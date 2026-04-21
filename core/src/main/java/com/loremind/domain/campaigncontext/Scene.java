@@ -48,10 +48,18 @@ public class Scene {
 
     /**
      * IDs des images (Shared Kernel) illustrant cette scene.
-     * Utile pour carte du lieu, portraits des PNJ principaux, ambiance.
+     * Vocation "ambiance" : portraits, decors, moodboard. Rendu facon editorial.
      */
     @Builder.Default
     private List<String> illustrationImageIds = new ArrayList<>();
+
+    /**
+     * IDs des images utilisees comme cartes / plans.
+     * Vocation "outil de table" : plan de donjon, carte du lieu, schema tactique.
+     * Rendu different des illustrations : vignettes plus grandes, ratio natif preserve.
+     */
+    @Builder.Default
+    private List<String> mapImageIds = new ArrayList<>();
 
     /**
      * Sorties narratives possibles depuis cette scène (graphe intra-chapitre).

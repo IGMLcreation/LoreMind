@@ -54,6 +54,7 @@ export class ChapterEditComponent implements OnInit, OnDestroy {
   loreId: string | null = null;
   relatedPageIds: string[] = [];
   illustrationImageIds: string[] = [];
+  mapImageIds: string[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -111,6 +112,7 @@ export class ChapterEditComponent implements OnInit, OnDestroy {
       this.availablePages = pages;
       this.relatedPageIds = [...(chapter.relatedPageIds ?? [])];
       this.illustrationImageIds = [...(chapter.illustrationImageIds ?? [])];
+      this.mapImageIds = [...(chapter.mapImageIds ?? [])];
       this.form.patchValue({
         name:             chapter.name,
         description:      chapter.description ?? '',
@@ -148,7 +150,8 @@ export class ChapterEditComponent implements OnInit, OnDestroy {
       playerObjectives: this.form.value.playerObjectives,
       narrativeStakes:  this.form.value.narrativeStakes,
       relatedPageIds:   this.relatedPageIds,
-      illustrationImageIds: this.illustrationImageIds
+      illustrationImageIds: this.illustrationImageIds,
+      mapImageIds:      this.mapImageIds
     }).subscribe({
       next: () => this.router.navigate(['/campaigns', this.campaignId, 'arcs', this.arcId, 'chapters', this.chapterId]),
       error: () => console.error('Erreur lors de la sauvegarde')

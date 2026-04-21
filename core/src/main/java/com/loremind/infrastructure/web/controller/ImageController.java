@@ -79,6 +79,10 @@ public class ImageController {
                 .contentType(MediaType.parseMediaType(img.getContentType()))
                 .contentLength(img.getSizeBytes())
                 .header(HttpHeaders.CACHE_CONTROL, "public, max-age=31536000, immutable")
+                // Autorise explicitement l'utilisation cross-origin du binaire dans une <img>.
+                // Sans ce header, Firefox 109+ applique ORB (Opaque Response Blocking) et
+                // bloque l'image quand le front (localhost:4200) la charge depuis l'API (localhost:8080).
+                .header("Cross-Origin-Resource-Policy", "cross-origin")
                 .body(new InputStreamResource(stream));
     }
 

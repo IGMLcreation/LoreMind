@@ -83,6 +83,9 @@ public class PostgresArcRepository implements ArcRepository {
                 .illustrationImageIds(jpaEntity.getIllustrationImageIds() != null
                         ? new ArrayList<>(jpaEntity.getIllustrationImageIds())
                         : new ArrayList<>())
+                .mapImageIds(jpaEntity.getMapImageIds() != null
+                        ? new ArrayList<>(jpaEntity.getMapImageIds())
+                        : new ArrayList<>())
                 .createdAt(jpaEntity.getCreatedAt())
                 .updatedAt(jpaEntity.getUpdatedAt())
                 .build();
@@ -106,6 +109,9 @@ public class PostgresArcRepository implements ArcRepository {
                         : new ArrayList<>())
                 .illustrationImageIds(arc.getIllustrationImageIds() != null
                         ? new ArrayList<>(arc.getIllustrationImageIds())
+                        : new ArrayList<>())
+                .mapImageIds(arc.getMapImageIds() != null
+                        ? new ArrayList<>(arc.getMapImageIds())
                         : new ArrayList<>())
                 .createdAt(arc.getCreatedAt())
                 .updatedAt(arc.getUpdatedAt())

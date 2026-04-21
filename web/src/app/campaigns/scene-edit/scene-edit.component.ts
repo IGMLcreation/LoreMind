@@ -53,6 +53,7 @@ export class SceneEditComponent implements OnInit, OnDestroy {
   loreId: string | null = null;
   relatedPageIds: string[] = [];
   illustrationImageIds: string[] = [];
+  mapImageIds: string[] = [];
 
   /** Scènes du chapitre courant (hors scène éditée) — alimente le dropdown des cibles. */
   siblingScenes: Scene[] = [];
@@ -129,6 +130,7 @@ export class SceneEditComponent implements OnInit, OnDestroy {
       this.availablePages = pages;
       this.relatedPageIds = [...(scene.relatedPageIds ?? [])];
       this.illustrationImageIds = [...(scene.illustrationImageIds ?? [])];
+      this.mapImageIds = [...(scene.mapImageIds ?? [])];
       this.siblingScenes = chapterScenes.filter(s => s.id !== this.sceneId);
       this.branches = (scene.branches ?? []).map(b => ({ ...b }));
       this.form.patchValue({
@@ -179,6 +181,7 @@ export class SceneEditComponent implements OnInit, OnDestroy {
       enemies:              this.form.value.enemies,
       relatedPageIds:       this.relatedPageIds,
       illustrationImageIds: this.illustrationImageIds,
+      mapImageIds:          this.mapImageIds,
       branches:             this.branches
     }).subscribe({
       next: () => this.router.navigate(['/campaigns', this.campaignId, 'arcs', this.arcId, 'chapters', this.chapterId, 'scenes', this.sceneId]),

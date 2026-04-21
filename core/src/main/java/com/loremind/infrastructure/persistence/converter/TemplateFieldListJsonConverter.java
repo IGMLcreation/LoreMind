@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loremind.domain.lorecontext.FieldType;
+import com.loremind.domain.lorecontext.ImageLayout;
 import com.loremind.domain.lorecontext.TemplateField;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
@@ -72,8 +73,20 @@ public class TemplateFieldListJsonConverter
                         // Type inconnu (ajoute par une version future) : fallback TEXT.
                         type = FieldType.TEXT;
                     }
+                    ImageLayout layout = null;
+                    if (type == FieldType.IMAGE) {
+                        String layoutStr = item.path("layout").asText(null);
+                        if (layoutStr != null && !layoutStr.isBlank()) {
+                            try {
+                                layout = ImageLayout.valueOf(layoutStr);
+                            } catch (IllegalArgumentException ex) {
+                                // Layout inconnu : on laisse null → rendu GALLERY par defaut cote UI.
+                                layout = null;
+                            }
+                        }
+                    }
                     if (name != null && !name.isBlank()) {
-                        result.add(new TemplateField(name, type));
+                        result.add(new TemplateField(name, type, layout));
                     }
                 }
                 // Autres types de noeuds (nombre, booleen...) : ignores silencieusement.

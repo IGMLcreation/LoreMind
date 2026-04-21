@@ -38,11 +38,17 @@ public class Arc {
     private List<String> relatedPageIds = new ArrayList<>();
 
     /**
-     * IDs des images (Shared Kernel) servant d'illustrations a cet arc.
+     * IDs des images (Shared Kernel) servant d'illustrations a cet arc (ambiance).
      * Galerie ordonnee : la 1ere image est l'illustration principale.
      */
     @Builder.Default
     private List<String> illustrationImageIds = new ArrayList<>();
+
+    /**
+     * IDs des images utilisees comme cartes / plans (outil de table).
+     */
+    @Builder.Default
+    private List<String> mapImageIds = new ArrayList<>();
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

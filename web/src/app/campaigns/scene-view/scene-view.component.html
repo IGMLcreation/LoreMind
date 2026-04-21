@@ -13,9 +13,15 @@
     </div>
   </header>
 
-  <!-- Illustrations -->
+  <!-- Illustrations (rendu editorial magazine) -->
   <section class="view-section" *ngIf="(scene.illustrationImageIds?.length ?? 0) > 0">
-    <app-image-gallery [imageIds]="scene.illustrationImageIds ?? []"></app-image-gallery>
+    <app-image-gallery [imageIds]="scene.illustrationImageIds ?? []" [layout]="'EDITORIAL'"></app-image-gallery>
+  </section>
+
+  <!-- Cartes & plans -->
+  <section class="view-section" *ngIf="(scene.mapImageIds?.length ?? 0) > 0">
+    <h2 class="view-section-title"><span class="view-section-icon">🗺️</span> Cartes & plans</h2>
+    <app-image-gallery [imageIds]="scene.mapImageIds ?? []" [layout]="'MAPS'"></app-image-gallery>
   </section>
 
   <!-- Description courte -->

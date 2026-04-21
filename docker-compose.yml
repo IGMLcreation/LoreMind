@@ -55,7 +55,7 @@ services:
       "
 
   core:
-    image: ${REGISTRY:-gitea.example.com}/ietm64/core:${TAG:-latest}
+    image: ${REGISTRY:-git.igmlcreation.fr}/ietm64/core:${TAG:-latest}
     container_name: loremind-core
     depends_on:
       postgres:
@@ -77,7 +77,7 @@ services:
     restart: unless-stopped
 
   brain:
-    image: ${REGISTRY:-gitea.example.com}/ietm64/brain:${TAG:-latest}
+    image: ${REGISTRY:-git.igmlcreation.fr}/ietm64/brain:${TAG:-latest}
     container_name: loremind-brain
     environment:
       LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
@@ -95,7 +95,7 @@ services:
     restart: unless-stopped
 
   web:
-    image: ${REGISTRY:-gitea.example.com}/ietm64/web:${TAG:-latest}
+    image: ${REGISTRY:-git.igmlcreation.fr}/ietm64/web:${TAG:-latest}
     container_name: loremind-web
     depends_on:
       - core

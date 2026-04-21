@@ -125,7 +125,8 @@
     &:hover { color: #a5b4fc; background: #1f1b3a; }
   }
 
-  .type-select {
+  .type-select,
+  .layout-select {
     background: #1a1a2e;
     border: 1px solid #2a2a3d;
     color: white;
@@ -136,6 +137,12 @@
     cursor: pointer;
 
     &:focus { outline: none; border-color: #6c63ff; }
+  }
+
+  .layout-select {
+    height: 28px;
+    font-size: 0.72rem;
+    padding: 0 0.45rem;
   }
 
   input {
@@ -165,6 +172,35 @@
       border: none;
       background: transparent;
       &:focus { border: none; }
+    }
+  }
+
+  .reorder-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    .btn-reorder {
+      width: 22px;
+      height: 16px;
+      background: transparent;
+      color: #6b7280;
+      border: 1px solid #2a2a3d;
+      border-radius: 3px;
+      padding: 0;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.12s, color 0.12s, border-color 0.12s;
+
+      &:hover:not(:disabled) {
+        background: #2a2a3d;
+        color: white;
+        border-color: #6c63ff;
+      }
+
+      &:disabled { opacity: 0.3; cursor: not-allowed; }
     }
   }
 }

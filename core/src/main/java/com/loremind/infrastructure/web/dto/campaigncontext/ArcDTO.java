@@ -27,6 +27,9 @@ public class ArcDTO {
     /** IDs des pages du Lore liées à cet arc (weak cross-context references). */
     private List<String> relatedPageIds = new ArrayList<>();
 
-    /** IDs des images (Shared Kernel) illustrant cet arc. */
+    /** IDs des images (Shared Kernel) illustrant cet arc (ambiance). */
     private List<String> illustrationImageIds = new ArrayList<>();
+
+    /** IDs des images utilisees comme cartes / plans. */
+    private List<String> mapImageIds = new ArrayList<>();
 }

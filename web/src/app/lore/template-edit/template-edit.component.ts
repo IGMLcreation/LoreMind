@@ -3,14 +3,14 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
-import { LucideAngularModule, Plus, X, Trash2, Type, Image as ImageIcon } from 'lucide-angular';
+import { LucideAngularModule, Plus, X, Trash2, Type, Image as ImageIcon, ChevronUp, ChevronDown } from 'lucide-angular';
 import { LoreService } from '../../services/lore.service';
 import { TemplateService } from '../../services/template.service';
 import { PageService } from '../../services/page.service';
 import { LayoutService } from '../../services/layout.service';
 import { PageTitleService } from '../../services/page-title.service';
 import { LoreNode } from '../../services/lore.model';
-import { FieldType, Template, TemplateField } from '../../services/template.model';
+import { FieldType, ImageLayout, Template, TemplateField } from '../../services/template.model';
 import { loadLoreSidebarData, buildLoreSidebarConfig } from '../lore-sidebar.helper';
 
 /**
@@ -30,6 +30,8 @@ export class TemplateEditComponent implements OnInit, OnDestroy {
   readonly Trash2 = Trash2;
   readonly Type = Type;
   readonly ImageIcon = ImageIcon;
+  readonly ChevronUp = ChevronUp;
+  readonly ChevronDown = ChevronDown;
 
   form: FormGroup;
   loreId = '';
@@ -75,10 +77,12 @@ export class TemplateEditComponent implements OnInit, OnDestroy {
     this.template = template;
     // Copie defensive + normalisation du type (defaut TEXT si inconnu/manquant,
     // utile pour les templates legacy cote frontend meme si le backend le fait aussi).
-    this.fields = (template.fields ?? []).map(f => ({
-      name: f.name,
-      type: f.type === 'IMAGE' ? 'IMAGE' : 'TEXT'
-    }));
+    this.fields = (template.fields ?? []).map(f => {
+      const type: FieldType = f.type === 'IMAGE' ? 'IMAGE' : 'TEXT';
+      return type === 'IMAGE'
+        ? { name: f.name, type, layout: f.layout ?? 'GALLERY' }
+        : { name: f.name, type };
+    });
     this.form.patchValue({
       name: template.name,
       description: template.description,
@@ -91,7 +95,10 @@ export class TemplateEditComponent implements OnInit, OnDestroy {
     const name = this.newFieldName.trim();
     if (!name) return;
     if (this.fields.some(f => f.name === name)) return;
-    this.fields = [...this.fields, { name, type: this.newFieldType }];
+    const newField: TemplateField = this.newFieldType === 'IMAGE'
+      ? { name, type: 'IMAGE', layout: 'GALLERY' }
+      : { name, type: 'TEXT' };
+    this.fields = [...this.fields, newField];
     this.newFieldName = '';
   }
 
@@ -99,12 +106,33 @@ export class TemplateEditComponent implements OnInit, OnDestroy {
     this.fields = this.fields.filter((_, i) => i !== index);
   }
 
+  /** Deplace un champ d'un cran vers le haut ou le bas. No-op aux bords. */
+  moveField(index: number, direction: -1 | 1): void {
+    const target = index + direction;
+    if (target < 0 || target >= this.fields.length) return;
+    const next = [...this.fields];
+    [next[index], next[target]] = [next[target], next[index]];
+    this.fields = next;
+  }
+
   /** Bascule le type d'un champ (TEXT <-> IMAGE). */
   toggleFieldType(index: number): void {
     const field = this.fields[index];
     if (!field) return;
     const nextType: FieldType = field.type === 'TEXT' ? 'IMAGE' : 'TEXT';
-    this.fields = this.fields.map((f, i) => i === index ? { ...f, type: nextType } : f);
+    this.fields = this.fields.map((f, i) => {
+      if (i !== index) return f;
+      return nextType === 'IMAGE'
+        ? { name: f.name, type: 'IMAGE', layout: f.layout ?? 'GALLERY' }
+        : { name: f.name, type: 'TEXT' };
+    });
+  }
+
+  /** Met a jour le layout d'un champ IMAGE. */
+  setFieldLayout(index: number, layout: ImageLayout): void {
+    this.fields = this.fields.map((f, i) =>
+      i === index && f.type === 'IMAGE' ? { ...f, layout } : f
+    );
   }
 
   save(): void {

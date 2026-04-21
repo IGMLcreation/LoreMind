@@ -43,7 +43,21 @@
       <label class="section-label">Champs du template</label>
 
       <ul class="fields-list">
-        <li class="field-row" *ngFor="let f of fields; let i = index">
+        <li class="field-row" *ngFor="let f of fields; let i = index; let first = first; let last = last">
+          <div class="reorder-stack">
+            <button type="button" class="btn-icon-ghost btn-reorder"
+                    (click)="moveField(i, -1)"
+                    [disabled]="first"
+                    aria-label="Monter d'un cran" title="Monter">
+              <lucide-icon [img]="ChevronUp" [size]="12"></lucide-icon>
+            </button>
+            <button type="button" class="btn-icon-ghost btn-reorder"
+                    (click)="moveField(i, 1)"
+                    [disabled]="last"
+                    aria-label="Descendre d'un cran" title="Descendre">
+              <lucide-icon [img]="ChevronDown" [size]="12"></lucide-icon>
+            </button>
+          </div>
           <span class="field-chip" [class.field-chip-image]="f.type === 'IMAGE'">
             <lucide-icon [img]="f.type === 'IMAGE' ? ImageIcon : Type" [size]="12"></lucide-icon>
             {{ f.name }}
@@ -54,6 +68,17 @@
                   [title]="f.type === 'TEXT' ? 'Transformer en champ Image' : 'Transformer en champ Texte'">
             {{ f.type === 'TEXT' ? 'Texte' : 'Image' }}
           </button>
+          <select *ngIf="f.type === 'IMAGE'"
+                  class="layout-select"
+                  [ngModel]="f.layout ?? 'GALLERY'"
+                  [ngModelOptions]="{ standalone: true }"
+                  (ngModelChange)="setFieldLayout(i, $event)"
+                  title="Mise en page des images">
+            <option value="GALLERY">Grille</option>
+            <option value="HERO">Heros</option>
+            <option value="MASONRY">Mosaique</option>
+            <option value="CAROUSEL">Carrousel</option>
+          </select>
           <button type="button" class="btn-icon-ghost" (click)="removeField(i)" aria-label="Supprimer">
             <lucide-icon [img]="X" [size]="14"></lucide-icon>
           </button>

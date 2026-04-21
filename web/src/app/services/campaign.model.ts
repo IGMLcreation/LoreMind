@@ -36,8 +36,11 @@ export interface Arc {
   /** IDs des pages du Lore liées à cet arc (weak cross-context refs). */
   relatedPageIds?: string[];
 
-  /** IDs des images (Shared Kernel) illustrant cet arc. */
+  /** IDs des images (Shared Kernel) illustrant cet arc (ambiance). */
   illustrationImageIds?: string[];
+
+  /** IDs des images utilisees comme cartes / plans (outil de table). */
+  mapImageIds?: string[];
 }
 
 // Payload pour la création d'un Arc (pas d'id)
@@ -55,6 +58,7 @@ export interface ArcCreate {
 
   relatedPageIds?: string[];
   illustrationImageIds?: string[];
+  mapImageIds?: string[];
 }
 
 export interface Chapter {
@@ -71,6 +75,7 @@ export interface Chapter {
 
   relatedPageIds?: string[];
   illustrationImageIds?: string[];
+  mapImageIds?: string[];
 }
 
 export interface ChapterCreate {
@@ -85,6 +90,7 @@ export interface ChapterCreate {
 
   relatedPageIds?: string[];
   illustrationImageIds?: string[];
+  mapImageIds?: string[];
 }
 
 /**
@@ -116,6 +122,7 @@ export interface Scene {
 
   relatedPageIds?: string[];
   illustrationImageIds?: string[];
+  mapImageIds?: string[];
 
   /** Sorties narratives (graphe intra-chapitre). */
   branches?: SceneBranch[];
@@ -138,5 +145,6 @@ export interface SceneCreate {
 
   relatedPageIds?: string[];
   illustrationImageIds?: string[];
+  mapImageIds?: string[];
   branches?: SceneBranch[];
 }

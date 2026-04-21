@@ -80,6 +80,11 @@ public class SceneJpaEntity {
     @Builder.Default
     private List<String> illustrationImageIds = new ArrayList<>();
 
+    @Column(name = "map_image_ids", columnDefinition = "TEXT")
+    @Convert(converter = StringListJsonConverter.class)
+    @Builder.Default
+    private List<String> mapImageIds = new ArrayList<>();
+
     // Graphe narratif intra-chapitre : sorties possibles vers d'autres scènes.
     // Persisté en TEXT JSON via converter (pattern homogène avec les autres listes).
     @Column(name = "branches", columnDefinition = "TEXT")

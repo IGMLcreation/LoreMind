@@ -60,6 +60,8 @@ export class ArcEditComponent implements OnInit, OnDestroy {
 
   /** IDs des images illustrant cet arc (bind sur app-image-gallery editable). */
   illustrationImageIds: string[] = [];
+  /** IDs des images utilisees comme cartes / plans (outil de table). */
+  mapImageIds: string[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -119,6 +121,7 @@ export class ArcEditComponent implements OnInit, OnDestroy {
       this.availablePages = pages;
       this.relatedPageIds = [...(arc.relatedPageIds ?? [])];
       this.illustrationImageIds = [...(arc.illustrationImageIds ?? [])];
+      this.mapImageIds = [...(arc.mapImageIds ?? [])];
       this.pageTitleService.set(arc.name);
       this.form.patchValue({
         name:        arc.name,
@@ -161,7 +164,8 @@ export class ArcEditComponent implements OnInit, OnDestroy {
       rewards:        this.form.value.rewards,
       resolution:     this.form.value.resolution,
       relatedPageIds: this.relatedPageIds,
-      illustrationImageIds: this.illustrationImageIds
+      illustrationImageIds: this.illustrationImageIds,
+      mapImageIds:    this.mapImageIds
     }).subscribe({
       next: () => this.router.navigate(['/campaigns', this.campaignId, 'arcs', this.arcId]),
       error: () => console.error('Erreur lors de la sauvegarde')

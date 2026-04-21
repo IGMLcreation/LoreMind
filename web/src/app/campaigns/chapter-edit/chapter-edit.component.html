@@ -18,15 +18,28 @@
 
   <form [formGroup]="form" (ngSubmit)="submit()" class="edit-form">
 
-    <!-- Illustrations (galerie editable) -->
+    <!-- Illustrations (galerie editable, rendu editorial) -->
     <div class="field">
       <label>Illustrations</label>
       <app-image-gallery
         [imageIds]="illustrationImageIds"
         [editable]="true"
+        [layout]="'EDITORIAL'"
         (imageIdsChange)="illustrationImageIds = $event">
       </app-image-gallery>
-      <small class="field-hint">Ajoute des cartes, portraits ou ambiances pour illustrer ce chapitre.</small>
+      <small class="field-hint">Portraits, ambiances, scenes marquantes du chapitre.</small>
+    </div>
+
+    <!-- Cartes & plans -->
+    <div class="field">
+      <label>Cartes &amp; plans</label>
+      <app-image-gallery
+        [imageIds]="mapImageIds"
+        [editable]="true"
+        [layout]="'MAPS'"
+        (imageIdsChange)="mapImageIds = $event">
+      </app-image-gallery>
+      <small class="field-hint">Cartes regionales, plans de donjon, schemas utiles a la table.</small>
     </div>
 
     <div class="field">

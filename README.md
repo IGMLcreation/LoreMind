@@ -67,4 +67,9 @@ docker compose up -d --build
 
 ## License
 
-[À définir]
+LoreMind est distribué sous licence **[GNU AGPL v3](LICENSE)**.
+
+En pratique :
+- Tu peux l'utiliser gratuitement, l'héberger où tu veux, le modifier, le redistribuer.
+- Si tu modifies le code et que tu exposes l'application modifiée sur un réseau (même en SaaS privé), tu dois rendre tes modifications publiques sous la même licence.
+- Les univers (Lore) et campagnes que tu crées avec LoreMind **t'appartiennent entièrement** — la licence ne couvre que le code de l'application.

@@ -1,33 +1,36 @@
-.gallery {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.8rem;
-  align-items: flex-start;
-}
+// =============== Common tile / remove-button ===============
+// Partage par tous les layouts : vignette, survol, bouton X.
 
-.gallery-tile {
+.gallery-tile,
+.masonry-item,
+.hero-thumb,
+.carousel-slide,
+.hero-main,
+.map-tile {
   position: relative;
-  width: 120px;
-  height: 120px;
-  border-radius: 6px;
+  border-radius: 8px;
   overflow: hidden;
   background: #1a1a2e;
   border: 1px solid #2a2a3d;
   cursor: zoom-in;
-  transition: border-color 0.15s, transform 0.15s;
+  transition: border-color 0.15s, transform 0.15s, box-shadow 0.2s;
 
   &:hover {
     border-color: #6c63ff;
     transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(108, 99, 255, 0.18);
 
     .gallery-remove { opacity: 1; }
+
+    img { transform: scale(1.04); }
   }
 
   img {
+    display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    display: block;
+    transition: transform 0.3s ease;
   }
 }
 
@@ -47,6 +50,7 @@
   cursor: pointer;
   opacity: 0;
   transition: opacity 0.15s, background 0.15s;
+  z-index: 2;
 
   &:hover { background: #7f1d1d; color: white; }
 }
@@ -60,7 +64,352 @@
   font-style: italic;
 }
 
-// Lightbox plein ecran
+// =============== Layout: GALLERY (planche de contact) ===============
+// Grille stricte de carres identiques, effet "contact sheet" photo.
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 0.35rem;
+  padding: 0.35rem;
+  background: #12121f;
+  border-radius: 6px;
+  max-width: 720px; // contient la grille pour ne pas etaler sur tout l'ecran
+}
+
+.gallery-tile {
+  width: auto;
+  aspect-ratio: 1 / 1;
+  border-radius: 2px; // carres vifs, presque sans radius
+}
+
+// =============== Layout: HERO ===============
+.hero {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.hero-main {
+  width: 100%;
+  aspect-ratio: 21 / 9;
+  max-height: 360px;
+  cursor: zoom-in;
+
+  img { object-position: center; }
+}
+
+.hero-rest {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.hero-thumb {
+  width: 90px;
+  height: 90px;
+}
+
+// =============== Layout: MASONRY (Pinterest) ===============
+// Colonnes larges, hauteurs naturelles preservees. Effet tres visible si les
+// images n'ont pas toutes le meme ratio. Le border-radius genereux et les
+// ombres accentuent le cote "tableau d'inspiration".
+.masonry {
+  column-count: 3;
+  column-gap: 1.2rem;
+  padding: 0.5rem 0;
+
+  @media (max-width: 900px) { column-count: 2; }
+  @media (max-width: 500px) { column-count: 1; }
+}
+
+.masonry-item {
+  display: inline-block;
+  width: 100%;
+  margin-bottom: 1.2rem;
+  break-inside: avoid;
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+
+  // Override de la transition par defaut pour un feel plus doux.
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(108, 99, 255, 0.35);
+  }
+
+  img {
+    height: auto; // ratio natif preserve → hauteur variable entre les tuiles
+    border-radius: 14px;
+  }
+}
+
+.masonry-uploader {
+  aspect-ratio: 3 / 4; // slot vertical, bien different d'une tuile simple
+  border-style: dashed;
+  border-width: 2px;
+  cursor: default;
+  box-shadow: none;
+
+  &:hover { transform: none; box-shadow: none; }
+}
+
+// =============== Layout: CAROUSEL (cinema) ===============
+// Bande horizontale facon affiche de film : grandes slides 16/9, ombres
+// marquees, fade sur les bords pour suggerer le defilement infini.
+.carousel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0;
+
+  // Fade gauche/droite pour signaler clairement "ca defile".
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 48px;
+    pointer-events: none;
+    z-index: 3;
+  }
+  &::before { left: 48px;  background: linear-gradient(to right, #0f0f1e 0%, transparent 100%); }
+  &::after  { right: 48px; background: linear-gradient(to left,  #0f0f1e 0%, transparent 100%); }
+}
+
+.carousel-track {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  padding: 0.5rem 0.25rem;
+  flex: 1;
+  min-width: 0;
+
+  &::-webkit-scrollbar { height: 6px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb {
+    background: #2a2a3d;
+    border-radius: 3px;
+  }
+}
+
+.carousel-slide {
+  flex: 0 0 auto;
+  width: 360px;
+  aspect-ratio: 16 / 9;
+  height: auto;
+  scroll-snap-align: start;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+
+  &:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 16px 40px rgba(108, 99, 255, 0.4);
+  }
+}
+
+.carousel-uploader {
+  width: 220px;
+  aspect-ratio: 16 / 9;
+  border-style: dashed;
+  border-width: 2px;
+  cursor: default;
+  box-shadow: none;
+
+  &:hover { transform: none; box-shadow: none; }
+}
+
+.carousel-nav {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #2a2a3d;
+  border-radius: 50%;
+  background: rgba(26, 26, 46, 0.9);
+  color: #9ca3af;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+
+  &:hover {
+    color: white;
+    border-color: #6c63ff;
+    background: #1f1b3a;
+  }
+}
+
+// =============== Layout: EDITORIAL (scrapbook polaroid) ===============
+// Rendu carnet de campagne : vignettes facon polaroid, legerement inclinees,
+// avec bande de papier collant (::before) et ombre portee. Au survol, la photo
+// se redresse et se souleve. Pas de grille rigide : flex-wrap laisse respirer.
+.editorial {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem 1.25rem;
+  padding: 1.25rem 0.5rem 0.5rem;
+  align-items: flex-start;
+  justify-content: flex-start;
+  // Fond kraft/parchemin tres discret pour suggerer le carnet.
+  background:
+    radial-gradient(ellipse at 20% 20%, rgba(180, 150, 100, 0.05), transparent 60%),
+    radial-gradient(ellipse at 80% 70%, rgba(160, 120, 80, 0.04), transparent 60%);
+  border-radius: 8px;
+}
+
+.editorial-item {
+  position: relative;
+  flex: 0 0 220px;
+  max-width: 100%;
+  background: #f5efe0; // papier blanc casse
+  padding: 10px 10px 34px 10px; // bas = bande blanche facon polaroid
+  border-radius: 2px;
+  cursor: zoom-in;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.35),
+    0 14px 28px rgba(0, 0, 0, 0.45);
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.3, 1),
+              box-shadow 0.3s ease;
+
+  // Rotations pseudo-aleatoires pour casser l'effet grille.
+  transform: rotate(-2deg);
+  &:nth-child(2n)  { transform: rotate(1.8deg); }
+  &:nth-child(3n)  { transform: rotate(-1.2deg); }
+  &:nth-child(4n)  { transform: rotate(2.5deg); }
+  &:nth-child(5n)  { transform: rotate(-2.8deg); }
+  &:nth-child(7n)  { transform: rotate(0.9deg); }
+
+  // Ruban adhesif en haut de la photo.
+  &::before {
+    content: '';
+    position: absolute;
+    top: -9px;
+    left: 50%;
+    width: 68px;
+    height: 18px;
+    transform: translateX(-50%) rotate(-4deg);
+    background: rgba(255, 238, 200, 0.55);
+    border-left: 1px dashed rgba(0, 0, 0, 0.08);
+    border-right: 1px dashed rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+    pointer-events: none;
+  }
+  &:nth-child(2n)::before { transform: translateX(-50%) rotate(3deg); }
+  &:nth-child(3n)::before { transform: translateX(-50%) rotate(-7deg); left: 58%; }
+  &:nth-child(4n)::before { transform: translateX(-50%) rotate(5deg);  left: 42%; }
+
+  &:hover {
+    transform: rotate(0deg) scale(1.05) translateY(-4px);
+    z-index: 10;
+    box-shadow:
+      0 4px 8px rgba(0, 0, 0, 0.5),
+      0 24px 48px rgba(0, 0, 0, 0.6);
+
+    .gallery-remove { opacity: 1; }
+  }
+
+  img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    background: #1a1a2e;
+    border-radius: 0;
+  }
+}
+
+// La premiere image (feature) est plus grande et en ratio 4/3 pour jouer le role d'affiche.
+.editorial-feature {
+  flex: 0 0 420px;
+
+  img { aspect-ratio: 4 / 3; }
+}
+
+// Bouton X : sur polaroid blanc, on renforce le contraste.
+.editorial-item .gallery-remove {
+  top: 14px;
+  right: 14px;
+  background: rgba(17, 17, 30, 0.92);
+  color: #fecaca;
+
+  &:hover { background: #7f1d1d; color: white; }
+}
+
+// Uploader : meme cadre polaroid mais en "coller une photo ici" dashed.
+.editorial-uploader {
+  background: rgba(245, 239, 224, 0.06);
+  border: 2px dashed rgba(108, 99, 255, 0.7);
+  padding: 0;
+  cursor: default;
+
+  &::before { display: none; } // pas de scotch sur le slot vide
+  &:hover {
+    transform: rotate(0deg);
+    box-shadow:
+      0 2px 4px rgba(0, 0, 0, 0.35),
+      0 14px 28px rgba(0, 0, 0, 0.45);
+  }
+
+  // L'uploader interne doit remplir le slot.
+  app-image-uploader { display: block; width: 100%; height: 100%; min-height: 180px; }
+}
+
+// Responsive : on reduit la taille et on supprime les rotations sur mobile.
+@media (max-width: 780px) {
+  .editorial-item          { flex: 0 0 calc(50% - 0.75rem); }
+  .editorial-feature       { flex: 0 0 calc(100% - 0.5rem); }
+}
+
+@media (max-width: 480px) {
+  .editorial { gap: 1.25rem 0.75rem; }
+  .editorial-item,
+  .editorial-feature {
+    flex: 0 0 100%;
+    transform: rotate(0deg) !important;
+    &::before { display: none; }
+  }
+}
+
+// =============== Layout: MAPS ===============
+// Plans et cartes : on ne CROP pas (une carte croppee ne sert a rien).
+// Grandes vignettes, ratio natif preserve via object-fit: contain.
+.maps {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.map-tile {
+  aspect-ratio: 4 / 3;
+  background:
+    linear-gradient(45deg, #15152440 25%, transparent 25%),
+    linear-gradient(-45deg, #15152440 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #15152440 75%),
+    linear-gradient(-45deg, transparent 75%, #15152440 75%),
+    #1a1a2e;
+  background-size: 20px 20px;
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+
+  img {
+    object-fit: contain; // Preserve le ratio natif, ajoute un padding visuel via le fond.
+    padding: 4px;
+  }
+}
+
+.map-uploader {
+  border-style: dashed;
+  cursor: default;
+  background: #1a1a2e;
+
+  &:hover { transform: none; box-shadow: none; }
+}
+
+// =============== Lightbox (inchange) ===============
 .lightbox-backdrop {
   position: fixed;
   inset: 0;

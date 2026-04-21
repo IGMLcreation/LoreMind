@@ -41,6 +41,9 @@ public class SceneMapper {
         dto.setIllustrationImageIds(scene.getIllustrationImageIds() != null
                 ? new ArrayList<>(scene.getIllustrationImageIds())
                 : new ArrayList<>());
+        dto.setMapImageIds(scene.getMapImageIds() != null
+                ? new ArrayList<>(scene.getMapImageIds())
+                : new ArrayList<>());
         dto.setBranches(toBranchDTOs(scene.getBranches()));
         return dto;
     }
@@ -69,6 +72,9 @@ public class SceneMapper {
                         : new ArrayList<>())
                 .illustrationImageIds(dto.getIllustrationImageIds() != null
                         ? new ArrayList<>(dto.getIllustrationImageIds())
+                        : new ArrayList<>())
+                .mapImageIds(dto.getMapImageIds() != null
+                        ? new ArrayList<>(dto.getMapImageIds())
                         : new ArrayList<>())
                 .branches(toBranchDomain(dto.getBranches()))
                 .build();

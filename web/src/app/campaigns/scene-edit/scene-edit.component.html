@@ -18,15 +18,28 @@
 
   <form [formGroup]="form" (ngSubmit)="submit()" class="edit-form">
 
-    <!-- Illustrations (galerie editable) -->
+    <!-- Illustrations (galerie editable, rendu editorial) -->
     <div class="field">
       <label>Illustrations</label>
       <app-image-gallery
         [imageIds]="illustrationImageIds"
         [editable]="true"
+        [layout]="'EDITORIAL'"
         (imageIdsChange)="illustrationImageIds = $event">
       </app-image-gallery>
-      <small class="field-hint">Carte du lieu, portrait des PNJ presents, ambiance visuelle...</small>
+      <small class="field-hint">Portraits des PNJ, ambiance visuelle, scenes evocatrices...</small>
+    </div>
+
+    <!-- Cartes & plans (galerie editable, rendu maps) -->
+    <div class="field">
+      <label>Cartes &amp; plans</label>
+      <app-image-gallery
+        [imageIds]="mapImageIds"
+        [editable]="true"
+        [layout]="'MAPS'"
+        (imageIdsChange)="mapImageIds = $event">
+      </app-image-gallery>
+      <small class="field-hint">Plans du lieu, cartes tactiques, schemas utilisables a la table.</small>
     </div>
 
     <div class="field">

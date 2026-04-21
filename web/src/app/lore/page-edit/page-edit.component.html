@@ -65,6 +65,7 @@
           <app-image-gallery
             [imageIds]="imageValues[field.name] || []"
             [editable]="true"
+            [layout]="field.layout ?? 'GALLERY'"
             (imageIdsChange)="imageValues[field.name] = $event">
           </app-image-gallery>
         </div>

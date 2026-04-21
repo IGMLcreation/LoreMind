@@ -68,6 +68,12 @@ public class ArcJpaEntity {
     @Builder.Default
     private List<String> illustrationImageIds = new ArrayList<>();
 
+    /** IDs des images "cartes / plans". */
+    @Column(name = "map_image_ids", columnDefinition = "TEXT")
+    @Convert(converter = StringListJsonConverter.class)
+    @Builder.Default
+    private List<String> mapImageIds = new ArrayList<>();
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

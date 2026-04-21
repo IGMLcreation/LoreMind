@@ -28,7 +28,10 @@
       </section>
       <section class="view-section" *ngIf="field.type === 'IMAGE'">
         <h2 class="view-section-title">{{ field.name }}</h2>
-        <app-image-gallery [imageIds]="imageIdsOf(field.name)"></app-image-gallery>
+        <app-image-gallery
+          [imageIds]="imageIdsOf(field.name)"
+          [layout]="field.layout ?? 'GALLERY'">
+        </app-image-gallery>
       </section>
     </ng-container>
   </ng-container>

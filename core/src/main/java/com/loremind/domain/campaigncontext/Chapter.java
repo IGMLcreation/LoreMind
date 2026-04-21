@@ -34,10 +34,16 @@ public class Chapter {
     private List<String> relatedPageIds = new ArrayList<>();
 
     /**
-     * IDs des images (Shared Kernel) illustrant ce chapitre.
+     * IDs des images (Shared Kernel) illustrant ce chapitre (ambiance).
      */
     @Builder.Default
     private List<String> illustrationImageIds = new ArrayList<>();
+
+    /**
+     * IDs des images utilisees comme cartes / plans pour ce chapitre (outil de table).
+     */
+    @Builder.Default
+    private List<String> mapImageIds = new ArrayList<>();
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

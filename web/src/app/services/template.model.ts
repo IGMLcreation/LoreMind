@@ -8,12 +8,24 @@
 export type FieldType = 'TEXT' | 'IMAGE';
 
 /**
+ * Variante de rendu pour un champ IMAGE. Miroir de
+ * com.loremind.domain.lorecontext.ImageLayout. Ignore pour TEXT.
+ * - 'GALLERY'  : grille de vignettes (defaut)
+ * - 'HERO'     : premiere image en banniere, suivantes en petit
+ * - 'MASONRY'  : mosaique hauteurs variables
+ * - 'CAROUSEL' : defilement horizontal
+ */
+export type ImageLayout = 'GALLERY' | 'HERO' | 'MASONRY' | 'CAROUSEL' | 'EDITORIAL' | 'MAPS';
+
+/**
  * Champ d'un Template : nom + type discriminant.
  * Miroir de TemplateFieldDTO (backend).
  */
 export interface TemplateField {
   name: string;
   type: FieldType;
+  /** Uniquement pour type='IMAGE'. Absent/null = 'GALLERY'. */
+  layout?: ImageLayout | null;
 }
 
 export interface Template {

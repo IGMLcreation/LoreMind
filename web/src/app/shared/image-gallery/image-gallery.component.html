@@ -1,29 +1,183 @@
-<!-- Grille de vignettes + uploader si editable. -->
-<div class="gallery"
-     *ngIf="imageIds.length > 0 || editable; else empty">
+<!-- Container avec classe dynamique selon le layout choisi. -->
+<div [ngSwitch]="effectiveLayout" class="gallery-root">
 
-  <div class="gallery-tile"
-       *ngFor="let id of imageIds"
-       (click)="openLightbox(id)"
-       role="button"
-       tabindex="0">
-    <img [src]="urlFor(id)" [alt]="'Illustration ' + id" loading="lazy" />
+  <!-- =================== HERO =================== -->
+  <ng-container *ngSwitchCase="'HERO'">
+    <div class="hero" *ngIf="imageIds.length > 0 || editable; else empty">
+      <div class="hero-main"
+           *ngIf="heroId"
+           (click)="openLightbox(heroId)"
+           role="button"
+           tabindex="0">
+        <img [src]="urlFor(heroId)" [alt]="'Illustration principale'" loading="lazy" />
+        <button type="button"
+                class="gallery-remove"
+                *ngIf="editable"
+                (click)="remove(heroId, $event)"
+                aria-label="Retirer cette image">
+          <lucide-icon [img]="X" [size]="14"></lucide-icon>
+        </button>
+      </div>
 
-    <button type="button"
-            class="gallery-remove"
-            *ngIf="editable"
-            (click)="remove(id, $event)"
-            aria-label="Retirer cette image">
-      <lucide-icon [img]="X" [size]="14"></lucide-icon>
-    </button>
-  </div>
+      <div class="hero-rest" *ngIf="restIds.length > 0 || editable">
+        <div class="gallery-tile hero-thumb"
+             *ngFor="let id of restIds"
+             (click)="openLightbox(id)"
+             role="button"
+             tabindex="0">
+          <img [src]="urlFor(id)" [alt]="'Illustration ' + id" loading="lazy" />
+          <button type="button"
+                  class="gallery-remove"
+                  *ngIf="editable"
+                  (click)="remove(id, $event)"
+                  aria-label="Retirer cette image">
+            <lucide-icon [img]="X" [size]="14"></lucide-icon>
+          </button>
+        </div>
+        <app-image-uploader *ngIf="editable" [compact]="true" (uploaded)="onUploaded($event)"></app-image-uploader>
+      </div>
 
-  <!-- Bouton + (uploader compact), uniquement en mode edition -->
-  <app-image-uploader
-    *ngIf="editable"
-    [compact]="true"
-    (uploaded)="onUploaded($event)">
-  </app-image-uploader>
+      <!-- Si pas de hero mais editable, on montre au moins l'uploader. -->
+      <div class="hero-rest" *ngIf="!heroId && editable">
+        <app-image-uploader [compact]="true" (uploaded)="onUploaded($event)"></app-image-uploader>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- =================== MASONRY =================== -->
+  <ng-container *ngSwitchCase="'MASONRY'">
+    <div class="masonry" *ngIf="imageIds.length > 0 || editable; else empty">
+      <div class="masonry-item"
+           *ngFor="let id of imageIds"
+           (click)="openLightbox(id)"
+           role="button"
+           tabindex="0">
+        <img [src]="urlFor(id)" [alt]="'Illustration ' + id" loading="lazy" />
+        <button type="button"
+                class="gallery-remove"
+                *ngIf="editable"
+                (click)="remove(id, $event)"
+                aria-label="Retirer cette image">
+          <lucide-icon [img]="X" [size]="14"></lucide-icon>
+        </button>
+      </div>
+      <div class="masonry-item masonry-uploader" *ngIf="editable">
+        <app-image-uploader [compact]="true" (uploaded)="onUploaded($event)"></app-image-uploader>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- =================== CAROUSEL =================== -->
+  <ng-container *ngSwitchCase="'CAROUSEL'">
+    <div class="carousel" *ngIf="imageIds.length > 0 || editable; else empty">
+      <button type="button"
+              class="carousel-nav carousel-prev"
+              *ngIf="imageIds.length > 1"
+              (click)="scrollCarousel(-1)"
+              aria-label="Precedent">
+        <lucide-icon [img]="ChevronLeft" [size]="20"></lucide-icon>
+      </button>
+
+      <div class="carousel-track" #carouselTrack>
+        <div class="carousel-slide"
+             *ngFor="let id of imageIds"
+             (click)="openLightbox(id)"
+             role="button"
+             tabindex="0">
+          <img [src]="urlFor(id)" [alt]="'Illustration ' + id" loading="lazy" />
+          <button type="button"
+                  class="gallery-remove"
+                  *ngIf="editable"
+                  (click)="remove(id, $event)"
+                  aria-label="Retirer cette image">
+            <lucide-icon [img]="X" [size]="14"></lucide-icon>
+          </button>
+        </div>
+        <div class="carousel-slide carousel-uploader" *ngIf="editable">
+          <app-image-uploader [compact]="true" (uploaded)="onUploaded($event)"></app-image-uploader>
+        </div>
+      </div>
+
+      <button type="button"
+              class="carousel-nav carousel-next"
+              *ngIf="imageIds.length > 1"
+              (click)="scrollCarousel(1)"
+              aria-label="Suivant">
+        <lucide-icon [img]="ChevronRight" [size]="20"></lucide-icon>
+      </button>
+    </div>
+  </ng-container>
+
+  <!-- =================== EDITORIAL =================== -->
+  <!-- Rendu adaptatif facon magazine : 1 image → hero, 2 → diptyque, 3 → feature + 2 satellites, 4+ → feature + 3 satellites. -->
+  <ng-container *ngSwitchCase="'EDITORIAL'">
+    <div class="editorial" *ngIf="imageIds.length > 0 || editable; else empty">
+      <div class="editorial-item"
+           *ngFor="let id of imageIds; let i = index"
+           [class.editorial-feature]="i === 0"
+           (click)="openLightbox(id)"
+           role="button"
+           tabindex="0">
+        <img [src]="urlFor(id)" [alt]="'Illustration ' + id" loading="lazy" />
+        <button type="button"
+                class="gallery-remove"
+                *ngIf="editable"
+                (click)="remove(id, $event)"
+                aria-label="Retirer cette image">
+          <lucide-icon [img]="X" [size]="14"></lucide-icon>
+        </button>
+      </div>
+      <div class="editorial-item editorial-uploader" *ngIf="editable">
+        <app-image-uploader [compact]="true" (uploaded)="onUploaded($event)"></app-image-uploader>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- =================== MAPS =================== -->
+  <!-- Cartes / plans : grandes vignettes, ratio natif preserve (pas de crop). -->
+  <ng-container *ngSwitchCase="'MAPS'">
+    <div class="maps" *ngIf="imageIds.length > 0 || editable; else empty">
+      <div class="map-tile"
+           *ngFor="let id of imageIds"
+           (click)="openLightbox(id)"
+           role="button"
+           tabindex="0">
+        <img [src]="urlFor(id)" [alt]="'Carte ' + id" loading="lazy" />
+        <button type="button"
+                class="gallery-remove"
+                *ngIf="editable"
+                (click)="remove(id, $event)"
+                aria-label="Retirer cette carte">
+          <lucide-icon [img]="X" [size]="14"></lucide-icon>
+        </button>
+      </div>
+      <div class="map-tile map-uploader" *ngIf="editable">
+        <app-image-uploader [compact]="true" (uploaded)="onUploaded($event)"></app-image-uploader>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- =================== GALLERY (default) =================== -->
+  <ng-container *ngSwitchDefault>
+    <div class="gallery" *ngIf="imageIds.length > 0 || editable; else empty">
+      <div class="gallery-tile"
+           *ngFor="let id of imageIds"
+           (click)="openLightbox(id)"
+           role="button"
+           tabindex="0">
+        <img [src]="urlFor(id)" [alt]="'Illustration ' + id" loading="lazy" />
+        <button type="button"
+                class="gallery-remove"
+                *ngIf="editable"
+                (click)="remove(id, $event)"
+                aria-label="Retirer cette image">
+          <lucide-icon [img]="X" [size]="14"></lucide-icon>
+        </button>
+      </div>
+      <app-image-uploader *ngIf="editable" [compact]="true" (uploaded)="onUploaded($event)"></app-image-uploader>
+    </div>
+  </ng-container>
+
 </div>
 
 <!-- Etat vide (lecture uniquement). -->
