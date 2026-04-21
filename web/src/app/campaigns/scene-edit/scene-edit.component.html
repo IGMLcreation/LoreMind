@@ -1,0 +1,228 @@
+<div class="edit-page">
+
+  <div class="page-header">
+    <div>
+      <h1>{{ scene?.name || 'Scène' }}</h1>
+      <p class="subtitle">Scène</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn-ai"
+              (click)="toggleChat()"
+              [class.active]="chatOpen"
+              title="Ouvrir l'Assistant IA pour dialoguer autour de cette scène">
+        <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
+        Assistant IA
+      </button>
+    </div>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="edit-form">
+
+    <!-- Illustrations (galerie editable) -->
+    <div class="field">
+      <label>Illustrations</label>
+      <app-image-gallery
+        [imageIds]="illustrationImageIds"
+        [editable]="true"
+        (imageIdsChange)="illustrationImageIds = $event">
+      </app-image-gallery>
+      <small class="field-hint">Carte du lieu, portrait des PNJ presents, ambiance visuelle...</small>
+    </div>
+
+    <div class="field">
+      <label>Titre de la scène *</label>
+      <input
+        type="text"
+        formControlName="name"
+        placeholder="Ex: Arrivée au village"
+        [class.invalid]="form.get('name')?.invalid && form.get('name')?.touched"
+      />
+    </div>
+
+    <div class="field">
+      <label>Description courte *</label>
+      <textarea
+        formControlName="description"
+        placeholder="Résumé en une ou deux phrases de ce qui se passe..."
+        rows="3">
+      </textarea>
+    </div>
+
+    <!-- Section : Contexte et ambiance -->
+    <app-expandable-section title="Contexte et ambiance" icon="📍" [initiallyOpen]="true">
+      <div class="field-row">
+        <div class="field">
+          <label>Lieu</label>
+          <input type="text" formControlName="location" placeholder="Ex: Taverne du Dragon d'Or" />
+        </div>
+        <div class="field">
+          <label>Moment</label>
+          <input type="text" formControlName="timing" placeholder="Ex: Soir, à la tombée de la nuit" />
+        </div>
+      </div>
+      <div class="field">
+        <label>Ambiance et atmosphère</label>
+        <textarea
+          formControlName="atmosphere"
+          placeholder="Décrivez l'ambiance générale de la scène (sons, odeurs, lumière, émotions...)"
+          rows="4">
+        </textarea>
+      </div>
+    </app-expandable-section>
+
+    <!-- Section : Narration pour les joueurs -->
+    <app-expandable-section title="Narration pour les joueurs" icon="📖">
+      <div class="field">
+        <textarea
+          formControlName="playerNarration"
+          placeholder="Le texte que vous lirez aux joueurs pour planter le décor de cette scène..."
+          rows="6">
+        </textarea>
+        <small class="field-hint">Ce texte peut être lu directement à vos joueurs.</small>
+      </div>
+    </app-expandable-section>
+
+    <!-- Section : Notes et secrets du MJ (privé) -->
+    <app-expandable-section title="Notes et secrets du MJ" icon="🔒" variant="private">
+      <div class="field">
+        <textarea
+          formControlName="gmSecretNotes"
+          placeholder="Informations cachées, indices, éléments secrets que les joueurs ne doivent pas connaître..."
+          rows="5">
+        </textarea>
+        <small class="field-hint">Ces notes sont privées et visibles uniquement par le MJ.</small>
+      </div>
+    </app-expandable-section>
+
+    <!-- Section : Choix et conséquences -->
+    <app-expandable-section title="Choix et conséquences" icon="🔀">
+      <div class="field">
+        <textarea
+          formControlName="choicesConsequences"
+          placeholder="Décrivez les différentes options qui s'offrent aux joueurs et leurs conséquences..."
+          rows="5">
+        </textarea>
+      </div>
+    </app-expandable-section>
+
+    <!-- Section : Branches narratives (graphe intra-chapitre) -->
+    <app-expandable-section title="Branches narratives" icon="🌿">
+      <div class="branches-hint" *ngIf="siblingScenes.length === 0">
+        <small class="field-hint">
+          💡 Il faut au moins une autre scène dans ce chapitre pour créer des branches.
+          Créez d'abord d'autres scènes, puis revenez ici pour les connecter.
+        </small>
+      </div>
+
+      <div class="branches-list" *ngIf="siblingScenes.length > 0">
+        <div class="branch-item" *ngFor="let branch of branches; let i = index; trackBy: trackByIndex">
+          <div class="field">
+            <label>Libellé du choix</label>
+            <input
+              type="text"
+              [value]="branch.label"
+              (input)="updateBranchLabel(i, $any($event.target).value)"
+              placeholder="Ex: Si les joueurs attaquent le garde" />
+          </div>
+
+          <div class="field">
+            <label>Scène de destination *</label>
+            <select
+              (change)="updateBranchTarget(i, $any($event.target).value)">
+              <option value="" [selected]="!branch.targetSceneId">— Choisir une scène —</option>
+              <option *ngFor="let s of siblingScenes"
+                      [value]="s.id"
+                      [selected]="s.id === branch.targetSceneId">{{ s.name }}</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Condition MJ (optionnel)</label>
+            <input
+              type="text"
+              [value]="branch.condition || ''"
+              (input)="updateBranchCondition(i, $any($event.target).value)"
+              placeholder="Ex: Jet de Persuasion DD 15 réussi" />
+          </div>
+
+          <button type="button" class="btn-remove-branch" (click)="removeBranch(i)"
+                  title="Supprimer cette branche">
+            <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+            Retirer
+          </button>
+        </div>
+
+        <button type="button" class="btn-add-branch" (click)="addBranch()">
+          + Ajouter une branche
+        </button>
+
+        <small class="field-hint">
+          Chaque branche représente une "sortie" possible depuis cette scène selon l'action des joueurs.
+          Les cibles sont limitées aux scènes du même chapitre.
+        </small>
+      </div>
+    </app-expandable-section>
+
+    <!-- Section : Combat ou rencontre -->
+    <app-expandable-section title="Combat ou rencontre" icon="⚔️">
+      <div class="field">
+        <label>Difficulté estimée</label>
+        <input type="text" formControlName="combatDifficulty" placeholder="Ex: Moyenne, 3 gobelins niveau 2" />
+      </div>
+      <div class="field">
+        <label>Ennemis et créatures</label>
+        <textarea
+          formControlName="enemies"
+          placeholder="Liste des ennemis présents dans cette scène..."
+          rows="4">
+        </textarea>
+      </div>
+    </app-expandable-section>
+
+    <!-- Section : Pages Lore associées (B2 cross-context) -->
+    <app-expandable-section title="Pages Lore associées" icon="🔗" *ngIf="loreId">
+      <div class="field">
+        <app-lore-link-picker
+          [value]="relatedPageIds"
+          [availablePages]="availablePages"
+          [loreId]="loreId"
+          (valueChange)="relatedPageIds = $event">
+        </app-lore-link-picker>
+        <small class="field-hint">
+          Épinglez ici le lieu, les PNJ ou créatures de cette scène. Cliquez sur un chip pour ouvrir la page.
+        </small>
+      </div>
+    </app-expandable-section>
+
+    <div class="field" *ngIf="!loreId">
+      <small class="field-hint">
+        💡 Cette campagne n'est associée à aucun univers. Associez-la à un Lore dans l'écran de la campagne
+        pour pouvoir épingler des pages du Lore à cette scène.
+      </small>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn-primary" [disabled]="form.invalid">
+        Sauvegarder
+      </button>
+      <button type="button" class="btn-secondary" (click)="cancel()">Annuler</button>
+      <button type="button" class="btn-danger" (click)="delete()">
+        <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+        Supprimer
+      </button>
+    </div>
+
+  </form>
+
+</div>
+
+<!-- Drawer chat IA (hors .edit-page pour couvrir le viewport à droite) -->
+<app-ai-chat-drawer
+  [campaignId]="campaignId"
+  entityType="scene"
+  [entityId]="sceneId"
+  [isOpen]="chatOpen"
+  welcomeMessage="Je vois cette scène. Demande-moi d'enrichir son ambiance, sa narration ou ses choix."
+  [quickSuggestions]="chatQuickSuggestions"
+  (close)="chatOpen = false">
+</app-ai-chat-drawer>

@@ -1,0 +1,42 @@
+<div class="picker">
+
+  <!-- Chips des pages déjà liées -->
+  <div class="linked-chips" *ngIf="linkedPages.length > 0">
+    <span class="chip" *ngFor="let p of linkedPages">
+      <a
+        class="chip-label"
+        [href]="pageUrl(p.id!)"
+        target="_blank"
+        rel="noopener"
+        title="Ouvrir dans un nouvel onglet">
+        <lucide-icon [img]="Link2" [size]="12"></lucide-icon>
+        {{ p.title }}
+      </a>
+      <button type="button" class="chip-remove" (click)="remove(p.id!)" title="Retirer le lien">
+        <lucide-icon [img]="X" [size]="12"></lucide-icon>
+      </button>
+    </span>
+  </div>
+
+  <!-- Input + dropdown de suggestions -->
+  <div class="search-wrapper">
+    <input
+      type="text"
+      class="search-input"
+      placeholder="Rechercher une page à lier..."
+      [(ngModel)]="query"
+      (focus)="dropdownOpen = true"
+      (blur)="onBlur()" />
+
+    <ul class="suggestions" *ngIf="dropdownOpen && suggestions.length > 0">
+      <li *ngFor="let p of suggestions" (mousedown)="add(p)">
+        {{ p.title }}
+      </li>
+    </ul>
+
+    <p class="empty-hint" *ngIf="dropdownOpen && query && suggestions.length === 0">
+      Aucune page ne correspond
+    </p>
+  </div>
+
+</div>

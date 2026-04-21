@@ -1,0 +1,88 @@
+<div class="page">
+
+  <header class="page-header">
+    <h1>Créer une nouvelle Page</h1>
+    <p class="subtitle">Créez une page à partir d'un template existant</p>
+  </header>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="page-form">
+
+    <!-- Titre -->
+    <div class="field">
+      <label>Titre de la page *</label>
+      <input type="text" formControlName="title" placeholder="Ex: Maître Eldrin, La Cité d'Argent..." />
+    </div>
+
+    <!-- Template -->
+    <div class="field">
+      <label>Template *</label>
+
+      <div class="templates-grid" *ngIf="templates.length; else emptyTemplates">
+        <button
+          type="button"
+          class="template-card"
+          *ngFor="let t of templates"
+          [class.selected]="selectedTemplateId === t.id"
+          (click)="selectTemplate(t)">
+          <div class="template-card-head">
+            <lucide-icon [img]="FileText" [size]="16"></lucide-icon>
+            <span class="template-name">{{ t.name }}</span>
+          </div>
+          <p class="template-description">{{ t.description || '—' }}</p>
+        </button>
+      </div>
+
+      <ng-template #emptyTemplates>
+        <p class="empty-hint">
+          Aucun template défini pour ce Lore.
+          <a [routerLink]="['/lore', loreId, 'templates', 'create']">Créer un template</a> d'abord.
+        </p>
+      </ng-template>
+    </div>
+
+    <!-- Dossier de destination -->
+    <div class="field">
+      <label>Dossier de destination *</label>
+      <select formControlName="nodeId" [attr.disabled]="preselectedNodeId ? true : null">
+        <option value="" disabled>Sélectionnez un dossier</option>
+        <option *ngFor="let node of nodes" [value]="node.id">{{ node.name }}</option>
+      </select>
+      <p class="hint">La page sera créée dans ce dossier</p>
+    </div>
+
+    <!-- Aide contextuelle -->
+    <div class="info-box">
+      💡 Option 1 : <strong>Créer la page</strong> vide, puis remplir les champs manuellement.<br>
+      💡 Option 2 : <strong>Créer avec l'IA</strong> pour dialoguer avec un assistant qui pré-remplira les champs.
+    </div>
+
+    <!-- Erreur wizard (parsing &lt;values&gt; ou échec HTTP) -->
+    <div class="wizard-error" *ngIf="wizardError" role="alert">{{ wizardError }}</div>
+
+    <!-- Actions -->
+    <div class="actions-row">
+      <button type="button" class="btn-secondary" (click)="cancel()">Annuler</button>
+      <button type="button" class="btn-ai" (click)="openWizard()" [disabled]="!canSubmit"
+              title="Ouvrir l'assistant IA pour pré-remplir les champs">
+        <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
+        Créer avec l'IA
+      </button>
+      <button type="submit" class="btn-primary" [disabled]="!canSubmit">Créer la page</button>
+    </div>
+
+  </form>
+
+</div>
+
+<!-- Drawer chat IA en mode wizard -->
+<app-ai-chat-drawer
+  [loreId]="loreId"
+  [isOpen]="chatOpen"
+  [welcomeMessage]="wizardWelcome"
+  [systemPromptAddon]="wizardSystemPrompt"
+  [quickSuggestions]="wizardSuggestions"
+  [primaryAction]="wizardPrimaryAction"
+  (close)="closeWizard()"
+  (assistantReply)="onWizardReply($event)"
+  (primaryActionClick)="applyWizardAndCreate()">
+</app-ai-chat-drawer>

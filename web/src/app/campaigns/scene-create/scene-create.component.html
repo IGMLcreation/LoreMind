@@ -1,0 +1,38 @@
+<div class="scene-create-page">
+
+  <div class="page-header">
+    <h1>Créer une nouvelle scène</h1>
+    <p class="chapter-ref" *ngIf="chapterName">Chapitre : {{ chapterName }}</p>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="scene-form">
+
+    <div class="field">
+      <label>Nom de la scène *</label>
+      <input
+        type="text"
+        formControlName="name"
+        placeholder="Ex: Arrivée au village"
+        [class.invalid]="form.get('name')?.invalid && form.get('name')?.touched"
+      />
+    </div>
+
+    <div class="field">
+      <label>Description</label>
+      <textarea
+        formControlName="description"
+        placeholder="Décrivez la scène, les événements clés, les PNJ présents..."
+        rows="6">
+      </textarea>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn-primary" [disabled]="form.invalid">
+        Créer la scène
+      </button>
+      <button type="button" class="btn-secondary" (click)="cancel()">Annuler</button>
+    </div>
+
+  </form>
+
+</div>

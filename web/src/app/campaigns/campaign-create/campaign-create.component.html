@@ -1,0 +1,69 @@
+<div class="modal-backdrop" (click)="onCancel()">
+  <div class="modal" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <h2>Créer une nouvelle Campagne</h2>
+      <button class="btn-close" (click)="onCancel()">
+        <lucide-icon [img]="X" [size]="18"></lucide-icon>
+      </button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()">
+
+      <div class="field">
+        <label>Nom de la campagne *</label>
+        <input
+          type="text"
+          formControlName="name"
+          placeholder="Ex: L'Ombre du Nord, Les Héritiers Oubliés..."
+          [class.invalid]="form.get('name')?.invalid && form.get('name')?.touched"
+        />
+      </div>
+
+      <div class="field">
+        <label>Description / Pitch</label>
+        <textarea
+          formControlName="description"
+          placeholder="Résumez l'intrigue principale de votre campagne..."
+          rows="5"
+        ></textarea>
+      </div>
+
+      <div class="field">
+        <label>Nombre de joueurs</label>
+        <input type="number" formControlName="playerCount" min="1" />
+      </div>
+
+      <div class="field">
+        <label>Univers associé</label>
+        <select formControlName="loreId">
+          <option value="">— Aucun univers (campagne libre) —</option>
+          <option *ngFor="let lore of availableLores" [value]="lore.id">{{ lore.name }}</option>
+        </select>
+        <p class="hint">
+          Optionnel. Si associée, vous pourrez lier arcs, chapitres et scènes aux pages du Lore.
+          Laissez vide pour un one-shot ou si vous créerez le Lore plus tard.
+        </p>
+      </div>
+
+      <div class="info-box">
+        <p><strong>💡 Organisation :</strong> Votre campagne sera structurée en :</p>
+        <ul>
+          <li><strong>Arcs</strong> - Les grandes phases narratives</li>
+          <li><strong>Chapitres</strong> - Les segments d'un arc</li>
+          <li><strong>Scènes</strong> - Les moments de jeu individuels</li>
+        </ul>
+      </div>
+
+      <div class="modal-actions">
+        <button type="submit" class="btn-primary" [disabled]="form.invalid">
+          <lucide-icon [img]="BookCopy" [size]="16"></lucide-icon>
+          Créer la campagne
+        </button>
+        <button type="button" class="btn-secondary" (click)="onCancel()">Annuler</button>
+      </div>
+
+    </form>
+
+  </div>
+</div>

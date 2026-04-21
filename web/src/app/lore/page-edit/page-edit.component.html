@@ -1,0 +1,123 @@
+<div class="page" *ngIf="page">
+
+  <app-breadcrumb [items]="breadcrumbItems"></app-breadcrumb>
+
+  <header class="page-header">
+    <div>
+      <h1>{{ page.title }}</h1>
+      <p class="subtitle">{{ template?.name || 'Page' }}</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn-ai"
+              (click)="toggleChat()"
+              [disabled]="aiLoading"
+              [class.active]="chatOpen"
+              title="Ouvrir l'Assistant IA (chat ou remplissage automatique)">
+        <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
+        {{ aiLoading ? 'Génération…' : 'Assistant IA' }}
+      </button>
+      <button type="button" class="btn-secondary" [routerLink]="['/lore', loreId, 'pages', pageId]">Annuler</button>
+      <button type="button" class="btn-danger" (click)="delete()">Supprimer</button>
+      <button type="button" class="btn-primary" (click)="save()" [disabled]="!title.trim()">
+        Sauvegarder
+      </button>
+    </div>
+  </header>
+
+  <div *ngIf="aiError" class="ai-error-banner" role="alert">
+    <span>{{ aiError }}</span>
+    <button type="button" class="ai-error-dismiss" (click)="aiError = null" aria-label="Fermer">×</button>
+  </div>
+
+  <form class="edit-form">
+
+    <!-- Identité ----------------------------------------------------- -->
+    <div class="field">
+      <label>Nom</label>
+      <input type="text" [(ngModel)]="title" name="title" required />
+    </div>
+
+    <div class="field">
+      <label>Dossier</label>
+      <select [(ngModel)]="nodeId" name="nodeId">
+        <option *ngFor="let node of nodes" [value]="node.id">{{ node.name }}</option>
+      </select>
+      <p class="hint">Déplacez cette page dans un autre dossier</p>
+    </div>
+
+    <!-- Champs dynamiques du template -------------------------------- -->
+    <ng-container *ngIf="template?.fields?.length">
+      <h2 class="section-title">Champs</h2>
+      <ng-container *ngFor="let field of template!.fields">
+        <!-- Champ TEXT : textarea editable -->
+        <div class="field" *ngIf="field.type === 'TEXT'">
+          <label>{{ field.name }}</label>
+          <textarea
+            [(ngModel)]="values[field.name]"
+            [name]="'value_' + field.name"
+            rows="4"
+            [placeholder]="'Valeur pour ' + field.name + '...'">
+          </textarea>
+        </div>
+        <!-- Champ IMAGE : galerie editable. -->
+        <div class="field" *ngIf="field.type === 'IMAGE'">
+          <label>{{ field.name }}</label>
+          <app-image-gallery
+            [imageIds]="imageValues[field.name] || []"
+            [editable]="true"
+            (imageIdsChange)="imageValues[field.name] = $event">
+          </app-image-gallery>
+        </div>
+      </ng-container>
+    </ng-container>
+
+    <!-- Tags --------------------------------------------------------- -->
+    <h2 class="section-title">Tags</h2>
+    <div class="field">
+      <app-chips-input
+        [value]="tags"
+        (valueChange)="tags = $event"
+        placeholder="Ajouter un tag (Entrée pour valider)...">
+      </app-chips-input>
+      <p class="hint">Mots-clés libres pour classer et retrouver cette page</p>
+    </div>
+
+    <!-- Liens vers d'autres pages ----------------------------------- -->
+    <h2 class="section-title">Pages liées</h2>
+    <div class="field">
+      <app-lore-link-picker
+        [value]="relatedPageIds"
+        [availablePages]="allPages"
+        [excludePageId]="pageId"
+        [loreId]="loreId"
+        (valueChange)="relatedPageIds = $event">
+      </app-lore-link-picker>
+      <p class="hint">Cliquez sur un lien pour ouvrir la page associée</p>
+    </div>
+
+    <!-- Notes privées ----------------------------------------------- -->
+    <h2 class="section-title">Notes privées</h2>
+    <div class="field">
+      <textarea
+        [(ngModel)]="notes"
+        name="notes"
+        rows="4"
+        placeholder="Notes personnelles (non exportées vers FoundryVTT)">
+      </textarea>
+      <p class="hint">Visibles uniquement par vous. Utiles pour préparer vos sessions.</p>
+    </div>
+
+  </form>
+
+</div>
+
+<!-- Drawer chat IA (hors du .page pour pouvoir couvrir le viewport côté droit) -->
+<app-ai-chat-drawer
+  [loreId]="loreId"
+  [pageId]="pageId"
+  [isOpen]="chatOpen"
+  [quickSuggestions]="chatQuickSuggestions"
+  [primaryAction]="chatPrimaryAction"
+  (close)="chatOpen = false"
+  (primaryActionClick)="onChatFillRequested()">
+</app-ai-chat-drawer>

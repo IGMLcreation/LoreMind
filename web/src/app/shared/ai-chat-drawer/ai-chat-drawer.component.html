@@ -1,0 +1,81 @@
+<aside class="drawer" [class.drawer-open]="isOpen" aria-label="Assistant IA">
+
+  <header class="drawer-header">
+    <h2>Assistant IA</h2>
+    <button type="button" class="close-btn" (click)="onClose()" aria-label="Fermer">
+      <lucide-icon [img]="X" [size]="18"></lucide-icon>
+    </button>
+  </header>
+
+  <div #messagesContainer class="messages">
+    <!-- Message d'accueil (non-stocké dans `messages`, toujours visible tant que la conversation est vide). -->
+    <div class="msg msg-assistant" *ngIf="messages.length === 0 && !currentAssistantText">
+      {{ welcomeMessage }}
+    </div>
+
+    <!-- Historique -->
+    <ng-container *ngFor="let m of messages">
+      <div class="msg" [class.msg-user]="m.role === 'user'" [class.msg-assistant]="m.role === 'assistant'">
+        {{ m.content }}
+      </div>
+    </ng-container>
+
+    <!-- Bulle en cours de streaming -->
+    <div class="msg msg-assistant msg-streaming" *ngIf="currentAssistantText">
+      {{ currentAssistantText }}<span class="caret"></span>
+    </div>
+
+    <!-- Indicateur pendant la phase "en train de réfléchir" (avant le premier token) -->
+    <div class="typing-indicator" *ngIf="isStreaming && !currentAssistantText" aria-live="polite">
+      <span></span><span></span><span></span>
+    </div>
+
+    <!-- Erreur locale au drawer -->
+    <div class="msg msg-error" *ngIf="errorMessage" role="alert">
+      {{ errorMessage }}
+    </div>
+  </div>
+
+  <!-- Action primaire (optionnelle) : ne passe PAS par le chat -->
+  <div class="primary-action" *ngIf="primaryAction">
+    <button
+      type="button"
+      class="primary-btn"
+      (click)="onPrimaryAction()"
+      [disabled]="isStreaming">
+      <lucide-icon [img]="Wand2" [size]="14"></lucide-icon>
+      {{ primaryAction.label }}
+    </button>
+  </div>
+
+  <!-- Suggestions rapides -->
+  <div class="quick-suggestions" *ngIf="quickSuggestions.length">
+    <p class="quick-label">Suggestions rapides :</p>
+    <div class="quick-list">
+      <button
+        type="button"
+        class="quick-btn"
+        *ngFor="let s of quickSuggestions"
+        (click)="useQuickSuggestion(s)"
+        [disabled]="isStreaming">
+        <lucide-icon [img]="Lightbulb" [size]="12"></lucide-icon>
+        {{ s }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Zone de saisie -->
+  <form class="input-row" (ngSubmit)="send()">
+    <input
+      type="text"
+      [(ngModel)]="input"
+      name="chatInput"
+      placeholder="Posez une question..."
+      [disabled]="isStreaming"
+      autocomplete="off" />
+    <button type="submit" class="send-btn" [disabled]="!input.trim() || isStreaming" aria-label="Envoyer">
+      <lucide-icon [img]="Send" [size]="16"></lucide-icon>
+    </button>
+  </form>
+
+</aside>

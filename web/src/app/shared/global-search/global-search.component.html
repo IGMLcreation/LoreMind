@@ -1,0 +1,51 @@
+<div class="gs-overlay" *ngIf="open" (click)="close()">
+  <div class="gs-modal" (click)="$event.stopPropagation()">
+
+    <div class="gs-input-row">
+      <lucide-icon [img]="Search" [size]="18" class="gs-search-icon"></lucide-icon>
+      <input
+        #searchInput
+        type="text"
+        class="gs-input"
+        placeholder="Rechercher dans LoreMind..."
+        [ngModel]="query"
+        (ngModelChange)="onQueryChange($event)" />
+      <span class="gs-kbd">ESC</span>
+    </div>
+
+    <div class="gs-results" *ngIf="results.length > 0">
+      <button
+        *ngFor="let r of results; let i = index"
+        class="gs-result"
+        [class.active]="i === activeIndex"
+        (mouseenter)="activeIndex = i"
+        (click)="select(r)">
+        <lucide-icon [img]="iconFor(r.kind)" [size]="16" class="gs-result-icon"></lucide-icon>
+        <div class="gs-result-body">
+          <div class="gs-result-title">{{ r.title }}</div>
+          <div class="gs-result-subtitle" *ngIf="r.subtitle">{{ r.subtitle }}</div>
+          <div class="gs-result-tag">{{ r.tag }}</div>
+        </div>
+      </button>
+    </div>
+
+    <div class="gs-empty" *ngIf="!loading && query.trim().length >= 2 && results.length === 0">
+      Aucun résultat
+    </div>
+    <div class="gs-empty" *ngIf="query.trim().length < 2">
+      Tape au moins 2 caractères
+    </div>
+
+    <div class="gs-footer">
+      <div class="gs-hints">
+        <span><kbd>↑</kbd><kbd>↓</kbd> naviguer</span>
+        <span><kbd>↵</kbd> sélectionner</span>
+        <span><kbd>ESC</kbd> fermer</span>
+      </div>
+      <span class="gs-count" *ngIf="results.length > 0">
+        {{ results.length }} résultat{{ results.length > 1 ? 's' : '' }}
+      </span>
+    </div>
+
+  </div>
+</div>

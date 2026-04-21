@@ -1,0 +1,15 @@
+<div class="expandable-section" [class.private]="variant === 'private'">
+
+  <button type="button" class="section-header" (click)="toggle()">
+    <span class="section-title">
+      <span class="section-icon" *ngIf="icon">{{ icon }}</span>
+      {{ title }}
+    </span>
+    <lucide-icon [img]="isOpen ? ChevronUp : ChevronDown" [size]="16"></lucide-icon>
+  </button>
+
+  <div class="section-content" *ngIf="isOpen">
+    <ng-content></ng-content>
+  </div>
+
+</div>

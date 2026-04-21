@@ -1,0 +1,141 @@
+.page {
+  padding: 2rem 3rem;
+  max-width: 860px;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+
+  h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: white;
+    margin: 0 0 0.25rem;
+  }
+  .subtitle {
+    color: #9ca3af;
+    font-size: 0.85rem;
+    margin: 0;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 0.6rem;
+  }
+}
+
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+
+  label {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: #d1d5db;
+  }
+
+  .optional { color: #6b7280; font-weight: 400; }
+
+  input, select {
+    background: #1a1a2e;
+    border: 1px solid #2a2a3d;
+    color: white;
+    padding: 0.7rem 0.9rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+
+    &:focus {
+      outline: none;
+      border-color: #6c63ff;
+    }
+  }
+}
+
+.hint {
+  font-size: 0.76rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.icon-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 0.5rem;
+  max-width: 500px;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: #1a1a2e;
+  border: 1px solid #2a2a3d;
+  border-radius: 6px;
+  color: #d1d5db;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+
+  &:hover { border-color: #3a3a55; background: #20203a; }
+
+  &.selected {
+    border-color: #6c63ff;
+    background: #1e1c3a;
+    color: #a5b4fc;
+  }
+}
+
+.info-box {
+  background: #1a1a2e;
+  border: 1px solid #2a2a3d;
+  border-left: 3px solid #fca5a5;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  color: #d1d5db;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.btn-primary, .btn-secondary, .btn-danger {
+  padding: 0.6rem 1.1rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.btn-primary {
+  background: #6c63ff;
+  color: white;
+
+  &:hover:not(:disabled) { background: #5a52e0; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.btn-secondary {
+  background: #2a2a3d;
+  color: #d1d5db;
+
+  &:hover { background: #363650; }
+}
+
+.btn-danger {
+  background: #3f1f1f;
+  color: #fca5a5;
+
+  &:hover:not(:disabled) { background: #5a2a2a; }
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
+}

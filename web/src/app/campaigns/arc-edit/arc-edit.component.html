@@ -1,0 +1,143 @@
+<div class="edit-page">
+
+  <div class="page-header">
+    <div>
+      <h1>{{ arc?.name || 'Arc' }}</h1>
+      <p class="subtitle">Arc narratif</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn-ai"
+              (click)="toggleChat()"
+              [class.active]="chatOpen"
+              title="Ouvrir l'Assistant IA pour dialoguer autour de cet arc">
+        <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
+        Assistant IA
+      </button>
+    </div>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="edit-form">
+
+    <!-- Illustrations (galerie editable) -->
+    <div class="field">
+      <label>Illustrations</label>
+      <app-image-gallery
+        [imageIds]="illustrationImageIds"
+        [editable]="true"
+        (imageIdsChange)="illustrationImageIds = $event">
+      </app-image-gallery>
+      <small class="field-hint">Glisse-depose ou clique sur "+ Ajouter" pour uploader. JPEG, PNG, WebP ou GIF, 10 Mo max.</small>
+    </div>
+
+    <div class="field">
+      <label>Titre de l'arc *</label>
+      <input
+        type="text"
+        formControlName="name"
+        placeholder="Ex: L'Ombre du Nord"
+        [class.invalid]="form.get('name')?.invalid && form.get('name')?.touched"
+      />
+    </div>
+
+    <div class="field">
+      <label>Synopsis de l'arc</label>
+      <textarea
+        formControlName="description"
+        placeholder="Décrivez l'histoire principale de cet arc narratif..."
+        rows="5">
+      </textarea>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Thèmes principaux</label>
+        <textarea
+          formControlName="themes"
+          placeholder="Quels sont les thèmes explorés dans cet arc ? (trahison, rédemption...)"
+          rows="4">
+        </textarea>
+      </div>
+      <div class="field">
+        <label>Enjeux globaux</label>
+        <textarea
+          formControlName="stakes"
+          placeholder="Quels sont les enjeux majeurs de cet arc pour les personnages ?"
+          rows="4">
+        </textarea>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Notes et planification du MJ</label>
+      <textarea
+        formControlName="gmNotes"
+        placeholder="Vos notes sur la direction de l'arc, les twists prévus, les révélations importantes..."
+        rows="5">
+      </textarea>
+      <small class="field-hint">Ces notes sont privées et ne seront pas exportées vers FoundryVTT.</small>
+    </div>
+
+    <div class="field">
+      <label>Récompenses et progression</label>
+      <textarea
+        formControlName="rewards"
+        placeholder="Quelles récompenses les joueurs obtiendront-ils ? Objets, niveaux, connaissances, contacts..."
+        rows="4">
+      </textarea>
+    </div>
+
+    <div class="field">
+      <label>Dénouement prévu</label>
+      <textarea
+        formControlName="resolution"
+        placeholder="Comment cet arc devrait-il se terminer ? Quelles sont les issues possibles ?"
+        rows="4">
+      </textarea>
+    </div>
+
+    <!-- ===== Pages Lore associées (phase B2 cross-context) ===== -->
+    <div class="field" *ngIf="loreId">
+      <label>Pages Lore associées</label>
+      <app-lore-link-picker
+        [value]="relatedPageIds"
+        [availablePages]="availablePages"
+        [loreId]="loreId"
+        (valueChange)="relatedPageIds = $event">
+      </app-lore-link-picker>
+      <small class="field-hint">
+        Liez cet arc à des PNJ, lieux ou éléments du Lore. Cliquez sur un chip pour ouvrir la page associée.
+      </small>
+    </div>
+
+    <div class="field lore-hint" *ngIf="!loreId">
+      <small class="field-hint">
+        💡 Cette campagne n'est associée à aucun univers. Associez-la à un Lore dans l'écran de la campagne
+        pour pouvoir lier cet arc à des pages du Lore (PNJ, lieux, etc.).
+      </small>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn-primary" [disabled]="form.invalid">
+        Sauvegarder
+      </button>
+      <button type="button" class="btn-secondary" (click)="cancel()">Annuler</button>
+      <button type="button" class="btn-danger" (click)="delete()">
+        <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+        Supprimer
+      </button>
+    </div>
+
+  </form>
+
+</div>
+
+<!-- Drawer chat IA (hors .edit-page pour couvrir le viewport à droite) -->
+<app-ai-chat-drawer
+  [campaignId]="campaignId"
+  entityType="arc"
+  [entityId]="arcId"
+  [isOpen]="chatOpen"
+  welcomeMessage="Je vois cet arc. Demande-moi d'enrichir ses thèmes, ses enjeux ou son dénouement."
+  [quickSuggestions]="chatQuickSuggestions"
+  (close)="chatOpen = false">
+</app-ai-chat-drawer>

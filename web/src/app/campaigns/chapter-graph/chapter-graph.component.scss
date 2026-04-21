@@ -1,0 +1,86 @@
+.graph-page {
+  padding: 2.5rem 2rem;
+  max-width: 100%;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 2rem;
+
+  .subtitle {
+    color: #6b7280;
+    font-size: 0.9rem;
+    margin: 0.25rem 0 0;
+  }
+}
+
+.graph-empty {
+  padding: 2rem;
+  text-align: center;
+  color: #6b7280;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px dashed #d1d5db;
+}
+
+.graph-container {
+  background: #fafafa;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  overflow: auto;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+}
+
+.graph-svg {
+  display: block;
+  max-width: 100%;
+}
+
+.node {
+  cursor: pointer;
+
+  .node-box {
+    fill: #ffffff;
+    stroke: #1f2937;
+    stroke-width: 2;
+    transition: fill 0.15s ease, stroke 0.15s ease;
+  }
+
+  .node-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    fill: #1f2937;
+    pointer-events: none;
+  }
+
+  &:hover .node-box {
+    fill: #eef2ff;
+    stroke: #4f46e5;
+  }
+}
+
+.edge-label {
+  font-size: 0.75rem;
+  fill: #4b5563;
+  font-style: italic;
+  // Halo blanc autour du texte pour garantir la lisibilité même s'il passe
+  // sur une ligne ou un autre élément.
+  paint-order: stroke;
+  stroke: #fafafa;
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+
+.graph-hint {
+  display: block;
+  margin-top: 1rem;
+  color: #6b7280;
+  font-size: 0.85rem;
+}

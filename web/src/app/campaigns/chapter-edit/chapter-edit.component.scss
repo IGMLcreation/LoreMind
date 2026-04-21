@@ -1,0 +1,31 @@
+.edit-page {
+  padding: 2.5rem 2rem;
+  max-width: 640px;
+}
+
+// Header local : titre à gauche, actions (Assistant IA) à droite.
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+
+  .header-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+}
+
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+// Override local : bouton Supprimer poussé à droite (voir _buttons.scss pour la base).
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: auto;
+}

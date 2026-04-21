@@ -1,0 +1,103 @@
+<div class="settings-page">
+
+  <header class="page-header">
+    <button class="btn-back" (click)="goBack()">
+      <lucide-icon [img]="ArrowLeft" [size]="16"></lucide-icon>
+      <span>Retour</span>
+    </button>
+    <h1>Parametres</h1>
+  </header>
+
+  <div *ngIf="errorMessage" class="alert alert-error">
+    <lucide-icon [img]="AlertCircle" [size]="16"></lucide-icon>
+    <span>{{ errorMessage }}</span>
+  </div>
+  <div *ngIf="successMessage" class="alert alert-success">
+    <lucide-icon [img]="Check" [size]="16"></lucide-icon>
+    <span>{{ successMessage }}</span>
+  </div>
+
+  <section class="card" *ngIf="settings">
+    <h2>Moteur IA</h2>
+    <p class="hint">Choix du fournisseur de modele de langage utilise par le chat et la generation de pages.</p>
+
+    <div class="form-row">
+      <label>Fournisseur</label>
+      <div class="radio-group">
+        <label class="radio">
+          <input type="radio" name="provider" value="ollama" [(ngModel)]="settings.llm_provider">
+          <span>Ollama (local)</span>
+        </label>
+        <label class="radio">
+          <input type="radio" name="provider" value="onemin" [(ngModel)]="settings.llm_provider">
+          <span>1min.ai (cloud)</span>
+        </label>
+      </div>
+    </div>
+  </section>
+
+  <!-- Bloc Ollama -->
+  <section class="card" *ngIf="settings && settings.llm_provider === 'ollama'">
+    <h2>Configuration Ollama</h2>
+
+    <div class="form-row">
+      <label for="ollama-url">URL du serveur Ollama</label>
+      <input id="ollama-url" type="text" [(ngModel)]="settings.ollama_base_url" placeholder="http://localhost:11434">
+    </div>
+
+    <div class="form-row">
+      <label for="ollama-model">Modele</label>
+      <div class="inline-select">
+        <select id="ollama-model" [(ngModel)]="settings.llm_model">
+          <option *ngIf="ollamaModels.length === 0" [value]="settings.llm_model">{{ settings.llm_model }}</option>
+          <option *ngFor="let m of ollamaModels" [value]="m">{{ m }}</option>
+        </select>
+        <button type="button" class="btn-secondary" (click)="refreshModels()" [disabled]="loadingModels">
+          <lucide-icon [img]="RefreshCw" [size]="14"></lucide-icon>
+          <span>{{ loadingModels ? 'Chargement...' : 'Actualiser' }}</span>
+        </button>
+      </div>
+      <p class="hint" *ngIf="ollamaModels.length === 0">Aucun modele detecte. Verifie que Ollama tourne et que l'URL est correcte.</p>
+    </div>
+  </section>
+
+  <!-- Bloc 1min.ai -->
+  <section class="card" *ngIf="settings && settings.llm_provider === 'onemin'">
+    <h2>Configuration 1min.ai</h2>
+
+    <div class="form-row">
+      <label for="onemin-key">Cle API</label>
+      <input
+        id="onemin-key"
+        type="password"
+        [(ngModel)]="oneminApiKeyInput"
+        [placeholder]="settings.onemin_api_key_set ? 'Cle configuree (laisser vide pour ne pas changer)' : 'Saisir votre cle API'">
+      <label class="checkbox" *ngIf="settings.onemin_api_key_set">
+        <input type="checkbox" [(ngModel)]="clearApiKey">
+        <span>Effacer la cle enregistree</span>
+      </label>
+    </div>
+
+    <div class="form-row">
+      <label for="onemin-provider">Fournisseur</label>
+      <select id="onemin-provider" [(ngModel)]="oneminProvider" (ngModelChange)="onProviderChange()">
+        <option *ngFor="let g of oneminGroups" [value]="g.provider">{{ g.provider }}</option>
+      </select>
+    </div>
+
+    <div class="form-row">
+      <label for="onemin-model">Modele</label>
+      <select id="onemin-model" [(ngModel)]="settings.onemin_model">
+        <option *ngFor="let m of currentProviderModels" [value]="m">{{ m }}</option>
+      </select>
+    </div>
+  </section>
+
+  <div class="actions" *ngIf="settings">
+    <button class="btn-primary" (click)="save()" [disabled]="saving">
+      <lucide-icon [img]="Save" [size]="16"></lucide-icon>
+      <span>{{ saving ? 'Sauvegarde...' : 'Sauvegarder' }}</span>
+    </button>
+  </div>
+
+</div>

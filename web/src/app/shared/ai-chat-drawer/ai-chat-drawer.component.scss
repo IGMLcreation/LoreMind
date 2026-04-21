@@ -1,0 +1,261 @@
+:host {
+  // Le drawer lui-même gère son positionnement fixed. Rien à prévoir côté host.
+  display: contents;
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 380px;
+  height: 100vh;
+  background: #0f0f1a;
+  border-left: 1px solid #1e1e3a;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.25s ease;
+  z-index: 1000;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.4);
+}
+
+.drawer-open {
+  transform: translateX(0);
+}
+
+// --- Header --------------------------------------------------------------
+
+.drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #1e1e3a;
+  flex-shrink: 0;
+
+  h2 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+  }
+
+  .close-btn {
+    background: transparent;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 4px;
+    display: flex;
+
+    &:hover {
+      color: white;
+      background: #1e1e3a;
+    }
+  }
+}
+
+// --- Zone messages -------------------------------------------------------
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.msg {
+  max-width: 85%;
+  padding: 0.6rem 0.85rem;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.msg-assistant {
+  align-self: flex-start;
+  background: #1a1a2e;
+  color: #e5e7eb;
+  border: 1px solid #2a2a3d;
+}
+
+.msg-user {
+  align-self: flex-end;
+  background: #6c63ff;
+  color: white;
+}
+
+.msg-streaming {
+  // Le caret clignotant à la fin donne la sensation de "l'IA est en train d'écrire"
+  .caret {
+    display: inline-block;
+    width: 6px;
+    height: 1em;
+    background: #a5b4fc;
+    margin-left: 2px;
+    vertical-align: text-bottom;
+    animation: blink 1s step-end infinite;
+  }
+}
+
+.msg-error {
+  align-self: stretch;
+  background: #3f1f1f;
+  color: #fca5a5;
+  border: 1px solid #7f1d1d;
+  font-size: 0.85rem;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0; }
+}
+
+// --- Indicateur "typing" -------------------------------------------------
+
+.typing-indicator {
+  display: flex;
+  gap: 0.3rem;
+  padding: 0.6rem 0.85rem;
+  align-self: flex-start;
+
+  span {
+    width: 6px;
+    height: 6px;
+    background: #6c63ff;
+    border-radius: 50%;
+    animation: bounce 1.2s infinite ease-in-out both;
+  }
+  span:nth-child(2) { animation-delay: 0.15s; }
+  span:nth-child(3) { animation-delay: 0.3s; }
+}
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40%           { transform: scale(1);   opacity: 1; }
+}
+
+// --- Action primaire -----------------------------------------------------
+
+.primary-action {
+  padding: 0.75rem 1.25rem 0;
+  flex-shrink: 0;
+
+  .primary-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    width: 100%;
+    padding: 0.65rem 0.9rem;
+    background: #6c63ff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, opacity 0.15s;
+
+    &:hover:not(:disabled) { background: #5a52e0; }
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}
+
+// --- Suggestions rapides -------------------------------------------------
+
+.quick-suggestions {
+  padding: 0.75rem 1.25rem 0;
+  border-top: 1px solid #1e1e3a;
+  flex-shrink: 0;
+
+  .quick-label {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    margin: 0 0 0.5rem;
+  }
+
+  .quick-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .quick-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.35rem 0.6rem;
+    background: #1a1a2e;
+    border: 1px solid #2a2a3d;
+    border-radius: 4px;
+    color: #d1d5db;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: background 0.15s;
+
+    &:hover:not(:disabled) {
+      background: #2a2a3d;
+      color: white;
+    }
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}
+
+// --- Zone de saisie ------------------------------------------------------
+
+.input-row {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem 1rem;
+  flex-shrink: 0;
+
+  input {
+    flex: 1;
+    background: #1a1a2e;
+    border: 1px solid #2a2a3d;
+    color: white;
+    padding: 0.55rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.88rem;
+    font-family: inherit;
+
+    &:focus {
+      outline: none;
+      border-color: #6c63ff;
+    }
+    &:disabled {
+      opacity: 0.5;
+    }
+  }
+
+  .send-btn {
+    background: #6c63ff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    width: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s, opacity 0.15s;
+
+    &:hover:not(:disabled) { background: #5a52e0; }
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}

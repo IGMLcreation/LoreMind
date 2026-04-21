@@ -1,0 +1,21 @@
+// ==========================================================================
+// Feuille de style globale — point d'entrée unique pour les règles partagées
+// ==========================================================================
+// Les partials dans @app/../styles/ contiennent les patterns réutilisés par
+// plusieurs composants (boutons, champs de formulaire, etc.). Extraits ici
+// pour éliminer la duplication qui existait dans 16+ fichiers SCSS.
+@use './styles/buttons';
+@use './styles/forms';
+@use './styles/view';
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #0a0a14;
+  color: #e0e0e0;
+}

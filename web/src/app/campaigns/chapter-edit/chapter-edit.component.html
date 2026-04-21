@@ -1,0 +1,125 @@
+<div class="edit-page">
+
+  <div class="page-header">
+    <div>
+      <h1>{{ chapter?.name || 'Chapitre' }}</h1>
+      <p class="subtitle">Chapitre</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn-ai"
+              (click)="toggleChat()"
+              [class.active]="chatOpen"
+              title="Ouvrir l'Assistant IA pour dialoguer autour de ce chapitre">
+        <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
+        Assistant IA
+      </button>
+    </div>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="edit-form">
+
+    <!-- Illustrations (galerie editable) -->
+    <div class="field">
+      <label>Illustrations</label>
+      <app-image-gallery
+        [imageIds]="illustrationImageIds"
+        [editable]="true"
+        (imageIdsChange)="illustrationImageIds = $event">
+      </app-image-gallery>
+      <small class="field-hint">Ajoute des cartes, portraits ou ambiances pour illustrer ce chapitre.</small>
+    </div>
+
+    <div class="field">
+      <label>Titre du chapitre *</label>
+      <input
+        type="text"
+        formControlName="name"
+        placeholder="Ex: Chapitre 1: Les Disparitions"
+        [class.invalid]="form.get('name')?.invalid && form.get('name')?.touched"
+      />
+    </div>
+
+    <div class="field">
+      <label>Synopsis du chapitre</label>
+      <textarea
+        formControlName="description"
+        placeholder="Décrivez brièvement ce qui se passe dans ce chapitre..."
+        rows="5">
+      </textarea>
+    </div>
+
+    <div class="field">
+      <label>Notes du Maître de Jeu</label>
+      <textarea
+        formControlName="gmNotes"
+        placeholder="Vos notes privées sur le déroulement du chapitre, les événements clés, les rebondissements..."
+        rows="6">
+      </textarea>
+      <small class="field-hint">Ces notes sont privées et ne seront pas exportées vers FoundryVTT.</small>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Objectifs des joueurs</label>
+        <textarea
+          formControlName="playerObjectives"
+          placeholder="Que doivent accomplir les joueurs dans ce chapitre ?"
+          rows="4">
+        </textarea>
+      </div>
+      <div class="field">
+        <label>Enjeux narratifs</label>
+        <textarea
+          formControlName="narrativeStakes"
+          placeholder="Quels sont les enjeux dramatiques ?"
+          rows="4">
+        </textarea>
+      </div>
+    </div>
+
+    <!-- ===== Pages Lore associées (B2 cross-context) ===== -->
+    <div class="field" *ngIf="loreId">
+      <label>Pages Lore associées</label>
+      <app-lore-link-picker
+        [value]="relatedPageIds"
+        [availablePages]="availablePages"
+        [loreId]="loreId"
+        (valueChange)="relatedPageIds = $event">
+      </app-lore-link-picker>
+      <small class="field-hint">
+        Liez ce chapitre à des PNJ, lieux ou éléments du Lore qui y apparaissent.
+      </small>
+    </div>
+
+    <div class="field" *ngIf="!loreId">
+      <small class="field-hint">
+        💡 Cette campagne n'est associée à aucun univers. Associez-la à un Lore dans l'écran de la campagne
+        pour pouvoir lier ce chapitre à des pages du Lore.
+      </small>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn-primary" [disabled]="form.invalid">
+        Sauvegarder
+      </button>
+      <button type="button" class="btn-secondary" (click)="cancel()">Annuler</button>
+      <button type="button" class="btn-danger" (click)="delete()">
+        <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+        Supprimer
+      </button>
+    </div>
+
+  </form>
+
+</div>
+
+<!-- Drawer chat IA (hors .edit-page pour couvrir le viewport à droite) -->
+<app-ai-chat-drawer
+  [campaignId]="campaignId"
+  entityType="chapter"
+  [entityId]="chapterId"
+  [isOpen]="chatOpen"
+  welcomeMessage="Je vois ce chapitre. Demande-moi d'étoffer ses objectifs, ses enjeux ou sa scène d'ouverture."
+  [quickSuggestions]="chatQuickSuggestions"
+  (close)="chatOpen = false">
+</app-ai-chat-drawer>

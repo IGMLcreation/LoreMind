@@ -1,0 +1,83 @@
+.edit-page {
+  padding: 2.5rem 2rem;
+  max-width: 760px;
+}
+
+// Header local : titre à gauche, actions (Assistant IA) à droite.
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+
+  .header-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+}
+
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+// Override local : bouton Supprimer poussé à droite (voir _buttons.scss pour la base).
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: auto;
+}
+
+// Branches narratives : cartes empilées avec libellé / cible / condition / bouton retirer.
+.branches-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.branch-item {
+  position: relative;
+  padding: 1rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.btn-add-branch {
+  align-self: flex-start;
+  padding: 0.5rem 0.9rem;
+  background: transparent;
+  color: #1f2937;
+  border: 1px dashed #9ca3af;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+
+  &:hover {
+    background: #f3f4f6;
+    border-color: #1f2937;
+  }
+}
+
+.btn-remove-branch {
+  align-self: flex-end;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.7rem;
+  background: transparent;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+
+  &:hover {
+    background: #fef2f2;
+  }
+}

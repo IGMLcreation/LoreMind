@@ -1,0 +1,110 @@
+# ==========================================================================
+# LoreMindMJ - Stack complete pour distribution utilisateur
+# --------------------------------------------------------------------------
+# Lancement  : docker compose up -d
+# Acces      : http://localhost:8081
+# Mise a jour: docker compose pull && docker compose up -d
+# ==========================================================================
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: loremind-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-loremind}
+      POSTGRES_USER: ${POSTGRES_USER:-loremind}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-loremind}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    container_name: loremind-minio
+    environment:
+      MINIO_ROOT_USER: ${MINIO_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD:-minioadmin}
+    volumes:
+      - minio-data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  # Creation automatique du bucket loremind-images au premier lancement.
+  minio-init:
+    image: minio/mc:latest
+    container_name: loremind-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 ${MINIO_USER:-minioadmin} ${MINIO_PASSWORD:-minioadmin} &&
+      mc mb --ignore-existing local/loremind-images &&
+      mc anonymous set download local/loremind-images &&
+      echo 'Bucket loremind-images pret.'
+      "
+
+  core:
+    image: ${REGISTRY:-gitea.example.com}/ietm64/core:${TAG:-latest}
+    container_name: loremind-core
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-loremind}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-loremind}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      APP_CORS_ALLOWED_ORIGINS: http://localhost:${WEB_PORT:-8081}
+      BRAIN_BASE_URL: http://brain:8000
+      BRAIN_INTERNAL_SECRET: ${BRAIN_INTERNAL_SECRET:?set BRAIN_INTERNAL_SECRET in .env}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD in .env}
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_PASSWORD:-minioadmin}
+    restart: unless-stopped
+
+  brain:
+    image: ${REGISTRY:-gitea.example.com}/ietm64/brain:${TAG:-latest}
+    container_name: loremind-brain
+    environment:
+      LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      LLM_MODEL: ${LLM_MODEL:-gemma4:26b}
+      ONEMIN_API_KEY: ${ONEMIN_API_KEY:-}
+      ONEMIN_MODEL: ${ONEMIN_MODEL:-gpt-4o-mini}
+      INTERNAL_SHARED_SECRET: ${BRAIN_INTERNAL_SECRET:?set BRAIN_INTERNAL_SECRET in .env}
+    volumes:
+      - brain-data:/app/data
+    extra_hosts:
+      # Linux : permet au conteneur d'atteindre Ollama sur l'hote.
+      # Mac/Windows Docker Desktop le fait nativement.
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  web:
+    image: ${REGISTRY:-gitea.example.com}/ietm64/web:${TAG:-latest}
+    container_name: loremind-web
+    depends_on:
+      - core
+      - brain
+    ports:
+      - "${WEB_PORT:-8081}:80"
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  minio-data:
+  brain-data:

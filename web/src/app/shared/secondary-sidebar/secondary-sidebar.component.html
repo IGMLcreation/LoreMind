@@ -1,0 +1,87 @@
+<aside class="secondary-sidebar" [class.collapsed]="isCollapsed">
+
+  <div class="collapse-toggle" (click)="toggleCollapse()">
+    <lucide-icon [img]="isCollapsed ? PanelLeftOpen : PanelLeftClose" [size]="16"></lucide-icon>
+  </div>
+
+  <ng-container *ngIf="!isCollapsed">
+
+    <h2 class="sidebar-title">{{ title }}</h2>
+
+    <div class="actions-row" *ngIf="createActions.length">
+      <button
+        *ngFor="let action of createActions"
+        class="btn-pill"
+        [class.primary]="action.variant === 'primary'"
+        [class.secondary]="action.variant === 'secondary'"
+        (click)="runAction(action)">
+        {{ action.label }}
+      </button>
+    </div>
+
+    <div class="tree">
+      <ng-container *ngFor="let item of items">
+        <ng-container *ngTemplateOutlet="treeNode; context: { $implicit: item, level: 0 }"></ng-container>
+      </ng-container>
+    </div>
+
+    <!-- Template récursif : un noeud d'arbre rend son bouton, puis ses enfants via ce même template -->
+    <ng-template #treeNode let-item let-level="level">
+      <div class="tree-item" [style.padding-left.px]="level * 12">
+        <div class="tree-row">
+          <button
+            *ngIf="!item.isAction && item.children?.length"
+            type="button"
+            class="chevron-btn"
+            (click)="clickChevron($event, item)">
+            <lucide-icon
+              [img]="isExpanded(item.id) ? ChevronDown : ChevronRight"
+              [size]="12">
+            </lucide-icon>
+          </button>
+          <span *ngIf="item.isAction || !item.children?.length" class="chevron-spacer"></span>
+
+          <button type="button" class="tree-btn" [class.action]="item.isAction" (click)="clickItem(item)">
+            <lucide-icon
+              *ngIf="iconFor(item) as icon"
+              [img]="icon"
+              [size]="14"
+              class="item-icon">
+            </lucide-icon>
+            {{ item.label }}
+            <span class="tree-item-meta" *ngIf="!item.isAction && item.meta">{{ item.meta }}</span>
+          </button>
+        </div>
+        <div class="tree-children" *ngIf="isExpanded(item.id) && item.children?.length">
+          <ng-container *ngFor="let child of item.children">
+            <ng-container *ngTemplateOutlet="treeNode; context: { $implicit: child, level: level + 1 }"></ng-container>
+          </ng-container>
+        </div>
+      </div>
+    </ng-template>
+
+    <!-- Panneau bas (ex: Templates) ------------------------------------ -->
+    <section class="bottom-panel" *ngIf="bottomPanel">
+      <button class="panel-header" (click)="togglePanel()">
+        <span class="panel-title">{{ bottomPanel.title }}</span>
+        <lucide-icon
+          [img]="panelOpen ? ChevronDown : ChevronRight"
+          [size]="14">
+        </lucide-icon>
+      </button>
+      <ul class="panel-list" *ngIf="panelOpen">
+        <li *ngFor="let item of bottomPanel.items">
+          <button
+            class="panel-item"
+            [class.action]="item.isAction"
+            (click)="clickPanelItem(item)">
+            <span class="panel-item-label">{{ item.label }}</span>
+            <span class="panel-item-meta" *ngIf="item.meta">{{ item.meta }}</span>
+          </button>
+        </li>
+      </ul>
+    </section>
+
+  </ng-container>
+
+</aside>

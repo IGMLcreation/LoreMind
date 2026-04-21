@@ -1,0 +1,66 @@
+<aside class="sidebar">
+
+  <div class="sidebar-header">
+    <div class="logo">
+      <span class="logo-icon">✦</span>
+      <span class="logo-text">LoreMind</span>
+    </div>
+    <p class="logo-subtitle">THE DIGITAL CODEX</p>
+  </div>
+
+  <div class="nav-toggle">
+    <button class="toggle-btn" [class.active]="currentRoute.startsWith('/lore')" (click)="navigateTo('/lore')">
+      Lore
+    </button>
+    <button class="toggle-btn" [class.active]="currentRoute.startsWith('/campaigns')" (click)="navigateTo('/campaigns')">
+      Campagne
+    </button>
+  </div>
+
+  <!-- Mode contextuel : liste des lores ou campagnes -->
+  <ng-container *ngIf="layoutConfig$ | async as config">
+    <div class="context-list">
+      <button
+        class="context-item"
+        *ngFor="let item of config.globalItems"
+        [class.active]="isActive(item.route)"
+        (click)="navigateTo(item.route)">
+        {{ item.name }}
+      </button>
+    </div>
+
+    <div class="spacer"></div>
+
+    <button class="btn-back-all" (click)="navigateTo(config.globalBackRoute)">
+      <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon>
+      <span>{{ config.globalBackLabel }}</span>
+    </button>
+  </ng-container>
+
+  <!-- Mode normal : spacer + outils -->
+  <ng-container *ngIf="!(layoutConfig$ | async)">
+    <div class="spacer"></div>
+  </ng-container>
+
+  <div class="tools-section">
+    <p class="tools-label">OUTILS</p>
+    <button class="tool-btn" (click)="openSearch()">
+      <lucide-icon [img]="Search" [size]="16"></lucide-icon>
+      <span>Recherche globale</span>
+      <span class="tool-kbd">Ctrl+K</span>
+    </button>
+    <button class="tool-btn">
+      <lucide-icon [img]="Download" [size]="16"></lucide-icon>
+      <span>Export VTT</span>
+    </button>
+    <button class="tool-btn" [class.active]="currentRoute.startsWith('/settings')" (click)="navigateTo('/settings')">
+      <lucide-icon [img]="Settings" [size]="16"></lucide-icon>
+      <span>Paramètres</span>
+    </button>
+  </div>
+
+  <div class="sidebar-footer">
+    <span class="version">Version 0.2.0</span>
+  </div>
+
+</aside>

@@ -1,0 +1,74 @@
+<div class="view-page" *ngIf="arc">
+
+  <header class="view-header">
+    <div>
+      <h1>{{ arc.name }}</h1>
+      <p class="view-subtitle">Arc narratif</p>
+    </div>
+    <div class="view-actions">
+      <button type="button" class="btn-primary" (click)="editMode()">
+        <lucide-icon [img]="Pencil" [size]="14"></lucide-icon>
+        Modifier
+      </button>
+    </div>
+  </header>
+
+  <!-- Illustrations en tete de page (si presentes) -->
+  <section class="view-section" *ngIf="(arc.illustrationImageIds?.length ?? 0) > 0">
+    <app-image-gallery [imageIds]="arc.illustrationImageIds ?? []"></app-image-gallery>
+  </section>
+
+  <section class="view-section">
+    <h2 class="view-section-title"><span class="view-section-icon">📜</span> Synopsis</h2>
+    <p class="view-section-body" *ngIf="arc.description?.trim(); else emptyDesc">{{ arc.description }}</p>
+    <ng-template #emptyDesc><p class="view-section-empty">Non renseigné</p></ng-template>
+  </section>
+
+  <div class="view-row">
+    <section class="view-section">
+      <h2 class="view-section-title"><span class="view-section-icon">✨</span> Thèmes principaux</h2>
+      <p class="view-section-body" *ngIf="arc.themes?.trim(); else emptyThemes">{{ arc.themes }}</p>
+      <ng-template #emptyThemes><p class="view-section-empty">Non renseigné</p></ng-template>
+    </section>
+
+    <section class="view-section">
+      <h2 class="view-section-title"><span class="view-section-icon">⚖️</span> Enjeux globaux</h2>
+      <p class="view-section-body" *ngIf="arc.stakes?.trim(); else emptyStakes">{{ arc.stakes }}</p>
+      <ng-template #emptyStakes><p class="view-section-empty">Non renseigné</p></ng-template>
+    </section>
+  </div>
+
+  <section class="view-section">
+    <h2 class="view-section-title"><span class="view-section-icon">🎁</span> Récompenses et progression</h2>
+    <p class="view-section-body" *ngIf="arc.rewards?.trim(); else emptyRewards">{{ arc.rewards }}</p>
+    <ng-template #emptyRewards><p class="view-section-empty">Non renseigné</p></ng-template>
+  </section>
+
+  <section class="view-section">
+    <h2 class="view-section-title"><span class="view-section-icon">🎬</span> Dénouement prévu</h2>
+    <p class="view-section-body" *ngIf="arc.resolution?.trim(); else emptyResolution">{{ arc.resolution }}</p>
+    <ng-template #emptyResolution><p class="view-section-empty">Non renseigné</p></ng-template>
+  </section>
+
+  <!-- Notes MJ (bloc privé rouge discret) -->
+  <section class="view-section view-section--private" *ngIf="arc.gmNotes?.trim()">
+    <h2 class="view-section-title">
+      <span class="view-section-icon">🔒</span>
+      Notes et planification du MJ
+    </h2>
+    <p class="view-section-body">{{ arc.gmNotes }}</p>
+  </section>
+
+  <!-- Pages Lore liées (chips cliquables) -->
+  <section class="view-section" *ngIf="loreId && (arc.relatedPageIds?.length ?? 0) > 0">
+    <h2 class="view-section-title"><span class="view-section-icon">🔗</span> Pages Lore associées</h2>
+    <div class="view-chips">
+      <a class="view-chip"
+         *ngFor="let relId of arc.relatedPageIds"
+         [routerLink]="['/lore', loreId, 'pages', relId]">
+        {{ titleOfRelated(relId) }}
+      </a>
+    </div>
+  </section>
+
+</div>

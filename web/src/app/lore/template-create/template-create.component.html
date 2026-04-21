@@ -1,0 +1,90 @@
+<div class="page">
+
+  <header class="page-header">
+    <h1>Créer un nouveau Template</h1>
+    <p class="subtitle">Définissez un gabarit personnalisé pour créer des pages cohérentes</p>
+  </header>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="template-form">
+
+    <!-- Colonne gauche ---------------------------------------------- -->
+    <div class="col-left">
+
+      <div class="field">
+        <label>Nom du template *</label>
+        <input type="text" formControlName="name" placeholder="Ex: Auberge, Artefact, Monstre..." />
+      </div>
+
+      <div class="field">
+        <label>Description</label>
+        <textarea formControlName="description" rows="4" placeholder="À quoi sert ce template ?"></textarea>
+      </div>
+
+      <div class="field">
+        <label>Dossier par défaut *</label>
+        <select formControlName="defaultNodeId">
+          <option value="" disabled>Sélectionnez un dossier</option>
+          <option *ngFor="let node of nodes" [value]="node.id">{{ node.name }}</option>
+        </select>
+        <p class="hint">Les pages créées avec ce template seront placées dans ce dossier</p>
+      </div>
+
+    </div>
+
+    <!-- Colonne droite --------------------------------------------- -->
+    <div class="col-right">
+
+      <label class="section-label">Champs du template *</label>
+
+      <ul class="fields-list">
+        <li class="field-row" *ngFor="let f of fields; let i = index">
+          <span class="field-chip" [class.field-chip-image]="f.type === 'IMAGE'">
+            <lucide-icon [img]="f.type === 'IMAGE' ? ImageIcon : Type" [size]="12"></lucide-icon>
+            {{ f.name }}
+          </span>
+          <button type="button"
+                  class="btn-icon btn-type-toggle"
+                  (click)="toggleFieldType(i)"
+                  [attr.aria-label]="'Basculer vers ' + (f.type === 'TEXT' ? 'Image' : 'Texte')"
+                  [title]="f.type === 'TEXT' ? 'Transformer en champ Image' : 'Transformer en champ Texte'">
+            {{ f.type === 'TEXT' ? 'Texte' : 'Image' }}
+          </button>
+          <button type="button" class="btn-icon" (click)="removeField(i)" aria-label="Supprimer">
+            <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+          </button>
+        </li>
+      </ul>
+
+      <div class="field-row add-row">
+        <input
+          type="text"
+          [(ngModel)]="newFieldName"
+          [ngModelOptions]="{ standalone: true }"
+          placeholder="Nom du champ..."
+          (keydown.enter)="$event.preventDefault(); addField()" />
+        <select
+          class="type-select"
+          [(ngModel)]="newFieldType"
+          [ngModelOptions]="{ standalone: true }"
+          aria-label="Type du champ">
+          <option value="TEXT">Texte</option>
+          <option value="IMAGE">Image</option>
+        </select>
+        <button type="button" class="btn-add" (click)="addField()" title="Ajouter le champ">
+          <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
+        </button>
+      </div>
+
+      <p class="hint">Les champs Texte sont editables librement et utilisables par l'IA. Les champs Image hebergent une galerie d'illustrations.</p>
+
+    </div>
+
+    <!-- Actions ---------------------------------------------------- -->
+    <div class="actions-row">
+      <button type="button" class="btn-secondary" (click)="cancel()">Annuler</button>
+      <button type="submit" class="btn-primary" [disabled]="form.invalid">Créer le template</button>
+    </div>
+
+  </form>
+
+</div>

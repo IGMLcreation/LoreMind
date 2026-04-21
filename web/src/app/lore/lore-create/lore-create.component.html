@@ -1,0 +1,54 @@
+<div class="modal-backdrop" (click)="onCancel()">
+  <div class="modal" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <h2>Créer un nouveau Lore</h2>
+      <button class="btn-close" (click)="onCancel()">
+        <lucide-icon [img]="X" [size]="18"></lucide-icon>
+      </button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()">
+
+      <div class="field">
+        <label>Nom de l'univers *</label>
+        <input
+          type="text"
+          formControlName="name"
+          placeholder="Ex: Royaume des Ombres, Cyberpunk 2157..."
+          [class.invalid]="form.get('name')?.invalid && form.get('name')?.touched"
+        />
+      </div>
+
+      <div class="field">
+        <label>Description</label>
+        <textarea
+          formControlName="description"
+          placeholder="Décrivez brièvement votre univers, son ambiance, son genre..."
+          rows="5"
+        ></textarea>
+      </div>
+
+      <div class="info-box">
+        <p><strong>💡 Astuce :</strong> Votre lore sera créé avec quelques templates par défaut :</p>
+        <ul>
+          <li>PNJ - Pour vos personnages</li>
+          <li>Lieu - Pour vos villes et régions</li>
+          <li>Faction - Pour vos organisations</li>
+          <li>Objet - Pour vos artefacts</li>
+        </ul>
+        <p class="info-footer">Vous pourrez créer vos propres templates ensuite !</p>
+      </div>
+
+      <div class="modal-actions">
+        <button type="submit" class="btn-primary" [disabled]="form.invalid">
+          <lucide-icon [img]="BookCopy" [size]="16"></lucide-icon>
+          Créer le lore
+        </button>
+        <button type="button" class="btn-secondary" (click)="onCancel()">Annuler</button>
+      </div>
+
+    </form>
+
+  </div>
+</div>

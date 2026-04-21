@@ -1,0 +1,18 @@
+.scene-create-page {
+  padding: 2.5rem 2rem;
+  max-width: 640px;
+}
+
+// Overrides locaux : titre violet + sous-titre .chapter-ref (parent de la scène).
+.page-header {
+  h1 { color: #a5b4fc; }
+  .chapter-ref { color: #6b7280; font-size: 0.85rem; margin: 0; }
+}
+
+.scene-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.btn-primary { flex: 1; }

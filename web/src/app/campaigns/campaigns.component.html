@@ -1,0 +1,42 @@
+<div class="campaigns-page">
+
+  <div class="campaigns-hero">
+    <lucide-icon [img]="Map" [size]="56" class="hero-icon"></lucide-icon>
+    <h1>Vos Campagnes</h1>
+    <p class="hero-subtitle">Rejoignez une campagne ou créez-en de nouvelles</p>
+  </div>
+
+  <div class="campaigns-grid">
+
+    <div class="campaign-card" *ngFor="let campaign of campaigns" (click)="navigateToDetail(campaign.id!)">
+      <div class="card-header">
+        <span class="status-badge en-cours">En cours</span>
+        <span class="card-date">{{ campaign.playerCount }} joueurs</span>
+      </div>
+      <h2>{{ campaign.name }}</h2>
+      <p class="card-description">{{ campaign.description }}</p>
+      <div class="card-stats">
+        <span>⚔️ {{ campaign.arcCount || 0 }} arcs</span>
+        <span>📖 {{ campaign.chapterCount || 0 }} chapitres</span>
+      </div>
+    </div>
+
+    <div class="campaign-card card-new" (click)="openCreateModal()">
+      <div class="new-icon">
+        <lucide-icon [img]="Plus" [size]="20"></lucide-icon>
+      </div>
+      <h2>Nouvelle Campagne</h2>
+      <p class="card-description">Créez une nouvelle aventure</p>
+    </div>
+
+  </div>
+
+  <p class="tip">💡 Astuce : Organisez vos arcs et chapitres pour ne rien oublier de vos aventures</p>
+
+</div>
+
+<app-campaign-create
+  *ngIf="showCreateModal"
+  (close)="onModalClose()"
+  (created)="onCampaignCreated($event)">
+</app-campaign-create>

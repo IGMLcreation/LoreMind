@@ -1,0 +1,37 @@
+<div class="arc-create-page">
+
+  <div class="page-header">
+    <h1>Créer un nouvel arc narratif</h1>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="arc-form">
+
+    <div class="field">
+      <label>Nom de l'arc *</label>
+      <input
+        type="text"
+        formControlName="name"
+        placeholder="Ex: L'Ombre du Nord"
+        [class.invalid]="form.get('name')?.invalid && form.get('name')?.touched"
+      />
+    </div>
+
+    <div class="field">
+      <label>Description</label>
+      <textarea
+        formControlName="description"
+        placeholder="Décrivez l'arc narratif principal..."
+        rows="5">
+      </textarea>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn-primary" [disabled]="form.invalid">
+        Créer l'arc
+      </button>
+      <button type="button" class="btn-secondary" (click)="cancel()">Annuler</button>
+    </div>
+
+  </form>
+
+</div>

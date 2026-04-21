@@ -1,0 +1,18 @@
+<div class="app-container">
+  <app-sidebar></app-sidebar>
+
+  <ng-container *ngIf="sidebarConfig$ | async as config">
+    <app-secondary-sidebar
+      [title]="config.title"
+      [items]="config.items"
+      [createActions]="config.createActions"
+      [bottomPanel]="config.bottomPanel || null">
+    </app-secondary-sidebar>
+  </ng-container>
+
+  <main class="main-content">
+    <router-outlet></router-outlet>
+  </main>
+</div>
+
+<app-global-search></app-global-search>

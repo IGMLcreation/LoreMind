@@ -1,0 +1,235 @@
+.page {
+  padding: 2rem 3rem;
+  max-width: 1000px;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+
+  h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: white;
+    margin: 0 0 0.25rem;
+  }
+  .subtitle {
+    color: #9ca3af;
+    font-size: 0.85rem;
+    margin: 0;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 0.6rem;
+  }
+}
+
+.template-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem 2.5rem;
+
+  .col-left, .col-right {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+
+  label {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: #d1d5db;
+  }
+
+  input, textarea, select {
+    background: #1a1a2e;
+    border: 1px solid #2a2a3d;
+    color: white;
+    padding: 0.7rem 0.9rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-family: inherit;
+
+    &:focus {
+      outline: none;
+      border-color: #6c63ff;
+    }
+  }
+
+  textarea { resize: vertical; }
+}
+
+.hint {
+  font-size: 0.76rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.section-label {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #d1d5db;
+  margin-bottom: 0.4rem;
+}
+
+.fields-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.field-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  .field-chip {
+    flex: 1;
+    background: #1a1a2e;
+    border: 1px solid #2a2a3d;
+    color: white;
+    padding: 0.6rem 0.9rem;
+    border-radius: 6px;
+    font-size: 0.88rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+
+    // Discriminant visuel pour les champs IMAGE (palette indigo).
+    &.field-chip-image {
+      background: #1f1b3a;
+      border-color: #3d3566;
+      color: #c7b8ff;
+    }
+  }
+
+  .btn-type-toggle {
+    width: auto;
+    padding: 0 0.7rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+    color: #9ca3af;
+
+    &:hover { color: #a5b4fc; background: #1f1b3a; }
+  }
+
+  .type-select {
+    background: #1a1a2e;
+    border: 1px solid #2a2a3d;
+    color: white;
+    padding: 0 0.6rem;
+    height: 36px;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    cursor: pointer;
+
+    &:focus { outline: none; border-color: #6c63ff; }
+  }
+
+  input {
+    flex: 1;
+    background: #1a1a2e;
+    border: 1px solid #2a2a3d;
+    color: white;
+    padding: 0.6rem 0.9rem;
+    border-radius: 6px;
+    font-size: 0.88rem;
+
+    &:focus {
+      outline: none;
+      border-color: #6c63ff;
+    }
+
+    &::placeholder { color: #6b7280; }
+  }
+
+  &.add-row {
+    margin-top: 0.25rem;
+    border: 1px dashed #2a2a3d;
+    border-radius: 6px;
+    padding: 0;
+
+    input {
+      border: none;
+      background: transparent;
+      &:focus { border: none; }
+    }
+  }
+}
+
+.btn-icon-ghost {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  color: #6b7280;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+
+  &:hover { color: #fca5a5; background: #2a1f1f; }
+}
+
+.btn-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-right: 0.4rem;
+  background: transparent;
+  color: #6c63ff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover { background: #2a2a3d; }
+}
+
+.btn-primary, .btn-secondary, .btn-danger {
+  padding: 0.6rem 1.1rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.btn-primary {
+  background: #6c63ff;
+  color: white;
+
+  &:hover:not(:disabled) { background: #5a52e0; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.btn-secondary {
+  background: #2a2a3d;
+  color: #d1d5db;
+
+  &:hover { background: #363650; }
+}
+
+.btn-danger {
+  background: #3f1f1f;
+  color: #fca5a5;
+
+  &:hover { background: #5a2a2a; }
+}

@@ -1,0 +1,102 @@
+.lore-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3rem 2rem;
+  min-height: 100%;
+}
+
+.lore-hero {
+  text-align: center;
+  margin-bottom: 3rem;
+
+  .hero-icon { display: block; margin-bottom: 1rem; color: #6c63ff; }
+
+  h1 { font-size: 2rem; font-weight: 700; color: white; margin-bottom: 0.5rem; }
+
+  .hero-subtitle { color: #6b7280; font-size: 0.95rem; }
+}
+
+.lore-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 900px;
+}
+
+.lore-card {
+  background: #111827;
+  border: 1px solid #1f2937;
+  border-radius: 12px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.2s;
+
+  &:hover {
+    border-color: #6c63ff;
+    transform: translateY(-3px);
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .card-icon { font-size: 1.25rem; color: #6c63ff; }
+  .card-date  { font-size: 0.75rem; color: #6b7280; }
+
+  h2 { color: white; font-size: 1.1rem; margin-bottom: 0.5rem; }
+
+  .card-description {
+    color: #6b7280;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+    // Tronque à 3 lignes avec "…" : évite qu'une description longue étire
+    // la carte et par ricochet la carte "Nouveau Lore" alignée sur sa hauteur.
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .card-stats {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.8rem;
+    color: #4b5563;
+  }
+}
+
+.card-new {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-style: dashed;
+  border-color: #374151;
+  text-align: center;
+
+  .new-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background: #1f2937;
+    color: #6c63ff;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.75rem;
+  }
+}
+
+.tip {
+  margin-top: 3rem;
+  font-size: 0.8rem;
+  color: #4b5563;
+}

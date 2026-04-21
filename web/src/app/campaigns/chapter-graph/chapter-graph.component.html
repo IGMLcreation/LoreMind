@@ -1,0 +1,64 @@
+<div class="graph-page">
+
+  <div class="page-header">
+    <div>
+      <h1>{{ chapter?.name || 'Chapitre' }} — Carte</h1>
+      <p class="subtitle">Organigramme des scènes et de leurs branches narratives</p>
+    </div>
+    <button type="button" class="btn-secondary" (click)="back()">
+      <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon>
+      Retour au chapitre
+    </button>
+  </div>
+
+  <div class="graph-empty" *ngIf="scenes.length === 0">
+    <p>Ce chapitre n'a aucune scène. Créez-en pour voir apparaître la carte.</p>
+  </div>
+
+  <div class="graph-container" *ngIf="scenes.length > 0">
+    <svg [attr.width]="svgWidth" [attr.height]="svgHeight" class="graph-svg">
+      <defs>
+        <marker id="arrowhead" viewBox="0 0 10 10" refX="9" refY="5"
+                markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#6b7280" />
+        </marker>
+      </defs>
+
+      <g class="edges">
+        <g class="edge" *ngFor="let edge of edges">
+          <line [attr.x1]="edge.x1" [attr.y1]="edge.y1"
+                [attr.x2]="edge.x2" [attr.y2]="edge.y2"
+                stroke="#6b7280" stroke-width="2"
+                marker-end="url(#arrowhead)" />
+          <text *ngIf="edge.label"
+                [attr.x]="edge.labelX"
+                [attr.y]="edge.labelY"
+                text-anchor="middle"
+                class="edge-label">
+            {{ edge.label }}
+          </text>
+        </g>
+      </g>
+
+      <g class="nodes">
+        <g class="node" *ngFor="let node of nodes" (click)="openScene(node.id)">
+          <title>{{ node.name }}</title>
+          <rect [attr.x]="node.x" [attr.y]="node.y"
+                [attr.width]="NODE_WIDTH" [attr.height]="NODE_HEIGHT"
+                rx="8" ry="8" class="node-box" />
+          <text [attr.x]="node.x + NODE_WIDTH / 2"
+                [attr.y]="node.y + NODE_HEIGHT / 2 + 5"
+                text-anchor="middle"
+                class="node-label">
+            {{ node.displayName }}
+          </text>
+        </g>
+      </g>
+    </svg>
+
+    <small class="graph-hint">
+      💡 Cliquez sur une scène pour l'ouvrir. Les scènes non reliées au point d'entrée (scène d'ordre 1) apparaissent en bas.
+    </small>
+  </div>
+
+</div>

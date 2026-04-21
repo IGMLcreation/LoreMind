@@ -1,0 +1,70 @@
+<div class="lore-detail" *ngIf="lore">
+
+  <!-- ============ Header : mode lecture ============ -->
+  <div class="detail-header" *ngIf="!editing">
+    <div class="header-texts">
+      <h1>{{ lore.name }}</h1>
+      <p class="description">{{ lore.description }}</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn-secondary" (click)="startEdit()" title="Modifier le Lore">
+        <lucide-icon [img]="Pencil" [size]="14"></lucide-icon>
+        Modifier
+      </button>
+      <button type="button" class="btn-danger" (click)="deleteLore()" title="Supprimer le Lore">
+        <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+        Supprimer
+      </button>
+    </div>
+  </div>
+
+  <!-- ============ Header : mode édition inline ============ -->
+  <div class="detail-header edit-mode" *ngIf="editing">
+    <div class="field">
+      <label>Nom</label>
+      <input type="text" [(ngModel)]="editName" name="editName" required />
+    </div>
+    <div class="field">
+      <label>Description</label>
+      <textarea [(ngModel)]="editDescription" name="editDescription" rows="3"></textarea>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn-primary" (click)="saveEdit()" [disabled]="!editName.trim()">
+        Sauvegarder
+      </button>
+      <button type="button" class="btn-secondary" (click)="cancelEdit()">
+        Annuler
+      </button>
+    </div>
+  </div>
+
+  <!-- ============ Grille des dossiers racine ============ -->
+  <div class="nodes-section">
+    <div class="section-header">
+      <h2>Dossiers</h2>
+      <button class="btn-add" (click)="navigateToCreateNode()">
+        <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
+        Nouveau dossier
+      </button>
+    </div>
+
+    <!-- rootNodes : uniquement les dossiers racine (pas les sous-dossiers,
+         qui sont visibles dans l'arbre de la sidebar). -->
+    <div class="nodes-grid" *ngIf="rootNodes.length > 0">
+      <div class="node-card" *ngFor="let node of rootNodes" (click)="navigateToFolder(node.id!)">
+        <lucide-icon [img]="Folder" [size]="24" class="node-icon"></lucide-icon>
+        <span class="node-name">{{ node.name }}</span>
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="rootNodes.length === 0">
+      <lucide-icon [img]="Folder" [size]="40" class="empty-icon"></lucide-icon>
+      <p>Aucun dossier pour le moment.</p>
+      <button class="btn-add-first" (click)="navigateToCreateNode()">
+        <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
+        Créer votre premier dossier
+      </button>
+    </div>
+  </div>
+
+</div>

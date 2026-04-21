@@ -1,0 +1,116 @@
+.node-create-page {
+  padding: 2.5rem 2rem;
+  max-width: 640px;
+}
+
+.page-header {
+  margin-bottom: 2.5rem;
+
+  h1 { font-size: 1.5rem; font-weight: 700; color: white; margin-bottom: 0.4rem; }
+  .subtitle { color: #6b7280; font-size: 0.9rem; }
+}
+
+.node-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  label {
+    font-size: 0.875rem;
+    color: #d1d5db;
+    font-weight: 500;
+  }
+
+  .optional { color: #6b7280; font-weight: 400; }
+
+  input, textarea, select {
+    background: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    color: white;
+    font-size: 0.9rem;
+    outline: none;
+    resize: none;
+    transition: border-color 0.2s;
+
+    &::placeholder { color: #4b5563; }
+    &:focus { border-color: #6c63ff; }
+    &.invalid { border-color: #ef4444; }
+  }
+}
+
+.icon-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  background: #1f2937;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover { background: #374151; color: white; }
+
+  &.selected {
+    background: #1e1b4b;
+    border-color: #6c63ff;
+    color: #a5b4fc;
+  }
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  padding-top: 0.5rem;
+}
+
+.btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #6c63ff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover:not(:disabled) { background: #5b52e0; }
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
+}
+
+.btn-secondary {
+  padding: 0.75rem 1.5rem;
+  background: #1f2937;
+  color: #d1d5db;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover { background: #374151; }
+}

@@ -1,0 +1,89 @@
+// ==========================================================================
+// Champs de formulaire partagés
+// --------------------------------------------------------------------------
+// Style canonique pour tous les couples label + input / textarea / select.
+// Extrait ici pour éliminer la duplication dans 14+ composants.
+//
+// Usage :
+//   <div class="field">
+//     <label>Nom</label>
+//     <input type="text" [(ngModel)]="name" />
+//   </div>
+//
+// Astuce visuelle (texte gris italique sous un champ) :
+//   <p class="field-hint">Optionnel. Facilite les recherches.</p>
+// ==========================================================================
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  label {
+    font-size: 0.875rem;
+    color: #d1d5db;
+    font-weight: 500;
+  }
+
+  input,
+  textarea,
+  select {
+    background: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    color: white;
+    font-size: 0.9rem;
+    outline: none;
+    font-family: inherit;
+    transition: border-color 0.2s;
+
+    &::placeholder { color: #4b5563; }
+    &:focus { border-color: #6c63ff; }
+    &.invalid, &.ng-invalid.ng-touched { border-color: #ef4444; }
+  }
+
+  textarea { resize: vertical; min-height: 4rem; }
+}
+
+.field-hint {
+  color: #6b7280;
+  font-size: 0.75rem;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+// Grille 2 colonnes pour aligner 2 champs côte à côte.
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+// --------------------------------------------------------------------------
+// Header de page "create" / "edit" (titre + éventuel sous-titre)
+// --------------------------------------------------------------------------
+.page-header {
+  margin-bottom: 2rem;
+
+  h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    margin: 0 0 0.35rem 0;
+  }
+
+  .subtitle {
+    color: #6b7280;
+    font-size: 0.85rem;
+    margin: 0;
+  }
+}
+
+// Barre d'actions en bas d'un formulaire (Sauvegarder / Annuler / Supprimer).
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  padding-top: 0.5rem;
+  flex-wrap: wrap;
+}

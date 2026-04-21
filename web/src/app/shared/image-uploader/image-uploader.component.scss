@@ -1,0 +1,88 @@
+// Drop-zone standard
+.upload-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 140px;
+  padding: 1.5rem;
+  background: #1a1a2e;
+  border: 2px dashed #2a2a3d;
+  border-radius: 8px;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+
+  &:hover { border-color: #6c63ff; color: #d1d5db; }
+  &.drag-over { border-color: #6c63ff; background: #1f1f3a; color: white; }
+  &.loading { cursor: progress; opacity: 0.7; }
+}
+
+.upload-zone-title {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: #d1d5db;
+}
+
+.upload-zone-hint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #6b7280;
+  text-align: center;
+}
+
+// Variante compacte (bouton carre pour galerie)
+.upload-compact {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  width: 120px;
+  height: 120px;
+  background: #1a1a2e;
+  border: 2px dashed #2a2a3d;
+  border-radius: 6px;
+  color: #6b7280;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+
+  &:hover { border-color: #6c63ff; color: #a5b4fc; background: #1f1f3a; }
+  &.loading { cursor: progress; opacity: 0.7; }
+}
+
+.upload-error, .upload-error-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.5rem 0 0;
+  padding: 0.5rem 0.7rem;
+  background: #3f1f1f;
+  color: #fca5a5;
+  border: 1px solid #7f1d1d;
+  border-radius: 6px;
+  font-size: 0.82rem;
+}
+
+.upload-error-inline {
+  padding: 0.3rem 0.5rem;
+  font-size: 0.72rem;
+  margin-top: 0.3rem;
+}
+
+// Spinner CSS simple (pas de dep externe)
+.upload-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid #2a2a3d;
+  border-top-color: #6c63ff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

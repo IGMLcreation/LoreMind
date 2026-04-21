@@ -1,0 +1,18 @@
+.arc-create-page {
+  padding: 2.5rem 2rem;
+  max-width: 640px;
+}
+
+// Override local : titre en violet (pas en blanc comme le .page-header global).
+.page-header h1 { color: #a5b4fc; }
+
+.arc-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+// Spécificité locale : le bouton "Créer l'arc" prend toute la largeur dispo.
+// Tous les autres styles (.field, .btn-primary de base, .btn-secondary, .form-actions)
+// sont fournis globalement par @app/styles/_forms.scss et _buttons.scss.
+.btn-primary { flex: 1; }

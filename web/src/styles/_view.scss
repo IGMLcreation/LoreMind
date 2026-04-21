@@ -1,0 +1,150 @@
+// ==========================================================================
+// Style "fiche de jeu" — mode consultation (lecture seule).
+// ==========================================================================
+// Responsabilité : afficher une entité (Page, Arc, Chapter, Scene) sous forme
+// d'une belle fiche où chaque champ est un bloc titré, visible d'un bloc,
+// SANS scrollbar interne — le contenu texte s'étend verticalement selon sa
+// taille réelle grâce à `white-space: pre-wrap` sur un élément natif
+// (pas de textarea). L'utilisateur fait défiler la page avec la molette.
+//
+// Utilisé par : page-view, arc-view, chapter-view, scene-view.
+// Principe DRY : les 4 composants partagent ces sélecteurs globaux.
+
+.view-page {
+  padding: 2rem 3rem;
+  max-width: 1000px;
+
+  // En-tête : titre + sous-titre + boutons d'action (Modifier, Supprimer...)
+  .view-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 2rem;
+
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: white;
+      margin: 0 0 0.3rem;
+      line-height: 1.2;
+    }
+    .view-subtitle {
+      color: #9ca3af;
+      font-size: 0.85rem;
+      margin: 0;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .view-actions {
+      display: flex;
+      gap: 0.6rem;
+      flex-shrink: 0;
+    }
+  }
+
+  // Bloc de contenu : une section = un champ (titre + corps)
+  .view-section {
+    padding: 1.25rem 0;
+    border-top: 1px solid #1e1e3a;
+
+    &:first-of-type {
+      border-top: none;
+      padding-top: 0;
+    }
+
+    .view-section-title {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #a5b4fc;             // violet discret, cohérent avec .btn-ai
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin: 0 0 0.6rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      .view-section-icon {
+        font-size: 0.9rem;
+      }
+    }
+
+    // Corps texte — c'est ici que la magie "pas de scrollbar" opère :
+    // `white-space: pre-wrap` conserve les sauts de ligne du textarea d'origine
+    // et le texte se hauteur-adapte naturellement (element = bloc HTML classique).
+    .view-section-body {
+      color: #e0e0e0;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      margin: 0;
+    }
+
+    // État vide : champ non renseigné, on l'indique discrètement.
+    .view-section-empty {
+      color: #4b5563;
+      font-style: italic;
+      font-size: 0.88rem;
+      margin: 0;
+    }
+  }
+
+  // Variante "privé MJ" — fond rouge discret pour les notes secrètes
+  // (gmNotes, gmSecretNotes). Cohérent avec expandable-section variant="private".
+  .view-section--private {
+    background: rgba(127, 29, 29, 0.08);
+    border-left: 3px solid #7f1d1d;
+    padding-left: 1rem;
+    margin-left: -1rem;
+    border-radius: 0 4px 4px 0;
+
+    .view-section-title { color: #fca5a5; }
+  }
+
+  // Affichage 2 colonnes pour des champs courts côte-à-côte (location/timing...).
+  .view-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+
+    .view-section {
+      border-top: none;
+      padding-top: 0;
+    }
+  }
+
+  // Chips (tags et pages liées en lecture seule)
+  .view-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0;
+
+    .view-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.3rem 0.7rem;
+      background: #1a1a2e;
+      border: 1px solid #2a2a3d;
+      border-radius: 999px;
+      color: #d1d5db;
+      font-size: 0.82rem;
+      text-decoration: none;
+      transition: border-color 0.15s, color 0.15s;
+
+      &[href]:hover {
+        border-color: #6c63ff;
+        color: white;
+      }
+    }
+
+    .view-chip--tag {
+      background: #1e1b4b;
+      border-color: #312e81;
+      color: #c4b5fd;
+    }
+  }
+}

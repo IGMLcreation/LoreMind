@@ -1,0 +1,90 @@
+<div class="view-page" *ngIf="scene">
+
+  <header class="view-header">
+    <div>
+      <h1>{{ scene.name }}</h1>
+      <p class="view-subtitle">Scène</p>
+    </div>
+    <div class="view-actions">
+      <button type="button" class="btn-primary" (click)="editMode()">
+        <lucide-icon [img]="Pencil" [size]="14"></lucide-icon>
+        Modifier
+      </button>
+    </div>
+  </header>
+
+  <!-- Illustrations -->
+  <section class="view-section" *ngIf="(scene.illustrationImageIds?.length ?? 0) > 0">
+    <app-image-gallery [imageIds]="scene.illustrationImageIds ?? []"></app-image-gallery>
+  </section>
+
+  <!-- Description courte -->
+  <section class="view-section">
+    <h2 class="view-section-title"><span class="view-section-icon">📝</span> Description</h2>
+    <p class="view-section-body" *ngIf="scene.description?.trim(); else emptyDesc">{{ scene.description }}</p>
+    <ng-template #emptyDesc><p class="view-section-empty">Non renseigné</p></ng-template>
+  </section>
+
+  <!-- Contexte et ambiance -->
+  <div class="view-row" *ngIf="scene.location?.trim() || scene.timing?.trim()">
+    <section class="view-section" *ngIf="scene.location?.trim()">
+      <h2 class="view-section-title"><span class="view-section-icon">📍</span> Lieu</h2>
+      <p class="view-section-body">{{ scene.location }}</p>
+    </section>
+    <section class="view-section" *ngIf="scene.timing?.trim()">
+      <h2 class="view-section-title"><span class="view-section-icon">⏰</span> Moment</h2>
+      <p class="view-section-body">{{ scene.timing }}</p>
+    </section>
+  </div>
+
+  <section class="view-section" *ngIf="scene.atmosphere?.trim()">
+    <h2 class="view-section-title"><span class="view-section-icon">🌫️</span> Ambiance et atmosphère</h2>
+    <p class="view-section-body">{{ scene.atmosphere }}</p>
+  </section>
+
+  <!-- Narration pour les joueurs -->
+  <section class="view-section" *ngIf="scene.playerNarration?.trim()">
+    <h2 class="view-section-title"><span class="view-section-icon">📖</span> Narration pour les joueurs</h2>
+    <p class="view-section-body">{{ scene.playerNarration }}</p>
+  </section>
+
+  <!-- Choix et conséquences -->
+  <section class="view-section" *ngIf="scene.choicesConsequences?.trim()">
+    <h2 class="view-section-title"><span class="view-section-icon">🔀</span> Choix et conséquences</h2>
+    <p class="view-section-body">{{ scene.choicesConsequences }}</p>
+  </section>
+
+  <!-- Combat ou rencontre -->
+  <ng-container *ngIf="scene.combatDifficulty?.trim() || scene.enemies?.trim()">
+    <section class="view-section" *ngIf="scene.combatDifficulty?.trim()">
+      <h2 class="view-section-title"><span class="view-section-icon">⚔️</span> Difficulté estimée</h2>
+      <p class="view-section-body">{{ scene.combatDifficulty }}</p>
+    </section>
+    <section class="view-section" *ngIf="scene.enemies?.trim()">
+      <h2 class="view-section-title"><span class="view-section-icon">🐲</span> Ennemis et créatures</h2>
+      <p class="view-section-body">{{ scene.enemies }}</p>
+    </section>
+  </ng-container>
+
+  <!-- Notes et secrets du MJ (privé) -->
+  <section class="view-section view-section--private" *ngIf="scene.gmSecretNotes?.trim()">
+    <h2 class="view-section-title">
+      <span class="view-section-icon">🔒</span>
+      Notes et secrets du MJ
+    </h2>
+    <p class="view-section-body">{{ scene.gmSecretNotes }}</p>
+  </section>
+
+  <!-- Pages Lore liées -->
+  <section class="view-section" *ngIf="loreId && (scene.relatedPageIds?.length ?? 0) > 0">
+    <h2 class="view-section-title"><span class="view-section-icon">🔗</span> Pages Lore associées</h2>
+    <div class="view-chips">
+      <a class="view-chip"
+         *ngFor="let relId of scene.relatedPageIds"
+         [routerLink]="['/lore', loreId, 'pages', relId]">
+        {{ titleOfRelated(relId) }}
+      </a>
+    </div>
+  </section>
+
+</div>

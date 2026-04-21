@@ -1,0 +1,21 @@
+.chapter-create-page {
+  padding: 2.5rem 2rem;
+  max-width: 640px;
+}
+
+// Overrides locaux :
+// - titre en violet (au lieu de blanc comme le .page-header global)
+// - sous-titre .arc-ref spécifique à cet écran (référence à l'arc parent)
+.page-header {
+  h1 { color: #a5b4fc; }
+  .arc-ref { color: #6b7280; font-size: 0.85rem; margin: 0; }
+}
+
+.chapter-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+// Le bouton "Créer" prend toute la largeur restante.
+.btn-primary { flex: 1; }

@@ -1,0 +1,93 @@
+<div class="campaign-detail" *ngIf="campaign">
+
+  <!-- ============ Header : mode lecture ============ -->
+  <div class="detail-header" *ngIf="!editing">
+    <div class="header-texts">
+      <h1>{{ campaign.name }}</h1>
+      <p class="description">{{ campaign.description }}</p>
+      <div class="meta">
+        <span class="badge">{{ campaign.playerCount || 0 }} joueurs</span>
+
+        <!-- Badge "Univers" : lien vers le Lore associé si présent -->
+        <a *ngIf="linkedLore"
+           class="badge badge-lore"
+           [routerLink]="['/lore', linkedLore.id]"
+           title="Ouvrir l'univers associé">
+          <lucide-icon [img]="Globe" [size]="12"></lucide-icon>
+          {{ linkedLore.name }}
+        </a>
+
+        <!-- Campagne liée à un Lore qui n'existe plus (supprimé ailleurs) -->
+        <span *ngIf="campaign.loreId && !linkedLore" class="badge badge-lore-missing" title="L'univers associé est introuvable">
+          <lucide-icon [img]="Globe" [size]="12"></lucide-icon>
+          Univers introuvable
+        </span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn-secondary" (click)="startEdit()">
+        <lucide-icon [img]="Pencil" [size]="14"></lucide-icon>
+        Modifier
+      </button>
+      <button type="button" class="btn-danger" (click)="deleteCampaign()">
+        <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+        Supprimer
+      </button>
+    </div>
+  </div>
+
+  <!-- ============ Header : mode édition inline ============ -->
+  <div class="detail-header edit-mode" *ngIf="editing">
+    <div class="field">
+      <label>Nom</label>
+      <input type="text" [(ngModel)]="editName" name="editName" required />
+    </div>
+    <div class="field">
+      <label>Description</label>
+      <textarea [(ngModel)]="editDescription" name="editDescription" rows="3"></textarea>
+    </div>
+    <div class="field">
+      <label>Univers associé</label>
+      <select [(ngModel)]="editLoreId" name="editLoreId">
+        <option value="">— Aucun univers (campagne libre) —</option>
+        <option *ngFor="let lore of availableLores" [value]="lore.id">{{ lore.name }}</option>
+      </select>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn-primary" (click)="saveEdit()" [disabled]="!editName.trim()">
+        Sauvegarder
+      </button>
+      <button type="button" class="btn-secondary" (click)="cancelEdit()">
+        Annuler
+      </button>
+    </div>
+  </div>
+
+  <div class="arcs-section">
+    <div class="section-header">
+      <h2>Arcs narratifs</h2>
+      <button class="btn-add">
+        <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
+        Nouvel arc
+      </button>
+    </div>
+
+    <div class="arcs-grid" *ngIf="arcs.length > 0">
+      <div class="arc-card" *ngFor="let arc of arcs">
+        <lucide-icon [img]="Swords" [size]="24" class="arc-icon"></lucide-icon>
+        <span class="arc-name">{{ arc.name }}</span>
+        <span class="arc-meta">{{ arc.chapterCount || 0 }} chapitres</span>
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="arcs.length === 0">
+      <lucide-icon [img]="Swords" [size]="40" class="empty-icon"></lucide-icon>
+      <p>Aucun arc narratif pour le moment.</p>
+      <button class="btn-add-first">
+        <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
+        Créer votre premier arc
+      </button>
+    </div>
+  </div>
+
+</div>

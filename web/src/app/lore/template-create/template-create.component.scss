@@ -1,0 +1,213 @@
+.page {
+  padding: 2rem 3rem;
+  max-width: 1000px;
+}
+
+.page-header {
+  margin-bottom: 2rem;
+
+  h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: white;
+    margin: 0 0 0.25rem;
+  }
+  .subtitle {
+    color: #9ca3af;
+    font-size: 0.9rem;
+    margin: 0;
+  }
+}
+
+.template-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem 2.5rem;
+
+  .col-left, .col-right {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .actions-row {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: flex-start;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+
+  label {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: #d1d5db;
+  }
+
+  input, textarea, select {
+    background: #1a1a2e;
+    border: 1px solid #2a2a3d;
+    color: white;
+    padding: 0.7rem 0.9rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-family: inherit;
+
+    &:focus {
+      outline: none;
+      border-color: #6c63ff;
+    }
+  }
+
+  textarea { resize: vertical; }
+}
+
+.hint {
+  font-size: 0.76rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.section-label {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #d1d5db;
+  margin-bottom: 0.4rem;
+}
+
+.fields-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.field-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  .field-chip {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    background: #2a5f3f;
+    color: #d1fae5;
+    padding: 0.6rem 0.9rem;
+    border-radius: 6px;
+    font-size: 0.88rem;
+
+    // Couleur discriminante pour les champs IMAGE (palette indigo).
+    &.field-chip-image {
+      background: #312b5c;
+      color: #c7b8ff;
+    }
+  }
+
+  .btn-type-toggle {
+    width: auto;
+    padding: 0 0.7rem;
+    background: #2a2a3d;
+    color: #d1d5db;
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+
+    &:hover { background: #363650; color: white; }
+  }
+
+  .type-select {
+    background: #1a1a2e;
+    border: 1px solid #2a2a3d;
+    color: white;
+    padding: 0 0.6rem;
+    height: 36px;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    cursor: pointer;
+
+    &:focus { outline: none; border-color: #6c63ff; }
+  }
+
+  input {
+    flex: 1;
+    background: #1a1a2e;
+    border: 1px solid #2a2a3d;
+    color: white;
+    padding: 0.6rem 0.9rem;
+    border-radius: 6px;
+    font-size: 0.88rem;
+
+    &:focus {
+      outline: none;
+      border-color: #6c63ff;
+    }
+  }
+
+  &.add-row { margin-top: 0.5rem; }
+}
+
+.btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: #3f1f1f;
+  color: #fca5a5;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover { background: #5a2a2a; }
+}
+
+.btn-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: #6c63ff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover { background: #5a52e0; }
+}
+
+.btn-primary, .btn-secondary {
+  padding: 0.65rem 1.2rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.btn-primary {
+  background: #6c63ff;
+  color: white;
+
+  &:hover:not(:disabled) { background: #5a52e0; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.btn-secondary {
+  background: #2a2a3d;
+  color: #d1d5db;
+
+  &:hover { background: #363650; }
+}

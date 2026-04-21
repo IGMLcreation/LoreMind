@@ -1,0 +1,67 @@
+<div class="page" *ngIf="node">
+
+  <header class="page-header">
+    <div>
+      <h1>Éditer le dossier</h1>
+      <p class="subtitle">
+        {{ childFolderCount }} sous-dossier(s) · {{ pageCount }} page(s)
+      </p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn-secondary" (click)="cancel()">Annuler</button>
+      <button
+        type="button"
+        class="btn-danger"
+        [disabled]="!canDelete"
+        [title]="canDelete ? 'Supprimer le dossier' : 'Impossible : le dossier contient des éléments'"
+        (click)="delete()">
+        Supprimer
+      </button>
+      <button
+        type="submit"
+        class="btn-primary"
+        [disabled]="form.invalid"
+        (click)="save()">
+        Sauvegarder
+      </button>
+    </div>
+  </header>
+
+  <form [formGroup]="form" class="edit-form">
+
+    <div class="field">
+      <label>Nom du dossier *</label>
+      <input type="text" formControlName="name" />
+    </div>
+
+    <div class="field">
+      <label>Dossier parent <span class="optional">(optionnel)</span></label>
+      <select formControlName="parentId">
+        <option value="">— Racine du Lore —</option>
+        <option *ngFor="let parent of availableParents" [value]="parent.id">{{ parent.name }}</option>
+      </select>
+      <p class="hint">Vous ne pouvez pas choisir un sous-dossier du dossier courant (cycle interdit)</p>
+    </div>
+
+    <div class="field">
+      <label>Icône</label>
+      <div class="icon-grid">
+        <button
+          type="button"
+          class="icon-btn"
+          *ngFor="let option of iconOptions"
+          [class.selected]="selectedIcon === option.key"
+          (click)="selectIcon(option.key)">
+          <lucide-icon [img]="option.icon" [size]="18"></lucide-icon>
+        </button>
+      </div>
+    </div>
+
+    <div class="info-box" *ngIf="!canDelete">
+      ⚠️ Pour supprimer ce dossier, videz-le d'abord : déplacez ou supprimez ses
+      {{ childFolderCount }} sous-dossier(s) et ses {{ pageCount }} page(s).
+    </div>
+
+  </form>
+
+</div>

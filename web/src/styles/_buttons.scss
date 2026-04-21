@@ -1,0 +1,100 @@
+// ==========================================================================
+// Boutons partagés
+// --------------------------------------------------------------------------
+// Style canonique utilisé par TOUS les écrans "create" et "edit" (formulaires).
+// Extrait ici pour éliminer la duplication qui existait dans 16+ composants.
+//
+// Usage standard (formulaire plein pot) :
+//   <button class="btn-primary">Sauvegarder</button>
+//
+// Variante compacte (headers avec juste 2 boutons alignés) :
+//   <button class="btn-primary btn-sm">Modifier</button>
+//
+// Bouton avec icône Lucide :
+//   <button class="btn-primary btn-icon">...</button>
+// ==========================================================================
+
+.btn-primary {
+  padding: 0.85rem 1.5rem;
+  background: #6c63ff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover:not(:disabled) { background: #5b52e0; }
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
+}
+
+.btn-secondary {
+  padding: 0.85rem 1.5rem;
+  background: #1f2937;
+  color: #d1d5db;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover:not(:disabled) { background: #374151; }
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
+}
+
+.btn-danger {
+  padding: 0.85rem 1.25rem;
+  background: transparent;
+  color: #ef4444;
+  border: 1px solid #7f1d1d;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+
+  &:hover:not(:disabled) { background: #7f1d1d; color: white; }
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
+}
+
+// Bouton "Assistant IA" des headers — tonalité violette, cohérent avec le drawer.
+// Variante `.active` appliquée quand le drawer est ouvert (feedback visuel).
+.btn-ai {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1.1rem;
+  background: transparent;
+  color: #a5b4fc;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+
+  &:hover:not(:disabled) { background: #1f2937; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+  &.active {
+    background: #1f2937;
+    border-color: #6c63ff;
+    color: white;
+  }
+}
+
+// --------------------------------------------------------------------------
+// Modificateurs combinables
+// --------------------------------------------------------------------------
+
+// Variante compacte pour les barres d'actions de header (détail, edit inline).
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+}
+
+// Alignement flex pour boutons qui contiennent un `<lucide-icon>` + texte.
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}

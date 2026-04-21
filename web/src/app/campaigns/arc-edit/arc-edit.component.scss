@@ -1,0 +1,34 @@
+.edit-page {
+  padding: 2.5rem 2rem;
+  max-width: 640px;
+}
+
+// Header local : titre à gauche, actions (Assistant IA) à droite.
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+
+  .header-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+}
+
+// Formulaire vertical classique.
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+// Override local : dans ce header, le bouton Supprimer est poussé à droite
+// via margin-left auto (les boutons Annuler/Sauvegarder restent groupés à gauche).
+// Styles de base fournis globalement par @app/styles/_buttons.scss (.btn-danger).
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: auto;
+}

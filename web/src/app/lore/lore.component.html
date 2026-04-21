@@ -1,0 +1,42 @@
+<div class="lore-page">
+
+  <div class="lore-hero">
+    <lucide-icon [img]="BookOpen" [size]="56" class="hero-icon"></lucide-icon>
+    <h1>Vos Univers</h1>
+    <p class="hero-subtitle">Sélectionnez un lore existant ou créez un nouvel univers</p>
+  </div>
+
+  <div class="lore-grid">
+
+    <div class="lore-card" *ngFor="let lore of lores" (click)="navigateToDetail(lore.id!)">
+      <div class="card-header">
+        <lucide-icon [img]="Folder" [size]="20" class="card-icon"></lucide-icon>
+        <span class="card-date">Il y a 2h</span>
+      </div>
+      <h2>{{ lore.name }}</h2>
+      <p class="card-description">{{ lore.description }}</p>
+      <div class="card-stats">
+        <span>📄 {{ lore.pageCount || 0 }} pages</span>
+        <span>🌳 {{ lore.nodeCount || 0 }} dossiers</span>
+      </div>
+    </div>
+
+    <div class="lore-card card-new" (click)="openCreateModal()">
+      <div class="new-icon">
+        <lucide-icon [img]="Plus" [size]="20"></lucide-icon>
+      </div>
+      <h2>Nouveau Lore</h2>
+      <p class="card-description">Créez un nouvel univers</p>
+    </div>
+
+  </div>
+
+  <p class="tip">💡 Astuce : Utilisez les templates pour structurer votre univers de manière cohérente</p>
+
+</div>
+
+<app-lore-create
+  *ngIf="showCreateModal"
+  (close)="onModalClose()"
+  (created)="onLoreCreated($event)">
+</app-lore-create>

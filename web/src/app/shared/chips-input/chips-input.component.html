@@ -1,0 +1,15 @@
+<div class="chips-wrapper">
+  <span class="chip" *ngFor="let tag of value; let i = index">
+    {{ tag }}
+    <button type="button" class="chip-remove" (click)="remove(i)" title="Retirer">
+      <lucide-icon [img]="X" [size]="12"></lucide-icon>
+    </button>
+  </span>
+  <input
+    type="text"
+    class="chip-input"
+    [placeholder]="placeholder"
+    [(ngModel)]="current"
+    (keydown)="onKeyDown($event)"
+    (blur)="add()" />
+</div>

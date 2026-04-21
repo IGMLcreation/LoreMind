@@ -1,0 +1,47 @@
+<!-- Grille de vignettes + uploader si editable. -->
+<div class="gallery"
+     *ngIf="imageIds.length > 0 || editable; else empty">
+
+  <div class="gallery-tile"
+       *ngFor="let id of imageIds"
+       (click)="openLightbox(id)"
+       role="button"
+       tabindex="0">
+    <img [src]="urlFor(id)" [alt]="'Illustration ' + id" loading="lazy" />
+
+    <button type="button"
+            class="gallery-remove"
+            *ngIf="editable"
+            (click)="remove(id, $event)"
+            aria-label="Retirer cette image">
+      <lucide-icon [img]="X" [size]="14"></lucide-icon>
+    </button>
+  </div>
+
+  <!-- Bouton + (uploader compact), uniquement en mode edition -->
+  <app-image-uploader
+    *ngIf="editable"
+    [compact]="true"
+    (uploaded)="onUploaded($event)">
+  </app-image-uploader>
+</div>
+
+<!-- Etat vide (lecture uniquement). -->
+<ng-template #empty>
+  <div class="gallery-empty">
+    <lucide-icon [img]="ImageIcon" [size]="20"></lucide-icon>
+    <span>Aucune illustration</span>
+  </div>
+</ng-template>
+
+<!-- Lightbox : image plein ecran sur fond noir, clic pour fermer. -->
+<div class="lightbox-backdrop"
+     *ngIf="lightboxId"
+     (click)="closeLightbox()"
+     role="dialog"
+     aria-label="Image en plein ecran">
+  <img [src]="urlFor(lightboxId)" alt="Image agrandie" class="lightbox-image" />
+  <button type="button" class="lightbox-close" (click)="closeLightbox()" aria-label="Fermer">
+    <lucide-icon [img]="X" [size]="24"></lucide-icon>
+  </button>
+</div>

@@ -1,0 +1,65 @@
+<div class="view-page" *ngIf="page">
+
+  <app-breadcrumb [items]="breadcrumbItems"></app-breadcrumb>
+
+  <header class="view-header">
+    <div>
+      <h1>{{ page.title }}</h1>
+      <p class="view-subtitle">{{ template?.name || 'Page' }}</p>
+    </div>
+    <div class="view-actions">
+      <button type="button" class="btn-primary" (click)="editMode()">
+        <lucide-icon [img]="Pencil" [size]="14"></lucide-icon>
+        Modifier
+      </button>
+    </div>
+  </header>
+
+  <!-- Champs dynamiques du template (seuls les champs TEXT sont rendus ici ;
+       le support complet des champs IMAGE arrive a l'etape 5). -->
+  <ng-container *ngIf="template?.fields?.length">
+    <ng-container *ngFor="let field of template!.fields">
+      <section class="view-section" *ngIf="field.type === 'TEXT'">
+        <h2 class="view-section-title">{{ field.name }}</h2>
+        <p class="view-section-body" *ngIf="valueOf(field.name); else emptyField">{{ valueOf(field.name) }}</p>
+        <ng-template #emptyField>
+          <p class="view-section-empty">Non renseigné</p>
+        </ng-template>
+      </section>
+      <section class="view-section" *ngIf="field.type === 'IMAGE'">
+        <h2 class="view-section-title">{{ field.name }}</h2>
+        <app-image-gallery [imageIds]="imageIdsOf(field.name)"></app-image-gallery>
+      </section>
+    </ng-container>
+  </ng-container>
+
+  <!-- Tags -->
+  <section class="view-section" *ngIf="(page.tags?.length ?? 0) > 0">
+    <h2 class="view-section-title">Tags</h2>
+    <div class="view-chips">
+      <span class="view-chip view-chip--tag" *ngFor="let tag of page.tags">{{ tag }}</span>
+    </div>
+  </section>
+
+  <!-- Pages liées -->
+  <section class="view-section" *ngIf="(page.relatedPageIds?.length ?? 0) > 0">
+    <h2 class="view-section-title">Pages liées</h2>
+    <div class="view-chips">
+      <a class="view-chip"
+         *ngFor="let relId of page.relatedPageIds"
+         [routerLink]="['/lore', loreId, 'pages', relId]">
+        {{ titleOfRelated(relId) }}
+      </a>
+    </div>
+  </section>
+
+  <!-- Notes privées MJ -->
+  <section class="view-section view-section--private" *ngIf="page.notes?.trim()">
+    <h2 class="view-section-title">
+      <span class="view-section-icon">🔒</span>
+      Notes privées
+    </h2>
+    <p class="view-section-body">{{ page.notes }}</p>
+  </section>
+
+</div>

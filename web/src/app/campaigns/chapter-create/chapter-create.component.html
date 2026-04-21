@@ -1,0 +1,38 @@
+<div class="chapter-create-page">
+
+  <div class="page-header">
+    <h1>Créer un nouveau chapitre</h1>
+    <p class="arc-ref" *ngIf="arcName">Arc : {{ arcName }}</p>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="chapter-form">
+
+    <div class="field">
+      <label>Nom du chapitre *</label>
+      <input
+        type="text"
+        formControlName="name"
+        placeholder="Ex: Chapitre 1: Les Disparitions"
+        [class.invalid]="form.get('name')?.invalid && form.get('name')?.touched"
+      />
+    </div>
+
+    <div class="field">
+      <label>Description</label>
+      <textarea
+        formControlName="description"
+        placeholder="Décrivez ce chapitre..."
+        rows="5">
+      </textarea>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn-primary" [disabled]="form.invalid">
+        Créer le chapitre
+      </button>
+      <button type="button" class="btn-secondary" (click)="cancel()">Annuler</button>
+    </div>
+
+  </form>
+
+</div>

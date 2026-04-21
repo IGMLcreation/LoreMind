@@ -1,0 +1,71 @@
+<div class="node-create-page">
+
+  <div class="page-header">
+    <h1>Créer un nouveau dossier</h1>
+    <p class="subtitle">Les dossiers permettent d'organiser vos pages par catégorie</p>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="node-form">
+
+    <div class="field">
+      <label>Nom du dossier *</label>
+      <input
+        type="text"
+        formControlName="name"
+        placeholder="Ex: Personnages, Créatures..."
+        [class.invalid]="form.get('name')?.invalid && form.get('name')?.touched"
+      />
+    </div>
+
+    <div class="field">
+      <label>Dossier parent <span class="optional">(optionnel)</span></label>
+      <select formControlName="parentId">
+        <option value="">— Racine du Lore —</option>
+        <option *ngFor="let parent of availableParents" [value]="parent.id">{{ parent.name }}</option>
+      </select>
+      <p class="hint">Laissez vide pour créer un dossier à la racine du lore</p>
+    </div>
+
+    <div class="field">
+      <label>Icône</label>
+      <div class="icon-grid">
+        <button
+          type="button"
+          class="icon-btn"
+          *ngFor="let option of iconOptions"
+          [class.selected]="selectedIcon === option.key"
+          (click)="selectIcon(option.key)">
+          <lucide-icon [img]="option.icon" [size]="18"></lucide-icon>
+        </button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Description <span class="optional">(optionnel)</span></label>
+      <textarea
+        formControlName="description"
+        placeholder="Décrivez le type de contenu que ce dossier contiendra..."
+        rows="4">
+      </textarea>
+    </div>
+
+    <div class="field">
+      <label>Adresse</label>
+      <input
+        type="text"
+        formControlName="address"
+        placeholder="nom-du-dossier"
+      />
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn-primary" [disabled]="form.invalid">
+        <lucide-icon [img]="getIcon(selectedIcon)" [size]="16"></lucide-icon>
+        Créer le dossier
+      </button>
+      <button type="button" class="btn-secondary" (click)="cancel()">Annuler</button>
+    </div>
+
+  </form>
+
+</div>
