@@ -37,7 +37,7 @@ from app.infrastructure.onemin_adapter import OneMinAiLLMProvider
 app = FastAPI(
     title="LoreMind Brain",
     description="Backend IA pour la génération de contenu narratif.",
-    version="0.2.0",
+    version="0.3.0",
 )
 
 
