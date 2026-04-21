@@ -5,6 +5,7 @@ import com.loremind.domain.campaigncontext.ports.CampaignRepository;
 import com.loremind.domain.generationcontext.CampaignStructuralContext;
 import com.loremind.domain.generationcontext.ChatMessage;
 import com.loremind.domain.generationcontext.ChatRequest;
+import com.loremind.domain.generationcontext.ChatUsage;
 import com.loremind.domain.generationcontext.LoreStructuralContext;
 import com.loremind.domain.generationcontext.NarrativeEntityContext;
 import com.loremind.domain.generationcontext.ports.AiChatProvider;
@@ -65,6 +66,7 @@ public class StreamChatForCampaignUseCase {
             String entityType,
             String entityId,
             List<ChatMessage> messages,
+            Consumer<ChatUsage> onUsage,
             Consumer<String> onToken,
             Runnable onComplete,
             Consumer<Throwable> onError) {
@@ -84,7 +86,7 @@ public class StreamChatForCampaignUseCase {
                 .narrativeEntity(narrativeEntity)
                 .build();
 
-        aiChatProvider.streamChat(request, onToken, onComplete, onError);
+        aiChatProvider.streamChat(request, onUsage, onToken, onComplete, onError);
     }
 
     /**

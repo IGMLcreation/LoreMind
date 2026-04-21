@@ -16,7 +16,19 @@ export interface ChatMessage {
  * - done  : le stream s'est terminé proprement (l'observable va compléter).
  * - error : une erreur s'est produite côté serveur (l'observable va erreur-compléter).
  */
+/**
+ * Instantané d'occupation de la fenêtre de contexte (émis 1x par tour, avant le streaming).
+ * Les valeurs sont exprimées en tokens (~cl100k_base, ±10% vs tokenizer natif du modèle).
+ */
+export interface ChatUsage {
+  system: number;
+  history: number;
+  current: number;
+  max: number;
+}
+
 export type ChatStreamEvent =
+  | { type: 'usage'; usage: ChatUsage }
   | { type: 'token'; value: string }
   | { type: 'done' }
   | { type: 'error'; message: string };
@@ -128,12 +140,19 @@ export class AiChatService {
 
     const dispatchCurrentEvent = () => {
       const eventName = currentEvent ?? 'message';
+      // DEBUG jauge de contexte — à retirer une fois stabilisé.
+      if (eventName !== 'message') {
+        console.log('[AiChatService] SSE event:', eventName, 'data:', currentData);
+      }
       if (eventName === 'error') {
         const message = this.safeParseMessage(currentData);
         subscriber.error(new Error(message));
       } else if (eventName === 'done') {
         subscriber.next({ type: 'done' });
         subscriber.complete();
+      } else if (eventName === 'usage') {
+        const usage = this.safeParseUsage(currentData);
+        if (usage) subscriber.next({ type: 'usage', usage });
       } else {
         // Événement 'message' (défaut) : JSON {"token": "..."}
         const token = this.safeParseToken(currentData);
@@ -183,6 +202,23 @@ export class AiChatService {
     try {
       const obj = JSON.parse(json) as { token?: string };
       return typeof obj.token === 'string' ? obj.token : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private safeParseUsage(json: string): ChatUsage | null {
+    try {
+      const obj = JSON.parse(json) as Partial<ChatUsage>;
+      if (
+        typeof obj.system === 'number' &&
+        typeof obj.history === 'number' &&
+        typeof obj.current === 'number' &&
+        typeof obj.max === 'number'
+      ) {
+        return { system: obj.system, history: obj.history, current: obj.current, max: obj.max };
+      }
+      return null;
     } catch {
       return null;
     }

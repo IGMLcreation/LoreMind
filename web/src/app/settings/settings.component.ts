@@ -42,6 +42,18 @@ export class SettingsComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
 
+  /**
+   * Fenetre de contexte max supportee par le modele Ollama actuellement
+   * selectionne (extraite des metadonnees GGUF via /api/show). 0 si inconnue
+   * — dans ce cas on laisse un fallback de 131072 cote UI.
+   */
+  ollamaModelMaxContext = 0;
+
+  /** Minimum raisonnable pour num_ctx (defaut Ollama = 2048). */
+  readonly CTX_MIN = 2048;
+  /** Fallback si Ollama ne renvoie pas le context_length (modele exotique). */
+  readonly CTX_FALLBACK_MAX = 131072;
+
   /** Cle 1min.ai saisie — vide = on ne touche pas a la cle persistee. */
   oneminApiKeyInput = '';
   /** True si l'utilisateur a coche "effacer la cle". */
@@ -61,6 +73,7 @@ export class SettingsComponent implements OnInit {
       next: (s) => {
         this.settings = { ...s };
         this.refreshModels();
+        this.fetchOllamaModelInfo();
       },
       error: (err) => this.errorMessage = this.extractError(err, 'Impossible de charger les parametres.')
     });
@@ -99,6 +112,31 @@ export class SettingsComponent implements OnInit {
     return group ? group.models : [];
   }
 
+  /**
+   * Recupere la fenetre max supportee par le modele Ollama selectionne.
+   * Si la valeur courante de num_ctx depasse ce max, on la clamp.
+   */
+  fetchOllamaModelInfo(): void {
+    if (!this.settings || this.settings.llm_provider !== 'ollama') return;
+    const modelName = this.settings.llm_model;
+    if (!modelName) return;
+    this.settingsService.getOllamaModelInfo(modelName).subscribe({
+      next: (info) => {
+        this.ollamaModelMaxContext = info.context_length;
+        const max = this.effectiveMaxContext;
+        if (this.settings && this.settings.llm_num_ctx > max) {
+          this.settings.llm_num_ctx = max;
+        }
+      },
+      error: () => this.ollamaModelMaxContext = 0
+    });
+  }
+
+  /** Max effectif a afficher pour le slider (modele Ollama ou fallback). */
+  get effectiveMaxContext(): number {
+    return this.ollamaModelMaxContext > 0 ? this.ollamaModelMaxContext : this.CTX_FALLBACK_MAX;
+  }
+
   /** Quand on change de fournisseur, bascule automatiquement sur son premier modele. */
   onProviderChange(): void {
     if (!this.settings) return;
@@ -118,7 +156,8 @@ export class SettingsComponent implements OnInit {
       llm_provider: this.settings.llm_provider,
       ollama_base_url: this.settings.ollama_base_url,
       llm_model: this.settings.llm_model,
-      onemin_model: this.settings.onemin_model
+      onemin_model: this.settings.onemin_model,
+      llm_num_ctx: this.settings.llm_num_ctx
     };
     if (this.clearApiKey) {
       patch.onemin_api_key = '';

@@ -163,20 +163,6 @@
   align-items: center;
   gap: 0.6rem;
   padding: 0.5rem 0;
-
-  // Fade gauche/droite pour signaler clairement "ca defile".
-  &::before,
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 48px;
-    pointer-events: none;
-    z-index: 3;
-  }
-  &::before { left: 48px;  background: linear-gradient(to right, #0f0f1e 0%, transparent 100%); }
-  &::after  { right: 48px; background: linear-gradient(to left,  #0f0f1e 0%, transparent 100%); }
 }
 
 .carousel-track {

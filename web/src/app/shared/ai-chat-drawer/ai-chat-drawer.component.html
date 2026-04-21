@@ -1,81 +1,148 @@
-<aside class="drawer" [class.drawer-open]="isOpen" aria-label="Assistant IA">
+<aside class="drawer" [class.drawer-open]="isOpen" [class.with-sidebar]="persistent && sidebarOpen" aria-label="Assistant IA">
 
-  <header class="drawer-header">
-    <h2>Assistant IA</h2>
-    <button type="button" class="close-btn" (click)="onClose()" aria-label="Fermer">
-      <lucide-icon [img]="X" [size]="18"></lucide-icon>
-    </button>
-  </header>
-
-  <div #messagesContainer class="messages">
-    <!-- Message d'accueil (non-stocké dans `messages`, toujours visible tant que la conversation est vide). -->
-    <div class="msg msg-assistant" *ngIf="messages.length === 0 && !currentAssistantText">
-      {{ welcomeMessage }}
-    </div>
-
-    <!-- Historique -->
-    <ng-container *ngFor="let m of messages">
-      <div class="msg" [class.msg-user]="m.role === 'user'" [class.msg-assistant]="m.role === 'assistant'">
-        {{ m.content }}
-      </div>
-    </ng-container>
-
-    <!-- Bulle en cours de streaming -->
-    <div class="msg msg-assistant msg-streaming" *ngIf="currentAssistantText">
-      {{ currentAssistantText }}<span class="caret"></span>
-    </div>
-
-    <!-- Indicateur pendant la phase "en train de réfléchir" (avant le premier token) -->
-    <div class="typing-indicator" *ngIf="isStreaming && !currentAssistantText" aria-live="polite">
-      <span></span><span></span><span></span>
-    </div>
-
-    <!-- Erreur locale au drawer -->
-    <div class="msg msg-error" *ngIf="errorMessage" role="alert">
-      {{ errorMessage }}
-    </div>
-  </div>
-
-  <!-- Action primaire (optionnelle) : ne passe PAS par le chat -->
-  <div class="primary-action" *ngIf="primaryAction">
-    <button
-      type="button"
-      class="primary-btn"
-      (click)="onPrimaryAction()"
-      [disabled]="isStreaming">
-      <lucide-icon [img]="Wand2" [size]="14"></lucide-icon>
-      {{ primaryAction.label }}
-    </button>
-  </div>
-
-  <!-- Suggestions rapides -->
-  <div class="quick-suggestions" *ngIf="quickSuggestions.length">
-    <p class="quick-label">Suggestions rapides :</p>
-    <div class="quick-list">
-      <button
-        type="button"
-        class="quick-btn"
-        *ngFor="let s of quickSuggestions"
-        (click)="useQuickSuggestion(s)"
-        [disabled]="isStreaming">
-        <lucide-icon [img]="Lightbulb" [size]="12"></lucide-icon>
-        {{ s }}
+  <!-- Sidebar conversations (mode persistent uniquement) -->
+  <section class="conv-sidebar" *ngIf="persistent && sidebarOpen" aria-label="Conversations">
+    <div class="conv-sidebar-header">
+      <span class="conv-sidebar-title">Conversations</span>
+      <button type="button" class="conv-new-btn" (click)="startNewConversation()" [disabled]="isStreaming" title="Nouvelle conversation">
+        <lucide-icon [img]="MessageSquarePlus" [size]="16"></lucide-icon>
       </button>
     </div>
-  </div>
+    <ul class="conv-list">
+      <li *ngIf="conversations.length === 0" class="conv-empty">Aucune conversation</li>
+      <li
+        *ngFor="let c of conversations"
+        class="conv-item"
+        [class.active]="c.id === currentConversationId"
+        (click)="selectConversation(c)">
+        <span class="conv-item-title">{{ c.title }}</span>
+        <button
+          type="button"
+          class="conv-item-del"
+          (click)="deleteConversation(c, $event)"
+          [disabled]="isStreaming"
+          title="Supprimer">
+          <lucide-icon [img]="Trash2" [size]="12"></lucide-icon>
+        </button>
+      </li>
+    </ul>
+  </section>
 
-  <!-- Zone de saisie -->
-  <form class="input-row" (ngSubmit)="send()">
-    <input
-      type="text"
-      [(ngModel)]="input"
-      name="chatInput"
-      placeholder="Posez une question..."
-      [disabled]="isStreaming"
-      autocomplete="off" />
-    <button type="submit" class="send-btn" [disabled]="!input.trim() || isStreaming" aria-label="Envoyer">
-      <lucide-icon [img]="Send" [size]="16"></lucide-icon>
-    </button>
-  </form>
+  <section class="conv-main">
 
+    <header class="drawer-header">
+      <button
+        *ngIf="persistent"
+        type="button"
+        class="sidebar-toggle"
+        (click)="toggleSidebar()"
+        [attr.aria-label]="sidebarOpen ? 'Masquer la liste' : 'Afficher la liste'"
+        [title]="sidebarOpen ? 'Masquer la liste' : 'Afficher la liste'">
+        <lucide-icon [img]="sidebarOpen ? PanelLeftClose : PanelLeftOpen" [size]="16"></lucide-icon>
+      </button>
+
+      <div class="header-title-wrap">
+        <ng-container *ngIf="persistent && currentConversationId; else defaultTitle">
+          <ng-container *ngIf="!editingTitle; else editingTpl">
+            <h2 class="header-title" [title]="currentTitle">{{ currentTitle || 'Nouvelle conversation' }}</h2>
+            <button type="button" class="rename-btn" (click)="startRenameTitle()" title="Renommer" aria-label="Renommer">
+              <lucide-icon [img]="Pencil" [size]="12"></lucide-icon>
+            </button>
+          </ng-container>
+          <ng-template #editingTpl>
+            <input
+              class="rename-input"
+              type="text"
+              [(ngModel)]="titleDraft"
+              (keyup.enter)="submitRenameTitle()"
+              (keyup.escape)="cancelRenameTitle()"
+              (blur)="submitRenameTitle()"
+              autofocus />
+          </ng-template>
+        </ng-container>
+        <ng-template #defaultTitle>
+          <h2 class="header-title">Assistant IA</h2>
+        </ng-template>
+      </div>
+
+      <button type="button" class="close-btn" (click)="onClose()" aria-label="Fermer">
+        <lucide-icon [img]="X" [size]="18"></lucide-icon>
+      </button>
+    </header>
+
+    <div class="context-gauge" *ngIf="usage" [attr.data-level]="usageLevel"
+         [attr.title]="'System: ' + usage.system + ' · Historique: ' + usage.history + ' · Courant: ' + usage.current + ' / ' + usage.max + ' tokens'">
+      <div class="gauge-bar">
+        <div class="gauge-fill" [style.width.%]="usagePercent"></div>
+      </div>
+      <div class="gauge-label">
+        <span class="gauge-text">Contexte : {{ usageTotal }} / {{ usage.max }} tokens</span>
+        <span class="gauge-percent">{{ usagePercent }}%</span>
+      </div>
+    </div>
+
+    <div #messagesContainer class="messages">
+      <div class="msg msg-assistant" *ngIf="messages.length === 0 && !currentAssistantText">
+        {{ welcomeMessage }}
+      </div>
+
+      <ng-container *ngFor="let m of messages">
+        <div class="msg" [class.msg-user]="m.role === 'user'" [class.msg-assistant]="m.role === 'assistant'">
+          {{ m.content }}
+        </div>
+      </ng-container>
+
+      <div class="msg msg-assistant msg-streaming" *ngIf="currentAssistantText">
+        {{ currentAssistantText }}<span class="caret"></span>
+      </div>
+
+      <div class="typing-indicator" *ngIf="isStreaming && !currentAssistantText" aria-live="polite">
+        <span></span><span></span><span></span>
+      </div>
+
+      <div class="msg msg-error" *ngIf="errorMessage" role="alert">
+        {{ errorMessage }}
+      </div>
+    </div>
+
+    <div class="primary-action" *ngIf="primaryAction">
+      <button
+        type="button"
+        class="primary-btn"
+        (click)="onPrimaryAction()"
+        [disabled]="isStreaming">
+        <lucide-icon [img]="Wand2" [size]="14"></lucide-icon>
+        {{ primaryAction.label }}
+      </button>
+    </div>
+
+    <div class="quick-suggestions" *ngIf="quickSuggestions.length">
+      <p class="quick-label">Suggestions rapides :</p>
+      <div class="quick-list">
+        <button
+          type="button"
+          class="quick-btn"
+          *ngFor="let s of quickSuggestions"
+          (click)="useQuickSuggestion(s)"
+          [disabled]="isStreaming">
+          <lucide-icon [img]="Lightbulb" [size]="12"></lucide-icon>
+          {{ s }}
+        </button>
+      </div>
+    </div>
+
+    <form class="input-row" (ngSubmit)="send()">
+      <input
+        type="text"
+        [(ngModel)]="input"
+        name="chatInput"
+        placeholder="Posez une question..."
+        [disabled]="isStreaming"
+        autocomplete="off" />
+      <button type="submit" class="send-btn" [disabled]="!input.trim() || isStreaming" aria-label="Envoyer">
+        <lucide-icon [img]="Send" [size]="16"></lucide-icon>
+      </button>
+    </form>
+
+  </section>
 </aside>

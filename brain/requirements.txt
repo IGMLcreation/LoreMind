@@ -4,3 +4,9 @@ httpx==0.27.*
 pydantic-settings==2.6.*
 
 pydantic
+
+# Comptage de tokens pour la jauge de contexte (UI chat drawer).
+# L'encodage cl100k_base (GPT-4/3.5) donne une approximation correcte pour
+# la plupart des modeles Llama/Gemma/Mistral (~5-10% d'ecart) — suffisant
+# pour une jauge visuelle.
+tiktoken==0.8.*

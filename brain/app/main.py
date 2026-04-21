@@ -9,6 +9,7 @@ from typing import Annotated, AsyncIterator, Literal
 
 import hmac
 import httpx
+import tiktoken
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
@@ -37,8 +38,25 @@ from app.infrastructure.onemin_adapter import OneMinAiLLMProvider
 app = FastAPI(
     title="LoreMind Brain",
     description="Backend IA pour la génération de contenu narratif.",
-    version="0.3.0",
+    version="0.4.0",
 )
+
+
+# Encodeur tiktoken partagé — chargé une fois pour éviter le coût de lookup
+# à chaque requête. On utilise cl100k_base (GPT-3.5/4) comme tokenizer
+# universel approximatif : ±10% d'écart avec Llama/Gemma mais largement
+# suffisant pour une jauge visuelle à l'utilisateur.
+_TOKEN_ENCODER: tiktoken.Encoding | None = None
+
+
+def _count_tokens(text: str | None) -> int:
+    """Compte les tokens d'un texte via tiktoken. Null/empty → 0."""
+    if not text:
+        return 0
+    global _TOKEN_ENCODER
+    if _TOKEN_ENCODER is None:
+        _TOKEN_ENCODER = tiktoken.get_encoding("cl100k_base")
+    return len(_TOKEN_ENCODER.encode(text))
 
 
 # Chemins exemptes d'auth inter-service : healthcheck docker + introspection
@@ -335,7 +353,32 @@ async def chat_stream(
     campaign_context = _to_campaign_context(body.campaign_context)
     narrative_entity = _to_narrative_entity(body.narrative_entity)
 
+    # --- Comptage tokens pour la jauge de contexte frontend ---
+    # On construit le system prompt une fois ici pour le compter — le use case
+    # le reconstruira à l'identique en interne (coût négligeable : concat de str).
+    # Cette duplication évite de complexifier le contrat stream() avec un
+    # paramètre optionnel system_prompt précalculé.
+    system_prompt_preview = use_case.build_system_prompt(
+        lore_context=lore_context,
+        page_context=page_context,
+        campaign_context=campaign_context,
+        narrative_entity=narrative_entity,
+    )
+    # Dernier message = "current" (souvent user), le reste = historique accumulé.
+    current_msg = messages[-1] if messages else None
+    history_msgs = messages[:-1] if messages else []
+    settings = get_settings()
+    usage_payload = {
+        "system": _count_tokens(system_prompt_preview),
+        "history": sum(_count_tokens(m.content) for m in history_msgs),
+        "current": _count_tokens(current_msg.content) if current_msg else 0,
+        "max": settings.llm_num_ctx,
+    }
+
     async def event_stream() -> AsyncIterator[str]:
+        # Event 'usage' émis en tout premier : le frontend peut afficher la
+        # jauge avant même le premier token de réponse.
+        yield f"event: usage\ndata: {json.dumps(usage_payload, ensure_ascii=False)}\n\n"
         try:
             async for token in use_case.stream(
                 messages,
@@ -351,6 +394,60 @@ async def chat_stream(
             yield f"event: error\ndata: {json.dumps({'message': str(exc)})}\n\n"
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
+
+
+# --- Auto-titre d'une conversation persistee --------------------------------
+
+
+class SummarizeTitleMessageDTO(BaseModel):
+    role: Literal["user", "assistant", "system"]
+    content: str
+
+
+class SummarizeTitleRequestDTO(BaseModel):
+    """Premiers messages d'une conversation pour auto-generer un titre court."""
+
+    messages: list[SummarizeTitleMessageDTO] = Field(default_factory=list)
+
+
+class SummarizeTitleResponseDTO(BaseModel):
+    title: str
+
+
+_TITLE_SYSTEM_PROMPT = (
+    "Tu generes un titre court (4 a 7 mots max) qui resume le sujet de la "
+    "conversation ci-dessous. Reponds UNIQUEMENT par le titre, sans guillemets, "
+    "sans ponctuation finale, sans prefixe type 'Titre :'. Le titre doit etre "
+    "en francais et capturer le sujet metier (pas 'Conversation IA')."
+)
+
+
+@app.post("/summarize/conversation-title", response_model=SummarizeTitleResponseDTO)
+async def summarize_conversation_title(
+    body: SummarizeTitleRequestDTO,
+    llm: Annotated[LLMProvider, Depends(get_llm_provider)],
+) -> SummarizeTitleResponseDTO:
+    """Genere un titre court a partir des premiers echanges de la conversation.
+
+    Appele par le core apres le 1er couple user/assistant, pour remplacer le
+    titre provisoire "Nouvelle conversation" par quelque chose de parlant.
+    """
+    if not body.messages:
+        raise HTTPException(status_code=422, detail="Au moins un message requis")
+
+    transcript = "\n".join(f"{m.role.upper()}: {m.content}" for m in body.messages[:6])
+    prompt = f"{_TITLE_SYSTEM_PROMPT}\n\nConversation :\n{transcript}\n\nTitre :"
+    try:
+        raw = await llm.generate(prompt)
+    except LLMProviderError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    title = raw.strip().splitlines()[0].strip().strip('"').strip("'").rstrip(".")
+    if len(title) > 80:
+        title = title[:80].rstrip()
+    if not title:
+        title = "Nouvelle conversation"
+    return SummarizeTitleResponseDTO(title=title)
 
 
 # --- Mapping DTO → domaine (frontière HTTP) ---------------------------------
@@ -449,6 +546,9 @@ class SettingsDTO(BaseModel):
     onemin_model: str
     # True si une cle 1min.ai est deja configuree — pas de leak de la cle elle-meme.
     onemin_api_key_set: bool
+    # Fenetre de contexte effective passee au modele (num_ctx Ollama) — sert
+    # aussi de plafond a la jauge de contexte UI.
+    llm_num_ctx: int
 
 
 class SettingsUpdateDTO(BaseModel):
@@ -460,6 +560,7 @@ class SettingsUpdateDTO(BaseModel):
     onemin_model: str | None = None
     # Chaine vide => on efface la cle. None => pas de changement.
     onemin_api_key: str | None = None
+    llm_num_ctx: int | None = None
 
 
 def _to_settings_dto(s: Settings) -> SettingsDTO:
@@ -469,6 +570,7 @@ def _to_settings_dto(s: Settings) -> SettingsDTO:
         llm_model=s.llm_model,
         onemin_model=s.onemin_model,
         onemin_api_key_set=bool(s.onemin_api_key),
+        llm_num_ctx=s.llm_num_ctx,
     )
 
 
@@ -510,6 +612,50 @@ async def list_ollama_models(
         return {"models": []}
     models = [m.get("name", "") for m in data.get("models", []) if m.get("name")]
     return {"models": sorted(models)}
+
+
+class OllamaModelInfoDTO(BaseModel):
+    """Info utile extraite de /api/show pour un modele Ollama donne.
+
+    `context_length` = fenetre de contexte max supportee par le modele
+    (extraite des metadonnees GGUF). 0 si inconnue. Le frontend s'en sert
+    pour borner le slider de num_ctx dans les Parametres.
+    """
+
+    context_length: int = 0
+
+
+@app.post("/models/ollama/info", response_model=OllamaModelInfoDTO)
+async def get_ollama_model_info(
+    body: dict[str, str],
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> OllamaModelInfoDTO:
+    """Retourne les metadonnees d'un modele Ollama via /api/show.
+
+    On passe par POST (et pas GET /models/ollama/{name}) parce que les noms
+    Ollama contiennent souvent un `:` (ex: `gemma3:e2b`) qui se segmente
+    mal dans une URL — le body JSON evite le probleme d'escaping.
+
+    Le champ qui nous interesse est `model_info["<arch>.context_length"]`
+    (ex: `gemma3.context_length: 131072`). L'arch varie selon le modele, on
+    scanne donc tous les champs finissant par `.context_length`.
+    """
+    name = (body.get("name") or "").strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="name requis")
+    url = f"{settings.ollama_base_url}/api/show"
+    try:
+        async with httpx.AsyncClient(timeout=5) as client:
+            response = await client.post(url, json={"model": name})
+            response.raise_for_status()
+            data = response.json()
+    except httpx.HTTPError:
+        return OllamaModelInfoDTO(context_length=0)
+    model_info = data.get("model_info") or {}
+    for key, value in model_info.items():
+        if key.endswith(".context_length") and isinstance(value, int):
+            return OllamaModelInfoDTO(context_length=value)
+    return OllamaModelInfoDTO(context_length=0)
 
 
 @app.get("/models/onemin")

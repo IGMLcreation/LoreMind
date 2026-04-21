@@ -3,6 +3,7 @@ package com.loremind.infrastructure.web.controller;
 import com.loremind.application.generationcontext.StreamChatForCampaignUseCase;
 import com.loremind.application.generationcontext.StreamChatForLoreUseCase;
 import com.loremind.domain.generationcontext.ChatMessage;
+import com.loremind.domain.generationcontext.ChatUsage;
 import com.loremind.infrastructure.web.dto.generationcontext.ChatMessageDTO;
 import com.loremind.infrastructure.web.dto.generationcontext.ChatStreamCampaignRequestDTO;
 import com.loremind.infrastructure.web.dto.generationcontext.ChatStreamRequestDTO;
@@ -80,6 +81,7 @@ public class AiChatController {
         try {
             streamChatForLoreUseCase.execute(
                     loreId, pageId, messages,
+                    usage -> sendUsage(emitter, usage),
                     token -> sendToken(emitter, token),
                     () -> complete(emitter),
                     error -> fail(emitter, error));
@@ -100,6 +102,7 @@ public class AiChatController {
         try {
             streamChatForCampaignUseCase.execute(
                     campaignId, entityType, entityId, messages,
+                    usage -> sendUsage(emitter, usage),
                     token -> sendToken(emitter, token),
                     () -> complete(emitter),
                     error -> fail(emitter, error));
@@ -109,6 +112,18 @@ public class AiChatController {
     }
 
     // --- Helpers SSE (un seul point d'écriture par type d'événement) --------
+
+    private void sendUsage(SseEmitter emitter, ChatUsage usage) {
+        try {
+            String payload = "{\"system\":" + usage.system()
+                    + ",\"history\":" + usage.history()
+                    + ",\"current\":" + usage.current()
+                    + ",\"max\":" + usage.max() + "}";
+            emitter.send(SseEmitter.event().name("usage").data(payload));
+        } catch (IOException e) {
+            emitter.completeWithError(e);
+        }
+    }
 
     private void sendToken(SseEmitter emitter, String token) {
         try {

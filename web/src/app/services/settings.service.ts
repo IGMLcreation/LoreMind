@@ -12,6 +12,7 @@ export interface AppSettings {
   llm_model: string;
   onemin_model: string;
   onemin_api_key_set: boolean;
+  llm_num_ctx: number;
 }
 
 /**
@@ -24,6 +25,13 @@ export interface AppSettingsUpdate {
   llm_model?: string;
   onemin_model?: string;
   onemin_api_key?: string;
+  llm_num_ctx?: number;
+}
+
+/** Metadonnees d'un modele Ollama (issues de /api/show). */
+export interface OllamaModelInfo {
+  /** Fenetre de contexte max du modele (en tokens). 0 si inconnue. */
+  context_length: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -47,6 +55,11 @@ export class SettingsService {
 
   listOllamaModels(): Observable<{ models: string[] }> {
     return this.http.get<{ models: string[] }>(`${this.apiUrl}/models/ollama`, this.authOptions);
+  }
+
+  getOllamaModelInfo(name: string): Observable<OllamaModelInfo> {
+    return this.http.post<OllamaModelInfo>(
+      `${this.apiUrl}/models/ollama/info`, { name }, this.authOptions);
   }
 
   listOneMinModels(): Observable<{ groups: OneMinModelGroup[] }> {

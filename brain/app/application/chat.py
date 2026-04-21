@@ -81,6 +81,20 @@ class ChatUseCase:
         ):
             yield token
 
+    def build_system_prompt(
+        self,
+        lore_context: LoreStructuralContext | None = None,
+        page_context: PageContext | None = None,
+        campaign_context: CampaignStructuralContext | None = None,
+        narrative_entity: NarrativeEntityContext | None = None,
+    ) -> str:
+        """Version publique — utilisée par le controller HTTP pour compter
+        les tokens du system prompt avant de streamer (jauge de contexte).
+        """
+        return self._build_system_prompt(
+            lore_context, page_context, campaign_context, narrative_entity
+        )
+
     # --- Construction du system prompt --------------------------------------
 
     def _build_system_prompt(

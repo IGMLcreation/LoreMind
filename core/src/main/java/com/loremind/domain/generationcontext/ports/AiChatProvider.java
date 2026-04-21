@@ -1,6 +1,7 @@
 package com.loremind.domain.generationcontext.ports;
 
 import com.loremind.domain.generationcontext.ChatRequest;
+import com.loremind.domain.generationcontext.ChatUsage;
 
 import java.util.function.Consumer;
 
@@ -26,6 +27,10 @@ public interface AiChatProvider {
      * HTTP côté controller SSE).
      *
      * @param request    messages + contexte Lore
+     * @param onUsage    invoqué une fois au début du stream avec le bilan
+     *                   d'occupation de la fenêtre de contexte (tokens system /
+     *                   history / current / max). Peut ne jamais être invoqué
+     *                   si le provider ne supporte pas le comptage.
      * @param onToken    invoqué à chaque token reçu du LLM (peut être appelé
      *                   de nombreuses fois)
      * @param onComplete invoqué une fois le stream terminé avec succès
@@ -34,6 +39,7 @@ public interface AiChatProvider {
      */
     void streamChat(
             ChatRequest request,
+            Consumer<ChatUsage> onUsage,
             Consumer<String> onToken,
             Runnable onComplete,
             Consumer<Throwable> onError

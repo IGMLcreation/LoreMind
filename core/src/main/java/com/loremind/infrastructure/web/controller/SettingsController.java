@@ -7,6 +7,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -51,6 +52,11 @@ public class SettingsController {
     @GetMapping("/models/ollama")
     public ResponseEntity<Map<String, Object>> listOllamaModels() {
         return forward(HttpMethod.GET, "/models/ollama", null);
+    }
+
+    @PostMapping("/models/ollama/info")
+    public ResponseEntity<Map<String, Object>> getOllamaModelInfo(@RequestBody Map<String, Object> body) {
+        return forward(HttpMethod.POST, "/models/ollama/info", body);
     }
 
     @GetMapping("/models/onemin")

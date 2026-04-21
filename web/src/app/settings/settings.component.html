@@ -48,7 +48,7 @@
     <div class="form-row">
       <label for="ollama-model">Modele</label>
       <div class="inline-select">
-        <select id="ollama-model" [(ngModel)]="settings.llm_model">
+        <select id="ollama-model" [(ngModel)]="settings.llm_model" (ngModelChange)="fetchOllamaModelInfo()">
           <option *ngIf="ollamaModels.length === 0" [value]="settings.llm_model">{{ settings.llm_model }}</option>
           <option *ngFor="let m of ollamaModels" [value]="m">{{ m }}</option>
         </select>
@@ -90,6 +90,54 @@
       <select id="onemin-model" [(ngModel)]="settings.onemin_model">
         <option *ngFor="let m of currentProviderModels" [value]="m">{{ m }}</option>
       </select>
+    </div>
+  </section>
+
+  <!-- Bloc Fenetre de contexte -->
+  <section class="card" *ngIf="settings">
+    <h2>Fenetre de contexte</h2>
+
+    <!-- Ollama : slider borne par le max du modele -->
+    <div class="form-row" *ngIf="settings.llm_provider === 'ollama'">
+      <label for="llm-num-ctx">
+        Tokens alloues au modele
+        <span class="ctx-value">{{ settings.llm_num_ctx | number }}</span>
+        <span class="ctx-max" *ngIf="ollamaModelMaxContext > 0">
+          / {{ ollamaModelMaxContext | number }} max
+        </span>
+      </label>
+      <input
+        id="llm-num-ctx"
+        type="range"
+        [min]="CTX_MIN"
+        [max]="effectiveMaxContext"
+        step="1024"
+        [(ngModel)]="settings.llm_num_ctx"
+        class="ctx-slider">
+      <p class="hint" *ngIf="ollamaModelMaxContext > 0">
+        Le modele <strong>{{ settings.llm_model }}</strong> accepte jusqu'a
+        {{ ollamaModelMaxContext | number }} tokens. Plus la valeur est elevee, plus
+        l'IA peut tenir d'historique et de contexte — au prix de VRAM et de latence.
+      </p>
+      <p class="hint" *ngIf="ollamaModelMaxContext === 0">
+        Impossible de determiner la fenetre max du modele (Ollama injoignable ou modele
+        inconnu). Slider borne a {{ CTX_FALLBACK_MAX | number }} par securite.
+      </p>
+    </div>
+
+    <!-- 1min.ai : saisie libre (pas d'introspection possible) -->
+    <div class="form-row" *ngIf="settings.llm_provider === 'onemin'">
+      <label for="llm-num-ctx-onemin">Fenetre de contexte (tokens)</label>
+      <input
+        id="llm-num-ctx-onemin"
+        type="number"
+        min="2048"
+        step="1024"
+        [(ngModel)]="settings.llm_num_ctx">
+      <p class="hint">
+        A regler selon la capacite du modele 1min.ai choisi (ex: 128 000 pour gpt-4o,
+        200 000 pour claude-sonnet). Sert de plafond a la jauge de contexte du chat.
+      </p>
     </div>
   </section>
 

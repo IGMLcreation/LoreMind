@@ -7,6 +7,7 @@ import com.loremind.domain.generationcontext.CampaignStructuralContext.ChapterSu
 import com.loremind.domain.generationcontext.CampaignStructuralContext.SceneSummary;
 import com.loremind.domain.generationcontext.ChatMessage;
 import com.loremind.domain.generationcontext.ChatRequest;
+import com.loremind.domain.generationcontext.ChatUsage;
 import com.loremind.domain.generationcontext.LoreStructuralContext;
 import com.loremind.domain.generationcontext.LoreStructuralContext.PageSummary;
 import com.loremind.domain.generationcontext.NarrativeEntityContext;
@@ -62,6 +63,7 @@ public class BrainAiChatClient implements AiChatProvider {
     @Override
     public void streamChat(
             ChatRequest request,
+            Consumer<ChatUsage> onUsage,
             Consumer<String> onToken,
             Runnable onComplete,
             Consumer<Throwable> onError) {
@@ -81,7 +83,7 @@ public class BrainAiChatClient implements AiChatProvider {
             // au contrat synchrone du port. L'appelant choisit le thread.
             flux
                 .timeout(Duration.ofSeconds(120))
-                .doOnNext(sse -> handleEvent(sse, onToken, onError))
+                .doOnNext(sse -> handleEvent(sse, onUsage, onToken, onError))
                 .blockLast();
             onComplete.run();
         } catch (Exception e) {
@@ -90,9 +92,10 @@ public class BrainAiChatClient implements AiChatProvider {
         }
     }
 
-    /** Dispatch selon le type d'événement SSE (data par défaut, done, error). */
+    /** Dispatch selon le type d'événement SSE (data par défaut, done, error, usage). */
     private void handleEvent(
             ServerSentEvent<String> sse,
+            Consumer<ChatUsage> onUsage,
             Consumer<String> onToken,
             Consumer<Throwable> onError) {
         String event = sse.event();  // null si pas d'event: xxx -> c'est un data par défaut
@@ -106,11 +109,49 @@ public class BrainAiChatClient implements AiChatProvider {
         if ("done".equals(event)) {
             return; // la fin est gérée par blockLast + onComplete
         }
+        if ("usage".equals(event)) {
+            ChatUsage usage = extractUsage(data);
+            if (usage != null) onUsage.accept(usage);
+            return;
+        }
         // Défaut : événement data avec JSON {"token":"..."}.
         String token = extractToken(data);
         if (token != null && !token.isEmpty()) {
             onToken.accept(token);
         }
+    }
+
+    /**
+     * Parse un JSON {"system":N,"history":N,"current":N,"max":N} en ChatUsage.
+     * Renvoie null si le payload est illisible — dans ce cas on ne propage
+     * simplement pas d'usage, le stream token continue normalement.
+     */
+    private ChatUsage extractUsage(String json) {
+        if (json == null) return null;
+        try {
+            int system = extractIntField(json, "system");
+            int history = extractIntField(json, "history");
+            int current = extractIntField(json, "current");
+            int max = extractIntField(json, "max");
+            return new ChatUsage(system, history, current, max);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /** Parse minimaliste d'un champ entier JSON sans dépendre de Jackson. */
+    private int extractIntField(String json, String field) {
+        String needle = "\"" + field + "\"";
+        int idx = json.indexOf(needle);
+        if (idx < 0) return 0;
+        int colon = json.indexOf(':', idx);
+        if (colon < 0) return 0;
+        int start = colon + 1;
+        while (start < json.length() && Character.isWhitespace(json.charAt(start))) start++;
+        int end = start;
+        while (end < json.length() && (Character.isDigit(json.charAt(end)) || json.charAt(end) == '-')) end++;
+        if (end == start) return 0;
+        return Integer.parseInt(json.substring(start, end));
     }
 
     /**
