@@ -271,10 +271,10 @@ export class AiChatDrawerComponent implements OnChanges, OnDestroy {
   private sendUserMessage(text: string): void {
     if (this.persistent) {
       this.ensureConversation().then((convId) => {
-        if (convId) this.streamAndPersist(text, convId);
+        if (convId) this.stream(text, convId);
       });
     } else {
-      this.streamEphemeral(text);
+      this.stream(text, null);
     }
   }
 
@@ -305,7 +305,15 @@ export class AiChatDrawerComponent implements OnChanges, OnDestroy {
     });
   }
 
-  private streamAndPersist(text: string, convId: string): void {
+  /**
+   * Stream unifie : persistant si convId est fourni, ephemere sinon.
+   * - Le message user est pousse dans le flux visuel immediatement, puis persiste
+   *   (si convId) avant meme l'arrivee du premier token — evite la perte en cas
+   *   d'interruption reseau.
+   * - Le message assistant est persiste a la completion, et un titre auto est
+   *   declenche lorsqu'il s'agit du tout premier echange de la conversation.
+   */
+  private stream(text: string, convId: string | null): void {
     const wasEmpty = this.messages.length === 0;
     this.errorMessage = null;
     this.messages.push({ role: 'user', content: text });
@@ -313,8 +321,9 @@ export class AiChatDrawerComponent implements OnChanges, OnDestroy {
     this.isStreaming = true;
     this.scrollToBottom();
 
-    // Persiste le message user immediatement — evite toute perte si stream interrompu.
-    this.conversationService.appendMessage(convId, 'user', text).subscribe({ error: () => {} });
+    if (convId) {
+      this.conversationService.appendMessage(convId, 'user', text).subscribe({ error: () => {} });
+    }
 
     this.streamSub = this.buildStream().subscribe({
       next: (event) => {
@@ -335,46 +344,14 @@ export class AiChatDrawerComponent implements OnChanges, OnDestroy {
         if (reply) {
           this.messages.push({ role: 'assistant', content: reply });
           this.assistantReply.emit(reply);
-          this.conversationService.appendMessage(convId, 'assistant', reply).subscribe({
-            next: () => {
-              if (wasEmpty) this.triggerAutoTitle(convId);
-            },
-            error: () => {},
-          });
-        }
-        this.currentAssistantText = '';
-        this.isStreaming = false;
-        this.scrollToBottom();
-      },
-    });
-  }
-
-  private streamEphemeral(text: string): void {
-    this.errorMessage = null;
-    this.messages.push({ role: 'user', content: text });
-    this.currentAssistantText = '';
-    this.isStreaming = true;
-    this.scrollToBottom();
-
-    this.streamSub = this.buildStream().subscribe({
-      next: (event) => {
-        if (event.type === 'token') {
-          this.currentAssistantText += event.value;
-          this.scrollToBottom();
-        } else if (event.type === 'usage') {
-          this.usage = event.usage;
-        }
-      },
-      error: (err) => {
-        this.isStreaming = false;
-        this.errorMessage = err?.message ?? 'Erreur inconnue.';
-        this.currentAssistantText = '';
-      },
-      complete: () => {
-        const reply = this.currentAssistantText;
-        if (reply) {
-          this.messages.push({ role: 'assistant', content: reply });
-          this.assistantReply.emit(reply);
+          if (convId) {
+            this.conversationService.appendMessage(convId, 'assistant', reply).subscribe({
+              next: () => {
+                if (wasEmpty) this.triggerAutoTitle(convId);
+              },
+              error: () => {},
+            });
+          }
         }
         this.currentAssistantText = '';
         this.isStreaming = false;
