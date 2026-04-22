@@ -30,7 +30,7 @@
       <div class="tree-item" [style.padding-left.px]="level * 12">
         <div class="tree-row">
           <button
-            *ngIf="!item.isAction && item.children?.length"
+            *ngIf="!item.isAction && isExpandable(item)"
             type="button"
             class="chevron-btn"
             (click)="clickChevron($event, item)">
@@ -39,7 +39,7 @@
               [size]="12">
             </lucide-icon>
           </button>
-          <span *ngIf="item.isAction || !item.children?.length" class="chevron-spacer"></span>
+          <span *ngIf="item.isAction || !isExpandable(item)" class="chevron-spacer"></span>
 
           <button type="button" class="tree-btn" [class.action]="item.isAction" (click)="clickItem(item)">
             <lucide-icon
@@ -51,10 +51,38 @@
             {{ item.label }}
             <span class="tree-item-meta" *ngIf="!item.isAction && item.meta">{{ item.meta }}</span>
           </button>
+
+          <!-- Actions de creation contextuelles, revelees au survol de la ligne -->
+          <span class="node-actions" *ngIf="item.createActions?.length">
+            <button
+              *ngFor="let a of item.createActions"
+              type="button"
+              class="node-action-btn"
+              [title]="a.label"
+              [attr.aria-label]="a.label"
+              (click)="runCreateAction($event, a)">
+              <lucide-icon [img]="iconForAction(a)" [size]="12"></lucide-icon>
+            </button>
+          </span>
         </div>
-        <div class="tree-children" *ngIf="isExpanded(item.id) && item.children?.length">
+        <div class="tree-children" *ngIf="isExpanded(item.id) && (hasChildren(item) || item.createActions?.length)">
           <ng-container *ngFor="let child of item.children">
             <ng-container *ngTemplateOutlet="treeNode; context: { $implicit: child, level: level + 1 }"></ng-container>
+          </ng-container>
+          <!-- Empty-state inline : createActions affichees en pleine largeur
+               UNIQUEMENT si le noeud n'a aucun vrai enfant (sinon le hover-reveal
+               sur le parent suffit, pas de pollution visuelle). -->
+          <ng-container *ngIf="!hasChildren(item) && item.createActions?.length">
+            <div class="tree-item empty-action" *ngFor="let a of item.createActions"
+                 [style.padding-left.px]="(level + 1) * 12">
+              <div class="tree-row">
+                <span class="chevron-spacer"></span>
+                <button type="button" class="tree-btn action" (click)="runCreateAction($event, a)">
+                  <lucide-icon [img]="iconForAction(a)" [size]="12" class="item-icon"></lucide-icon>
+                  + {{ a.label }}
+                </button>
+              </div>
+            </div>
           </ng-container>
         </div>
       </div>

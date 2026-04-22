@@ -11,6 +11,21 @@ export interface TreeItem {
   iconKey?: string;
   /** Petit badge affiché à droite (ex: "3" pour compter les pages d'un dossier). */
   meta?: string;
+  /**
+   * Actions de creation contextuelles (ex: "+ Nouveau chapitre" sur un arc).
+   * Affichees comme boutons icone au survol du noeud (repli visuel), et en
+   * pleine largeur si le noeud est expanded sans aucun enfant reel
+   * (empty-state inline, meilleur des deux mondes).
+   */
+  createActions?: TreeCreateAction[];
+}
+
+export interface TreeCreateAction {
+  id: string;
+  label: string;      // tooltip au hover, texte complet en empty-state
+  route: string;
+  /** Cle d'icone cote sidebar (plus | folder-plus | file-plus). */
+  actionIcon?: 'plus' | 'folder-plus' | 'file-plus';
 }
 
 export interface GlobalItem {

@@ -75,19 +75,7 @@ export function buildLoreSidebarConfig(data: LoreSidebarData): SecondarySidebarC
         id: `page-${p.id}`,
         label: p.title,
         route: `/lore/${lore.id}/pages/${p.id}`
-      })),
-      {
-        id: `create-folder-${node.id}`,
-        label: '+ Nouveau dossier',
-        isAction: true,
-        route: `/lore/${lore.id}/folders/${node.id}/create`
-      },
-      {
-        id: `create-page-${node.id}`,
-        label: '+ Nouvelle page',
-        isAction: true,
-        route: `/lore/${lore.id}/nodes/${node.id}/pages/create`
-      }
+      }))
     ];
     // IDs préfixés par type — chaque entité a sa propre séquence IDENTITY en base,
     // donc node.id=1 et page.id=1 peuvent coexister et collisionner dans le
@@ -98,7 +86,21 @@ export function buildLoreSidebarConfig(data: LoreSidebarData): SecondarySidebarC
       iconKey: node.icon ?? undefined,
       route: `/lore/${lore.id}/folders/${node.id}/edit`,
       meta: nodePages.length > 0 ? String(nodePages.length) : undefined,
-      children
+      children,
+      createActions: [
+        {
+          id: `create-folder-${node.id}`,
+          label: 'Nouveau sous-dossier',
+          route: `/lore/${lore.id}/folders/${node.id}/create`,
+          actionIcon: 'folder-plus'
+        },
+        {
+          id: `create-page-${node.id}`,
+          label: 'Nouvelle page',
+          route: `/lore/${lore.id}/nodes/${node.id}/pages/create`,
+          actionIcon: 'file-plus'
+        }
+      ]
     };
   };
 

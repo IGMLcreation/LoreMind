@@ -1,8 +1,8 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { LucideAngularModule, ChevronRight, ChevronDown, PanelLeftClose, PanelLeftOpen, LucideIconData } from 'lucide-angular';
-import { TreeItem, SidebarAction, BottomPanel, BottomPanelItem, LayoutService } from '../../services/layout.service';
+import { LucideAngularModule, ChevronRight, ChevronDown, PanelLeftClose, PanelLeftOpen, Plus, FolderPlus, FilePlus, LucideIconData } from 'lucide-angular';
+import { TreeItem, TreeCreateAction, SidebarAction, BottomPanel, BottomPanelItem, LayoutService } from '../../services/layout.service';
 import { resolveIcon } from '../../lore/lore-icons';
 
 @Component({
@@ -25,6 +25,9 @@ export class SecondarySidebarComponent {
   readonly ChevronRight = ChevronRight;
   readonly PanelLeftClose = PanelLeftClose;
   readonly PanelLeftOpen = PanelLeftOpen;
+  readonly Plus = Plus;
+  readonly FolderPlus = FolderPlus;
+  readonly FilePlus = FilePlus;
 
   isCollapsed = false;
 
@@ -80,6 +83,37 @@ export class SecondarySidebarComponent {
   /** Résout la clé d'icône d'un TreeItem en icône lucide pour le template. */
   iconFor(item: TreeItem): LucideIconData | null {
     return item.iconKey ? resolveIcon(item.iconKey) : null;
+  }
+
+  /** Resolution d'icone pour un TreeCreateAction (hover + empty-state). */
+  iconForAction(action: TreeCreateAction): LucideIconData {
+    switch (action.actionIcon) {
+      case 'folder-plus': return FolderPlus;
+      case 'file-plus':   return FilePlus;
+      default:            return Plus;
+    }
+  }
+
+  /**
+   * Declenche une action de creation contextuelle. stopPropagation pour eviter
+   * que le clic ne remonte au bouton parent (qui navigue ou toggle).
+   */
+  runCreateAction(event: Event, action: TreeCreateAction): void {
+    event.stopPropagation();
+    this.router.navigate([action.route]);
+  }
+
+  /** True si le noeud a au moins un vrai enfant (utile pour le chevron). */
+  hasChildren(item: TreeItem): boolean {
+    return !!item.children && item.children.length > 0;
+  }
+
+  /**
+   * True si le chevron doit s'afficher : soit il y a des enfants, soit le
+   * noeud a des createActions (dans ce cas deplier revele l'empty-state).
+   */
+  isExpandable(item: TreeItem): boolean {
+    return this.hasChildren(item) || (item.createActions?.length ?? 0) > 0;
   }
 
   /**
