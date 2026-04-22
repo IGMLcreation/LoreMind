@@ -1,11 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, HostListener, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { LucideAngularModule, Lightbulb, MessageSquarePlus, PanelLeftClose, PanelLeftOpen, Pencil, Send, Sparkles, Trash2, Wand2, X } from 'lucide-angular';
+import { LucideAngularModule, Lightbulb, Maximize2, MessageSquarePlus, Minimize2, PanelLeftClose, PanelLeftOpen, Pencil, Send, Sparkles, Trash2, Wand2, X } from 'lucide-angular';
 import { Subscription } from 'rxjs';
 import { AiChatService, ChatMessage, ChatUsage, NarrativeEntityType } from '../../services/ai-chat.service';
 import { Conversation, ConversationContext } from '../../services/conversation.model';
 import { ConversationService } from '../../services/conversation.service';
+import { MarkdownPipe } from '../markdown.pipe';
 
 /**
  * Action primaire optionnelle rendue en gros bouton au-dessus des suggestions.
@@ -30,11 +31,11 @@ export interface ChatPrimaryAction {
 @Component({
   selector: 'app-ai-chat-drawer',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule],
+  imports: [CommonModule, FormsModule, LucideAngularModule, MarkdownPipe],
   templateUrl: './ai-chat-drawer.component.html',
   styleUrls: ['./ai-chat-drawer.component.scss'],
 })
-export class AiChatDrawerComponent implements OnChanges, OnDestroy {
+export class AiChatDrawerComponent implements OnInit, OnChanges, OnDestroy {
   readonly X = X;
   readonly Send = Send;
   readonly Sparkles = Sparkles;
@@ -45,6 +46,33 @@ export class AiChatDrawerComponent implements OnChanges, OnDestroy {
   readonly PanelLeftOpen = PanelLeftOpen;
   readonly Pencil = Pencil;
   readonly Trash2 = Trash2;
+  readonly Maximize2 = Maximize2;
+  readonly Minimize2 = Minimize2;
+
+  // --- Redimensionnement --------------------------------------------------
+  /** Largeur min du drawer en pixels (en dessous ca devient inutilisable). */
+  private readonly MIN_WIDTH = 340;
+  /** Largeur max : 95% de la fenetre, pour laisser un peu de page visible. */
+  private readonly MAX_WIDTH_RATIO = 0.95;
+  /** Largeurs par defaut selon la presence de la sidebar conversations. */
+  private readonly DEFAULT_WIDTH = 380;
+  private readonly DEFAULT_WIDTH_WITH_SIDEBAR = 600;
+  /** Ratio utilise en mode "agrandi" (bouton Maximize). */
+  private readonly WIDE_RATIO = 0.6;
+
+  private readonly LS_WIDTH = 'ai-chat-drawer-width';
+  private readonly LS_WIDE = 'ai-chat-drawer-wide';
+
+  /** Largeur custom choisie par l'utilisateur via la poignee (null = defaut). */
+  customWidth: number | null = null;
+  /** Mode "grand ecran" : prend ~60% de la fenetre, ignore customWidth. */
+  isWide = false;
+  /** Drag en cours — utilise pour desactiver les transitions pendant le resize. */
+  isResizing = false;
+  private resizeStartX = 0;
+  private resizeStartWidth = 0;
+  private readonly onMouseMove = (e: MouseEvent) => this.handleResizeMove(e);
+  private readonly onMouseUp = () => this.handleResizeEnd();
 
   @Input() loreId = '';
   @Input() pageId: string | null = null;
@@ -115,6 +143,88 @@ export class AiChatDrawerComponent implements OnChanges, OnDestroy {
 
   // --- Cycle de vie -------------------------------------------------------
 
+  ngOnInit(): void {
+    this.loadSizePreferences();
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    // Clamp si la fenetre a retreci en dessous du max actuel.
+    if (this.customWidth !== null) {
+      const max = Math.floor(window.innerWidth * this.MAX_WIDTH_RATIO);
+      if (this.customWidth > max) this.customWidth = max;
+    }
+  }
+
+  /** Largeur effective appliquee au drawer (px). */
+  get effectiveWidth(): number {
+    if (this.isWide) {
+      return Math.max(this.MIN_WIDTH, Math.floor(window.innerWidth * this.WIDE_RATIO));
+    }
+    if (this.customWidth !== null) return this.customWidth;
+    return this.persistent && this.sidebarOpen
+      ? this.DEFAULT_WIDTH_WITH_SIDEBAR
+      : this.DEFAULT_WIDTH;
+  }
+
+  toggleWide(): void {
+    this.isWide = !this.isWide;
+    try {
+      localStorage.setItem(this.LS_WIDE, this.isWide ? '1' : '0');
+    } catch {}
+  }
+
+  /** Debut du drag : enregistre la position de depart + abonne listeners globaux. */
+  onResizeStart(event: MouseEvent): void {
+    if (this.isWide) return; // en mode wide la poignee est desactivee
+    event.preventDefault();
+    this.isResizing = true;
+    this.resizeStartX = event.clientX;
+    this.resizeStartWidth = this.effectiveWidth;
+    document.addEventListener('mousemove', this.onMouseMove);
+    document.addEventListener('mouseup', this.onMouseUp);
+    // Empeche la selection de texte pendant le drag.
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'ew-resize';
+  }
+
+  private handleResizeMove(event: MouseEvent): void {
+    if (!this.isResizing) return;
+    // Le drawer est ancre a droite : largeur augmente quand la souris va a gauche.
+    const delta = this.resizeStartX - event.clientX;
+    const max = Math.floor(window.innerWidth * this.MAX_WIDTH_RATIO);
+    const next = Math.min(max, Math.max(this.MIN_WIDTH, this.resizeStartWidth + delta));
+    this.customWidth = next;
+  }
+
+  private handleResizeEnd(): void {
+    if (!this.isResizing) return;
+    this.isResizing = false;
+    document.removeEventListener('mousemove', this.onMouseMove);
+    document.removeEventListener('mouseup', this.onMouseUp);
+    document.body.style.userSelect = '';
+    document.body.style.cursor = '';
+    if (this.customWidth !== null) {
+      try {
+        localStorage.setItem(this.LS_WIDTH, String(this.customWidth));
+      } catch {}
+    }
+  }
+
+  private loadSizePreferences(): void {
+    try {
+      const w = localStorage.getItem(this.LS_WIDTH);
+      if (w) {
+        const n = parseInt(w, 10);
+        if (Number.isFinite(n) && n >= this.MIN_WIDTH) {
+          const max = Math.floor(window.innerWidth * this.MAX_WIDTH_RATIO);
+          this.customWidth = Math.min(max, n);
+        }
+      }
+      this.isWide = localStorage.getItem(this.LS_WIDE) === '1';
+    } catch {}
+  }
+
   ngOnChanges(changes: SimpleChanges): void {
     if (!this.persistent) return;
     const contextChanged =
@@ -128,6 +238,8 @@ export class AiChatDrawerComponent implements OnChanges, OnDestroy {
 
   ngOnDestroy(): void {
     this.abortStream();
+    document.removeEventListener('mousemove', this.onMouseMove);
+    document.removeEventListener('mouseup', this.onMouseUp);
   }
 
   // --- Sidebar : listing / nouveau / select / rename / delete ------------

@@ -70,7 +70,7 @@
     </div>
   </div>
 
-  <div class="characters-section">
+  <section class="detail-section characters-section">
     <div class="section-header">
       <h2>Personnages joueurs</h2>
       <button class="btn-add" (click)="createCharacter()">
@@ -97,33 +97,33 @@
         Créer votre premier PJ
       </button>
     </div>
-  </div>
+  </section>
 
-  <div class="arcs-section">
+  <section class="detail-section arcs-section">
     <div class="section-header">
       <h2>Arcs narratifs</h2>
-      <button class="btn-add">
+      <button class="btn-add" (click)="createArc()">
         <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
         Nouvel arc
       </button>
     </div>
 
     <div class="arcs-grid" *ngIf="arcs.length > 0">
-      <div class="arc-card" *ngFor="let arc of arcs">
+      <div class="arc-card" *ngFor="let arc of arcs" (click)="openArc(arc)">
         <lucide-icon [img]="Swords" [size]="24" class="arc-icon"></lucide-icon>
         <span class="arc-name">{{ arc.name }}</span>
-        <span class="arc-meta">{{ arc.chapterCount || 0 }} chapitres</span>
+        <span class="arc-meta">{{ chapterCountByArc[arc.id!] || 0 }} chapitres</span>
       </div>
     </div>
 
     <div class="empty-state" *ngIf="arcs.length === 0">
       <lucide-icon [img]="Swords" [size]="40" class="empty-icon"></lucide-icon>
       <p>Aucun arc narratif pour le moment.</p>
-      <button class="btn-add-first">
+      <button class="btn-add-first" (click)="createArc()">
         <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
         Créer votre premier arc
       </button>
     </div>
-  </div>
+  </section>
 
 </div>

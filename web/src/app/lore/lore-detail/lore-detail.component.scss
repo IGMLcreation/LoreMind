@@ -2,6 +2,18 @@
   padding: 2.5rem 2rem;
 }
 
+/**
+ * Carte visuelle pour les sous-sections (Dossiers). Le header (titre + resume)
+ * reste en dehors d'une carte : il EST le lore, pas une section qui lui
+ * appartient. Meme pattern que campaign-detail.
+ */
+.detail-section {
+  background: #0d1117;
+  border: 1px solid #1f2937;
+  border-radius: 12px;
+  padding: 1.5rem 1.75rem;
+}
+
 .detail-header {
   display: flex;
   align-items: flex-start;

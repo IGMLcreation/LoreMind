@@ -36,6 +36,8 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
 
   campaign: Campaign | null = null;
   arcs: Arc[] = [];
+  /** Nombre de chapitres par arc — alimente le compteur des cartes. */
+  chapterCountByArc: Record<string, number> = {};
   /** Lore associé si `campaign.loreId` est renseigné ; sinon null. */
   linkedLore: Lore | null = null;
   /** Lores disponibles pour changer l'association en mode édition. */
@@ -86,9 +88,18 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
       this.loadLinkedGameSystem(campaign);
       this.loadCharacters(campaign.id!);
       this.arcs = treeData.arcs;
+      this.chapterCountByArc = this.computeChapterCounts(treeData);
       this.showLayout(allCampaigns, treeData);
       this.pageTitleService.set(campaign.name);
     });
+  }
+
+  private computeChapterCounts(data: CampaignTreeData): Record<string, number> {
+    const counts: Record<string, number> = {};
+    for (const arcId of Object.keys(data.chaptersByArc)) {
+      counts[arcId] = data.chaptersByArc[arcId].length;
+    }
+    return counts;
   }
 
   /**
@@ -110,6 +121,7 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
       this.loadLinkedGameSystem(campaign);
       this.loadCharacters(campaign.id!);
       this.arcs = treeData.arcs;
+      this.chapterCountByArc = this.computeChapterCounts(treeData);
       this.showLayout(allCampaigns, treeData);
       this.pageTitleService.set(campaign.name);
     });
@@ -155,6 +167,16 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   editCharacter(character: Character): void {
     if (!this.campaign || !character.id) return;
     this.router.navigate(['/campaigns', this.campaign.id, 'characters', character.id, 'edit']);
+  }
+
+  createArc(): void {
+    if (!this.campaign) return;
+    this.router.navigate(['/campaigns', this.campaign.id, 'arcs', 'create']);
+  }
+
+  openArc(arc: Arc): void {
+    if (!this.campaign || !arc.id) return;
+    this.router.navigate(['/campaigns', this.campaign.id, 'arcs', arc.id]);
   }
 
   /** Extrait une ligne de résumé depuis le markdown (1re ligne non-vide, non-titre). */
