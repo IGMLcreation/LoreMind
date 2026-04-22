@@ -1,0 +1,39 @@
+<div class="gs-page">
+
+  <div class="gs-hero">
+    <lucide-icon [img]="Dices" [size]="56" class="hero-icon"></lucide-icon>
+    <h1>Systèmes de JDR</h1>
+    <p class="hero-subtitle">Les règles que l'IA connaîtra pour vos campagnes</p>
+  </div>
+
+  <div class="gs-grid">
+
+    <div class="gs-card" *ngFor="let gs of gameSystems" (click)="edit(gs.id!)">
+      <div class="card-header">
+        <h2>{{ gs.name }}</h2>
+        <div class="card-actions">
+          <button class="icon-btn" (click)="delete(gs, $event)" title="Supprimer">
+            <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+          </button>
+        </div>
+      </div>
+      <p class="card-description">{{ gs.description || '(Pas de description)' }}</p>
+      <div class="card-footer">
+        <span *ngIf="gs.author" class="author">par {{ gs.author }}</span>
+        <span *ngIf="gs.isPublic" class="badge-public">public</span>
+      </div>
+    </div>
+
+    <div class="gs-card card-new" (click)="create()">
+      <div class="new-icon">
+        <lucide-icon [img]="Plus" [size]="20"></lucide-icon>
+      </div>
+      <h2>Nouveau système</h2>
+      <p class="card-description">Saisir les règles d'un JDR (markdown)</p>
+    </div>
+
+  </div>
+
+  <p class="tip">💡 Astuce : organisez vos règles par sections avec des titres <code>## Combat</code>, <code>## Classes</code>, <code>## Lore</code>… Le système injectera les sections pertinentes selon ce que l'IA doit générer.</p>
+
+</div>

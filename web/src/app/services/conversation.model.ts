@@ -26,7 +26,7 @@ export interface Conversation {
 export interface ConversationContext {
   loreId?: string | null;
   campaignId?: string | null;
-  entityType?: 'page' | 'arc' | 'chapter' | 'scene' | null;
+  entityType?: 'page' | 'arc' | 'chapter' | 'scene' | 'character' | null;
   entityId?: string | null;
 }
 

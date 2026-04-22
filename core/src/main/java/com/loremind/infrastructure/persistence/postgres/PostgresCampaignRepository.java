@@ -71,6 +71,7 @@ public class PostgresCampaignRepository implements CampaignRepository {
                 .updatedAt(jpaEntity.getUpdatedAt())
                 .arcsCount(jpaEntity.getArcsCount())
                 .loreId(jpaEntity.getLoreId())
+                .gameSystemId(jpaEntity.getGameSystemId())
                 .build();
     }
 
@@ -84,6 +85,7 @@ public class PostgresCampaignRepository implements CampaignRepository {
                 .updatedAt(campaign.getUpdatedAt())
                 .arcsCount(campaign.getArcsCount())
                 .loreId(campaign.getLoreId())
+                .gameSystemId(campaign.getGameSystemId())
                 .build();
     }
 }

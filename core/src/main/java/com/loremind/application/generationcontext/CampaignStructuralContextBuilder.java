@@ -3,15 +3,18 @@ package com.loremind.application.generationcontext;
 import com.loremind.domain.campaigncontext.Arc;
 import com.loremind.domain.campaigncontext.Campaign;
 import com.loremind.domain.campaigncontext.Chapter;
+import com.loremind.domain.campaigncontext.Character;
 import com.loremind.domain.campaigncontext.Scene;
 import com.loremind.domain.campaigncontext.ports.ArcRepository;
 import com.loremind.domain.campaigncontext.ports.CampaignRepository;
 import com.loremind.domain.campaigncontext.ports.ChapterRepository;
+import com.loremind.domain.campaigncontext.ports.CharacterRepository;
 import com.loremind.domain.campaigncontext.ports.SceneRepository;
 import com.loremind.domain.generationcontext.CampaignStructuralContext;
 import com.loremind.domain.generationcontext.CampaignStructuralContext.ArcSummary;
 import com.loremind.domain.generationcontext.CampaignStructuralContext.BranchHint;
 import com.loremind.domain.generationcontext.CampaignStructuralContext.ChapterSummary;
+import com.loremind.domain.generationcontext.CampaignStructuralContext.CharacterSummary;
 import com.loremind.domain.generationcontext.CampaignStructuralContext.SceneSummary;
 import org.springframework.stereotype.Component;
 
@@ -38,17 +41,23 @@ public class CampaignStructuralContextBuilder {
     private final ArcRepository arcRepository;
     private final ChapterRepository chapterRepository;
     private final SceneRepository sceneRepository;
+    private final CharacterRepository characterRepository;
 
     public CampaignStructuralContextBuilder(
             CampaignRepository campaignRepository,
             ArcRepository arcRepository,
             ChapterRepository chapterRepository,
-            SceneRepository sceneRepository) {
+            SceneRepository sceneRepository,
+            CharacterRepository characterRepository) {
         this.campaignRepository = campaignRepository;
         this.arcRepository = arcRepository;
         this.chapterRepository = chapterRepository;
         this.sceneRepository = sceneRepository;
+        this.characterRepository = characterRepository;
     }
+
+    /** Longueur max du snippet de PJ injecté dans le contexte (coût tokens maîtrisé). */
+    private static final int CHARACTER_SNIPPET_MAX_LEN = 160;
 
     /**
      * Construit la carte narrative d'une Campagne (arcs → chapitres → scènes,
@@ -65,11 +74,40 @@ public class CampaignStructuralContextBuilder {
                 .map(this::toArcSummary)
                 .collect(Collectors.toList());
 
+        List<CharacterSummary> characters = characterRepository.findByCampaignId(campaignId).stream()
+                .sorted(Comparator.comparingInt(Character::getOrder))
+                .map(this::toCharacterSummary)
+                .collect(Collectors.toList());
+
         return CampaignStructuralContext.builder()
                 .campaignName(campaign.getName())
                 .campaignDescription(campaign.getDescription())
                 .arcs(arcs)
+                .characters(characters)
                 .build();
+    }
+
+    /**
+     * Projette un PJ vers un résumé court : nom + 1re ligne "signifiante" du
+     * markdown (ni vide, ni un titre). Permet à l'IA de savoir "qui est Thorin"
+     * sans injecter toute sa fiche.
+     */
+    private CharacterSummary toCharacterSummary(Character c) {
+        return CharacterSummary.builder()
+                .name(c.getName())
+                .snippet(extractSnippet(c.getMarkdownContent()))
+                .build();
+    }
+
+    private static String extractSnippet(String markdown) {
+        if (markdown == null || markdown.isBlank()) return "";
+        String firstLine = markdown.lines()
+                .map(String::strip)
+                .filter(l -> !l.isEmpty() && !l.startsWith("#"))
+                .findFirst()
+                .orElse("");
+        if (firstLine.length() <= CHARACTER_SNIPPET_MAX_LEN) return firstLine;
+        return firstLine.substring(0, CHARACTER_SNIPPET_MAX_LEN - 1).stripTrailing() + "…";
     }
 
     private ArcSummary toArcSummary(Arc arc) {

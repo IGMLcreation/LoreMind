@@ -30,6 +30,22 @@ public class CampaignStructuralContext {
     String campaignName;
     String campaignDescription;
     @Singular List<ArcSummary> arcs;
+    /** Personnages joueurs (PJ) de la campagne. Vide si aucun. */
+    @Singular List<CharacterSummary> characters;
+
+    /**
+     * Résumé d'un PJ : nom + snippet court du markdown.
+     * Pas le markdown complet pour maîtriser le coût token (chaque campagne
+     * peut avoir 4-6 PJ × potentiellement 1-2k tokens/fiche = trop lourd).
+     * La fiche complète n'est injectée que si le PJ est l'entité focus
+     * (via NarrativeEntityContext, entity_type="character").
+     */
+    @Value
+    @Builder
+    public static class CharacterSummary {
+        String name;
+        String snippet;
+    }
 
     /** Résumé d'un arc : nom + description courte + ses chapitres. */
     @Value

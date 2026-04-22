@@ -15,4 +15,6 @@ public class CampaignDTO {
     private int arcsCount;
     /** Nullable : campagne sans univers associé. */
     private String loreId;
+    /** Nullable : campagne sans système de JDR associé (générique). */
+    private String gameSystemId;
 }

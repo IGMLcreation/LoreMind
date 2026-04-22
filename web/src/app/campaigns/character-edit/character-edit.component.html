@@ -1,0 +1,82 @@
+<div class="ce-page">
+
+  <div class="ce-header">
+    <button class="btn-back" (click)="back()">
+      <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon>
+      Retour à la campagne
+    </button>
+    <div class="header-row">
+      <h1>
+        <lucide-icon [img]="User" [size]="22"></lucide-icon>
+        {{ characterId ? 'Éditer la fiche' : 'Nouveau personnage' }}
+      </h1>
+      <button
+        *ngIf="characterId"
+        type="button"
+        class="btn-ai"
+        (click)="toggleChat()"
+        [class.active]="chatOpen"
+        title="Ouvrir l'Assistant IA pour dialoguer autour de ce PJ">
+        <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
+        Assistant IA
+      </button>
+    </div>
+  </div>
+
+  <div class="ce-form">
+
+    <div class="field">
+      <label>Nom du personnage *</label>
+      <input
+        type="text"
+        [(ngModel)]="name"
+        name="name"
+        placeholder="Ex: Thorin le Grand-Hache, Lyra l'Errante..."
+      />
+    </div>
+
+    <div class="field content-field">
+      <label>Fiche (markdown)</label>
+      <p class="hint">
+        Tout en markdown libre : stats, classe, backstory, équipement, objectifs personnels…
+        L'IA lira ces infos pour rester cohérente quand vous générez des scènes impliquant ce PJ.
+      </p>
+      <textarea
+        [(ngModel)]="markdownContent"
+        name="markdownContent"
+        rows="22"
+        placeholder="# Thorin Grand-Hache&#10;&#10;**Race :** Nain&#10;**Classe :** Guerrier niveau 4&#10;**PV :** 35 / 35&#10;&#10;## Stats&#10;- Force : 16&#10;- Dextérité : 12&#10;...&#10;&#10;## Backstory&#10;Originaire des montagnes du Nord, Thorin a fui son clan après..."
+      ></textarea>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="btn-primary" [disabled]="!name.trim()" (click)="submit()">
+        <lucide-icon [img]="Save" [size]="16"></lucide-icon>
+        {{ characterId ? 'Enregistrer' : 'Créer' }}
+      </button>
+      <button type="button" class="btn-secondary" (click)="back()">Annuler</button>
+      <span class="spacer"></span>
+      <button
+        *ngIf="characterId"
+        type="button"
+        class="btn-danger"
+        (click)="deleteCharacter()">
+        <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+        Supprimer
+      </button>
+    </div>
+
+  </div>
+
+</div>
+
+<app-ai-chat-drawer
+  *ngIf="characterId && campaignId"
+  [campaignId]="campaignId"
+  entityType="character"
+  [entityId]="characterId"
+  [isOpen]="chatOpen"
+  welcomeMessage="Je vois cette fiche de personnage. Demande-moi de proposer stats, backstory, équipement ou objectifs personnels."
+  [quickSuggestions]="chatQuickSuggestions"
+  (close)="chatOpen = false">
+</app-ai-chat-drawer>

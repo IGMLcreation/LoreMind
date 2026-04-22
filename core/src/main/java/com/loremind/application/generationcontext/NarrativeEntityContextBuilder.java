@@ -2,9 +2,11 @@ package com.loremind.application.generationcontext;
 
 import com.loremind.domain.campaigncontext.Arc;
 import com.loremind.domain.campaigncontext.Chapter;
+import com.loremind.domain.campaigncontext.Character;
 import com.loremind.domain.campaigncontext.Scene;
 import com.loremind.domain.campaigncontext.ports.ArcRepository;
 import com.loremind.domain.campaigncontext.ports.ChapterRepository;
+import com.loremind.domain.campaigncontext.ports.CharacterRepository;
 import com.loremind.domain.campaigncontext.ports.SceneRepository;
 import com.loremind.domain.generationcontext.NarrativeEntityContext;
 import org.springframework.stereotype.Component;
@@ -26,20 +28,23 @@ public class NarrativeEntityContextBuilder {
     private final ArcRepository arcRepository;
     private final ChapterRepository chapterRepository;
     private final SceneRepository sceneRepository;
+    private final CharacterRepository characterRepository;
 
     public NarrativeEntityContextBuilder(
             ArcRepository arcRepository,
             ChapterRepository chapterRepository,
-            SceneRepository sceneRepository) {
+            SceneRepository sceneRepository,
+            CharacterRepository characterRepository) {
         this.arcRepository = arcRepository;
         this.chapterRepository = chapterRepository;
         this.sceneRepository = sceneRepository;
+        this.characterRepository = characterRepository;
     }
 
     /**
      * Charge l'entité narrative ciblée et la projette vers un VO du GenerationContext.
      *
-     * @param entityType "arc", "chapter" ou "scene" (insensible à la casse)
+     * @param entityType "arc", "chapter", "scene" ou "character" (insensible à la casse)
      * @param entityId   l'ID de l'entité
      * @throws IllegalArgumentException si le type est inconnu ou l'entité introuvable
      */
@@ -49,6 +54,7 @@ public class NarrativeEntityContextBuilder {
             case "arc" -> fromArc(loadArc(entityId));
             case "chapter" -> fromChapter(loadChapter(entityId));
             case "scene" -> fromScene(loadScene(entityId));
+            case "character" -> fromCharacter(loadCharacter(entityId));
             default -> throw new IllegalArgumentException("Type d'entité narrative inconnu: " + entityType);
         };
     }
@@ -68,6 +74,11 @@ public class NarrativeEntityContextBuilder {
     private Scene loadScene(String id) {
         return sceneRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Scène non trouvée: " + id));
+    }
+
+    private Character loadCharacter(String id) {
+        return characterRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Personnage non trouvé: " + id));
     }
 
     // --- Mapping entité → VO ------------------------------------------------
@@ -114,6 +125,16 @@ public class NarrativeEntityContextBuilder {
         return NarrativeEntityContext.builder()
                 .entityType("scene")
                 .title(s.getName())
+                .fields(fields)
+                .build();
+    }
+
+    private NarrativeEntityContext fromCharacter(Character c) {
+        Map<String, String> fields = new LinkedHashMap<>();
+        putField(fields, "fiche complète (markdown)", c.getMarkdownContent());
+        return NarrativeEntityContext.builder()
+                .entityType("character")
+                .title(c.getName())
                 .fields(fields)
                 .build();
     }

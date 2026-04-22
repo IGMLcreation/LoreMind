@@ -14,6 +14,8 @@ export const routes: Routes = [
   { path: 'lore/:loreId/pages/:pageId/edit', loadComponent: () => import('./lore/page-edit/page-edit.component').then(m => m.PageEditComponent) },
   { path: 'campaigns', loadComponent: () => import('./campaigns/campaigns.component').then(m => m.CampaignsComponent) },
   { path: 'campaigns/:id', loadComponent: () => import('./campaigns/campaign-detail/campaign-detail.component').then(m => m.CampaignDetailComponent) },
+  { path: 'campaigns/:campaignId/characters/create', loadComponent: () => import('./campaigns/character-edit/character-edit.component').then(m => m.CharacterEditComponent) },
+  { path: 'campaigns/:campaignId/characters/:characterId/edit', loadComponent: () => import('./campaigns/character-edit/character-edit.component').then(m => m.CharacterEditComponent) },
   { path: 'campaigns/:campaignId/arcs/create', loadComponent: () => import('./campaigns/arc-create/arc-create.component').then(m => m.ArcCreateComponent) },
   { path: 'campaigns/:campaignId/arcs/:arcId', loadComponent: () => import('./campaigns/arc-view/arc-view.component').then(m => m.ArcViewComponent) },
   { path: 'campaigns/:campaignId/arcs/:arcId/edit', loadComponent: () => import('./campaigns/arc-edit/arc-edit.component').then(m => m.ArcEditComponent) },
@@ -24,6 +26,9 @@ export const routes: Routes = [
   { path: 'campaigns/:campaignId/arcs/:arcId/chapters/:chapterId/scenes/create', loadComponent: () => import('./campaigns/scene-create/scene-create.component').then(m => m.SceneCreateComponent) },
   { path: 'campaigns/:campaignId/arcs/:arcId/chapters/:chapterId/scenes/:sceneId', loadComponent: () => import('./campaigns/scene-view/scene-view.component').then(m => m.SceneViewComponent) },
   { path: 'campaigns/:campaignId/arcs/:arcId/chapters/:chapterId/scenes/:sceneId/edit', loadComponent: () => import('./campaigns/scene-edit/scene-edit.component').then(m => m.SceneEditComponent) },
+  { path: 'game-systems', loadComponent: () => import('./game-systems/game-systems.component').then(m => m.GameSystemsComponent) },
+  { path: 'game-systems/create', loadComponent: () => import('./game-systems/game-system-edit/game-system-edit.component').then(m => m.GameSystemEditComponent) },
+  { path: 'game-systems/:id/edit', loadComponent: () => import('./game-systems/game-system-edit/game-system-edit.component').then(m => m.GameSystemEditComponent) },
   { path: 'settings', loadComponent: () => import('./settings/settings.component').then(m => m.SettingsComponent) },
   { path: '', redirectTo: '/lore', pathMatch: 'full' }
 ];

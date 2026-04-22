@@ -8,6 +8,8 @@ export interface Campaign {
   chapterCount?: number;
   /** ID du Lore associé (weak reference cross-context). `null` = pas d'univers lié. */
   loreId?: string | null;
+  /** ID du GameSystem associé (weak reference cross-context). `null` = campagne générique. */
+  gameSystemId?: string | null;
 }
 
 // Interface pour la création de Campaign (sans id)
@@ -16,6 +18,7 @@ export interface CampaignCreate {
   description: string;
   playerCount: number;
   loreId?: string | null;
+  gameSystemId?: string | null;
 }
 
 export interface Arc {

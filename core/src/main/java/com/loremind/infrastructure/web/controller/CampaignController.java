@@ -31,7 +31,7 @@ public class CampaignController {
     public ResponseEntity<CampaignDTO> createCampaign(@RequestBody CampaignDTO campaignDTO) {
         Campaign campaign = campaignMapper.toDomain(campaignDTO);
         Campaign createdCampaign = campaignService.createCampaign(
-                new CampaignService.CampaignData(campaign.getName(), campaign.getDescription(), campaign.getLoreId())
+                new CampaignService.CampaignData(campaign.getName(), campaign.getDescription(), campaign.getLoreId(), campaign.getGameSystemId())
         );
         return ResponseEntity.ok(campaignMapper.toDTO(createdCampaign));
     }
@@ -64,7 +64,7 @@ public class CampaignController {
     public ResponseEntity<CampaignDTO> updateCampaign(@PathVariable String id, @RequestBody CampaignDTO campaignDTO) {
         Campaign updatedCampaign = campaignService.updateCampaign(
                 id,
-                new CampaignService.CampaignData(campaignDTO.getName(), campaignDTO.getDescription(), campaignDTO.getLoreId())
+                new CampaignService.CampaignData(campaignDTO.getName(), campaignDTO.getDescription(), campaignDTO.getLoreId(), campaignDTO.getGameSystemId())
         );
         return ResponseEntity.ok(campaignMapper.toDTO(updatedCampaign));
     }

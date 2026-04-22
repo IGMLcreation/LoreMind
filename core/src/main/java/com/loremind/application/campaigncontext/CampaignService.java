@@ -28,13 +28,14 @@ public class CampaignService {
      *
      * <p>{@code loreId} est nullable : une campagne peut exister sans univers associé.</p>
      */
-    public record CampaignData(String name, String description, String loreId) {}
+    public record CampaignData(String name, String description, String loreId, String gameSystemId) {}
 
     public Campaign createCampaign(CampaignData data) {
         Campaign campaign = Campaign.builder()
                 .name(data.name())
                 .description(data.description())
-                .loreId(normalizeLoreId(data.loreId()))
+                .loreId(normalizeId(data.loreId()))
+                .gameSystemId(normalizeId(data.gameSystemId()))
                 .arcsCount(0)
                 .build();
         return campaignRepository.save(campaign);
@@ -57,16 +58,17 @@ public class CampaignService {
         Campaign campaign = existingCampaign.get();
         campaign.setName(data.name());
         campaign.setDescription(data.description());
-        campaign.setLoreId(normalizeLoreId(data.loreId()));
+        campaign.setLoreId(normalizeId(data.loreId()));
+        campaign.setGameSystemId(normalizeId(data.gameSystemId()));
         return campaignRepository.save(campaign);
     }
 
     /**
-     * Normalise un loreId entrant : une chaîne vide/blanche est traitée comme "pas de lien".
+     * Normalise un ID entrant : une chaîne vide/blanche est traitée comme "pas de lien".
      * Utile car les payloads JSON peuvent envoyer "" au lieu de null.
      */
-    private String normalizeLoreId(String loreId) {
-        return (loreId == null || loreId.isBlank()) ? null : loreId;
+    private String normalizeId(String id) {
+        return (id == null || id.isBlank()) ? null : id;
     }
 
     public void deleteCampaign(String id) {

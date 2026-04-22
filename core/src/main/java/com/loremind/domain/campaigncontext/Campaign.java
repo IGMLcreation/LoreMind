@@ -28,7 +28,18 @@ public class Campaign {
      */
     private String loreId;
 
+    /**
+     * Référence faible (weak reference) vers un GameSystem.
+     * Nullable : une campagne peut être "générique" (pas de système de JDR déclaré).
+     * Weak reference pour respecter la séparation des Bounded Contexts.
+     */
+    private String gameSystemId;
+
     public boolean isLinkedToLore() {
         return this.loreId != null && !this.loreId.isBlank();
+    }
+
+    public boolean isLinkedToGameSystem() {
+        return this.gameSystemId != null && !this.gameSystemId.isBlank();
     }
 }

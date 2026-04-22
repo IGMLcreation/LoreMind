@@ -46,6 +46,18 @@
         </p>
       </div>
 
+      <div class="field">
+        <label>Système de JDR</label>
+        <select formControlName="gameSystemId">
+          <option value="">— Aucun (campagne générique) —</option>
+          <option *ngFor="let gs of availableGameSystems" [value]="gs.id">{{ gs.name }}</option>
+        </select>
+        <p class="hint">
+          Optionnel. Si défini, l'IA injectera les règles du système (classes, combat, lore...)
+          dans ses suggestions pour respecter les mécaniques du JDR.
+        </p>
+      </div>
+
       <div class="info-box">
         <p><strong>💡 Organisation :</strong> Votre campagne sera structurée en :</p>
         <ul>

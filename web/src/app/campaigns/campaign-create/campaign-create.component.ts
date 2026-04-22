@@ -4,16 +4,19 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { LucideAngularModule, BookCopy, X } from 'lucide-angular';
 import { LoreService } from '../../services/lore.service';
 import { Lore } from '../../services/lore.model';
+import { GameSystemService } from '../../services/game-system.service';
+import { GameSystem } from '../../services/game-system.model';
 
 /**
  * Payload émis vers le parent à la création d'une campagne.
- * `loreId` est optionnel (null = campagne sans univers associé).
+ * `loreId` et `gameSystemId` sont optionnels (null = non associé).
  */
 export interface CampaignCreatePayload {
   name: string;
   description: string;
   playerCount: number;
   loreId: string | null;
+  gameSystemId: string | null;
 }
 
 @Component({
@@ -33,15 +36,20 @@ export class CampaignCreateComponent implements OnInit {
   form: FormGroup;
   /** Lores disponibles pour association. Chargés à l'ouverture de la modal. */
   availableLores: Lore[] = [];
+  /** GameSystems disponibles pour association. */
+  availableGameSystems: GameSystem[] = [];
 
-  constructor(private fb: FormBuilder, private loreService: LoreService) {
+  constructor(
+    private fb: FormBuilder,
+    private loreService: LoreService,
+    private gameSystemService: GameSystemService
+  ) {
     this.form = this.fb.group({
-      name:        ['', Validators.required],
-      description: [''],
-      playerCount: [4, [Validators.required, Validators.min(1)]],
-      // Valeur par défaut : chaîne vide = "— Aucun lore associé —".
-      // Le service normalise ensuite ""/null en null côté backend.
-      loreId:      ['']
+      name:         ['', Validators.required],
+      description:  [''],
+      playerCount:  [4, [Validators.required, Validators.min(1)]],
+      loreId:       [''],
+      gameSystemId: ['']
     });
   }
 
@@ -49,6 +57,10 @@ export class CampaignCreateComponent implements OnInit {
     this.loreService.getAllLores().subscribe({
       next: (lores) => this.availableLores = lores,
       error: () => this.availableLores = []
+    });
+    this.gameSystemService.getAll().subscribe({
+      next: (gs) => this.availableGameSystems = gs,
+      error: () => this.availableGameSystems = []
     });
   }
 
@@ -59,7 +71,8 @@ export class CampaignCreateComponent implements OnInit {
       name: raw.name,
       description: raw.description,
       playerCount: raw.playerCount,
-      loreId: raw.loreId ? raw.loreId : null
+      loreId: raw.loreId ? raw.loreId : null,
+      gameSystemId: raw.gameSystemId ? raw.gameSystemId : null
     });
   }
 
