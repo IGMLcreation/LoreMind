@@ -80,30 +80,30 @@ export function buildCampaignTree(campaignId: string, data: CampaignTreeData): T
         label: sc.name,
         route: `/campaigns/${campaignId}/arcs/${arc.id}/chapters/${ch.id}/scenes/${sc.id}`
       }));
-      sceneItems.push({
-        id: `new-scene-${ch.id}`,
-        label: '+ Nouvelle scène',
-        isAction: true,
-        route: `/campaigns/${campaignId}/arcs/${arc.id}/chapters/${ch.id}/scenes/create`
-      });
       return {
         id: `chapter-${ch.id}`,
         label: ch.name,
         children: sceneItems,
-        route: `/campaigns/${campaignId}/arcs/${arc.id}/chapters/${ch.id}`
+        route: `/campaigns/${campaignId}/arcs/${arc.id}/chapters/${ch.id}`,
+        createActions: [{
+          id: `new-scene-${ch.id}`,
+          label: 'Nouvelle scène',
+          route: `/campaigns/${campaignId}/arcs/${arc.id}/chapters/${ch.id}/scenes/create`,
+          actionIcon: 'plus'
+        }]
       };
-    });
-    chapterItems.push({
-      id: `new-chapter-${arc.id}`,
-      label: '+ Nouveau chapitre',
-      isAction: true,
-      route: `/campaigns/${campaignId}/arcs/${arc.id}/chapters/create`
     });
     return {
       id: `arc-${arc.id}`,
       label: arc.name,
       children: chapterItems,
-      route: `/campaigns/${campaignId}/arcs/${arc.id}`
+      route: `/campaigns/${campaignId}/arcs/${arc.id}`,
+      createActions: [{
+        id: `new-chapter-${arc.id}`,
+        label: 'Nouveau chapitre',
+        route: `/campaigns/${campaignId}/arcs/${arc.id}/chapters/create`,
+        actionIcon: 'plus'
+      }]
     };
   });
 }

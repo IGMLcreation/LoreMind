@@ -132,6 +132,45 @@
   align-items: center;
   gap: 0.15rem;
   width: 100%;
+  position: relative;
+
+  // Hover-reveal : les boutons d'action de creation n'apparaissent qu'au
+  // survol de la ligne. Pattern Notion/VS Code.
+  &:hover .node-actions { opacity: 1; pointer-events: auto; }
+}
+
+.node-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1rem;
+  margin-left: auto;
+  flex-shrink: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  // Superpose les boutons d'action sur le .tree-item-meta eventuel
+  // (compteur de pages) : au hover on affiche les actions, au repos le meta.
+  position: absolute;
+  right: 0.25rem;
+  background: linear-gradient(to right, transparent, #1f2937 30%);
+  padding-left: 1rem;
+}
+
+.node-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #9ca3af;
+  padding: 0;
+  transition: background 0.12s, color 0.12s;
+
+  &:hover { background: #2a2a3d; color: #c7d2fe; }
 }
 
 .chevron-btn {
