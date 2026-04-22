@@ -50,7 +50,8 @@ public class CampaignServiceTest {
         CampaignService.CampaignData data = new CampaignService.CampaignData(
                 "New Campaign",
                 "Description",
-                "lore-123"
+                "lore-123",
+                null
         );
         when(campaignRepository.save(any(Campaign.class))).thenReturn(testCampaign);
 
@@ -69,6 +70,7 @@ public class CampaignServiceTest {
         CampaignService.CampaignData data = new CampaignService.CampaignData(
                 "New Campaign",
                 "Description",
+                null,
                 null
         );
         when(campaignRepository.save(any(Campaign.class))).thenReturn(testCampaign);
@@ -88,7 +90,8 @@ public class CampaignServiceTest {
         CampaignService.CampaignData data = new CampaignService.CampaignData(
                 "New Campaign",
                 "Description",
-                "   "
+                "   ",
+                null
         );
         when(campaignRepository.save(any(Campaign.class))).thenReturn(testCampaign);
 
@@ -151,7 +154,8 @@ public class CampaignServiceTest {
         CampaignService.CampaignData data = new CampaignService.CampaignData(
                 "Updated Campaign",
                 "Updated Description",
-                "lore-456"
+                "lore-456",
+                null
         );
         when(campaignRepository.findById("campaign-1")).thenReturn(Optional.of(testCampaign));
         when(campaignRepository.save(any(Campaign.class))).thenReturn(testCampaign);
@@ -171,7 +175,8 @@ public class CampaignServiceTest {
         CampaignService.CampaignData data = new CampaignService.CampaignData(
                 "Updated Campaign",
                 "Updated Description",
-                "lore-456"
+                "lore-456",
+                null
         );
         when(campaignRepository.findById("invalid-id")).thenReturn(Optional.empty());
 
