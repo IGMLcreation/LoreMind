@@ -173,6 +173,46 @@
   .arc-meta  { color: #6b7280; font-size: 0.75rem; }
 }
 
+.characters-section {
+  margin-bottom: 2.5rem;
+}
+
+.characters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0.75rem;
+}
+
+.character-card {
+  background: #111827;
+  border: 1px solid #1f2937;
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.2s;
+
+  &:hover { border-color: #a78bfa; transform: translateY(-2px); }
+
+  .character-icon { color: #a78bfa; flex-shrink: 0; margin-top: 2px; }
+  .character-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 0.2rem;
+  }
+  .character-name { color: white; font-size: 0.95rem; font-weight: 600; }
+  .character-snippet {
+    color: #6b7280;
+    font-size: 0.8rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
 .empty-state {
   display: flex;
   flex-direction: column;

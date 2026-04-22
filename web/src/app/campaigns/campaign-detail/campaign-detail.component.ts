@@ -2,12 +2,16 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { LucideAngularModule, Swords, Plus, Globe, Pencil, Trash2 } from 'lucide-angular';
+import { LucideAngularModule, Swords, Plus, Globe, Pencil, Trash2, User, Dices } from 'lucide-angular';
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError, switchMap, filter, map } from 'rxjs/operators';
 import { CampaignService } from '../../services/campaign.service';
 import { LoreService } from '../../services/lore.service';
+import { GameSystemService } from '../../services/game-system.service';
+import { GameSystem } from '../../services/game-system.model';
+import { CharacterService } from '../../services/character.service';
+import { Character } from '../../services/character.model';
 import { LayoutService, GlobalItem } from '../../services/layout.service';
 import { PageTitleService } from '../../services/page-title.service';
 import { Campaign, Arc } from '../../services/campaign.model';
@@ -27,6 +31,8 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   readonly Globe = Globe;
   readonly Pencil = Pencil;
   readonly Trash2 = Trash2;
+  readonly User = User;
+  readonly Dices = Dices;
 
   campaign: Campaign | null = null;
   arcs: Arc[] = [];
@@ -34,18 +40,27 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   linkedLore: Lore | null = null;
   /** Lores disponibles pour changer l'association en mode édition. */
   availableLores: Lore[] = [];
+  /** GameSystems disponibles pour changer l'association en mode édition. */
+  availableGameSystems: GameSystem[] = [];
+  /** GameSystem associé si `campaign.gameSystemId` est renseigné ; sinon null. */
+  linkedGameSystem: GameSystem | null = null;
+  /** Fiches de personnages (PJ) de la campagne. */
+  characters: Character[] = [];
 
   /** Mode édition inline. */
   editing = false;
   editName = '';
   editDescription = '';
   editLoreId = '';
+  editGameSystemId = '';
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private campaignService: CampaignService,
     private loreService: LoreService,
+    private gameSystemService: GameSystemService,
+    private characterService: CharacterService,
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService
   ) {}
@@ -68,6 +83,8 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
       this.campaign = campaign;
       this.editing = false;
       this.loadLinkedLore(campaign);
+      this.loadLinkedGameSystem(campaign);
+      this.loadCharacters(campaign.id!);
       this.arcs = treeData.arcs;
       this.showLayout(allCampaigns, treeData);
       this.pageTitleService.set(campaign.name);
@@ -90,6 +107,8 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
       this.campaign = campaign;
       this.editing = false;
       this.loadLinkedLore(campaign);
+      this.loadLinkedGameSystem(campaign);
+      this.loadCharacters(campaign.id!);
       this.arcs = treeData.arcs;
       this.showLayout(allCampaigns, treeData);
       this.pageTitleService.set(campaign.name);
@@ -108,6 +127,47 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
     this.loreService.getLoreById(campaign.loreId).pipe(
       catchError(() => of(null))
     ).subscribe(lore => this.linkedLore = lore);
+  }
+
+  /** Même logique pour le GameSystem associé : dégradation si supprimé. */
+  private loadLinkedGameSystem(campaign: Campaign): void {
+    if (!campaign.gameSystemId) {
+      this.linkedGameSystem = null;
+      return;
+    }
+    this.gameSystemService.getById(campaign.gameSystemId).pipe(
+      catchError(() => of(null))
+    ).subscribe(gs => this.linkedGameSystem = gs);
+  }
+
+  /** Charge les fiches de personnages (PJ) de la campagne. */
+  private loadCharacters(campaignId: string): void {
+    this.characterService.getByCampaign(campaignId).pipe(
+      catchError(() => of([] as Character[]))
+    ).subscribe(list => this.characters = list);
+  }
+
+  createCharacter(): void {
+    if (!this.campaign) return;
+    this.router.navigate(['/campaigns', this.campaign.id, 'characters', 'create']);
+  }
+
+  editCharacter(character: Character): void {
+    if (!this.campaign || !character.id) return;
+    this.router.navigate(['/campaigns', this.campaign.id, 'characters', character.id, 'edit']);
+  }
+
+  /** Extrait une ligne de résumé depuis le markdown (1re ligne non-vide, non-titre). */
+  characterSnippet(c: Character): string {
+    if (!c.markdownContent) return '(Fiche vide)';
+    const firstMeaningful = c.markdownContent
+      .split('\n')
+      .map(l => l.trim())
+      .find(l => l && !l.startsWith('#'));
+    if (!firstMeaningful) return '(Fiche vide)';
+    return firstMeaningful.length > 80
+      ? firstMeaningful.substring(0, 77) + '…'
+      : firstMeaningful;
   }
 
   private showLayout(allCampaigns: Campaign[], data: CampaignTreeData): void {
@@ -138,10 +198,15 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
     this.editName = this.campaign.name;
     this.editDescription = this.campaign.description ?? '';
     this.editLoreId = this.campaign.loreId ?? '';
-    // On charge les Lores disponibles pour le select uniquement à l'entrée en mode édition.
+    this.editGameSystemId = this.campaign.gameSystemId ?? '';
+    // On charge les Lores et GameSystems disponibles uniquement à l'entrée en mode édition.
     this.loreService.getAllLores().subscribe({
       next: (lores) => this.availableLores = lores,
       error: () => this.availableLores = []
+    });
+    this.gameSystemService.getAll().subscribe({
+      next: (gs) => this.availableGameSystems = gs,
+      error: () => this.availableGameSystems = []
     });
     this.editing = true;
   }
@@ -156,7 +221,8 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
       name: this.editName.trim(),
       description: this.editDescription,
       playerCount: this.campaign.playerCount ?? 0,
-      loreId: this.editLoreId ? this.editLoreId : null
+      loreId: this.editLoreId ? this.editLoreId : null,
+      gameSystemId: this.editGameSystemId ? this.editGameSystemId : null
     }).subscribe({
       next: (updated) => {
         this.campaign = updated;

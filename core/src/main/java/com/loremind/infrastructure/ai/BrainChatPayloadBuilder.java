@@ -4,9 +4,11 @@ import com.loremind.domain.generationcontext.CampaignStructuralContext;
 import com.loremind.domain.generationcontext.CampaignStructuralContext.ArcSummary;
 import com.loremind.domain.generationcontext.CampaignStructuralContext.BranchHint;
 import com.loremind.domain.generationcontext.CampaignStructuralContext.ChapterSummary;
+import com.loremind.domain.generationcontext.CampaignStructuralContext.CharacterSummary;
 import com.loremind.domain.generationcontext.CampaignStructuralContext.SceneSummary;
 import com.loremind.domain.generationcontext.ChatMessage;
 import com.loremind.domain.generationcontext.ChatRequest;
+import com.loremind.domain.generationcontext.GameSystemContext;
 import com.loremind.domain.generationcontext.LoreStructuralContext;
 import com.loremind.domain.generationcontext.LoreStructuralContext.PageSummary;
 import com.loremind.domain.generationcontext.NarrativeEntityContext;
@@ -52,7 +54,20 @@ public class BrainChatPayloadBuilder {
         if (request.getNarrativeEntity() != null) {
             root.put("narrative_entity", narrativeEntityToMap(request.getNarrativeEntity()));
         }
+        if (request.getGameSystemContext() != null) {
+            root.put("game_system_context", gameSystemContextToMap(request.getGameSystemContext()));
+        }
         return root;
+    }
+
+    private Map<String, Object> gameSystemContextToMap(GameSystemContext gs) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("system_name", gs.getSystemName());
+        if (gs.getSystemDescription() != null && !gs.getSystemDescription().isBlank()) {
+            map.put("system_description", gs.getSystemDescription());
+        }
+        map.put("sections", gs.getSections() != null ? gs.getSections() : Map.of());
+        return map;
     }
 
     private Map<String, Object> messageToMap(ChatMessage m) {
@@ -111,6 +126,21 @@ public class BrainChatPayloadBuilder {
         map.put("arcs", ctx.getArcs().stream()
                 .map(this::arcSummaryToMap)
                 .collect(Collectors.toList()));
+        // Liste des PJ : omise si aucun pour alléger le prompt des campagnes sans fiches.
+        if (ctx.getCharacters() != null && !ctx.getCharacters().isEmpty()) {
+            map.put("characters", ctx.getCharacters().stream()
+                    .map(this::characterSummaryToMap)
+                    .collect(Collectors.toList()));
+        }
+        return map;
+    }
+
+    private Map<String, Object> characterSummaryToMap(CharacterSummary c) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("name", c.getName());
+        if (c.getSnippet() != null && !c.getSnippet().isBlank()) {
+            map.put("snippet", c.getSnippet());
+        }
         return map;
     }
 

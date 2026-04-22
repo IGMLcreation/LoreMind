@@ -22,7 +22,9 @@ from app.domain.models import (
     ArcSummary,
     CampaignStructuralContext,
     ChapterSummary,
+    CharacterSummary,
     ChatMessage,
+    GameSystemContext,
     LoreStructuralContext,
     NarrativeEntityContext,
     PageContext,
@@ -196,20 +198,40 @@ class ArcSummaryDTO(BaseModel):
     illustration_count: int = 0
 
 
+class CharacterSummaryDTO(BaseModel):
+    """Résumé d'un PJ : nom + snippet. Pas de fiche complète au niveau résumé."""
+
+    name: str
+    snippet: str = ""
+
+
 class CampaignContextDTO(BaseModel):
     """Carte narrative enrichie : arcs → chapitres → scènes avec synopsis."""
 
     campaign_name: str
     campaign_description: str | None = None
     arcs: list[ArcSummaryDTO] = Field(default_factory=list)
+    characters: list[CharacterSummaryDTO] = Field(default_factory=list)
 
 
 class NarrativeEntityDTO(BaseModel):
-    """Entité narrative (arc/chapter/scene) en cours d'édition — focus optionnel."""
+    """Entité narrative (arc/chapter/scene/character) en cours d'édition — focus optionnel."""
 
-    entity_type: str = Field(pattern="^(arc|chapter|scene)$")
+    entity_type: str = Field(pattern="^(arc|chapter|scene|character)$")
     title: str
     fields: dict[str, str] = Field(default_factory=dict)
+
+
+class GameSystemContextDTO(BaseModel):
+    """Règles de JDR présélectionnées par le Core (filtrées par intent).
+
+    Les sections sont un dict titre_H2 → contenu_markdown. Peuvent être
+    vides si aucune section ne matchait l'intent de génération courant.
+    """
+
+    system_name: str
+    system_description: str | None = None
+    sections: dict[str, str] = Field(default_factory=dict)
 
 
 class ChatStreamRequestDTO(BaseModel):
@@ -226,6 +248,7 @@ class ChatStreamRequestDTO(BaseModel):
     page_context: PageContextDTO | None = None
     campaign_context: CampaignContextDTO | None = None
     narrative_entity: NarrativeEntityDTO | None = None
+    game_system_context: GameSystemContextDTO | None = None
 
     def has_scope(self) -> bool:
         """Vrai si au moins un contexte racine (Lore ou Campagne) est fourni."""
@@ -352,6 +375,7 @@ async def chat_stream(
     page_context = _to_page_context(body.page_context)
     campaign_context = _to_campaign_context(body.campaign_context)
     narrative_entity = _to_narrative_entity(body.narrative_entity)
+    game_system_context = _to_game_system_context(body.game_system_context)
 
     # --- Comptage tokens pour la jauge de contexte frontend ---
     # On construit le system prompt une fois ici pour le compter — le use case
@@ -363,6 +387,7 @@ async def chat_stream(
         page_context=page_context,
         campaign_context=campaign_context,
         narrative_entity=narrative_entity,
+        game_system_context=game_system_context,
     )
     # Dernier message = "current" (souvent user), le reste = historique accumulé.
     current_msg = messages[-1] if messages else None
@@ -386,6 +411,7 @@ async def chat_stream(
                 page_context=page_context,
                 campaign_context=campaign_context,
                 narrative_entity=narrative_entity,
+                game_system_context=game_system_context,
             ):
                 # json.dumps avec ensure_ascii=False pour préserver les accents
                 yield f"data: {json.dumps({'token': token}, ensure_ascii=False)}\n\n"
@@ -523,10 +549,15 @@ def _to_campaign_context(dto: CampaignContextDTO | None) -> CampaignStructuralCo
         )
         for arc in dto.arcs
     ]
+    characters = [
+        CharacterSummary(name=c.name, snippet=c.snippet)
+        for c in dto.characters
+    ]
     return CampaignStructuralContext(
         campaign_name=dto.campaign_name,
         campaign_description=dto.campaign_description,
         arcs=arcs,
+        characters=characters,
     )
 
 
@@ -741,4 +772,14 @@ def _to_narrative_entity(dto: NarrativeEntityDTO | None) -> NarrativeEntityConte
         entity_type=dto.entity_type,
         title=dto.title,
         fields=dict(dto.fields),
+    )
+
+
+def _to_game_system_context(dto: GameSystemContextDTO | None) -> GameSystemContext | None:
+    if dto is None:
+        return None
+    return GameSystemContext(
+        system_name=dto.system_name,
+        system_description=dto.system_description,
+        sections=dict(dto.sections),
     )

@@ -1,11 +1,14 @@
 package com.loremind.application.generationcontext;
 
+import com.loremind.application.gamesystemcontext.GameSystemContextBuilder;
 import com.loremind.domain.campaigncontext.Campaign;
 import com.loremind.domain.campaigncontext.ports.CampaignRepository;
+import com.loremind.domain.gamesystemcontext.GenerationIntent;
 import com.loremind.domain.generationcontext.CampaignStructuralContext;
 import com.loremind.domain.generationcontext.ChatMessage;
 import com.loremind.domain.generationcontext.ChatRequest;
 import com.loremind.domain.generationcontext.ChatUsage;
+import com.loremind.domain.generationcontext.GameSystemContext;
 import com.loremind.domain.generationcontext.LoreStructuralContext;
 import com.loremind.domain.generationcontext.NarrativeEntityContext;
 import com.loremind.domain.generationcontext.ports.AiChatProvider;
@@ -34,6 +37,7 @@ public class StreamChatForCampaignUseCase {
     private final CampaignStructuralContextBuilder campaignContextBuilder;
     private final LoreStructuralContextBuilder loreContextBuilder;
     private final NarrativeEntityContextBuilder narrativeEntityContextBuilder;
+    private final GameSystemContextBuilder gameSystemContextBuilder;
     private final AiChatProvider aiChatProvider;
 
     public StreamChatForCampaignUseCase(
@@ -41,11 +45,13 @@ public class StreamChatForCampaignUseCase {
             CampaignStructuralContextBuilder campaignContextBuilder,
             LoreStructuralContextBuilder loreContextBuilder,
             NarrativeEntityContextBuilder narrativeEntityContextBuilder,
+            GameSystemContextBuilder gameSystemContextBuilder,
             AiChatProvider aiChatProvider) {
         this.campaignRepository = campaignRepository;
         this.campaignContextBuilder = campaignContextBuilder;
         this.loreContextBuilder = loreContextBuilder;
         this.narrativeEntityContextBuilder = narrativeEntityContextBuilder;
+        this.gameSystemContextBuilder = gameSystemContextBuilder;
         this.aiChatProvider = aiChatProvider;
     }
 
@@ -78,12 +84,14 @@ public class StreamChatForCampaignUseCase {
         CampaignStructuralContext campaignContext = campaignContextBuilder.build(campaignId);
         LoreStructuralContext loreContext = loadLinkedLoreContextOrNull(campaign);
         NarrativeEntityContext narrativeEntity = buildNarrativeEntityOrNull(entityType, entityId);
+        GameSystemContext gameSystemContext = loadGameSystemContextOrNull(campaign, entityType);
 
         ChatRequest request = ChatRequest.builder()
                 .messages(messages)
                 .loreContext(loreContext)
                 .campaignContext(campaignContext)
                 .narrativeEntity(narrativeEntity)
+                .gameSystemContext(gameSystemContext)
                 .build();
 
         aiChatProvider.streamChat(request, onUsage, onToken, onComplete, onError);
@@ -103,5 +111,17 @@ public class StreamChatForCampaignUseCase {
         if (entityType == null || entityType.isBlank()) return null;
         if (entityId == null || entityId.isBlank()) return null;
         return narrativeEntityContextBuilder.build(entityType, entityId);
+    }
+
+    /**
+     * Charge le GameSystemContext si la campagne est liée à un GameSystem.
+     * L'entityType détermine quelles sections de règles sont injectées
+     * (SCENE → combat/PNJ, CHAPTER → combat/classes, ARC → lore/factions, autre → toutes).
+     * Retourne null en cas de GameSystem introuvable (dégradation gracieuse).
+     */
+    private GameSystemContext loadGameSystemContextOrNull(Campaign campaign, String entityType) {
+        if (!campaign.isLinkedToGameSystem()) return null;
+        GenerationIntent intent = GenerationIntent.fromNarrativeEntityType(entityType);
+        return gameSystemContextBuilder.buildOptional(campaign.getGameSystemId(), intent).orElse(null);
     }
 }

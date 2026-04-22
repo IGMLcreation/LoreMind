@@ -45,6 +45,13 @@ public class CampaignJpaEntity {
     @Column(name = "lore_id")
     private String loreId;
 
+    /**
+     * ID du GameSystem associé (nullable).
+     * Weak reference inter-contexte — pas de @ManyToOne / pas de FK DB.
+     */
+    @Column(name = "game_system_id")
+    private String gameSystemId;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

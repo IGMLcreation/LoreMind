@@ -1,0 +1,103 @@
+<div class="gse-page">
+
+  <div class="gse-header">
+    <button class="btn-back" (click)="back()">
+      <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon>
+      Retour à la liste
+    </button>
+    <h1>
+      <lucide-icon [img]="Dices" [size]="22"></lucide-icon>
+      {{ id ? 'Éditer le système' : 'Nouveau système de JDR' }}
+    </h1>
+  </div>
+
+  <div class="gse-form">
+
+    <div class="field">
+      <label>Nom *</label>
+      <input type="text" [(ngModel)]="name" name="name" placeholder="Ex: Nimble, D&D 5.1 SRD, Mon Homebrew..." />
+    </div>
+
+    <div class="field">
+      <label>Description courte</label>
+      <textarea [(ngModel)]="description" name="description" rows="2" placeholder="En une ligne, de quoi parle ce système ?"></textarea>
+    </div>
+
+    <div class="field">
+      <label>Auteur</label>
+      <input type="text" [(ngModel)]="author" name="author" placeholder="Ex: Hasbro, Homebrew, moi-même..." />
+    </div>
+
+    <!-- Sections de règles -->
+    <div class="sections-area">
+      <h2 class="sections-title">Règles du système</h2>
+      <p class="sections-hint">
+        Une section = un thème. L'IA injectera automatiquement les sections pertinentes
+        selon ce qu'elle génère (combat → Combat/Monstres, PNJ → Classes, arc → Lore/Factions).
+      </p>
+
+      <div class="section-list">
+        <div class="section-card" *ngFor="let section of sections; let i = index" [class.collapsed]="section.collapsed">
+
+          <div class="section-head">
+            <button type="button" class="btn-collapse" (click)="toggleCollapse(section)">
+              <lucide-icon [img]="section.collapsed ? ChevronRight : ChevronDown" [size]="16"></lucide-icon>
+            </button>
+            <input
+              type="text"
+              class="section-title-input"
+              [(ngModel)]="section.title"
+              [name]="'title-' + i"
+              placeholder="Nom de la section (ex: Combat)"
+            />
+            <button type="button" class="btn-remove" (click)="removeSection(i)" title="Supprimer cette section">
+              <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+            </button>
+          </div>
+
+          <textarea
+            *ngIf="!section.collapsed"
+            class="section-content"
+            [(ngModel)]="section.content"
+            [name]="'content-' + i"
+            rows="6"
+            placeholder="Décrivez les règles de cette section..."
+          ></textarea>
+
+        </div>
+
+        <div *ngIf="sections.length === 0" class="empty-hint">
+          Aucune section pour l'instant — ajoutez-en une avec les boutons ci-dessous.
+        </div>
+      </div>
+
+      <div class="add-row">
+        <span class="add-label">Ajouter une section :</span>
+        <button
+          type="button"
+          *ngFor="let name of suggestedSections"
+          class="chip"
+          [class.disabled]="isSectionUsed(name)"
+          (click)="addSuggested(name)"
+          [disabled]="isSectionUsed(name)">
+          <lucide-icon [img]="Plus" [size]="12"></lucide-icon>
+          {{ name }}
+        </button>
+        <button type="button" class="chip chip-custom" (click)="addBlank()">
+          <lucide-icon [img]="Plus" [size]="12"></lucide-icon>
+          Autre…
+        </button>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="btn-primary" [disabled]="!name.trim()" (click)="submit()">
+        <lucide-icon [img]="Save" [size]="16"></lucide-icon>
+        {{ id ? 'Enregistrer' : 'Créer' }}
+      </button>
+      <button type="button" class="btn-secondary" (click)="back()">Annuler</button>
+    </div>
+
+  </div>
+
+</div>

@@ -169,6 +169,20 @@ class CampaignStructuralContext:
     campaign_name: str
     campaign_description: str | None
     arcs: list[ArcSummary]
+    characters: list["CharacterSummary"] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class CharacterSummary:
+    """Résumé d'un PJ : nom + snippet court extrait du markdown de la fiche.
+
+    La fiche complète n'est JAMAIS dans ce résumé — elle n'arrive que si le PJ
+    est l'entité focus (via NarrativeEntityContext entity_type="character").
+    Ça plafonne le coût token à ~40 tokens/PJ quel que soit le détail des fiches.
+    """
+
+    name: str
+    snippet: str
 
 
 @dataclass(frozen=True)
@@ -184,3 +198,20 @@ class NarrativeEntityContext:
     entity_type: str
     title: str
     fields: dict[str, str]
+
+
+@dataclass(frozen=True)
+class GameSystemContext:
+    """Règles d'un système de JDR (D&D, Nimble, homebrew...) injectées
+    dans le system prompt pour que l'IA respecte les mécaniques du jeu.
+
+    Les sections ont été présélectionnées côté Core selon l'intent
+    (SCENE → combat/PNJ, CHAPTER → combat/classes, ARC → lore/factions,
+    GENERIC → toutes). Indexées par titre H2 original.
+
+    Campagne uniquement au MVP : jamais présent sur un chat Lore.
+    """
+
+    system_name: str
+    system_description: str | None
+    sections: dict[str, str]

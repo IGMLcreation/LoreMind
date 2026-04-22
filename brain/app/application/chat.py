@@ -20,6 +20,8 @@ from app.domain.models import (
     CampaignStructuralContext,
     ChatMessage,
     ChapterSummary,
+    CharacterSummary,
+    GameSystemContext,
     LoreStructuralContext,
     NarrativeEntityContext,
     PageContext,
@@ -63,16 +65,17 @@ class ChatUseCase:
         page_context: PageContext | None = None,
         campaign_context: CampaignStructuralContext | None = None,
         narrative_entity: NarrativeEntityContext | None = None,
+        game_system_context: GameSystemContext | None = None,
     ) -> AsyncIterator[str]:
         """Streame les tokens de la réponse assistant pour le dernier message user.
 
-        Les 4 contextes sont tous optionnels, mais au moins l'un des deux
+        Les contextes sont tous optionnels, mais au moins l'un des deux
         "niveaux haut" (lore_context ou campaign_context) doit être fourni
         pour que le prompt ait du sens. Le controller (main.py) applique
         cette règle à la frontière HTTP.
         """
         system_prompt = self._build_system_prompt(
-            lore_context, page_context, campaign_context, narrative_entity
+            lore_context, page_context, campaign_context, narrative_entity, game_system_context
         )
         async for token in self._llm.stream_chat(
             messages,
@@ -87,12 +90,13 @@ class ChatUseCase:
         page_context: PageContext | None = None,
         campaign_context: CampaignStructuralContext | None = None,
         narrative_entity: NarrativeEntityContext | None = None,
+        game_system_context: GameSystemContext | None = None,
     ) -> str:
         """Version publique — utilisée par le controller HTTP pour compter
         les tokens du system prompt avant de streamer (jauge de contexte).
         """
         return self._build_system_prompt(
-            lore_context, page_context, campaign_context, narrative_entity
+            lore_context, page_context, campaign_context, narrative_entity, game_system_context
         )
 
     # --- Construction du system prompt --------------------------------------
@@ -103,12 +107,15 @@ class ChatUseCase:
         page: PageContext | None,
         campaign: CampaignStructuralContext | None,
         narrative: NarrativeEntityContext | None,
+        game_system: GameSystemContext | None = None,
     ) -> str:
         sections = [_BASE_SYSTEM]
         if lore is not None:
             sections.append(self._format_lore(lore))
         if campaign is not None:
             sections.append(self._format_campaign(campaign, lore_present=lore is not None))
+        if game_system is not None:
+            sections.append(self._format_game_system(game_system))
         if page is not None:
             sections.append(self._format_page(page))
         if narrative is not None:
@@ -190,13 +197,39 @@ class ChatUseCase:
             if lore_present
             else "\n(Cette campagne n'est associée à aucun univers — tu peux proposer des éléments d'ambiance libres.)"
         )
+        characters_block = ChatUseCase._format_characters(ctx.characters)
         return (
             "--- CAMPAGNE COURANTE ---\n"
-            f"Nom : {ctx.campaign_name}{desc}{lore_note}\n\n"
+            f"Nom : {ctx.campaign_name}{desc}{lore_note}\n"
+            f"{characters_block}\n"
             "Structure narrative (les flèches → indiquent des transitions de scène "
             "déclenchées par un choix des joueurs) :\n"
             f"{arcs_block}"
         )
+
+    @staticmethod
+    def _format_characters(characters: list[CharacterSummary]) -> str:
+        """Bloc PJ — liste nom + snippet. Rappel anti-hallucination IA.
+
+        Si la campagne n'a aucun PJ, on le signale explicitement : l'IA ne
+        doit pas inventer "les héros" ou leurs noms dans ses suggestions.
+        """
+        if not characters:
+            return (
+                "\nPersonnages joueurs : aucune fiche pour l'instant. Ne suppose "
+                "ni noms ni classes pour les PJ tant que le MJ ne les a pas créés.\n"
+            )
+        lines = ["\nPersonnages joueurs (PJ) :"]
+        for c in characters:
+            if c.snippet:
+                lines.append(f"- **{c.name}** — {c.snippet}")
+            else:
+                lines.append(f"- **{c.name}** (fiche vide)")
+        lines.append(
+            "Pour une fiche complète (stats, backstory), n'invente rien : "
+            "demande au MJ d'ouvrir l'éditeur du PJ pour te donner les détails."
+        )
+        return "\n".join(lines) + "\n"
 
     @staticmethod
     def _format_arcs(arcs: list[ArcSummary]) -> str:
@@ -248,12 +281,46 @@ class ChatUseCase:
         noun = "illustration" if count == 1 else "illustrations"
         return f" [{count} {noun}]"
 
+    # --- Bloc Système de JDR ------------------------------------------------
+
+    @staticmethod
+    def _format_game_system(gs: GameSystemContext) -> str:
+        """Bloc des règles du système de JDR de la campagne.
+
+        Les sections ont été filtrées côté Core selon l'intent (combat,
+        classes, lore...). Si aucune section n'a matché, on affiche juste
+        le nom du système comme rappel de cadre.
+        """
+        desc = f"\nDescription : {gs.system_description}" if gs.system_description else ""
+        if not gs.sections:
+            return (
+                "--- SYSTÈME DE JDR ---\n"
+                f"Nom : {gs.system_name}{desc}\n"
+                "(Aucune section de règles pertinente pour ce type de génération — "
+                "reste cohérent avec l'univers et les conventions du système.)"
+            )
+        sections_block = "\n\n".join(
+            f"### {title}\n{content}" for title, content in gs.sections.items()
+        )
+        return (
+            "--- SYSTÈME DE JDR ---\n"
+            f"Nom : {gs.system_name}{desc}\n\n"
+            "Respecte scrupuleusement les règles et conventions ci-dessous quand "
+            "tu proposes des stats, classes, rencontres, mécaniques ou éléments "
+            "d'ambiance. Les noms propres (classes, sorts, monstres) doivent "
+            "venir de ces règles — n'en invente pas d'autres.\n\n"
+            f"{sections_block}"
+        )
+
     @staticmethod
     def _format_narrative_entity(ne: NarrativeEntityContext) -> str:
         """Bloc équivalent à _format_page mais pour Arc/Chapter/Scene."""
-        type_label = {"arc": "ARC", "chapter": "CHAPITRE", "scene": "SCÈNE"}.get(
-            ne.entity_type.lower(), ne.entity_type.upper()
-        )
+        type_label = {
+            "arc": "ARC",
+            "chapter": "CHAPITRE",
+            "scene": "SCÈNE",
+            "character": "FICHE DE PERSONNAGE",
+        }.get(ne.entity_type.lower(), ne.entity_type.upper())
         if ne.fields:
             fields_block = "\n".join(
                 f'- "{key}" : {value or "(vide)"}'

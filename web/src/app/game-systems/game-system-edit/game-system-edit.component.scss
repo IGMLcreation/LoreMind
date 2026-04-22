@@ -1,0 +1,256 @@
+.gse-page {
+  padding: 2rem 3rem;
+  color: #e5e7eb;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.gse-header {
+  margin-bottom: 2rem;
+
+  h1 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.75rem;
+    color: white;
+    margin: 0.75rem 0 0;
+  }
+}
+
+.btn-back {
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0;
+  font-size: 0.85rem;
+
+  &:hover { color: #e5e7eb; }
+}
+
+.gse-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+
+  label {
+    color: #e5e7eb;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 0.4rem;
+  }
+
+  input[type="text"], textarea {
+    background: #0b1220;
+    border: 1px solid #1f2937;
+    border-radius: 8px;
+    color: #e5e7eb;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.95rem;
+    font-family: inherit;
+
+    &:focus {
+      outline: none;
+      border-color: #a78bfa;
+    }
+  }
+
+  textarea { resize: vertical; }
+}
+
+/* ─── Sections ──────────────────────────────────────────────── */
+
+.sections-area {
+  border-top: 1px solid #1f2937;
+  padding-top: 1.5rem;
+  margin-top: 0.5rem;
+}
+
+.sections-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: white;
+  margin: 0 0 0.25rem;
+}
+
+.sections-hint {
+  color: #6b7280;
+  font-size: 0.85rem;
+  margin: 0 0 1rem;
+}
+
+.section-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.section-card {
+  background: #0b1220;
+  border: 1px solid #1f2937;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: border-color 0.15s;
+
+  &:focus-within { border-color: #374151; }
+  &.collapsed { background: #0a0f1a; }
+}
+
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.5rem 0.5rem 0.25rem;
+}
+
+.btn-collapse {
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  border-radius: 4px;
+
+  &:hover { color: #e5e7eb; }
+}
+
+.section-title-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.3rem 0.25rem;
+
+  &:focus { outline: none; }
+  &::placeholder { color: #4b5563; font-weight: 400; font-style: italic; }
+}
+
+.btn-remove {
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  display: flex;
+
+  &:hover { color: #f87171; background: rgba(248, 113, 113, 0.08); }
+}
+
+.section-content {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-top: 1px solid #1f2937;
+  color: #d1d5db;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  font-family: inherit;
+  line-height: 1.5;
+  resize: vertical;
+  box-sizing: border-box;
+
+  &:focus { outline: none; }
+}
+
+.empty-hint {
+  color: #6b7280;
+  font-size: 0.85rem;
+  font-style: italic;
+  text-align: center;
+  padding: 1.5rem;
+  border: 1px dashed #1f2937;
+  border-radius: 10px;
+}
+
+/* ─── Chips d'ajout ─────────────────────────────────────────── */
+
+.add-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.add-label {
+  color: #9ca3af;
+  font-size: 0.85rem;
+  margin-right: 0.25rem;
+}
+
+.chip {
+  background: #111827;
+  border: 1px solid #1f2937;
+  color: #d1d5db;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  transition: all 0.15s;
+
+  &:hover:not(:disabled) {
+    border-color: #a78bfa;
+    color: white;
+  }
+
+  &.disabled, &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  &.chip-custom {
+    border-style: dashed;
+    color: #a78bfa;
+  }
+}
+
+/* ─── Actions ──────────────────────────────────────────────── */
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.btn-primary {
+  background: #a78bfa;
+  color: #0b1220;
+  border: none;
+  padding: 0.6rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+  &:hover:not(:disabled) { background: #c4b5fd; }
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 1px solid #1f2937;
+  color: #9ca3af;
+  padding: 0.6rem 1.25rem;
+  border-radius: 8px;
+  cursor: pointer;
+
+  &:hover { border-color: #374151; color: #e5e7eb; }
+}

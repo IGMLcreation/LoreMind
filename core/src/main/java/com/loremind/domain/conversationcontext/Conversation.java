@@ -37,7 +37,7 @@ public class Conversation {
     /**
      * Type d'entite focus, null si la conversation est ancree au niveau
      * Lore/Campagne racine (pas sur une page/scene precise).
-     * Valeurs : "page", "arc", "chapter", "scene".
+     * Valeurs : "page", "arc", "chapter", "scene", "character".
      */
     private String entityType;
     private String entityId;

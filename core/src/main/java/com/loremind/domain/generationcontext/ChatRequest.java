@@ -39,4 +39,10 @@ public class ChatRequest {
 
     /** Optionnel : entité narrative en cours d'édition (arc/chapter/scene). */
     NarrativeEntityContext narrativeEntity;
+
+    /**
+     * Optionnel : règles du système de JDR de la campagne (filtrées par intent).
+     * Null si la campagne n'a pas de GameSystem associé. Campagne uniquement au MVP.
+     */
+    GameSystemContext gameSystemContext;
 }

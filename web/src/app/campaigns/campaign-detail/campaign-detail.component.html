@@ -53,12 +53,48 @@
         <option *ngFor="let lore of availableLores" [value]="lore.id">{{ lore.name }}</option>
       </select>
     </div>
+    <div class="field">
+      <label>Système de JDR</label>
+      <select [(ngModel)]="editGameSystemId" name="editGameSystemId">
+        <option value="">— Aucun (générique) —</option>
+        <option *ngFor="let gs of availableGameSystems" [value]="gs.id">{{ gs.name }}</option>
+      </select>
+    </div>
     <div class="header-actions">
       <button type="button" class="btn-primary" (click)="saveEdit()" [disabled]="!editName.trim()">
         Sauvegarder
       </button>
       <button type="button" class="btn-secondary" (click)="cancelEdit()">
         Annuler
+      </button>
+    </div>
+  </div>
+
+  <div class="characters-section">
+    <div class="section-header">
+      <h2>Personnages joueurs</h2>
+      <button class="btn-add" (click)="createCharacter()">
+        <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
+        Nouveau PJ
+      </button>
+    </div>
+
+    <div class="characters-grid" *ngIf="characters.length > 0">
+      <div class="character-card" *ngFor="let character of characters" (click)="editCharacter(character)">
+        <lucide-icon [img]="User" [size]="20" class="character-icon"></lucide-icon>
+        <div class="character-info">
+          <span class="character-name">{{ character.name }}</span>
+          <span class="character-snippet">{{ characterSnippet(character) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="characters.length === 0">
+      <lucide-icon [img]="User" [size]="40" class="empty-icon"></lucide-icon>
+      <p>Aucun personnage joueur pour le moment.</p>
+      <button class="btn-add-first" (click)="createCharacter()">
+        <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
+        Créer votre premier PJ
       </button>
     </div>
   </div>

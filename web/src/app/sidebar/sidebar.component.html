@@ -49,6 +49,10 @@
       <span>Recherche globale</span>
       <span class="tool-kbd">Ctrl+K</span>
     </button>
+    <button class="tool-btn" [class.active]="currentRoute.startsWith('/game-systems')" (click)="navigateTo('/game-systems')">
+      <lucide-icon [img]="Dices" [size]="16"></lucide-icon>
+      <span>Systèmes de JDR</span>
+    </button>
     <button class="tool-btn">
       <lucide-icon [img]="Download" [size]="16"></lucide-icon>
       <span>Export VTT</span>

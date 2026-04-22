@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { AsyncPipe, NgIf, NgFor } from '@angular/common';
 import { Router } from '@angular/router';
-import { LucideAngularModule, Search, Download, Settings, ArrowLeft } from 'lucide-angular';
+import { LucideAngularModule, Search, Download, Settings, ArrowLeft, Dices } from 'lucide-angular';
 import { LayoutService } from '../services/layout.service';
 import { GlobalSearchService } from '../services/global-search.service';
 
@@ -19,6 +19,7 @@ export class SidebarComponent {
   readonly Download = Download;
   readonly Settings = Settings;
   readonly ArrowLeft = ArrowLeft;
+  readonly Dices = Dices;
 
   readonly layoutConfig$ = this.layoutService.secondarySidebar$;
 
