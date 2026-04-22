@@ -1,9 +1,23 @@
 .campaign-detail {
   padding: 2.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/**
+ * Chaque bloc (resume, PJ, arcs) est encapsule dans une carte distincte
+ * pour separer visuellement les zones. Le gap au niveau du parent gere
+ * les espacements — les sections ne portent plus de margin-bottom.
+ */
+.detail-section {
+  background: #0d1117;
+  border: 1px solid #1f2937;
+  border-radius: 12px;
+  padding: 1.5rem 1.75rem;
 }
 
 .detail-header {
-  margin-bottom: 2.5rem;
 
   h1 {
     font-size: 1.75rem;
@@ -173,9 +187,6 @@
   .arc-meta  { color: #6b7280; font-size: 0.75rem; }
 }
 
-.characters-section {
-  margin-bottom: 2.5rem;
-}
 
 .characters-grid {
   display: grid;

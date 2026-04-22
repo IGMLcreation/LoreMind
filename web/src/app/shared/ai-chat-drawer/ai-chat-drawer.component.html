@@ -1,4 +1,21 @@
-<aside class="drawer" [class.drawer-open]="isOpen" [class.with-sidebar]="persistent && sidebarOpen" aria-label="Assistant IA">
+<aside
+  class="drawer"
+  [class.drawer-open]="isOpen"
+  [class.is-resizing]="isResizing"
+  [class.is-wide]="isWide"
+  [style.width.px]="effectiveWidth"
+  aria-label="Assistant IA">
+
+  <!-- Poignee de redimensionnement (desactivee en mode wide) -->
+  <div
+    class="resize-handle"
+    *ngIf="!isWide"
+    (mousedown)="onResizeStart($event)"
+    role="separator"
+    aria-orientation="vertical"
+    aria-label="Redimensionner le panneau"
+    title="Glisser pour redimensionner"></div>
+
 
   <!-- Sidebar conversations (mode persistent uniquement) -->
   <section class="conv-sidebar" *ngIf="persistent && sidebarOpen" aria-label="Conversations">
@@ -65,6 +82,15 @@
         </ng-template>
       </div>
 
+      <button
+        type="button"
+        class="wide-toggle-btn"
+        (click)="toggleWide()"
+        [attr.aria-label]="isWide ? 'Reduire le panneau' : 'Agrandir le panneau'"
+        [title]="isWide ? 'Reduire' : 'Agrandir'">
+        <lucide-icon [img]="isWide ? Minimize2 : Maximize2" [size]="16"></lucide-icon>
+      </button>
+
       <button type="button" class="close-btn" (click)="onClose()" aria-label="Fermer">
         <lucide-icon [img]="X" [size]="18"></lucide-icon>
       </button>
@@ -82,18 +108,18 @@
     </div>
 
     <div #messagesContainer class="messages">
-      <div class="msg msg-assistant" *ngIf="messages.length === 0 && !currentAssistantText">
-        {{ welcomeMessage }}
+      <div class="msg msg-assistant md" *ngIf="messages.length === 0 && !currentAssistantText"
+           [innerHTML]="welcomeMessage | markdown">
       </div>
 
       <ng-container *ngFor="let m of messages">
-        <div class="msg" [class.msg-user]="m.role === 'user'" [class.msg-assistant]="m.role === 'assistant'">
-          {{ m.content }}
-        </div>
+        <div *ngIf="m.role === 'user'" class="msg msg-user">{{ m.content }}</div>
+        <div *ngIf="m.role === 'assistant'" class="msg msg-assistant md"
+             [innerHTML]="m.content | markdown"></div>
       </ng-container>
 
-      <div class="msg msg-assistant msg-streaming" *ngIf="currentAssistantText">
-        {{ currentAssistantText }}<span class="caret"></span>
+      <div class="msg msg-assistant msg-streaming md" *ngIf="currentAssistantText">
+        <span [innerHTML]="currentAssistantText | markdown"></span><span class="caret"></span>
       </div>
 
       <div class="typing-indicator" *ngIf="isStreaming && !currentAssistantText" aria-live="polite">
