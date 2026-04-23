@@ -30,7 +30,7 @@ export interface ChapterDeletionImpact {
   providedIn: 'root'
 })
 export class CampaignService {
-  private apiUrl = 'http://localhost:8080/api/campaigns';
+  private apiUrl = '/api/campaigns';
 
   constructor(private http: HttpClient) {}
 
@@ -60,73 +60,73 @@ export class CampaignService {
 
   // ========== ARC ==========
   getArcs(campaignId: string): Observable<Arc[]> {
-    return this.http.get<Arc[]>(`http://localhost:8080/api/arcs/campaign/${campaignId}`);
+    return this.http.get<Arc[]>(`/api/arcs/campaign/${campaignId}`);
   }
 
   getArcById(id: string): Observable<Arc> {
-    return this.http.get<Arc>(`http://localhost:8080/api/arcs/${id}`);
+    return this.http.get<Arc>(`/api/arcs/${id}`);
   }
 
   createArc(payload: ArcCreate): Observable<Arc> {
-    return this.http.post<Arc>('http://localhost:8080/api/arcs', payload);
+    return this.http.post<Arc>('/api/arcs', payload);
   }
 
   updateArc(id: string, payload: ArcCreate): Observable<Arc> {
-    return this.http.put<Arc>(`http://localhost:8080/api/arcs/${id}`, payload);
+    return this.http.put<Arc>(`/api/arcs/${id}`, payload);
   }
 
   deleteArc(id: string): Observable<void> {
-    return this.http.delete<void>(`http://localhost:8080/api/arcs/${id}`);
+    return this.http.delete<void>(`/api/arcs/${id}`);
   }
 
   getArcDeletionImpact(id: string): Observable<ArcDeletionImpact> {
-    return this.http.get<ArcDeletionImpact>(`http://localhost:8080/api/arcs/${id}/deletion-impact`);
+    return this.http.get<ArcDeletionImpact>(`/api/arcs/${id}/deletion-impact`);
   }
 
   // ========== CHAPTER ==========
   getChapters(arcId: string): Observable<Chapter[]> {
-    return this.http.get<Chapter[]>(`http://localhost:8080/api/chapters/arc/${arcId}`);
+    return this.http.get<Chapter[]>(`/api/chapters/arc/${arcId}`);
   }
 
   getChapterById(id: string): Observable<Chapter> {
-    return this.http.get<Chapter>(`http://localhost:8080/api/chapters/${id}`);
+    return this.http.get<Chapter>(`/api/chapters/${id}`);
   }
 
   createChapter(payload: ChapterCreate): Observable<Chapter> {
-    return this.http.post<Chapter>('http://localhost:8080/api/chapters', payload);
+    return this.http.post<Chapter>('/api/chapters', payload);
   }
 
   updateChapter(id: string, payload: ChapterCreate): Observable<Chapter> {
-    return this.http.put<Chapter>(`http://localhost:8080/api/chapters/${id}`, payload);
+    return this.http.put<Chapter>(`/api/chapters/${id}`, payload);
   }
 
   deleteChapter(id: string): Observable<void> {
-    return this.http.delete<void>(`http://localhost:8080/api/chapters/${id}`);
+    return this.http.delete<void>(`/api/chapters/${id}`);
   }
 
   getChapterDeletionImpact(id: string): Observable<ChapterDeletionImpact> {
-    return this.http.get<ChapterDeletionImpact>(`http://localhost:8080/api/chapters/${id}/deletion-impact`);
+    return this.http.get<ChapterDeletionImpact>(`/api/chapters/${id}/deletion-impact`);
   }
 
   // ========== SCENE ==========
   getScenes(chapterId: string): Observable<Scene[]> {
-    return this.http.get<Scene[]>(`http://localhost:8080/api/scenes/chapter/${chapterId}`);
+    return this.http.get<Scene[]>(`/api/scenes/chapter/${chapterId}`);
   }
 
   getSceneById(id: string): Observable<Scene> {
-    return this.http.get<Scene>(`http://localhost:8080/api/scenes/${id}`);
+    return this.http.get<Scene>(`/api/scenes/${id}`);
   }
 
   createScene(payload: SceneCreate): Observable<Scene> {
-    return this.http.post<Scene>('http://localhost:8080/api/scenes', payload);
+    return this.http.post<Scene>('/api/scenes', payload);
   }
 
   updateScene(id: string, payload: SceneCreate): Observable<Scene> {
-    return this.http.put<Scene>(`http://localhost:8080/api/scenes/${id}`, payload);
+    return this.http.put<Scene>(`/api/scenes/${id}`, payload);
   }
 
   deleteScene(id: string): Observable<void> {
-    return this.http.delete<void>(`http://localhost:8080/api/scenes/${id}`);
+    return this.http.delete<void>(`/api/scenes/${id}`);
   }
 
   search(q: string): Observable<Campaign[]> {

@@ -3,6 +3,8 @@ import { AppComponent } from './app/app.component';
 import { PreloadAllModules, provideRouter, withPreloading } from '@angular/router';
 import { routes } from './app/app.routes';
 import { provideHttpClient } from '@angular/common/http';
+import { APP_INITIALIZER } from '@angular/core';
+import { ConfigService } from './app/services/config.service';
 
 // withPreloading(PreloadAllModules) : une fois l'app initiale rendue, Angular
 // telecharge en arriere-plan tous les chunks lazy-loades. Consequence : la
@@ -13,5 +15,11 @@ bootstrapApplication(AppComponent, {
   providers: [
     provideRouter(routes, withPreloading(PreloadAllModules)),
     provideHttpClient(),
+    {
+      provide: APP_INITIALIZER,
+      useFactory: (config: ConfigService) => () => config.load(),
+      deps: [ConfigService],
+      multi: true,
+    },
   ],
 }).catch((err: Error) => console.error(err));

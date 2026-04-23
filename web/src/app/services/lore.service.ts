@@ -28,8 +28,8 @@ export interface LoreDeletionImpact {
   providedIn: 'root'
 })
 export class LoreService {
-  private apiUrl = 'http://localhost:8080/api/lores';
-  private nodesUrl = 'http://localhost:8080/api/lore-nodes';
+  private apiUrl = '/api/lores';
+  private nodesUrl = '/api/lore-nodes';
 
   constructor(private http: HttpClient) {}
 

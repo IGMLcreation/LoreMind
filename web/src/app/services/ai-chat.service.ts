@@ -45,8 +45,8 @@ export type NarrativeEntityType = 'arc' | 'chapter' | 'scene' | 'character';
 
 @Injectable({ providedIn: 'root' })
 export class AiChatService {
-  private readonly loreEndpoint = 'http://localhost:8080/api/ai/chat/stream';
-  private readonly campaignEndpoint = 'http://localhost:8080/api/ai/chat/stream-campaign';
+  private readonly loreEndpoint = '/api/ai/chat/stream';
+  private readonly campaignEndpoint = '/api/ai/chat/stream-campaign';
 
   /**
    * Streame la réponse de l'IA pour un historique de messages donné (chat ancré Lore).

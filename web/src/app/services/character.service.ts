@@ -8,7 +8,7 @@ import { Character, CharacterCreate } from './character.model';
  */
 @Injectable({ providedIn: 'root' })
 export class CharacterService {
-  private apiUrl = 'http://localhost:8080/api/characters';
+  private apiUrl = '/api/characters';
 
   constructor(private http: HttpClient) {}
 

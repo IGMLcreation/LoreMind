@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { hiddenInDemoGuard } from './guards/demo-mode.guard';
 
 export const routes: Routes = [
   { path: 'lore', loadComponent: () => import('./lore/lore.component').then(m => m.LoreComponent) },
@@ -30,6 +31,8 @@ export const routes: Routes = [
   { path: 'game-systems', loadComponent: () => import('./game-systems/game-systems.component').then(m => m.GameSystemsComponent) },
   { path: 'game-systems/create', loadComponent: () => import('./game-systems/game-system-edit/game-system-edit.component').then(m => m.GameSystemEditComponent) },
   { path: 'game-systems/:id/edit', loadComponent: () => import('./game-systems/game-system-edit/game-system-edit.component').then(m => m.GameSystemEditComponent) },
-  { path: 'settings', loadComponent: () => import('./settings/settings.component').then(m => m.SettingsComponent) },
+  // Routes masquees en mode demo : ajouter canActivate: [hiddenInDemoGuard]
+  // (a prevoir aussi sur la future route d'export VTT).
+  { path: 'settings', canActivate: [hiddenInDemoGuard], loadComponent: () => import('./settings/settings.component').then(m => m.SettingsComponent) },
   { path: '', redirectTo: '/lore', pathMatch: 'full' }
 ];

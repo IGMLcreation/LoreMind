@@ -10,7 +10,7 @@ import { Page, PageCreate } from './page.model';
  */
 @Injectable({ providedIn: 'root' })
 export class PageService {
-  private apiUrl = 'http://localhost:8080/api/pages';
+  private apiUrl = '/api/pages';
 
   constructor(private http: HttpClient) {}
 

@@ -17,7 +17,7 @@ import {
  */
 @Injectable({ providedIn: 'root' })
 export class ConversationService {
-  private readonly apiUrl = 'http://localhost:8080/api/conversations';
+  private readonly apiUrl = '/api/conversations';
 
   constructor(private http: HttpClient) {}
 

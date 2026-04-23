@@ -36,7 +36,7 @@ export interface OllamaModelInfo {
 
 @Injectable({ providedIn: 'root' })
 export class SettingsService {
-  private readonly apiUrl = 'http://localhost:8080/api/settings';
+  private readonly apiUrl = '/api/settings';
 
   // HTTP Basic : le browser gere le prompt natif de credentials au premier 401.
   // withCredentials=true pour que les creds soient renvoyees sur les appels
