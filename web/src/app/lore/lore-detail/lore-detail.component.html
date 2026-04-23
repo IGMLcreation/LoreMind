@@ -39,7 +39,7 @@
   </div>
 
   <!-- ============ Grille des dossiers racine ============ -->
-  <section class="detail-section nodes-section">
+  <section class="detail-section nodes-section" *ngIf="!editing">
     <div class="section-header">
       <h2>Dossiers</h2>
       <button class="btn-add" (click)="navigateToCreateNode()">

@@ -77,8 +77,8 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
       switchMap(id => forkJoin({
         campaign: this.campaignService.getCampaignById(id),
         allCampaigns: this.campaignService.getAllCampaigns(),
-        treeData: loadCampaignTreeData(this.campaignService, id).pipe(
-          catchError(() => of({ arcs: [], chaptersByArc: {}, scenesByChapter: {} } as CampaignTreeData))
+        treeData: loadCampaignTreeData(this.campaignService, id, this.characterService).pipe(
+          catchError(() => of({ arcs: [], chaptersByArc: {}, scenesByChapter: {}, characters: [] } as CampaignTreeData))
         )
       }))
     ).subscribe(({ campaign, allCampaigns, treeData }) => {
@@ -111,8 +111,8 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
     forkJoin({
       campaign: this.campaignService.getCampaignById(id),
       allCampaigns: this.campaignService.getAllCampaigns(),
-      treeData: loadCampaignTreeData(this.campaignService, id).pipe(
-        catchError(() => of({ arcs: [], chaptersByArc: {}, scenesByChapter: {} } as CampaignTreeData))
+      treeData: loadCampaignTreeData(this.campaignService, id, this.characterService).pipe(
+        catchError(() => of({ arcs: [], chaptersByArc: {}, scenesByChapter: {}, characters: [] } as CampaignTreeData))
       )
     }).subscribe(({ campaign, allCampaigns, treeData }) => {
       this.campaign = campaign;

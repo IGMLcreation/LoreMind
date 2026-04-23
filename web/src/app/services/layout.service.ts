@@ -12,6 +12,11 @@ export interface TreeItem {
   /** Petit badge affiché à droite (ex: "3" pour compter les pages d'un dossier). */
   meta?: string;
   /**
+   * Libellé de section affiché AU-DESSUS du nœud, avec un filet de séparation.
+   * Utilisé pour grouper visuellement des nœuds racines (ex: "Personnages" vs "Narration").
+   */
+  sectionHeaderBefore?: string;
+  /**
    * Actions de creation contextuelles (ex: "+ Nouveau chapitre" sur un arc).
    * Affichees comme boutons icone au survol du noeud (repli visuel), et en
    * pleine largeur si le noeud est expanded sans aucun enfant reel

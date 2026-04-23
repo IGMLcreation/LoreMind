@@ -29,6 +29,9 @@
 
     <!-- Template récursif : un noeud d'arbre rend son bouton, puis ses enfants via ce même template -->
     <ng-template #treeNode let-item let-level="level">
+      <div class="tree-section-header" *ngIf="level === 0 && item.sectionHeaderBefore">
+        {{ item.sectionHeaderBefore }}
+      </div>
       <div class="tree-item" [style.padding-left.px]="level * 12">
         <div class="tree-row">
           <button
