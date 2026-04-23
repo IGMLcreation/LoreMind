@@ -1,8 +1,15 @@
 package com.loremind.application.campaigncontext;
 
+import com.loremind.domain.campaigncontext.Arc;
 import com.loremind.domain.campaigncontext.Campaign;
+import com.loremind.domain.campaigncontext.Chapter;
+import com.loremind.domain.campaigncontext.ports.ArcRepository;
 import com.loremind.domain.campaigncontext.ports.CampaignRepository;
+import com.loremind.domain.campaigncontext.ports.ChapterRepository;
+import com.loremind.domain.campaigncontext.ports.CharacterRepository;
+import com.loremind.domain.campaigncontext.ports.SceneRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -16,9 +23,22 @@ import java.util.Optional;
 public class CampaignService {
 
     private final CampaignRepository campaignRepository;
+    private final ArcRepository arcRepository;
+    private final ChapterRepository chapterRepository;
+    private final SceneRepository sceneRepository;
+    private final CharacterRepository characterRepository;
 
-    public CampaignService(CampaignRepository campaignRepository) {
+    public CampaignService(
+            CampaignRepository campaignRepository,
+            ArcRepository arcRepository,
+            ChapterRepository chapterRepository,
+            SceneRepository sceneRepository,
+            CharacterRepository characterRepository) {
         this.campaignRepository = campaignRepository;
+        this.arcRepository = arcRepository;
+        this.chapterRepository = chapterRepository;
+        this.sceneRepository = sceneRepository;
+        this.characterRepository = characterRepository;
     }
 
     /**
@@ -29,6 +49,12 @@ public class CampaignService {
      * <p>{@code loreId} est nullable : une campagne peut exister sans univers associé.</p>
      */
     public record CampaignData(String name, String description, String loreId, String gameSystemId) {}
+
+    /**
+     * Compte des entités qui seront supprimées en cascade si la campagne est effacée.
+     * Utilisé par l'UI pour afficher un récapitulatif dans le dialogue de confirmation.
+     */
+    public record DeletionImpact(int arcs, int chapters, int scenes, int characters) {}
 
     public Campaign createCampaign(CampaignData data) {
         Campaign campaign = Campaign.builder()
@@ -71,7 +97,48 @@ public class CampaignService {
         return (id == null || id.isBlank()) ? null : id;
     }
 
+    /**
+     * Calcule l'impact d'une suppression en cascade : nombre d'arcs, chapitres,
+     * scènes et personnages qui disparaîtront avec la campagne. Utilisé par l'UI
+     * pour afficher "X arcs, Y chapitres, Z scènes seront supprimés".
+     */
+    public DeletionImpact getDeletionImpact(String id) {
+        List<Arc> arcs = arcRepository.findByCampaignId(id);
+        int chapterTotal = 0;
+        int sceneTotal = 0;
+        for (Arc arc : arcs) {
+            List<Chapter> chapters = chapterRepository.findByArcId(arc.getId());
+            chapterTotal += chapters.size();
+            for (Chapter chapter : chapters) {
+                sceneTotal += sceneRepository.findByChapterId(chapter.getId()).size();
+            }
+        }
+        int characterTotal = characterRepository.findByCampaignId(id).size();
+        return new DeletionImpact(arcs.size(), chapterTotal, sceneTotal, characterTotal);
+    }
+
+    /**
+     * Supprime la campagne et toutes ses entités dépendantes (arcs → chapitres →
+     * scènes, plus les personnages). L'opération est transactionnelle : soit
+     * tout disparaît, soit rien ne change. Les FKs applicatives n'ayant pas
+     * de contrainte CASCADE au niveau DB, on orchestre la cascade ici.
+     */
+    @Transactional
     public void deleteCampaign(String id) {
+        List<Arc> arcs = arcRepository.findByCampaignId(id);
+        for (Arc arc : arcs) {
+            List<Chapter> chapters = chapterRepository.findByArcId(arc.getId());
+            for (Chapter chapter : chapters) {
+                for (var scene : sceneRepository.findByChapterId(chapter.getId())) {
+                    sceneRepository.deleteById(scene.getId());
+                }
+                chapterRepository.deleteById(chapter.getId());
+            }
+            arcRepository.deleteById(arc.getId());
+        }
+        for (var character : characterRepository.findByCampaignId(id)) {
+            characterRepository.deleteById(character.getId());
+        }
         campaignRepository.deleteById(id);
     }
 

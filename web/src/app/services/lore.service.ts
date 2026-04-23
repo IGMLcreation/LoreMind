@@ -3,6 +3,23 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Lore, LoreCreate, LoreNode, LoreNodeCreate } from './lore.model';
 
+/** Compte des entités qui seront supprimées en cascade avec un dossier. */
+export interface LoreNodeDeletionImpact {
+  /** Sous-dossiers (récursif, sans compter le dossier racine lui-même). */
+  folders: number;
+  /** Pages dans l'ensemble du sous-arbre. */
+  pages: number;
+}
+
+/** Compte des entités qui seront supprimées / détachées en cascade avec un Lore. */
+export interface LoreDeletionImpact {
+  folders: number;
+  pages: number;
+  templates: number;
+  /** Campagnes qui perdront leur référence au Lore (mais resteront présentes). */
+  detachedCampaigns: number;
+}
+
 /**
  * Service HTTP pour la gestion des Lores.
  * Port de sortie vers le Backend Java (Architecture Hexagonale).
@@ -36,6 +53,10 @@ export class LoreService {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
+  getLoreDeletionImpact(id: string): Observable<LoreDeletionImpact> {
+    return this.http.get<LoreDeletionImpact>(`${this.apiUrl}/${id}/deletion-impact`);
+  }
+
   getLoreNodes(loreId: string): Observable<LoreNode[]> {
     return this.http.get<LoreNode[]>(`${this.nodesUrl}?loreId=${loreId}`);
   }
@@ -55,6 +76,10 @@ export class LoreService {
 
   deleteLoreNode(id: string): Observable<void> {
     return this.http.delete<void>(`${this.nodesUrl}/${id}`);
+  }
+
+  getLoreNodeDeletionImpact(id: string): Observable<LoreNodeDeletionImpact> {
+    return this.http.get<LoreNodeDeletionImpact>(`${this.nodesUrl}/${id}/deletion-impact`);
   }
 
   searchLores(q: string): Observable<Lore[]> {

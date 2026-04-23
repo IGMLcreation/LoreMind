@@ -69,4 +69,17 @@ public class LoreController {
         loreService.deleteLore(id);
         return ResponseEntity.noContent().build();
     }
+
+    /**
+     * Récapitulatif des entités qui seront supprimées / détachées en cascade.
+     * Utilisé par l'UI pour afficher "X dossiers, Y pages, Z templates,
+     * N campagne(s) détachée(s)" dans la confirmation.
+     */
+    @GetMapping("/{id}/deletion-impact")
+    public ResponseEntity<LoreService.DeletionImpact> getDeletionImpact(@PathVariable String id) {
+        if (loreService.getLoreById(id).isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(loreService.getDeletionImpact(id));
+    }
 }

@@ -134,16 +134,35 @@ export class LoreNodeEditComponent implements OnInit, OnDestroy {
     });
   }
 
-  get canDelete(): boolean {
-    return this.childFolderCount === 0 && this.pageCount === 0;
-  }
-
+  /**
+   * Suppression en cascade : on va chercher le compte exact de sous-dossiers et
+   * de pages (qui tombent avec le dossier), on l'annonce dans la confirmation,
+   * puis on délègue au backend — l'atomicité est garantie côté transaction.
+   */
   delete(): void {
-    if (!this.canDelete || !this.node) return;
-    if (!confirm(`Supprimer le dossier "${this.node.name}" ?`)) return;
-    this.loreService.deleteLoreNode(this.folderId).subscribe({
-      next: () => this.router.navigate(['/lore', this.loreId]),
-      error: () => console.error('Erreur lors de la suppression du dossier')
+    if (!this.node) return;
+    const node = this.node;
+    this.loreService.getLoreNodeDeletionImpact(this.folderId).subscribe({
+      next: impact => {
+        const parts: string[] = [];
+        if (impact.folders > 0) parts.push(`${impact.folders} sous-dossier${impact.folders > 1 ? 's' : ''}`);
+        if (impact.pages > 0) parts.push(`${impact.pages} page${impact.pages > 1 ? 's' : ''}`);
+
+        const lines = [`Supprimer le dossier "${node.name}" ?`];
+        if (parts.length) {
+          lines.push('');
+          lines.push(`Cette action supprimera aussi : ${parts.join(', ')}.`);
+        }
+        lines.push('');
+        lines.push('Cette action est irréversible.');
+
+        if (!confirm(lines.join('\n'))) return;
+        this.loreService.deleteLoreNode(this.folderId).subscribe({
+          next: () => this.router.navigate(['/lore', this.loreId]),
+          error: () => console.error('Erreur lors de la suppression du dossier')
+        });
+      },
+      error: () => console.error('Impossible de récupérer les dépendances du dossier')
     });
   }
 

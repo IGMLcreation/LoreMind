@@ -1,9 +1,15 @@
 package com.loremind.application.lorecontext;
 
+import com.loremind.domain.campaigncontext.Campaign;
+import com.loremind.domain.campaigncontext.ports.CampaignRepository;
 import com.loremind.domain.lorecontext.Lore;
+import com.loremind.domain.lorecontext.LoreNode;
+import com.loremind.domain.lorecontext.Page;
+import com.loremind.domain.lorecontext.Template;
 import com.loremind.domain.lorecontext.ports.LoreNodeRepository;
 import com.loremind.domain.lorecontext.ports.LoreRepository;
 import com.loremind.domain.lorecontext.ports.PageRepository;
+import com.loremind.domain.lorecontext.ports.TemplateRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,6 +23,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 /**
@@ -30,6 +37,8 @@ public class LoreServiceTest {
     @Mock private LoreRepository loreRepository;
     @Mock private LoreNodeRepository loreNodeRepository;
     @Mock private PageRepository pageRepository;
+    @Mock private TemplateRepository templateRepository;
+    @Mock private CampaignRepository campaignRepository;
 
     @InjectMocks private LoreService loreService;
 
@@ -134,8 +143,67 @@ public class LoreServiceTest {
     }
 
     @Test
-    void testDeleteLore_DelegatesToRepository() {
+    void testDeleteLore_EmptyLore() {
+        // Aucun dossier / page / template / campagne : seul le Lore est supprimé.
         loreService.deleteLore("lore-1");
         verify(loreRepository).deleteById("lore-1");
+        verify(loreNodeRepository, never()).deleteById(anyString());
+        verify(pageRepository, never()).deleteById(anyString());
+        verify(templateRepository, never()).deleteById(anyString());
+    }
+
+    @Test
+    void testDeleteLore_CascadesFoldersPagesTemplates() {
+        LoreNode node = LoreNode.builder().id("n-1").loreId("lore-1").name("F").build();
+        Page page = Page.builder().id("p-1").loreId("lore-1").nodeId("n-1").title("P").build();
+        Template template = Template.builder().id("t-1").loreId("lore-1").name("T").build();
+
+        when(pageRepository.findByLoreId("lore-1")).thenReturn(List.of(page));
+        when(loreNodeRepository.findByLoreId("lore-1")).thenReturn(List.of(node));
+        when(templateRepository.findByLoreId("lore-1")).thenReturn(List.of(template));
+
+        loreService.deleteLore("lore-1");
+
+        verify(pageRepository).deleteById("p-1");
+        verify(loreNodeRepository).deleteById("n-1");
+        verify(templateRepository).deleteById("t-1");
+        verify(loreRepository).deleteById("lore-1");
+    }
+
+    @Test
+    void testDeleteLore_DetachesCampaignsInsteadOfDeleting() {
+        Campaign attached = Campaign.builder().id("c-1").loreId("lore-1").name("C1").build();
+        Campaign other = Campaign.builder().id("c-2").loreId("lore-other").name("C2").build();
+        Campaign orphan = Campaign.builder().id("c-3").loreId(null).name("C3").build();
+        when(campaignRepository.findAll()).thenReturn(List.of(attached, other, orphan));
+        when(campaignRepository.save(any(Campaign.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        loreService.deleteLore("lore-1");
+
+        // Seule la campagne attachée est re-sauvegardée (avec loreId=null).
+        ArgumentCaptor<Campaign> captor = ArgumentCaptor.forClass(Campaign.class);
+        verify(campaignRepository, times(1)).save(captor.capture());
+        assertEquals("c-1", captor.getValue().getId());
+        assertNull(captor.getValue().getLoreId());
+        // Aucune campagne n'est supprimée.
+        verify(campaignRepository, never()).deleteById(anyString());
+    }
+
+    @Test
+    void testGetDeletionImpact() {
+        Template t1 = Template.builder().id("t-1").loreId("lore-1").name("T").build();
+        Campaign attached = Campaign.builder().id("c-1").loreId("lore-1").name("C").build();
+        Campaign unrelated = Campaign.builder().id("c-2").loreId("lore-other").name("C2").build();
+        when(loreNodeRepository.countByLoreId("lore-1")).thenReturn(4L);
+        when(pageRepository.countByLoreId("lore-1")).thenReturn(12L);
+        when(templateRepository.findByLoreId("lore-1")).thenReturn(List.of(t1));
+        when(campaignRepository.findAll()).thenReturn(List.of(attached, unrelated));
+
+        LoreService.DeletionImpact impact = loreService.getDeletionImpact("lore-1");
+
+        assertEquals(4, impact.folders());
+        assertEquals(12, impact.pages());
+        assertEquals(1, impact.templates());
+        assertEquals(1, impact.detachedCampaigns());
     }
 }

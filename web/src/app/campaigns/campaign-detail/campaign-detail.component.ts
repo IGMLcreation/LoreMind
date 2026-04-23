@@ -257,22 +257,37 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Suppression protégée : refus si la campagne contient des arcs.
-   * Les arcs contiennent potentiellement des chapitres/scènes construits longuement.
+   * Suppression en cascade : récupère d'abord le détail de ce qui sera effacé
+   * (arcs / chapitres / scènes / personnages), affiche le récapitulatif dans
+   * la confirmation, puis supprime. Le cascade est orchestré côté backend dans
+   * une seule transaction.
    */
   deleteCampaign(): void {
     if (!this.campaign) return;
-    if (this.arcs.length > 0) {
-      alert(
-        `Impossible de supprimer "${this.campaign.name}" : elle contient encore ${this.arcs.length} arc(s).\n` +
-        `Videz la campagne (arcs et chapitres) avant de la supprimer.`
-      );
-      return;
-    }
-    if (!confirm(`Supprimer définitivement la campagne "${this.campaign.name}" ?`)) return;
-    this.campaignService.deleteCampaign(this.campaign.id!).subscribe({
-      next: () => this.router.navigate(['/campaigns']),
-      error: () => console.error('Erreur lors de la suppression de la campagne')
+    const campaign = this.campaign;
+    this.campaignService.getCampaignDeletionImpact(campaign.id!).subscribe({
+      next: impact => {
+        const parts: string[] = [];
+        if (impact.arcs > 0) parts.push(`${impact.arcs} arc${impact.arcs > 1 ? 's' : ''}`);
+        if (impact.chapters > 0) parts.push(`${impact.chapters} chapitre${impact.chapters > 1 ? 's' : ''}`);
+        if (impact.scenes > 0) parts.push(`${impact.scenes} scène${impact.scenes > 1 ? 's' : ''}`);
+        if (impact.characters > 0) parts.push(`${impact.characters} personnage${impact.characters > 1 ? 's' : ''}`);
+
+        const lines = [`Supprimer définitivement la campagne "${campaign.name}" ?`];
+        if (parts.length) {
+          lines.push('');
+          lines.push(`Cette action supprimera aussi : ${parts.join(', ')}.`);
+        }
+        lines.push('');
+        lines.push('Cette action est irréversible.');
+
+        if (!confirm(lines.join('\n'))) return;
+        this.campaignService.deleteCampaign(campaign.id!).subscribe({
+          next: () => this.router.navigate(['/campaigns']),
+          error: () => console.error('Erreur lors de la suppression de la campagne')
+        });
+      },
+      error: () => console.error('Impossible de récupérer les dépendances de la campagne')
     });
   }
 

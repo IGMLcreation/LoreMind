@@ -1,9 +1,13 @@
 package com.loremind.application.lorecontext;
 
 import com.loremind.domain.lorecontext.LoreNode;
+import com.loremind.domain.lorecontext.Page;
 import com.loremind.domain.lorecontext.ports.LoreNodeRepository;
+import com.loremind.domain.lorecontext.ports.PageRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,10 +20,19 @@ import java.util.Optional;
 public class LoreNodeService {
 
     private final LoreNodeRepository loreNodeRepository;
+    private final PageRepository pageRepository;
 
-    public LoreNodeService(LoreNodeRepository loreNodeRepository) {
+    public LoreNodeService(LoreNodeRepository loreNodeRepository, PageRepository pageRepository) {
         this.loreNodeRepository = loreNodeRepository;
+        this.pageRepository = pageRepository;
     }
+
+    /**
+     * Compte des entités qui seront supprimées en cascade si le dossier est effacé :
+     * le dossier lui-même n'est pas compté, seuls les descendants (sous-dossiers
+     * récursifs + pages de l'ensemble du sous-arbre).
+     */
+    public record DeletionImpact(int folders, int pages) {}
 
     /**
      * Crée un LoreNode (dossier) à partir d'un "objet changes" porteur des valeurs
@@ -68,7 +81,64 @@ public class LoreNodeService {
         return loreNodeRepository.save(existing);
     }
 
+    /**
+     * Calcule l'impact d'une suppression en cascade : nombre de sous-dossiers
+     * (récursif, sans compter la racine) et de pages dans l'ensemble du sous-arbre.
+     */
+    public DeletionImpact getDeletionImpact(String id) {
+        List<LoreNode> descendants = collectDescendants(id);
+        int pageTotal = pageRepository.findByNodeId(id).size();
+        for (LoreNode descendant : descendants) {
+            pageTotal += pageRepository.findByNodeId(descendant.getId()).size();
+        }
+        return new DeletionImpact(descendants.size(), pageTotal);
+    }
+
+    /**
+     * Supprime le dossier et tout son sous-arbre (sous-dossiers récursifs + pages).
+     * Suppression en profondeur d'abord (feuilles → racine) pour limiter les
+     * références orphelines en cours de transaction. Les FKs applicatives n'ayant
+     * pas de CASCADE en DB, on orchestre la descente ici.
+     */
+    @Transactional
     public void deleteLoreNode(String id) {
+        List<LoreNode> descendants = collectDescendants(id);
+        // Descendants retournés en ordre BFS (haut → bas) : on inverse pour
+        // supprimer les feuilles en premier, puis on finit par la racine.
+        for (int i = descendants.size() - 1; i >= 0; i--) {
+            String descendantId = descendants.get(i).getId();
+            deletePagesOfNode(descendantId);
+            loreNodeRepository.deleteById(descendantId);
+        }
+        deletePagesOfNode(id);
         loreNodeRepository.deleteById(id);
+    }
+
+    private void deletePagesOfNode(String nodeId) {
+        for (Page page : pageRepository.findByNodeId(nodeId)) {
+            pageRepository.deleteById(page.getId());
+        }
+    }
+
+    /**
+     * Retourne tous les descendants (hors racine) d'un dossier, en ordre BFS.
+     * Parcours itératif pour éviter tout risque de débordement de pile sur
+     * une arborescence profonde malicieuse.
+     */
+    private List<LoreNode> collectDescendants(String rootId) {
+        List<LoreNode> result = new ArrayList<>();
+        List<String> frontier = new ArrayList<>();
+        frontier.add(rootId);
+        while (!frontier.isEmpty()) {
+            List<String> nextFrontier = new ArrayList<>();
+            for (String parentId : frontier) {
+                for (LoreNode child : loreNodeRepository.findByParentId(parentId)) {
+                    result.add(child);
+                    nextFrontier.add(child.getId());
+                }
+            }
+            frontier = nextFrontier;
+        }
+        return result;
     }
 }

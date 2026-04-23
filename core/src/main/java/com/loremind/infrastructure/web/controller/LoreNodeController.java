@@ -97,4 +97,16 @@ public class LoreNodeController {
         loreNodeService.deleteLoreNode(id);
         return ResponseEntity.noContent().build();
     }
+
+    /**
+     * Récapitulatif des entités qui seront supprimées en cascade : utilisé par
+     * l'UI pour afficher "X sous-dossiers, Y pages..." dans la confirmation.
+     */
+    @GetMapping("/{id}/deletion-impact")
+    public ResponseEntity<LoreNodeService.DeletionImpact> getDeletionImpact(@PathVariable String id) {
+        if (loreNodeService.getLoreNodeById(id).isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(loreNodeService.getDeletionImpact(id));
+    }
 }

@@ -110,24 +110,43 @@ export class LoreDetailComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Suppression protégée : refus si le Lore contient encore des dossiers
-   * ou des pages. Protège contre un clic accidentel sur des données
-   * construites longuement. Logique côté frontend (pas d'appel HTTP
-   * supplémentaire) car les données sont déjà chargées.
+   * Suppression en cascade : récupère le détail de ce qui tombera (dossiers,
+   * pages, templates) et de ce qui sera détaché (campagnes conservées mais
+   * sans lien vers ce Lore), affiche le récapitulatif dans la confirmation,
+   * puis délègue au backend (transaction atomique).
    */
   deleteLore(): void {
     if (!this.lore) return;
-    if (this.allNodes.length > 0) {
-      alert(
-        `Impossible de supprimer "${this.lore.name}" : il contient encore ${this.allNodes.length} dossier(s).\n` +
-        `Videz le Lore (dossiers et pages) avant de le supprimer.`
-      );
-      return;
-    }
-    if (!confirm(`Supprimer définitivement le Lore "${this.lore.name}" ?`)) return;
-    this.loreService.deleteLore(this.lore.id!).subscribe({
-      next: () => this.router.navigate(['/lore']),
-      error: () => console.error('Erreur lors de la suppression du Lore')
+    const lore = this.lore;
+    this.loreService.getLoreDeletionImpact(lore.id!).subscribe({
+      next: impact => {
+        const deleted: string[] = [];
+        if (impact.folders > 0) deleted.push(`${impact.folders} dossier${impact.folders > 1 ? 's' : ''}`);
+        if (impact.pages > 0) deleted.push(`${impact.pages} page${impact.pages > 1 ? 's' : ''}`);
+        if (impact.templates > 0) deleted.push(`${impact.templates} template${impact.templates > 1 ? 's' : ''}`);
+
+        const lines = [`Supprimer définitivement le Lore "${lore.name}" ?`];
+        if (deleted.length) {
+          lines.push('');
+          lines.push(`Cette action supprimera aussi : ${deleted.join(', ')}.`);
+        }
+        if (impact.detachedCampaigns > 0) {
+          lines.push('');
+          lines.push(
+            `${impact.detachedCampaigns} campagne${impact.detachedCampaigns > 1 ? 's' : ''} ${impact.detachedCampaigns > 1 ? 'seront conservées' : 'sera conservée'} ` +
+            `mais ${impact.detachedCampaigns > 1 ? 'perdront' : 'perdra'} leur lien vers cet univers.`
+          );
+        }
+        lines.push('');
+        lines.push('Cette action est irréversible.');
+
+        if (!confirm(lines.join('\n'))) return;
+        this.loreService.deleteLore(lore.id!).subscribe({
+          next: () => this.router.navigate(['/lore']),
+          error: () => console.error('Erreur lors de la suppression du Lore')
+        });
+      },
+      error: () => console.error('Impossible de récupérer les dépendances du Lore')
     });
   }
 

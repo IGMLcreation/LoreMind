@@ -74,4 +74,16 @@ public class CampaignController {
         campaignService.deleteCampaign(id);
         return ResponseEntity.noContent().build();
     }
+
+    /**
+     * Récapitulatif des entités qui seront supprimées en cascade : utilisé par
+     * l'UI pour afficher "X arcs, Y chapitres, Z scènes..." dans la confirmation.
+     */
+    @GetMapping("/{id}/deletion-impact")
+    public ResponseEntity<CampaignService.DeletionImpact> getDeletionImpact(@PathVariable String id) {
+        if (!campaignService.campaignExists(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(campaignService.getDeletionImpact(id));
+    }
 }

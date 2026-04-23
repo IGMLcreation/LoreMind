@@ -1,7 +1,9 @@
 package com.loremind.application.lorecontext;
 
 import com.loremind.domain.lorecontext.LoreNode;
+import com.loremind.domain.lorecontext.Page;
 import com.loremind.domain.lorecontext.ports.LoreNodeRepository;
+import com.loremind.domain.lorecontext.ports.PageRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,6 +17,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 /**
@@ -26,6 +29,7 @@ import static org.mockito.Mockito.*;
 public class LoreNodeServiceTest {
 
     @Mock private LoreNodeRepository loreNodeRepository;
+    @Mock private PageRepository pageRepository;
 
     @InjectMocks private LoreNodeService loreNodeService;
 
@@ -118,8 +122,66 @@ public class LoreNodeServiceTest {
     }
 
     @Test
-    void testDelete() {
+    void testDelete_LeafFolder() {
+        // Aucun descendant, aucune page : seul le dossier est supprimé.
         loreNodeService.deleteLoreNode("n-1");
         verify(loreNodeRepository).deleteById("n-1");
+        verify(pageRepository, never()).deleteById(anyString());
+    }
+
+    @Test
+    void testDelete_CascadesPagesOfRoot() {
+        Page p1 = Page.builder().id("p-1").nodeId("n-1").title("P1").build();
+        Page p2 = Page.builder().id("p-2").nodeId("n-1").title("P2").build();
+        when(pageRepository.findByNodeId("n-1")).thenReturn(List.of(p1, p2));
+
+        loreNodeService.deleteLoreNode("n-1");
+
+        verify(pageRepository).deleteById("p-1");
+        verify(pageRepository).deleteById("p-2");
+        verify(loreNodeRepository).deleteById("n-1");
+    }
+
+    @Test
+    void testDelete_CascadesSubfoldersRecursive() {
+        // n-1 → n-1a → n-1a1 ; chaque feuille a une page.
+        LoreNode mid = LoreNode.builder().id("n-1a").parentId("n-1").loreId("lore-1").name("mid").build();
+        LoreNode leaf = LoreNode.builder().id("n-1a1").parentId("n-1a").loreId("lore-1").name("leaf").build();
+        Page pageOnLeaf = Page.builder().id("p-leaf").nodeId("n-1a1").title("P").build();
+
+        when(loreNodeRepository.findByParentId("n-1")).thenReturn(List.of(mid));
+        when(loreNodeRepository.findByParentId("n-1a")).thenReturn(List.of(leaf));
+        when(pageRepository.findByNodeId("n-1a1")).thenReturn(List.of(pageOnLeaf));
+
+        loreNodeService.deleteLoreNode("n-1");
+
+        // Feuilles d'abord (pages puis dossier leaf), puis mid, puis la racine.
+        verify(pageRepository).deleteById("p-leaf");
+        verify(loreNodeRepository).deleteById("n-1a1");
+        verify(loreNodeRepository).deleteById("n-1a");
+        verify(loreNodeRepository).deleteById("n-1");
+    }
+
+    @Test
+    void testGetDeletionImpact_CountsSubfoldersAndPages() {
+        LoreNode sub1 = LoreNode.builder().id("s-1").parentId("n-1").loreId("lore-1").name("s1").build();
+        LoreNode sub2 = LoreNode.builder().id("s-2").parentId("n-1").loreId("lore-1").name("s2").build();
+        LoreNode subsub = LoreNode.builder().id("s-1a").parentId("s-1").loreId("lore-1").name("s1a").build();
+        Page p1 = Page.builder().id("p-1").nodeId("n-1").title("P1").build();
+        Page p2 = Page.builder().id("p-2").nodeId("s-1").title("P2").build();
+        Page p3 = Page.builder().id("p-3").nodeId("s-1a").title("P3").build();
+
+        when(loreNodeRepository.findByParentId("n-1")).thenReturn(List.of(sub1, sub2));
+        when(loreNodeRepository.findByParentId("s-1")).thenReturn(List.of(subsub));
+        when(pageRepository.findByNodeId("n-1")).thenReturn(List.of(p1));
+        when(pageRepository.findByNodeId("s-1")).thenReturn(List.of(p2));
+        when(pageRepository.findByNodeId("s-2")).thenReturn(List.of());
+        when(pageRepository.findByNodeId("s-1a")).thenReturn(List.of(p3));
+
+        LoreNodeService.DeletionImpact impact = loreNodeService.getDeletionImpact("n-1");
+
+        // 3 sous-dossiers (sub1, sub2, subsub) — on ne compte pas la racine n-1.
+        assertEquals(3, impact.folders());
+        assertEquals(3, impact.pages());
     }
 }

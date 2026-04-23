@@ -1,7 +1,15 @@
 package com.loremind.application.campaigncontext;
 
+import com.loremind.domain.campaigncontext.Arc;
 import com.loremind.domain.campaigncontext.Campaign;
+import com.loremind.domain.campaigncontext.Chapter;
+import com.loremind.domain.campaigncontext.Character;
+import com.loremind.domain.campaigncontext.Scene;
+import com.loremind.domain.campaigncontext.ports.ArcRepository;
 import com.loremind.domain.campaigncontext.ports.CampaignRepository;
+import com.loremind.domain.campaigncontext.ports.ChapterRepository;
+import com.loremind.domain.campaigncontext.ports.CharacterRepository;
+import com.loremind.domain.campaigncontext.ports.SceneRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,6 +35,14 @@ public class CampaignServiceTest {
 
     @Mock
     private CampaignRepository campaignRepository;
+    @Mock
+    private ArcRepository arcRepository;
+    @Mock
+    private ChapterRepository chapterRepository;
+    @Mock
+    private SceneRepository sceneRepository;
+    @Mock
+    private CharacterRepository characterRepository;
 
     @InjectMocks
     private CampaignService campaignService;
@@ -196,15 +212,75 @@ public class CampaignServiceTest {
     }
 
     @Test
-    void testDeleteCampaign() {
-        // Arrange
-        doNothing().when(campaignRepository).deleteById("campaign-1");
-
+    void testDeleteCampaign_EmptyCampaign() {
+        // Arrange : aucune dépendance ; Mockito renvoie List.of() par défaut.
         // Act
         campaignService.deleteCampaign("campaign-1");
 
         // Assert
         verify(campaignRepository, times(1)).deleteById("campaign-1");
+        verify(arcRepository, never()).deleteById(anyString());
+        verify(chapterRepository, never()).deleteById(anyString());
+        verify(sceneRepository, never()).deleteById(anyString());
+        verify(characterRepository, never()).deleteById(anyString());
+    }
+
+    @Test
+    void testDeleteCampaign_CascadesArcsChaptersScenes() {
+        // Arrange : campagne avec 1 arc → 1 chapitre → 2 scènes.
+        Arc arc = Arc.builder().id("arc-1").campaignId("campaign-1").name("Arc 1").build();
+        Chapter chapter = Chapter.builder().id("chap-1").arcId("arc-1").name("Chap 1").build();
+        Scene scene1 = Scene.builder().id("scene-1").chapterId("chap-1").name("Scene 1").build();
+        Scene scene2 = Scene.builder().id("scene-2").chapterId("chap-1").name("Scene 2").build();
+
+        when(arcRepository.findByCampaignId("campaign-1")).thenReturn(List.of(arc));
+        when(chapterRepository.findByArcId("arc-1")).thenReturn(List.of(chapter));
+        when(sceneRepository.findByChapterId("chap-1")).thenReturn(List.of(scene1, scene2));
+
+        // Act
+        campaignService.deleteCampaign("campaign-1");
+
+        // Assert : tout disparaît, dans l'ordre feuilles → racine.
+        verify(sceneRepository).deleteById("scene-1");
+        verify(sceneRepository).deleteById("scene-2");
+        verify(chapterRepository).deleteById("chap-1");
+        verify(arcRepository).deleteById("arc-1");
+        verify(campaignRepository).deleteById("campaign-1");
+    }
+
+    @Test
+    void testDeleteCampaign_CascadesCharacters() {
+        Character pc = Character.builder().id("char-1").campaignId("campaign-1").name("Alric").build();
+        when(characterRepository.findByCampaignId("campaign-1")).thenReturn(List.of(pc));
+
+        campaignService.deleteCampaign("campaign-1");
+
+        verify(characterRepository).deleteById("char-1");
+        verify(campaignRepository).deleteById("campaign-1");
+    }
+
+    @Test
+    void testGetDeletionImpact() {
+        Arc arc = Arc.builder().id("arc-1").campaignId("campaign-1").name("Arc 1").build();
+        Chapter c1 = Chapter.builder().id("chap-1").arcId("arc-1").name("C1").build();
+        Chapter c2 = Chapter.builder().id("chap-2").arcId("arc-1").name("C2").build();
+        Scene s1 = Scene.builder().id("s-1").chapterId("chap-1").name("S1").build();
+        Scene s2 = Scene.builder().id("s-2").chapterId("chap-2").name("S2").build();
+        Scene s3 = Scene.builder().id("s-3").chapterId("chap-2").name("S3").build();
+        Character pc = Character.builder().id("char-1").campaignId("campaign-1").name("Alric").build();
+
+        when(arcRepository.findByCampaignId("campaign-1")).thenReturn(List.of(arc));
+        when(chapterRepository.findByArcId("arc-1")).thenReturn(List.of(c1, c2));
+        when(sceneRepository.findByChapterId("chap-1")).thenReturn(List.of(s1));
+        when(sceneRepository.findByChapterId("chap-2")).thenReturn(List.of(s2, s3));
+        when(characterRepository.findByCampaignId("campaign-1")).thenReturn(List.of(pc));
+
+        CampaignService.DeletionImpact impact = campaignService.getDeletionImpact("campaign-1");
+
+        assertEquals(1, impact.arcs());
+        assertEquals(2, impact.chapters());
+        assertEquals(3, impact.scenes());
+        assertEquals(1, impact.characters());
     }
 
     @Test
