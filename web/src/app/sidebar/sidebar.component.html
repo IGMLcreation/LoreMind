@@ -53,11 +53,11 @@
       <lucide-icon [img]="Dices" [size]="16"></lucide-icon>
       <span>Systèmes de JDR</span>
     </button>
-    <button class="tool-btn">
+    <button class="tool-btn" *ngIf="!config.demoMode">
       <lucide-icon [img]="Download" [size]="16"></lucide-icon>
       <span>Export VTT</span>
     </button>
-    <button class="tool-btn" [class.active]="currentRoute.startsWith('/settings')" (click)="navigateTo('/settings')">
+    <button class="tool-btn" *ngIf="!config.demoMode" [class.active]="currentRoute.startsWith('/settings')" (click)="navigateTo('/settings')">
       <lucide-icon [img]="Settings" [size]="16"></lucide-icon>
       <span>Paramètres</span>
     </button>

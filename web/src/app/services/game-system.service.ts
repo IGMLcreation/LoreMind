@@ -8,7 +8,7 @@ import { GameSystem, GameSystemCreate } from './game-system.model';
  */
 @Injectable({ providedIn: 'root' })
 export class GameSystemService {
-  private apiUrl = 'http://localhost:8080/api/game-systems';
+  private apiUrl = '/api/game-systems';
 
   constructor(private http: HttpClient) {}
 

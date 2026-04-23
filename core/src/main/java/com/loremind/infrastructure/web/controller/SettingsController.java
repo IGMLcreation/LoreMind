@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
 
@@ -32,20 +34,25 @@ public class SettingsController {
 
     private final RestTemplate restTemplate;
     private final String brainBaseUrl;
+    private final boolean demoMode;
 
     public SettingsController(RestTemplate restTemplate,
-                              @Value("${brain.base-url}") String brainBaseUrl) {
+                              @Value("${brain.base-url}") String brainBaseUrl,
+                              @Value("${app.demo-mode:false}") boolean demoMode) {
         this.restTemplate = restTemplate;
         this.brainBaseUrl = brainBaseUrl;
+        this.demoMode = demoMode;
     }
 
     @GetMapping
     public ResponseEntity<Map<String, Object>> getSettings() {
+        guardDemoMode();
         return forward(HttpMethod.GET, "/settings", null);
     }
 
     @PutMapping
     public ResponseEntity<Map<String, Object>> updateSettings(@RequestBody Map<String, Object> patch) {
+        guardDemoMode();
         return forward(HttpMethod.PUT, "/settings", patch);
     }
 
@@ -62,6 +69,12 @@ public class SettingsController {
     @GetMapping("/models/onemin")
     public ResponseEntity<Map<String, Object>> listOneMinModels() {
         return forward(HttpMethod.GET, "/models/onemin", null);
+    }
+
+    private void guardDemoMode() {
+        if (demoMode) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Settings disabled in demo mode");
+        }
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})

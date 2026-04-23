@@ -9,8 +9,8 @@ import { Image } from './image.model';
  */
 @Injectable({ providedIn: 'root' })
 export class ImageService {
-  /** Base absolue du backend — utile pour construire des URLs complètes (<img src>). */
-  readonly apiBase = 'http://localhost:8080';
+  /** Base du backend (vide = même origine que le front, résolue par le navigateur). */
+  readonly apiBase = '';
   private apiUrl = `${this.apiBase}/api/images`;
 
   constructor(private http: HttpClient) {}
