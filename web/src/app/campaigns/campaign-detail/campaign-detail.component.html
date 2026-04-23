@@ -70,7 +70,7 @@
     </div>
   </div>
 
-  <section class="detail-section characters-section">
+  <section class="detail-section characters-section" *ngIf="!editing">
     <div class="section-header">
       <h2>Personnages joueurs</h2>
       <button class="btn-add" (click)="createCharacter()">
@@ -99,7 +99,7 @@
     </div>
   </section>
 
-  <section class="detail-section arcs-section">
+  <section class="detail-section arcs-section" *ngIf="!editing">
     <div class="section-header">
       <h2>Arcs narratifs</h2>
       <button class="btn-add" (click)="createArc()">

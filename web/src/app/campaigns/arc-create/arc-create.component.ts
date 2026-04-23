@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { LucideAngularModule, BookOpen } from 'lucide-angular';
 import { CampaignService } from '../../services/campaign.service';
+import { CharacterService } from '../../services/character.service';
 import { LayoutService, GlobalItem } from '../../services/layout.service';
 import { Campaign } from '../../services/campaign.model';
 import { loadCampaignTreeData, buildCampaignTree } from '../campaign-tree.helper';
@@ -33,6 +34,7 @@ export class ArcCreateComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private campaignService: CampaignService,
+    private characterService: CharacterService,
     private layoutService: LayoutService
   ) {
     this.form = this.fb.group({
@@ -50,7 +52,7 @@ export class ArcCreateComponent implements OnInit, OnDestroy {
     forkJoin({
       campaign: this.campaignService.getCampaignById(this.campaignId),
       allCampaigns: this.campaignService.getAllCampaigns(),
-      treeData: loadCampaignTreeData(this.campaignService, this.campaignId)
+      treeData: loadCampaignTreeData(this.campaignService, this.campaignId, this.characterService)
     }).subscribe(({ campaign, allCampaigns, treeData }) => {
       this.existingArcCount = treeData.arcs.length;
 

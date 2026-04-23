@@ -110,6 +110,23 @@
   padding: 0.25rem 0;
 }
 
+// En-tête de section — groupe visuellement les nœuds racines (ex: Personnages / Narration).
+// Un filet au-dessus crée la séparation ; pas de filet pour la première section
+// (le titre suffit) — on cible ça via :not(:first-child).
+.tree-section-header {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9ca3af;
+  padding: 0.6rem 0.5rem 0.3rem;
+}
+.tree > .tree-section-header:not(:first-child) {
+  border-top: 1px solid #374151;
+  margin-top: 0.35rem;
+  padding-top: 0.6rem;
+}
+
 .tree-btn {
   display: flex;
   align-items: center;
