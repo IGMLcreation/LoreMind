@@ -4,6 +4,9 @@ import { Router } from '@angular/router';
 import { LucideAngularModule, Search, Download, Settings, ArrowLeft, Dices } from 'lucide-angular';
 import { LayoutService } from '../services/layout.service';
 import { GlobalSearchService } from '../services/global-search.service';
+// Single source of truth pour la version affichée dans le footer :
+// on lit directement package.json à la compilation (resolveJsonModule).
+import packageJson from '../../../package.json';
 
 @Component({
   selector: 'app-sidebar',
@@ -22,6 +25,7 @@ export class SidebarComponent {
   readonly Dices = Dices;
 
   readonly layoutConfig$ = this.layoutService.secondarySidebar$;
+  readonly appVersion = packageJson.version;
 
   constructor(
     private router: Router,
