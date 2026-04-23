@@ -1,9 +1,13 @@
 package com.loremind.application.campaigncontext;
 
 import com.loremind.domain.campaigncontext.Arc;
+import com.loremind.domain.campaigncontext.Chapter;
 import com.loremind.domain.campaigncontext.ports.ArcRepository;
+import com.loremind.domain.campaigncontext.ports.ChapterRepository;
+import com.loremind.domain.campaigncontext.ports.SceneRepository;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,10 +21,19 @@ import java.util.Optional;
 public class ArcService {
 
     private final ArcRepository arcRepository;
+    private final ChapterRepository chapterRepository;
+    private final SceneRepository sceneRepository;
 
-    public ArcService(ArcRepository arcRepository) {
+    public ArcService(ArcRepository arcRepository,
+                      ChapterRepository chapterRepository,
+                      SceneRepository sceneRepository) {
         this.arcRepository = arcRepository;
+        this.chapterRepository = chapterRepository;
+        this.sceneRepository = sceneRepository;
     }
+
+    /** Compte des entités qui seront supprimées en cascade avec l'arc. */
+    public record DeletionImpact(int chapters, int scenes) {}
 
     public Arc createArc(String name, String description, String campaignId, int order) {
         Arc arc = Arc.builder()
@@ -59,7 +72,31 @@ public class ArcService {
         return arcRepository.save(arc);
     }
 
+    /**
+     * Calcule l'impact d'une suppression en cascade : chapitres + scènes
+     * qui disparaîtront avec l'arc.
+     */
+    public DeletionImpact getDeletionImpact(String id) {
+        List<Chapter> chapters = chapterRepository.findByArcId(id);
+        int sceneTotal = 0;
+        for (Chapter chapter : chapters) {
+            sceneTotal += sceneRepository.findByChapterId(chapter.getId()).size();
+        }
+        return new DeletionImpact(chapters.size(), sceneTotal);
+    }
+
+    /**
+     * Supprime l'arc et toutes ses entités dépendantes (chapitres → scènes).
+     * Transactionnel : atomique.
+     */
+    @Transactional
     public void deleteArc(String id) {
+        for (Chapter chapter : chapterRepository.findByArcId(id)) {
+            for (var scene : sceneRepository.findByChapterId(chapter.getId())) {
+                sceneRepository.deleteById(scene.getId());
+            }
+            chapterRepository.deleteById(chapter.getId());
+        }
         arcRepository.deleteById(id);
     }
 

@@ -74,6 +74,15 @@
 }
 
 .detail-header {
+  // Sticky : Modifier/Supprimer restent accessibles pendant le scroll de la
+  // campagne (potentiellement très longue avec arcs / chapitres / scènes).
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #0a0a14;
+  padding: 1rem 0;
+  border-bottom: 1px solid #1f2937;
+  margin-bottom: 1.5rem;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;

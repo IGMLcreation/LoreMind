@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
-import { LucideAngularModule, Pencil } from 'lucide-angular';
+import { LucideAngularModule, Pencil, Trash2 } from 'lucide-angular';
 import { CampaignService } from '../../services/campaign.service';
 import { PageService } from '../../services/page.service';
 import { LayoutService, GlobalItem } from '../../services/layout.service';
@@ -26,6 +26,7 @@ import { ImageGalleryComponent } from '../../shared/image-gallery/image-gallery.
 })
 export class SceneViewComponent implements OnInit, OnDestroy {
   readonly Pencil = Pencil;
+  readonly Trash2 = Trash2;
 
   campaignId = '';
   arcId = '';
@@ -108,6 +109,19 @@ export class SceneViewComponent implements OnInit, OnDestroy {
       '/campaigns', this.campaignId, 'arcs', this.arcId,
       'chapters', this.chapterId, 'scenes', this.sceneId, 'edit'
     ]);
+  }
+
+  /** Suppression simple — une scène n'a pas d'enfants. Retour au chapitre parent. */
+  deleteScene(): void {
+    if (!this.scene) return;
+    const scene = this.scene;
+    if (!confirm(`Supprimer la scène "${scene.name}" ?\n\nCette action est irréversible.`)) return;
+    this.campaignService.deleteScene(scene.id!).subscribe({
+      next: () => this.router.navigate([
+        '/campaigns', this.campaignId, 'arcs', this.arcId, 'chapters', this.chapterId
+      ]),
+      error: () => console.error('Erreur lors de la suppression de la scène')
+    });
   }
 
   ngOnDestroy(): void {

@@ -77,7 +77,7 @@ export class LoreDetailComponent implements OnInit, OnDestroy {
   }
 
   navigateToFolder(nodeId: string): void {
-    this.router.navigate(['/lore', this.lore!.id, 'folders', nodeId, 'edit']);
+    this.router.navigate(['/lore', this.lore!.id, 'folders', nodeId]);
   }
 
   // ─────────────── Édition / suppression du Lore ───────────────

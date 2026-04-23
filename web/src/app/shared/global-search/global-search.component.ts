@@ -131,7 +131,7 @@ export class GlobalSearchComponent implements OnInit, OnDestroy {
       title: n.name,
       subtitle: '',
       tag: 'Dossier',
-      route: ['/lore', n.loreId, 'folders', n.id, 'edit']
+      route: ['/lore', n.loreId, 'folders', n.id]
     }));
     const templateResults: SearchResult[] = templates.map(t => ({
       id: t.id,

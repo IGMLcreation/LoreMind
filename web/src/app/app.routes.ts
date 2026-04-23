@@ -5,6 +5,7 @@ export const routes: Routes = [
   { path: 'lore/:id', loadComponent: () => import('./lore/lore-detail/lore-detail.component').then(m => m.LoreDetailComponent) },
   { path: 'lore/:loreId/nodes/create', loadComponent: () => import('./lore/lore-node-create/lore-node-create.component').then(m => m.LoreNodeCreateComponent) },
   { path: 'lore/:loreId/folders/:parentId/create', loadComponent: () => import('./lore/lore-node-create/lore-node-create.component').then(m => m.LoreNodeCreateComponent) },
+  { path: 'lore/:loreId/folders/:folderId', loadComponent: () => import('./lore/folder-view/folder-view.component').then(m => m.FolderViewComponent) },
   { path: 'lore/:loreId/folders/:folderId/edit', loadComponent: () => import('./lore/lore-node-edit/lore-node-edit.component').then(m => m.LoreNodeEditComponent) },
   { path: 'lore/:loreId/templates/create', loadComponent: () => import('./lore/template-create/template-create.component').then(m => m.TemplateCreateComponent) },
   { path: 'lore/:loreId/templates/:templateId', loadComponent: () => import('./lore/template-edit/template-edit.component').then(m => m.TemplateEditComponent) },

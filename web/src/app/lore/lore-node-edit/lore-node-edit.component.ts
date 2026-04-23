@@ -129,45 +129,15 @@ export class LoreNodeEditComponent implements OnInit, OnDestroy {
       parentId: raw.parentId && raw.parentId !== '' ? raw.parentId : null
     };
     this.loreService.updateLoreNode(this.folderId, updated).subscribe({
-      next: () => this.router.navigate(['/lore', this.loreId]),
+      next: () => this.router.navigate(['/lore', this.loreId, 'folders', this.folderId]),
       error: () => console.error('Erreur lors de la sauvegarde du dossier')
     });
   }
 
-  /**
-   * Suppression en cascade : on va chercher le compte exact de sous-dossiers et
-   * de pages (qui tombent avec le dossier), on l'annonce dans la confirmation,
-   * puis on délègue au backend — l'atomicité est garantie côté transaction.
-   */
-  delete(): void {
-    if (!this.node) return;
-    const node = this.node;
-    this.loreService.getLoreNodeDeletionImpact(this.folderId).subscribe({
-      next: impact => {
-        const parts: string[] = [];
-        if (impact.folders > 0) parts.push(`${impact.folders} sous-dossier${impact.folders > 1 ? 's' : ''}`);
-        if (impact.pages > 0) parts.push(`${impact.pages} page${impact.pages > 1 ? 's' : ''}`);
-
-        const lines = [`Supprimer le dossier "${node.name}" ?`];
-        if (parts.length) {
-          lines.push('');
-          lines.push(`Cette action supprimera aussi : ${parts.join(', ')}.`);
-        }
-        lines.push('');
-        lines.push('Cette action est irréversible.');
-
-        if (!confirm(lines.join('\n'))) return;
-        this.loreService.deleteLoreNode(this.folderId).subscribe({
-          next: () => this.router.navigate(['/lore', this.loreId]),
-          error: () => console.error('Erreur lors de la suppression du dossier')
-        });
-      },
-      error: () => console.error('Impossible de récupérer les dépendances du dossier')
-    });
-  }
-
   cancel(): void {
-    this.router.navigate(['/lore', this.loreId]);
+    // Retour vers la vue détail du dossier plutôt que la racine du Lore :
+    // l'édition est un sous-écran du détail.
+    this.router.navigate(['/lore', this.loreId, 'folders', this.folderId]);
   }
 
   /** Retourne l'icône lucide à afficher dans l'aperçu du bouton "Sauvegarder". */

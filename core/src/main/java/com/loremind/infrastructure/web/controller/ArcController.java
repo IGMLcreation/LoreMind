@@ -68,4 +68,12 @@ public class ArcController {
         arcService.deleteArc(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/{id}/deletion-impact")
+    public ResponseEntity<ArcService.DeletionImpact> getDeletionImpact(@PathVariable String id) {
+        if (!arcService.arcExists(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(arcService.getDeletionImpact(id));
+    }
 }

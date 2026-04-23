@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { forkJoin } from 'rxjs';
-import { LucideAngularModule, Pencil } from 'lucide-angular';
+import { LucideAngularModule, Pencil, Trash2 } from 'lucide-angular';
 import { LoreService } from '../../services/lore.service';
 import { TemplateService } from '../../services/template.service';
 import { PageService } from '../../services/page.service';
@@ -34,6 +34,7 @@ import { ImageGalleryComponent } from '../../shared/image-gallery/image-gallery.
 })
 export class PageViewComponent implements OnInit, OnDestroy {
   readonly Pencil = Pencil;
+  readonly Trash2 = Trash2;
 
   loreId = '';
   pageId = '';
@@ -96,7 +97,7 @@ export class PageViewComponent implements OnInit, OnDestroy {
         : undefined;
     }
     for (const node of folderChain) {
-      items.push({ label: node.name, route: ['/lore', this.loreId, 'folders', node.id, 'edit'] });
+      items.push({ label: node.name, route: ['/lore', this.loreId, 'folders', node.id] });
     }
     items.push({ label: this.page.title });
     return items;
@@ -119,6 +120,26 @@ export class PageViewComponent implements OnInit, OnDestroy {
 
   editMode(): void {
     this.router.navigate(['/lore', this.loreId, 'pages', this.pageId, 'edit']);
+  }
+
+  /**
+   * Suppression simple : pas d'enfants. On remonte au dossier parent
+   * si on peut, sinon à la racine du Lore.
+   */
+  deletePage(): void {
+    if (!this.page) return;
+    const page = this.page;
+    if (!confirm(`Supprimer la page "${page.title}" ?\n\nCette action est irréversible.`)) return;
+    this.pageService.delete(page.id!).subscribe({
+      next: () => {
+        if (page.nodeId) {
+          this.router.navigate(['/lore', this.loreId, 'folders', page.nodeId]);
+        } else {
+          this.router.navigate(['/lore', this.loreId]);
+        }
+      },
+      error: () => console.error('Erreur lors de la suppression de la page')
+    });
   }
 
   ngOnDestroy(): void {

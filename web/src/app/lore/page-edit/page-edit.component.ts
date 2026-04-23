@@ -147,7 +147,7 @@ export class PageEditComponent implements OnInit, OnDestroy {
     for (const node of folderChain) {
       items.push({
         label: node.name,
-        route: ['/lore', this.loreId, 'folders', node.id, 'edit']
+        route: ['/lore', this.loreId, 'folders', node.id]
       });
     }
 

@@ -63,8 +63,18 @@
 // --------------------------------------------------------------------------
 // Header de page "create" / "edit" (titre + éventuel sous-titre)
 // --------------------------------------------------------------------------
+// Sticky : sur les formulaires longs, les boutons (Sauvegarder / Annuler /
+// Supprimer) restent toujours accessibles sans devoir scroller. Le fond opaque
+// masque le contenu qui scrolle dessous, et le border-bottom crée une
+// séparation visuelle dès qu'il y a du contenu sous le header.
 .page-header {
-  margin-bottom: 2rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #0a0a14;
+  padding: 1rem 0;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #1f2937;
 
   h1 {
     font-size: 1.5rem;

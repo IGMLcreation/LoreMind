@@ -1,7 +1,11 @@
 package com.loremind.application.campaigncontext;
 
 import com.loremind.domain.campaigncontext.Arc;
+import com.loremind.domain.campaigncontext.Chapter;
+import com.loremind.domain.campaigncontext.Scene;
 import com.loremind.domain.campaigncontext.ports.ArcRepository;
+import com.loremind.domain.campaigncontext.ports.ChapterRepository;
+import com.loremind.domain.campaigncontext.ports.SceneRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,6 +18,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 /**
@@ -26,6 +31,10 @@ public class ArcServiceTest {
 
     @Mock
     private ArcRepository arcRepository;
+    @Mock
+    private ChapterRepository chapterRepository;
+    @Mock
+    private SceneRepository sceneRepository;
 
     @InjectMocks
     private ArcService arcService;
@@ -159,15 +168,48 @@ public class ArcServiceTest {
     }
 
     @Test
-    void testDeleteArc() {
-        // Arrange
-        doNothing().when(arcRepository).deleteById("arc-1");
-
-        // Act
+    void testDeleteArc_EmptyArc() {
+        // Aucun chapitre : Mockito renvoie List.of() par défaut.
         arcService.deleteArc("arc-1");
 
-        // Assert
-        verify(arcRepository, times(1)).deleteById("arc-1");
+        verify(arcRepository).deleteById("arc-1");
+        verify(chapterRepository, never()).deleteById(anyString());
+        verify(sceneRepository, never()).deleteById(anyString());
+    }
+
+    @Test
+    void testDeleteArc_CascadesChaptersAndScenes() {
+        Chapter chapter = Chapter.builder().id("chap-1").arcId("arc-1").name("C").build();
+        Scene s1 = Scene.builder().id("s-1").chapterId("chap-1").name("S1").build();
+        Scene s2 = Scene.builder().id("s-2").chapterId("chap-1").name("S2").build();
+
+        when(chapterRepository.findByArcId("arc-1")).thenReturn(List.of(chapter));
+        when(sceneRepository.findByChapterId("chap-1")).thenReturn(List.of(s1, s2));
+
+        arcService.deleteArc("arc-1");
+
+        verify(sceneRepository).deleteById("s-1");
+        verify(sceneRepository).deleteById("s-2");
+        verify(chapterRepository).deleteById("chap-1");
+        verify(arcRepository).deleteById("arc-1");
+    }
+
+    @Test
+    void testGetDeletionImpact() {
+        Chapter c1 = Chapter.builder().id("chap-1").arcId("arc-1").name("C1").build();
+        Chapter c2 = Chapter.builder().id("chap-2").arcId("arc-1").name("C2").build();
+        Scene s1 = Scene.builder().id("s-1").chapterId("chap-1").name("S1").build();
+        Scene s2 = Scene.builder().id("s-2").chapterId("chap-2").name("S2").build();
+        Scene s3 = Scene.builder().id("s-3").chapterId("chap-2").name("S3").build();
+
+        when(chapterRepository.findByArcId("arc-1")).thenReturn(List.of(c1, c2));
+        when(sceneRepository.findByChapterId("chap-1")).thenReturn(List.of(s1));
+        when(sceneRepository.findByChapterId("chap-2")).thenReturn(List.of(s2, s3));
+
+        ArcService.DeletionImpact impact = arcService.getDeletionImpact("arc-1");
+
+        assertEquals(2, impact.chapters());
+        assertEquals(3, impact.scenes());
     }
 
     @Test
