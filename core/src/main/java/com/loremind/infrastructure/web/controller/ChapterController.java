@@ -68,4 +68,12 @@ public class ChapterController {
         chapterService.deleteChapter(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/{id}/deletion-impact")
+    public ResponseEntity<ChapterService.DeletionImpact> getDeletionImpact(@PathVariable String id) {
+        if (!chapterService.chapterExists(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(chapterService.getDeletionImpact(id));
+    }
 }

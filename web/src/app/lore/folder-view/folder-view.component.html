@@ -1,0 +1,85 @@
+<div class="folder-view" *ngIf="node">
+
+  <!-- Fil d'Ariane : Lore → ancêtres → dossier courant -->
+  <nav class="breadcrumb" aria-label="Fil d'Ariane">
+    <button type="button" class="crumb" (click)="navigateToLoreRoot()" *ngIf="lore">
+      {{ lore.name }}
+    </button>
+    <ng-container *ngFor="let ancestor of ancestors">
+      <lucide-icon [img]="ChevronRight" [size]="12" class="crumb-sep"></lucide-icon>
+      <button type="button" class="crumb" (click)="navigateToSubfolder(ancestor.id!)">
+        {{ ancestor.name }}
+      </button>
+    </ng-container>
+    <lucide-icon [img]="ChevronRight" [size]="12" class="crumb-sep"></lucide-icon>
+    <span class="crumb current">{{ node.name }}</span>
+  </nav>
+
+  <!-- Header : icône + nom + actions -->
+  <div class="detail-header">
+    <div class="header-texts">
+      <h1>
+        <lucide-icon [img]="folderIcon" [size]="24" class="title-icon"></lucide-icon>
+        {{ node.name }}
+      </h1>
+      <p class="description">
+        {{ subfolders.length }} sous-dossier(s) · {{ pages.length }} page(s)
+      </p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn-secondary" (click)="navigateToEdit()" title="Modifier le dossier">
+        <lucide-icon [img]="Pencil" [size]="14"></lucide-icon>
+        Modifier
+      </button>
+      <button type="button" class="btn-danger" (click)="delete()" title="Supprimer le dossier et tout son contenu">
+        <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+        Supprimer
+      </button>
+    </div>
+  </div>
+
+  <!-- Sous-dossiers -->
+  <section class="detail-section">
+    <div class="section-header">
+      <h2>Sous-dossiers</h2>
+      <button class="btn-add" (click)="navigateToCreateSubfolder()">
+        <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
+        Nouveau sous-dossier
+      </button>
+    </div>
+
+    <div class="items-grid" *ngIf="subfolders.length > 0">
+      <div class="node-card" *ngFor="let sub of subfolders" (click)="navigateToSubfolder(sub.id!)">
+        <lucide-icon [img]="Folder" [size]="24" class="node-icon"></lucide-icon>
+        <span class="node-name">{{ sub.name }}</span>
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="subfolders.length === 0">
+      <p>Aucun sous-dossier.</p>
+    </div>
+  </section>
+
+  <!-- Pages -->
+  <section class="detail-section">
+    <div class="section-header">
+      <h2>Pages</h2>
+      <button class="btn-add" (click)="navigateToCreatePage()">
+        <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
+        Nouvelle page
+      </button>
+    </div>
+
+    <div class="items-grid" *ngIf="pages.length > 0">
+      <div class="node-card" *ngFor="let page of pages" (click)="navigateToPage(page.id!)">
+        <lucide-icon [img]="FileText" [size]="24" class="node-icon"></lucide-icon>
+        <span class="node-name">{{ page.title }}</span>
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="pages.length === 0">
+      <p>Aucune page dans ce dossier.</p>
+    </div>
+  </section>
+
+</div>

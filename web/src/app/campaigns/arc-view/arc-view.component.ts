@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
-import { LucideAngularModule, Pencil } from 'lucide-angular';
+import { LucideAngularModule, Pencil, Trash2 } from 'lucide-angular';
 import { CampaignService } from '../../services/campaign.service';
 import { PageService } from '../../services/page.service';
 import { LayoutService, GlobalItem } from '../../services/layout.service';
@@ -27,6 +27,7 @@ import { ImageGalleryComponent } from '../../shared/image-gallery/image-gallery.
 })
 export class ArcViewComponent implements OnInit, OnDestroy {
   readonly Pencil = Pencil;
+  readonly Trash2 = Trash2;
 
   campaignId = '';
   arcId = '';
@@ -99,6 +100,38 @@ export class ArcViewComponent implements OnInit, OnDestroy {
 
   editMode(): void {
     this.router.navigate(['/campaigns', this.campaignId, 'arcs', this.arcId, 'edit']);
+  }
+
+  /**
+   * Suppression en cascade : récupère d'abord le compte de chapitres / scènes
+   * qui tomberont avec l'arc, l'annonce dans la confirmation, puis délègue au
+   * backend (transaction atomique).
+   */
+  deleteArc(): void {
+    if (!this.arc) return;
+    const arc = this.arc;
+    this.campaignService.getArcDeletionImpact(arc.id!).subscribe({
+      next: impact => {
+        const parts: string[] = [];
+        if (impact.chapters > 0) parts.push(`${impact.chapters} chapitre${impact.chapters > 1 ? 's' : ''}`);
+        if (impact.scenes > 0) parts.push(`${impact.scenes} scène${impact.scenes > 1 ? 's' : ''}`);
+
+        const lines = [`Supprimer l'arc "${arc.name}" ?`];
+        if (parts.length) {
+          lines.push('');
+          lines.push(`Cette action supprimera aussi : ${parts.join(', ')}.`);
+        }
+        lines.push('');
+        lines.push('Cette action est irréversible.');
+
+        if (!confirm(lines.join('\n'))) return;
+        this.campaignService.deleteArc(arc.id!).subscribe({
+          next: () => this.router.navigate(['/campaigns', this.campaignId]),
+          error: () => console.error('Erreur lors de la suppression de l\'arc')
+        });
+      },
+      error: () => console.error('Impossible de récupérer les dépendances de l\'arc')
+    });
   }
 
   ngOnDestroy(): void {

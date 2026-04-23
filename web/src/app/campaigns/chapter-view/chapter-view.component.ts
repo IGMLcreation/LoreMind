@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
-import { LucideAngularModule, Pencil, Network } from 'lucide-angular';
+import { LucideAngularModule, Pencil, Network, Trash2 } from 'lucide-angular';
 import { CampaignService } from '../../services/campaign.service';
 import { PageService } from '../../services/page.service';
 import { LayoutService, GlobalItem } from '../../services/layout.service';
@@ -27,6 +27,7 @@ import { ImageGalleryComponent } from '../../shared/image-gallery/image-gallery.
 export class ChapterViewComponent implements OnInit, OnDestroy {
   readonly Pencil = Pencil;
   readonly Network = Network;
+  readonly Trash2 = Trash2;
 
   campaignId = '';
   arcId = '';
@@ -110,6 +111,33 @@ export class ChapterViewComponent implements OnInit, OnDestroy {
     this.router.navigate([
       '/campaigns', this.campaignId, 'arcs', this.arcId, 'chapters', this.chapterId, 'graph'
     ]);
+  }
+
+  /**
+   * Suppression en cascade : récupère le compte de scènes qui tomberont avec
+   * le chapitre, l'annonce dans la confirmation, puis délègue au backend.
+   */
+  deleteChapter(): void {
+    if (!this.chapter) return;
+    const chapter = this.chapter;
+    this.campaignService.getChapterDeletionImpact(chapter.id!).subscribe({
+      next: impact => {
+        const lines = [`Supprimer le chapitre "${chapter.name}" ?`];
+        if (impact.scenes > 0) {
+          lines.push('');
+          lines.push(`Cette action supprimera aussi : ${impact.scenes} scène${impact.scenes > 1 ? 's' : ''}.`);
+        }
+        lines.push('');
+        lines.push('Cette action est irréversible.');
+
+        if (!confirm(lines.join('\n'))) return;
+        this.campaignService.deleteChapter(chapter.id!).subscribe({
+          next: () => this.router.navigate(['/campaigns', this.campaignId, 'arcs', this.arcId]),
+          error: () => console.error('Erreur lors de la suppression du chapitre')
+        });
+      },
+      error: () => console.error('Impossible de récupérer les dépendances du chapitre')
+    });
   }
 
   ngOnDestroy(): void {

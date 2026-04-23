@@ -85,7 +85,7 @@ export function buildLoreSidebarConfig(data: LoreSidebarData): SecondarySidebarC
       id: `folder-${node.id}`,
       label: node.name,
       iconKey: node.icon ?? undefined,
-      route: `/lore/${lore.id}/folders/${node.id}/edit`,
+      route: `/lore/${lore.id}/folders/${node.id}`,
       meta: nodePages.length > 0 ? String(nodePages.length) : undefined,
       children,
       createActions: [

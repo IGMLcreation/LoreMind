@@ -2,8 +2,10 @@ package com.loremind.application.campaigncontext;
 
 import com.loremind.domain.campaigncontext.Chapter;
 import com.loremind.domain.campaigncontext.ports.ChapterRepository;
+import com.loremind.domain.campaigncontext.ports.SceneRepository;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,10 +19,15 @@ import java.util.Optional;
 public class ChapterService {
 
     private final ChapterRepository chapterRepository;
+    private final SceneRepository sceneRepository;
 
-    public ChapterService(ChapterRepository chapterRepository) {
+    public ChapterService(ChapterRepository chapterRepository, SceneRepository sceneRepository) {
         this.chapterRepository = chapterRepository;
+        this.sceneRepository = sceneRepository;
     }
+
+    /** Compte des scènes qui seront supprimées en cascade avec le chapitre. */
+    public record DeletionImpact(int scenes) {}
 
     public Chapter createChapter(String name, String description, String arcId, int order) {
         Chapter chapter = Chapter.builder()
@@ -58,7 +65,17 @@ public class ChapterService {
         return chapterRepository.save(chapter);
     }
 
+    /** Compte des scènes qui tomberont avec le chapitre. */
+    public DeletionImpact getDeletionImpact(String id) {
+        return new DeletionImpact(sceneRepository.findByChapterId(id).size());
+    }
+
+    /** Supprime le chapitre et toutes ses scènes. Transactionnel : atomique. */
+    @Transactional
     public void deleteChapter(String id) {
+        for (var scene : sceneRepository.findByChapterId(id)) {
+            sceneRepository.deleteById(scene.getId());
+        }
         chapterRepository.deleteById(id);
     }
 

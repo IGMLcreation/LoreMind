@@ -15,11 +15,19 @@
 }
 
 .detail-header {
+  // Sticky : les actions Modifier/Supprimer du Lore restent accessibles
+  // quand on scrolle la grille de dossiers.
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #0a0a14;
+  padding: 1rem 0;
+  border-bottom: 1px solid #1f2937;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 1.5rem;
-  margin-bottom: 2.5rem;
+  margin-bottom: 1.5rem;
 
   .header-texts { flex: 1; min-width: 0; }
 

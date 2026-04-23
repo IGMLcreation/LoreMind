@@ -189,6 +189,22 @@ export class SecondarySidebarComponent implements OnDestroy {
   }
 
   /**
+   * True si la route du node correspond exactement à l'URL courante. Utilisé
+   * pour surligner le dossier / page / scène en cours dans l'arbre — utile
+   * quand plusieurs entrées partagent le même label (ex : deux sous-dossiers
+   * "test" dans la même arborescence).
+   */
+  isActive(item: TreeItem): boolean {
+    if (!item.route) return false;
+    return this.router.isActive(item.route, {
+      paths: 'exact',
+      queryParams: 'ignored',
+      fragment: 'ignored',
+      matrixParams: 'ignored'
+    });
+  }
+
+  /**
    * Auto-déplie la chaîne d'ancêtres du item dont `route` matche l'URL active.
    * Nécessaire car la sidebar est détruite/recréée à chaque navigation (ngIf
    * dans app.component.html) : sans ça, même si on persiste `expandedItems`

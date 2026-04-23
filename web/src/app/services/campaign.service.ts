@@ -11,6 +11,17 @@ export interface CampaignDeletionImpact {
   characters: number;
 }
 
+/** Compte des entités qui seront supprimées en cascade avec un arc. */
+export interface ArcDeletionImpact {
+  chapters: number;
+  scenes: number;
+}
+
+/** Compte des scènes qui tomberont avec un chapitre. */
+export interface ChapterDeletionImpact {
+  scenes: number;
+}
+
 /**
  * Service HTTP pour la gestion des Campagnes.
  * Port de sortie vers le Backend Java (Architecture Hexagonale).
@@ -68,6 +79,10 @@ export class CampaignService {
     return this.http.delete<void>(`http://localhost:8080/api/arcs/${id}`);
   }
 
+  getArcDeletionImpact(id: string): Observable<ArcDeletionImpact> {
+    return this.http.get<ArcDeletionImpact>(`http://localhost:8080/api/arcs/${id}/deletion-impact`);
+  }
+
   // ========== CHAPTER ==========
   getChapters(arcId: string): Observable<Chapter[]> {
     return this.http.get<Chapter[]>(`http://localhost:8080/api/chapters/arc/${arcId}`);
@@ -87,6 +102,10 @@ export class CampaignService {
 
   deleteChapter(id: string): Observable<void> {
     return this.http.delete<void>(`http://localhost:8080/api/chapters/${id}`);
+  }
+
+  getChapterDeletionImpact(id: string): Observable<ChapterDeletionImpact> {
+    return this.http.get<ChapterDeletionImpact>(`http://localhost:8080/api/chapters/${id}/deletion-impact`);
   }
 
   // ========== SCENE ==========

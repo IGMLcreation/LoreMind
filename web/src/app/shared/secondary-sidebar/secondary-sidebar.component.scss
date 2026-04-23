@@ -129,6 +129,17 @@
   &.action { color: #6b7280; font-style: italic; }
   &.action:hover { color: #a5b4fc; background: #1f2937; }
 
+  // Dossier / page / scène actuellement affichée : surligné avec un accent
+  // violet et une barre gauche pour repérer instantanément où on se trouve,
+  // utile quand plusieurs entrées partagent le même label.
+  &.active {
+    background: #1e1b4b;
+    color: white;
+    font-weight: 500;
+    box-shadow: inset 3px 0 0 #6c63ff;
+  }
+  &.active:hover { background: #2a2558; }
+
   .tree-item-meta {
     margin-left: auto;
     font-size: 0.72rem;

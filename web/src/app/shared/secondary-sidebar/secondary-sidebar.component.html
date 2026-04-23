@@ -43,7 +43,10 @@
           </button>
           <span *ngIf="item.isAction || !isExpandable(item)" class="chevron-spacer"></span>
 
-          <button type="button" class="tree-btn" [class.action]="item.isAction" (click)="clickItem(item)">
+          <button type="button" class="tree-btn"
+                  [class.action]="item.isAction"
+                  [class.active]="isActive(item)"
+                  (click)="clickItem(item)">
             <lucide-icon
               *ngIf="iconFor(item) as icon"
               [img]="icon"

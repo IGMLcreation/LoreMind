@@ -17,7 +17,7 @@ export interface BreadcrumbItem {
  * Utilisation type :
  *   <app-breadcrumb [items]="[
  *     { label: 'Mon Univers', route: ['/lore', loreId] },
- *     { label: 'PNJ',         route: ['/lore', loreId, 'folders', nodeId, 'edit'] },
+ *     { label: 'PNJ',         route: ['/lore', loreId, 'folders', nodeId] },
  *     { label: 'Aldric' }
  *   ]"></app-breadcrumb>
  */
