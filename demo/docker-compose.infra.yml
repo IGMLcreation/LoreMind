@@ -1,0 +1,78 @@
+# ==========================================================================
+# LoreMind Demo - Infra permanente
+# --------------------------------------------------------------------------
+# - dockerproxy : expose un subset restreint de l'API Docker a l'orchestrateur
+#   (lecture seule sauf containers/images/networks). Remplace le mount direct
+#   de /var/run/docker.sock : meme avec RCE sur l'orchestrateur, un attaquant
+#   ne peut pas exec sur l'hote, creer des volumes, ni lire le daemon.
+# - orchestrator : sert l'Angular et proxy les /api/* vers les sessions.
+#
+# Les conteneurs de session sont crees dynamiquement par l'orchestrateur.
+# ==========================================================================
+
+services:
+  dockerproxy:
+    image: tecnativa/docker-socket-proxy:latest
+    container_name: loremind-demo-dockerproxy
+    restart: unless-stopped
+    environment:
+      # Minimum requis par l'orchestrateur.
+      CONTAINERS: 1
+      IMAGES: 1
+      NETWORKS: 1
+      POST: 1
+      # Tout le reste reste a 0 (defaut) : pas d'EXEC, VOLUMES, BUILD, AUTH,
+      # SYSTEM, INFO, SWARM, SECRETS, CONFIGS, NODES, etc.
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - socket-proxy
+    # Pas de ports exposes : accessible uniquement via le reseau socket-proxy.
+
+  orchestrator:
+    container_name: loremind-demo-orchestrator
+    depends_on:
+      - dockerproxy
+    build:
+      context: ../
+      dockerfile: demo/orchestrator/Dockerfile
+    restart: unless-stopped
+    environment:
+      # L'orchestrateur parle a dockerproxy au lieu du socket direct.
+      DOCKER_HOST: tcp://dockerproxy:2375
+      REGISTRY: ${REGISTRY:-git.igmlcreation.fr}
+      TAG: ${TAG:-latest}
+      MAX_SESSIONS: ${MAX_SESSIONS:-10}
+      SESSION_TTL_MINUTES: ${SESSION_TTL_MINUTES:-20}
+      CORE_MEMORY_MB: ${CORE_MEMORY_MB:-700}
+      BRAIN_MEMORY_MB: ${BRAIN_MEMORY_MB:-300}
+      POSTGRES_MEMORY_MB: ${POSTGRES_MEMORY_MB:-200}
+      SESSIONS_NETWORK: loremind-demo-sessions
+      BRAIN_INTERNAL_SECRET_DEFAULT: ${BRAIN_INTERNAL_SECRET_DEFAULT:-change-me}
+      # Rate limit : 1 creation par IP par fenetre (en secondes).
+      RATE_LIMIT_WINDOW_SECONDS: ${RATE_LIMIT_WINDOW_SECONDS:-60}
+    networks:
+      - traefik
+      - sessions
+      - socket-proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.loremind-demo.rule=Host(`${DEMO_HOST:-loremind-demo.igmlcreation.fr}`)"
+      - "traefik.http.routers.loremind-demo.entrypoints=websecure"
+      - "traefik.http.routers.loremind-demo.tls.certresolver=letsencrypt"
+      - "traefik.http.services.loremind-demo.loadbalancer.server.port=80"
+
+networks:
+  traefik:
+    external: true
+    name: ${TRAEFIK_NETWORK:-traefik}
+  sessions:
+    # Reseau interne pour les trios de session. Pas d'acces Internet direct
+    # (sauf via le DNS Docker), pas expose au host.
+    name: loremind-demo-sessions
+    driver: bridge
+  socket-proxy:
+    # Reseau prive entre dockerproxy et orchestrateur. Isole du reste.
+    name: loremind-demo-socket-proxy
+    driver: bridge
+    internal: true
