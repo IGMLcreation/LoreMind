@@ -63,8 +63,9 @@ export function buildLoreSidebarConfig(data: LoreSidebarData): SecondarySidebarC
   }
 
   /**
-   * Construit récursivement le TreeItem d'un dossier :
-   * ses sous-dossiers, puis ses pages, puis les actions "+ Nouveau dossier" et "+ Nouvelle page".
+   * Construit récursivement le TreeItem d'un dossier : ses sous-dossiers,
+   * ses pages, et deux actions révélées au survol de la ligne (pas dans la
+   * hiérarchie) — "Nouveau sous-dossier" et "Nouvelle page".
    */
   const buildFolderItem = (node: LoreNode): TreeItem => {
     const subFolders = childrenByParent.get(node.id!) ?? [];
@@ -116,20 +117,16 @@ export function buildLoreSidebarConfig(data: LoreSidebarData): SecondarySidebarC
     id: 'templates',
     title: 'Templates',
     initiallyOpen: true,
-    items: [
-      ...templates.map(t => ({
-        id: t.id!,
-        label: t.name,
-        meta: `${t.fieldCount ?? t.fields.length} champs`,
-        route: `/lore/${lore.id}/templates/${t.id}`
-      })),
-      {
-        id: 'create-template',
-        label: '+ Nouveau template',
-        isAction: true,
-        route: `/lore/${lore.id}/templates/create`
-      }
-    ]
+    headerAction: {
+      label: 'Nouveau template',
+      route: `/lore/${lore.id}/templates/create`
+    },
+    items: templates.map(t => ({
+      id: t.id!,
+      label: t.name,
+      meta: `${t.fieldCount ?? t.fields.length} champs`,
+      route: `/lore/${lore.id}/templates/${t.id}`
+    }))
   };
 
   return {

@@ -1,4 +1,6 @@
-<aside class="secondary-sidebar" [class.collapsed]="isCollapsed">
+<aside class="secondary-sidebar"
+       [class.collapsed]="isCollapsed"
+       [style.width.px]="isCollapsed ? null : width">
 
   <div class="collapse-toggle" (click)="toggleCollapse()">
     <lucide-icon [img]="isCollapsed ? PanelLeftOpen : PanelLeftClose" [size]="16"></lucide-icon>
@@ -61,28 +63,13 @@
               [title]="a.label"
               [attr.aria-label]="a.label"
               (click)="runCreateAction($event, a)">
-              <lucide-icon [img]="iconForAction(a)" [size]="12"></lucide-icon>
+              <lucide-icon [img]="iconForAction(a)" [size]="16"></lucide-icon>
             </button>
           </span>
         </div>
-        <div class="tree-children" *ngIf="isExpanded(item.id) && (hasChildren(item) || item.createActions?.length)">
+        <div class="tree-children" *ngIf="isExpanded(item.id) && hasChildren(item)">
           <ng-container *ngFor="let child of item.children">
             <ng-container *ngTemplateOutlet="treeNode; context: { $implicit: child, level: level + 1 }"></ng-container>
-          </ng-container>
-          <!-- Empty-state inline : createActions affichees en pleine largeur
-               UNIQUEMENT si le noeud n'a aucun vrai enfant (sinon le hover-reveal
-               sur le parent suffit, pas de pollution visuelle). -->
-          <ng-container *ngIf="!hasChildren(item) && item.createActions?.length">
-            <div class="tree-item empty-action" *ngFor="let a of item.createActions"
-                 [style.padding-left.px]="(level + 1) * 12">
-              <div class="tree-row">
-                <span class="chevron-spacer"></span>
-                <button type="button" class="tree-btn action" (click)="runCreateAction($event, a)">
-                  <lucide-icon [img]="iconForAction(a)" [size]="12" class="item-icon"></lucide-icon>
-                  + {{ a.label }}
-                </button>
-              </div>
-            </div>
           </ng-container>
         </div>
       </div>
@@ -90,13 +77,24 @@
 
     <!-- Panneau bas (ex: Templates) ------------------------------------ -->
     <section class="bottom-panel" *ngIf="bottomPanel">
-      <button class="panel-header" (click)="togglePanel()">
-        <span class="panel-title">{{ bottomPanel.title }}</span>
-        <lucide-icon
-          [img]="panelOpen ? ChevronDown : ChevronRight"
-          [size]="14">
-        </lucide-icon>
-      </button>
+      <div class="panel-header-row">
+        <button class="panel-header" (click)="togglePanel()">
+          <span class="panel-title">{{ bottomPanel.title }}</span>
+          <lucide-icon
+            [img]="panelOpen ? ChevronDown : ChevronRight"
+            [size]="14">
+          </lucide-icon>
+        </button>
+        <button
+          *ngIf="bottomPanel.headerAction as action"
+          type="button"
+          class="panel-header-action"
+          [title]="action.label"
+          [attr.aria-label]="action.label"
+          (click)="runPanelHeaderAction($event, action)">
+          <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
+        </button>
+      </div>
       <ul class="panel-list" *ngIf="panelOpen">
         <li *ngFor="let item of bottomPanel.items">
           <button
@@ -112,4 +110,9 @@
 
   </ng-container>
 
+  <!-- Poignée de redimensionnement sur le bord droit (masquée si replié) -->
+  <div class="resize-handle"
+       *ngIf="!isCollapsed"
+       (mousedown)="startResize($event)"
+       title="Glissez pour redimensionner"></div>
 </aside>

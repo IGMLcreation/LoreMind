@@ -107,9 +107,23 @@
     align-items: center;
     gap: 0.45rem;
 
-    // Discriminant visuel pour les champs IMAGE (palette indigo).
+    // Champ existant, chargé depuis le backend — orange ambre.
+    &.field-chip-existing {
+      background: #5a3a1a;
+      border-color: #7a4f22;
+      color: #fde4c0;
+    }
+
+    // Champ ajouté pendant cette session, pas encore sauvegardé — vert.
+    &.field-chip-new {
+      background: #2a5f3f;
+      border-color: #347a4f;
+      color: #d1fae5;
+    }
+
+    // Champ IMAGE (palette indigo) — prioritaire sur existing/new.
     &.field-chip-image {
-      background: #1f1b3a;
+      background: #312b5c;
       border-color: #3d3566;
       color: #c7b8ff;
     }
@@ -118,11 +132,33 @@
   .btn-type-toggle {
     width: auto;
     padding: 0 0.7rem;
+    background: #2a2a3d;
+    color: #d1d5db;
     font-size: 0.72rem;
     letter-spacing: 0.02em;
-    color: #9ca3af;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    height: 32px;
 
-    &:hover { color: #a5b4fc; background: #1f1b3a; }
+    &:hover { background: #363650; color: white; }
+  }
+
+  .btn-icon-danger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: #3f1f1f;
+    color: #fca5a5;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s;
+
+    &:hover { background: #5a2a2a; }
   }
 
   .type-select,
@@ -227,15 +263,14 @@
   justify-content: center;
   width: 36px;
   height: 36px;
-  margin-right: 0.4rem;
-  background: transparent;
-  color: #6c63ff;
+  background: #6c63ff;
+  color: white;
   border: none;
   border-radius: 6px;
   cursor: pointer;
   transition: background 0.15s;
 
-  &:hover { background: #2a2a3d; }
+  &:hover { background: #5a52d6; }
 }
 
 .btn-primary, .btn-secondary, .btn-danger {

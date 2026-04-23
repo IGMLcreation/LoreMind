@@ -35,7 +35,7 @@
       <ng-template #emptyTemplates>
         <p class="empty-hint">
           Aucun template défini pour ce Lore.
-          <a [routerLink]="['/lore', loreId, 'templates', 'create']">Créer un template</a> d'abord.
+          <a [routerLink]="['/lore', loreId, 'templates', 'create']" [queryParams]="{ returnTo: 'page-create' }" (click)="saveDraft()">Créer un template</a> d'abord.
         </p>
       </ng-template>
     </div>
@@ -43,11 +43,21 @@
     <!-- Dossier de destination -->
     <div class="field">
       <label>Dossier de destination *</label>
-      <select formControlName="nodeId" [attr.disabled]="preselectedNodeId ? true : null">
-        <option value="" disabled>Sélectionnez un dossier</option>
-        <option *ngFor="let node of nodes" [value]="node.id">{{ node.name }}</option>
-      </select>
-      <p class="hint">La page sera créée dans ce dossier</p>
+
+      <ng-container *ngIf="nodes.length; else emptyFolders">
+        <select formControlName="nodeId" [attr.disabled]="preselectedNodeId ? true : null">
+          <option value="" disabled>Sélectionnez un dossier</option>
+          <option *ngFor="let node of nodes" [value]="node.id">{{ node.name }}</option>
+        </select>
+        <p class="hint">La page sera créée dans ce dossier</p>
+      </ng-container>
+
+      <ng-template #emptyFolders>
+        <p class="empty-hint">
+          Aucun dossier dans ce Lore.
+          <a [routerLink]="['/lore', loreId, 'nodes', 'create']" [queryParams]="{ returnTo: 'page-create' }" (click)="saveDraft()">Créer un dossier</a> d'abord.
+        </p>
+      </ng-template>
     </div>
 
     <!-- Aide contextuelle -->

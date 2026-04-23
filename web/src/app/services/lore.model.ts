@@ -24,14 +24,12 @@ export interface LoreNode {
   /** Champs historiques non encore persistés côté backend — gardés pour compat de l'UI. */
   type?: string;
   description?: string;
-  address?: string;
 }
 
 export interface LoreNodeCreate {
   name: string;
   icon: string;
   description: string;
-  address: string;
   parentId?: string | null;
   loreId: string;
 }

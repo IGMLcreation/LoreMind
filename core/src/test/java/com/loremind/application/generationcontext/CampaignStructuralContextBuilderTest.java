@@ -8,6 +8,7 @@ import com.loremind.domain.campaigncontext.SceneBranch;
 import com.loremind.domain.campaigncontext.ports.ArcRepository;
 import com.loremind.domain.campaigncontext.ports.CampaignRepository;
 import com.loremind.domain.campaigncontext.ports.ChapterRepository;
+import com.loremind.domain.campaigncontext.ports.CharacterRepository;
 import com.loremind.domain.campaigncontext.ports.SceneRepository;
 import com.loremind.domain.generationcontext.CampaignStructuralContext;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,6 +41,8 @@ public class CampaignStructuralContextBuilderTest {
     private ChapterRepository chapterRepository;
     @Mock
     private SceneRepository sceneRepository;
+    @Mock
+    private CharacterRepository characterRepository;
 
     @InjectMocks
     private CampaignStructuralContextBuilder builder;

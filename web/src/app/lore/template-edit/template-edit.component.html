@@ -58,7 +58,10 @@
               <lucide-icon [img]="ChevronDown" [size]="12"></lucide-icon>
             </button>
           </div>
-          <span class="field-chip" [class.field-chip-image]="f.type === 'IMAGE'">
+          <span class="field-chip"
+                [class.field-chip-image]="f.type === 'IMAGE'"
+                [class.field-chip-existing]="f.type !== 'IMAGE' && isExistingField(f)"
+                [class.field-chip-new]="f.type !== 'IMAGE' && !isExistingField(f)">
             <lucide-icon [img]="f.type === 'IMAGE' ? ImageIcon : Type" [size]="12"></lucide-icon>
             {{ f.name }}
           </span>
@@ -79,8 +82,8 @@
             <option value="MASONRY">Mosaique</option>
             <option value="CAROUSEL">Carrousel</option>
           </select>
-          <button type="button" class="btn-icon-ghost" (click)="removeField(i)" aria-label="Supprimer">
-            <lucide-icon [img]="X" [size]="14"></lucide-icon>
+          <button type="button" class="btn-icon-danger" (click)="removeField(i)" aria-label="Supprimer">
+            <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
           </button>
         </li>
       </ul>
