@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, HostListener, OnDestroy, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { LucideAngularModule, ChevronRight, ChevronDown, PanelLeftClose, PanelLeftOpen, Plus, FolderPlus, FilePlus, LucideIconData } from 'lucide-angular';
@@ -12,7 +12,7 @@ import { resolveIcon } from '../../lore/lore-icons';
   templateUrl: './secondary-sidebar.component.html',
   styleUrls: ['./secondary-sidebar.component.scss']
 })
-export class SecondarySidebarComponent {
+export class SecondarySidebarComponent implements OnDestroy {
   @Input() title = '';
   @Input() createActions: SidebarAction[] = [];
   @Input() bottomPanel: BottomPanel | null = null;
@@ -31,6 +31,17 @@ export class SecondarySidebarComponent {
 
   isCollapsed = false;
 
+  // --- Resize (étirement horizontal) -------------------------------------
+  /** Clé localStorage pour persister la largeur choisie par l'utilisateur. */
+  private static readonly WIDTH_STORAGE_KEY = 'secondary-sidebar-width';
+  private static readonly MIN_WIDTH = 180;
+  private static readonly MAX_WIDTH = 600;
+  private static readonly DEFAULT_WIDTH = 220;
+
+  /** Largeur courante en px (bindée en [style.width.px]). */
+  width = SecondarySidebarComponent.DEFAULT_WIDTH;
+  private isResizing = false;
+
   private _items: TreeItem[] = [];
 
   @Input() set items(value: TreeItem[]) {
@@ -39,7 +50,65 @@ export class SecondarySidebarComponent {
   }
   get items(): TreeItem[] { return this._items; }
 
-  constructor(private router: Router, private layoutService: LayoutService) {}
+  constructor(
+    private router: Router,
+    private layoutService: LayoutService,
+    private elementRef: ElementRef<HTMLElement>
+  ) {
+    try {
+      const stored = localStorage.getItem(SecondarySidebarComponent.WIDTH_STORAGE_KEY);
+      const parsed = stored ? parseInt(stored, 10) : NaN;
+      if (!isNaN(parsed)) {
+        this.width = Math.min(
+          Math.max(parsed, SecondarySidebarComponent.MIN_WIDTH),
+          SecondarySidebarComponent.MAX_WIDTH
+        );
+      }
+    } catch { /* storage indisponible : on garde la valeur par défaut */ }
+  }
+
+  /** Début du resize — on active le flag et on désactive la sélection texte le temps du drag. */
+  startResize(event: MouseEvent): void {
+    if (this.isCollapsed) return;
+    event.preventDefault();
+    this.isResizing = true;
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'col-resize';
+  }
+
+  @HostListener('document:mousemove', ['$event'])
+  onResizeMove(event: MouseEvent): void {
+    if (!this.isResizing) return;
+    // La sidebar peut être précédée par la sidebar primaire : on calcule la largeur
+    // cible à partir du bord gauche du composant, pas de la fenêtre. Sinon le
+    // curseur et la poignée se désynchronisent.
+    const rect = this.elementRef.nativeElement.getBoundingClientRect();
+    const delta = event.clientX - rect.left;
+    const next = Math.min(
+      Math.max(delta, SecondarySidebarComponent.MIN_WIDTH),
+      SecondarySidebarComponent.MAX_WIDTH
+    );
+    this.width = next;
+  }
+
+  @HostListener('document:mouseup')
+  onResizeEnd(): void {
+    if (!this.isResizing) return;
+    this.isResizing = false;
+    document.body.style.userSelect = '';
+    document.body.style.cursor = '';
+    try {
+      localStorage.setItem(SecondarySidebarComponent.WIDTH_STORAGE_KEY, String(this.width));
+    } catch { /* storage indisponible : on ignore */ }
+  }
+
+  ngOnDestroy(): void {
+    // Sécurité : si le composant est détruit en plein drag, on restaure le curseur global.
+    if (this.isResizing) {
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+    }
+  }
 
   runAction(action: SidebarAction): void {
     if (action.route) { this.router.navigate([action.route]); }
@@ -80,6 +149,12 @@ export class SecondarySidebarComponent {
     if (item.route) { this.router.navigate([item.route]); }
   }
 
+  /** Clic sur le "+" du header : navigue sans toggler le panneau (stopPropagation). */
+  runPanelHeaderAction(event: Event, action: { route: string }): void {
+    event.stopPropagation();
+    this.router.navigate([action.route]);
+  }
+
   /** Résout la clé d'icône d'un TreeItem en icône lucide pour le template. */
   iconFor(item: TreeItem): LucideIconData | null {
     return item.iconKey ? resolveIcon(item.iconKey) : null;
@@ -108,12 +183,9 @@ export class SecondarySidebarComponent {
     return !!item.children && item.children.length > 0;
   }
 
-  /**
-   * True si le chevron doit s'afficher : soit il y a des enfants, soit le
-   * noeud a des createActions (dans ce cas deplier revele l'empty-state).
-   */
+  /** True si le chevron doit s'afficher — seulement quand le noeud a de vrais enfants. */
   isExpandable(item: TreeItem): boolean {
-    return this.hasChildren(item) || (item.createActions?.length ?? 0) > 0;
+    return this.hasChildren(item);
   }
 
   /**

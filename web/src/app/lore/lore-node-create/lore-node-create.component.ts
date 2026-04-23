@@ -9,6 +9,7 @@ import { PageService } from '../../services/page.service';
 import { LayoutService } from '../../services/layout.service';
 import { LoreNode } from '../../services/lore.model';
 import { loadLoreSidebarData, buildLoreSidebarConfig } from '../lore-sidebar.helper';
+import { popReturnTo } from '../return-stack.helper';
 import { LORE_ICON_OPTIONS, IconOption, resolveIcon } from '../lore-icons';
 
 @Component({
@@ -42,14 +43,7 @@ export class LoreNodeCreateComponent implements OnInit, OnDestroy {
     this.form = this.fb.group({
       name:        ['', Validators.required],
       description: [''],
-      address:     ['', Validators.required],
       parentId:    ['']   // '' = racine
-    });
-
-    // Auto-génère l'adresse depuis le nom
-    this.form.get('name')!.valueChanges.subscribe(name => {
-      const slug = (name as string).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-      this.form.get('address')!.setValue(slug, { emitEvent: false });
     });
   }
 
@@ -84,17 +78,35 @@ export class LoreNodeCreateComponent implements OnInit, OnDestroy {
     this.loreService.createLoreNode({
       name: raw.name,
       description: raw.description,
-      address: raw.address,
       icon: this.selectedIcon,
       parentId: raw.parentId && raw.parentId !== '' ? raw.parentId : null,
       loreId: this.loreId
     }).subscribe({
-      next: () => this.router.navigate(['/lore', this.loreId]),
+      next: () => this.navigateBack(),
       error: () => console.error('Erreur lors de la création du dossier')
     });
   }
 
   cancel(): void {
+    this.navigateBack();
+  }
+
+  /**
+   * Redirige vers l'écran d'origine en dépilant le premier élément du query-param
+   * `returnTo` (pile séparée par des virgules). Supporte `page-create` et
+   * `template-create`, en transmettant le reste de la pile à l'écran suivant.
+   */
+  private navigateBack(): void {
+    const { next, rest } = popReturnTo(this.route.snapshot.queryParamMap.get('returnTo'));
+    const qp = rest ? { returnTo: rest } : {};
+    if (next === 'page-create') {
+      this.router.navigate(['/lore', this.loreId, 'pages', 'create'], { queryParams: qp });
+      return;
+    }
+    if (next === 'template-create') {
+      this.router.navigate(['/lore', this.loreId, 'templates', 'create'], { queryParams: qp });
+      return;
+    }
     this.router.navigate(['/lore', this.loreId]);
   }
 

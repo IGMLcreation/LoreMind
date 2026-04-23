@@ -22,11 +22,23 @@
 
       <div class="field">
         <label>Dossier par défaut *</label>
-        <select formControlName="defaultNodeId">
-          <option value="" disabled>Sélectionnez un dossier</option>
-          <option *ngFor="let node of nodes" [value]="node.id">{{ node.name }}</option>
-        </select>
-        <p class="hint">Les pages créées avec ce template seront placées dans ce dossier</p>
+
+        <ng-container *ngIf="nodes.length; else emptyFolders">
+          <select formControlName="defaultNodeId">
+            <option value="" disabled>Sélectionnez un dossier</option>
+            <option *ngFor="let node of nodes" [value]="node.id">{{ node.name }}</option>
+          </select>
+          <p class="hint">Les pages créées avec ce template seront placées dans ce dossier</p>
+        </ng-container>
+
+        <ng-template #emptyFolders>
+          <p class="empty-hint">
+            Aucun dossier dans ce Lore.
+            <a [routerLink]="['/lore', loreId, 'nodes', 'create']"
+               [queryParams]="{ returnTo: nodeCreateReturnTo }"
+               (click)="saveDraft()">Créer un dossier</a> d'abord.
+          </p>
+        </ng-template>
       </div>
 
     </div>
@@ -85,7 +97,7 @@
           type="text"
           [(ngModel)]="newFieldName"
           [ngModelOptions]="{ standalone: true }"
-          placeholder="Nom du champ..."
+          placeholder="+ Ajouter un champ"
           (keydown.enter)="$event.preventDefault(); addField()" />
         <select
           class="type-select"

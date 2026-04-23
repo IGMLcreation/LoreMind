@@ -62,6 +62,8 @@ export interface BottomPanel {
   title: string;
   items: BottomPanelItem[];
   initiallyOpen?: boolean;
+  /** Action "+" inline dans le header — créer un item sans déplier le panneau. */
+  headerAction?: { label: string; route: string };
 }
 
 export interface SecondarySidebarConfig {

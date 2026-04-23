@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
-import { LucideAngularModule, Plus, X, Trash2, Type, Image as ImageIcon, ChevronUp, ChevronDown } from 'lucide-angular';
+import { LucideAngularModule, Plus, Trash2, Type, Image as ImageIcon, ChevronUp, ChevronDown } from 'lucide-angular';
 import { LoreService } from '../../services/lore.service';
 import { TemplateService } from '../../services/template.service';
 import { PageService } from '../../services/page.service';
@@ -26,7 +26,6 @@ import { loadLoreSidebarData, buildLoreSidebarConfig } from '../lore-sidebar.hel
 })
 export class TemplateEditComponent implements OnInit, OnDestroy {
   readonly Plus = Plus;
-  readonly X = X;
   readonly Trash2 = Trash2;
   readonly Type = Type;
   readonly ImageIcon = ImageIcon;
@@ -41,6 +40,17 @@ export class TemplateEditComponent implements OnInit, OnDestroy {
   fields: TemplateField[] = [];
   newFieldName = '';
   newFieldType: FieldType = 'TEXT';
+  /**
+   * Noms des champs chargés depuis le backend — utilisés pour discriminer
+   * visuellement les champs existants (orange) des champs ajoutés dans cette
+   * session d'édition (vert). Non muté ensuite.
+   */
+  private originalFieldNames = new Set<string>();
+
+  /** True si le champ est présent depuis le chargement du template. */
+  isExistingField(field: TemplateField): boolean {
+    return this.originalFieldNames.has(field.name);
+  }
 
   constructor(
     private fb: FormBuilder,
@@ -83,6 +93,7 @@ export class TemplateEditComponent implements OnInit, OnDestroy {
         ? { name: f.name, type, layout: f.layout ?? 'GALLERY' }
         : { name: f.name, type };
     });
+    this.originalFieldNames = new Set(this.fields.map(f => f.name));
     this.form.patchValue({
       name: template.name,
       description: template.description,

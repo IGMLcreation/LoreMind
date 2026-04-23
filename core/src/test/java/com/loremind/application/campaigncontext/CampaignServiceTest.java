@@ -53,7 +53,10 @@ public class CampaignServiceTest {
                 "lore-123",
                 null
         );
-        when(campaignRepository.save(any(Campaign.class))).thenReturn(testCampaign);
+        // Le repo renvoie la Campaign telle que passée — on teste la normalisation
+        // du loreId dans le service, pas le comportement du repo.
+        when(campaignRepository.save(any(Campaign.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
         Campaign result = campaignService.createCampaign(data);
@@ -73,7 +76,8 @@ public class CampaignServiceTest {
                 null,
                 null
         );
-        when(campaignRepository.save(any(Campaign.class))).thenReturn(testCampaign);
+        when(campaignRepository.save(any(Campaign.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
         Campaign result = campaignService.createCampaign(data);
@@ -93,7 +97,8 @@ public class CampaignServiceTest {
                 "   ",
                 null
         );
-        when(campaignRepository.save(any(Campaign.class))).thenReturn(testCampaign);
+        when(campaignRepository.save(any(Campaign.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
         Campaign result = campaignService.createCampaign(data);

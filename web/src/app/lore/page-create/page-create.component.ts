@@ -92,7 +92,46 @@ export class PageCreateComponent implements OnInit, OnDestroy {
         if (this.preselectedNodeId) {
           this.form.patchValue({ nodeId: this.preselectedNodeId });
         }
+
+        this.restoreDraft();
       });
+  }
+
+  /** Clé sessionStorage pour le brouillon — scopée au lore courant. */
+  private get draftKey(): string {
+    return `page-create-draft:${this.loreId}`;
+  }
+
+  /**
+   * Sauvegarde le titre et le template sélectionné avant un détour de navigation
+   * (création de template ou de dossier), pour pouvoir les restaurer au retour.
+   * NodeId volontairement omis : il peut référencer un dossier qui n'existait
+   * pas encore et serait invalide après un aller-retour.
+   */
+  saveDraft(): void {
+    const draft = {
+      title: this.form.value.title ?? '',
+      selectedTemplateId: this.selectedTemplateId
+    };
+    if (!draft.title && !draft.selectedTemplateId) return;
+    try {
+      sessionStorage.setItem(this.draftKey, JSON.stringify(draft));
+    } catch { /* quota dépassé ou storage indisponible : on ignore */ }
+  }
+
+  private restoreDraft(): void {
+    let raw: string | null = null;
+    try { raw = sessionStorage.getItem(this.draftKey); } catch { return; }
+    if (!raw) return;
+    sessionStorage.removeItem(this.draftKey);
+    try {
+      const draft = JSON.parse(raw) as { title?: string; selectedTemplateId?: string | null };
+      if (draft.title) this.form.patchValue({ title: draft.title });
+      if (draft.selectedTemplateId && this.templates.some(t => t.id === draft.selectedTemplateId)) {
+        const tpl = this.templates.find(t => t.id === draft.selectedTemplateId)!;
+        this.selectTemplate(tpl);
+      }
+    } catch { /* JSON corrompu : on ignore */ }
   }
 
   selectTemplate(template: Template): void {

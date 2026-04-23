@@ -15,6 +15,24 @@
   padding: 2rem;
   width: 100%;
   max-width: 600px;
+  // Le contenu peut dépasser la hauteur de l'écran (formulaire long) :
+  // on borne la modale et on fait scroller l'intérieur en flex-column.
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header { flex-shrink: 0; }
+
+form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  // Marge interne pour que la scrollbar ne colle pas aux inputs.
+  margin-right: -0.5rem;
+  padding-right: 0.5rem;
 }
 
 .modal-header {
@@ -87,6 +105,14 @@
 .modal-actions {
   display: flex;
   gap: 1rem;
+  // Actions collées en bas du scroll : visibles même si on n'a pas défilé
+  // jusqu'en bas du formulaire.
+  position: sticky;
+  bottom: 0;
+  background: #111827;
+  padding-top: 1rem;
+  margin-top: auto;
+  flex-shrink: 0;
 }
 
 .btn-primary {

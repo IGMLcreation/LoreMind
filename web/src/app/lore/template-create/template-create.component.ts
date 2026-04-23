@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { LucideAngularModule, Plus, Trash2, Type, Image as ImageIcon, ChevronUp, ChevronDown } from 'lucide-angular';
 import { LoreService } from '../../services/lore.service';
 import { TemplateService } from '../../services/template.service';
@@ -10,6 +10,7 @@ import { LayoutService } from '../../services/layout.service';
 import { LoreNode } from '../../services/lore.model';
 import { FieldType, ImageLayout, TemplateField } from '../../services/template.model';
 import { loadLoreSidebarData, buildLoreSidebarConfig } from '../lore-sidebar.helper';
+import { popReturnTo } from '../return-stack.helper';
 
 /**
  * Écran de création d'un Template (gabarit de Page).
@@ -20,7 +21,7 @@ import { loadLoreSidebarData, buildLoreSidebarConfig } from '../lore-sidebar.hel
 @Component({
   selector: 'app-template-create',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, LucideAngularModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, LucideAngularModule],
   templateUrl: './template-create.component.html',
   styleUrls: ['./template-create.component.scss']
 })
@@ -69,7 +70,52 @@ export class TemplateCreateComponent implements OnInit, OnDestroy {
     loadLoreSidebarData(this.loreId, this.loreService, this.templateService, this.pageService).subscribe(data => {
       this.nodes = data.nodes;
       this.layoutService.show(buildLoreSidebarConfig(data));
+      this.restoreDraft();
     });
+  }
+
+  /** Clé sessionStorage pour le brouillon de template — scopée au lore. */
+  private get draftKey(): string {
+    return `template-create-draft:${this.loreId}`;
+  }
+
+  /**
+   * Sauvegarde le formulaire courant avant un détour (création de dossier).
+   * defaultNodeId volontairement omis : il référence potentiellement un dossier
+   * qui n'existe pas encore.
+   */
+  saveDraft(): void {
+    const draft = {
+      name: this.form.value.name ?? '',
+      description: this.form.value.description ?? '',
+      fields: this.fields
+    };
+    try {
+      sessionStorage.setItem(this.draftKey, JSON.stringify(draft));
+    } catch { /* storage indisponible : on ignore */ }
+  }
+
+  private restoreDraft(): void {
+    let raw: string | null = null;
+    try { raw = sessionStorage.getItem(this.draftKey); } catch { return; }
+    if (!raw) return;
+    sessionStorage.removeItem(this.draftKey);
+    try {
+      const draft = JSON.parse(raw) as { name?: string; description?: string; fields?: TemplateField[] };
+      if (draft.name) this.form.patchValue({ name: draft.name });
+      if (draft.description) this.form.patchValue({ description: draft.description });
+      if (Array.isArray(draft.fields) && draft.fields.length) this.fields = draft.fields;
+    } catch { /* JSON corrompu : on ignore */ }
+  }
+
+  /**
+   * Construit le `returnTo` à passer à l'écran de création de dossier :
+   * on empile 'template-create' par-dessus la pile courante, pour que node-create
+   * revienne ici puis remonte à l'écran d'origine le cas échéant.
+   */
+  get nodeCreateReturnTo(): string {
+    const current = this.route.snapshot.queryParamMap.get('returnTo');
+    return current ? `template-create,${current}` : 'template-create';
   }
 
   addField(): void {
@@ -129,12 +175,28 @@ export class TemplateCreateComponent implements OnInit, OnDestroy {
       defaultNodeId: raw.defaultNodeId,
       fields: this.fields
     }).subscribe({
-      next: () => this.router.navigate(['/lore', this.loreId]),
+      next: () => this.navigateBack(),
       error: () => console.error('Erreur lors de la création du template')
     });
   }
 
   cancel(): void {
+    this.navigateBack();
+  }
+
+  /**
+   * Redirige vers l'écran d'origine en dépilant le premier élément du query-param
+   * `returnTo` (pile de retours séparés par des virgules, ex : `page-create` ou
+   * `template-create,page-create`). Sinon retombe sur la page détail du Lore.
+   */
+  private navigateBack(): void {
+    const { next, rest } = popReturnTo(this.route.snapshot.queryParamMap.get('returnTo'));
+    if (next === 'page-create') {
+      this.router.navigate(['/lore', this.loreId, 'pages', 'create'], {
+        queryParams: rest ? { returnTo: rest } : {}
+      });
+      return;
+    }
     this.router.navigate(['/lore', this.loreId]);
   }
 
