@@ -12,8 +12,7 @@
       <button
         type="button"
         class="btn-danger"
-        [disabled]="!canDelete"
-        [title]="canDelete ? 'Supprimer le dossier' : 'Impossible : le dossier contient des éléments'"
+        title="Supprimer le dossier et tout son contenu"
         (click)="delete()">
         Supprimer
       </button>
@@ -55,11 +54,6 @@
           <lucide-icon [img]="option.icon" [size]="18"></lucide-icon>
         </button>
       </div>
-    </div>
-
-    <div class="info-box" *ngIf="!canDelete">
-      ⚠️ Pour supprimer ce dossier, videz-le d'abord : déplacez ou supprimez ses
-      {{ childFolderCount }} sous-dossier(s) et ses {{ pageCount }} page(s).
     </div>
 
   </form>

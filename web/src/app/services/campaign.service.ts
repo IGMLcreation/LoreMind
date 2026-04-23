@@ -3,6 +3,14 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Campaign, CampaignCreate, Arc, ArcCreate, Chapter, ChapterCreate, Scene, SceneCreate } from './campaign.model';
 
+/** Compte des entités qui seront supprimées en cascade avec la campagne. */
+export interface CampaignDeletionImpact {
+  arcs: number;
+  chapters: number;
+  scenes: number;
+  characters: number;
+}
+
 /**
  * Service HTTP pour la gestion des Campagnes.
  * Port de sortie vers le Backend Java (Architecture Hexagonale).
@@ -33,6 +41,10 @@ export class CampaignService {
 
   deleteCampaign(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  getCampaignDeletionImpact(id: string): Observable<CampaignDeletionImpact> {
+    return this.http.get<CampaignDeletionImpact>(`${this.apiUrl}/${id}/deletion-impact`);
   }
 
   // ========== ARC ==========
