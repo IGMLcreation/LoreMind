@@ -22,6 +22,7 @@ type Config struct {
 	PreparingPage      string
 	RateLimitWindow    time.Duration
 	MaxBodyBytes       int64
+	DemoHost           string
 }
 
 func loadConfig() *Config {
@@ -40,6 +41,9 @@ func loadConfig() *Config {
 		RateLimitWindow:    time.Duration(envInt("RATE_LIMIT_WINDOW_SECONDS", 60)) * time.Second,
 		// 10 Mo : aligne avec la limite d'upload d'image cote core.
 		MaxBodyBytes: int64(envInt("MAX_BODY_MB", 10)) * 1024 * 1024,
+		// Utilise pour injecter APP_CORS_ALLOWED_ORIGINS dans les cores spawnes :
+		// sans ca, Spring bloque les POST avec 403 (origine rejetee).
+		DemoHost: envStr("DEMO_HOST", "loremind-demo.igmlcreation.fr"),
 	}
 }
 
