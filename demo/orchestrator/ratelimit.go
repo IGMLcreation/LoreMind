@@ -56,11 +56,18 @@ func (rl *rateLimiter) cleanupLoop() {
 	}
 }
 
-// clientIP extrait l'IP reelle en prenant la derniere entree de X-Forwarded-For.
-// Justification : Traefik APPEND l'IP du peer au header existant, donc la
-// derniere valeur est celle que Traefik a observe directement (le vrai client).
-// Prendre la premiere serait une faille : un attaquant peut preremplir le header.
+// clientIP extrait l'IP reelle du visiteur en tenant compte du setup reverse-proxy.
+// Ordre de priorite :
+//  1. CF-Connecting-IP : defini par Cloudflare sur la base de SA propre vue du
+//     peer TCP, non-forgeable par le client, ecrase toute valeur entrante.
+//  2. X-Forwarded-For, derniere entree : quand seul Traefik est en front (pas
+//     de Cloudflare), Traefik append l'IP qu'il observe. Prendre la premiere
+//     serait une faille (header forgeable).
+//  3. RemoteAddr : fallback si aucun header de proxy n'est present.
 func clientIP(r *http.Request) string {
+	if cfIP := r.Header.Get("CF-Connecting-IP"); cfIP != "" {
+		return strings.TrimSpace(cfIP)
+	}
 	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
 		parts := strings.Split(xff, ",")
 		return strings.TrimSpace(parts[len(parts)-1])
