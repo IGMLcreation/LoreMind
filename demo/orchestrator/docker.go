@@ -9,9 +9,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 )
@@ -125,7 +125,7 @@ type runSpec struct {
 func (d *DockerClient) runContainer(ctx context.Context, s runSpec) error {
 	// Pull silencieux si image absente localement. Ignore les erreurs (l'image
 	// peut exister localement sans etre atteignable au registre, ex: builds dev).
-	if reader, err := d.cli.ImagePull(ctx, s.Image, types.ImagePullOptions{}); err == nil {
+	if reader, err := d.cli.ImagePull(ctx, s.Image, image.PullOptions{}); err == nil {
 		// Drain le body, sinon le pull n'est pas termine quand on continue.
 		_, _ = io.Copy(io.Discard, reader)
 		reader.Close()
