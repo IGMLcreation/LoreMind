@@ -88,9 +88,12 @@ export class PageCreateComponent implements OnInit, OnDestroy {
         this.templates = data.templates;
         this.layoutService.show(buildLoreSidebarConfig(data));
 
-        // Si nodeId fourni par l'URL, on verrouille la valeur du formulaire.
+        // Si nodeId fourni par l'URL, on fige la valeur ET on désactive le
+        // contrôle de formulaire (FormControl.disable, pas attr.disabled qui
+        // serait cosmétique). La valeur reste incluse dans les submits.
         if (this.preselectedNodeId) {
           this.form.patchValue({ nodeId: this.preselectedNodeId });
+          this.form.get('nodeId')?.disable();
         }
 
         this.restoreDraft();
@@ -152,7 +155,7 @@ export class PageCreateComponent implements OnInit, OnDestroy {
 
   submit(): void {
     if (!this.canSubmit) return;
-    const raw = this.form.value;
+    const raw = this.form.getRawValue();
     this.pageService.create({
       loreId: this.loreId,
       nodeId: raw.nodeId,
@@ -206,7 +209,7 @@ export class PageCreateComponent implements OnInit, OnDestroy {
       return;
     }
     this.wizardError = null;
-    const raw = this.form.value;
+    const raw = this.form.getRawValue();
     // Le backend POST /api/pages ne prend pas `values` — on crée d'abord la
     // coquille, puis on PUT immédiatement avec les valeurs extraites.
     // 2 roundtrips, mais zéro modification backend nécessaire.

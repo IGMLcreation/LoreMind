@@ -53,6 +53,12 @@ yarn-error.log*
 .pnpm-debug.log*
 coverage/
 
+# Playwright (E2E)
+web/test-results/
+web/playwright-report/
+web/blob-report/
+web/playwright/.cache/
+
 # ============================================================================
 # IDE / Editeurs
 # ============================================================================

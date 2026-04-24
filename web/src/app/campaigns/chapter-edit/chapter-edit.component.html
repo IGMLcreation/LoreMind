@@ -43,8 +43,9 @@
     </div>
 
     <div class="field">
-      <label>Titre du chapitre *</label>
+      <label for="chapter-edit-name">Titre du chapitre *</label>
       <input
+        id="chapter-edit-name"
         type="text"
         formControlName="name"
         placeholder="Ex: Chapitre 1: Les Disparitions"
@@ -53,8 +54,9 @@
     </div>
 
     <div class="field">
-      <label>Synopsis du chapitre</label>
+      <label for="chapter-edit-description">Synopsis du chapitre</label>
       <textarea
+        id="chapter-edit-description"
         formControlName="description"
         placeholder="Décrivez brièvement ce qui se passe dans ce chapitre..."
         rows="5">
@@ -62,8 +64,9 @@
     </div>
 
     <div class="field">
-      <label>Notes du Maître de Jeu</label>
+      <label for="chapter-edit-gm-notes">Notes du Maître de Jeu</label>
       <textarea
+        id="chapter-edit-gm-notes"
         formControlName="gmNotes"
         placeholder="Vos notes privées sur le déroulement du chapitre, les événements clés, les rebondissements..."
         rows="6">
@@ -73,16 +76,18 @@
 
     <div class="field-row">
       <div class="field">
-        <label>Objectifs des joueurs</label>
+        <label for="chapter-edit-player-objectives">Objectifs des joueurs</label>
         <textarea
+          id="chapter-edit-player-objectives"
           formControlName="playerObjectives"
           placeholder="Que doivent accomplir les joueurs dans ce chapitre ?"
           rows="4">
         </textarea>
       </div>
       <div class="field">
-        <label>Enjeux narratifs</label>
+        <label for="chapter-edit-narrative-stakes">Enjeux narratifs</label>
         <textarea
+          id="chapter-edit-narrative-stakes"
           formControlName="narrativeStakes"
           placeholder="Quels sont les enjeux dramatiques ?"
           rows="4">

@@ -11,20 +11,20 @@
     <div class="col-left">
 
       <div class="field">
-        <label>Nom du template *</label>
-        <input type="text" formControlName="name" placeholder="Ex: Auberge, Artefact, Monstre..." />
+        <label for="template-name">Nom du template *</label>
+        <input id="template-name" type="text" formControlName="name" placeholder="Ex: Auberge, Artefact, Monstre..." />
       </div>
 
       <div class="field">
-        <label>Description</label>
-        <textarea formControlName="description" rows="4" placeholder="À quoi sert ce template ?"></textarea>
+        <label for="template-description">Description</label>
+        <textarea id="template-description" formControlName="description" rows="4" placeholder="À quoi sert ce template ?"></textarea>
       </div>
 
       <div class="field">
-        <label>Dossier par défaut *</label>
+        <label for="template-default-node">Dossier par défaut *</label>
 
         <ng-container *ngIf="nodes.length; else emptyFolders">
-          <select formControlName="defaultNodeId">
+          <select id="template-default-node" formControlName="defaultNodeId">
             <option value="" disabled>Sélectionnez un dossier</option>
             <option *ngFor="let node of nodes" [value]="node.id">{{ node.name }}</option>
           </select>
