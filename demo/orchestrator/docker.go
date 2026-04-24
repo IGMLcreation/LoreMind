@@ -139,7 +139,11 @@ func (d *DockerClient) SpawnTrio(ctx context.Context, sessionID string, cfg *Con
 			"ADMIN_USERNAME=admin",
 			"ADMIN_PASSWORD=" + adminPassword,
 			"DEMO_MODE=true",
-			"CORS_ALLOWED_ORIGINS=*",
+			// CorsConfig.java lit app.cors.allowed-origins (= APP_CORS_ALLOWED_ORIGINS
+			// via le relaxed binding Spring). Necessaire meme en same-origin car
+			// le browser envoie Origin sur les POST et le CorsFilter 403 les
+			// origines inconnues.
+			"APP_CORS_ALLOWED_ORIGINS=https://" + cfg.DemoHost,
 		},
 		Labels: copyLabels(labels, "core"),
 		Memory: cfg.CoreMemoryBytes,

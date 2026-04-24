@@ -51,6 +51,8 @@ services:
       BRAIN_INTERNAL_SECRET_DEFAULT: ${BRAIN_INTERNAL_SECRET_DEFAULT:-change-me}
       # Rate limit : 1 creation par IP par fenetre (en secondes).
       RATE_LIMIT_WINDOW_SECONDS: ${RATE_LIMIT_WINDOW_SECONDS:-60}
+      # Domaine public : propage aux cores de session pour configurer CORS.
+      DEMO_HOST: ${DEMO_HOST:-loremind-demo.igmlcreation.fr}
     networks:
       - traefik
       - sessions
