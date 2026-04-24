@@ -87,7 +87,8 @@
 
   &.selected {
     border-color: #6c63ff;
-    background: #1e1c3a;
+    background: #2a2558;
+    box-shadow: 0 0 0 1px #6c63ff, 0 0 12px rgba(108, 99, 255, 0.35);
   }
 
   .template-card-head {

@@ -1,23 +1,40 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, shareReplay, tap } from 'rxjs/operators';
 import { Page, PageCreate } from './page.model';
 
 /**
  * Service HTTP pour la gestion des Pages.
  * Port de sortie du Frontend vers le Backend Java (/api/pages).
+ *
+ * `getByLoreId` est cache via shareReplay(1) — toute mutation
+ * (create/update/delete) invalide l'ensemble du cache.
  */
 @Injectable({ providedIn: 'root' })
 export class PageService {
   private apiUrl = '/api/pages';
 
+  private byLoreIdCache = new Map<string, Observable<Page[]>>();
+
   constructor(private http: HttpClient) {}
+
+  private invalidate(): void {
+    this.byLoreIdCache.clear();
+  }
 
   /** Toutes les pages d'un Lore (flat, pour répartir ensuite par nodeId). */
   getByLoreId(loreId: string): Observable<Page[]> {
-    const params = new HttpParams().set('loreId', loreId);
-    return this.http.get<Page[]>(this.apiUrl, { params });
+    let obs = this.byLoreIdCache.get(loreId);
+    if (!obs) {
+      const params = new HttpParams().set('loreId', loreId);
+      obs = this.http.get<Page[]>(this.apiUrl, { params }).pipe(
+        tap({ error: () => this.byLoreIdCache.delete(loreId) }),
+        shareReplay(1)
+      );
+      this.byLoreIdCache.set(loreId, obs);
+    }
+    return obs;
   }
 
   /** Toutes les pages d'un noeud donné. */
@@ -31,15 +48,15 @@ export class PageService {
   }
 
   create(payload: PageCreate): Observable<Page> {
-    return this.http.post<Page>(this.apiUrl, payload);
+    return this.http.post<Page>(this.apiUrl, payload).pipe(tap(() => this.invalidate()));
   }
 
   update(id: string, page: Page): Observable<Page> {
-    return this.http.put<Page>(`${this.apiUrl}/${id}`, page);
+    return this.http.put<Page>(`${this.apiUrl}/${id}`, page).pipe(tap(() => this.invalidate()));
   }
 
   delete(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+    return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(tap(() => this.invalidate()));
   }
 
   search(q: string): Observable<Page[]> {

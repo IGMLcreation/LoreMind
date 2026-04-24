@@ -94,7 +94,27 @@ export class PageCreateComponent implements OnInit, OnDestroy {
         if (this.preselectedNodeId) {
           this.form.patchValue({ nodeId: this.preselectedNodeId });
           this.form.get('nodeId')?.disable();
+          this.autoSelectTemplateForNode(this.preselectedNodeId);
+        } else {
+          // Pas de nodeId dans l'URL : le <select> affiche visuellement la
+          // première option mais la valeur du FormControl reste ''. On tente
+          // l'auto-sélection inverse : si un seul template a un defaultNodeId
+          // qui pointe sur un dossier existant, on le sélectionne et on
+          // pré-remplit le dossier — sinon on laisse l'utilisateur choisir.
+          const validNodeIds = new Set(this.nodes.map(n => n.id));
+          const candidates = this.templates.filter(
+            t => t.defaultNodeId && validNodeIds.has(t.defaultNodeId)
+          );
+          if (candidates.length === 1) {
+            const tpl = candidates[0];
+            this.selectedTemplateId = tpl.id!;
+            this.form.patchValue({ nodeId: tpl.defaultNodeId });
+          }
         }
+
+        this.form.get('nodeId')?.valueChanges.subscribe(nodeId => {
+          this.autoSelectTemplateForNode(nodeId);
+        });
 
         this.restoreDraft();
       });
@@ -135,6 +155,18 @@ export class PageCreateComponent implements OnInit, OnDestroy {
         this.selectTemplate(tpl);
       }
     } catch { /* JSON corrompu : on ignore */ }
+  }
+
+  /**
+   * Auto-sélection du template dont defaultNodeId === nodeId courant.
+   * Ne fait rien si l'utilisateur a déjà choisi un template manuellement
+   * (on ne veut pas écraser un choix explicite).
+   */
+  private autoSelectTemplateForNode(nodeId: string | null | undefined): void {
+    if (!nodeId) return;
+    if (this.selectedTemplateId) return;
+    const matching = this.templates.find(t => t.defaultNodeId === nodeId);
+    if (matching) this.selectedTemplateId = matching.id!;
   }
 
   selectTemplate(template: Template): void {
