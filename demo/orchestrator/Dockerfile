@@ -11,7 +11,9 @@ COPY web/ .
 RUN npm run build -- --configuration production
 
 # --- Etage 2 : build orchestrateur Go ---
-FROM golang:1.22-alpine AS go-build
+# go 1.25+ requis par une dependance transitive de github.com/docker/docker
+# (otelhttp v0.68+ impose cette version minimale).
+FROM golang:1.25-alpine AS go-build
 WORKDIR /src
 COPY demo/orchestrator/ ./
 # go mod tidy resout le go.sum au build pour eviter d'avoir a le committer.
