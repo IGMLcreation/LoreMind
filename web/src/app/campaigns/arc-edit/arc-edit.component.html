@@ -43,8 +43,9 @@
     </div>
 
     <div class="field">
-      <label>Titre de l'arc *</label>
+      <label for="arc-edit-name">Titre de l'arc *</label>
       <input
+        id="arc-edit-name"
         type="text"
         formControlName="name"
         placeholder="Ex: L'Ombre du Nord"
@@ -53,8 +54,9 @@
     </div>
 
     <div class="field">
-      <label>Synopsis de l'arc</label>
+      <label for="arc-edit-description">Synopsis de l'arc</label>
       <textarea
+        id="arc-edit-description"
         formControlName="description"
         placeholder="Décrivez l'histoire principale de cet arc narratif..."
         rows="5">
@@ -63,16 +65,18 @@
 
     <div class="field-row">
       <div class="field">
-        <label>Thèmes principaux</label>
+        <label for="arc-edit-themes">Thèmes principaux</label>
         <textarea
+          id="arc-edit-themes"
           formControlName="themes"
           placeholder="Quels sont les thèmes explorés dans cet arc ? (trahison, rédemption...)"
           rows="4">
         </textarea>
       </div>
       <div class="field">
-        <label>Enjeux globaux</label>
+        <label for="arc-edit-stakes">Enjeux globaux</label>
         <textarea
+          id="arc-edit-stakes"
           formControlName="stakes"
           placeholder="Quels sont les enjeux majeurs de cet arc pour les personnages ?"
           rows="4">
@@ -81,8 +85,9 @@
     </div>
 
     <div class="field">
-      <label>Notes et planification du MJ</label>
+      <label for="arc-edit-gm-notes">Notes et planification du MJ</label>
       <textarea
+        id="arc-edit-gm-notes"
         formControlName="gmNotes"
         placeholder="Vos notes sur la direction de l'arc, les twists prévus, les révélations importantes..."
         rows="5">
@@ -91,8 +96,9 @@
     </div>
 
     <div class="field">
-      <label>Récompenses et progression</label>
+      <label for="arc-edit-rewards">Récompenses et progression</label>
       <textarea
+        id="arc-edit-rewards"
         formControlName="rewards"
         placeholder="Quelles récompenses les joueurs obtiendront-ils ? Objets, niveaux, connaissances, contacts..."
         rows="4">
@@ -100,8 +106,9 @@
     </div>
 
     <div class="field">
-      <label>Dénouement prévu</label>
+      <label for="arc-edit-resolution">Dénouement prévu</label>
       <textarea
+        id="arc-edit-resolution"
         formControlName="resolution"
         placeholder="Comment cet arc devrait-il se terminer ? Quelles sont les issues possibles ?"
         rows="4">

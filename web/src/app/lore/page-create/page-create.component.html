@@ -9,8 +9,8 @@
 
     <!-- Titre -->
     <div class="field">
-      <label>Titre de la page *</label>
-      <input type="text" formControlName="title" placeholder="Ex: Maître Eldrin, La Cité d'Argent..." />
+      <label for="page-title">Titre de la page *</label>
+      <input id="page-title" type="text" formControlName="title" placeholder="Ex: Maître Eldrin, La Cité d'Argent..." />
     </div>
 
     <!-- Template -->
@@ -42,10 +42,10 @@
 
     <!-- Dossier de destination -->
     <div class="field">
-      <label>Dossier de destination *</label>
+      <label for="page-node">Dossier de destination *</label>
 
       <ng-container *ngIf="nodes.length; else emptyFolders">
-        <select formControlName="nodeId" [attr.disabled]="preselectedNodeId ? true : null">
+        <select id="page-node" formControlName="nodeId">
           <option value="" disabled>Sélectionnez un dossier</option>
           <option *ngFor="let node of nodes" [value]="node.id">{{ node.name }}</option>
         </select>

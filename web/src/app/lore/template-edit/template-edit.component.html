@@ -17,13 +17,13 @@
     <div class="col-left">
 
       <div class="field">
-        <label>Nom</label>
-        <input type="text" formControlName="name" />
+        <label for="template-edit-name">Nom</label>
+        <input id="template-edit-name" type="text" formControlName="name" />
       </div>
 
       <div class="field">
-        <label>Dossier par défaut</label>
-        <select formControlName="defaultNodeId">
+        <label for="template-edit-default-node">Dossier par défaut</label>
+        <select id="template-edit-default-node" formControlName="defaultNodeId">
           <option value="">-- Aucun --</option>
           <option *ngFor="let node of nodes" [value]="node.id">{{ node.name }}</option>
         </select>
@@ -31,8 +31,8 @@
       </div>
 
       <div class="field">
-        <label>Description</label>
-        <textarea formControlName="description" rows="6"></textarea>
+        <label for="template-edit-description">Description</label>
+        <textarea id="template-edit-description" formControlName="description" rows="6"></textarea>
       </div>
 
     </div>

@@ -43,8 +43,9 @@
     </div>
 
     <div class="field">
-      <label>Titre de la scène *</label>
+      <label for="scene-edit-name">Titre de la scène *</label>
       <input
+        id="scene-edit-name"
         type="text"
         formControlName="name"
         placeholder="Ex: Arrivée au village"
@@ -53,8 +54,9 @@
     </div>
 
     <div class="field">
-      <label>Description courte *</label>
+      <label for="scene-edit-description">Description courte *</label>
       <textarea
+        id="scene-edit-description"
         formControlName="description"
         placeholder="Résumé en une ou deux phrases de ce qui se passe..."
         rows="3">
@@ -65,17 +67,18 @@
     <app-expandable-section title="Contexte et ambiance" icon="📍" [initiallyOpen]="true">
       <div class="field-row">
         <div class="field">
-          <label>Lieu</label>
-          <input type="text" formControlName="location" placeholder="Ex: Taverne du Dragon d'Or" />
+          <label for="scene-edit-location">Lieu</label>
+          <input id="scene-edit-location" type="text" formControlName="location" placeholder="Ex: Taverne du Dragon d'Or" />
         </div>
         <div class="field">
-          <label>Moment</label>
-          <input type="text" formControlName="timing" placeholder="Ex: Soir, à la tombée de la nuit" />
+          <label for="scene-edit-timing">Moment</label>
+          <input id="scene-edit-timing" type="text" formControlName="timing" placeholder="Ex: Soir, à la tombée de la nuit" />
         </div>
       </div>
       <div class="field">
-        <label>Ambiance et atmosphère</label>
+        <label for="scene-edit-atmosphere">Ambiance et atmosphère</label>
         <textarea
+          id="scene-edit-atmosphere"
           formControlName="atmosphere"
           placeholder="Décrivez l'ambiance générale de la scène (sons, odeurs, lumière, émotions...)"
           rows="4">
@@ -179,12 +182,13 @@
     <!-- Section : Combat ou rencontre -->
     <app-expandable-section title="Combat ou rencontre" icon="⚔️">
       <div class="field">
-        <label>Difficulté estimée</label>
-        <input type="text" formControlName="combatDifficulty" placeholder="Ex: Moyenne, 3 gobelins niveau 2" />
+        <label for="scene-edit-combat-difficulty">Difficulté estimée</label>
+        <input id="scene-edit-combat-difficulty" type="text" formControlName="combatDifficulty" placeholder="Ex: Moyenne, 3 gobelins niveau 2" />
       </div>
       <div class="field">
-        <label>Ennemis et créatures</label>
+        <label for="scene-edit-enemies">Ennemis et créatures</label>
         <textarea
+          id="scene-edit-enemies"
           formControlName="enemies"
           placeholder="Liste des ennemis présents dans cette scène..."
           rows="4">

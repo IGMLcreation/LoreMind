@@ -11,8 +11,9 @@
     <form [formGroup]="form" (ngSubmit)="submit()">
 
       <div class="field">
-        <label>Nom de la campagne *</label>
+        <label for="campaign-name">Nom de la campagne *</label>
         <input
+          id="campaign-name"
           type="text"
           formControlName="name"
           placeholder="Ex: L'Ombre du Nord, Les Héritiers Oubliés..."
@@ -21,8 +22,9 @@
       </div>
 
       <div class="field">
-        <label>Description / Pitch</label>
+        <label for="campaign-description">Description / Pitch</label>
         <textarea
+          id="campaign-description"
           formControlName="description"
           placeholder="Résumez l'intrigue principale de votre campagne..."
           rows="5"
@@ -30,13 +32,13 @@
       </div>
 
       <div class="field">
-        <label>Nombre de joueurs</label>
-        <input type="number" formControlName="playerCount" min="1" />
+        <label for="campaign-player-count">Nombre de joueurs</label>
+        <input id="campaign-player-count" type="number" formControlName="playerCount" min="1" />
       </div>
 
       <div class="field">
-        <label>Univers associé</label>
-        <select formControlName="loreId">
+        <label for="campaign-lore">Univers associé</label>
+        <select id="campaign-lore" formControlName="loreId">
           <option value="">— Aucun univers (campagne libre) —</option>
           <option *ngFor="let lore of availableLores" [value]="lore.id">{{ lore.name }}</option>
         </select>
@@ -47,8 +49,8 @@
       </div>
 
       <div class="field">
-        <label>Système de JDR</label>
-        <select formControlName="gameSystemId">
+        <label for="campaign-game-system">Système de JDR</label>
+        <select id="campaign-game-system" formControlName="gameSystemId">
           <option value="">— Aucun (campagne générique) —</option>
           <option *ngFor="let gs of availableGameSystems" [value]="gs.id">{{ gs.name }}</option>
         </select>

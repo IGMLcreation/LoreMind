@@ -11,8 +11,9 @@
     <form [formGroup]="form" (ngSubmit)="submit()">
 
       <div class="field">
-        <label>Nom de l'univers *</label>
+        <label for="lore-name">Nom de l'univers *</label>
         <input
+          id="lore-name"
           type="text"
           formControlName="name"
           placeholder="Ex: Royaume des Ombres, Cyberpunk 2157..."
@@ -21,8 +22,9 @@
       </div>
 
       <div class="field">
-        <label>Description</label>
+        <label for="lore-description">Description</label>
         <textarea
+          id="lore-description"
           formControlName="description"
           placeholder="Décrivez brièvement votre univers, son ambiance, son genre..."
           rows="5"

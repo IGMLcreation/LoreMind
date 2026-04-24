@@ -1,0 +1,17 @@
+# Override pour la CI E2E : build les images depuis les sources au lieu de les puller.
+# Usage : docker compose -f docker-compose.yml -f docker-compose.e2e.yml up -d --build
+services:
+  core:
+    build:
+      context: ./core
+    image: loremind-core:e2e
+
+  brain:
+    build:
+      context: ./brain
+    image: loremind-brain:e2e
+
+  web:
+    build:
+      context: ./web
+    image: loremind-web:e2e
