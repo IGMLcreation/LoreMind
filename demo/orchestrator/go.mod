@@ -2,7 +2,7 @@ module github.com/loremind/demo-orchestrator
 
 go 1.23
 
-require (
-	github.com/docker/docker v28.0.4+incompatible
-	github.com/google/uuid v1.6.0
-)
+// Aucune dependance externe : on parle a Docker Engine en HTTP brut
+// (cf. docker.go) plutot que d'utiliser github.com/docker/docker, dont le
+// graphe transitif est instable d'une version a l'autre (sockets.DialPipe,
+// errors.As/Is, otelhttp...).

@@ -1,37 +1,91 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"os"
+	"strings"
 	"time"
-
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/filters"
-	"github.com/docker/docker/api/types/image"
-	"github.com/docker/docker/api/types/network"
-	"github.com/docker/docker/client"
 )
 
-// DockerClient encapsule les operations Docker necessaires a la demo.
+// DockerClient parle a l'API Engine Docker en HTTP brut via le dockerproxy.
+// Pas de SDK externe : evite les conflits de versions transitives qui
+// rendaient github.com/docker/docker v27/v28 ininstallable proprement.
+//
+// L'API Engine v1.43 est exposee par Docker Engine 24+ (et le dockerproxy
+// la supporte sans config supplementaire).
 type DockerClient struct {
-	cli *client.Client
+	baseURL string
+	http    *http.Client
 }
 
 func newDockerClient() (*DockerClient, error) {
-	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-	if err != nil {
-		return nil, fmt.Errorf("docker client: %w", err)
+	base := os.Getenv("DOCKER_HOST")
+	if base == "" {
+		return nil, fmt.Errorf("DOCKER_HOST non defini (attendu : tcp://dockerproxy:2375)")
 	}
-	return &DockerClient{cli: cli}, nil
+	// tcp://host:port -> http://host:port (le dockerproxy parle HTTP en clair).
+	base = strings.Replace(base, "tcp://", "http://", 1)
+	return &DockerClient{
+		baseURL: strings.TrimRight(base, "/") + "/v1.43",
+		http:    &http.Client{Timeout: 60 * time.Second},
+	}, nil
 }
 
-// SpawnTrio cree les 3 conteneurs d'une session (postgres, brain, core) et
-// les branche sur le reseau interne. Ils partagent un label "demo-session=<id>"
-// pour faciliter le nettoyage.
+// --- Types serialises vers l'API Engine ---
+
+type containerSpec struct {
+	Image            string            `json:"Image"`
+	Env              []string          `json:"Env,omitempty"`
+	Labels           map[string]string `json:"Labels,omitempty"`
+	HostConfig       hostConfig        `json:"HostConfig"`
+	NetworkingConfig networkingConfig  `json:"NetworkingConfig"`
+}
+
+type hostConfig struct {
+	Memory        int64             `json:"Memory,omitempty"`
+	NanoCPUs      int64             `json:"NanoCPUs,omitempty"`
+	PidsLimit     int64             `json:"PidsLimit,omitempty"`
+	Tmpfs         map[string]string `json:"Tmpfs,omitempty"`
+	SecurityOpt   []string          `json:"SecurityOpt,omitempty"`
+	RestartPolicy restartPolicy     `json:"RestartPolicy"`
+}
+
+type restartPolicy struct {
+	Name string `json:"Name"`
+}
+
+type networkingConfig struct {
+	EndpointsConfig map[string]endpointSettings `json:"EndpointsConfig,omitempty"`
+}
+
+type endpointSettings struct {
+	Aliases []string `json:"Aliases,omitempty"`
+}
+
+// runSpec : forme intermediate cote orchestrateur, mappee sur containerSpec
+// au moment d'envoyer la requete.
+type runSpec struct {
+	Name   string
+	Image  string
+	Env    []string
+	Labels map[string]string
+	Memory int64
+	Tmpfs  map[string]string
+	Net    string
+	Alias  string
+}
+
+// --- Operations de haut niveau ---
+
+// SpawnTrio cree postgres + brain + core pour une session.
 func (d *DockerClient) SpawnTrio(ctx context.Context, sessionID string, cfg *Config) error {
 	pgName := "demo-" + sessionID + "-postgres"
 	brainName := "demo-" + sessionID + "-brain"
@@ -40,18 +94,13 @@ func (d *DockerClient) SpawnTrio(ctx context.Context, sessionID string, cfg *Con
 	brainSecret := randomHex(32)
 	adminPassword := randomHex(16)
 
-	labels := map[string]string{
-		"demo-session": sessionID,
-		"demo-role":    "", // rempli par conteneur
-	}
+	labels := map[string]string{"demo-session": sessionID}
 
-	// --- Postgres (tmpfs => ephemere) ---
-	pgLabels := copyLabels(labels, "postgres")
 	if err := d.runContainer(ctx, runSpec{
 		Name:   pgName,
 		Image:  "postgres:16-alpine",
 		Env:    []string{"POSTGRES_DB=loremind", "POSTGRES_USER=loremind", "POSTGRES_PASSWORD=" + pgPassword},
-		Labels: pgLabels,
+		Labels: copyLabels(labels, "postgres"),
 		Memory: cfg.PostgresMemoryBytes,
 		Tmpfs:  map[string]string{"/var/lib/postgresql/data": "rw,size=200m"},
 		Net:    cfg.SessionsNetwork,
@@ -60,19 +109,17 @@ func (d *DockerClient) SpawnTrio(ctx context.Context, sessionID string, cfg *Con
 		return fmt.Errorf("spawn postgres: %w", err)
 	}
 
-	// --- Brain ---
-	brainLabels := copyLabels(labels, "brain")
 	if err := d.runContainer(ctx, runSpec{
 		Name:  brainName,
 		Image: cfg.Registry + "/ietm64/brain:" + cfg.Tag,
 		Env: []string{
 			"INTERNAL_SHARED_SECRET=" + brainSecret,
-			// Pas de provider LLM configure en demo : les features IA repondront
-			// en erreur, la demo sert principalement a explorer l'edition.
+			// Pas de provider LLM configure en demo : les features IA echoueront
+			// proprement, la demo sert principalement a explorer l'edition.
 			"LLM_PROVIDER=ollama",
-			"OLLAMA_BASE_URL=http://localhost:1", // endpoint mort volontairement
+			"OLLAMA_BASE_URL=http://localhost:1",
 		},
-		Labels: brainLabels,
+		Labels: copyLabels(labels, "brain"),
 		Memory: cfg.BrainMemoryBytes,
 		Net:    cfg.SessionsNetwork,
 		Alias:  brainName,
@@ -80,8 +127,6 @@ func (d *DockerClient) SpawnTrio(ctx context.Context, sessionID string, cfg *Con
 		return fmt.Errorf("spawn brain: %w", err)
 	}
 
-	// --- Core ---
-	coreLabels := copyLabels(labels, "core")
 	if err := d.runContainer(ctx, runSpec{
 		Name:  coreName,
 		Image: cfg.Registry + "/ietm64/core:" + cfg.Tag,
@@ -95,10 +140,8 @@ func (d *DockerClient) SpawnTrio(ctx context.Context, sessionID string, cfg *Con
 			"ADMIN_PASSWORD=" + adminPassword,
 			"DEMO_MODE=true",
 			"CORS_ALLOWED_ORIGINS=*",
-			// MinIO volontairement non fourni : le client init en lazy, seul
-			// l'upload d'images echouera (500). A masquer plus tard si besoin.
 		},
-		Labels: coreLabels,
+		Labels: copyLabels(labels, "core"),
 		Memory: cfg.CoreMemoryBytes,
 		Net:    cfg.SessionsNetwork,
 		Alias:  coreName,
@@ -109,74 +152,77 @@ func (d *DockerClient) SpawnTrio(ctx context.Context, sessionID string, cfg *Con
 	return nil
 }
 
-// runSpec regroupe les parametres d'un container pour runContainer.
-type runSpec struct {
-	Name   string
-	Image  string
-	Env    []string
-	Labels map[string]string
-	Memory int64
-	Tmpfs  map[string]string
-	Net    string
-	Alias  string
-}
-
-// runContainer pull l'image si absente puis cree et demarre le conteneur.
 func (d *DockerClient) runContainer(ctx context.Context, s runSpec) error {
-	// Pull silencieux si image absente localement. Ignore les erreurs (l'image
-	// peut exister localement sans etre atteignable au registre, ex: builds dev).
-	if reader, err := d.cli.ImagePull(ctx, s.Image, image.PullOptions{}); err == nil {
-		// Drain le body, sinon le pull n'est pas termine quand on continue.
-		_, _ = io.Copy(io.Discard, reader)
-		reader.Close()
-	}
+	// Pull best-effort : si l'image est deja locale, ContainerCreate la reprendra.
+	_ = d.pullImage(ctx, s.Image)
 
-	pidsLimit := int64(200)
-	hostCfg := &container.HostConfig{
-		RestartPolicy: container.RestartPolicy{Name: "no"},
-		Resources: container.Resources{
-			Memory:    s.Memory,
-			NanoCPUs:  1_000_000_000, // 1 vCPU par conteneur
-			PidsLimit: &pidsLimit,    // Anti fork-bomb : max 200 threads/processus.
-		},
-		Tmpfs: s.Tmpfs,
-		// no-new-privileges : interdit a un processus du conteneur de gagner
-		// plus de privileges que son parent (bloque les exploits setuid courants).
-		SecurityOpt: []string{"no-new-privileges:true"},
-		// CapDrop/CapAdd volontairement non configures : les images core (JVM
-		// Spring Boot) et brain (Python) n'ont pas ete auditees pour un
-		// fonctionnement avec capabilities restreintes ; un drop trop agressif
-		// peut casser le demarrage de maniere non triviale. A revoir si besoin.
-	}
-
-	netCfg := &network.NetworkingConfig{
-		EndpointsConfig: map[string]*network.EndpointSettings{
-			s.Net: {Aliases: []string{s.Alias}},
-		},
-	}
-
-	resp, err := d.cli.ContainerCreate(ctx, &container.Config{
+	spec := containerSpec{
 		Image:  s.Image,
 		Env:    s.Env,
 		Labels: s.Labels,
-	}, hostCfg, netCfg, nil, s.Name)
+		HostConfig: hostConfig{
+			Memory:        s.Memory,
+			NanoCPUs:      1_000_000_000, // 1 vCPU par conteneur
+			PidsLimit:     200,           // anti fork-bomb
+			Tmpfs:         s.Tmpfs,
+			SecurityOpt:   []string{"no-new-privileges:true"},
+			RestartPolicy: restartPolicy{Name: "no"},
+		},
+		NetworkingConfig: networkingConfig{
+			EndpointsConfig: map[string]endpointSettings{
+				s.Net: {Aliases: []string{s.Alias}},
+			},
+		},
+	}
+	body, err := json.Marshal(spec)
+	if err != nil {
+		return err
+	}
+
+	createResp, err := d.do(ctx, "POST", "/containers/create?name="+url.QueryEscape(s.Name), body)
 	if err != nil {
 		return fmt.Errorf("create %s: %w", s.Name, err)
 	}
-	if err := d.cli.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
+	var created struct {
+		ID string `json:"Id"`
+	}
+	if err := json.Unmarshal(createResp, &created); err != nil {
+		return fmt.Errorf("parse create %s: %w", s.Name, err)
+	}
+	if _, err := d.do(ctx, "POST", "/containers/"+created.ID+"/start", nil); err != nil {
 		return fmt.Errorf("start %s: %w", s.Name, err)
 	}
 	return nil
 }
 
-// WaitReady poll l'endpoint /api/config du core pendant timeout, retourne true
-// des qu'il repond 200. Utilise par le manager pour passer en Status=ready.
+// pullImage drain le flux de progression. Erreur silencieuse : si le pull
+// echoue (registre prive sans auth, image deja locale), runContainer aura un
+// retour clair via ContainerCreate.
+func (d *DockerClient) pullImage(ctx context.Context, img string) error {
+	req, err := http.NewRequestWithContext(ctx, "POST",
+		d.baseURL+"/images/create?fromImage="+url.QueryEscape(img), nil)
+	if err != nil {
+		return err
+	}
+	resp, err := d.http.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	_, _ = io.Copy(io.Discard, resp.Body)
+	if resp.StatusCode >= 400 {
+		return fmt.Errorf("pull %s: status %d", img, resp.StatusCode)
+	}
+	return nil
+}
+
+// WaitReady poll l'endpoint /api/config du core jusqu'a 200 ou timeout.
 func (d *DockerClient) WaitReady(ctx context.Context, sessionID string, timeout time.Duration) bool {
 	deadline := time.Now().Add(timeout)
-	url := "http://demo-" + sessionID + "-core:8080/api/config"
-	httpClient := &http.Client{Timeout: 2 * time.Second}
+	target := "http://demo-" + sessionID + "-core:8080/api/config"
+	c := &http.Client{Timeout: 2 * time.Second}
 	for time.Now().Before(deadline) {
-		resp, err := httpClient.Get(url)
+		resp, err := c.Get(target)
 		if err == nil {
 			resp.Body.Close()
 			if resp.StatusCode == 200 {
@@ -192,32 +238,26 @@ func (d *DockerClient) WaitReady(ctx context.Context, sessionID string, timeout 
 	return false
 }
 
-// KillTrio arrete et supprime tous les conteneurs avec le label demo-session=<id>.
+// KillTrio supprime tous les conteneurs labellises demo-session=<id>.
 func (d *DockerClient) KillTrio(ctx context.Context, sessionID string) error {
-	f := filters.NewArgs()
-	f.Add("label", "demo-session="+sessionID)
-	list, err := d.cli.ContainerList(ctx, container.ListOptions{All: true, Filters: f})
+	containers, err := d.listContainersWithLabel(ctx, "demo-session="+sessionID)
 	if err != nil {
 		return err
 	}
-	for _, c := range list {
-		_ = d.cli.ContainerRemove(ctx, c.ID, container.RemoveOptions{Force: true})
+	for _, c := range containers {
+		_, _ = d.do(ctx, "DELETE", "/containers/"+c.ID+"?force=true", nil)
 	}
 	return nil
 }
 
-// ListSessionIDs retourne les IDs de session detectes dans les labels Docker.
-// Utile au demarrage pour nettoyer les orphelins (conteneurs d'une vie
-// anterieure de l'orchestrateur).
+// ListSessionIDs : utilise au boot pour retrouver les conteneurs orphelins.
 func (d *DockerClient) ListSessionIDs(ctx context.Context) ([]string, error) {
-	f := filters.NewArgs()
-	f.Add("label", "demo-session")
-	list, err := d.cli.ContainerList(ctx, container.ListOptions{All: true, Filters: f})
+	containers, err := d.listContainersWithLabel(ctx, "demo-session")
 	if err != nil {
 		return nil, err
 	}
-	seen := make(map[string]bool)
-	for _, c := range list {
+	seen := map[string]bool{}
+	for _, c := range containers {
 		if v, ok := c.Labels["demo-session"]; ok && v != "" {
 			seen[v] = true
 		}
@@ -229,10 +269,58 @@ func (d *DockerClient) ListSessionIDs(ctx context.Context) ([]string, error) {
 	return out, nil
 }
 
+type containerInfo struct {
+	ID     string            `json:"Id"`
+	Labels map[string]string `json:"Labels"`
+}
+
+func (d *DockerClient) listContainersWithLabel(ctx context.Context, label string) ([]containerInfo, error) {
+	filters := map[string][]string{"label": {label}}
+	filtersJSON, _ := json.Marshal(filters)
+	q := url.Values{}
+	q.Set("all", "true")
+	q.Set("filters", string(filtersJSON))
+	body, err := d.do(ctx, "GET", "/containers/json?"+q.Encode(), nil)
+	if err != nil {
+		return nil, err
+	}
+	var list []containerInfo
+	if err := json.Unmarshal(body, &list); err != nil {
+		return nil, err
+	}
+	return list, nil
+}
+
+// do envoie une requete et renvoie le body. Une reponse 4xx/5xx est convertie
+// en erreur avec le contenu pour faciliter le debug.
+func (d *DockerClient) do(ctx context.Context, method, path string, body []byte) ([]byte, error) {
+	var rdr io.Reader
+	if body != nil {
+		rdr = bytes.NewReader(body)
+	}
+	req, err := http.NewRequestWithContext(ctx, method, d.baseURL+path, rdr)
+	if err != nil {
+		return nil, err
+	}
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
+	resp, err := d.http.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	out, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode >= 400 {
+		return nil, fmt.Errorf("%s %s: HTTP %d %s", method, path, resp.StatusCode, out)
+	}
+	return out, nil
+}
+
 // --- helpers ---
 
 func copyLabels(base map[string]string, role string) map[string]string {
-	out := make(map[string]string, len(base))
+	out := make(map[string]string, len(base)+1)
 	for k, v := range base {
 		out[k] = v
 	}
