@@ -7,8 +7,9 @@
   <form [formGroup]="form" (ngSubmit)="submit()" class="arc-form">
 
     <div class="field">
-      <label>Nom de l'arc *</label>
+      <label for="arc-create-name">Nom de l'arc *</label>
       <input
+        id="arc-create-name"
         type="text"
         formControlName="name"
         placeholder="Ex: L'Ombre du Nord"
@@ -17,8 +18,9 @@
     </div>
 
     <div class="field">
-      <label>Description</label>
+      <label for="arc-create-description">Description</label>
       <textarea
+        id="arc-create-description"
         formControlName="description"
         placeholder="Décrivez l'arc narratif principal..."
         rows="5">

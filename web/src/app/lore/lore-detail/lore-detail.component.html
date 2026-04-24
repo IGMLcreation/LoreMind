@@ -21,12 +21,12 @@
   <!-- ============ Header : mode édition inline ============ -->
   <div class="detail-header edit-mode" *ngIf="editing">
     <div class="field">
-      <label>Nom</label>
-      <input type="text" [(ngModel)]="editName" name="editName" required />
+      <label for="lore-detail-edit-name">Nom</label>
+      <input id="lore-detail-edit-name" type="text" [(ngModel)]="editName" name="editName" required />
     </div>
     <div class="field">
-      <label>Description</label>
-      <textarea [(ngModel)]="editDescription" name="editDescription" rows="3"></textarea>
+      <label for="lore-detail-edit-description">Description</label>
+      <textarea id="lore-detail-edit-description" [(ngModel)]="editDescription" name="editDescription" rows="3"></textarea>
     </div>
     <div class="header-actions">
       <button type="button" class="btn-primary" (click)="saveEdit()" [disabled]="!editName.trim()">

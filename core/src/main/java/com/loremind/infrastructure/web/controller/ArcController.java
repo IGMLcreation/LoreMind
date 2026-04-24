@@ -40,17 +40,11 @@ public class ArcController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ArcDTO>> getAllArcs() {
-        List<Arc> arcs = arcService.getAllArcs();
-        List<ArcDTO> arcDTOs = arcs.stream()
-                .map(arcMapper::toDTO)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(arcDTOs);
-    }
-
-    @GetMapping("/campaign/{campaignId}")
-    public ResponseEntity<List<ArcDTO>> getArcsByCampaignId(@PathVariable String campaignId) {
-        List<Arc> arcs = arcService.getArcsByCampaignId(campaignId);
+    public ResponseEntity<List<ArcDTO>> getAllArcs(
+            @RequestParam(value = "campaignId", required = false) String campaignId) {
+        List<Arc> arcs = (campaignId != null && !campaignId.isBlank())
+                ? arcService.getArcsByCampaignId(campaignId)
+                : arcService.getAllArcs();
         List<ArcDTO> arcDTOs = arcs.stream()
                 .map(arcMapper::toDTO)
                 .collect(Collectors.toList());

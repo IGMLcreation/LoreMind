@@ -60,7 +60,8 @@ export class CampaignService {
 
   // ========== ARC ==========
   getArcs(campaignId: string): Observable<Arc[]> {
-    return this.http.get<Arc[]>(`/api/arcs/campaign/${campaignId}`);
+    const params = new HttpParams().set('campaignId', campaignId);
+    return this.http.get<Arc[]>('/api/arcs', { params });
   }
 
   getArcById(id: string): Observable<Arc> {
@@ -85,7 +86,8 @@ export class CampaignService {
 
   // ========== CHAPTER ==========
   getChapters(arcId: string): Observable<Chapter[]> {
-    return this.http.get<Chapter[]>(`/api/chapters/arc/${arcId}`);
+    const params = new HttpParams().set('arcId', arcId);
+    return this.http.get<Chapter[]>('/api/chapters', { params });
   }
 
   getChapterById(id: string): Observable<Chapter> {
@@ -110,7 +112,8 @@ export class CampaignService {
 
   // ========== SCENE ==========
   getScenes(chapterId: string): Observable<Scene[]> {
-    return this.http.get<Scene[]>(`/api/scenes/chapter/${chapterId}`);
+    const params = new HttpParams().set('chapterId', chapterId);
+    return this.http.get<Scene[]>('/api/scenes', { params });
   }
 
   getSceneById(id: string): Observable<Scene> {

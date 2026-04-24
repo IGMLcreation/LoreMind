@@ -40,17 +40,11 @@ public class ChapterController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ChapterDTO>> getAllChapters() {
-        List<Chapter> chapters = chapterService.getAllChapters();
-        List<ChapterDTO> chapterDTOs = chapters.stream()
-                .map(chapterMapper::toDTO)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(chapterDTOs);
-    }
-
-    @GetMapping("/arc/{arcId}")
-    public ResponseEntity<List<ChapterDTO>> getChaptersByArcId(@PathVariable String arcId) {
-        List<Chapter> chapters = chapterService.getChaptersByArcId(arcId);
+    public ResponseEntity<List<ChapterDTO>> getAllChapters(
+            @RequestParam(value = "arcId", required = false) String arcId) {
+        List<Chapter> chapters = (arcId != null && !arcId.isBlank())
+                ? chapterService.getChaptersByArcId(arcId)
+                : chapterService.getAllChapters();
         List<ChapterDTO> chapterDTOs = chapters.stream()
                 .map(chapterMapper::toDTO)
                 .collect(Collectors.toList());
