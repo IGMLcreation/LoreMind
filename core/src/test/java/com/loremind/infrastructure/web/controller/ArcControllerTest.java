@@ -79,7 +79,7 @@ class ArcControllerTest {
     @Test
     void getByCampaign_pathVariant() throws Exception {
         arcRepository.save(Arc.builder().campaignId(campaignId).name("A").order(0).build());
-        mockMvc.perform(get("/api/arcs/campaign/{id}", campaignId))
+        mockMvc.perform(get("/api/arcs").param("campaignId", campaignId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
     }

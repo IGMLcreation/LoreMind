@@ -41,9 +41,20 @@ jobs:
         run: |
           docker compose -f docker-compose.yml -f docker-compose.e2e.yml up -d --build
 
+      - name: Attach runner to compose network
+        run: |
+          NET=$(docker network ls --format '{{.Name}}' | grep -E '(^|_)loremind(_|$)' | grep -i default | head -1)
+          if [ -z "$NET" ]; then
+            echo "Compose network not found" >&2
+            docker network ls
+            exit 1
+          fi
+          echo "Connecting $(hostname) to network $NET"
+          docker network connect "$NET" "$(hostname)"
+
       - name: Wait for web to be ready
         run: |
-          timeout 180 bash -c 'until curl -sf http://localhost:8081 > /dev/null; do echo "waiting..."; sleep 3; done'
+          timeout 180 bash -c 'until curl -sf http://web/ > /dev/null; do echo "waiting..."; sleep 3; done'
 
       - name: Install web deps
         working-directory: web
@@ -56,7 +67,7 @@ jobs:
       - name: Run Playwright tests
         working-directory: web
         env:
-          E2E_BASE_URL: http://localhost:8081
+          E2E_BASE_URL: http://web
           CI: 'true'
         run: npm run e2e
 

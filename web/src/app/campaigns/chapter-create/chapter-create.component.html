@@ -8,8 +8,9 @@
   <form [formGroup]="form" (ngSubmit)="submit()" class="chapter-form">
 
     <div class="field">
-      <label>Nom du chapitre *</label>
+      <label for="chapter-create-name">Nom du chapitre *</label>
       <input
+        id="chapter-create-name"
         type="text"
         formControlName="name"
         placeholder="Ex: Chapitre 1: Les Disparitions"
@@ -18,8 +19,9 @@
     </div>
 
     <div class="field">
-      <label>Description</label>
+      <label for="chapter-create-description">Description</label>
       <textarea
+        id="chapter-create-description"
         formControlName="description"
         placeholder="Décrivez ce chapitre..."
         rows="5">

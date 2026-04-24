@@ -36,6 +36,42 @@ export async function deleteLore(request: APIRequestContext, loreId: string): Pr
   await request.delete(`/api/lores/${loreId}`).catch(() => undefined);
 }
 
+export async function getLoreById(
+  request: APIRequestContext,
+  loreId: string,
+): Promise<{ id: string; name: string; description: string }> {
+  const res = await request.get(`/api/lores/${loreId}`);
+  expect(res.ok(), `GET /api/lores/${loreId} -> ${res.status()}`).toBeTruthy();
+  return res.json();
+}
+
+export async function getArcsForCampaign(
+  request: APIRequestContext,
+  campaignId: string,
+): Promise<Array<{ id: string; name: string; campaignId: string }>> {
+  const res = await request.get(`/api/arcs?campaignId=${campaignId}`);
+  expect(res.ok(), `GET /api/arcs -> ${res.status()}`).toBeTruthy();
+  return res.json();
+}
+
+export async function getChaptersForArc(
+  request: APIRequestContext,
+  arcId: string,
+): Promise<Array<{ id: string; name: string; arcId: string }>> {
+  const res = await request.get(`/api/chapters?arcId=${arcId}`);
+  expect(res.ok(), `GET /api/chapters -> ${res.status()}`).toBeTruthy();
+  return res.json();
+}
+
+export async function getScenesForChapter(
+  request: APIRequestContext,
+  chapterId: string,
+): Promise<Array<{ id: string; name: string; chapterId: string }>> {
+  const res = await request.get(`/api/scenes?chapterId=${chapterId}`);
+  expect(res.ok(), `GET /api/scenes -> ${res.status()}`).toBeTruthy();
+  return res.json();
+}
+
 export async function getTemplatesForLore(
   request: APIRequestContext,
   loreId: string,

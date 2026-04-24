@@ -40,17 +40,11 @@ public class SceneController {
     }
 
     @GetMapping
-    public ResponseEntity<List<SceneDTO>> getAllScenes() {
-        List<Scene> scenes = sceneService.getAllScenes();
-        List<SceneDTO> sceneDTOs = scenes.stream()
-                .map(sceneMapper::toDTO)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(sceneDTOs);
-    }
-
-    @GetMapping("/chapter/{chapterId}")
-    public ResponseEntity<List<SceneDTO>> getScenesByChapterId(@PathVariable String chapterId) {
-        List<Scene> scenes = sceneService.getScenesByChapterId(chapterId);
+    public ResponseEntity<List<SceneDTO>> getAllScenes(
+            @RequestParam(value = "chapterId", required = false) String chapterId) {
+        List<Scene> scenes = (chapterId != null && !chapterId.isBlank())
+                ? sceneService.getScenesByChapterId(chapterId)
+                : sceneService.getAllScenes();
         List<SceneDTO> sceneDTOs = scenes.stream()
                 .map(sceneMapper::toDTO)
                 .collect(Collectors.toList());

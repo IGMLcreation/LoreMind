@@ -81,7 +81,7 @@ class ChapterControllerTest {
     @Test
     void getByArc_pathVariant() throws Exception {
         chapterRepository.save(Chapter.builder().arcId(arcId).name("A").order(0).build());
-        mockMvc.perform(get("/api/chapters/arc/{id}", arcId))
+        mockMvc.perform(get("/api/chapters").param("arcId", arcId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
     }

@@ -85,7 +85,7 @@ class SceneControllerTest {
     @Test
     void getByChapter_pathVariant() throws Exception {
         sceneRepository.save(Scene.builder().chapterId(chapterId).name("A").order(0).build());
-        mockMvc.perform(get("/api/scenes/chapter/{id}", chapterId))
+        mockMvc.perform(get("/api/scenes").param("chapterId", chapterId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
     }
