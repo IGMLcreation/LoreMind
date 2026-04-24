@@ -60,6 +60,13 @@ jobs:
         working-directory: web
         run: npm ci
 
+      - name: Work around runner clock skew for apt
+        run: |
+          sudo tee /etc/apt/apt.conf.d/99no-check-valid-until >/dev/null <<'EOF'
+          Acquire::Check-Valid-Until "false";
+          Acquire::Check-Date "false";
+          EOF
+
       - name: Install Playwright browsers
         working-directory: web
         run: npx playwright install --with-deps chromium
