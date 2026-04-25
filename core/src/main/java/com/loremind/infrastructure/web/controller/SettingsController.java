@@ -21,12 +21,10 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Map;
 
@@ -46,13 +44,16 @@ public class SettingsController {
 
     private final RestTemplate restTemplate;
     private final String brainBaseUrl;
+    private final String brainInternalSecret;
     private final boolean demoMode;
 
     public SettingsController(RestTemplate restTemplate,
                               @Value("${brain.base-url}") String brainBaseUrl,
+                              @Value("${brain.internal-secret}") String brainInternalSecret,
                               @Value("${app.demo-mode:false}") boolean demoMode) {
         this.restTemplate = restTemplate;
         this.brainBaseUrl = brainBaseUrl;
+        this.brainInternalSecret = brainInternalSecret;
         this.demoMode = demoMode;
     }
 
@@ -93,12 +94,18 @@ public class SettingsController {
             HttpClient http = HttpClient.newBuilder()
                     .connectTimeout(Duration.ofSeconds(10))
                     .build();
-            HttpRequest req = HttpRequest.newBuilder()
+            // Le RestTemplate auto-injecte X-Internal-Secret via un interceptor,
+            // mais on bypass RestTemplate pour le streaming -> on doit ajouter
+            // l'entete a la main, sinon le Brain repond 401.
+            HttpRequest.Builder reqBuilder = HttpRequest.newBuilder()
                     .uri(URI.create(brainBaseUrl + "/models/ollama/pull"))
                     .timeout(Duration.ofMinutes(60))
                     .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(toJson(body)))
-                    .build();
+                    .POST(HttpRequest.BodyPublishers.ofString(toJson(body)));
+            if (brainInternalSecret != null && !brainInternalSecret.isBlank()) {
+                reqBuilder.header("X-Internal-Secret", brainInternalSecret);
+            }
+            HttpRequest req = reqBuilder.build();
             try {
                 HttpResponse<InputStream> resp = http.send(req, HttpResponse.BodyHandlers.ofInputStream());
                 try (InputStream in = resp.body()) {
