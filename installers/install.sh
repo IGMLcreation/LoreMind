@@ -129,7 +129,7 @@ fi
 # 3. none     : aucune installation, configuration ulterieure via l'app
 OLLAMA_MODE="embedded"
 OLLAMA_BASE_URL_VAL="http://ollama:11434"
-LLM_MODEL_VAL="gemma4:26b"
+LLM_MODEL_VAL="gemma4:e4b"
 if [ "$LLM_PROVIDER" = "ollama" ]; then
     HOST_OLLAMA_REPLY="$(ask "Avez-vous deja Ollama installe sur cette machine ? [o/N]" "N")"
     case "$HOST_OLLAMA_REPLY" in
@@ -227,6 +227,41 @@ step "Telechargement des images (peut prendre quelques minutes)"
 docker compose pull
 step "Demarrage de la stack"
 docker compose up -d
+
+# 5b. Telechargement du modele Ollama (mode embarque uniquement)
+# ----------------------------------------------------------------------------
+# Le conteneur Ollama est pret mais sans modele. On propose le pull tout de
+# suite pour que l'utilisateur ait quelque chose a utiliser au premier lancement.
+if [ "$LLM_PROVIDER" = "ollama" ] && [ "$OLLAMA_MODE" = "embedded" ]; then
+    PULL_REPLY="$(ask "Telecharger le modele '${LLM_MODEL_VAL}' maintenant ? (peut prendre plusieurs minutes) [O/n]" "O")"
+    case "$PULL_REPLY" in
+        n|N|no|non|No|Non)
+            echo "  Pour le telecharger plus tard : docker exec -it loremind-ollama ollama pull ${LLM_MODEL_VAL}"
+            ;;
+        *)
+            step "Attente de la disponibilite du conteneur Ollama..."
+            OLLAMA_READY=0
+            for i in $(seq 1 30); do
+                if docker exec loremind-ollama ollama list >/dev/null 2>&1; then
+                    OLLAMA_READY=1
+                    break
+                fi
+                sleep 2
+            done
+            if [ "$OLLAMA_READY" = "0" ]; then
+                warn "Le conteneur Ollama ne repond pas encore. Vous pourrez pull plus tard :"
+                warn "  docker exec -it loremind-ollama ollama pull ${LLM_MODEL_VAL}"
+            else
+                step "Telechargement du modele ${LLM_MODEL_VAL} (peut prendre plusieurs minutes selon votre connexion)..."
+                if docker exec loremind-ollama ollama pull "${LLM_MODEL_VAL}"; then
+                    ok "Modele ${LLM_MODEL_VAL} pret a l'emploi"
+                else
+                    warn "Echec du pull. Reessayez : docker exec -it loremind-ollama ollama pull ${LLM_MODEL_VAL}"
+                fi
+            fi
+            ;;
+    esac
+fi
 
 # 6. Recap
 URL="http://localhost:${WEB_PORT}"

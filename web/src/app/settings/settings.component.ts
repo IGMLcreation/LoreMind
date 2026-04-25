@@ -2,8 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { LucideAngularModule, ArrowLeft, RefreshCw, Save, Check, AlertCircle, Download } from 'lucide-angular';
-import { SettingsService, AppSettings, AppSettingsUpdate, OneMinModelGroup } from '../services/settings.service';
+import { LucideAngularModule, ArrowLeft, RefreshCw, Save, Check, AlertCircle, Download, Trash2, Plus, X } from 'lucide-angular';
+import { SettingsService, AppSettings, AppSettingsUpdate, OneMinModelGroup, OllamaPullEvent } from '../services/settings.service';
+import { Subscription } from 'rxjs';
 import { UpdatesService, UpdateStatus } from '../services/updates.service';
 import { ConfigService } from '../services/config.service';
 
@@ -33,6 +34,34 @@ export class SettingsComponent implements OnInit {
   readonly Check = Check;
   readonly AlertCircle = AlertCircle;
   readonly Download = Download;
+  readonly Trash2 = Trash2;
+  readonly Plus = Plus;
+  readonly X = X;
+
+  // --- Pull / delete de modeles Ollama ---
+  /** Dialog d'ajout de modele ouvert/ferme. */
+  pullDialogOpen = false;
+  /** Nom saisi par l'utilisateur dans le dialog. */
+  pullModelName = '';
+  /** Suggestions courantes affichees dans le dialog. */
+  readonly pullSuggestions = [
+    'gemma4:e4b', 'gemma3:4b', 'gemma3:12b',
+    'llama3.2:3b', 'llama3.1:8b',
+    'mistral:7b', 'qwen2.5:3b', 'qwen2.5:7b'
+  ];
+  /** Pull en cours ; null si aucun. */
+  pullInProgress = false;
+  /** Etape courante affichee a l'utilisateur (ex: "downloading", "verifying"). */
+  pullStatus = '';
+  /** Bytes telecharges sur le digest courant. */
+  pullCompleted = 0;
+  /** Bytes totaux du digest courant. */
+  pullTotal = 0;
+  /** Souscription au flux de pull pour pouvoir l'annuler. */
+  private pullSubscription: Subscription | null = null;
+
+  /** Modele en cours de suppression (nom) pour disabler son bouton. */
+  deletingModel: string | null = null;
 
   // Mises a jour conteneurs
   updateStatus: UpdateStatus | null = null;
@@ -225,6 +254,119 @@ export class SettingsComponent implements OnInit {
       error: (err) => {
         this.errorMessage = this.extractError(err, 'Echec de la sauvegarde.');
         this.saving = false;
+      }
+    });
+  }
+
+  // --- Gestion des modeles Ollama (pull / delete) -------------------------
+
+  openPullDialog(): void {
+    this.pullDialogOpen = true;
+    this.pullModelName = '';
+    this.resetPullState();
+  }
+
+  closePullDialog(): void {
+    if (this.pullInProgress) return; // empêche fermeture pendant un pull
+    this.pullDialogOpen = false;
+  }
+
+  selectSuggestion(name: string): void {
+    this.pullModelName = name;
+  }
+
+  startPull(): void {
+    const name = this.pullModelName.trim();
+    if (!name || this.pullInProgress) return;
+    this.resetPullState();
+    this.pullInProgress = true;
+    this.pullStatus = 'connexion...';
+    this.errorMessage = '';
+
+    this.pullSubscription = this.settingsService.pullOllamaModel(name).subscribe({
+      next: (event: OllamaPullEvent) => {
+        if (event.error) {
+          this.errorMessage = `Echec : ${event.error}`;
+          this.pullInProgress = false;
+          return;
+        }
+        if (event.status) this.pullStatus = event.status;
+        if (event.completed != null) this.pullCompleted = event.completed;
+        if (event.total != null) this.pullTotal = event.total;
+      },
+      error: (err) => {
+        this.errorMessage = this.extractError(err, `Echec du telechargement de ${name}.`);
+        this.pullInProgress = false;
+      },
+      complete: () => {
+        this.pullInProgress = false;
+        this.successMessage = `Modele ${name} telecharge.`;
+        this.refreshModels();
+        // Si l'utilisateur n'avait aucun modele, on selectionne celui-ci.
+        if (this.settings && !this.settings.llm_model) {
+          this.settings.llm_model = name;
+          this.fetchOllamaModelInfo();
+        }
+        // Petite tempo avant de fermer pour que le user voie "success".
+        setTimeout(() => this.closePullDialog(), 1200);
+      }
+    });
+  }
+
+  cancelPull(): void {
+    if (this.pullSubscription) {
+      this.pullSubscription.unsubscribe();
+      this.pullSubscription = null;
+    }
+    this.pullInProgress = false;
+    this.pullStatus = 'annule';
+  }
+
+  private resetPullState(): void {
+    this.pullStatus = '';
+    this.pullCompleted = 0;
+    this.pullTotal = 0;
+    if (this.pullSubscription) {
+      this.pullSubscription.unsubscribe();
+      this.pullSubscription = null;
+    }
+  }
+
+  /** Pourcentage du digest courant pour la barre de progression. */
+  get pullPercent(): number {
+    if (this.pullTotal <= 0) return 0;
+    return Math.min(100, Math.round((this.pullCompleted / this.pullTotal) * 100));
+  }
+
+  /** Affichage humain des octets ('1.2 GB' / '450 MB'). */
+  formatBytes(b: number): string {
+    if (!b) return '0';
+    const u = ['B', 'KB', 'MB', 'GB', 'TB'];
+    let i = 0;
+    let v = b;
+    while (v >= 1024 && i < u.length - 1) { v /= 1024; i++; }
+    return `${v.toFixed(v < 10 && i > 0 ? 1 : 0)} ${u[i]}`;
+  }
+
+  deleteModel(name: string): void {
+    if (!confirm(`Supprimer le modele '${name}' ? L'espace disque sera libere.`)) return;
+    this.deletingModel = name;
+    this.errorMessage = '';
+    this.settingsService.deleteOllamaModel(name).subscribe({
+      next: () => {
+        this.deletingModel = null;
+        this.successMessage = `Modele ${name} supprime.`;
+        // Si l'utilisateur supprime le modele actuellement selectionne,
+        // on bascule sur le premier disponible (ou vide).
+        this.refreshModels();
+        if (this.settings && this.settings.llm_model === name) {
+          this.settings.llm_model = '';
+          this.ollamaModelMaxContext = 0;
+        }
+      },
+      error: (err) => {
+        this.deletingModel = null;
+        this.errorMessage = this.extractError(err, `Echec de la suppression de ${name}.`);
       }
     });
   }

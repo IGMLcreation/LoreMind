@@ -40,7 +40,7 @@
   Auteur       : ietm64
   Licence      : AGPL-3.0
   Projet       : LoreMindMJ - assistant pour Maitres de Jeu de JDR
-  Version      : 0.6.6
+  Version      : 0.6.8
 
 .LINK
   https://git.igmlcreation.fr/ietm64/loremind
@@ -91,15 +91,34 @@ function Test-Docker {
     return ($LASTEXITCODE -eq 0)
 }
 
-function Wait-Docker([int]$TimeoutSec = 180) {
+function Wait-Docker([int]$TimeoutSec = 600) {
+    # Attend que Docker reponde. Tolere les erreurs "command not found" pendant
+    # les premieres iterations le temps que le PATH soit rafraichi.
     Write-Step "Attente du demarrage de Docker Desktop (max ${TimeoutSec}s)..."
+    Write-Host "  Si Docker Desktop affiche un contrat de licence, acceptez-le."
     $deadline = (Get-Date).AddSeconds($TimeoutSec)
+    $reportedFound = $false
     while ((Get-Date) -lt $deadline) {
-        docker info *>$null
-        if ($LASTEXITCODE -eq 0) { Write-Ok "Docker repond"; return $true }
-        Start-Sleep -Seconds 3
+        if (Get-Command docker -ErrorAction SilentlyContinue) {
+            if (-not $reportedFound) {
+                Write-Ok "Commande 'docker' detectee, attente du daemon..."
+                $reportedFound = $true
+            }
+            docker info *>$null
+            if ($LASTEXITCODE -eq 0) { Write-Ok "Docker repond"; return $true }
+        }
+        Start-Sleep -Seconds 5
     }
     return $false
+}
+
+function Update-PathFromRegistry {
+    # winget install ne propage pas les modifs de PATH a la session courante.
+    # On relit la valeur PATH depuis le registre (Machine + User) et on
+    # l'applique a $env:PATH pour rendre 'docker.exe' immediatement utilisable.
+    $machinePath = [Environment]::GetEnvironmentVariable('Path','Machine')
+    $userPath    = [Environment]::GetEnvironmentVariable('Path','User')
+    $env:PATH = ($machinePath, $userPath -join ';').TrimEnd(';')
 }
 
 # ---------------------------------------------------------------------------
@@ -159,12 +178,25 @@ if (Test-Docker) {
     winget install --id Docker.DockerDesktop -e --accept-package-agreements --accept-source-agreements
     if ($LASTEXITCODE -ne 0) { Write-Err "Echec de l'installation Docker Desktop via winget"; exit 1 }
 
+    # winget a modifie le PATH systeme mais pas celui de la session courante.
+    # On le rafraichit pour que la commande 'docker' soit immediatement trouvable.
+    Update-PathFromRegistry
+
     Write-Step "Lancement de Docker Desktop..."
     $dd = "$env:ProgramFiles\Docker\Docker\Docker Desktop.exe"
     if (Test-Path $dd) { Start-Process $dd }
 
-    if (-not (Wait-Docker 240)) {
-        Write-Err "Docker n'a pas demarre. Lancez-le manuellement puis relancez ce script."
+    Write-Host ""
+    Write-Host "  Docker Desktop demarre pour la premiere fois." -ForegroundColor Yellow
+    Write-Host "  Au premier lancement, il affiche un contrat de licence (Subscription Service Agreement)."
+    Write-Host "  Cliquez 'Accept' pour continuer."
+    Write-Host ""
+    Read-Host "  Appuyez sur Entree une fois que Docker Desktop affiche 'Engine running' (icone baleine verte)"
+
+    if (-not (Wait-Docker 600)) {
+        Write-Err "Docker ne repond toujours pas apres 10 minutes."
+        Write-Err "Verifiez que Docker Desktop est lance et que vous avez accepte le contrat,"
+        Write-Err "puis relancez install.bat."
         exit 1
     }
 }
@@ -270,7 +302,7 @@ if ($llmProvider -eq 'ollama') {
     }
 }
 
-$llmModel = 'gemma4:26b'
+$llmModel = 'gemma4:e4b'
 
 $autoUpdate = if ($NonInteractive) { $true } else {
     $r = Read-Host "  Activer les mises a jour auto (chaque nuit a 4h) ? [O/n]"
@@ -327,6 +359,43 @@ if ($LASTEXITCODE -ne 0) { Write-Err "Echec docker compose pull"; exit 1 }
 Write-Step "Demarrage de la stack"
 docker compose up -d
 if ($LASTEXITCODE -ne 0) { Write-Err "Echec docker compose up"; exit 1 }
+
+# ---------------------------------------------------------------------------
+# 5b. Telechargement du modele Ollama (mode embarque uniquement)
+# ---------------------------------------------------------------------------
+# En mode embarque, le conteneur Ollama est prêt mais ne contient aucun modele
+# par defaut. On propose de pull le modele configure tout de suite pour que
+# l'utilisateur ait quelque chose a utiliser des le premier lancement.
+if ($ollamaMode -eq 'embedded' -and $llmProvider -eq 'ollama') {
+    $pullNow = if ($NonInteractive) { $true } else {
+        $r = Read-Host "  Telecharger le modele '$llmModel' maintenant ? (peut prendre quelques minutes) [O/n]"
+        -not ($r -match '^(n|N|no|non)$')
+    }
+    if ($pullNow) {
+        # Petite attente pour laisser le conteneur ollama finir son init.
+        Write-Step "Attente de la disponibilite du conteneur Ollama..."
+        $ollamaReady = $false
+        for ($i = 0; $i -lt 30; $i++) {
+            docker exec loremind-ollama ollama list *>$null
+            if ($LASTEXITCODE -eq 0) { $ollamaReady = $true; break }
+            Start-Sleep -Seconds 2
+        }
+        if (-not $ollamaReady) {
+            Write-Warn2 "Le conteneur Ollama ne repond pas encore. Vous pourrez pull le modele plus tard avec :"
+            Write-Warn2 "  docker exec -it loremind-ollama ollama pull $llmModel"
+        } else {
+            Write-Step "Telechargement du modele $llmModel (peut prendre plusieurs minutes selon votre connexion)..."
+            docker exec loremind-ollama ollama pull $llmModel
+            if ($LASTEXITCODE -eq 0) {
+                Write-Ok "Modele $llmModel pret a l'emploi"
+            } else {
+                Write-Warn2 "Echec du pull. Reessayez manuellement : docker exec -it loremind-ollama ollama pull $llmModel"
+            }
+        }
+    } else {
+        Write-Host "  Pour le telecharger plus tard : docker exec -it loremind-ollama ollama pull $llmModel"
+    }
+}
 
 # ---------------------------------------------------------------------------
 # 6. Recap
