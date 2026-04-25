@@ -154,7 +154,12 @@ services:
   # Postgres et MinIO sont volontairement exclus (donnees persistantes,
   # compatibilite de version a verifier manuellement).
   watchtower:
-    image: containrrr/watchtower:latest
+    # Fork maintenu de containrrr/watchtower (l'original est abandonne depuis
+    # ~2023 et son client Docker API est trop vieux pour les versions recentes
+    # de Docker Desktop -- erreur "client version 1.25 is too old").
+    # nickfedor/watchtower est un drop-in : memes variables d'environnement,
+    # meme API HTTP, juste l'image change.
+    image: nickfedor/watchtower:latest
     container_name: loremind-watchtower
     profiles: ["autoupdate"]
     volumes:
