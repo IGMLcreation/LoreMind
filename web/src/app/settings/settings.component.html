@@ -141,13 +141,6 @@
     </div>
   </section>
 
-  <div class="actions" *ngIf="settings">
-    <button class="btn-primary" (click)="save()" [disabled]="saving">
-      <lucide-icon [img]="Save" [size]="16"></lucide-icon>
-      <span>{{ saving ? 'Sauvegarde...' : 'Sauvegarder' }}</span>
-    </button>
-  </div>
-
   <!-- Bloc Mises a jour -->
   <section class="card" *ngIf="config.updateCheckEnabled">
     <h2>Mises a jour</h2>
@@ -197,5 +190,12 @@
       </div>
     </div>
   </section>
+
+  <div class="actions" *ngIf="settings">
+    <button class="btn-primary" (click)="save()" [disabled]="saving">
+      <lucide-icon [img]="Save" [size]="16"></lucide-icon>
+      <span>{{ saving ? 'Sauvegarde...' : 'Sauvegarder' }}</span>
+    </button>
+  </div>
 
 </div>
