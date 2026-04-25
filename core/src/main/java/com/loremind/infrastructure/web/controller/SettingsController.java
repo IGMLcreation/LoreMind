@@ -91,7 +91,12 @@ public class SettingsController {
     public ResponseEntity<StreamingResponseBody> pullOllamaModel(@RequestBody Map<String, Object> body) {
         guardDemoMode();
         StreamingResponseBody stream = output -> {
+            // Force HTTP/1.1 : le HttpClient JDK essaie HTTP/2 par defaut,
+            // mais uvicorn (Brain) ne supporte que HTTP/1.1 et rejette la
+            // tentative d'upgrade ("Unsupported upgrade request") -> la
+            // requete n'arrive jamais a notre endpoint Python.
             HttpClient http = HttpClient.newBuilder()
+                    .version(HttpClient.Version.HTTP_1_1)
                     .connectTimeout(Duration.ofSeconds(10))
                     .build();
             // Le RestTemplate auto-injecte X-Internal-Secret via un interceptor,
