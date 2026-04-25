@@ -123,11 +123,53 @@ if [ "$LLM_PROVIDER" = "onemin" ] && [ "$NON_INTERACTIVE" != "1" ]; then
     ONEMIN_API_KEY="$(ask "Cle API 1min.ai" "")"
 fi
 
+# --- Mode Ollama : embarque (defaut) vs hote -------------------------------
+# Embarque : service 'ollama' du compose (profile local-ollama). Zero config reseau.
+# Hote     : Ollama deja installe sur la machine. Necessite OLLAMA_HOST=0.0.0.0
+#            via override systemd pour que le conteneur Brain l'atteigne.
+USE_EMBEDDED_OLLAMA=1
+OLLAMA_BASE_URL_VAL="http://ollama:11434"
+LLM_MODEL_VAL="gemma4:26b"
+if [ "$LLM_PROVIDER" = "ollama" ]; then
+    HOST_OLLAMA_REPLY="$(ask "Avez-vous deja Ollama installe sur cette machine ? [o/N]" "N")"
+    case "$HOST_OLLAMA_REPLY" in
+        o|O|y|Y|oui|yes|Oui|Yes)
+            USE_EMBEDDED_OLLAMA=0
+            OLLAMA_BASE_URL_VAL="http://host.docker.internal:11434"
+            step "Configuration d'Ollama hote (OLLAMA_HOST=0.0.0.0:11434)..."
+            if systemctl list-unit-files 2>/dev/null | grep -q '^ollama\.service'; then
+                sudo mkdir -p /etc/systemd/system/ollama.service.d
+                sudo tee /etc/systemd/system/ollama.service.d/loremind-host.conf >/dev/null <<EOF
+[Service]
+Environment="OLLAMA_HOST=0.0.0.0:11434"
+EOF
+                sudo systemctl daemon-reload
+                sudo systemctl restart ollama
+                ok "Service systemd ollama redemarre avec OLLAMA_HOST=0.0.0.0:11434"
+            else
+                warn "Service systemd 'ollama' introuvable. Definissez OLLAMA_HOST=0.0.0.0:11434 manuellement avant de relancer Ollama."
+            fi
+            ;;
+        *)
+            USE_EMBEDDED_OLLAMA=1
+            ok "Ollama sera lance dans Docker (modeles dans un volume Docker)"
+            ;;
+    esac
+fi
+
 AUTO_UPDATE_REPLY="$(ask "Activer les mises a jour auto (chaque nuit a 4h) ? [O/n]" "O")"
 case "$AUTO_UPDATE_REPLY" in
-    n|N|no|non|No|Non) COMPOSE_PROFILES="" ; AUTO_UPDATE=0 ;;
-    *)                 COMPOSE_PROFILES="autoupdate" ; AUTO_UPDATE=1 ;;
+    n|N|no|non|No|Non) AUTO_UPDATE=0 ;;
+    *)                 AUTO_UPDATE=1 ;;
 esac
+
+# Combinaison de profiles : autoupdate et/ou local-ollama (separes par virgule).
+PROFILES_ARR=()
+[ "$AUTO_UPDATE" = "1" ] && PROFILES_ARR+=("autoupdate")
+if [ "$LLM_PROVIDER" = "ollama" ] && [ "$USE_EMBEDDED_OLLAMA" = "1" ]; then
+    PROFILES_ARR+=("local-ollama")
+fi
+COMPOSE_PROFILES="$(IFS=,; echo "${PROFILES_ARR[*]}")"
 
 cat > .env <<EOF
 # Genere par install.sh le $(date '+%Y-%m-%d %H:%M')
@@ -149,8 +191,8 @@ MINIO_USER=minioadmin
 MINIO_PASSWORD=$(rand_hex 24)
 
 LLM_PROVIDER=${LLM_PROVIDER}
-OLLAMA_BASE_URL=http://host.docker.internal:11434
-LLM_MODEL=gemma4:26b
+OLLAMA_BASE_URL=${OLLAMA_BASE_URL_VAL}
+LLM_MODEL=${LLM_MODEL_VAL}
 ONEMIN_API_KEY=${ONEMIN_API_KEY}
 ONEMIN_MODEL=gpt-4o-mini
 
@@ -183,6 +225,16 @@ if [ "$AUTO_UPDATE" = "1" ]; then
     echo -e " Auto-update  : ${c_green}active${c_off} (chaque nuit a 4h via Watchtower)"
 else
     echo " Auto-update  : desactive (mise a jour manuelle uniquement)"
+fi
+if [ "$LLM_PROVIDER" = "ollama" ]; then
+    if [ "$USE_EMBEDDED_OLLAMA" = "1" ]; then
+        echo -e " Ollama       : ${c_green}embarque${c_off} (service Docker 'ollama')"
+        echo
+        echo " IMPORTANT : telechargez un modele avant utilisation :"
+        echo "   docker exec -it loremind-ollama ollama pull ${LLM_MODEL_VAL}"
+    else
+        echo " Ollama       : hote (http://host.docker.internal:11434)"
+    fi
 fi
 echo
 echo " Commandes utiles (depuis $INSTALL_DIR) :"

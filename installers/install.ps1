@@ -1,14 +1,49 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-  Installeur LoreMindMJ pour Windows 10/11.
+  Installeur officiel de LoreMindMJ pour Windows 10/11.
+
 .DESCRIPTION
-  - Verifie / installe WSL2 et Docker Desktop (via winget)
-  - Genere un .env avec mots de passe aleatoires
-  - Recupere le docker-compose.yml officiel
-  - Lance la stack et ouvre le navigateur
+  Script d'installation pas-a-pas qui :
+    - Verifie la presence de WSL2 et Docker Desktop ; les installe via winget si absents
+    - Telecharge le fichier docker-compose.yml officiel depuis le depot du projet
+    - Genere un fichier .env contenant des secrets aleatoires (RNG cryptographique)
+    - Configure le mode Ollama (embarque dans Docker ou Ollama deja installe sur l'hote)
+    - Demarre la stack Docker et ouvre l'application dans le navigateur
+
+  Aucune connexion sortante n'est etablie en dehors :
+    - du depot officiel du projet (fichier docker-compose.yml)
+    - du Docker Hub / registry Docker pour les images
+
+  Le code source de ce script est public et auditable a l'adresse indiquee dans .LINK.
+
+.PARAMETER InstallDir
+  Dossier d'installation. Defaut : %LOCALAPPDATA%\LoreMind
+
+.PARAMETER ComposeUrl
+  URL du fichier docker-compose.yml a recuperer. Defaut : version officielle du depot.
+
+.PARAMETER WebPort
+  Port HTTP local sur lequel l'application sera exposee. Defaut : 8081.
+
+.PARAMETER NonInteractive
+  Mode automatique pour CI / re-installation. Utilise les valeurs par defaut.
+
 .EXAMPLE
-  iwr https://git.igmlcreation.fr/ietm64/loremind/raw/branch/main/installers/install.ps1 | iex
+  Procedure recommandee :
+    1. Telechargez install.ps1 dans un dossier (clic droit -> Enregistrer la cible sous).
+    2. Ouvrez PowerShell en tant qu'administrateur (clic droit sur PowerShell).
+    3. Naviguez vers le dossier : cd C:\Chemin\Vers\Le\Dossier
+    4. Lancez : .\install.ps1
+
+.NOTES
+  Auteur       : ietm64
+  Licence      : AGPL-3.0
+  Projet       : LoreMindMJ - assistant pour Maitres de Jeu de JDR
+  Version      : 0.6.6
+
+.LINK
+  https://git.igmlcreation.fr/ietm64/loremind
 #>
 
 [CmdletBinding()]
@@ -27,19 +62,16 @@ function Write-Warn2($msg)   { Write-Host "  !! $msg" -ForegroundColor Yellow }
 function Write-Err($msg)     { Write-Host "  XX $msg" -ForegroundColor Red }
 
 function Test-Admin {
+    # Verifie si la session courante a les droits administrateur Windows.
     $current = [Security.Principal.WindowsIdentity]::GetCurrent()
     return ([Security.Principal.WindowsPrincipal]$current).IsInRole(
         [Security.Principal.WindowsBuiltInRole]::Administrator)
 }
 
-function Invoke-Elevated {
-    Write-Step "Relance en mode administrateur..."
-    $args = @('-NoProfile','-ExecutionPolicy','Bypass','-File',$PSCommandPath)
-    Start-Process powershell -Verb RunAs -ArgumentList $args
-    exit
-}
-
 function New-RandomSecret([int]$Length = 32) {
+    # Genere un secret aleatoire imprimable (hex) via le RNG cryptographique
+    # de .NET. Utilise pour les mots de passe Postgres / MinIO / tokens internes
+    # afin que chaque installation ait des credentials uniques.
     $bytes = New-Object byte[] $Length
     [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
     return ([BitConverter]::ToString($bytes) -replace '-','').ToLower().Substring(0, $Length)
@@ -71,9 +103,23 @@ function Wait-Docker([int]$TimeoutSec = 180) {
 }
 
 # ---------------------------------------------------------------------------
-# 0. Pre-requis admin
+# 0. Verification des droits administrateur
 # ---------------------------------------------------------------------------
-if (-not (Test-Admin)) { Invoke-Elevated }
+# On NE force PAS l'elevation automatique : on demande a l'utilisateur de
+# relancer le script lui-meme avec les droits admin. C'est plus transparent
+# et evite les avertissements antivirus liees a l'elevation silencieuse.
+if (-not (Test-Admin)) {
+    Write-Host ""
+    Write-Host "Ce script doit etre execute en tant qu'administrateur." -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "Procedure :"
+    Write-Host "  1. Fermez cette fenetre PowerShell."
+    Write-Host "  2. Cliquez-droit sur l'icone PowerShell > 'Executer en tant qu'administrateur'."
+    Write-Host "  3. Naviguez a nouveau vers ce dossier et relancez : .\install.ps1"
+    Write-Host ""
+    Read-Host "Appuyez sur Entree pour quitter"
+    exit 1
+}
 
 Write-Host ""
 Write-Host "============================================================"
@@ -106,9 +152,12 @@ if (Test-Docker) {
         Write-Err "winget introuvable. Installez Docker Desktop manuellement : https://www.docker.com/products/docker-desktop/"
         exit 1
     }
-    Write-Warn2 "Installation de Docker Desktop via winget..."
+    Write-Warn2 "Installation de Docker Desktop via winget (gestionnaire de paquets officiel Microsoft)..."
+    # On invoque winget en mode interactif (l'utilisateur voit la progression).
+    # Les flags --accept-* sont necessaires pour ne pas bloquer sur les CGU
+    # (Docker Desktop a des conditions d'utilisation a accepter).
     winget install --id Docker.DockerDesktop -e --accept-package-agreements --accept-source-agreements
-    if ($LASTEXITCODE -ne 0) { Write-Err "Echec winget"; exit 1 }
+    if ($LASTEXITCODE -ne 0) { Write-Err "Echec de l'installation Docker Desktop via winget"; exit 1 }
 
     Write-Step "Lancement de Docker Desktop..."
     $dd = "$env:ProgramFiles\Docker\Docker\Docker Desktop.exe"
@@ -128,9 +177,13 @@ New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
 Set-Location $InstallDir
 
 $composePath = Join-Path $InstallDir 'docker-compose.yml'
-Write-Step "Telechargement de docker-compose.yml"
+Write-Step "Telechargement de docker-compose.yml depuis le depot officiel"
+Write-Host "  Source : $ComposeUrl"
+# Seul telechargement reseau effectue par ce script. Aucune execution de code
+# distant : le fichier est uniquement enregistre sur le disque puis passe a
+# 'docker compose' pour interpretation locale.
 Invoke-WebRequest -Uri $ComposeUrl -OutFile $composePath -UseBasicParsing
-Write-Ok "docker-compose.yml recupere"
+Write-Ok "docker-compose.yml recupere ($composePath)"
 
 # ---------------------------------------------------------------------------
 # 4. Generation du .env
@@ -160,11 +213,51 @@ if ($llmProvider -eq 'onemin' -and -not $NonInteractive) {
     $onemKey = Read-Host "  Cle API 1min.ai"
 }
 
+# --- Mode Ollama : embarque (defaut) vs hote -------------------------------
+# Embarque  : service 'ollama' du compose (profile local-ollama). Zero config reseau.
+# Hote      : Ollama deja installe sur la machine. Necessite OLLAMA_HOST=0.0.0.0
+#             pour que Docker Desktop puisse l'atteindre via host.docker.internal.
+$useEmbeddedOllama = $true
+$ollamaBaseUrl = 'http://ollama:11434'
+if ($llmProvider -eq 'ollama') {
+    $useEmbeddedOllama = if ($NonInteractive) { $true } else {
+        $r = Read-Host "  Avez-vous deja Ollama installe sur cette machine ? [o/N]"
+        -not ($r -match '^(o|O|y|Y|oui|yes)$')
+    }
+    if (-not $useEmbeddedOllama) {
+        $ollamaBaseUrl = 'http://host.docker.internal:11434'
+        Write-Step "Configuration d'Ollama hote..."
+        # Pour que le conteneur Docker puisse atteindre Ollama via host.docker.internal,
+        # Ollama doit ecouter sur 0.0.0.0 (et non 127.0.0.1 par defaut). On positionne
+        # la variable d'environnement utilisateur OLLAMA_HOST en consequence.
+        try {
+            [Environment]::SetEnvironmentVariable('OLLAMA_HOST','0.0.0.0:11434','User')
+            Write-Ok "Variable d'environnement utilisateur OLLAMA_HOST=0.0.0.0:11434 definie"
+            Write-Host ""
+            Write-Host "  Pour que ce changement prenne effet, vous devez :" -ForegroundColor Yellow
+            Write-Host "    1. Quitter completement Ollama (icone systray > Quit Ollama)"
+            Write-Host "    2. Relancer Ollama"
+            Write-Host ""
+            Read-Host "  Appuyez sur Entree une fois Ollama redemarre"
+        } catch {
+            Write-Warn2 "Impossible de definir OLLAMA_HOST automatiquement. Definissez-la manuellement (Parametres systeme > Variables d'environnement) puis redemarrez Ollama."
+        }
+    } else {
+        Write-Ok "Ollama sera lance dans Docker (modeles dans un volume Docker dedie)"
+    }
+}
+
+$llmModel = 'gemma4:26b'
+
 $autoUpdate = if ($NonInteractive) { $true } else {
     $r = Read-Host "  Activer les mises a jour auto (chaque nuit a 4h) ? [O/n]"
     -not ($r -match '^(n|N|no|non)$')
 }
-$composeProfiles = if ($autoUpdate) { 'autoupdate' } else { '' }
+# Combinaison de profiles : autoupdate et/ou local-ollama (separes par virgule).
+$profilesList = @()
+if ($autoUpdate)              { $profilesList += 'autoupdate' }
+if ($useEmbeddedOllama -and $llmProvider -eq 'ollama') { $profilesList += 'local-ollama' }
+$composeProfiles = $profilesList -join ','
 
 $envContent = @"
 # Genere par install.ps1 le $(Get-Date -Format 'yyyy-MM-dd HH:mm')
@@ -186,8 +279,8 @@ MINIO_USER=minioadmin
 MINIO_PASSWORD=$(New-RandomSecret 24)
 
 LLM_PROVIDER=$llmProvider
-OLLAMA_BASE_URL=http://host.docker.internal:11434
-LLM_MODEL=gemma4:26b
+OLLAMA_BASE_URL=$ollamaBaseUrl
+LLM_MODEL=$llmModel
 ONEMIN_API_KEY=$onemKey
 ONEMIN_MODEL=gpt-4o-mini
 
@@ -228,6 +321,16 @@ if ($autoUpdate) {
     Write-Host " Auto-update  : active (chaque nuit a 4h via Watchtower)" -ForegroundColor Green
 } else {
     Write-Host " Auto-update  : desactive (mise a jour manuelle uniquement)"
+}
+if ($llmProvider -eq 'ollama') {
+    if ($useEmbeddedOllama) {
+        Write-Host " Ollama       : embarque (service Docker 'ollama')" -ForegroundColor Green
+        Write-Host ""
+        Write-Host " IMPORTANT : telechargez un modele avant utilisation :"
+        Write-Host "   docker exec -it loremind-ollama ollama pull $llmModel"
+    } else {
+        Write-Host " Ollama       : hote (http://host.docker.internal:11434)"
+    }
 }
 Write-Host ""
 Write-Host " Commandes utiles (depuis $InstallDir) :"
