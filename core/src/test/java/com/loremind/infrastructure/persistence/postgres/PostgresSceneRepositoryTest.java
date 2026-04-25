@@ -70,13 +70,13 @@ class PostgresSceneRepositoryTest {
 
     @Test
     void save_scenePreservesBranches_viaJsonbRoundTrip() {
-        // Le critique : le @Jacksonized de SceneBranch doit permettre la
-        // reconstruction via builder apres serialisation Jackson.
+        // Le critique : SceneBranch (record) doit etre reconstructible par
+        // Jackson via le constructeur canonique apres serialisation JSON.
         Scene scene = Scene.builder()
                 .chapterId(chapterId).name("Decision").order(0)
                 .branches(List.of(
-                        SceneBranch.builder().label("fuite").targetSceneId("sc-2").condition("HP bas").build(),
-                        SceneBranch.builder().label("combat").targetSceneId("sc-3").build()
+                        new SceneBranch("fuite", "sc-2", "HP bas"),
+                        SceneBranch.of("combat", "sc-3")
                 ))
                 .build();
 
@@ -84,10 +84,10 @@ class PostgresSceneRepositoryTest {
         Scene r = repository.findById(saved.getId()).orElseThrow();
 
         assertEquals(2, r.getBranches().size());
-        assertEquals("fuite", r.getBranches().get(0).getLabel());
-        assertEquals("sc-2", r.getBranches().get(0).getTargetSceneId());
-        assertEquals("HP bas", r.getBranches().get(0).getCondition());
-        assertEquals("combat", r.getBranches().get(1).getLabel());
+        assertEquals("fuite", r.getBranches().get(0).label());
+        assertEquals("sc-2", r.getBranches().get(0).targetSceneId());
+        assertEquals("HP bas", r.getBranches().get(0).condition());
+        assertEquals("combat", r.getBranches().get(1).label());
     }
 
     @Test

@@ -2,8 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { LucideAngularModule, ArrowLeft, RefreshCw, Save, Check, AlertCircle } from 'lucide-angular';
+import { LucideAngularModule, ArrowLeft, RefreshCw, Save, Check, AlertCircle, Download } from 'lucide-angular';
 import { SettingsService, AppSettings, AppSettingsUpdate, OneMinModelGroup } from '../services/settings.service';
+import { UpdatesService, UpdateStatus } from '../services/updates.service';
+import { ConfigService } from '../services/config.service';
 
 /**
  * Ecran de parametrage du LLM utilise par le Brain.
@@ -30,6 +32,13 @@ export class SettingsComponent implements OnInit {
   readonly Save = Save;
   readonly Check = Check;
   readonly AlertCircle = AlertCircle;
+  readonly Download = Download;
+
+  // Mises a jour conteneurs
+  updateStatus: UpdateStatus | null = null;
+  updateChecking = false;
+  updateApplying = false;
+  updateMessage = '';
 
   settings: AppSettings | null = null;
   ollamaModels: string[] = [];
@@ -61,11 +70,51 @@ export class SettingsComponent implements OnInit {
 
   constructor(
     private settingsService: SettingsService,
-    private router: Router
+    private router: Router,
+    private updatesService: UpdatesService,
+    public config: ConfigService
   ) {}
 
   ngOnInit(): void {
     this.loadSettings();
+    if (this.config.updateCheckEnabled) {
+      this.checkUpdates();
+    }
+  }
+
+  checkUpdates(): void {
+    this.updateChecking = true;
+    this.updateMessage = '';
+    this.updatesService.checkNow().subscribe({
+      next: (s) => {
+        this.updateStatus = s;
+        this.updateChecking = false;
+      },
+      error: () => {
+        this.updateChecking = false;
+      }
+    });
+  }
+
+  applyUpdate(): void {
+    if (!confirm('Telecharger et redemarrer les conteneurs maintenant ? L\'app sera indisponible quelques secondes.')) {
+      return;
+    }
+    this.updateApplying = true;
+    this.updateMessage = '';
+    this.updatesService.apply().subscribe({
+      next: (r) => {
+        this.updateApplying = false;
+        // Le redemarrage de core peut couper la connexion avant la reponse —
+        // dans ce cas r vaut null (gere par catchError dans le service).
+        this.updateMessage = r?.message
+          ?? 'Mise a jour declenchee. Rechargez la page dans 30s.';
+      },
+      error: () => {
+        this.updateApplying = false;
+        this.updateMessage = 'Mise a jour declenchee. Rechargez la page dans 30s.';
+      }
+    });
   }
 
   loadSettings(): void {

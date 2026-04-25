@@ -6,108 +6,97 @@ import com.loremind.domain.generationcontext.CampaignStructuralContext.ChapterSu
 import com.loremind.domain.generationcontext.CampaignStructuralContext.SceneSummary;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests unitaires pour CampaignStructuralContext et ses types imbriques.
- * Focus sur les annotations @Singular (chapters/scenes/branches/arcs) qui
- * permettent une construction incrementale du graphe narratif.
+ * Records purs : aucune dependance technique.
  */
 class CampaignStructuralContextTest {
 
     @Test
-    void builder_constructsFullNarrativeTree() {
-        BranchHint branch = BranchHint.builder()
-                .label("si les PJ fuient")
-                .targetSceneName("La poursuite")
-                .condition("PJ < moitie des HP")
-                .build();
+    void constructor_buildsFullNarrativeTree() {
+        BranchHint branch = new BranchHint("si les PJ fuient", "La poursuite", "PJ < moitie des HP");
 
-        SceneSummary scene = SceneSummary.builder()
-                .name("L'auberge")
-                .description("Rencontre tendue avec le tavernier")
-                .illustrationCount(2)
-                .branch(branch)
-                .build();
+        SceneSummary scene = new SceneSummary(
+                "L'auberge",
+                "Rencontre tendue avec le tavernier",
+                2,
+                List.of(branch));
 
-        ChapterSummary chapter = ChapterSummary.builder()
-                .name("L'arrivee")
-                .description("Les PJ decouvrent la ville")
-                .scene(scene)
-                .build();
+        ChapterSummary chapter = new ChapterSummary(
+                "L'arrivee",
+                "Les PJ decouvrent la ville",
+                0,
+                List.of(scene));
 
-        ArcSummary arc = ArcSummary.builder()
-                .name("Acte I")
-                .description("Mise en place")
-                .illustrationCount(1)
-                .chapter(chapter)
-                .build();
+        ArcSummary arc = new ArcSummary(
+                "Acte I",
+                "Mise en place",
+                1,
+                List.of(chapter));
 
-        CampaignStructuralContext ctx = CampaignStructuralContext.builder()
-                .campaignName("Les Ombres")
-                .campaignDescription("Une campagne dark fantasy")
-                .arc(arc)
-                .build();
+        CampaignStructuralContext ctx = new CampaignStructuralContext(
+                "Les Ombres",
+                "Une campagne dark fantasy",
+                List.of(arc),
+                List.of());
 
-        assertEquals("Les Ombres", ctx.getCampaignName());
-        assertEquals(1, ctx.getArcs().size());
-        assertEquals(1, ctx.getArcs().get(0).getChapters().size());
-        assertEquals(1, ctx.getArcs().get(0).getChapters().get(0).getScenes().size());
-        assertEquals(1, ctx.getArcs().get(0).getChapters().get(0).getScenes().get(0).getBranches().size());
+        assertEquals("Les Ombres", ctx.campaignName());
+        assertEquals(1, ctx.arcs().size());
+        assertEquals(1, ctx.arcs().get(0).chapters().size());
+        assertEquals(1, ctx.arcs().get(0).chapters().get(0).scenes().size());
+        assertEquals(1, ctx.arcs().get(0).chapters().get(0).scenes().get(0).branches().size());
     }
 
     // --- BranchHint ---------------------------------------------------------
 
     @Test
     void branchHint_preservesAllFields() {
-        BranchHint b = BranchHint.builder()
-                .label("combat")
-                .targetSceneName("La confrontation")
-                .condition("initiative > 15")
-                .build();
+        BranchHint b = new BranchHint("combat", "La confrontation", "initiative > 15");
 
-        assertEquals("combat", b.getLabel());
-        assertEquals("La confrontation", b.getTargetSceneName());
-        assertEquals("initiative > 15", b.getCondition());
+        assertEquals("combat", b.label());
+        assertEquals("La confrontation", b.targetSceneName());
+        assertEquals("initiative > 15", b.condition());
     }
 
     @Test
     void branchHint_conditionIsOptional() {
-        BranchHint b = BranchHint.builder()
-                .label("suite normale")
-                .targetSceneName("Scene 2")
-                .build();
+        BranchHint b = new BranchHint("suite normale", "Scene 2", null);
 
-        assertNull(b.getCondition());
+        assertNull(b.condition());
     }
 
     // --- illustrationCount --------------------------------------------------
 
     @Test
     void illustrationCount_defaultsToZero_onAllSummaryTypes() {
-        ArcSummary arc = ArcSummary.builder().name("X").build();
-        ChapterSummary chapter = ChapterSummary.builder().name("X").build();
-        SceneSummary scene = SceneSummary.builder().name("X").build();
+        ArcSummary arc = new ArcSummary("X", null, 0, List.of());
+        ChapterSummary chapter = new ChapterSummary("X", null, 0, List.of());
+        SceneSummary scene = new SceneSummary("X", null, 0, List.of());
 
-        assertEquals(0, arc.getIllustrationCount());
-        assertEquals(0, chapter.getIllustrationCount());
-        assertEquals(0, scene.getIllustrationCount());
+        assertEquals(0, arc.illustrationCount());
+        assertEquals(0, chapter.illustrationCount());
+        assertEquals(0, scene.illustrationCount());
     }
 
-    // --- @Singular : accumulation incrementale -----------------------------
+    // --- Construction incrementale (chapitres multiples) -------------------
 
     @Test
-    void singular_accumulatesMultipleCalls() {
-        ArcSummary arc = ArcSummary.builder()
-                .name("Acte I")
-                .chapter(ChapterSummary.builder().name("Ch1").build())
-                .chapter(ChapterSummary.builder().name("Ch2").build())
-                .chapter(ChapterSummary.builder().name("Ch3").build())
-                .build();
+    void multipleChapters_arePreserved() {
+        ArcSummary arc = new ArcSummary(
+                "Acte I",
+                null,
+                0,
+                List.of(
+                        new ChapterSummary("Ch1", null, 0, List.of()),
+                        new ChapterSummary("Ch2", null, 0, List.of()),
+                        new ChapterSummary("Ch3", null, 0, List.of())));
 
-        assertEquals(3, arc.getChapters().size());
-        assertTrue(arc.getChapters().stream().anyMatch(c -> "Ch2".equals(c.getName())));
+        assertEquals(3, arc.chapters().size());
+        assertEquals("Ch2", arc.chapters().get(1).name());
     }
 }

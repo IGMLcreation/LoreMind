@@ -107,11 +107,6 @@ public class StreamChatForLoreUseCase {
                 ? page.getValues()
                 : Collections.emptyMap();
 
-        return PageContext.builder()
-                .title(page.getTitle())
-                .templateName(templateName)
-                .templateFields(templateFields)
-                .values(values)
-                .build();
+        return new PageContext(page.getTitle(), templateName, templateFields, values);
     }
 }

@@ -82,12 +82,11 @@ public class LoreStructuralContextBuilder {
         Map<String, String> pageTitleById = pages.stream()
                 .collect(Collectors.toMap(Page::getId, Page::getTitle, (a, b) -> a));
 
-        return LoreStructuralContext.builder()
-                .loreName(lore.getName())
-                .loreDescription(lore.getDescription())
-                .folders(buildFoldersMap(nodes, pages, templateNameById, pageTitleById))
-                .tags(extractUniqueTags(pages))
-                .build();
+        return new LoreStructuralContext(
+                lore.getName(),
+                lore.getDescription(),
+                buildFoldersMap(nodes, pages, templateNameById, pageTitleById),
+                extractUniqueTags(pages));
     }
 
     private Map<String, List<PageSummary>> buildFoldersMap(
@@ -118,13 +117,12 @@ public class LoreStructuralContextBuilder {
             Page page,
             Map<String, String> templateNameById,
             Map<String, String> pageTitleById) {
-        return PageSummary.builder()
-                .title(page.getTitle())
-                .templateName(templateNameById.getOrDefault(page.getTemplateId(), "?"))
-                .values(truncatedValues(page.getValues()))
-                .tags(page.getTags() != null ? List.copyOf(page.getTags()) : Collections.emptyList())
-                .relatedPageTitles(resolveRelatedTitles(page.getRelatedPageIds(), pageTitleById))
-                .build();
+        return new PageSummary(
+                page.getTitle(),
+                templateNameById.getOrDefault(page.getTemplateId(), "?"),
+                truncatedValues(page.getValues()),
+                page.getTags() != null ? List.copyOf(page.getTags()) : Collections.emptyList(),
+                resolveRelatedTitles(page.getRelatedPageIds(), pageTitleById));
     }
 
     /**

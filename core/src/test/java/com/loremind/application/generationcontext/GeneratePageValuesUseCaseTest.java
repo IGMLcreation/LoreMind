@@ -89,13 +89,13 @@ public class GeneratePageValuesUseCaseTest {
         verify(aiProvider).generatePage(captor.capture());
         GenerationContext ctx = captor.getValue();
 
-        assertEquals("Aetheria", ctx.getLoreName());
-        assertEquals("monde aérien", ctx.getLoreDescription());
-        assertEquals("PNJ", ctx.getFolderName());
-        assertEquals("Personnage", ctx.getTemplateName());
-        assertEquals("Alice", ctx.getPageTitle());
+        assertEquals("Aetheria", ctx.loreName());
+        assertEquals("monde aérien", ctx.loreDescription());
+        assertEquals("PNJ", ctx.folderName());
+        assertEquals("Personnage", ctx.templateName());
+        assertEquals("Alice", ctx.pageTitle());
         // Seuls les champs TEXT doivent etre envoyes (pas "Portrait" IMAGE).
-        assertEquals(List.of("Histoire", "Apparence"), ctx.getTemplateFields());
+        assertEquals(List.of("Histoire", "Apparence"), ctx.templateFields());
     }
 
     @Test

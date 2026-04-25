@@ -91,11 +91,7 @@ public class NarrativeEntityContextBuilder {
         putField(fields, "rewards",    a.getRewards());
         putField(fields, "resolution", a.getResolution());
         putField(fields, "gmNotes",    a.getGmNotes());
-        return NarrativeEntityContext.builder()
-                .entityType("arc")
-                .title(a.getName())
-                .fields(fields)
-                .build();
+        return new NarrativeEntityContext("arc", a.getName(), fields);
     }
 
     private NarrativeEntityContext fromChapter(Chapter c) {
@@ -104,11 +100,7 @@ public class NarrativeEntityContextBuilder {
         putField(fields, "playerObjectives", c.getPlayerObjectives());
         putField(fields, "narrativeStakes", c.getNarrativeStakes());
         putField(fields, "gmNotes",          c.getGmNotes());
-        return NarrativeEntityContext.builder()
-                .entityType("chapter")
-                .title(c.getName())
-                .fields(fields)
-                .build();
+        return new NarrativeEntityContext("chapter", c.getName(), fields);
     }
 
     private NarrativeEntityContext fromScene(Scene s) {
@@ -122,21 +114,13 @@ public class NarrativeEntityContextBuilder {
         putField(fields, "combatDifficulty",     s.getCombatDifficulty());
         putField(fields, "enemies",              s.getEnemies());
         putField(fields, "gmSecretNotes",        s.getGmSecretNotes());
-        return NarrativeEntityContext.builder()
-                .entityType("scene")
-                .title(s.getName())
-                .fields(fields)
-                .build();
+        return new NarrativeEntityContext("scene", s.getName(), fields);
     }
 
     private NarrativeEntityContext fromCharacter(Character c) {
         Map<String, String> fields = new LinkedHashMap<>();
         putField(fields, "fiche complète (markdown)", c.getMarkdownContent());
-        return NarrativeEntityContext.builder()
-                .entityType("character")
-                .title(c.getName())
-                .fields(fields)
-                .build();
+        return new NarrativeEntityContext("character", c.getName(), fields);
     }
 
     /** Null/blank devient chaîne vide — uniforme côté prompt, pas de NPE côté LLM. */

@@ -60,15 +60,15 @@ class SceneTest {
 
     @Test
     void builder_preservesBranches_whenProvided() {
-        SceneBranch b1 = SceneBranch.builder().label("fuite").targetSceneId("sc-2").build();
-        SceneBranch b2 = SceneBranch.builder().label("combat").targetSceneId("sc-3").build();
+        SceneBranch b1 = SceneBranch.of("fuite", "sc-2");
+        SceneBranch b2 = SceneBranch.of("combat", "sc-3");
 
         Scene scene = Scene.builder()
                 .branches(List.of(b1, b2))
                 .build();
 
         assertEquals(2, scene.getBranches().size());
-        assertEquals("fuite", scene.getBranches().get(0).getLabel());
-        assertEquals("sc-3", scene.getBranches().get(1).getTargetSceneId());
+        assertEquals("fuite", scene.getBranches().get(0).label());
+        assertEquals("sc-3", scene.getBranches().get(1).targetSceneId());
     }
 }

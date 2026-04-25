@@ -55,10 +55,7 @@ public class StreamChatForLoreUseCaseTest {
     @SuppressWarnings("unchecked")
     @BeforeEach
     void setUp() {
-        loreCtx = LoreStructuralContext.builder()
-                .loreName("Aetheria").loreDescription("d")
-                .folders(Collections.emptyMap())
-                .build();
+        loreCtx = new LoreStructuralContext("Aetheria", "d", Collections.emptyMap(), List.of());
         messages = List.of();
         onUsage = mock(Consumer.class);
         onToken = mock(Consumer.class);
@@ -75,9 +72,9 @@ public class StreamChatForLoreUseCaseTest {
         ArgumentCaptor<ChatRequest> captor = ArgumentCaptor.forClass(ChatRequest.class);
         verify(aiChatProvider).streamChat(captor.capture(), eq(onUsage), eq(onToken), eq(onComplete), eq(onError));
         ChatRequest req = captor.getValue();
-        assertSame(loreCtx, req.getLoreContext());
-        assertNull(req.getPageContext());
-        assertNull(req.getCampaignContext());
+        assertSame(loreCtx, req.loreContext());
+        assertNull(req.pageContext());
+        assertNull(req.campaignContext());
     }
 
     @Test
@@ -88,7 +85,7 @@ public class StreamChatForLoreUseCaseTest {
 
         ArgumentCaptor<ChatRequest> captor = ArgumentCaptor.forClass(ChatRequest.class);
         verify(aiChatProvider).streamChat(captor.capture(), any(), any(), any(), any());
-        assertNull(captor.getValue().getPageContext());
+        assertNull(captor.getValue().pageContext());
         verifyNoInteractions(pageRepository);
     }
 
@@ -116,12 +113,12 @@ public class StreamChatForLoreUseCaseTest {
         ArgumentCaptor<ChatRequest> captor = ArgumentCaptor.forClass(ChatRequest.class);
         verify(aiChatProvider).streamChat(captor.capture(), any(), any(), any(), any());
         ChatRequest req = captor.getValue();
-        assertNotNull(req.getPageContext());
-        assertEquals("Alice", req.getPageContext().getTitle());
-        assertEquals("Personnage", req.getPageContext().getTemplateName());
+        assertNotNull(req.pageContext());
+        assertEquals("Alice", req.pageContext().title());
+        assertEquals("Personnage", req.pageContext().templateName());
         // Seuls les champs TEXT exposes
-        assertEquals(List.of("Histoire"), req.getPageContext().getTemplateFields());
-        assertEquals(values, req.getPageContext().getValues());
+        assertEquals(List.of("Histoire"), req.pageContext().templateFields());
+        assertEquals(values, req.pageContext().values());
     }
 
     @Test
@@ -137,12 +134,12 @@ public class StreamChatForLoreUseCaseTest {
 
         ArgumentCaptor<ChatRequest> captor = ArgumentCaptor.forClass(ChatRequest.class);
         verify(aiChatProvider).streamChat(captor.capture(), any(), any(), any(), any());
-        var pageCtx = captor.getValue().getPageContext();
+        var pageCtx = captor.getValue().pageContext();
         assertNotNull(pageCtx);
-        assertEquals("Orphan", pageCtx.getTitle());
-        assertEquals("?", pageCtx.getTemplateName());
-        assertTrue(pageCtx.getTemplateFields().isEmpty());
-        assertTrue(pageCtx.getValues().isEmpty());
+        assertEquals("Orphan", pageCtx.title());
+        assertEquals("?", pageCtx.templateName());
+        assertTrue(pageCtx.templateFields().isEmpty());
+        assertTrue(pageCtx.values().isEmpty());
         verifyNoInteractions(templateRepository);
     }
 
@@ -160,9 +157,9 @@ public class StreamChatForLoreUseCaseTest {
 
         ArgumentCaptor<ChatRequest> captor = ArgumentCaptor.forClass(ChatRequest.class);
         verify(aiChatProvider).streamChat(captor.capture(), any(), any(), any(), any());
-        var pageCtx = captor.getValue().getPageContext();
-        assertEquals("?", pageCtx.getTemplateName());
-        assertTrue(pageCtx.getTemplateFields().isEmpty());
+        var pageCtx = captor.getValue().pageContext();
+        assertEquals("?", pageCtx.templateName());
+        assertTrue(pageCtx.templateFields().isEmpty());
     }
 
     @Test

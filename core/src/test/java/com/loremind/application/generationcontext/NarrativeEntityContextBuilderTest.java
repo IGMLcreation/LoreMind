@@ -44,14 +44,14 @@ public class NarrativeEntityContextBuilderTest {
 
         NarrativeEntityContext ctx = builder.build("arc", "arc-1");
 
-        assertEquals("arc", ctx.getEntityType());
-        assertEquals("L'arc sombre", ctx.getTitle());
-        assertEquals("synopsis", ctx.getFields().get("description (synopsis)"));
-        assertEquals("trahison", ctx.getFields().get("themes"));
-        assertEquals("vie ou mort", ctx.getFields().get("stakes"));
-        assertEquals("pouvoir", ctx.getFields().get("rewards"));
-        assertEquals("le roi meurt", ctx.getFields().get("resolution"));
-        assertEquals("secret", ctx.getFields().get("gmNotes"));
+        assertEquals("arc", ctx.entityType());
+        assertEquals("L'arc sombre", ctx.title());
+        assertEquals("synopsis", ctx.fields().get("description (synopsis)"));
+        assertEquals("trahison", ctx.fields().get("themes"));
+        assertEquals("vie ou mort", ctx.fields().get("stakes"));
+        assertEquals("pouvoir", ctx.fields().get("rewards"));
+        assertEquals("le roi meurt", ctx.fields().get("resolution"));
+        assertEquals("secret", ctx.fields().get("gmNotes"));
     }
 
     @Test
@@ -64,12 +64,12 @@ public class NarrativeEntityContextBuilderTest {
 
         NarrativeEntityContext ctx = builder.build("chapter", "ch-1");
 
-        assertEquals("chapter", ctx.getEntityType());
-        assertEquals("Chapitre 1", ctx.getTitle());
-        assertEquals("", ctx.getFields().get("description (synopsis)"));
-        assertEquals("", ctx.getFields().get("playerObjectives"));
-        assertEquals("haut", ctx.getFields().get("narrativeStakes"));
-        assertEquals("", ctx.getFields().get("gmNotes"));
+        assertEquals("chapter", ctx.entityType());
+        assertEquals("Chapitre 1", ctx.title());
+        assertEquals("", ctx.fields().get("description (synopsis)"));
+        assertEquals("", ctx.fields().get("playerObjectives"));
+        assertEquals("haut", ctx.fields().get("narrativeStakes"));
+        assertEquals("", ctx.fields().get("gmNotes"));
     }
 
     @Test
@@ -85,17 +85,17 @@ public class NarrativeEntityContextBuilderTest {
 
         NarrativeEntityContext ctx = builder.build("scene", "s-1");
 
-        assertEquals("scene", ctx.getEntityType());
-        assertEquals("L'auberge", ctx.getTitle());
-        assertEquals("lieu calme", ctx.getFields().get("description"));
-        assertEquals("Taverne", ctx.getFields().get("location"));
-        assertEquals("Soir", ctx.getFields().get("timing"));
-        assertEquals("tendue", ctx.getFields().get("atmosphere"));
-        assertEquals("Vous entrez...", ctx.getFields().get("playerNarration"));
-        assertEquals("option A...", ctx.getFields().get("choicesConsequences"));
-        assertEquals("moyen", ctx.getFields().get("combatDifficulty"));
-        assertEquals("3 bandits", ctx.getFields().get("enemies"));
-        assertEquals("trésor caché", ctx.getFields().get("gmSecretNotes"));
+        assertEquals("scene", ctx.entityType());
+        assertEquals("L'auberge", ctx.title());
+        assertEquals("lieu calme", ctx.fields().get("description"));
+        assertEquals("Taverne", ctx.fields().get("location"));
+        assertEquals("Soir", ctx.fields().get("timing"));
+        assertEquals("tendue", ctx.fields().get("atmosphere"));
+        assertEquals("Vous entrez...", ctx.fields().get("playerNarration"));
+        assertEquals("option A...", ctx.fields().get("choicesConsequences"));
+        assertEquals("moyen", ctx.fields().get("combatDifficulty"));
+        assertEquals("3 bandits", ctx.fields().get("enemies"));
+        assertEquals("trésor caché", ctx.fields().get("gmSecretNotes"));
     }
 
     @Test
@@ -104,7 +104,7 @@ public class NarrativeEntityContextBuilderTest {
         when(arcRepository.findById("arc-1")).thenReturn(Optional.of(arc));
 
         NarrativeEntityContext ctx = builder.build("  ARC  ", "arc-1");
-        assertEquals("arc", ctx.getEntityType());
+        assertEquals("arc", ctx.entityType());
     }
 
     @Test

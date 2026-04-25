@@ -45,11 +45,7 @@ public class GameSystemContextBuilder {
     private GameSystemContext build(GameSystem gs, GenerationIntent intent) {
         Map<String, String> allSections = parseH2Sections(gs.getRulesMarkdown());
         Map<String, String> filtered = filterByIntent(allSections, intent);
-        return GameSystemContext.builder()
-                .systemName(gs.getName())
-                .systemDescription(gs.getDescription())
-                .sections(filtered)
-                .build();
+        return new GameSystemContext(gs.getName(), gs.getDescription(), filtered);
     }
 
     /**

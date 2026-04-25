@@ -3,6 +3,7 @@ package com.loremind.domain.generationcontext;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -26,57 +27,45 @@ class ChatRequestTest {
     void buildLoreOnly_leavesCampaignAndEntityNull() {
         ChatRequest request = ChatRequest.builder()
                 .messages(sampleMessages)
-                .loreContext(LoreStructuralContext.builder()
-                        .loreName("Ithoril")
-                        .loreDescription("Royaume sombre")
-                        .folders(java.util.Map.of())
-                        .build())
+                .loreContext(new LoreStructuralContext("Ithoril", "Royaume sombre", Map.of(), List.of()))
                 .build();
 
-        assertEquals(1, request.getMessages().size());
-        assertNotNull(request.getLoreContext());
-        assertEquals("Ithoril", request.getLoreContext().getLoreName());
-        assertNull(request.getPageContext());
-        assertNull(request.getCampaignContext());
-        assertNull(request.getNarrativeEntity());
+        assertEquals(1, request.messages().size());
+        assertNotNull(request.loreContext());
+        assertEquals("Ithoril", request.loreContext().loreName());
+        assertNull(request.pageContext());
+        assertNull(request.campaignContext());
+        assertNull(request.narrativeEntity());
     }
 
     @Test
     void buildLoreWithPageFocus_hasBothContexts() {
         ChatRequest request = ChatRequest.builder()
                 .messages(sampleMessages)
-                .loreContext(LoreStructuralContext.builder().folders(java.util.Map.of()).build())
-                .pageContext(PageContext.builder()
-                        .title("Thorin")
-                        .templateName("PNJ")
-                        .build())
+                .loreContext(new LoreStructuralContext(null, null, Map.of(), List.of()))
+                .pageContext(new PageContext("Thorin", "PNJ", null, null))
                 .build();
 
-        assertNotNull(request.getLoreContext());
-        assertNotNull(request.getPageContext());
-        assertEquals("Thorin", request.getPageContext().getTitle());
+        assertNotNull(request.loreContext());
+        assertNotNull(request.pageContext());
+        assertEquals("Thorin", request.pageContext().title());
     }
 
     @Test
     void buildCampaignWithNarrativeEntity_hasBothContexts() {
         ChatRequest request = ChatRequest.builder()
                 .messages(sampleMessages)
-                .campaignContext(CampaignStructuralContext.builder()
-                        .campaignName("Les Ombres")
-                        .campaignDescription("...")
-                        .build())
-                .narrativeEntity(NarrativeEntityContext.builder()
-                        .entityType("scene")
-                        .title("L'auberge")
-                        .fields(java.util.Map.of("location", "Taverne"))
-                        .build())
+                .campaignContext(new CampaignStructuralContext(
+                        "Les Ombres", "...", List.of(), List.of()))
+                .narrativeEntity(new NarrativeEntityContext(
+                        "scene", "L'auberge", Map.of("location", "Taverne")))
                 .build();
 
-        assertNotNull(request.getCampaignContext());
-        assertNotNull(request.getNarrativeEntity());
-        assertEquals("scene", request.getNarrativeEntity().getEntityType());
-        assertNull(request.getLoreContext());
-        assertNull(request.getPageContext());
+        assertNotNull(request.campaignContext());
+        assertNotNull(request.narrativeEntity());
+        assertEquals("scene", request.narrativeEntity().entityType());
+        assertNull(request.loreContext());
+        assertNull(request.pageContext());
     }
 
     @Test
@@ -86,10 +75,10 @@ class ChatRequestTest {
                 .messages(sampleMessages)
                 .build();
 
-        assertEquals(1, request.getMessages().size());
-        assertNull(request.getLoreContext());
-        assertNull(request.getPageContext());
-        assertNull(request.getCampaignContext());
-        assertNull(request.getNarrativeEntity());
+        assertEquals(1, request.messages().size());
+        assertNull(request.loreContext());
+        assertNull(request.pageContext());
+        assertNull(request.campaignContext());
+        assertNull(request.narrativeEntity());
     }
 }

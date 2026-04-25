@@ -71,10 +71,10 @@ public class LoreStructuralContextBuilderTest {
 
         LoreStructuralContext ctx = builder.build("lore-1");
 
-        assertEquals("Aetheria", ctx.getLoreName());
-        assertEquals("Monde aérien", ctx.getLoreDescription());
-        assertTrue(ctx.getFolders().isEmpty());
-        assertTrue(ctx.getTags().isEmpty());
+        assertEquals("Aetheria", ctx.loreName());
+        assertEquals("Monde aérien", ctx.loreDescription());
+        assertTrue(ctx.folders().isEmpty());
+        assertTrue(ctx.tags().isEmpty());
     }
 
     @Test
@@ -110,32 +110,32 @@ public class LoreStructuralContextBuilderTest {
 
         LoreStructuralContext ctx = builder.build("lore-1");
 
-        assertEquals(2, ctx.getFolders().size());
-        assertTrue(ctx.getFolders().containsKey("PNJ"));
-        assertTrue(ctx.getFolders().containsKey("Lieux"));
+        assertEquals(2, ctx.folders().size());
+        assertTrue(ctx.folders().containsKey("PNJ"));
+        assertTrue(ctx.folders().containsKey("Lieux"));
 
-        var pnjPages = ctx.getFolders().get("PNJ");
+        var pnjPages = ctx.folders().get("PNJ");
         assertEquals(1, pnjPages.size());
         var aliceSummary = pnjPages.get(0);
-        assertEquals("Alice", aliceSummary.getTitle());
-        assertEquals("Personnage", aliceSummary.getTemplateName());
+        assertEquals("Alice", aliceSummary.title());
+        assertEquals("Personnage", aliceSummary.templateName());
         // Blank/null filtrés
-        assertEquals(1, aliceSummary.getValues().size());
-        assertEquals("Il était une fois...", aliceSummary.getValues().get("Histoire"));
-        assertEquals(List.of("hero", "magic"), aliceSummary.getTags());
+        assertEquals(1, aliceSummary.values().size());
+        assertEquals("Il était une fois...", aliceSummary.values().get("Histoire"));
+        assertEquals(List.of("hero", "magic"), aliceSummary.tags());
         // p-2 resolved into title, p-ghost dropped silently
-        assertEquals(List.of("La Forêt"), aliceSummary.getRelatedPageTitles());
+        assertEquals(List.of("La Forêt"), aliceSummary.relatedPageTitles());
 
-        var forestSummary = ctx.getFolders().get("Lieux").get(0);
+        var forestSummary = ctx.folders().get("Lieux").get(0);
         // Template introuvable → "?"
-        assertEquals("?", forestSummary.getTemplateName());
-        assertTrue(forestSummary.getValues().isEmpty());
-        assertTrue(forestSummary.getRelatedPageTitles().isEmpty());
+        assertEquals("?", forestSummary.templateName());
+        assertTrue(forestSummary.values().isEmpty());
+        assertTrue(forestSummary.relatedPageTitles().isEmpty());
 
         // Tags uniques entre les 2 pages
-        assertEquals(2, ctx.getTags().size());
-        assertTrue(ctx.getTags().contains("hero"));
-        assertTrue(ctx.getTags().contains("magic"));
+        assertEquals(2, ctx.tags().size());
+        assertTrue(ctx.tags().contains("hero"));
+        assertTrue(ctx.tags().contains("magic"));
     }
 
     @Test
@@ -160,7 +160,7 @@ public class LoreStructuralContextBuilderTest {
 
         LoreStructuralContext ctx = builder.build("lore-1");
 
-        String truncated = ctx.getFolders().get("PNJ").get(0).getValues().get("Histoire");
+        String truncated = ctx.folders().get("PNJ").get(0).values().get("Histoire");
         assertNotNull(truncated);
         assertEquals(500 + 1, truncated.length()); // 500 + ellipse
         assertTrue(truncated.endsWith("…"));
@@ -185,9 +185,9 @@ public class LoreStructuralContextBuilderTest {
 
         LoreStructuralContext ctx = builder.build("lore-1");
 
-        var summary = ctx.getFolders().get("PNJ").get(0);
-        assertTrue(summary.getValues().isEmpty());
-        assertTrue(summary.getTags().isEmpty());
-        assertTrue(summary.getRelatedPageTitles().isEmpty());
+        var summary = ctx.folders().get("PNJ").get(0);
+        assertTrue(summary.values().isEmpty());
+        assertTrue(summary.tags().isEmpty());
+        assertTrue(summary.relatedPageTitles().isEmpty());
     }
 }

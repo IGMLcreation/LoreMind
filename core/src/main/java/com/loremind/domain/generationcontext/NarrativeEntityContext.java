@@ -1,8 +1,5 @@
 package com.loremind.domain.generationcontext;
 
-import lombok.Builder;
-import lombok.Value;
-
 import java.util.Map;
 
 /**
@@ -17,13 +14,11 @@ import java.util.Map;
  * `fields` associe le nom d'un champ (ex: "themes", "playerNarration")
  * à sa valeur actuelle (chaîne vide si non renseigné). Utiliser une
  * LinkedHashMap à la construction pour un prompt lisible (ordre préservé).
+ *
+ * @param entityType "arc", "chapter" ou "scene" — utilisé pour libeller le bloc du prompt.
  */
-@Value
-@Builder
-public class NarrativeEntityContext {
-
-    /** "arc", "chapter" ou "scene" — utilisé pour libeller le bloc du prompt. */
-    String entityType;
-    String title;
-    Map<String, String> fields;
+public record NarrativeEntityContext(
+        String entityType,
+        String title,
+        Map<String, String> fields) {
 }

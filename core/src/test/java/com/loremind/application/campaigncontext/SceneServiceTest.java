@@ -178,10 +178,7 @@ public class SceneServiceTest {
     @Test
     void testUpdateScene_WithValidBranches() {
         // Arrange
-        SceneBranch branch = SceneBranch.builder()
-                .targetSceneId("scene-2")
-                .label("Go to scene 2")
-                .build();
+        SceneBranch branch = SceneBranch.of("Go to scene 2", "scene-2");
         Scene updatedScene = Scene.builder()
                 .name("Updated Scene")
                 .branches(List.of(branch))
@@ -203,10 +200,7 @@ public class SceneServiceTest {
     @Test
     void testUpdateScene_WithBranchToSelf() {
         // Arrange
-        SceneBranch branch = SceneBranch.builder()
-                .targetSceneId("scene-1")
-                .label("Self-reference")
-                .build();
+        SceneBranch branch = SceneBranch.of("Self-reference", "scene-1");
         Scene updatedScene = Scene.builder()
                 .name("Updated Scene")
                 .branches(List.of(branch))
@@ -228,10 +222,7 @@ public class SceneServiceTest {
     @Test
     void testUpdateScene_WithBranchToDifferentChapter() {
         // Arrange
-        SceneBranch branch = SceneBranch.builder()
-                .targetSceneId("scene-other-chapter")
-                .label("Go to other chapter")
-                .build();
+        SceneBranch branch = SceneBranch.of("Go to other chapter", "scene-other-chapter");
         Scene updatedScene = Scene.builder()
                 .name("Updated Scene")
                 .branches(List.of(branch))
@@ -253,10 +244,7 @@ public class SceneServiceTest {
     @Test
     void testUpdateScene_WithBranchNullTarget() {
         // Arrange
-        SceneBranch branch = SceneBranch.builder()
-                .targetSceneId(null)
-                .label("Null target")
-                .build();
+        SceneBranch branch = SceneBranch.of("Null target", null);
         Scene updatedScene = Scene.builder()
                 .name("Updated Scene")
                 .branches(List.of(branch))
@@ -277,10 +265,7 @@ public class SceneServiceTest {
     @Test
     void testUpdateScene_WithBranchBlankTarget() {
         // Arrange
-        SceneBranch branch = SceneBranch.builder()
-                .targetSceneId("   ")
-                .label("Blank target")
-                .build();
+        SceneBranch branch = SceneBranch.of("Blank target", "   ");
         Scene updatedScene = Scene.builder()
                 .name("Updated Scene")
                 .branches(List.of(branch))

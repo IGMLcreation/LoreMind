@@ -153,3 +153,46 @@
   width: 100%;
   accent-color: #6c63ff;
 }
+
+.update-images {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.update-images li {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0.6rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+.badge-update {
+  margin-left: auto;
+  background: #6c63ff;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 3px;
+}
+.badge-ok {
+  margin-left: auto;
+  background: rgba(76, 175, 80, 0.2);
+  color: #81c784;
+  font-size: 0.7rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 3px;
+}
+.badge-warn {
+  margin-left: auto;
+  background: rgba(255, 152, 0, 0.2);
+  color: #ffb74d;
+  font-size: 0.7rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 3px;
+}

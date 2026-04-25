@@ -38,35 +38,35 @@ public class BrainChatPayloadBuilder {
 
     public Map<String, Object> build(ChatRequest request) {
         Map<String, Object> root = new LinkedHashMap<>();
-        root.put("messages", request.getMessages().stream()
+        root.put("messages", request.messages().stream()
                 .map(this::messageToMap)
                 .collect(Collectors.toList()));
 
-        if (request.getLoreContext() != null) {
-            root.put("lore_context", loreContextToMap(request.getLoreContext()));
+        if (request.loreContext() != null) {
+            root.put("lore_context", loreContextToMap(request.loreContext()));
         }
-        if (request.getPageContext() != null) {
-            root.put("page_context", pageContextToMap(request.getPageContext()));
+        if (request.pageContext() != null) {
+            root.put("page_context", pageContextToMap(request.pageContext()));
         }
-        if (request.getCampaignContext() != null) {
-            root.put("campaign_context", campaignContextToMap(request.getCampaignContext()));
+        if (request.campaignContext() != null) {
+            root.put("campaign_context", campaignContextToMap(request.campaignContext()));
         }
-        if (request.getNarrativeEntity() != null) {
-            root.put("narrative_entity", narrativeEntityToMap(request.getNarrativeEntity()));
+        if (request.narrativeEntity() != null) {
+            root.put("narrative_entity", narrativeEntityToMap(request.narrativeEntity()));
         }
-        if (request.getGameSystemContext() != null) {
-            root.put("game_system_context", gameSystemContextToMap(request.getGameSystemContext()));
+        if (request.gameSystemContext() != null) {
+            root.put("game_system_context", gameSystemContextToMap(request.gameSystemContext()));
         }
         return root;
     }
 
     private Map<String, Object> gameSystemContextToMap(GameSystemContext gs) {
         Map<String, Object> map = new LinkedHashMap<>();
-        map.put("system_name", gs.getSystemName());
-        if (gs.getSystemDescription() != null && !gs.getSystemDescription().isBlank()) {
-            map.put("system_description", gs.getSystemDescription());
+        map.put("system_name", gs.systemName());
+        if (gs.systemDescription() != null && !gs.systemDescription().isBlank()) {
+            map.put("system_description", gs.systemDescription());
         }
-        map.put("sections", gs.getSections() != null ? gs.getSections() : Map.of());
+        map.put("sections", gs.sections() != null ? gs.sections() : Map.of());
         return map;
     }
 
@@ -79,56 +79,56 @@ public class BrainChatPayloadBuilder {
 
     private Map<String, Object> loreContextToMap(LoreStructuralContext ctx) {
         Map<String, Object> map = new LinkedHashMap<>();
-        map.put("lore_name", ctx.getLoreName());
-        map.put("lore_description", ctx.getLoreDescription());
+        map.put("lore_name", ctx.loreName());
+        map.put("lore_description", ctx.loreDescription());
 
         Map<String, Object> foldersMap = new LinkedHashMap<>();
-        for (Map.Entry<String, List<PageSummary>> e : ctx.getFolders().entrySet()) {
+        for (Map.Entry<String, List<PageSummary>> e : ctx.folders().entrySet()) {
             foldersMap.put(e.getKey(), e.getValue().stream()
                     .map(this::pageSummaryToMap)
                     .collect(Collectors.toList()));
         }
         map.put("folders", foldersMap);
-        map.put("tags", ctx.getTags());
+        map.put("tags", ctx.tags());
         return map;
     }
 
     private Map<String, Object> pageSummaryToMap(PageSummary ps) {
         Map<String, Object> map = new LinkedHashMap<>();
-        map.put("title", ps.getTitle());
-        map.put("template_name", ps.getTemplateName());
+        map.put("title", ps.title());
+        map.put("template_name", ps.templateName());
         // values/tags/related_page_titles : omis si vides pour alléger le payload.
-        if (ps.getValues() != null && !ps.getValues().isEmpty()) {
-            map.put("values", ps.getValues());
+        if (ps.values() != null && !ps.values().isEmpty()) {
+            map.put("values", ps.values());
         }
-        if (ps.getTags() != null && !ps.getTags().isEmpty()) {
-            map.put("tags", ps.getTags());
+        if (ps.tags() != null && !ps.tags().isEmpty()) {
+            map.put("tags", ps.tags());
         }
-        if (ps.getRelatedPageTitles() != null && !ps.getRelatedPageTitles().isEmpty()) {
-            map.put("related_page_titles", ps.getRelatedPageTitles());
+        if (ps.relatedPageTitles() != null && !ps.relatedPageTitles().isEmpty()) {
+            map.put("related_page_titles", ps.relatedPageTitles());
         }
         return map;
     }
 
     private Map<String, Object> pageContextToMap(PageContext pc) {
         Map<String, Object> map = new LinkedHashMap<>();
-        map.put("title", pc.getTitle());
-        map.put("template_name", pc.getTemplateName());
-        map.put("template_fields", pc.getTemplateFields());
-        map.put("values", pc.getValues());
+        map.put("title", pc.title());
+        map.put("template_name", pc.templateName());
+        map.put("template_fields", pc.templateFields());
+        map.put("values", pc.values());
         return map;
     }
 
     private Map<String, Object> campaignContextToMap(CampaignStructuralContext ctx) {
         Map<String, Object> map = new LinkedHashMap<>();
-        map.put("campaign_name", ctx.getCampaignName());
-        map.put("campaign_description", ctx.getCampaignDescription());
-        map.put("arcs", ctx.getArcs().stream()
+        map.put("campaign_name", ctx.campaignName());
+        map.put("campaign_description", ctx.campaignDescription());
+        map.put("arcs", ctx.arcs().stream()
                 .map(this::arcSummaryToMap)
                 .collect(Collectors.toList()));
         // Liste des PJ : omise si aucun pour alléger le prompt des campagnes sans fiches.
-        if (ctx.getCharacters() != null && !ctx.getCharacters().isEmpty()) {
-            map.put("characters", ctx.getCharacters().stream()
+        if (ctx.characters() != null && !ctx.characters().isEmpty()) {
+            map.put("characters", ctx.characters().stream()
                     .map(this::characterSummaryToMap)
                     .collect(Collectors.toList()));
         }
@@ -137,9 +137,9 @@ public class BrainChatPayloadBuilder {
 
     private Map<String, Object> characterSummaryToMap(CharacterSummary c) {
         Map<String, Object> map = new LinkedHashMap<>();
-        map.put("name", c.getName());
-        if (c.getSnippet() != null && !c.getSnippet().isBlank()) {
-            map.put("snippet", c.getSnippet());
+        map.put("name", c.name());
+        if (c.snippet() != null && !c.snippet().isBlank()) {
+            map.put("snippet", c.snippet());
         }
         return map;
     }
@@ -167,10 +167,10 @@ public class BrainChatPayloadBuilder {
     private Map<String, Object> arcSummaryToMap(ArcSummary a) {
         return structuralSummaryToMap(
                 a,
-                ArcSummary::getName,
-                ArcSummary::getDescription,
-                ArcSummary::getIllustrationCount,
-                (map, arc) -> map.put("chapters", arc.getChapters().stream()
+                ArcSummary::name,
+                ArcSummary::description,
+                ArcSummary::illustrationCount,
+                (map, arc) -> map.put("chapters", arc.chapters().stream()
                         .map(this::chapterSummaryToMap)
                         .collect(Collectors.toList())));
     }
@@ -178,10 +178,10 @@ public class BrainChatPayloadBuilder {
     private Map<String, Object> chapterSummaryToMap(ChapterSummary c) {
         return structuralSummaryToMap(
                 c,
-                ChapterSummary::getName,
-                ChapterSummary::getDescription,
-                ChapterSummary::getIllustrationCount,
-                (map, chapter) -> map.put("scenes", chapter.getScenes().stream()
+                ChapterSummary::name,
+                ChapterSummary::description,
+                ChapterSummary::illustrationCount,
+                (map, chapter) -> map.put("scenes", chapter.scenes().stream()
                         .map(this::sceneSummaryToMap)
                         .collect(Collectors.toList())));
     }
@@ -189,13 +189,13 @@ public class BrainChatPayloadBuilder {
     private Map<String, Object> sceneSummaryToMap(SceneSummary s) {
         return structuralSummaryToMap(
                 s,
-                SceneSummary::getName,
-                SceneSummary::getDescription,
-                SceneSummary::getIllustrationCount,
+                SceneSummary::name,
+                SceneSummary::description,
+                SceneSummary::illustrationCount,
                 (map, scene) -> {
                     // Branches narratives : omises si absentes (scènes linéaires classiques).
-                    if (s.getBranches() != null && !s.getBranches().isEmpty()) {
-                        map.put("branches", s.getBranches().stream()
+                    if (s.branches() != null && !s.branches().isEmpty()) {
+                        map.put("branches", s.branches().stream()
                                 .map(this::branchHintToMap)
                                 .collect(Collectors.toList()));
                     }
@@ -204,19 +204,19 @@ public class BrainChatPayloadBuilder {
 
     private Map<String, Object> branchHintToMap(BranchHint b) {
         Map<String, Object> map = new LinkedHashMap<>();
-        map.put("label", b.getLabel());
-        map.put("target_scene_name", b.getTargetSceneName());
-        if (b.getCondition() != null && !b.getCondition().isBlank()) {
-            map.put("condition", b.getCondition());
+        map.put("label", b.label());
+        map.put("target_scene_name", b.targetSceneName());
+        if (b.condition() != null && !b.condition().isBlank()) {
+            map.put("condition", b.condition());
         }
         return map;
     }
 
     private Map<String, Object> narrativeEntityToMap(NarrativeEntityContext ne) {
         Map<String, Object> map = new LinkedHashMap<>();
-        map.put("entity_type", ne.getEntityType());
-        map.put("title", ne.getTitle());
-        map.put("fields", ne.getFields());
+        map.put("entity_type", ne.entityType());
+        map.put("title", ne.title());
+        map.put("fields", ne.fields());
         return map;
     }
 }

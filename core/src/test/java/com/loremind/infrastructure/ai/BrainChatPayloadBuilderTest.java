@@ -83,12 +83,8 @@ class BrainChatPayloadBuilderTest {
     @Test
     @SuppressWarnings("unchecked")
     void build_loreContext_includesBasicFields() {
-        LoreStructuralContext lore = LoreStructuralContext.builder()
-                .loreName("Ithoril")
-                .loreDescription("Royaume sombre")
-                .folders(Map.of())
-                .tag("dark-fantasy")
-                .build();
+        LoreStructuralContext lore = new LoreStructuralContext(
+                "Ithoril", "Royaume sombre", Map.of(), List.of("dark-fantasy"));
         ChatRequest req = ChatRequest.builder().messages(sampleMessages).loreContext(lore).build();
 
         Map<String, Object> payload = builder.build(req);
@@ -103,17 +99,10 @@ class BrainChatPayloadBuilderTest {
     @Test
     @SuppressWarnings("unchecked")
     void build_pageSummary_omitsEmptyValuesTagsAndRelated() {
-        PageSummary minimal = PageSummary.builder()
-                .title("Thorin")
-                .templateName("PNJ")
-                .values(Map.of())
-                .tags(List.of())
-                .relatedPageTitles(List.of())
-                .build();
-        LoreStructuralContext lore = LoreStructuralContext.builder()
-                .loreName("X").loreDescription("")
-                .folders(Map.of("PNJ", List.of(minimal)))
-                .build();
+        PageSummary minimal = new PageSummary("Thorin", "PNJ",
+                Map.of(), List.of(), List.of());
+        LoreStructuralContext lore = new LoreStructuralContext(
+                "X", "", Map.of("PNJ", List.of(minimal)), List.of());
         ChatRequest req = ChatRequest.builder().messages(sampleMessages).loreContext(lore).build();
 
         Map<String, Object> payload = builder.build(req);
@@ -132,17 +121,12 @@ class BrainChatPayloadBuilderTest {
     @Test
     @SuppressWarnings("unchecked")
     void build_pageSummary_includesNonEmptyValuesTagsAndRelated() {
-        PageSummary full = PageSummary.builder()
-                .title("Thorin")
-                .templateName("PNJ")
-                .values(Map.of("histoire", "Nee sous une etoile rouge"))
-                .tags(List.of("pnj", "allie"))
-                .relatedPageTitles(List.of("Taverne du Dragon d'Or"))
-                .build();
-        LoreStructuralContext lore = LoreStructuralContext.builder()
-                .loreName("X").loreDescription("")
-                .folders(Map.of("PNJ", List.of(full)))
-                .build();
+        PageSummary full = new PageSummary("Thorin", "PNJ",
+                Map.of("histoire", "Nee sous une etoile rouge"),
+                List.of("pnj", "allie"),
+                List.of("Taverne du Dragon d'Or"));
+        LoreStructuralContext lore = new LoreStructuralContext(
+                "X", "", Map.of("PNJ", List.of(full)), List.of());
         ChatRequest req = ChatRequest.builder().messages(sampleMessages).loreContext(lore).build();
 
         Map<String, Object> payload = builder.build(req);
@@ -161,12 +145,8 @@ class BrainChatPayloadBuilderTest {
     @Test
     @SuppressWarnings("unchecked")
     void build_pageContext_includesAllFields() {
-        PageContext pc = PageContext.builder()
-                .title("Thorin")
-                .templateName("PNJ")
-                .templateFields(List.of("histoire", "motto"))
-                .values(Map.of("histoire", "..."))
-                .build();
+        PageContext pc = new PageContext("Thorin", "PNJ",
+                List.of("histoire", "motto"), Map.of("histoire", "..."));
         ChatRequest req = ChatRequest.builder().messages(sampleMessages).pageContext(pc).build();
 
         Map<String, Object> payload = builder.build(req);
@@ -182,17 +162,12 @@ class BrainChatPayloadBuilderTest {
     @Test
     @SuppressWarnings("unchecked")
     void build_campaignContext_serializesFullNarrativeTree() {
-        BranchHint branch = BranchHint.builder()
-                .label("fuite").targetSceneName("La poursuite").condition("HP < 50%").build();
-        SceneSummary scene = SceneSummary.builder()
-                .name("L'auberge").description("Rencontre tendue")
-                .illustrationCount(3).branch(branch).build();
-        ChapterSummary chapter = ChapterSummary.builder()
-                .name("L'arrivee").description("...").scene(scene).build();
-        ArcSummary arc = ArcSummary.builder()
-                .name("Acte I").description("Mise en place").illustrationCount(1).chapter(chapter).build();
-        CampaignStructuralContext camp = CampaignStructuralContext.builder()
-                .campaignName("Les Ombres").campaignDescription("dark fantasy").arc(arc).build();
+        BranchHint branch = new BranchHint("fuite", "La poursuite", "HP < 50%");
+        SceneSummary scene = new SceneSummary("L'auberge", "Rencontre tendue", 3, List.of(branch));
+        ChapterSummary chapter = new ChapterSummary("L'arrivee", "...", 0, List.of(scene));
+        ArcSummary arc = new ArcSummary("Acte I", "Mise en place", 1, List.of(chapter));
+        CampaignStructuralContext camp = new CampaignStructuralContext(
+                "Les Ombres", "dark fantasy", List.of(arc), List.of());
         ChatRequest req = ChatRequest.builder().messages(sampleMessages).campaignContext(camp).build();
 
         Map<String, Object> payload = builder.build(req);
@@ -223,9 +198,9 @@ class BrainChatPayloadBuilderTest {
     @Test
     @SuppressWarnings("unchecked")
     void build_arcSummary_omitsIllustrationCount_whenZero() {
-        ArcSummary arc = ArcSummary.builder().name("A").description("").illustrationCount(0).build();
-        CampaignStructuralContext camp = CampaignStructuralContext.builder()
-                .campaignName("X").campaignDescription("").arc(arc).build();
+        ArcSummary arc = new ArcSummary("A", "", 0, List.of());
+        CampaignStructuralContext camp = new CampaignStructuralContext(
+                "X", "", List.of(arc), List.of());
         ChatRequest req = ChatRequest.builder().messages(sampleMessages).campaignContext(camp).build();
 
         Map<String, Object> payload = builder.build(req);
@@ -238,11 +213,11 @@ class BrainChatPayloadBuilderTest {
     @Test
     @SuppressWarnings("unchecked")
     void build_sceneSummary_omitsBranches_whenEmpty() {
-        SceneSummary scene = SceneSummary.builder().name("S").description("").build();
-        ChapterSummary chapter = ChapterSummary.builder().name("Ch").description("").scene(scene).build();
-        ArcSummary arc = ArcSummary.builder().name("A").description("").chapter(chapter).build();
-        CampaignStructuralContext camp = CampaignStructuralContext.builder()
-                .campaignName("X").campaignDescription("").arc(arc).build();
+        SceneSummary scene = new SceneSummary("S", "", 0, List.of());
+        ChapterSummary chapter = new ChapterSummary("Ch", "", 0, List.of(scene));
+        ArcSummary arc = new ArcSummary("A", "", 0, List.of(chapter));
+        CampaignStructuralContext camp = new CampaignStructuralContext(
+                "X", "", List.of(arc), List.of());
         ChatRequest req = ChatRequest.builder().messages(sampleMessages).campaignContext(camp).build();
 
         Map<String, Object> payload = builder.build(req);
@@ -256,12 +231,12 @@ class BrainChatPayloadBuilderTest {
     @Test
     @SuppressWarnings("unchecked")
     void build_branchHint_omitsCondition_whenBlank() {
-        BranchHint branch = BranchHint.builder().label("X").targetSceneName("Y").condition("   ").build();
-        SceneSummary scene = SceneSummary.builder().name("S").description("").branch(branch).build();
-        ChapterSummary chapter = ChapterSummary.builder().name("Ch").description("").scene(scene).build();
-        ArcSummary arc = ArcSummary.builder().name("A").description("").chapter(chapter).build();
-        CampaignStructuralContext camp = CampaignStructuralContext.builder()
-                .campaignName("X").campaignDescription("").arc(arc).build();
+        BranchHint branch = new BranchHint("X", "Y", "   ");
+        SceneSummary scene = new SceneSummary("S", "", 0, List.of(branch));
+        ChapterSummary chapter = new ChapterSummary("Ch", "", 0, List.of(scene));
+        ArcSummary arc = new ArcSummary("A", "", 0, List.of(chapter));
+        CampaignStructuralContext camp = new CampaignStructuralContext(
+                "X", "", List.of(arc), List.of());
         ChatRequest req = ChatRequest.builder().messages(sampleMessages).campaignContext(camp).build();
 
         Map<String, Object> payload = builder.build(req);
@@ -278,10 +253,8 @@ class BrainChatPayloadBuilderTest {
     @Test
     @SuppressWarnings("unchecked")
     void build_narrativeEntity_includesAllFields() {
-        NarrativeEntityContext entity = NarrativeEntityContext.builder()
-                .entityType("scene").title("L'auberge")
-                .fields(Map.of("location", "Taverne", "timing", "Soir"))
-                .build();
+        NarrativeEntityContext entity = new NarrativeEntityContext("scene", "L'auberge",
+                Map.of("location", "Taverne", "timing", "Soir"));
         ChatRequest req = ChatRequest.builder().messages(sampleMessages).narrativeEntity(entity).build();
 
         Map<String, Object> payload = builder.build(req);
@@ -295,10 +268,9 @@ class BrainChatPayloadBuilderTest {
 
     @Test
     void build_campaignScenario_includesBothContextsAndEntity() {
-        CampaignStructuralContext camp = CampaignStructuralContext.builder()
-                .campaignName("X").campaignDescription("").build();
-        NarrativeEntityContext entity = NarrativeEntityContext.builder()
-                .entityType("arc").title("T").fields(Map.of()).build();
+        CampaignStructuralContext camp = new CampaignStructuralContext(
+                "X", "", List.of(), List.of());
+        NarrativeEntityContext entity = new NarrativeEntityContext("arc", "T", Map.of());
         ChatRequest req = ChatRequest.builder()
                 .messages(sampleMessages)
                 .campaignContext(camp)

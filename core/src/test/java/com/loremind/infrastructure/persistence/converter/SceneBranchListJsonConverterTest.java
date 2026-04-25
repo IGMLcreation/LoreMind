@@ -48,27 +48,21 @@ class SceneBranchListJsonConverterTest {
 
     @Test
     void roundTrip_preservesAllBranchFields() {
-        // Test critique : depend de @Jacksonized sur SceneBranch.
+        // Test critique : Jackson doit reconstruire SceneBranch (record) via
+        // son constructeur canonique sans aucune annotation.
         List<SceneBranch> source = List.of(
-                SceneBranch.builder()
-                        .label("si les joueurs attaquent")
-                        .targetSceneId("sc-combat")
-                        .condition("initiative > 15")
-                        .build(),
-                SceneBranch.builder()
-                        .label("si les joueurs fuient")
-                        .targetSceneId("sc-poursuite")
-                        .build()
+                new SceneBranch("si les joueurs attaquent", "sc-combat", "initiative > 15"),
+                SceneBranch.of("si les joueurs fuient", "sc-poursuite")
         );
 
         String json = converter.convertToDatabaseColumn(source);
         List<SceneBranch> back = converter.convertToEntityAttribute(json);
 
         assertEquals(2, back.size());
-        assertEquals("si les joueurs attaquent", back.get(0).getLabel());
-        assertEquals("sc-combat", back.get(0).getTargetSceneId());
-        assertEquals("initiative > 15", back.get(0).getCondition());
-        assertEquals("sc-poursuite", back.get(1).getTargetSceneId());
-        assertNull(back.get(1).getCondition(), "condition absente doit rester null apres round-trip");
+        assertEquals("si les joueurs attaquent", back.get(0).label());
+        assertEquals("sc-combat", back.get(0).targetSceneId());
+        assertEquals("initiative > 15", back.get(0).condition());
+        assertEquals("sc-poursuite", back.get(1).targetSceneId());
+        assertNull(back.get(1).condition(), "condition absente doit rester null apres round-trip");
     }
 }

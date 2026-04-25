@@ -1,9 +1,5 @@
 package com.loremind.domain.generationcontext;
 
-import lombok.Builder;
-import lombok.Singular;
-import lombok.Value;
-
 import java.util.List;
 
 /**
@@ -22,16 +18,16 @@ import java.util.List;
  * <p>
  * La liste `arcs` préserve l'ordre narratif (tri sur `order` ascendant
  * fait par le use case côté application layer).
+ * <p>
+ * Record Java : pur domaine, aucune dépendance technique.
+ *
+ * @param characters Personnages joueurs (PJ) de la campagne. Vide si aucun.
  */
-@Value
-@Builder
-public class CampaignStructuralContext {
-
-    String campaignName;
-    String campaignDescription;
-    @Singular List<ArcSummary> arcs;
-    /** Personnages joueurs (PJ) de la campagne. Vide si aucun. */
-    @Singular List<CharacterSummary> characters;
+public record CampaignStructuralContext(
+        String campaignName,
+        String campaignDescription,
+        List<ArcSummary> arcs,
+        List<CharacterSummary> characters) {
 
     /**
      * Résumé d'un PJ : nom + snippet court du markdown.
@@ -40,53 +36,44 @@ public class CampaignStructuralContext {
      * La fiche complète n'est injectée que si le PJ est l'entité focus
      * (via NarrativeEntityContext, entity_type="character").
      */
-    @Value
-    @Builder
-    public static class CharacterSummary {
-        String name;
-        String snippet;
+    public record CharacterSummary(String name, String snippet) {
     }
 
-    /** Résumé d'un arc : nom + description courte + ses chapitres. */
-    @Value
-    @Builder
-    public static class ArcSummary {
-        String name;
-        String description;
-        /** Nombre d'illustrations attachees a cet arc (pour hint dans le prompt IA). */
-        int illustrationCount;
-        @Singular List<ChapterSummary> chapters;
+    /**
+     * Résumé d'un arc : nom + description courte + ses chapitres.
+     *
+     * @param illustrationCount Nombre d'illustrations attachees a cet arc (pour hint dans le prompt IA).
+     */
+    public record ArcSummary(
+            String name,
+            String description,
+            int illustrationCount,
+            List<ChapterSummary> chapters) {
     }
 
     /** Résumé d'un chapitre : nom + description courte + ses scènes. */
-    @Value
-    @Builder
-    public static class ChapterSummary {
-        String name;
-        String description;
-        int illustrationCount;
-        @Singular List<SceneSummary> scenes;
+    public record ChapterSummary(
+            String name,
+            String description,
+            int illustrationCount,
+            List<SceneSummary> scenes) {
     }
 
     /** Résumé d'une scène : nom + description courte + branches narratives. */
-    @Value
-    @Builder
-    public static class SceneSummary {
-        String name;
-        String description;
-        int illustrationCount;
-        @Singular List<BranchHint> branches;
+    public record SceneSummary(
+            String name,
+            String description,
+            int illustrationCount,
+            List<BranchHint> branches) {
     }
 
-    /** Indice d'une branche narrative vers une autre scène du même chapitre. */
-    @Value
-    @Builder
-    public static class BranchHint {
-        /** Libellé du choix joueur (ex: "Si les joueurs attaquent le garde"). */
-        String label;
-        /** Nom de la scène cible (résolu depuis targetSceneId côté builder). */
-        String targetSceneName;
-        /** Condition MJ privée (optionnel). */
-        String condition;
+    /**
+     * Indice d'une branche narrative vers une autre scène du même chapitre.
+     *
+     * @param label           Libellé du choix joueur (ex: "Si les joueurs attaquent le garde").
+     * @param targetSceneName Nom de la scène cible (résolu depuis targetSceneId côté builder).
+     * @param condition       Condition MJ privée (optionnel).
+     */
+    public record BranchHint(String label, String targetSceneName, String condition) {
     }
 }

@@ -1,9 +1,5 @@
 package com.loremind.domain.generationcontext;
 
-import lombok.Builder;
-import lombok.Singular;
-import lombok.Value;
-
 import java.util.List;
 import java.util.Map;
 
@@ -16,15 +12,14 @@ import java.util.Map;
  * <p>
  * La map `folders` est indexée par nom de dossier et mappe vers la liste
  * des pages qu'il contient (liste vide autorisée pour les dossiers vides).
+ * <p>
+ * Record Java : pur domaine, aucune dépendance technique.
  */
-@Value
-@Builder
-public class LoreStructuralContext {
-
-    String loreName;
-    String loreDescription;
-    Map<String, List<PageSummary>> folders;
-    @Singular List<String> tags;
+public record LoreStructuralContext(
+        String loreName,
+        String loreDescription,
+        Map<String, List<PageSummary>> folders,
+        List<String> tags) {
 
     /**
      * Résumé projeté d'une page pour l'IA.
@@ -40,13 +35,11 @@ public class LoreStructuralContext {
      * uniquement ce qui est partageable en narration — les secrets MJ
      * restent confinés à leur page d'édition).
      */
-    @Value
-    @Builder
-    public static class PageSummary {
-        String title;
-        String templateName;
-        Map<String, String> values;
-        List<String> tags;
-        List<String> relatedPageTitles;
+    public record PageSummary(
+            String title,
+            String templateName,
+            Map<String, String> values,
+            List<String> tags,
+            List<String> relatedPageTitles) {
     }
 }

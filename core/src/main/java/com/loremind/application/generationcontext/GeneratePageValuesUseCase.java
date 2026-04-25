@@ -67,16 +67,15 @@ public class GeneratePageValuesUseCase {
 
         requireNonEmptyFields(template);
 
-        GenerationContext context = GenerationContext.builder()
-                .loreName(lore.getName())
-                .loreDescription(lore.getDescription())
-                .folderName(folder.getName())
-                .templateName(template.getName())
-                // Seuls les champs TEXT sont envoyes a l'IA : les champs IMAGE
-                // necessitent un workflow different (pas de generation LLM texte).
-                .templateFields(template.textFieldNames())
-                .pageTitle(page.getTitle())
-                .build();
+        // Seuls les champs TEXT sont envoyes a l'IA : les champs IMAGE
+        // necessitent un workflow different (pas de generation LLM texte).
+        GenerationContext context = new GenerationContext(
+                lore.getName(),
+                lore.getDescription(),
+                folder.getName(),
+                template.getName(),
+                template.textFieldNames(),
+                page.getTitle());
 
         GenerationResult result = aiProvider.generatePage(context);
         return result.values();

@@ -62,6 +62,8 @@ services:
   core:
     image: ${REGISTRY:-git.igmlcreation.fr}/ietm64/core:${TAG:-latest}
     container_name: loremind-core
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
     depends_on:
       postgres:
         condition: service_healthy
@@ -79,11 +81,21 @@ services:
       MINIO_ENDPOINT: http://minio:9000
       MINIO_ACCESS_KEY: ${MINIO_USER:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_PASSWORD:-minioadmin}
+      # Detection des mises a jour : interroge le registry et delegue le pull/restart
+      # a Watchtower. Si WATCHTOWER_TOKEN est vide, la feature est desactivee
+      # (l'UI masque le badge et le bouton).
+      UPDATE_CHECK_REGISTRY: ${REGISTRY:-git.igmlcreation.fr}
+      UPDATE_CHECK_IMAGES: ietm64/core,ietm64/brain,ietm64/web
+      UPDATE_CHECK_TAG: ${TAG:-latest}
+      WATCHTOWER_URL: http://watchtower:8080
+      WATCHTOWER_TOKEN: ${WATCHTOWER_TOKEN:-}
     restart: unless-stopped
 
   brain:
     image: ${REGISTRY:-git.igmlcreation.fr}/ietm64/brain:${TAG:-latest}
     container_name: loremind-brain
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
     environment:
       LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
@@ -102,11 +114,40 @@ services:
   web:
     image: ${REGISTRY:-git.igmlcreation.fr}/ietm64/web:${TAG:-latest}
     container_name: loremind-web
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
     depends_on:
       - core
       - brain
     ports:
       - "${WEB_PORT:-8081}:80"
+    restart: unless-stopped
+
+  # Mises a jour automatiques des images core/brain/web.
+  # Active uniquement si COMPOSE_PROFILES=autoupdate (gere par l'installeur).
+  # Postgres et MinIO sont volontairement exclus (donnees persistantes,
+  # compatibilite de version a verifier manuellement).
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: loremind-watchtower
+    profiles: ["autoupdate"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      WATCHTOWER_LABEL_ENABLE: "true"
+      WATCHTOWER_CLEANUP: "true"
+      WATCHTOWER_INCLUDE_RESTARTING: "true"
+      # MONITOR_ONLY=true => detecte sans appliquer (l'UI declenche manuellement).
+      # MONITOR_ONLY=false => applique automatiquement selon WATCHTOWER_SCHEDULE.
+      WATCHTOWER_MONITOR_ONLY: "${WATCHTOWER_MONITOR_ONLY:-false}"
+      WATCHTOWER_SCHEDULE: "${WATCHTOWER_SCHEDULE:-0 0 4 * * *}"
+      # API HTTP pour declenchement manuel via le bouton UI (Core -> Watchtower).
+      WATCHTOWER_HTTP_API_UPDATE: "true"
+      WATCHTOWER_HTTP_API_PERIODIC_POLLS: "true"
+      WATCHTOWER_HTTP_API_TOKEN: "${WATCHTOWER_TOKEN:?set WATCHTOWER_TOKEN in .env (re-run installer)}"
+      WATCHTOWER_TIMEOUT: 60s
+      WATCHTOWER_NOTIFICATIONS_LEVEL: info
+      TZ: ${TZ:-Europe/Paris}
     restart: unless-stopped
 
 volumes:

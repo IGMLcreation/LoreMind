@@ -98,7 +98,7 @@ public class SceneService {
                 .collect(Collectors.toSet());
 
         for (SceneBranch b : branches) {
-            String target = b.getTargetSceneId();
+            String target = b.targetSceneId();
             if (target == null || target.isBlank()) {
                 throw new IllegalArgumentException("Une branche doit avoir une scène de destination");
             }
