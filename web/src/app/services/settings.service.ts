@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
@@ -43,7 +43,7 @@ export class SettingsService {
   // suivants en cross-origin (dev Angular sur :4200 -> core sur :8080).
   private readonly authOptions = { withCredentials: true };
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private zone: NgZone) {}
 
   getSettings(): Observable<AppSettings> {
     return this.http.get<AppSettings>(this.apiUrl, this.authOptions);
@@ -78,8 +78,16 @@ export class SettingsService {
    * bufferise les reponses XHR, ce qui empeche le streaming en temps reel.
    */
   pullOllamaModel(name: string): Observable<OllamaPullEvent> {
+    // fetch() s'execute hors zone Angular -> les emissions du subscriber
+    // doivent etre forcees dans la zone via NgZone.run() pour que le change
+    // detection se declenche et que la barre de progression se mette a jour
+    // en temps reel.
     return new Observable<OllamaPullEvent>((subscriber) => {
       const controller = new AbortController();
+      const emit = (ev: OllamaPullEvent) => this.zone.run(() => subscriber.next(ev));
+      const fail = (e: unknown) => this.zone.run(() => subscriber.error(e));
+      const done = () => this.zone.run(() => subscriber.complete());
+
       (async () => {
         try {
           const response = await fetch(`${this.apiUrl}/models/ollama/pull`, {
@@ -89,16 +97,22 @@ export class SettingsService {
             body: JSON.stringify({ name }),
             signal: controller.signal,
           });
-          if (!response.ok || !response.body) {
-            subscriber.error(new Error(`HTTP ${response.status}`));
+          if (!response.ok) {
+            const text = await response.text();
+            fail(new Error(`HTTP ${response.status} : ${text || 'reponse vide'}`));
+            return;
+          }
+          if (!response.body) {
+            fail(new Error('Reponse sans corps : streaming non supporte par le navigateur'));
             return;
           }
           const reader = response.body.getReader();
           const decoder = new TextDecoder();
           let buffer = '';
+          let eventsReceived = 0;
           while (true) {
-            const { value, done } = await reader.read();
-            if (done) break;
+            const { value, done: streamDone } = await reader.read();
+            if (streamDone) break;
             buffer += decoder.decode(value, { stream: true });
             // Decoupage NDJSON : chaque ligne est un objet JSON complet.
             let nl: number;
@@ -107,15 +121,27 @@ export class SettingsService {
               buffer = buffer.slice(nl + 1);
               if (!line) continue;
               try {
-                subscriber.next(JSON.parse(line) as OllamaPullEvent);
+                emit(JSON.parse(line) as OllamaPullEvent);
+                eventsReceived++;
               } catch {
                 // Ligne non JSON (rare) : on l'ignore.
               }
             }
           }
-          subscriber.complete();
+          // Reste eventuel dans le buffer (derniere ligne sans '\n').
+          if (buffer.trim()) {
+            try {
+              emit(JSON.parse(buffer.trim()) as OllamaPullEvent);
+              eventsReceived++;
+            } catch { /* ignore */ }
+          }
+          if (eventsReceived === 0) {
+            fail(new Error('Aucun evenement recu du serveur. Verifiez les logs du Brain (docker logs loremind-brain).'));
+            return;
+          }
+          done();
         } catch (err) {
-          if ((err as Error).name !== 'AbortError') subscriber.error(err);
+          if ((err as Error).name !== 'AbortError') fail(err);
         }
       })();
       return () => controller.abort();
