@@ -74,9 +74,9 @@ public class CampaignStructuralContextBuilderTest {
 
         CampaignStructuralContext ctx = builder.build("camp-1");
 
-        assertEquals("Les Terres Brisées", ctx.getCampaignName());
-        assertEquals("Campagne dark fantasy", ctx.getCampaignDescription());
-        assertTrue(ctx.getArcs().isEmpty());
+        assertEquals("Les Terres Brisées", ctx.campaignName());
+        assertEquals("Campagne dark fantasy", ctx.campaignDescription());
+        assertTrue(ctx.arcs().isEmpty());
     }
 
     @Test
@@ -100,19 +100,19 @@ public class CampaignStructuralContextBuilderTest {
 
         CampaignStructuralContext ctx = builder.build("camp-1");
 
-        assertEquals(2, ctx.getArcs().size());
-        assertEquals("Arc A", ctx.getArcs().get(0).getName());
-        assertEquals("Arc B", ctx.getArcs().get(1).getName());
+        assertEquals(2, ctx.arcs().size());
+        assertEquals("Arc A", ctx.arcs().get(0).name());
+        assertEquals("Arc B", ctx.arcs().get(1).name());
 
         // Chapitres tries : ch2 (order 1) avant ch1 (order 2)
-        assertEquals(2, ctx.getArcs().get(0).getChapters().size());
-        assertEquals("Ch B", ctx.getArcs().get(0).getChapters().get(0).getName());
-        assertEquals("Ch A", ctx.getArcs().get(0).getChapters().get(1).getName());
+        assertEquals(2, ctx.arcs().get(0).chapters().size());
+        assertEquals("Ch B", ctx.arcs().get(0).chapters().get(0).name());
+        assertEquals("Ch A", ctx.arcs().get(0).chapters().get(1).name());
 
         // Scenes dans ch-1 : s2 (order 1) avant s1 (order 2)
-        var chADto = ctx.getArcs().get(0).getChapters().get(1);
-        assertEquals("Scene B", chADto.getScenes().get(0).getName());
-        assertEquals("Scene A", chADto.getScenes().get(1).getName());
+        var chADto = ctx.arcs().get(0).chapters().get(1);
+        assertEquals("Scene B", chADto.scenes().get(0).name());
+        assertEquals("Scene A", chADto.scenes().get(1).name());
     }
 
     @Test
@@ -120,15 +120,8 @@ public class CampaignStructuralContextBuilderTest {
         Arc arc = Arc.builder().id("arc-1").name("Arc").description("").order(1).build();
         Chapter ch = Chapter.builder().id("ch-1").arcId("arc-1").name("Ch").description("").order(1).build();
 
-        SceneBranch validBranch = SceneBranch.builder()
-                .label("Si les joueurs fuient")
-                .targetSceneId("s-2")
-                .condition("en cas de combat perdu")
-                .build();
-        SceneBranch danglingBranch = SceneBranch.builder()
-                .label("Vers l'inconnu")
-                .targetSceneId("s-inconnu")
-                .build();
+        SceneBranch validBranch = new SceneBranch("Si les joueurs fuient", "s-2", "en cas de combat perdu");
+        SceneBranch danglingBranch = SceneBranch.of("Vers l'inconnu", "s-inconnu");
 
         Scene s1 = Scene.builder().id("s-1").chapterId("ch-1").name("Entrée").description("")
                 .order(1)
@@ -143,12 +136,12 @@ public class CampaignStructuralContextBuilderTest {
 
         CampaignStructuralContext ctx = builder.build("camp-1");
 
-        var scene1Summary = ctx.getArcs().get(0).getChapters().get(0).getScenes().get(0);
-        assertEquals(2, scene1Summary.getBranches().size());
-        assertEquals("Fuite", scene1Summary.getBranches().get(0).getTargetSceneName());
-        assertEquals("en cas de combat perdu", scene1Summary.getBranches().get(0).getCondition());
+        var scene1Summary = ctx.arcs().get(0).chapters().get(0).scenes().get(0);
+        assertEquals(2, scene1Summary.branches().size());
+        assertEquals("Fuite", scene1Summary.branches().get(0).targetSceneName());
+        assertEquals("en cas de combat perdu", scene1Summary.branches().get(0).condition());
         // ID inconnu → libellé de fallback
-        assertEquals("(scène inconnue)", scene1Summary.getBranches().get(1).getTargetSceneName());
+        assertEquals("(scène inconnue)", scene1Summary.branches().get(1).targetSceneName());
     }
 
     @Test
@@ -170,9 +163,9 @@ public class CampaignStructuralContextBuilderTest {
 
         CampaignStructuralContext ctx = builder.build("camp-1");
 
-        assertEquals(2, ctx.getArcs().get(0).getIllustrationCount());
-        assertEquals(0, ctx.getArcs().get(0).getChapters().get(0).getIllustrationCount());
-        assertEquals(1, ctx.getArcs().get(0).getChapters().get(0).getScenes().get(0).getIllustrationCount());
-        assertTrue(ctx.getArcs().get(0).getChapters().get(0).getScenes().get(0).getBranches().isEmpty());
+        assertEquals(2, ctx.arcs().get(0).illustrationCount());
+        assertEquals(0, ctx.arcs().get(0).chapters().get(0).illustrationCount());
+        assertEquals(1, ctx.arcs().get(0).chapters().get(0).scenes().get(0).illustrationCount());
+        assertTrue(ctx.arcs().get(0).chapters().get(0).scenes().get(0).branches().isEmpty());
     }
 }

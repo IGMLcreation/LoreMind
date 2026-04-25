@@ -87,18 +87,14 @@ public class SceneMapper {
     private List<SceneBranchDTO> toBranchDTOs(List<SceneBranch> branches) {
         if (branches == null) return new ArrayList<>();
         return branches.stream()
-                .map(b -> new SceneBranchDTO(b.getLabel(), b.getTargetSceneId(), b.getCondition()))
+                .map(b -> new SceneBranchDTO(b.label(), b.targetSceneId(), b.condition()))
                 .collect(Collectors.toList());
     }
 
     private List<SceneBranch> toBranchDomain(List<SceneBranchDTO> dtos) {
         if (dtos == null) return new ArrayList<>();
         return dtos.stream()
-                .map(d -> SceneBranch.builder()
-                        .label(d.getLabel())
-                        .targetSceneId(d.getTargetSceneId())
-                        .condition(d.getCondition())
-                        .build())
+                .map(d -> new SceneBranch(d.getLabel(), d.getTargetSceneId(), d.getCondition()))
                 .collect(Collectors.toList());
     }
 }

@@ -53,12 +53,12 @@ public class BrainAiClient implements AiProvider {
 
     private BrainGeneratePageRequest toBrainRequest(GenerationContext context) {
         return new BrainGeneratePageRequest(
-                context.getLoreName(),
-                context.getLoreDescription(),
-                context.getFolderName(),
-                context.getTemplateName(),
-                context.getTemplateFields(),
-                context.getPageTitle()
+                context.loreName(),
+                context.loreDescription(),
+                context.folderName(),
+                context.templateName(),
+                context.templateFields(),
+                context.pageTitle()
         );
     }
 

@@ -66,6 +66,7 @@ public class SecurityConfig {
                 // Preflight CORS toujours libre (le browser n'envoie pas Authorization sur OPTIONS)
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/settings/**").hasRole("ADMIN")
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .anyRequest().permitAll()
             )
             .httpBasic(basic -> {});

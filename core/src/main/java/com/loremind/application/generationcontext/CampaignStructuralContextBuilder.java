@@ -79,12 +79,11 @@ public class CampaignStructuralContextBuilder {
                 .map(this::toCharacterSummary)
                 .collect(Collectors.toList());
 
-        return CampaignStructuralContext.builder()
-                .campaignName(campaign.getName())
-                .campaignDescription(campaign.getDescription())
-                .arcs(arcs)
-                .characters(characters)
-                .build();
+        return new CampaignStructuralContext(
+                campaign.getName(),
+                campaign.getDescription(),
+                arcs,
+                characters);
     }
 
     /**
@@ -93,10 +92,7 @@ public class CampaignStructuralContextBuilder {
      * sans injecter toute sa fiche.
      */
     private CharacterSummary toCharacterSummary(Character c) {
-        return CharacterSummary.builder()
-                .name(c.getName())
-                .snippet(extractSnippet(c.getMarkdownContent()))
-                .build();
+        return new CharacterSummary(c.getName(), extractSnippet(c.getMarkdownContent()));
     }
 
     private static String extractSnippet(String markdown) {
@@ -115,12 +111,11 @@ public class CampaignStructuralContextBuilder {
                 .sorted(Comparator.comparingInt(Chapter::getOrder))
                 .map(this::toChapterSummary)
                 .collect(Collectors.toList());
-        return ArcSummary.builder()
-                .name(arc.getName())
-                .description(arc.getDescription())
-                .illustrationCount(countImages(arc.getIllustrationImageIds()))
-                .chapters(chapters)
-                .build();
+        return new ArcSummary(
+                arc.getName(),
+                arc.getDescription(),
+                countImages(arc.getIllustrationImageIds()),
+                chapters);
     }
 
     private ChapterSummary toChapterSummary(Chapter chapter) {
@@ -137,32 +132,28 @@ public class CampaignStructuralContextBuilder {
                 .map(s -> toSceneSummary(s, nameById))
                 .collect(Collectors.toList());
 
-        return ChapterSummary.builder()
-                .name(chapter.getName())
-                .description(chapter.getDescription())
-                .illustrationCount(countImages(chapter.getIllustrationImageIds()))
-                .scenes(summaries)
-                .build();
+        return new ChapterSummary(
+                chapter.getName(),
+                chapter.getDescription(),
+                countImages(chapter.getIllustrationImageIds()),
+                summaries);
     }
 
     private SceneSummary toSceneSummary(Scene scene, Map<String, String> nameById) {
         List<BranchHint> hints = scene.getBranches() == null
                 ? List.of()
                 : scene.getBranches().stream()
-                    .map(b -> BranchHint.builder()
-                            .label(b.getLabel())
-                            .targetSceneName(nameById.getOrDefault(
-                                    b.getTargetSceneId(), "(scène inconnue)"))
-                            .condition(b.getCondition())
-                            .build())
+                    .map(b -> new BranchHint(
+                            b.label(),
+                            nameById.getOrDefault(b.targetSceneId(), "(scène inconnue)"),
+                            b.condition()))
                     .collect(Collectors.toList());
 
-        return SceneSummary.builder()
-                .name(scene.getName())
-                .description(scene.getDescription())
-                .illustrationCount(countImages(scene.getIllustrationImageIds()))
-                .branches(hints)
-                .build();
+        return new SceneSummary(
+                scene.getName(),
+                scene.getDescription(),
+                countImages(scene.getIllustrationImageIds()),
+                hints);
     }
 
     /** Helper defensif : compte les illustrations attachees (null-safe). */

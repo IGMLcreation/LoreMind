@@ -1,8 +1,5 @@
 package com.loremind.domain.generationcontext;
 
-import lombok.Builder;
-import lombok.Value;
-
 import java.util.List;
 
 /**
@@ -21,28 +18,74 @@ import java.util.List;
  * Un chat Lore ne reçoit JAMAIS de campaignContext : un Lore ne voit pas
  * ses campagnes (asymétrie métier : la campagne est l'emprunteur du Lore,
  * pas l'inverse).
+ * <p>
+ * Record Java : pur domaine. Builder manuel fourni en raison des 6 champs
+ * dont 5 sont nullables — l'API fluide reste plus lisible aux call sites
+ * qu'un constructeur à 6 paramètres souvent à null.
+ *
+ * @param loreContext       Optionnel : carte structurelle du Lore. Null si campagne non liée à un Lore.
+ * @param pageContext       Optionnel : contexte d'une page précise en cours d'édition (chat Lore uniquement).
+ * @param campaignContext   Optionnel : carte narrative d'une Campagne (chat Campagne uniquement).
+ * @param narrativeEntity   Optionnel : entité narrative en cours d'édition (arc/chapter/scene).
+ * @param gameSystemContext Optionnel : règles du système de JDR de la campagne (filtrées par intent).
+ *                          Null si la campagne n'a pas de GameSystem associé. Campagne uniquement au MVP.
  */
-@Value
-@Builder
-public class ChatRequest {
+public record ChatRequest(
+        List<ChatMessage> messages,
+        LoreStructuralContext loreContext,
+        PageContext pageContext,
+        CampaignStructuralContext campaignContext,
+        NarrativeEntityContext narrativeEntity,
+        GameSystemContext gameSystemContext) {
 
-    List<ChatMessage> messages;
+    public static Builder builder() {
+        return new Builder();
+    }
 
-    /** Optionnel : carte structurelle du Lore. Null si campagne non liée à un Lore. */
-    LoreStructuralContext loreContext;
+    /** Builder fluide : permet d'omettre les contextes non pertinents. */
+    public static final class Builder {
+        private List<ChatMessage> messages;
+        private LoreStructuralContext loreContext;
+        private PageContext pageContext;
+        private CampaignStructuralContext campaignContext;
+        private NarrativeEntityContext narrativeEntity;
+        private GameSystemContext gameSystemContext;
 
-    /** Optionnel : contexte d'une page précise en cours d'édition (chat Lore uniquement). */
-    PageContext pageContext;
+        private Builder() {}
 
-    /** Optionnel : carte narrative d'une Campagne (chat Campagne uniquement). */
-    CampaignStructuralContext campaignContext;
+        public Builder messages(List<ChatMessage> messages) {
+            this.messages = messages;
+            return this;
+        }
 
-    /** Optionnel : entité narrative en cours d'édition (arc/chapter/scene). */
-    NarrativeEntityContext narrativeEntity;
+        public Builder loreContext(LoreStructuralContext loreContext) {
+            this.loreContext = loreContext;
+            return this;
+        }
 
-    /**
-     * Optionnel : règles du système de JDR de la campagne (filtrées par intent).
-     * Null si la campagne n'a pas de GameSystem associé. Campagne uniquement au MVP.
-     */
-    GameSystemContext gameSystemContext;
+        public Builder pageContext(PageContext pageContext) {
+            this.pageContext = pageContext;
+            return this;
+        }
+
+        public Builder campaignContext(CampaignStructuralContext campaignContext) {
+            this.campaignContext = campaignContext;
+            return this;
+        }
+
+        public Builder narrativeEntity(NarrativeEntityContext narrativeEntity) {
+            this.narrativeEntity = narrativeEntity;
+            return this;
+        }
+
+        public Builder gameSystemContext(GameSystemContext gameSystemContext) {
+            this.gameSystemContext = gameSystemContext;
+            return this;
+        }
+
+        public ChatRequest build() {
+            return new ChatRequest(messages, loreContext, pageContext,
+                    campaignContext, narrativeEntity, gameSystemContext);
+        }
+    }
 }

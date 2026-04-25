@@ -1,8 +1,5 @@
 package com.loremind.domain.generationcontext;
 
-import lombok.Builder;
-import lombok.Value;
-
 import java.util.List;
 import java.util.Map;
 
@@ -14,14 +11,11 @@ import java.util.Map;
  * à l'IA de focaliser ses suggestions sur les bons champs sans déborder
  * sur d'autres pages/templates.
  * <p>
- * Object de valeur immuable, pur domaine — aucune dépendance technique.
+ * Record Java : immuable, pur domaine, aucune dépendance technique.
  */
-@Value
-@Builder
-public class PageContext {
-
-    String title;
-    String templateName;
-    List<String> templateFields;
-    Map<String, String> values;
+public record PageContext(
+        String title,
+        String templateName,
+        List<String> templateFields,
+        Map<String, String> values) {
 }

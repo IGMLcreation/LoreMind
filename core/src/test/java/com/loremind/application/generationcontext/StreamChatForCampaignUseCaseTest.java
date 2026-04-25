@@ -55,9 +55,7 @@ public class StreamChatForCampaignUseCaseTest {
     @SuppressWarnings("unchecked")
     @BeforeEach
     void setUp() {
-        campaignCtx = CampaignStructuralContext.builder()
-                .campaignName("X").campaignDescription("d")
-                .build();
+        campaignCtx = new CampaignStructuralContext("X", "d", List.of(), List.of());
         messages = List.of();
         onUsage = mock(Consumer.class);
         onToken = mock(Consumer.class);
@@ -85,10 +83,10 @@ public class StreamChatForCampaignUseCaseTest {
         ArgumentCaptor<ChatRequest> captor = ArgumentCaptor.forClass(ChatRequest.class);
         verify(aiChatProvider).streamChat(captor.capture(), eq(onUsage), eq(onToken), eq(onComplete), eq(onError));
         ChatRequest req = captor.getValue();
-        assertSame(campaignCtx, req.getCampaignContext());
-        assertNull(req.getLoreContext());
-        assertNull(req.getNarrativeEntity());
-        assertNull(req.getPageContext());
+        assertSame(campaignCtx, req.campaignContext());
+        assertNull(req.loreContext());
+        assertNull(req.narrativeEntity());
+        assertNull(req.pageContext());
         verifyNoInteractions(loreContextBuilder);
         verifyNoInteractions(narrativeEntityContextBuilder);
     }
@@ -96,8 +94,8 @@ public class StreamChatForCampaignUseCaseTest {
     @Test
     void testExecute_LinkedCampaign_LoadsLoreContext() {
         Campaign linked = Campaign.builder().id("c-1").name("C").loreId("lore-1").build();
-        LoreStructuralContext loreCtx = LoreStructuralContext.builder()
-                .loreName("L").loreDescription("d").folders(Collections.emptyMap()).build();
+        LoreStructuralContext loreCtx = new LoreStructuralContext(
+                "L", "d", Collections.emptyMap(), List.of());
 
         when(campaignRepository.findById("c-1")).thenReturn(Optional.of(linked));
         when(campaignContextBuilder.build("c-1")).thenReturn(campaignCtx);
@@ -107,7 +105,7 @@ public class StreamChatForCampaignUseCaseTest {
 
         ArgumentCaptor<ChatRequest> captor = ArgumentCaptor.forClass(ChatRequest.class);
         verify(aiChatProvider).streamChat(captor.capture(), any(), any(), any(), any());
-        assertSame(loreCtx, captor.getValue().getLoreContext());
+        assertSame(loreCtx, captor.getValue().loreContext());
     }
 
     @Test
@@ -122,15 +120,14 @@ public class StreamChatForCampaignUseCaseTest {
 
         ArgumentCaptor<ChatRequest> captor = ArgumentCaptor.forClass(ChatRequest.class);
         verify(aiChatProvider).streamChat(captor.capture(), any(), any(), any(), any());
-        assertNull(captor.getValue().getLoreContext());
+        assertNull(captor.getValue().loreContext());
         // La requete doit tout de meme partir (pas d'exception).
     }
 
     @Test
     void testExecute_WithEntityFocus_BuildsNarrativeEntity() {
         Campaign standalone = Campaign.builder().id("c-1").name("C").loreId(null).build();
-        NarrativeEntityContext entity = NarrativeEntityContext.builder()
-                .entityType("scene").title("L'auberge").fields(Map.of()).build();
+        NarrativeEntityContext entity = new NarrativeEntityContext("scene", "L'auberge", Map.of());
 
         when(campaignRepository.findById("c-1")).thenReturn(Optional.of(standalone));
         when(campaignContextBuilder.build("c-1")).thenReturn(campaignCtx);
@@ -140,7 +137,7 @@ public class StreamChatForCampaignUseCaseTest {
 
         ArgumentCaptor<ChatRequest> captor = ArgumentCaptor.forClass(ChatRequest.class);
         verify(aiChatProvider).streamChat(captor.capture(), any(), any(), any(), any());
-        assertSame(entity, captor.getValue().getNarrativeEntity());
+        assertSame(entity, captor.getValue().narrativeEntity());
     }
 
     @Test
@@ -153,7 +150,7 @@ public class StreamChatForCampaignUseCaseTest {
 
         ArgumentCaptor<ChatRequest> captor = ArgumentCaptor.forClass(ChatRequest.class);
         verify(aiChatProvider).streamChat(captor.capture(), any(), any(), any(), any());
-        assertNull(captor.getValue().getNarrativeEntity());
+        assertNull(captor.getValue().narrativeEntity());
         verifyNoInteractions(narrativeEntityContextBuilder);
     }
 }

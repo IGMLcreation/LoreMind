@@ -8,11 +8,12 @@ import { firstValueFrom } from 'rxjs';
  */
 export interface PublicConfig {
   demoMode: boolean;
+  updateCheckEnabled: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
 export class ConfigService {
-  private config: PublicConfig = { demoMode: false };
+  private config: PublicConfig = { demoMode: false, updateCheckEnabled: false };
 
   constructor(private http: HttpClient) {}
 
@@ -27,5 +28,9 @@ export class ConfigService {
 
   get demoMode(): boolean {
     return this.config.demoMode;
+  }
+
+  get updateCheckEnabled(): boolean {
+    return this.config.updateCheckEnabled;
   }
 }

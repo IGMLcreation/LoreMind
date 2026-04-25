@@ -16,21 +16,17 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 class NarrativeEntityContextTest {
 
     @Test
-    void builder_preservesAllFields() {
+    void constructor_preservesAllFields() {
         Map<String, String> fields = new LinkedHashMap<>();
         fields.put("themes", "trahison");
         fields.put("stakes", "la survie du royaume");
 
-        NarrativeEntityContext ctx = NarrativeEntityContext.builder()
-                .entityType("arc")
-                .title("Acte I")
-                .fields(fields)
-                .build();
+        NarrativeEntityContext ctx = new NarrativeEntityContext("arc", "Acte I", fields);
 
-        assertEquals("arc", ctx.getEntityType());
-        assertEquals("Acte I", ctx.getTitle());
-        assertEquals(2, ctx.getFields().size());
-        assertEquals("trahison", ctx.getFields().get("themes"));
+        assertEquals("arc", ctx.entityType());
+        assertEquals("Acte I", ctx.title());
+        assertEquals(2, ctx.fields().size());
+        assertEquals("trahison", ctx.fields().get("themes"));
     }
 
     @Test
@@ -41,19 +37,15 @@ class NarrativeEntityContextTest {
         fields.put("timing", "Soir");
         fields.put("atmosphere", "fumee");
 
-        NarrativeEntityContext ctx = NarrativeEntityContext.builder()
-                .entityType("scene")
-                .title("L'auberge")
-                .fields(fields)
-                .build();
+        NarrativeEntityContext ctx = new NarrativeEntityContext("scene", "L'auberge", fields);
 
-        assertEquals("[location, timing, atmosphere]", ctx.getFields().keySet().toString());
+        assertEquals("[location, timing, atmosphere]", ctx.fields().keySet().toString());
     }
 
     @Test
     void twoContexts_differingOnEntityType_areNotEqual() {
-        NarrativeEntityContext a = NarrativeEntityContext.builder().entityType("arc").title("X").build();
-        NarrativeEntityContext b = NarrativeEntityContext.builder().entityType("scene").title("X").build();
+        NarrativeEntityContext a = new NarrativeEntityContext("arc", "X", Map.of());
+        NarrativeEntityContext b = new NarrativeEntityContext("scene", "X", Map.of());
         assertNotEquals(a, b);
     }
 }

@@ -178,6 +178,23 @@
   border: 1px solid #3a3f55;
 }
 
+.update-badge {
+  margin-left: auto;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  background: #6c63ff;
+  color: white;
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+  animation: update-pulse 2s ease-in-out infinite;
+}
+
+@keyframes update-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(108, 99, 255, 0.5); }
+  50%      { box-shadow: 0 0 0 4px rgba(108, 99, 255, 0); }
+}
+
 .sidebar-footer {
   padding-top: 1rem;
   border-top: 1px solid #1e1e3a;

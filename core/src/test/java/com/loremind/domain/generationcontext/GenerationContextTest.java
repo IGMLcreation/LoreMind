@@ -9,41 +9,38 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 /**
  * Tests unitaires pour GenerationContext (Value Object pour la generation one-shot).
- * Verifie la construction via builder et l'egalite structurelle.
+ * Verifie la construction et l'egalite structurelle (record).
  */
 class GenerationContextTest {
 
     @Test
-    void builder_preservesAllFields() {
-        GenerationContext ctx = GenerationContext.builder()
-                .loreName("Ithoril")
-                .loreDescription("Royaume sombre")
-                .folderName("PNJ")
-                .templateName("Fiche PNJ")
-                .templateFields(List.of("histoire", "motto", "apparence"))
-                .pageTitle("Thorin")
-                .build();
+    void constructor_preservesAllFields() {
+        GenerationContext ctx = new GenerationContext(
+                "Ithoril",
+                "Royaume sombre",
+                "PNJ",
+                "Fiche PNJ",
+                List.of("histoire", "motto", "apparence"),
+                "Thorin");
 
-        assertEquals("Ithoril", ctx.getLoreName());
-        assertEquals("PNJ", ctx.getFolderName());
-        assertEquals("Fiche PNJ", ctx.getTemplateName());
-        assertEquals(3, ctx.getTemplateFields().size());
-        assertEquals("Thorin", ctx.getPageTitle());
+        assertEquals("Ithoril", ctx.loreName());
+        assertEquals("PNJ", ctx.folderName());
+        assertEquals("Fiche PNJ", ctx.templateName());
+        assertEquals(3, ctx.templateFields().size());
+        assertEquals("Thorin", ctx.pageTitle());
     }
 
     @Test
     void twoContexts_withSameFields_areEqual() {
-        GenerationContext a = GenerationContext.builder()
-                .loreName("X").pageTitle("A").templateFields(List.of("f1")).build();
-        GenerationContext b = GenerationContext.builder()
-                .loreName("X").pageTitle("A").templateFields(List.of("f1")).build();
+        GenerationContext a = new GenerationContext("X", null, null, null, List.of("f1"), "A");
+        GenerationContext b = new GenerationContext("X", null, null, null, List.of("f1"), "A");
         assertEquals(a, b);
     }
 
     @Test
     void twoContexts_differingOnPageTitle_areNotEqual() {
-        GenerationContext a = GenerationContext.builder().pageTitle("A").build();
-        GenerationContext b = GenerationContext.builder().pageTitle("B").build();
+        GenerationContext a = new GenerationContext(null, null, null, null, null, "A");
+        GenerationContext b = new GenerationContext(null, null, null, null, null, "B");
         assertNotEquals(a, b);
     }
 }

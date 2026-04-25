@@ -148,4 +148,54 @@
     </button>
   </div>
 
+  <!-- Bloc Mises a jour -->
+  <section class="card" *ngIf="config.updateCheckEnabled">
+    <h2>Mises a jour</h2>
+    <p class="hint">Verifie aupres du registry Docker si une nouvelle version
+      des conteneurs (core, brain, web) est disponible. Postgres et MinIO sont
+      exclus — ils sont mis a jour manuellement.</p>
+
+    <div class="form-row">
+      <button type="button" class="btn-secondary" (click)="checkUpdates()" [disabled]="updateChecking">
+        <lucide-icon [img]="RefreshCw" [size]="14"></lucide-icon>
+        <span>{{ updateChecking ? 'Verification...' : 'Verifier maintenant' }}</span>
+      </button>
+    </div>
+
+    <div *ngIf="updateStatus && !updateStatus.enabled" class="hint">
+      Feature non configuree (WATCHTOWER_TOKEN absent).
+    </div>
+
+    <div *ngIf="updateStatus?.enabled">
+      <div *ngIf="updateStatus?.updateAvailable" class="alert alert-success">
+        <lucide-icon [img]="Download" [size]="16"></lucide-icon>
+        <span>Une mise a jour est disponible.</span>
+      </div>
+      <div *ngIf="!updateStatus?.updateAvailable" class="hint">
+        Tout est a jour (verifie le {{ updateStatus?.checkedAt | date:'short' }}).
+      </div>
+
+      <ul class="update-images" *ngIf="updateStatus?.images?.length">
+        <li *ngFor="let img of updateStatus?.images">
+          <strong>{{ img.image }}</strong>
+          <span *ngIf="img.updateAvailable" class="badge-update">MAJ dispo</span>
+          <span *ngIf="!img.updateAvailable && img.remoteDigest" class="badge-ok">a jour</span>
+          <span *ngIf="!img.remoteDigest" class="badge-warn">indisponible</span>
+        </li>
+      </ul>
+
+      <div class="form-row" *ngIf="updateStatus?.updateAvailable">
+        <button type="button" class="btn-primary" (click)="applyUpdate()" [disabled]="updateApplying">
+          <lucide-icon [img]="Download" [size]="16"></lucide-icon>
+          <span>{{ updateApplying ? 'Mise a jour en cours...' : 'Mettre a jour maintenant' }}</span>
+        </button>
+      </div>
+
+      <div *ngIf="updateMessage" class="alert alert-success">
+        <lucide-icon [img]="Check" [size]="16"></lucide-icon>
+        <span>{{ updateMessage }}</span>
+      </div>
+    </div>
+  </section>
+
 </div>

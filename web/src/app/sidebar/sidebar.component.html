@@ -60,6 +60,7 @@
     <button class="tool-btn" *ngIf="!config.demoMode" [class.active]="currentRoute.startsWith('/settings')" (click)="navigateTo('/settings')">
       <lucide-icon [img]="Settings" [size]="16"></lucide-icon>
       <span>Paramètres</span>
+      <span class="update-badge" *ngIf="updateAvailable$ | async" title="Mise a jour disponible">MAJ</span>
     </button>
   </div>
 

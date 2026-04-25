@@ -14,31 +14,29 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class PageContextTest {
 
     @Test
-    void builder_preservesAllFields() {
-        PageContext ctx = PageContext.builder()
-                .title("Thorin")
-                .templateName("PNJ")
-                .templateFields(List.of("histoire", "apparence", "motto"))
-                .values(Map.of("histoire", "Nee sous une etoile rouge"))
-                .build();
+    void constructor_preservesAllFields() {
+        PageContext ctx = new PageContext(
+                "Thorin",
+                "PNJ",
+                List.of("histoire", "apparence", "motto"),
+                Map.of("histoire", "Nee sous une etoile rouge"));
 
-        assertEquals("Thorin", ctx.getTitle());
-        assertEquals("PNJ", ctx.getTemplateName());
-        assertEquals(3, ctx.getTemplateFields().size());
-        assertEquals(1, ctx.getValues().size());
+        assertEquals("Thorin", ctx.title());
+        assertEquals("PNJ", ctx.templateName());
+        assertEquals(3, ctx.templateFields().size());
+        assertEquals(1, ctx.values().size());
     }
 
     @Test
     void emptyValues_areAllowed() {
         // Page vierge : template defini mais aucun champ rempli (cas generation ex-nihilo).
-        PageContext ctx = PageContext.builder()
-                .title("Nouveau PNJ")
-                .templateName("PNJ")
-                .templateFields(List.of("histoire", "apparence"))
-                .values(Map.of())
-                .build();
+        PageContext ctx = new PageContext(
+                "Nouveau PNJ",
+                "PNJ",
+                List.of("histoire", "apparence"),
+                Map.of());
 
-        assertTrue(ctx.getValues().isEmpty());
-        assertEquals(2, ctx.getTemplateFields().size());
+        assertTrue(ctx.values().isEmpty());
+        assertEquals(2, ctx.templateFields().size());
     }
 }

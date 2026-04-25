@@ -9,48 +9,36 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 /**
  * Tests unitaires pour SceneBranch (Value Object).
  * Verifie :
- *  - l'immuabilite (pas de setters : seul le builder permet la construction),
- *  - l'egalite structurelle generee par @Value (equals/hashCode sur tous les
+ *  - l'immuabilite (record : aucun setter, constructeur canonique uniquement),
+ *  - l'egalite structurelle generee par record (equals/hashCode sur tous les
  *    champs) — deux branches aux memes champs sont strictement egales,
  *  - le support du champ optionnel {@code condition}.
  */
 class SceneBranchTest {
 
     @Test
-    void builder_exposesAllFields() {
-        SceneBranch branch = SceneBranch.builder()
-                .label("Si les joueurs attaquent le garde")
-                .targetSceneId("sc-combat")
-                .condition("initiative > 15")
-                .build();
+    void constructor_exposesAllFields() {
+        SceneBranch branch = new SceneBranch(
+                "Si les joueurs attaquent le garde",
+                "sc-combat",
+                "initiative > 15");
 
-        assertEquals("Si les joueurs attaquent le garde", branch.getLabel());
-        assertEquals("sc-combat", branch.getTargetSceneId());
-        assertEquals("initiative > 15", branch.getCondition());
+        assertEquals("Si les joueurs attaquent le garde", branch.label());
+        assertEquals("sc-combat", branch.targetSceneId());
+        assertEquals("initiative > 15", branch.condition());
     }
 
     @Test
     void condition_isOptional() {
-        SceneBranch branch = SceneBranch.builder()
-                .label("sortie par la porte")
-                .targetSceneId("sc-corridor")
-                .build();
+        SceneBranch branch = SceneBranch.of("sortie par la porte", "sc-corridor");
 
-        assertNull(branch.getCondition());
+        assertNull(branch.condition());
     }
 
     @Test
     void twoBranches_withSameFields_areEqual() {
-        SceneBranch a = SceneBranch.builder()
-                .label("fuite")
-                .targetSceneId("sc-2")
-                .condition(null)
-                .build();
-        SceneBranch b = SceneBranch.builder()
-                .label("fuite")
-                .targetSceneId("sc-2")
-                .condition(null)
-                .build();
+        SceneBranch a = new SceneBranch("fuite", "sc-2", null);
+        SceneBranch b = new SceneBranch("fuite", "sc-2", null);
 
         assertEquals(a, b);
         assertEquals(a.hashCode(), b.hashCode());
@@ -58,16 +46,16 @@ class SceneBranchTest {
 
     @Test
     void twoBranches_differingOnTargetSceneId_areNotEqual() {
-        SceneBranch a = SceneBranch.builder().label("X").targetSceneId("sc-1").build();
-        SceneBranch b = SceneBranch.builder().label("X").targetSceneId("sc-2").build();
+        SceneBranch a = SceneBranch.of("X", "sc-1");
+        SceneBranch b = SceneBranch.of("X", "sc-2");
 
         assertNotEquals(a, b);
     }
 
     @Test
     void twoBranches_differingOnCondition_areNotEqual() {
-        SceneBranch a = SceneBranch.builder().label("X").targetSceneId("sc-1").condition("A").build();
-        SceneBranch b = SceneBranch.builder().label("X").targetSceneId("sc-1").condition("B").build();
+        SceneBranch a = new SceneBranch("X", "sc-1", "A");
+        SceneBranch b = new SceneBranch("X", "sc-1", "B");
 
         assertNotEquals(a, b);
     }

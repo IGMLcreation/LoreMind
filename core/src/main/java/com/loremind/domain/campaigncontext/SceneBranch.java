@@ -1,31 +1,25 @@
 package com.loremind.domain.campaigncontext;
 
-import lombok.Builder;
-import lombok.Value;
-import lombok.extern.jackson.Jacksonized;
-
 /**
  * Value Object représentant une "sortie" narrative depuis une Scene.
  * Décrit un choix offert aux joueurs et la scène de destination associée.
  * <p>
- * Immuable (@Value) : pour "modifier" une branche on la remplace.
- * @Jacksonized : permet à Jackson (sérialisation JSON via le converter JPA)
- * de reconstruire l'objet en passant par le builder malgré l'absence de setters.
+ * Record Java : immuable par construction, sans aucune dépendance technique
+ * (pas de Lombok, pas de Jackson). Jackson 2.12+ sait sérialiser/désérialiser
+ * les records nativement via le constructeur canonique — c'est ce dont
+ * dépend le SceneBranchListJsonConverter pour le stockage JSONB.
  * <p>
  * Règle métier : targetSceneId DOIT pointer vers une Scene du MÊME Chapter
  * (validation portée par SceneService).
+ *
+ * @param label          Libellé du choix (ex: "Si les joueurs attaquent le garde").
+ * @param targetSceneId  Id de la Scene de destination, intra-chapitre uniquement.
+ * @param condition      Notes MJ privées sur la condition de déclenchement (optionnel).
  */
-@Value
-@Builder
-@Jacksonized
-public class SceneBranch {
+public record SceneBranch(String label, String targetSceneId, String condition) {
 
-    /** Libellé du choix (ex: "Si les joueurs attaquent le garde"). */
-    String label;
-
-    /** Id de la Scene de destination, intra-chapitre uniquement. */
-    String targetSceneId;
-
-    /** Notes MJ privées sur la condition de déclenchement (optionnel). */
-    String condition;
+    /** Raccourci pour construire une branche sans condition (cas le plus courant). */
+    public static SceneBranch of(String label, String targetSceneId) {
+        return new SceneBranch(label, targetSceneId, null);
+    }
 }

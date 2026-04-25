@@ -1,5 +1,6 @@
 package com.loremind.infrastructure.web.controller;
 
+import com.loremind.infrastructure.updates.UpdateCheckService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,13 +19,18 @@ import java.util.Map;
 public class ConfigController {
 
     private final boolean demoMode;
+    private final UpdateCheckService updates;
 
-    public ConfigController(@Value("${app.demo-mode:false}") boolean demoMode) {
+    public ConfigController(@Value("${app.demo-mode:false}") boolean demoMode,
+                            UpdateCheckService updates) {
         this.demoMode = demoMode;
+        this.updates = updates;
     }
 
     @GetMapping
     public Map<String, Object> getPublicConfig() {
-        return Map.of("demoMode", demoMode);
+        return Map.of(
+                "demoMode", demoMode,
+                "updateCheckEnabled", updates.isEnabled());
     }
 }
