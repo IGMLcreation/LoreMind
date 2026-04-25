@@ -28,7 +28,7 @@ public class ChapterController {
     @PostMapping
     public ResponseEntity<ChapterDTO> createChapter(@RequestBody ChapterDTO chapterDTO) {
         Chapter chapter = chapterMapper.toDomain(chapterDTO);
-        Chapter createdChapter = chapterService.createChapter(chapter.getName(), chapter.getDescription(), chapter.getArcId(), chapter.getOrder());
+        Chapter createdChapter = chapterService.createChapter(chapter.getName(), chapter.getDescription(), chapter.getArcId(), chapter.getOrder(), chapter.getIcon());
         return ResponseEntity.ok(chapterMapper.toDTO(createdChapter));
     }
 

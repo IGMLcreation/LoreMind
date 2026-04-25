@@ -35,6 +35,26 @@
       color: white;
       margin: 0 0 0.3rem;
       line-height: 1.2;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+
+      // Pastille violette autour de l'icone. <lucide-icon> est inline par
+      // defaut : sans inline-flex le SVG se cale en haut-gauche de la boite
+      // au lieu d'etre centre. On fixe aussi la taille pour que la pastille
+      // soit toujours carree quelle que soit l'icone.
+      .title-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        color: #a5b4fc;
+        background: #1e1b4b;
+        border: 1px solid #4338ca;
+        border-radius: 8px;
+        flex-shrink: 0;
+      }
     }
     .view-subtitle {
       color: #9ca3af;

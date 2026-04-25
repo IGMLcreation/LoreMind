@@ -2,7 +2,10 @@
 
   <header class="view-header">
     <div>
-      <h1>{{ arc.name }}</h1>
+      <h1>
+        <lucide-icon *ngIf="arc.icon" [img]="resolveCampaignIcon(arc.icon)" [size]="22" class="title-icon"></lucide-icon>
+        {{ arc.name }}
+      </h1>
       <p class="view-subtitle">Arc narratif</p>
     </div>
     <div class="view-actions">

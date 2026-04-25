@@ -37,6 +37,9 @@ public class ArcJpaEntity {
     @Column(name = "\"order\"", nullable = false)
     private int order;
 
+    @Column
+    private String icon;
+
     // Champs narratifs enrichis — ajoutés automatiquement par Hibernate DDL (ddl-auto=update)
     @Column(columnDefinition = "TEXT")
     private String themes;

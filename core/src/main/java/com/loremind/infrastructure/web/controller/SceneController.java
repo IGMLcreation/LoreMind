@@ -28,7 +28,7 @@ public class SceneController {
     @PostMapping
     public ResponseEntity<SceneDTO> createScene(@RequestBody SceneDTO sceneDTO) {
         Scene scene = sceneMapper.toDomain(sceneDTO);
-        Scene createdScene = sceneService.createScene(scene.getName(), scene.getDescription(), scene.getChapterId(), scene.getOrder());
+        Scene createdScene = sceneService.createScene(scene.getName(), scene.getDescription(), scene.getChapterId(), scene.getOrder(), scene.getIcon());
         return ResponseEntity.ok(sceneMapper.toDTO(createdScene));
     }
 

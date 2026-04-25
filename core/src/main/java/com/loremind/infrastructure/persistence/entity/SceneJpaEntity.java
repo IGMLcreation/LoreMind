@@ -39,6 +39,9 @@ public class SceneJpaEntity {
     @Column(name = "\"order\"", nullable = false)
     private int order;
 
+    @Column
+    private String icon;
+
     // Champs narratifs enrichis — ajoutés automatiquement par Hibernate (ddl-auto=update)
 
     // Contexte et ambiance

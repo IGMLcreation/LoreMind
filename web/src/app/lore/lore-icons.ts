@@ -4,6 +4,7 @@ import {
   BookOpen, Scroll, Wand2, Sparkles, TreePine, Mountain,
   Ship, Flame, Star, Moon, Key, Globe, Compass, LucideIconData
 } from 'lucide-angular';
+import { CAMPAIGN_ICON_OPTIONS } from '../campaigns/campaign-icons';
 
 /**
  * Registre partagé d'icônes disponibles pour les dossiers (LoreNode).
@@ -46,8 +47,15 @@ export const LORE_ICON_OPTIONS: IconOption[] = [
 /** Icône par défaut pour un dossier sans icône. */
 export const DEFAULT_FOLDER_ICON: LucideIconData = Folder;
 
-/** Résout une clé d'icône en LucideIconData. Fallback : icône dossier par défaut. */
+/**
+ * Résout une clé d'icône en LucideIconData. Consulte LORE_ICON_OPTIONS puis
+ * CAMPAIGN_ICON_OPTIONS pour permettre à la sidebar partagée d'afficher
+ * indifféremment des icônes de dossiers (lore) ou d'arcs/chapitres/scènes
+ * (campagne). Fallback : icône dossier par défaut.
+ */
 export function resolveIcon(key: string | null | undefined): LucideIconData {
   if (!key) return DEFAULT_FOLDER_ICON;
-  return LORE_ICON_OPTIONS.find(o => o.key === key)?.icon ?? DEFAULT_FOLDER_ICON;
+  const loreMatch = LORE_ICON_OPTIONS.find(o => o.key === key);
+  if (loreMatch) return loreMatch.icon;
+  return CAMPAIGN_ICON_OPTIONS.find(o => o.key === key)?.icon ?? DEFAULT_FOLDER_ICON;
 }

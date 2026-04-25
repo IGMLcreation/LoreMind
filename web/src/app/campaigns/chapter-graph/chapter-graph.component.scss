@@ -11,7 +11,7 @@
   margin-bottom: 2rem;
 
   .subtitle {
-    color: #6b7280;
+    color: #9ca3af;
     font-size: 0.9rem;
     margin: 0.25rem 0 0;
   }
@@ -20,15 +20,17 @@
 .graph-empty {
   padding: 2rem;
   text-align: center;
-  color: #6b7280;
-  background: #f9fafb;
+  color: #9ca3af;
+  background: #14141f;
   border-radius: 8px;
-  border: 1px dashed #d1d5db;
+  border: 1px dashed #374151;
 }
 
 .graph-container {
-  background: #fafafa;
-  border: 1px solid #e5e7eb;
+  // Fond legerement plus sombre que la couleur des noeuds : creuse l'image
+  // sans aller jusqu'au noir pur (qui « brulerait » par contraste).
+  background: #0d0d18;
+  border: 1px solid #374151;
   border-radius: 12px;
   padding: 20px;
   overflow: auto;
@@ -41,14 +43,27 @@
 .graph-svg {
   display: block;
   max-width: 100%;
+  // Empeche le browser de clipper le contenu qui depasserait le viewport SVG
+  // pendant un drag — le scroll du conteneur prend le relais.
+  overflow: visible;
+  // Évite que le navigateur intercepte le drag pour faire de la sélection texte
+  // ou du panning natif sur les nœuds.
+  touch-action: none;
+  user-select: none;
 }
 
 .node {
-  cursor: pointer;
+  cursor: grab;
+  // Ombre portee douce pour detacher chaque noeud du fond. Faible alpha pour
+  // rester subtil sur fond sombre, large diffusion pour rester organique.
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
 
   .node-box {
-    fill: #ffffff;
-    stroke: #1f2937;
+    // Indigo desature : reprend la palette accent (#6c63ff) en version assombrie
+    // pour donner du caractere aux noeuds sans saturer la vue. Bordure assortie
+    // un peu plus claire pour bien dessiner le contour.
+    fill: #1f1d3a;
+    stroke: #4f4a7a;
     stroke-width: 2;
     transition: fill 0.15s ease, stroke 0.15s ease;
   }
@@ -56,31 +71,47 @@
   .node-label {
     font-size: 0.9rem;
     font-weight: 500;
-    fill: #1f2937;
+    fill: #f3f4f6;
     pointer-events: none;
   }
 
   &:hover .node-box {
-    fill: #eef2ff;
-    stroke: #4f46e5;
+    fill: #2c2952;
+    stroke: #8b80ff;
+  }
+
+  &.dragging {
+    cursor: grabbing;
+    .node-box {
+      fill: #2c2952;
+      stroke: #8b80ff;
+      filter: drop-shadow(0 4px 10px rgba(108, 99, 255, 0.35));
+    }
   }
 }
 
 .edge-label {
   font-size: 0.75rem;
-  fill: #4b5563;
+  fill: #e5e7eb;
   font-style: italic;
-  // Halo blanc autour du texte pour garantir la lisibilité même s'il passe
-  // sur une ligne ou un autre élément.
+  cursor: grab;
+  // Halo sombre autour du texte pour rester lisible quand un label passe
+  // par-dessus une arête ou un autre nœud. Aligne sur la couleur du fond.
   paint-order: stroke;
-  stroke: #fafafa;
-  stroke-width: 3px;
+  stroke: #0d0d18;
+  stroke-width: 4px;
   stroke-linejoin: round;
+
+  &:hover { fill: #ffffff; }
+  &.dragging {
+    cursor: grabbing;
+    fill: #ffffff;
+  }
 }
 
 .graph-hint {
   display: block;
   margin-top: 1rem;
-  color: #6b7280;
+  color: #9ca3af;
   font-size: 0.85rem;
 }

@@ -13,6 +13,14 @@
         <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
         Assistant IA
       </button>
+      <button type="button" class="btn-secondary" (click)="cancel()">Annuler</button>
+      <button type="button" class="btn-danger" (click)="delete()">
+        <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+        Supprimer
+      </button>
+      <button type="button" class="btn-primary" (click)="submit()" [disabled]="form.invalid">
+        Sauvegarder
+      </button>
     </div>
   </div>
 
@@ -61,6 +69,11 @@
         placeholder="Résumé en une ou deux phrases de ce qui se passe..."
         rows="3">
       </textarea>
+    </div>
+
+    <div class="field">
+      <label>Icône</label>
+      <app-icon-picker [options]="campaignIconOptions" [(selected)]="selectedIcon"></app-icon-picker>
     </div>
 
     <!-- Section : Contexte et ambiance -->
@@ -216,17 +229,6 @@
         💡 Cette campagne n'est associée à aucun univers. Associez-la à un Lore dans l'écran de la campagne
         pour pouvoir épingler des pages du Lore à cette scène.
       </small>
-    </div>
-
-    <div class="form-actions">
-      <button type="submit" class="btn-primary" [disabled]="form.invalid">
-        Sauvegarder
-      </button>
-      <button type="button" class="btn-secondary" (click)="cancel()">Annuler</button>
-      <button type="button" class="btn-danger" (click)="delete()">
-        <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
-        Supprimer
-      </button>
     </div>
 
   </form>

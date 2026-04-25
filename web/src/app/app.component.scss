@@ -5,6 +5,10 @@
 
 .main-content {
   flex: 1;
-  padding: 2rem;
+  // padding-top: 0 — sinon le contenu defile dans la zone de padding
+  // au-dessus du `.page-header` sticky (top: 0 pin sur l'edge interne du
+  // padding-box). Chaque page-wrapper definit deja son propre padding-top
+  // qui devient l'unique source d'espacement haut.
+  padding: 0 2rem 2rem;
   overflow-y: auto;
 }

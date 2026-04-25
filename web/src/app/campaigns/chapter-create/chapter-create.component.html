@@ -28,6 +28,11 @@
       </textarea>
     </div>
 
+    <div class="field">
+      <label>Icône</label>
+      <app-icon-picker [options]="campaignIconOptions" [(selected)]="selectedIcon"></app-icon-picker>
+    </div>
+
     <div class="form-actions">
       <button type="submit" class="btn-primary" [disabled]="form.invalid">
         Créer le chapitre

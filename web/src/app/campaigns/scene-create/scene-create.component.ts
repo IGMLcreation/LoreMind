@@ -9,6 +9,8 @@ import { CharacterService } from '../../services/character.service';
 import { LayoutService, GlobalItem } from '../../services/layout.service';
 import { Campaign } from '../../services/campaign.model';
 import { loadCampaignTreeData, buildCampaignTree } from '../campaign-tree.helper';
+import { IconPickerComponent } from '../../shared/icon-picker/icon-picker.component';
+import { CAMPAIGN_ICON_OPTIONS } from '../campaign-icons';
 
 /**
  * Écran de création d'une nouvelle scène rattachée à un chapitre.
@@ -17,11 +19,14 @@ import { loadCampaignTreeData, buildCampaignTree } from '../campaign-tree.helper
 @Component({
   selector: 'app-scene-create',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule],
+  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, IconPickerComponent],
   templateUrl: './scene-create.component.html',
   styleUrls: ['./scene-create.component.scss']
 })
 export class SceneCreateComponent implements OnInit, OnDestroy {
+  readonly campaignIconOptions = CAMPAIGN_ICON_OPTIONS;
+  selectedIcon: string | null = null;
+
   form: FormGroup;
   campaignId = '';
   arcId = '';
@@ -84,7 +89,8 @@ export class SceneCreateComponent implements OnInit, OnDestroy {
       name: this.form.value.name,
       description: this.form.value.description,
       chapterId: this.chapterId,
-      order: this.existingSceneCount + 1
+      order: this.existingSceneCount + 1,
+      icon: this.selectedIcon
     }).subscribe({
       next: (created) => this.router.navigate(['/campaigns', this.campaignId, 'arcs', this.arcId, 'chapters', this.chapterId, 'scenes', created.id]),
       error: () => console.error('Erreur lors de la création de la scène')

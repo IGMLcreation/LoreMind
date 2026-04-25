@@ -27,6 +27,7 @@ public class SceneMapper {
         dto.setDescription(scene.getDescription());
         dto.setChapterId(scene.getChapterId());
         dto.setOrder(scene.getOrder());
+        dto.setIcon(scene.getIcon());
         dto.setLocation(scene.getLocation());
         dto.setTiming(scene.getTiming());
         dto.setAtmosphere(scene.getAtmosphere());
@@ -59,6 +60,7 @@ public class SceneMapper {
                 .description(dto.getDescription())
                 .chapterId(dto.getChapterId())
                 .order(dto.getOrder())
+                .icon(dto.getIcon())
                 .location(dto.getLocation())
                 .timing(dto.getTiming())
                 .atmosphere(dto.getAtmosphere())

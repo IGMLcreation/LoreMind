@@ -9,6 +9,8 @@ import { CharacterService } from '../../services/character.service';
 import { LayoutService, GlobalItem } from '../../services/layout.service';
 import { Campaign } from '../../services/campaign.model';
 import { loadCampaignTreeData, buildCampaignTree } from '../campaign-tree.helper';
+import { IconPickerComponent } from '../../shared/icon-picker/icon-picker.component';
+import { CAMPAIGN_ICON_OPTIONS } from '../campaign-icons';
 
 /**
  * Écran de création d'un nouveau chapitre rattaché à un arc.
@@ -17,11 +19,14 @@ import { loadCampaignTreeData, buildCampaignTree } from '../campaign-tree.helper
 @Component({
   selector: 'app-chapter-create',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule],
+  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, IconPickerComponent],
   templateUrl: './chapter-create.component.html',
   styleUrls: ['./chapter-create.component.scss']
 })
 export class ChapterCreateComponent implements OnInit, OnDestroy {
+  readonly campaignIconOptions = CAMPAIGN_ICON_OPTIONS;
+  selectedIcon: string | null = null;
+
   form: FormGroup;
   campaignId = '';
   arcId = '';
@@ -82,7 +87,8 @@ export class ChapterCreateComponent implements OnInit, OnDestroy {
       name: this.form.value.name,
       description: this.form.value.description,
       arcId: this.arcId,
-      order: this.existingChapterCount + 1
+      order: this.existingChapterCount + 1,
+      icon: this.selectedIcon
     }).subscribe({
       next: (created) => this.router.navigate(['/campaigns', this.campaignId, 'arcs', this.arcId, 'chapters', created.id]),
       error: () => console.error('Erreur lors de la création du chapitre')

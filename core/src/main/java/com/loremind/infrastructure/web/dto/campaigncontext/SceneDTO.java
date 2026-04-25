@@ -17,6 +17,9 @@ public class SceneDTO {
     private String chapterId;
     private int order;
 
+    /** Cle d'icone (cf. CAMPAIGN_ICON_OPTIONS cote front). */
+    private String icon;
+
     // Champs narratifs enrichis
     private String location;
     private String timing;

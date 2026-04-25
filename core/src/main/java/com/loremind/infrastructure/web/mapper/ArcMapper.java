@@ -24,6 +24,7 @@ public class ArcMapper {
         dto.setDescription(arc.getDescription());
         dto.setCampaignId(arc.getCampaignId());
         dto.setOrder(arc.getOrder());
+        dto.setIcon(arc.getIcon());
         dto.setThemes(arc.getThemes());
         dto.setStakes(arc.getStakes());
         dto.setGmNotes(arc.getGmNotes());
@@ -46,6 +47,7 @@ public class ArcMapper {
                 .description(dto.getDescription())
                 .campaignId(dto.getCampaignId())
                 .order(dto.getOrder())
+                .icon(dto.getIcon())
                 .themes(dto.getThemes())
                 .stakes(dto.getStakes())
                 .gmNotes(dto.getGmNotes())

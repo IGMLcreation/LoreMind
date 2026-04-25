@@ -30,11 +30,16 @@ public class ChapterService {
     public record DeletionImpact(int scenes) {}
 
     public Chapter createChapter(String name, String description, String arcId, int order) {
+        return createChapter(name, description, arcId, order, null);
+    }
+
+    public Chapter createChapter(String name, String description, String arcId, int order, String icon) {
         Chapter chapter = Chapter.builder()
                 .name(name)
                 .description(description)
                 .arcId(arcId)
                 .order(order)
+                .icon(icon)
                 .build();
         return chapterRepository.save(chapter);
     }

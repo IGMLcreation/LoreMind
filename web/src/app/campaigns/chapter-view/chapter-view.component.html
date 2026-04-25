@@ -2,7 +2,10 @@
 
   <header class="view-header">
     <div>
-      <h1>{{ chapter.name }}</h1>
+      <h1>
+        <lucide-icon *ngIf="chapter.icon" [img]="resolveCampaignIcon(chapter.icon)" [size]="22" class="title-icon"></lucide-icon>
+        {{ chapter.name }}
+      </h1>
       <p class="view-subtitle">Chapitre</p>
     </div>
     <div class="view-actions">
