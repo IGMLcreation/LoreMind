@@ -40,7 +40,7 @@
   Auteur       : ietm64
   Licence      : AGPL-3.0
   Projet       : LoreMindMJ - assistant pour Maitres de Jeu de JDR
-  Version      : 0.6.8
+  Version      : 0.6.9
 
 .LINK
   https://git.igmlcreation.fr/ietm64/loremind

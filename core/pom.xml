@@ -14,7 +14,7 @@
 
     <groupId>com.loremind</groupId>
     <artifactId>loremind-core</artifactId>
-    <version>0.6.8</version>
+    <version>0.6.9</version>
     <name>LoreMind Core</name>
     <description>Backend Core - Architecture Hexagonale</description>
 
