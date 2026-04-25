@@ -213,37 +213,60 @@ if ($llmProvider -eq 'onemin' -and -not $NonInteractive) {
     $onemKey = Read-Host "  Cle API 1min.ai"
 }
 
-# --- Mode Ollama : embarque (defaut) vs hote -------------------------------
-# Embarque  : service 'ollama' du compose (profile local-ollama). Zero config reseau.
-# Hote      : Ollama deja installe sur la machine. Necessite OLLAMA_HOST=0.0.0.0
-#             pour que Docker Desktop puisse l'atteindre via host.docker.internal.
-$useEmbeddedOllama = $true
+# --- Mode Ollama : 3 options possibles -------------------------------------
+# 1. Hote    : Ollama est deja installe sur cette machine -> on configure le
+#              pare-feu pour que Docker puisse l'atteindre sans exposer le port.
+# 2. Embarque : Ollama tourne dans un conteneur Docker dedie (profile local-ollama).
+# 3. Aucun   : on n'installe rien tout de suite. L'utilisateur configurera
+#              Ollama plus tard via la page Parametres de LoreMind.
+$ollamaMode = 'embedded'   # valeurs : 'host' | 'embedded' | 'none'
 $ollamaBaseUrl = 'http://ollama:11434'
 if ($llmProvider -eq 'ollama') {
-    $useEmbeddedOllama = if ($NonInteractive) { $true } else {
+    $hasHostOllama = if ($NonInteractive) { $false } else {
         $r = Read-Host "  Avez-vous deja Ollama installe sur cette machine ? [o/N]"
-        -not ($r -match '^(o|O|y|Y|oui|yes)$')
+        ($r -match '^(o|O|y|Y|oui|yes)$')
     }
-    if (-not $useEmbeddedOllama) {
-        $ollamaBaseUrl = 'http://host.docker.internal:11434'
-        Write-Step "Configuration d'Ollama hote..."
-        # Pour que le conteneur Docker puisse atteindre Ollama via host.docker.internal,
-        # Ollama doit ecouter sur 0.0.0.0 (et non 127.0.0.1 par defaut). On positionne
-        # la variable d'environnement utilisateur OLLAMA_HOST en consequence.
-        try {
-            [Environment]::SetEnvironmentVariable('OLLAMA_HOST','0.0.0.0:11434','User')
-            Write-Ok "Variable d'environnement utilisateur OLLAMA_HOST=0.0.0.0:11434 definie"
-            Write-Host ""
-            Write-Host "  Pour que ce changement prenne effet, vous devez :" -ForegroundColor Yellow
-            Write-Host "    1. Quitter completement Ollama (icone systray > Quit Ollama)"
-            Write-Host "    2. Relancer Ollama"
-            Write-Host ""
-            Read-Host "  Appuyez sur Entree une fois Ollama redemarre"
-        } catch {
-            Write-Warn2 "Impossible de definir OLLAMA_HOST automatiquement. Definissez-la manuellement (Parametres systeme > Variables d'environnement) puis redemarrez Ollama."
-        }
+    if ($hasHostOllama) {
+        $ollamaMode = 'host'
     } else {
+        # Pas d'Ollama present : proposer l'installation Docker, sinon laisser
+        # l'utilisateur le configurer plus tard via la page Parametres.
+        $installViaDocker = if ($NonInteractive) { $true } else {
+            $r = Read-Host "  Voulez-vous installer Ollama via Docker maintenant ? [O/n]"
+            -not ($r -match '^(n|N|no|non)$')
+        }
+        $ollamaMode = if ($installViaDocker) { 'embedded' } else { 'none' }
+    }
+
+    if ($ollamaMode -eq 'host') {
+        $ollamaBaseUrl = 'http://host.docker.internal:11434'
+        # Delegue au helper dedie : configure OLLAMA_HOST=0.0.0.0 ET ajoute des
+        # regles Windows Firewall qui n'autorisent l'acces qu'aux conteneurs
+        # Docker (loopback + sous-reseaux Docker Desktop). Resultat : Ollama
+        # n'est pas expose au LAN ni a Internet.
+        $secureHelper = Join-Path $PSScriptRoot 'secure-host-ollama.ps1'
+        if (Test-Path $secureHelper) {
+            Write-Step "Configuration securisee d'Ollama hote (helper dedie)..."
+            try {
+                & $secureHelper
+            } catch {
+                Write-Warn2 "Le helper secure-host-ollama.ps1 a echoue : $($_.Exception.Message)"
+                Write-Warn2 "Configurez Ollama manuellement avant de continuer."
+            }
+            Write-Host ""
+            Read-Host "Appuyez sur Entree une fois Ollama redemarre pour continuer l'installation"
+        } else {
+            Write-Warn2 "secure-host-ollama.ps1 introuvable a cote de install.ps1."
+            Write-Warn2 "Telechargez-le depuis le depot et relancez-le manuellement."
+        }
+    } elseif ($ollamaMode -eq 'embedded') {
         Write-Ok "Ollama sera lance dans Docker (modeles dans un volume Docker dedie)"
+    } else {
+        # Mode 'none' : on cible host.docker.internal en supposant qu'Ollama
+        # sera installe plus tard sur l'hote. L'utilisateur peut aussi changer
+        # l'URL via la page Parametres pour pointer vers un Ollama distant.
+        $ollamaBaseUrl = 'http://host.docker.internal:11434'
+        Write-Warn2 "Aucun Ollama ne sera installe pour le moment. Configurez-le plus tard via la page Parametres de LoreMind."
     }
 }
 
@@ -255,8 +278,8 @@ $autoUpdate = if ($NonInteractive) { $true } else {
 }
 # Combinaison de profiles : autoupdate et/ou local-ollama (separes par virgule).
 $profilesList = @()
-if ($autoUpdate)              { $profilesList += 'autoupdate' }
-if ($useEmbeddedOllama -and $llmProvider -eq 'ollama') { $profilesList += 'local-ollama' }
+if ($autoUpdate)                                              { $profilesList += 'autoupdate' }
+if ($ollamaMode -eq 'embedded' -and $llmProvider -eq 'ollama'){ $profilesList += 'local-ollama' }
 $composeProfiles = $profilesList -join ','
 
 $envContent = @"
@@ -323,13 +346,19 @@ if ($autoUpdate) {
     Write-Host " Auto-update  : desactive (mise a jour manuelle uniquement)"
 }
 if ($llmProvider -eq 'ollama') {
-    if ($useEmbeddedOllama) {
-        Write-Host " Ollama       : embarque (service Docker 'ollama')" -ForegroundColor Green
-        Write-Host ""
-        Write-Host " IMPORTANT : telechargez un modele avant utilisation :"
-        Write-Host "   docker exec -it loremind-ollama ollama pull $llmModel"
-    } else {
-        Write-Host " Ollama       : hote (http://host.docker.internal:11434)"
+    switch ($ollamaMode) {
+        'embedded' {
+            Write-Host " Ollama       : embarque (service Docker 'ollama')" -ForegroundColor Green
+            Write-Host ""
+            Write-Host " IMPORTANT : telechargez un modele avant utilisation :"
+            Write-Host "   docker exec -it loremind-ollama ollama pull $llmModel"
+        }
+        'host' {
+            Write-Host " Ollama       : hote (configure via secure-host-ollama.ps1)"
+        }
+        'none' {
+            Write-Host " Ollama       : non configure - a faire via Parametres dans l'app" -ForegroundColor Yellow
+        }
     }
 }
 Write-Host ""

@@ -123,36 +123,53 @@ if [ "$LLM_PROVIDER" = "onemin" ] && [ "$NON_INTERACTIVE" != "1" ]; then
     ONEMIN_API_KEY="$(ask "Cle API 1min.ai" "")"
 fi
 
-# --- Mode Ollama : embarque (defaut) vs hote -------------------------------
-# Embarque : service 'ollama' du compose (profile local-ollama). Zero config reseau.
-# Hote     : Ollama deja installe sur la machine. Necessite OLLAMA_HOST=0.0.0.0
-#            via override systemd pour que le conteneur Brain l'atteigne.
-USE_EMBEDDED_OLLAMA=1
+# --- Mode Ollama : 3 options possibles -------------------------------------
+# 1. host     : Ollama deja installe sur la machine -> helper de securisation
+# 2. embedded : service 'ollama' du compose (profile local-ollama)
+# 3. none     : aucune installation, configuration ulterieure via l'app
+OLLAMA_MODE="embedded"
 OLLAMA_BASE_URL_VAL="http://ollama:11434"
 LLM_MODEL_VAL="gemma4:26b"
 if [ "$LLM_PROVIDER" = "ollama" ]; then
     HOST_OLLAMA_REPLY="$(ask "Avez-vous deja Ollama installe sur cette machine ? [o/N]" "N")"
     case "$HOST_OLLAMA_REPLY" in
         o|O|y|Y|oui|yes|Oui|Yes)
-            USE_EMBEDDED_OLLAMA=0
-            OLLAMA_BASE_URL_VAL="http://host.docker.internal:11434"
-            step "Configuration d'Ollama hote (OLLAMA_HOST=0.0.0.0:11434)..."
-            if systemctl list-unit-files 2>/dev/null | grep -q '^ollama\.service'; then
-                sudo mkdir -p /etc/systemd/system/ollama.service.d
-                sudo tee /etc/systemd/system/ollama.service.d/loremind-host.conf >/dev/null <<EOF
-[Service]
-Environment="OLLAMA_HOST=0.0.0.0:11434"
-EOF
-                sudo systemctl daemon-reload
-                sudo systemctl restart ollama
-                ok "Service systemd ollama redemarre avec OLLAMA_HOST=0.0.0.0:11434"
-            else
-                warn "Service systemd 'ollama' introuvable. Definissez OLLAMA_HOST=0.0.0.0:11434 manuellement avant de relancer Ollama."
-            fi
+            OLLAMA_MODE="host"
             ;;
         *)
-            USE_EMBEDDED_OLLAMA=1
+            # Pas d'Ollama present : proposer l'installation Docker.
+            INSTALL_DOCKER_REPLY="$(ask "Voulez-vous installer Ollama via Docker maintenant ? [O/n]" "O")"
+            case "$INSTALL_DOCKER_REPLY" in
+                n|N|no|non|No|Non) OLLAMA_MODE="none" ;;
+                *)                 OLLAMA_MODE="embedded" ;;
+            esac
+            ;;
+    esac
+
+    case "$OLLAMA_MODE" in
+        host)
+            OLLAMA_BASE_URL_VAL="http://host.docker.internal:11434"
+            # Delegue la configuration securisee au helper dedie : il fait
+            # ecouter Ollama uniquement sur l'IP du bridge Docker (jamais
+            # exposee au LAN ni a Internet) plutot que sur 0.0.0.0.
+            SECURE_HELPER="$(dirname -- "$0")/secure-host-ollama.sh"
+            if [ -f "$SECURE_HELPER" ]; then
+                step "Configuration securisee d'Ollama hote..."
+                bash "$SECURE_HELPER" || warn "Le helper secure-host-ollama.sh a echoue. Configurez Ollama manuellement."
+            else
+                warn "secure-host-ollama.sh introuvable a cote de install.sh."
+                warn "Telechargez-le depuis le depot et relancez : bash secure-host-ollama.sh"
+            fi
+            ;;
+        embedded)
             ok "Ollama sera lance dans Docker (modeles dans un volume Docker)"
+            ;;
+        none)
+            # On cible host.docker.internal par defaut en supposant qu'Ollama
+            # sera installe plus tard sur l'hote. L'utilisateur peut aussi
+            # changer l'URL via la page Parametres pour un Ollama distant.
+            OLLAMA_BASE_URL_VAL="http://host.docker.internal:11434"
+            warn "Aucun Ollama ne sera installe pour le moment. Configurez-le plus tard via la page Parametres de LoreMind."
             ;;
     esac
 fi
@@ -166,7 +183,7 @@ esac
 # Combinaison de profiles : autoupdate et/ou local-ollama (separes par virgule).
 PROFILES_ARR=()
 [ "$AUTO_UPDATE" = "1" ] && PROFILES_ARR+=("autoupdate")
-if [ "$LLM_PROVIDER" = "ollama" ] && [ "$USE_EMBEDDED_OLLAMA" = "1" ]; then
+if [ "$LLM_PROVIDER" = "ollama" ] && [ "$OLLAMA_MODE" = "embedded" ]; then
     PROFILES_ARR+=("local-ollama")
 fi
 COMPOSE_PROFILES="$(IFS=,; echo "${PROFILES_ARR[*]}")"
@@ -227,14 +244,20 @@ else
     echo " Auto-update  : desactive (mise a jour manuelle uniquement)"
 fi
 if [ "$LLM_PROVIDER" = "ollama" ]; then
-    if [ "$USE_EMBEDDED_OLLAMA" = "1" ]; then
-        echo -e " Ollama       : ${c_green}embarque${c_off} (service Docker 'ollama')"
-        echo
-        echo " IMPORTANT : telechargez un modele avant utilisation :"
-        echo "   docker exec -it loremind-ollama ollama pull ${LLM_MODEL_VAL}"
-    else
-        echo " Ollama       : hote (http://host.docker.internal:11434)"
-    fi
+    case "$OLLAMA_MODE" in
+        embedded)
+            echo -e " Ollama       : ${c_green}embarque${c_off} (service Docker 'ollama')"
+            echo
+            echo " IMPORTANT : telechargez un modele avant utilisation :"
+            echo "   docker exec -it loremind-ollama ollama pull ${LLM_MODEL_VAL}"
+            ;;
+        host)
+            echo " Ollama       : hote (configure via secure-host-ollama.sh)"
+            ;;
+        none)
+            echo -e " Ollama       : ${c_yellow}non configure${c_off} - a faire via Parametres dans l'app"
+            ;;
+    esac
 fi
 echo
 echo " Commandes utiles (depuis $INSTALL_DIR) :"
