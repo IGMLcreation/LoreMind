@@ -689,6 +689,76 @@ async def get_ollama_model_info(
     return OllamaModelInfoDTO(context_length=0)
 
 
+@app.post("/models/ollama/pull")
+async def pull_ollama_model(
+    body: dict[str, str],
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> StreamingResponse:
+    """Telecharge un modele depuis Ollama et streame la progression.
+
+    Proxifie l'endpoint `/api/pull` d'Ollama qui renvoie du JSON ligne par
+    ligne (NDJSON) avec le statut de chaque etape : manifest, layers,
+    digest, success. On reemet ce flux tel quel au client (le front
+    parsera les lignes et affichera une barre de progression).
+
+    Le timeout est intentionnellement tres long (60 min) car certains
+    modeles font 30+ Go.
+    """
+    name = (body.get("name") or "").strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="name requis")
+    url = f"{settings.ollama_base_url}/api/pull"
+
+    async def stream() -> AsyncIterator[bytes]:
+        # On utilise un timeout long pour la lecture (60 min) mais court pour
+        # la connexion (10s) — si Ollama n'est pas joignable, on echoue vite.
+        timeout = httpx.Timeout(connect=10, read=3600, write=10, pool=10)
+        try:
+            async with httpx.AsyncClient(timeout=timeout) as client:
+                async with client.stream("POST", url, json={"model": name, "stream": True}) as r:
+                    if r.status_code != 200:
+                        # Ollama renvoie un message JSON d'erreur. On le passe
+                        # tel quel au client en preservant le code HTTP.
+                        body_text = await r.aread()
+                        yield body_text
+                        return
+                    async for chunk in r.aiter_bytes():
+                        yield chunk
+        except httpx.HTTPError as e:
+            # Erreur reseau : on emet une ligne JSON d'erreur compatible
+            # avec le format NDJSON d'Ollama.
+            err = json.dumps({"error": f"Connexion a Ollama impossible : {e}"}) + "\n"
+            yield err.encode("utf-8")
+
+    # application/x-ndjson : un objet JSON par ligne, pas de wrapping SSE.
+    # C'est le format natif d'Ollama, le front le parsera ligne par ligne.
+    return StreamingResponse(stream(), media_type="application/x-ndjson")
+
+
+@app.delete("/models/ollama/{name:path}")
+async def delete_ollama_model(
+    name: str,
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> dict[str, str]:
+    """Supprime un modele du serveur Ollama.
+
+    Le `:path` dans le pattern autorise les `:` du nom (ex: `gemma4:e4b`)
+    sans avoir besoin de URL-encoder cote client.
+    """
+    if not name.strip():
+        raise HTTPException(status_code=400, detail="name requis")
+    url = f"{settings.ollama_base_url}/api/delete"
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            response = await client.request("DELETE", url, json={"model": name})
+            if response.status_code == 404:
+                raise HTTPException(status_code=404, detail=f"Modele '{name}' introuvable")
+            response.raise_for_status()
+    except httpx.HTTPError as e:
+        raise HTTPException(status_code=502, detail=f"Ollama injoignable : {e}")
+    return {"status": "deleted", "name": name}
+
+
 @app.get("/models/onemin")
 def list_onemin_models() -> dict[str, list[dict[str, object]]]:
     """Catalogue statique des modeles 1min.ai, groupes par fournisseur.

@@ -56,10 +56,90 @@
           <lucide-icon [img]="RefreshCw" [size]="14"></lucide-icon>
           <span>{{ loadingModels ? 'Chargement...' : 'Actualiser' }}</span>
         </button>
+        <button type="button" class="btn-secondary" (click)="openPullDialog()">
+          <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
+          <span>Telecharger</span>
+        </button>
       </div>
       <p class="hint" *ngIf="ollamaModels.length === 0">Aucun modele detecte. Verifie que Ollama tourne et que l'URL est correcte.</p>
     </div>
+
+    <!-- Liste des modeles installes avec bouton supprimer -->
+    <div class="form-row" *ngIf="ollamaModels.length > 0">
+      <label>Modeles installes</label>
+      <ul class="installed-models">
+        <li *ngFor="let m of ollamaModels">
+          <span class="model-name">{{ m }}</span>
+          <button type="button" class="btn-icon btn-danger"
+                  (click)="deleteModel(m)"
+                  [disabled]="deletingModel === m"
+                  [title]="'Supprimer ' + m">
+            <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+          </button>
+        </li>
+      </ul>
+    </div>
   </section>
+
+  <!-- Dialog de telechargement de modele -->
+  <div class="modal-overlay" *ngIf="pullDialogOpen" (click)="closePullDialog()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <header class="modal-header">
+        <h3>Telecharger un modele Ollama</h3>
+        <button type="button" class="btn-icon" (click)="closePullDialog()" [disabled]="pullInProgress" title="Fermer">
+          <lucide-icon [img]="X" [size]="18"></lucide-icon>
+        </button>
+      </header>
+
+      <div class="modal-body">
+        <div *ngIf="!pullInProgress">
+          <label for="pull-name">Nom du modele</label>
+          <input id="pull-name" type="text" [(ngModel)]="pullModelName"
+                 placeholder="ex: gemma4:e4b" autocomplete="off"
+                 (keydown.enter)="startPull()">
+
+          <p class="hint">Suggestions :</p>
+          <div class="suggestions">
+            <button type="button" *ngFor="let s of pullSuggestions"
+                    class="suggestion-chip" (click)="selectSuggestion(s)">{{ s }}</button>
+          </div>
+          <p class="hint" style="margin-top: 0.75rem;">
+            La liste complete est sur <a href="https://ollama.com/library" target="_blank" rel="noopener">ollama.com/library</a>.
+          </p>
+        </div>
+
+        <div *ngIf="pullInProgress" class="pull-progress">
+          <div class="pull-status">{{ pullStatus }}</div>
+          <div class="progress-bar" *ngIf="pullTotal > 0">
+            <div class="progress-fill" [style.width.%]="pullPercent"></div>
+          </div>
+          <div class="progress-text" *ngIf="pullTotal > 0">
+            {{ formatBytes(pullCompleted) }} / {{ formatBytes(pullTotal) }} ({{ pullPercent }}%)
+          </div>
+          <div class="progress-text" *ngIf="pullTotal === 0">
+            Preparation...
+          </div>
+        </div>
+      </div>
+
+      <footer class="modal-footer">
+        <button type="button" class="btn-secondary"
+                (click)="cancelPull()" *ngIf="pullInProgress">
+          Annuler
+        </button>
+        <button type="button" class="btn-secondary"
+                (click)="closePullDialog()" *ngIf="!pullInProgress">
+          Fermer
+        </button>
+        <button type="button" class="btn-primary"
+                (click)="startPull()"
+                [disabled]="pullInProgress || !pullModelName.trim()" *ngIf="!pullInProgress">
+          <lucide-icon [img]="Download" [size]="14"></lucide-icon>
+          <span>Telecharger</span>
+        </button>
+      </footer>
+    </div>
+  </div>
 
   <!-- Bloc 1min.ai -->
   <section class="card" *ngIf="settings && settings.llm_provider === 'onemin'">

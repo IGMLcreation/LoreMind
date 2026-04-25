@@ -1,5 +1,7 @@
 import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
+import { inject } from '@angular/core';
 import { catchError, throwError } from 'rxjs';
+import { ConfigService } from '../services/config.service';
 
 /**
  * Detecte la perte de session demo (orchestrateur) via les codes 401/502 sur
@@ -7,9 +9,10 @@ import { catchError, throwError } from 'rxjs';
  * Le reload renvoie l'utilisateur sur la page "Preparation" pour creer une
  * nouvelle session sans qu'il ait a faire Ctrl+Shift+R.
  *
- * Cet interceptor est inerte en mode normal (non-demo) : si le backend natif
- * renvoie un 401 legitime, ca declenche aussi le reload, ce qui est sans
- * consequence puisqu'aucun flux d'auth utilisateur n'existe encore cote app.
+ * Strictement inerte hors mode demo : sans cette garde, un 401 du backend
+ * natif (par ex. HTTP Basic sur /api/settings avant authentification) ou un
+ * 502 transitoire au boot (Brain pas encore pret) declencherait a tort
+ * l'overlay "session demo expiree" sur les installs self-hosted.
  */
 
 // Module-level flag : evite de declencher overlay + reload plusieurs fois si
@@ -17,8 +20,16 @@ import { catchError, throwError } from 'rxjs';
 let alreadyTriggered = false;
 
 export const sessionExpiredInterceptor: HttpInterceptorFn = (req, next) => {
+  const config = inject(ConfigService);
+
   return next(req).pipe(
     catchError((err) => {
+      // Garde stricte : l'overlay et le reload n'ont de sens qu'en mode demo,
+      // ou l'orchestrateur drop les sessions sans prevenir le client.
+      if (!config.demoMode) {
+        return throwError(() => err);
+      }
+
       const isApiCall = req.url.includes('/api/');
       const isSessionLoss =
         err instanceof HttpErrorResponse && (err.status === 401 || err.status === 502);
