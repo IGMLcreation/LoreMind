@@ -26,11 +26,16 @@ public class SceneService {
     }
 
     public Scene createScene(String name, String description, String chapterId, int order) {
+        return createScene(name, description, chapterId, order, null);
+    }
+
+    public Scene createScene(String name, String description, String chapterId, int order, String icon) {
         Scene scene = Scene.builder()
                 .name(name)
                 .description(description)
                 .chapterId(chapterId)
                 .order(order)
+                .icon(icon)
                 .build();
         return sceneRepository.save(scene);
     }

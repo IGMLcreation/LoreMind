@@ -16,6 +16,8 @@ import { loadCampaignTreeData, buildCampaignTree } from '../campaign-tree.helper
 import { LoreLinkPickerComponent } from '../../shared/lore-link-picker/lore-link-picker.component';
 import { AiChatDrawerComponent } from '../../shared/ai-chat-drawer/ai-chat-drawer.component';
 import { ImageGalleryComponent } from '../../shared/image-gallery/image-gallery.component';
+import { IconPickerComponent } from '../../shared/icon-picker/icon-picker.component';
+import { CAMPAIGN_ICON_OPTIONS } from '../campaign-icons';
 
 /**
  * Écran de détail/modification d'un Chapitre.
@@ -27,13 +29,15 @@ import { ImageGalleryComponent } from '../../shared/image-gallery/image-gallery.
 @Component({
   selector: 'app-chapter-edit',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, LoreLinkPickerComponent, AiChatDrawerComponent, ImageGalleryComponent],
+  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, LoreLinkPickerComponent, AiChatDrawerComponent, ImageGalleryComponent, IconPickerComponent],
   templateUrl: './chapter-edit.component.html',
   styleUrls: ['./chapter-edit.component.scss']
 })
 export class ChapterEditComponent implements OnInit, OnDestroy {
   readonly Trash2 = Trash2;
   readonly Sparkles = Sparkles;
+  readonly campaignIconOptions = CAMPAIGN_ICON_OPTIONS;
+  selectedIcon: string | null = null;
 
   /** État drawer chat IA (b5.7 — intégration Campagne). */
   chatOpen = false;
@@ -113,6 +117,7 @@ export class ChapterEditComponent implements OnInit, OnDestroy {
       this.loreId = loreId;
       this.availablePages = pages;
       this.relatedPageIds = [...(chapter.relatedPageIds ?? [])];
+      this.selectedIcon = chapter.icon ?? null;
       this.illustrationImageIds = [...(chapter.illustrationImageIds ?? [])];
       this.mapImageIds = [...(chapter.mapImageIds ?? [])];
       this.form.patchValue({
@@ -153,7 +158,8 @@ export class ChapterEditComponent implements OnInit, OnDestroy {
       narrativeStakes:  this.form.value.narrativeStakes,
       relatedPageIds:   this.relatedPageIds,
       illustrationImageIds: this.illustrationImageIds,
-      mapImageIds:      this.mapImageIds
+      mapImageIds:      this.mapImageIds,
+      icon:             this.selectedIcon
     }).subscribe({
       next: () => this.router.navigate(['/campaigns', this.campaignId, 'arcs', this.arcId, 'chapters', this.chapterId]),
       error: () => console.error('Erreur lors de la sauvegarde')

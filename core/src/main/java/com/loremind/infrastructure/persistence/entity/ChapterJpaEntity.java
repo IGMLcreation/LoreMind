@@ -37,6 +37,9 @@ public class ChapterJpaEntity {
     @Column(name = "\"order\"", nullable = false)
     private int order;
 
+    @Column
+    private String icon;
+
     // Champs narratifs enrichis — ajoutés automatiquement par Hibernate DDL (ddl-auto=update)
     @Column(name = "gm_notes", columnDefinition = "TEXT")
     private String gmNotes;

@@ -21,6 +21,9 @@ public class Chapter {
     private String arcId;              // Référence vers l'Arc parent
     private int order;                 // Ordre du chapitre dans l'arc
 
+    /** Cle d'icone choisie par l'utilisateur (cf. CAMPAIGN_ICON_OPTIONS cote front). */
+    private String icon;
+
     // Champs narratifs enrichis (voir docs/maquettes/campagne/détail/)
     private String gmNotes;            // Notes privées du MJ (non exportées vers FoundryVTT)
     private String playerObjectives;   // Objectifs des joueurs dans ce chapitre

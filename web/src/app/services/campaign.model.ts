@@ -29,6 +29,9 @@ export interface Arc {
   order?: number;
   chapterCount?: number;
 
+  /** Cle d'icone choisie par l'utilisateur (cf. CAMPAIGN_ICON_OPTIONS). */
+  icon?: string | null;
+
   // Champs narratifs enrichis
   themes?: string;
   stakes?: string;
@@ -52,6 +55,7 @@ export interface ArcCreate {
   description?: string;
   campaignId: string;
   order: number;
+  icon?: string | null;
 
   themes?: string;
   stakes?: string;
@@ -70,6 +74,7 @@ export interface Chapter {
   description?: string;
   arcId: string;
   order?: number;
+  icon?: string | null;
 
   // Champs narratifs enrichis
   gmNotes?: string;
@@ -86,6 +91,7 @@ export interface ChapterCreate {
   description?: string;
   arcId: string;
   order: number;
+  icon?: string | null;
 
   gmNotes?: string;
   playerObjectives?: string;
@@ -112,6 +118,7 @@ export interface Scene {
   description?: string;        // = Description courte dans l'UI
   chapterId: string;
   order?: number;
+  icon?: string | null;
 
   // Champs narratifs enrichis
   location?: string;
@@ -136,6 +143,7 @@ export interface SceneCreate {
   description?: string;
   chapterId: string;
   order: number;
+  icon?: string | null;
 
   location?: string;
   timing?: string;

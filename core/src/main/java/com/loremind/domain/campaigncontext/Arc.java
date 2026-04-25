@@ -21,6 +21,9 @@ public class Arc {
     private String campaignId;       // Référence vers la Campaign parente
     private int order;               // Ordre de l'arc dans la campagne
 
+    /** Cle d'icone choisie par l'utilisateur (cf. CAMPAIGN_ICON_OPTIONS cote front). */
+    private String icon;
+
     // Champs narratifs enrichis (voir docs/maquettes/campagne/détail/)
     private String themes;           // Thèmes principaux explorés dans cet arc
     private String stakes;           // Enjeux globaux pour les personnages

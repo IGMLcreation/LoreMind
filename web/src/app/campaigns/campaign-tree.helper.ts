@@ -109,11 +109,13 @@ export function buildCampaignTree(campaignId: string, data: CampaignTreeData): T
       const sceneItems: TreeItem[] = sortedScenes.map(sc => ({
         id: `scene-${sc.id}`,
         label: sc.name,
+        iconKey: sc.icon ?? undefined,
         route: `/campaigns/${campaignId}/arcs/${arc.id}/chapters/${ch.id}/scenes/${sc.id}`
       }));
       return {
         id: `chapter-${ch.id}`,
         label: ch.name,
+        iconKey: ch.icon ?? undefined,
         children: sceneItems,
         route: `/campaigns/${campaignId}/arcs/${arc.id}/chapters/${ch.id}`,
         createActions: [{
@@ -127,6 +129,7 @@ export function buildCampaignTree(campaignId: string, data: CampaignTreeData): T
     return {
       id: `arc-${arc.id}`,
       label: arc.name,
+      iconKey: arc.icon ?? undefined,
       children: chapterItems,
       route: `/campaigns/${campaignId}/arcs/${arc.id}`,
       sectionHeaderBefore: idx === 0 ? 'Narration' : undefined,

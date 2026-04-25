@@ -16,11 +16,16 @@
   </div>
 
   <div class="graph-container" *ngIf="scenes.length > 0">
-    <svg [attr.width]="svgWidth" [attr.height]="svgHeight" class="graph-svg">
+    <svg #svgEl
+         [attr.width]="svgWidth" [attr.height]="svgHeight"
+         class="graph-svg"
+         (pointermove)="onPointerMove($event)"
+         (pointerup)="onPointerUp($event)"
+         (pointercancel)="onPointerUp($event)">
       <defs>
         <marker id="arrowhead" viewBox="0 0 10 10" refX="9" refY="5"
                 markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-          <path d="M 0 0 L 10 5 L 0 10 z" fill="#6b7280" />
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#b8c0cc" />
         </marker>
       </defs>
 
@@ -28,20 +33,25 @@
         <g class="edge" *ngFor="let edge of edges">
           <line [attr.x1]="edge.x1" [attr.y1]="edge.y1"
                 [attr.x2]="edge.x2" [attr.y2]="edge.y2"
-                stroke="#6b7280" stroke-width="2"
+                stroke="#b8c0cc" stroke-width="2"
                 marker-end="url(#arrowhead)" />
           <text *ngIf="edge.label"
                 [attr.x]="edge.labelX"
                 [attr.y]="edge.labelY"
                 text-anchor="middle"
-                class="edge-label">
+                class="edge-label"
+                [class.dragging]="draggingLabelKey === edge.key"
+                (pointerdown)="onLabelPointerDown($event, edge)">
             {{ edge.label }}
           </text>
         </g>
       </g>
 
       <g class="nodes">
-        <g class="node" *ngFor="let node of nodes" (click)="openScene(node.id)">
+        <g class="node"
+           [class.dragging]="draggingId === node.id"
+           *ngFor="let node of nodes"
+           (pointerdown)="onPointerDown($event, node)">
           <title>{{ node.name }}</title>
           <rect [attr.x]="node.x" [attr.y]="node.y"
                 [attr.width]="NODE_WIDTH" [attr.height]="NODE_HEIGHT"
@@ -57,7 +67,7 @@
     </svg>
 
     <small class="graph-hint">
-      💡 Cliquez sur une scène pour l'ouvrir. Les scènes non reliées au point d'entrée (scène d'ordre 1) apparaissent en bas.
+      💡 Cliquez sur une scène pour l'ouvrir, ou glissez-la pour réorganiser la carte. Les scènes non reliées au point d'entrée (scène d'ordre 1) apparaissent en bas.
     </small>
   </div>
 

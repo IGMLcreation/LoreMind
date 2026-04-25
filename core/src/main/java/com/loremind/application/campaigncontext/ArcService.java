@@ -36,11 +36,16 @@ public class ArcService {
     public record DeletionImpact(int chapters, int scenes) {}
 
     public Arc createArc(String name, String description, String campaignId, int order) {
+        return createArc(name, description, campaignId, order, null);
+    }
+
+    public Arc createArc(String name, String description, String campaignId, int order, String icon) {
         Arc arc = Arc.builder()
                 .name(name)
                 .description(description)
                 .campaignId(campaignId)
                 .order(order)
+                .icon(icon)
                 .build();
         return arcRepository.save(arc);
     }

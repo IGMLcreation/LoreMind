@@ -21,6 +21,9 @@ public class Scene {
     private String chapterId;              // Référence vers le Chapter parent
     private int order;                     // Ordre de la scène dans le chapitre
 
+    /** Cle d'icone choisie par l'utilisateur (cf. CAMPAIGN_ICON_OPTIONS cote front). */
+    private String icon;
+
     // === Contexte et ambiance ===
     private String location;               // Lieu de la scène (ex: Taverne du Dragon d'Or)
     private String timing;                 // Moment (ex: Soir, à la tombée de la nuit)

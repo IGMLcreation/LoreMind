@@ -28,7 +28,7 @@ public class ArcController {
     @PostMapping
     public ResponseEntity<ArcDTO> createArc(@RequestBody ArcDTO arcDTO) {
         Arc arc = arcMapper.toDomain(arcDTO);
-        Arc createdArc = arcService.createArc(arc.getName(), arc.getDescription(), arc.getCampaignId(), arc.getOrder());
+        Arc createdArc = arcService.createArc(arc.getName(), arc.getDescription(), arc.getCampaignId(), arc.getOrder(), arc.getIcon());
         return ResponseEntity.ok(arcMapper.toDTO(createdArc));
     }
 

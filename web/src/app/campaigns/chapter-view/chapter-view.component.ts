@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { LucideAngularModule, Pencil, Network, Trash2 } from 'lucide-angular';
+import { resolveCampaignIcon } from '../campaign-icons';
 import { CampaignService } from '../../services/campaign.service';
 import { CharacterService } from '../../services/character.service';
 import { PageService } from '../../services/page.service';
@@ -29,6 +30,7 @@ export class ChapterViewComponent implements OnInit, OnDestroy {
   readonly Pencil = Pencil;
   readonly Network = Network;
   readonly Trash2 = Trash2;
+  readonly resolveCampaignIcon = resolveCampaignIcon;
 
   campaignId = '';
   arcId = '';

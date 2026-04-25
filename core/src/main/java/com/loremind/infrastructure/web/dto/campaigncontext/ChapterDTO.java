@@ -17,6 +17,9 @@ public class ChapterDTO {
     private String arcId;
     private int order;
 
+    /** Cle d'icone (cf. CAMPAIGN_ICON_OPTIONS cote front). */
+    private String icon;
+
     // Champs narratifs enrichis
     private String gmNotes;
     private String playerObjectives;

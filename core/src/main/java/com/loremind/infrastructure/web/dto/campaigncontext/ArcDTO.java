@@ -17,6 +17,9 @@ public class ArcDTO {
     private String campaignId;
     private int order;
 
+    /** Cle d'icone (cf. CAMPAIGN_ICON_OPTIONS cote front). */
+    private String icon;
+
     // Champs narratifs enrichis
     private String themes;
     private String stakes;

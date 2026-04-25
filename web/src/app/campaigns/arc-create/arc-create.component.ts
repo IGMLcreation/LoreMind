@@ -9,6 +9,8 @@ import { CharacterService } from '../../services/character.service';
 import { LayoutService, GlobalItem } from '../../services/layout.service';
 import { Campaign } from '../../services/campaign.model';
 import { loadCampaignTreeData, buildCampaignTree } from '../campaign-tree.helper';
+import { IconPickerComponent } from '../../shared/icon-picker/icon-picker.component';
+import { CAMPAIGN_ICON_OPTIONS } from '../campaign-icons';
 
 /**
  * Écran de création d'un nouvel Arc narratif (contexte Campagne).
@@ -18,15 +20,17 @@ import { loadCampaignTreeData, buildCampaignTree } from '../campaign-tree.helper
 @Component({
   selector: 'app-arc-create',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule],
+  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, IconPickerComponent],
   templateUrl: './arc-create.component.html',
   styleUrls: ['./arc-create.component.scss']
 })
 export class ArcCreateComponent implements OnInit, OnDestroy {
   readonly BookOpen = BookOpen;
+  readonly campaignIconOptions = CAMPAIGN_ICON_OPTIONS;
 
   form: FormGroup;
   campaignId = '';
+  selectedIcon: string | null = null;
   private existingArcCount = 0;
 
   constructor(
@@ -80,7 +84,8 @@ export class ArcCreateComponent implements OnInit, OnDestroy {
       name: this.form.value.name,
       description: this.form.value.description,
       campaignId: this.campaignId,
-      order: this.existingArcCount + 1
+      order: this.existingArcCount + 1,
+      icon: this.selectedIcon
     }).subscribe({
       next: (created) => this.router.navigate(['/campaigns', this.campaignId, 'arcs', created.id]),
       error: () => console.error('Erreur lors de la création de l\'arc')

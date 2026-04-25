@@ -24,6 +24,7 @@ public class ChapterMapper {
         dto.setDescription(chapter.getDescription());
         dto.setArcId(chapter.getArcId());
         dto.setOrder(chapter.getOrder());
+        dto.setIcon(chapter.getIcon());
         dto.setGmNotes(chapter.getGmNotes());
         dto.setPlayerObjectives(chapter.getPlayerObjectives());
         dto.setNarrativeStakes(chapter.getNarrativeStakes());
@@ -44,6 +45,7 @@ public class ChapterMapper {
                 .description(dto.getDescription())
                 .arcId(dto.getArcId())
                 .order(dto.getOrder())
+                .icon(dto.getIcon())
                 .gmNotes(dto.getGmNotes())
                 .playerObjectives(dto.getPlayerObjectives())
                 .narrativeStakes(dto.getNarrativeStakes())
