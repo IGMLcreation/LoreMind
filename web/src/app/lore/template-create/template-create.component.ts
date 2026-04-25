@@ -42,7 +42,8 @@ export class TemplateCreateComponent implements OnInit, OnDestroy {
    */
   fields: TemplateField[] = [
     { name: 'Nom', type: 'TEXT' },
-    { name: 'Description', type: 'TEXT' }
+    { name: 'Description', type: 'TEXT' },
+    { name: 'Illustration', type: 'IMAGE', layout: 'GALLERY' }
   ];
   /** Valeur courante de l'input d'ajout de champ (non binding direct pour reset facile). */
   newFieldName = '';
