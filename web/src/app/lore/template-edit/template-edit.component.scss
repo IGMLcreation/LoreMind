@@ -198,18 +198,7 @@
     &::placeholder { color: #6b7280; }
   }
 
-  &.add-row {
-    margin-top: 0.25rem;
-    border: 1px dashed #2a2a3d;
-    border-radius: 6px;
-    padding: 0;
-
-    input {
-      border: none;
-      background: transparent;
-      &:focus { border: none; }
-    }
-  }
+  &.add-row { margin-top: 0.5rem; }
 
   .reorder-stack {
     display: flex;

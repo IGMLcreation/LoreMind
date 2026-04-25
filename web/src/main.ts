@@ -2,9 +2,10 @@ import { bootstrapApplication } from '@angular/platform-browser';
 import { AppComponent } from './app/app.component';
 import { PreloadAllModules, provideRouter, withPreloading } from '@angular/router';
 import { routes } from './app/app.routes';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { APP_INITIALIZER } from '@angular/core';
 import { ConfigService } from './app/services/config.service';
+import { sessionExpiredInterceptor } from './app/interceptors/session-expired.interceptor';
 
 // withPreloading(PreloadAllModules) : une fois l'app initiale rendue, Angular
 // telecharge en arriere-plan tous les chunks lazy-loades. Consequence : la
@@ -14,7 +15,7 @@ import { ConfigService } from './app/services/config.service';
 bootstrapApplication(AppComponent, {
   providers: [
     provideRouter(routes, withPreloading(PreloadAllModules)),
-    provideHttpClient(),
+    provideHttpClient(withInterceptors([sessionExpiredInterceptor])),
     {
       provide: APP_INITIALIZER,
       useFactory: (config: ConfigService) => () => config.load(),
