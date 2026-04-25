@@ -91,6 +91,29 @@ services:
       WATCHTOWER_TOKEN: ${WATCHTOWER_TOKEN:-}
     restart: unless-stopped
 
+  # Ollama embarque (option par defaut pour les utilisateurs sans Ollama installe).
+  # Active via COMPOSE_PROFILES=local-ollama (gere par l'installeur).
+  # Si l'utilisateur a deja Ollama sur l'hote, ce service reste inactif et
+  # OLLAMA_BASE_URL pointe vers http://host.docker.internal:11434.
+  ollama:
+    image: ollama/ollama:latest
+    container_name: loremind-ollama
+    profiles: ["local-ollama"]
+    volumes:
+      - ollama-data:/root/.ollama
+    # Port expose sur loopback uniquement pour debug / pull manuel de modeles.
+    ports:
+      - "127.0.0.1:11434:11434"
+    # GPU NVIDIA si disponible (silencieusement ignore sinon).
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: unless-stopped
+
   brain:
     image: ${REGISTRY:-git.igmlcreation.fr}/ietm64/brain:${TAG:-latest}
     container_name: loremind-brain
@@ -98,7 +121,10 @@ services:
       - "com.centurylinklabs.watchtower.enable=true"
     environment:
       LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
-      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      # Defaut = Ollama embarque (service ollama du compose).
+      # L'installeur reecrit cette valeur en http://host.docker.internal:11434
+      # si l'utilisateur choisit le mode "Ollama deja installe sur l'hote".
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
       LLM_MODEL: ${LLM_MODEL:-gemma4:26b}
       ONEMIN_API_KEY: ${ONEMIN_API_KEY:-}
       ONEMIN_MODEL: ${ONEMIN_MODEL:-gpt-4o-mini}
@@ -154,3 +180,4 @@ volumes:
   postgres-data:
   minio-data:
   brain-data:
+  ollama-data:
