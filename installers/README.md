@@ -29,7 +29,7 @@ déclaratif et auditable en quelques lignes.
 ## Linux (Debian / Ubuntu / Fedora / Arch)
 
 ```bash
-curl -fsSL https://git.igmlcreation.fr/ietm64/loremind/raw/branch/main/installers/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/IGMLcreation/LoreMind/main/installers/install.sh | bash
 ```
 
 Le script :

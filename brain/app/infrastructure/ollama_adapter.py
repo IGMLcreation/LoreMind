@@ -61,7 +61,16 @@ class OllamaLLMProvider:
         async with httpx.AsyncClient(timeout=self._timeout) as client:
             try:
                 response = await client.post(url, json=payload)
-                response.raise_for_status()
+                if response.status_code >= 400:
+                    body = response.text
+                    try:
+                        err_obj = json.loads(body)
+                        err_msg = err_obj.get("error") or body
+                    except json.JSONDecodeError:
+                        err_msg = body
+                    raise LLMProviderError(
+                        f"Ollama HTTP {response.status_code} : {err_msg.strip()[:500]}"
+                    )
             except httpx.HTTPError as exc:
                 raise LLMProviderError(
                     f"Erreur lors de l'appel à Ollama : {exc}"
@@ -105,7 +114,20 @@ class OllamaLLMProvider:
         async with httpx.AsyncClient(timeout=self._timeout) as client:
             try:
                 async with client.stream("POST", url, json=payload) as response:
-                    response.raise_for_status()
+                    if response.status_code >= 400:
+                        # On lit le body d'erreur pour le remonter a l'utilisateur,
+                        # sinon on ne voit que "500 Internal Server Error" sans
+                        # savoir POURQUOI Ollama refuse (modele introuvable, OOM,
+                        # num_ctx trop grand pour la VRAM, etc.).
+                        body = (await response.aread()).decode("utf-8", errors="replace")
+                        try:
+                            err_obj = json.loads(body)
+                            err_msg = err_obj.get("error") or body
+                        except json.JSONDecodeError:
+                            err_msg = body
+                        raise LLMProviderError(
+                            f"Ollama HTTP {response.status_code} : {err_msg.strip()[:500]}"
+                        )
                     async for line in response.aiter_lines():
                         if not line.strip():
                             continue

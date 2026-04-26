@@ -24,7 +24,7 @@
   faciliter leur identification et suppression ulterieure.
 
 .LINK
-  https://git.igmlcreation.fr/ietm64/loremind
+  https://github.com/IGMLcreation/LoreMind
 #>
 
 [CmdletBinding()]
