@@ -2,12 +2,12 @@
 # ==========================================================================
 # Installeur LoreMindMJ pour Linux (Debian/Ubuntu/Fedora/Arch)
 # Usage :
-#   curl -fsSL https://git.igmlcreation.fr/ietm64/loremind/raw/branch/main/installers/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/IGMLcreation/LoreMind/main/installers/install.sh | bash
 # ==========================================================================
 set -euo pipefail
 
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/share/loremind}"
-COMPOSE_URL="${COMPOSE_URL:-https://git.igmlcreation.fr/ietm64/loremind/raw/branch/main/docker-compose.yml}"
+COMPOSE_URL="${COMPOSE_URL:-https://raw.githubusercontent.com/IGMLcreation/LoreMind/main/docker-compose.yml}"
 WEB_PORT="${WEB_PORT:-8081}"
 NON_INTERACTIVE="${NON_INTERACTIVE:-0}"
 
@@ -190,7 +190,8 @@ COMPOSE_PROFILES="$(IFS=,; echo "${PROFILES_ARR[*]}")"
 
 cat > .env <<EOF
 # Genere par install.sh le $(date '+%Y-%m-%d %H:%M')
-REGISTRY=git.igmlcreation.fr
+REGISTRY=ghcr.io
+IMAGE_NAMESPACE=igmlcreation/loremind-
 TAG=latest
 
 WEB_PORT=${WEB_PORT}

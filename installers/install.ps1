@@ -40,16 +40,16 @@
   Auteur       : ietm64
   Licence      : AGPL-3.0
   Projet       : LoreMindMJ - assistant pour Maitres de Jeu de JDR
-  Version      : 0.6.12
+  Version      : 0.6.13
 
 .LINK
-  https://git.igmlcreation.fr/ietm64/loremind
+  https://github.com/IGMLcreation/LoreMind
 #>
 
 [CmdletBinding()]
 param(
     [string]$InstallDir = "$env:LOCALAPPDATA\LoreMind",
-    [string]$ComposeUrl = "https://git.igmlcreation.fr/ietm64/loremind/raw/branch/main/docker-compose.yml",
+    [string]$ComposeUrl = "https://raw.githubusercontent.com/IGMLcreation/LoreMind/main/docker-compose.yml",
     [int]$WebPort      = 8081,
     [switch]$NonInteractive
 )
@@ -316,7 +316,8 @@ $composeProfiles = $profilesList -join ','
 
 $envContent = @"
 # Genere par install.ps1 le $(Get-Date -Format 'yyyy-MM-dd HH:mm')
-REGISTRY=git.igmlcreation.fr
+REGISTRY=ghcr.io
+IMAGE_NAMESPACE=igmlcreation/loremind-
 TAG=latest
 
 WEB_PORT=$WebPort
