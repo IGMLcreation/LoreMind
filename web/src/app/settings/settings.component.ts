@@ -59,6 +59,10 @@ export class SettingsComponent implements OnInit {
   pullTotal = 0;
   /** Souscription au flux de pull pour pouvoir l'annuler. */
   private pullSubscription: Subscription | null = null;
+  /** True si on a recu un evenement {status:"success"} d'Ollama. Sans ca,
+   *  une fermeture de stream (timeout proxy, perte reseau) ne doit PAS etre
+   *  interpretee comme une reussite. */
+  private pullSucceeded = false;
 
   /** Modele en cours de suppression (nom) pour disabler son bouton. */
   deletingModel: string | null = null;
@@ -293,6 +297,9 @@ export class SettingsComponent implements OnInit {
         if (event.status) this.pullStatus = event.status;
         if (event.completed != null) this.pullCompleted = event.completed;
         if (event.total != null) this.pullTotal = event.total;
+        // Marqueur explicite : Ollama emet "success" en derniere ligne quand
+        // le pull est reellement complet (manifest + layers + verify).
+        if (event.status === 'success') this.pullSucceeded = true;
       },
       error: (err) => {
         this.errorMessage = this.extractError(err, `Echec du telechargement de ${name}.`);
@@ -300,6 +307,14 @@ export class SettingsComponent implements OnInit {
       },
       complete: () => {
         this.pullInProgress = false;
+        if (!this.pullSucceeded) {
+          // Stream ferme sans 'success' final = connexion coupee
+          // (timeout proxy, perte reseau, ...). Le modele est probablement
+          // partiellement telecharge ; Ollama gardera les couches deja DL.
+          this.errorMessage = `Telechargement de ${name} interrompu avant la fin. Relancez pour reprendre.`;
+          this.refreshModels();
+          return;
+        }
         this.successMessage = `Modele ${name} telecharge.`;
         this.refreshModels();
         // Si l'utilisateur n'avait aucun modele, on selectionne celui-ci.
@@ -326,6 +341,7 @@ export class SettingsComponent implements OnInit {
     this.pullStatus = '';
     this.pullCompleted = 0;
     this.pullTotal = 0;
+    this.pullSucceeded = false;
     if (this.pullSubscription) {
       this.pullSubscription.unsubscribe();
       this.pullSubscription = null;
