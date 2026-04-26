@@ -198,9 +198,18 @@ public class UpdateCheckService {
         for (String key : new String[]{"service", "scope"}) {
             String v = params.get(key);
             if (v != null) {
+                // URLEncoder fait du "form encoding" qui transforme `:` et `/`
+                // en %3A et %2F. La plupart des registries (Docker Hub, Gitea)
+                // acceptent les deux, mais GHCR est strict et rejette le scope
+                // encode (403 DENIED). On preserve donc `:` et `/` dans la
+                // valeur, conformement a ce que GHCR attend
+                // (et que docker pull lui-meme envoie).
+                String encoded = URLEncoder.encode(v, StandardCharsets.UTF_8)
+                        .replace("%3A", ":")
+                        .replace("%2F", "/");
                 url.append(hasQuery ? '&' : '?')
                    .append(key).append('=')
-                   .append(URLEncoder.encode(v, StandardCharsets.UTF_8));
+                   .append(encoded);
                 hasQuery = true;
             }
         }
