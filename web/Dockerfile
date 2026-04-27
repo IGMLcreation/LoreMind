@@ -1,4 +1,4 @@
-FROM node:20-alpine AS build
+FROM node:20-bookworm-slim AS build
 WORKDIR /build
 COPY package*.json ./
 RUN npm ci --include=dev --ignore-scripts
