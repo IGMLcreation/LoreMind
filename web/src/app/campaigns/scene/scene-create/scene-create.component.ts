@@ -94,7 +94,7 @@ export class SceneCreateComponent implements OnInit, OnDestroy {
       order: this.existingSceneCount + 1,
       icon: this.selectedIcon
     }).subscribe({
-      next: (created) => this.router.navigate(['/campaigns', this.campaignId, 'arcs', this.arcId, 'chapters', this.chapterId, 'scenes', created.id]),
+      next: (created) => this.router.navigate(['/campaigns', this.campaignId, 'arcs', this.arcId, 'chapters', this.chapterId, 'scenes', created.id, 'edit']),
       error: () => console.error('Erreur lors de la création de la scène')
     });
   }

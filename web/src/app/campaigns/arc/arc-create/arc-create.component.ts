@@ -89,7 +89,7 @@ export class ArcCreateComponent implements OnInit, OnDestroy {
       order: this.existingArcCount + 1,
       icon: this.selectedIcon
     }).subscribe({
-      next: (created) => this.router.navigate(['/campaigns', this.campaignId, 'arcs', created.id]),
+      next: (created) => this.router.navigate(['/campaigns', this.campaignId, 'arcs', created.id, 'edit']),
       error: () => console.error('Erreur lors de la création de l\'arc')
     });
   }
