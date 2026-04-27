@@ -301,6 +301,46 @@ export async function getPageById(
   return res.json();
 }
 
+export interface SeededNpc {
+  id: string;
+  name: string;
+}
+
+export async function seedNpc(
+  request: APIRequestContext,
+  opts: { campaignId: string; name?: string; markdownContent?: string | null },
+): Promise<SeededNpc> {
+  const name = opts.name ?? `E2E NPC ${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+  const res = await request.post('/api/npcs', {
+    data: {
+      campaignId: opts.campaignId,
+      name,
+      markdownContent: opts.markdownContent ?? null,
+    },
+  });
+  expect(res.ok(), `POST /api/npcs -> ${res.status()}`).toBeTruthy();
+  const n = await res.json();
+  return { id: n.id, name };
+}
+
+export async function getNpcById(
+  request: APIRequestContext,
+  npcId: string,
+): Promise<{ id: string; name: string; markdownContent: string | null; campaignId: string; order: number }> {
+  const res = await request.get(`/api/npcs/${npcId}`);
+  expect(res.ok(), `GET /api/npcs/${npcId} -> ${res.status()}`).toBeTruthy();
+  return res.json();
+}
+
+export async function getNpcsByCampaign(
+  request: APIRequestContext,
+  campaignId: string,
+): Promise<Array<{ id: string; name: string }>> {
+  const res = await request.get(`/api/npcs/campaign/${campaignId}`);
+  expect(res.ok(), `GET /api/npcs/campaign -> ${res.status()}`).toBeTruthy();
+  return res.json();
+}
+
 export async function getTemplateById(
   request: APIRequestContext,
   templateId: string,

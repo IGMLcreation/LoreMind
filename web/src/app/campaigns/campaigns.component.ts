@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { LucideAngularModule, Map, Plus } from 'lucide-angular';
 import { CampaignService } from '../services/campaign.service';
 import { Campaign } from '../services/campaign.model';
-import { CampaignCreateComponent, CampaignCreatePayload } from './campaign-create/campaign-create.component';
+import { CampaignCreateComponent, CampaignCreatePayload } from './campaign/campaign-create/campaign-create.component';
 
 @Component({
   selector: 'app-campaigns',

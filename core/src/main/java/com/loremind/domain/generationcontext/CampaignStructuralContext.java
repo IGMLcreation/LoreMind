@@ -22,12 +22,14 @@ import java.util.List;
  * Record Java : pur domaine, aucune dépendance technique.
  *
  * @param characters Personnages joueurs (PJ) de la campagne. Vide si aucun.
+ * @param npcs       Personnages non-joueurs (PNJ) de la campagne. Vide si aucun.
  */
 public record CampaignStructuralContext(
         String campaignName,
         String campaignDescription,
         List<ArcSummary> arcs,
-        List<CharacterSummary> characters) {
+        List<CharacterSummary> characters,
+        List<NpcSummary> npcs) {
 
     /**
      * Résumé d'un PJ : nom + snippet court du markdown.
@@ -37,6 +39,14 @@ public record CampaignStructuralContext(
      * (via NarrativeEntityContext, entity_type="character").
      */
     public record CharacterSummary(String name, String snippet) {
+    }
+
+    /**
+     * Résumé d'un PNJ : symétrique à {@link CharacterSummary}.
+     * Snippet court extrait du markdown — la fiche complète est réservée
+     * à un usage focus (à venir, entity_type="npc").
+     */
+    public record NpcSummary(String name, String snippet) {
     }
 
     /**

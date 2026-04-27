@@ -12,9 +12,10 @@ import java.time.LocalDateTime;
  * backstory, équipement). Évolution prévue vers un système templaté par
  * GameSystem (la fiche Nimble n'a pas les mêmes champs qu'une fiche D&D).
  * <p>
- * Scope strict PJ : les PNJ restent dans le Lore (pages templatées) ou
- * dans les scènes elles-mêmes. Si le besoin de PNJ spécifiques à une
- * campagne remonte, on étendra l'entité (ex: type enum PJ/PNJ).
+ * Scope strict PJ : les PNJ sont gérés par l'entité {@link Npc} dédiée
+ * (entité distincte plutôt qu'enum PJ/PNJ — invariants métier divergents).
+ * Évolution prévue : système de templating partagé PJ/PNJ piloté par
+ * GameSystem pour adapter les blocs aux différents systèmes de JDR.
  */
 @Data
 @Builder

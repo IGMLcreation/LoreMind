@@ -1,0 +1,82 @@
+<div class="ne-page">
+
+  <div class="ne-header">
+    <button class="btn-back" (click)="back()">
+      <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon>
+      Retour à la campagne
+    </button>
+    <div class="header-row">
+      <h1>
+        <lucide-icon [img]="Drama" [size]="22"></lucide-icon>
+        {{ npcId ? 'Éditer le PNJ' : 'Nouveau PNJ' }}
+      </h1>
+      <button
+        *ngIf="npcId"
+        type="button"
+        class="btn-ai"
+        (click)="toggleChat()"
+        [class.active]="chatOpen"
+        title="Ouvrir l'Assistant IA pour dialoguer autour de ce PNJ">
+        <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
+        Assistant IA
+      </button>
+    </div>
+  </div>
+
+  <div class="ne-form">
+
+    <div class="field">
+      <label>Nom du PNJ *</label>
+      <input
+        type="text"
+        [(ngModel)]="name"
+        name="name"
+        placeholder="Ex: Borin le forgeron, Dame Elara, Kael l'aubergiste..."
+      />
+    </div>
+
+    <div class="field content-field">
+      <label>Fiche (markdown)</label>
+      <p class="hint">
+        Tout en markdown libre : apparence, motivations, faction, secrets, stats, notes MJ…
+        À terme, l'IA pourra exploiter ces infos pour incarner le PNJ avec cohérence dans les scènes.
+      </p>
+      <textarea
+        [(ngModel)]="markdownContent"
+        name="markdownContent"
+        rows="22"
+        placeholder="# Borin le forgeron&#10;&#10;**Race :** Nain&#10;**Faction :** Clan Feuillefer&#10;**Statut :** Vivant&#10;&#10;## Apparence&#10;Barbe rousse tressée, tablier de cuir brûlé...&#10;&#10;## Motivations&#10;Venger son clan décimé par les orcs il y a 10 hivers.&#10;&#10;## Notes MJ (secret)&#10;Connaît l'emplacement du marteau de Durin..."
+      ></textarea>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="btn-primary" [disabled]="!name.trim()" (click)="submit()">
+        <lucide-icon [img]="Save" [size]="16"></lucide-icon>
+        {{ npcId ? 'Enregistrer' : 'Créer' }}
+      </button>
+      <button type="button" class="btn-secondary" (click)="back()">Annuler</button>
+      <span class="spacer"></span>
+      <button
+        *ngIf="npcId"
+        type="button"
+        class="btn-danger"
+        (click)="deleteNpc()">
+        <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+        Supprimer
+      </button>
+    </div>
+
+  </div>
+
+</div>
+
+<app-ai-chat-drawer
+  *ngIf="npcId && campaignId"
+  [campaignId]="campaignId"
+  entityType="npc"
+  [entityId]="npcId"
+  [isOpen]="chatOpen"
+  welcomeMessage="Je vois cette fiche de PNJ. Demande-moi de proposer apparence, motivations, secrets, ou répliques signatures."
+  [quickSuggestions]="chatQuickSuggestions"
+  (close)="chatOpen = false">
+</app-ai-chat-drawer>

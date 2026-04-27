@@ -4,17 +4,20 @@ import com.loremind.domain.campaigncontext.Arc;
 import com.loremind.domain.campaigncontext.Campaign;
 import com.loremind.domain.campaigncontext.Chapter;
 import com.loremind.domain.campaigncontext.Character;
+import com.loremind.domain.campaigncontext.Npc;
 import com.loremind.domain.campaigncontext.Scene;
 import com.loremind.domain.campaigncontext.ports.ArcRepository;
 import com.loremind.domain.campaigncontext.ports.CampaignRepository;
 import com.loremind.domain.campaigncontext.ports.ChapterRepository;
 import com.loremind.domain.campaigncontext.ports.CharacterRepository;
+import com.loremind.domain.campaigncontext.ports.NpcRepository;
 import com.loremind.domain.campaigncontext.ports.SceneRepository;
 import com.loremind.domain.generationcontext.CampaignStructuralContext;
 import com.loremind.domain.generationcontext.CampaignStructuralContext.ArcSummary;
 import com.loremind.domain.generationcontext.CampaignStructuralContext.BranchHint;
 import com.loremind.domain.generationcontext.CampaignStructuralContext.ChapterSummary;
 import com.loremind.domain.generationcontext.CampaignStructuralContext.CharacterSummary;
+import com.loremind.domain.generationcontext.CampaignStructuralContext.NpcSummary;
 import com.loremind.domain.generationcontext.CampaignStructuralContext.SceneSummary;
 import org.springframework.stereotype.Component;
 
@@ -42,21 +45,24 @@ public class CampaignStructuralContextBuilder {
     private final ChapterRepository chapterRepository;
     private final SceneRepository sceneRepository;
     private final CharacterRepository characterRepository;
+    private final NpcRepository npcRepository;
 
     public CampaignStructuralContextBuilder(
             CampaignRepository campaignRepository,
             ArcRepository arcRepository,
             ChapterRepository chapterRepository,
             SceneRepository sceneRepository,
-            CharacterRepository characterRepository) {
+            CharacterRepository characterRepository,
+            NpcRepository npcRepository) {
         this.campaignRepository = campaignRepository;
         this.arcRepository = arcRepository;
         this.chapterRepository = chapterRepository;
         this.sceneRepository = sceneRepository;
         this.characterRepository = characterRepository;
+        this.npcRepository = npcRepository;
     }
 
-    /** Longueur max du snippet de PJ injecté dans le contexte (coût tokens maîtrisé). */
+    /** Longueur max du snippet de PJ/PNJ injecté dans le contexte (coût tokens maîtrisé). */
     private static final int CHARACTER_SNIPPET_MAX_LEN = 160;
 
     /**
@@ -79,11 +85,17 @@ public class CampaignStructuralContextBuilder {
                 .map(this::toCharacterSummary)
                 .collect(Collectors.toList());
 
+        List<NpcSummary> npcs = npcRepository.findByCampaignId(campaignId).stream()
+                .sorted(Comparator.comparingInt(Npc::getOrder))
+                .map(this::toNpcSummary)
+                .collect(Collectors.toList());
+
         return new CampaignStructuralContext(
                 campaign.getName(),
                 campaign.getDescription(),
                 arcs,
-                characters);
+                characters,
+                npcs);
     }
 
     /**
@@ -93,6 +105,11 @@ public class CampaignStructuralContextBuilder {
      */
     private CharacterSummary toCharacterSummary(Character c) {
         return new CharacterSummary(c.getName(), extractSnippet(c.getMarkdownContent()));
+    }
+
+    /** Symétrique à {@link #toCharacterSummary} pour les PNJ. */
+    private NpcSummary toNpcSummary(Npc n) {
+        return new NpcSummary(n.getName(), extractSnippet(n.getMarkdownContent()));
     }
 
     private static String extractSnippet(String markdown) {

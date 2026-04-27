@@ -170,6 +170,7 @@ class CampaignStructuralContext:
     campaign_description: str | None
     arcs: list[ArcSummary]
     characters: list["CharacterSummary"] = field(default_factory=list)
+    npcs: list["NpcSummary"] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -179,6 +180,19 @@ class CharacterSummary:
     La fiche complète n'est JAMAIS dans ce résumé — elle n'arrive que si le PJ
     est l'entité focus (via NarrativeEntityContext entity_type="character").
     Ça plafonne le coût token à ~40 tokens/PJ quel que soit le détail des fiches.
+    """
+
+    name: str
+    snippet: str
+
+
+@dataclass(frozen=True)
+class NpcSummary:
+    """Résumé d'un PNJ : symétrique à CharacterSummary.
+
+    Permet à l'IA de connaître les PNJ d'une campagne (nom + snippet) sans
+    injecter leurs fiches complètes. Évolution prévue : entity_type="npc"
+    pour focus sur la fiche complète.
     """
 
     name: str
