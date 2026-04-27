@@ -91,6 +91,7 @@ Thumbs.db
 # Documentation hors-code (conservee hors du repo)
 # ============================================================================
 docs/
+loremind-docs/
 
 # ============================================================================
 # Docker Compose override (dev uniquement, non-distribue aux end users)
