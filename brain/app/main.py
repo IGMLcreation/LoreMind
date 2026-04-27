@@ -23,6 +23,7 @@ from app.domain.models import (
     CampaignStructuralContext,
     ChapterSummary,
     CharacterSummary,
+    NpcSummary,
     ChatMessage,
     GameSystemContext,
     LoreStructuralContext,
@@ -205,6 +206,13 @@ class CharacterSummaryDTO(BaseModel):
     snippet: str = ""
 
 
+class NpcSummaryDTO(BaseModel):
+    """Résumé d'un PNJ : symétrique à CharacterSummaryDTO."""
+
+    name: str
+    snippet: str = ""
+
+
 class CampaignContextDTO(BaseModel):
     """Carte narrative enrichie : arcs → chapitres → scènes avec synopsis."""
 
@@ -212,12 +220,13 @@ class CampaignContextDTO(BaseModel):
     campaign_description: str | None = None
     arcs: list[ArcSummaryDTO] = Field(default_factory=list)
     characters: list[CharacterSummaryDTO] = Field(default_factory=list)
+    npcs: list[NpcSummaryDTO] = Field(default_factory=list)
 
 
 class NarrativeEntityDTO(BaseModel):
     """Entité narrative (arc/chapter/scene/character) en cours d'édition — focus optionnel."""
 
-    entity_type: str = Field(pattern="^(arc|chapter|scene|character)$")
+    entity_type: str = Field(pattern="^(arc|chapter|scene|character|npc)$")
     title: str
     fields: dict[str, str] = Field(default_factory=dict)
 
@@ -553,11 +562,16 @@ def _to_campaign_context(dto: CampaignContextDTO | None) -> CampaignStructuralCo
         CharacterSummary(name=c.name, snippet=c.snippet)
         for c in dto.characters
     ]
+    npcs = [
+        NpcSummary(name=n.name, snippet=n.snippet)
+        for n in dto.npcs
+    ]
     return CampaignStructuralContext(
         campaign_name=dto.campaign_name,
         campaign_description=dto.campaign_description,
         arcs=arcs,
         characters=characters,
+        npcs=npcs,
     )
 
 

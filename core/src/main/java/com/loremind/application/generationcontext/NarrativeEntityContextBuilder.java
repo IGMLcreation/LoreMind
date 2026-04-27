@@ -3,10 +3,12 @@ package com.loremind.application.generationcontext;
 import com.loremind.domain.campaigncontext.Arc;
 import com.loremind.domain.campaigncontext.Chapter;
 import com.loremind.domain.campaigncontext.Character;
+import com.loremind.domain.campaigncontext.Npc;
 import com.loremind.domain.campaigncontext.Scene;
 import com.loremind.domain.campaigncontext.ports.ArcRepository;
 import com.loremind.domain.campaigncontext.ports.ChapterRepository;
 import com.loremind.domain.campaigncontext.ports.CharacterRepository;
+import com.loremind.domain.campaigncontext.ports.NpcRepository;
 import com.loremind.domain.campaigncontext.ports.SceneRepository;
 import com.loremind.domain.generationcontext.NarrativeEntityContext;
 import org.springframework.stereotype.Component;
@@ -29,22 +31,25 @@ public class NarrativeEntityContextBuilder {
     private final ChapterRepository chapterRepository;
     private final SceneRepository sceneRepository;
     private final CharacterRepository characterRepository;
+    private final NpcRepository npcRepository;
 
     public NarrativeEntityContextBuilder(
             ArcRepository arcRepository,
             ChapterRepository chapterRepository,
             SceneRepository sceneRepository,
-            CharacterRepository characterRepository) {
+            CharacterRepository characterRepository,
+            NpcRepository npcRepository) {
         this.arcRepository = arcRepository;
         this.chapterRepository = chapterRepository;
         this.sceneRepository = sceneRepository;
         this.characterRepository = characterRepository;
+        this.npcRepository = npcRepository;
     }
 
     /**
      * Charge l'entité narrative ciblée et la projette vers un VO du GenerationContext.
      *
-     * @param entityType "arc", "chapter", "scene" ou "character" (insensible à la casse)
+     * @param entityType "arc", "chapter", "scene", "character" ou "npc" (insensible à la casse)
      * @param entityId   l'ID de l'entité
      * @throws IllegalArgumentException si le type est inconnu ou l'entité introuvable
      */
@@ -55,6 +60,7 @@ public class NarrativeEntityContextBuilder {
             case "chapter" -> fromChapter(loadChapter(entityId));
             case "scene" -> fromScene(loadScene(entityId));
             case "character" -> fromCharacter(loadCharacter(entityId));
+            case "npc" -> fromNpc(loadNpc(entityId));
             default -> throw new IllegalArgumentException("Type d'entité narrative inconnu: " + entityType);
         };
     }
@@ -79,6 +85,11 @@ public class NarrativeEntityContextBuilder {
     private Character loadCharacter(String id) {
         return characterRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Personnage non trouvé: " + id));
+    }
+
+    private Npc loadNpc(String id) {
+        return npcRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("PNJ non trouvé: " + id));
     }
 
     // --- Mapping entité → VO ------------------------------------------------
@@ -121,6 +132,12 @@ public class NarrativeEntityContextBuilder {
         Map<String, String> fields = new LinkedHashMap<>();
         putField(fields, "fiche complète (markdown)", c.getMarkdownContent());
         return new NarrativeEntityContext("character", c.getName(), fields);
+    }
+
+    private NarrativeEntityContext fromNpc(Npc n) {
+        Map<String, String> fields = new LinkedHashMap<>();
+        putField(fields, "fiche complète (markdown)", n.getMarkdownContent());
+        return new NarrativeEntityContext("npc", n.getName(), fields);
     }
 
     /** Null/blank devient chaîne vide — uniforme côté prompt, pas de NPE côté LLM. */

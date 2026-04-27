@@ -167,7 +167,7 @@ class BrainChatPayloadBuilderTest {
         ChapterSummary chapter = new ChapterSummary("L'arrivee", "...", 0, List.of(scene));
         ArcSummary arc = new ArcSummary("Acte I", "Mise en place", 1, List.of(chapter));
         CampaignStructuralContext camp = new CampaignStructuralContext(
-                "Les Ombres", "dark fantasy", List.of(arc), List.of());
+                "Les Ombres", "dark fantasy", List.of(arc), List.of(), List.of());
         ChatRequest req = ChatRequest.builder().messages(sampleMessages).campaignContext(camp).build();
 
         Map<String, Object> payload = builder.build(req);
@@ -200,7 +200,7 @@ class BrainChatPayloadBuilderTest {
     void build_arcSummary_omitsIllustrationCount_whenZero() {
         ArcSummary arc = new ArcSummary("A", "", 0, List.of());
         CampaignStructuralContext camp = new CampaignStructuralContext(
-                "X", "", List.of(arc), List.of());
+                "X", "", List.of(arc), List.of(), List.of());
         ChatRequest req = ChatRequest.builder().messages(sampleMessages).campaignContext(camp).build();
 
         Map<String, Object> payload = builder.build(req);
@@ -217,7 +217,7 @@ class BrainChatPayloadBuilderTest {
         ChapterSummary chapter = new ChapterSummary("Ch", "", 0, List.of(scene));
         ArcSummary arc = new ArcSummary("A", "", 0, List.of(chapter));
         CampaignStructuralContext camp = new CampaignStructuralContext(
-                "X", "", List.of(arc), List.of());
+                "X", "", List.of(arc), List.of(), List.of());
         ChatRequest req = ChatRequest.builder().messages(sampleMessages).campaignContext(camp).build();
 
         Map<String, Object> payload = builder.build(req);
@@ -236,7 +236,7 @@ class BrainChatPayloadBuilderTest {
         ChapterSummary chapter = new ChapterSummary("Ch", "", 0, List.of(scene));
         ArcSummary arc = new ArcSummary("A", "", 0, List.of(chapter));
         CampaignStructuralContext camp = new CampaignStructuralContext(
-                "X", "", List.of(arc), List.of());
+                "X", "", List.of(arc), List.of(), List.of());
         ChatRequest req = ChatRequest.builder().messages(sampleMessages).campaignContext(camp).build();
 
         Map<String, Object> payload = builder.build(req);
@@ -269,7 +269,7 @@ class BrainChatPayloadBuilderTest {
     @Test
     void build_campaignScenario_includesBothContextsAndEntity() {
         CampaignStructuralContext camp = new CampaignStructuralContext(
-                "X", "", List.of(), List.of());
+                "X", "", List.of(), List.of(), List.of());
         NarrativeEntityContext entity = new NarrativeEntityContext("arc", "T", Map.of());
         ChatRequest req = ChatRequest.builder()
                 .messages(sampleMessages)

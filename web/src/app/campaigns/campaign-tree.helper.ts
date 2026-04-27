@@ -2,9 +2,11 @@ import { Observable, forkJoin, of } from 'rxjs';
 import { switchMap, map } from 'rxjs/operators';
 import { CampaignService } from '../services/campaign.service';
 import { CharacterService } from '../services/character.service';
+import { NpcService } from '../services/npc.service';
 import { TreeItem } from '../services/layout.service';
 import { Arc, Chapter, Scene } from '../services/campaign.model';
 import { Character } from '../services/character.model';
+import { Npc } from '../services/npc.model';
 
 /**
  * Helper — charge l'arborescence complète d'une campagne (arcs -> chapitres -> scènes)
@@ -19,20 +21,23 @@ export interface CampaignTreeData {
   chaptersByArc: Record<string, Chapter[]>;
   scenesByChapter: Record<string, Scene[]>;
   characters: Character[];
+  npcs: Npc[];
 }
 
 export function loadCampaignTreeData(
   service: CampaignService,
   campaignId: string,
-  characterService: CharacterService
+  characterService: CharacterService,
+  npcService: NpcService
 ): Observable<CampaignTreeData> {
   return forkJoin({
     arcs: service.getArcs(campaignId),
-    characters: characterService.getByCampaign(campaignId)
+    characters: characterService.getByCampaign(campaignId),
+    npcs: npcService.getByCampaign(campaignId)
   }).pipe(
-    switchMap(({ arcs, characters }) => {
+    switchMap(({ arcs, characters, npcs }) => {
       if (arcs.length === 0) {
-        return of({ arcs, chaptersByArc: {}, scenesByChapter: {}, characters });
+        return of({ arcs, chaptersByArc: {}, scenesByChapter: {}, characters, npcs });
       }
       const chapterCalls = arcs.map(a =>
         service.getChapters(a.id!).pipe(map(chapters => ({ arcId: a.id!, chapters })))
@@ -47,7 +52,7 @@ export function loadCampaignTreeData(
           });
 
           if (allChapters.length === 0) {
-            return of({ arcs, chaptersByArc, scenesByChapter: {}, characters });
+            return of({ arcs, chaptersByArc, scenesByChapter: {}, characters, npcs });
           }
           const sceneCalls = allChapters.map(c =>
             service.getScenes(c.id!).pipe(map(scenes => ({ chapterId: c.id!, scenes })))
@@ -56,7 +61,7 @@ export function loadCampaignTreeData(
             map(sceneResults => {
               const scenesByChapter: Record<string, Scene[]> = {};
               sceneResults.forEach(r => { scenesByChapter[r.chapterId] = r.scenes; });
-              return { arcs, chaptersByArc, scenesByChapter, characters };
+              return { arcs, chaptersByArc, scenesByChapter, characters, npcs };
             })
           );
         })
@@ -83,17 +88,39 @@ export function buildCampaignTree(campaignId: string, data: CampaignTreeData): T
 
   const charactersNode: TreeItem = {
     id: 'characters-root',
-    label: 'Personnages',
+    label: 'PJ',
     iconKey: 'users',
     children: characterItems,
     meta: characterItems.length ? String(characterItems.length) : undefined,
     sectionHeaderBefore: 'Personnages',
-    // Note : si pas d'arcs, le filet au-dessus de "Personnages" est masqué par CSS
-    // (:first-child), ce qui est voulu — on ne veut pas de ligne seule en haut.
+    // Note : le section header "Personnages" est porté par le premier nœud (PJ).
+    // Le filet au-dessus est masqué par CSS si c'est le tout premier item de la sidebar.
     createActions: [{
       id: 'new-character',
       label: 'Nouveau PJ',
       route: `/campaigns/${campaignId}/characters/create`,
+      actionIcon: 'plus'
+    }]
+  };
+
+  const sortedNpcs = [...data.npcs].sort(byName);
+  const npcItems: TreeItem[] = sortedNpcs.map(n => ({
+    id: `npc-${n.id}`,
+    label: n.name,
+    route: `/campaigns/${campaignId}/npcs/${n.id}/edit`
+  }));
+
+  const npcsNode: TreeItem = {
+    id: 'npcs-root',
+    label: 'PNJ',
+    iconKey: 'c-drama',
+    children: npcItems,
+    meta: npcItems.length ? String(npcItems.length) : undefined,
+    // Pas de sectionHeaderBefore : on reste sous le header "Personnages" du nœud PJ.
+    createActions: [{
+      id: 'new-npc',
+      label: 'Nouveau PNJ',
+      route: `/campaigns/${campaignId}/npcs/create`,
       actionIcon: 'plus'
     }]
   };
@@ -143,5 +170,5 @@ export function buildCampaignTree(campaignId: string, data: CampaignTreeData): T
     };
   });
 
-  return [...arcNodes, charactersNode];
+  return [...arcNodes, charactersNode, npcsNode];
 }

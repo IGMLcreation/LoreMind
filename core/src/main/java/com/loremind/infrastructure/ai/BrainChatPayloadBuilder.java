@@ -5,6 +5,7 @@ import com.loremind.domain.generationcontext.CampaignStructuralContext.ArcSummar
 import com.loremind.domain.generationcontext.CampaignStructuralContext.BranchHint;
 import com.loremind.domain.generationcontext.CampaignStructuralContext.ChapterSummary;
 import com.loremind.domain.generationcontext.CampaignStructuralContext.CharacterSummary;
+import com.loremind.domain.generationcontext.CampaignStructuralContext.NpcSummary;
 import com.loremind.domain.generationcontext.CampaignStructuralContext.SceneSummary;
 import com.loremind.domain.generationcontext.ChatMessage;
 import com.loremind.domain.generationcontext.ChatRequest;
@@ -132,6 +133,12 @@ public class BrainChatPayloadBuilder {
                     .map(this::characterSummaryToMap)
                     .collect(Collectors.toList()));
         }
+        // Liste des PNJ : symétrique aux PJ, omise si vide pour alléger le payload.
+        if (ctx.npcs() != null && !ctx.npcs().isEmpty()) {
+            map.put("npcs", ctx.npcs().stream()
+                    .map(this::npcSummaryToMap)
+                    .collect(Collectors.toList()));
+        }
         return map;
     }
 
@@ -140,6 +147,15 @@ public class BrainChatPayloadBuilder {
         map.put("name", c.name());
         if (c.snippet() != null && !c.snippet().isBlank()) {
             map.put("snippet", c.snippet());
+        }
+        return map;
+    }
+
+    private Map<String, Object> npcSummaryToMap(NpcSummary n) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("name", n.name());
+        if (n.snippet() != null && !n.snippet().isBlank()) {
+            map.put("snippet", n.snippet());
         }
         return map;
     }

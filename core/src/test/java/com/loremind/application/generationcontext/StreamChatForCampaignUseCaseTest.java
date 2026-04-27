@@ -55,7 +55,7 @@ public class StreamChatForCampaignUseCaseTest {
     @SuppressWarnings("unchecked")
     @BeforeEach
     void setUp() {
-        campaignCtx = new CampaignStructuralContext("X", "d", List.of(), List.of());
+        campaignCtx = new CampaignStructuralContext("X", "d", List.of(), List.of(), List.of());
         messages = List.of();
         onUsage = mock(Consumer.class);
         onToken = mock(Consumer.class);

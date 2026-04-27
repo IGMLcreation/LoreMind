@@ -18,6 +18,15 @@ Pour l'installation, consultez le guide dans cette dernière .
 - Suivi de campagnes : Sessions, actions des joueurs, chronologie
 - Moteur IA intégré : Génération automatique de contenu (PNJ, Villes, Quêtes) à partir de templates
 
+## Démo
+
+Une démo est disponible sur le site [loremind-demo](https://loremind-demo.igmlcreation.fr/)
+
+!! Attention, la démo est uniquement accessible à 10 personnes à la fois (instances personnalisées). Cette limite est mise en place pour éviter l'overhead sur les ressources serveur.
+
+Cette dernière est utilisable 20 minutes maximum par session avant d'être réinitialiser.
+Vous comprendrez également qu'elle ne contient pas de démo pour la partie IA, pour laquelle il faut configurer un serveur Ollama (et qui ferait donc exploser le serveur) ou utiliser 1min.ai.
+
 ## License
 
 LoreMind est distribué sous licence **[GNU AGPL v3](LICENSE)**.

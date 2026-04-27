@@ -3,12 +3,15 @@ package com.loremind.application.generationcontext;
 import com.loremind.domain.campaigncontext.Arc;
 import com.loremind.domain.campaigncontext.Campaign;
 import com.loremind.domain.campaigncontext.Chapter;
+import com.loremind.domain.campaigncontext.Character;
+import com.loremind.domain.campaigncontext.Npc;
 import com.loremind.domain.campaigncontext.Scene;
 import com.loremind.domain.campaigncontext.SceneBranch;
 import com.loremind.domain.campaigncontext.ports.ArcRepository;
 import com.loremind.domain.campaigncontext.ports.CampaignRepository;
 import com.loremind.domain.campaigncontext.ports.ChapterRepository;
 import com.loremind.domain.campaigncontext.ports.CharacterRepository;
+import com.loremind.domain.campaigncontext.ports.NpcRepository;
 import com.loremind.domain.campaigncontext.ports.SceneRepository;
 import com.loremind.domain.generationcontext.CampaignStructuralContext;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,6 +46,8 @@ public class CampaignStructuralContextBuilderTest {
     private SceneRepository sceneRepository;
     @Mock
     private CharacterRepository characterRepository;
+    @Mock
+    private NpcRepository npcRepository;
 
     @InjectMocks
     private CampaignStructuralContextBuilder builder;
@@ -142,6 +147,66 @@ public class CampaignStructuralContextBuilderTest {
         assertEquals("en cas de combat perdu", scene1Summary.branches().get(0).condition());
         // ID inconnu → libellé de fallback
         assertEquals("(scène inconnue)", scene1Summary.branches().get(1).targetSceneName());
+    }
+
+    @Test
+    void testBuild_ProjectsCharactersAndNpcsWithSnippets() {
+        Character pj1 = Character.builder().id("c-1").campaignId("camp-1").order(1)
+                .name("Aragorn")
+                .markdownContent("# Aragorn\n\nRôdeur du Nord, héritier d'Isildur.")
+                .build();
+        Character pj2 = Character.builder().id("c-2").campaignId("camp-1").order(2)
+                .name("Legolas")
+                .markdownContent(null) // pas de snippet → string vide
+                .build();
+        Npc npc1 = Npc.builder().id("n-1").campaignId("camp-1").order(2)
+                .name("Borin le forgeron")
+                .markdownContent("# Borin\n\nNain barbu au regard perçant, ancien clan Feuillefer.")
+                .build();
+        Npc npc2 = Npc.builder().id("n-2").campaignId("camp-1").order(1)
+                .name("Dame Elara")
+                .markdownContent("")
+                .build();
+
+        when(campaignRepository.findById("camp-1")).thenReturn(Optional.of(campaign));
+        when(arcRepository.findByCampaignId("camp-1")).thenReturn(List.of());
+        when(characterRepository.findByCampaignId("camp-1")).thenReturn(List.of(pj2, pj1));
+        when(npcRepository.findByCampaignId("camp-1")).thenReturn(List.of(npc1, npc2));
+
+        CampaignStructuralContext ctx = builder.build("camp-1");
+
+        // PJ triés par order croissant
+        assertEquals(2, ctx.characters().size());
+        assertEquals("Aragorn", ctx.characters().get(0).name());
+        assertEquals("Rôdeur du Nord, héritier d'Isildur.", ctx.characters().get(0).snippet());
+        assertEquals("Legolas", ctx.characters().get(1).name());
+        assertEquals("", ctx.characters().get(1).snippet());
+
+        // PNJ triés par order croissant : Elara (1) avant Borin (2)
+        assertEquals(2, ctx.npcs().size());
+        assertEquals("Dame Elara", ctx.npcs().get(0).name());
+        assertEquals("", ctx.npcs().get(0).snippet());
+        assertEquals("Borin le forgeron", ctx.npcs().get(1).name());
+        assertEquals("Nain barbu au regard perçant, ancien clan Feuillefer.",
+                ctx.npcs().get(1).snippet());
+    }
+
+    @Test
+    void testBuild_TruncatesLongSnippet() {
+        // Snippet > 160 chars : doit être tronqué à 159 + "…"
+        String longLine = "x".repeat(200);
+        Npc longNpc = Npc.builder().id("n-1").campaignId("camp-1").order(1)
+                .name("Verbeux").markdownContent(longLine).build();
+
+        when(campaignRepository.findById("camp-1")).thenReturn(Optional.of(campaign));
+        when(arcRepository.findByCampaignId("camp-1")).thenReturn(List.of());
+        when(npcRepository.findByCampaignId("camp-1")).thenReturn(List.of(longNpc));
+
+        CampaignStructuralContext ctx = builder.build("camp-1");
+
+        String snippet = ctx.npcs().get(0).snippet();
+        assertEquals(160, snippet.length());
+        assertTrue(snippet.endsWith("…"));
     }
 
     @Test

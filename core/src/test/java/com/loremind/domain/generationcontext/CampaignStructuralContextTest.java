@@ -43,6 +43,7 @@ class CampaignStructuralContextTest {
                 "Les Ombres",
                 "Une campagne dark fantasy",
                 List.of(arc),
+                List.of(),
                 List.of());
 
         assertEquals("Les Ombres", ctx.campaignName());

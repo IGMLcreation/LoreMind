@@ -41,7 +41,7 @@ export type ChatStreamEvent =
  * décode ligne par ligne pour extraire les événements SSE.
  */
 /** Type d'entité narrative focus pour le chat Campagne. */
-export type NarrativeEntityType = 'arc' | 'chapter' | 'scene' | 'character';
+export type NarrativeEntityType = 'arc' | 'chapter' | 'scene' | 'character' | 'npc';
 
 @Injectable({ providedIn: 'root' })
 export class AiChatService {

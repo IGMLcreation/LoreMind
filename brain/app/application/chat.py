@@ -21,6 +21,7 @@ from app.domain.models import (
     ChatMessage,
     ChapterSummary,
     CharacterSummary,
+    NpcSummary,
     GameSystemContext,
     LoreStructuralContext,
     NarrativeEntityContext,
@@ -198,10 +199,12 @@ class ChatUseCase:
             else "\n(Cette campagne n'est associée à aucun univers — tu peux proposer des éléments d'ambiance libres.)"
         )
         characters_block = ChatUseCase._format_characters(ctx.characters)
+        npcs_block = ChatUseCase._format_npcs(ctx.npcs)
         return (
             "--- CAMPAGNE COURANTE ---\n"
             f"Nom : {ctx.campaign_name}{desc}{lore_note}\n"
-            f"{characters_block}\n"
+            f"{characters_block}"
+            f"{npcs_block}\n"
             "Structure narrative (les flèches → indiquent des transitions de scène "
             "déclenchées par un choix des joueurs) :\n"
             f"{arcs_block}"
@@ -228,6 +231,33 @@ class ChatUseCase:
         lines.append(
             "Pour une fiche complète (stats, backstory), n'invente rien : "
             "demande au MJ d'ouvrir l'éditeur du PJ pour te donner les détails."
+        )
+        return "\n".join(lines) + "\n"
+
+    @staticmethod
+    def _format_npcs(npcs: list[NpcSummary]) -> str:
+        """Bloc PNJ — symétrique aux PJ avec sa propre instruction anti-halluci.
+
+        Distinction importante : pour les PNJ, l'IA est ENCOURAGÉE à proposer de
+        nouveaux PNJ (création créative = OK). En revanche, elle ne doit pas
+        référencer comme existant un PNJ qui n'est pas dans la liste ci-dessous.
+        """
+        if not npcs:
+            return (
+                "\nPersonnages non-joueurs (PNJ) : aucun défini pour l'instant. "
+                "Tu peux librement proposer de nouveaux PNJ au MJ, mais ne "
+                "fais pas comme s'ils existaient déjà dans la campagne.\n"
+            )
+        lines = ["\nPersonnages non-joueurs (PNJ) connus :"]
+        for n in npcs:
+            if n.snippet:
+                lines.append(f"- **{n.name}** — {n.snippet}")
+            else:
+                lines.append(f"- **{n.name}** (fiche vide)")
+        lines.append(
+            "Pour une fiche complète d'un PNJ existant (apparence, motivations), "
+            "n'invente rien : demande au MJ d'ouvrir l'éditeur du PNJ. Tu peux "
+            "en revanche proposer librement de NOUVEAUX PNJ."
         )
         return "\n".join(lines) + "\n"
 
@@ -319,7 +349,8 @@ class ChatUseCase:
             "arc": "ARC",
             "chapter": "CHAPITRE",
             "scene": "SCÈNE",
-            "character": "FICHE DE PERSONNAGE",
+            "character": "FICHE DE PERSONNAGE (PJ)",
+            "npc": "FICHE DE PNJ",
         }.get(ne.entity_type.lower(), ne.entity_type.upper())
         if ne.fields:
             fields_block = "\n".join(

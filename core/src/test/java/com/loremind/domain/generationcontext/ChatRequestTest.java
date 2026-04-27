@@ -56,7 +56,7 @@ class ChatRequestTest {
         ChatRequest request = ChatRequest.builder()
                 .messages(sampleMessages)
                 .campaignContext(new CampaignStructuralContext(
-                        "Les Ombres", "...", List.of(), List.of()))
+                        "Les Ombres", "...", List.of(), List.of(), List.of()))
                 .narrativeEntity(new NarrativeEntityContext(
                         "scene", "L'auberge", Map.of("location", "Taverne")))
                 .build();
