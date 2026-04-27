@@ -254,7 +254,7 @@ export class PageCreateComponent implements OnInit, OnDestroy {
       next: (created) => {
         const updated = { ...created, values };
         this.pageService.update(created.id!, updated).subscribe({
-          next: () => this.router.navigate(['/lore', this.loreId, 'pages', created.id]),
+          next: () => this.router.navigate(['/lore', this.loreId, 'pages', created.id, 'edit']),
           error: () => this.wizardError = 'Page créée, mais impossible d\'appliquer les valeurs.'
         });
       },
