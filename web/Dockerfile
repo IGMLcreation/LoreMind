@@ -1,7 +1,7 @@
 FROM node:20-alpine AS build
 WORKDIR /build
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --include=dev --ignore-scripts
 COPY . .
 
 # Neutralise les URLs absolues hardcodees dans les services (dette assumee :
