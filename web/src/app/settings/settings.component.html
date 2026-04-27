@@ -244,16 +244,21 @@
         <lucide-icon [img]="Download" [size]="16"></lucide-icon>
         <span>Une mise a jour est disponible.</span>
       </div>
-      <div *ngIf="!updateStatus?.updateAvailable" class="hint">
+      <div *ngIf="updateStatus?.anyUnknown && !updateStatus?.updateAvailable" class="alert alert-warn">
+        <lucide-icon [img]="Download" [size]="16"></lucide-icon>
+        <span>Verification impossible pour certaines images — voir details ci-dessous.</span>
+      </div>
+      <div *ngIf="!updateStatus?.updateAvailable && !updateStatus?.anyUnknown" class="hint">
         Tout est a jour (verifie le {{ updateStatus?.checkedAt | date:'short' }}).
       </div>
 
       <ul class="update-images" *ngIf="updateStatus?.images?.length">
         <li *ngFor="let img of updateStatus?.images">
           <strong>{{ img.image }}</strong>
-          <span *ngIf="img.updateAvailable" class="badge-update">MAJ dispo</span>
-          <span *ngIf="!img.updateAvailable && img.remoteDigest" class="badge-ok">a jour</span>
-          <span *ngIf="!img.remoteDigest" class="badge-warn">indisponible</span>
+          <span *ngIf="img.status === 'UPDATE_AVAILABLE'" class="badge-update">MAJ dispo</span>
+          <span *ngIf="img.status === 'UP_TO_DATE'" class="badge-ok">a jour</span>
+          <span *ngIf="img.status === 'UNKNOWN'" class="badge-warn"
+                title="Impossible de comparer (baseline absente ou registry injoignable)">verification impossible</span>
         </li>
       </ul>
 

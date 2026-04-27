@@ -32,8 +32,13 @@ import java.util.concurrent.ConcurrentHashMap;
  *    image suivie ({@code update-check.images}). On stocke ces digests comme
  *    "baseline" (= ce que le conteneur en cours d'execution est cense faire
  *    tourner, puisque le `docker compose pull` precede toujours `up -d`).
+ *  - Si l'init echoue (reseau Docker pas encore pret, registry transitoirement
+ *    indisponible), un thread daemon de retry avec backoff complete les
+ *    baselines manquantes en arriere-plan.
  *  - {@link #check()} re-interroge le registry et compare. Si un digest a
- *    change, une mise a jour est disponible.
+ *    change, une mise a jour est disponible. Si la baseline manque (echec
+ *    de tous les retries), retourne {@link ImageStatusKind#UNKNOWN} pour
+ *    cette image — JAMAIS d'alignement silencieux (eviterait des MAJ ratees).
  *  - {@link #apply()} POST sur /v1/update de Watchtower (qui doit etre lance
  *    avec WATCHTOWER_HTTP_API_UPDATE=true et le meme token).
  *
@@ -84,6 +89,9 @@ public class UpdateCheckService {
         this.watchtowerToken = watchtowerToken;
     }
 
+    /** Backoff progressif (ms) pour retry de baseline en cas d'echec initial. */
+    private static final long[] BASELINE_RETRY_BACKOFFS_MS = {2_000, 5_000, 15_000, 30_000, 60_000};
+
     @PostConstruct
     void initBaseline() {
         if (!isEnabled()) {
@@ -91,7 +99,19 @@ public class UpdateCheckService {
             return;
         }
         log.info("Update check enabled - registry={} images={} tag={}", registry, images, tag);
+        boolean complete = tryBaselineMissing();
+        if (!complete) {
+            startBaselineRetryThread();
+        }
+    }
+
+    /**
+     * Tente de poser la baseline pour les images qui ne l'ont pas encore.
+     * @return true si TOUTES les images ont leur baseline apres cet essai.
+     */
+    private boolean tryBaselineMissing() {
         for (String image : images) {
+            if (baselineDigests.containsKey(image)) continue;
             try {
                 String digest = fetchRemoteDigest(image);
                 if (digest != null) {
@@ -102,6 +122,33 @@ public class UpdateCheckService {
                 log.warn("Cannot baseline digest for {}: {}", image, e.getMessage());
             }
         }
+        return baselineDigests.size() == images.size();
+    }
+
+    /**
+     * Lance un thread daemon qui retente de poser les baselines manquantes
+     * avec backoff. Le thread s'arrete des que toutes les baselines sont
+     * posees, ou apres epuisement des backoffs (et alors {@link #check()}
+     * retournera UNKNOWN pour ces images jusqu'au prochain redemarrage).
+     */
+    private void startBaselineRetryThread() {
+        Thread t = new Thread(() -> {
+            for (long backoff : BASELINE_RETRY_BACKOFFS_MS) {
+                try {
+                    Thread.sleep(backoff);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return;
+                }
+                if (tryBaselineMissing()) {
+                    log.info("Baseline complete after retry");
+                    return;
+                }
+            }
+            log.warn("Baseline incomplete after all retries; check() will return UNKNOWN for missing images");
+        }, "update-baseline-retry");
+        t.setDaemon(true);
+        t.start();
     }
 
     public boolean isEnabled() {
@@ -110,10 +157,11 @@ public class UpdateCheckService {
 
     public UpdateStatus check() {
         if (!isEnabled()) {
-            return new UpdateStatus(false, false, List.of(), Instant.now());
+            return new UpdateStatus(false, false, false, List.of(), Instant.now());
         }
         List<ImageStatus> statuses = new ArrayList<>();
         boolean anyUpdate = false;
+        boolean anyUnknown = false;
         for (String image : images) {
             String baseline = baselineDigests.get(image);
             String remote = null;
@@ -122,17 +170,21 @@ public class UpdateCheckService {
             } catch (Exception e) {
                 log.warn("Check failed for {}: {}", image, e.getMessage());
             }
-            // Si on n'a pas de baseline (echec au boot), on l'aligne maintenant
-            // pour eviter un faux positif "MAJ dispo".
-            if (baseline == null && remote != null) {
-                baselineDigests.put(image, remote);
-                baseline = remote;
+            // PAS d'alignement lazy si baseline absente : ce serait un faux negatif
+            // silencieux. On reporte UNKNOWN pour que l'UI le signale.
+            ImageStatusKind kind;
+            if (baseline == null || remote == null) {
+                kind = ImageStatusKind.UNKNOWN;
+                anyUnknown = true;
+            } else if (baseline.equals(remote)) {
+                kind = ImageStatusKind.UP_TO_DATE;
+            } else {
+                kind = ImageStatusKind.UPDATE_AVAILABLE;
+                anyUpdate = true;
             }
-            boolean updateAvailable = baseline != null && remote != null && !baseline.equals(remote);
-            if (updateAvailable) anyUpdate = true;
-            statuses.add(new ImageStatus(image, baseline, remote, updateAvailable));
+            statuses.add(new ImageStatus(image, baseline, remote, kind));
         }
-        return new UpdateStatus(true, anyUpdate, statuses, Instant.now());
+        return new UpdateStatus(true, anyUpdate, anyUnknown, statuses, Instant.now());
     }
 
     public void apply() {
@@ -278,15 +330,38 @@ public class UpdateCheckService {
     // Records de retour (sortis sous forme JSON par Jackson)
     // -----------------------------------------------------------------------
 
+    /**
+     * Etat tri-state d'une image vis-a-vis du registry.
+     * <ul>
+     *   <li>{@link #UP_TO_DATE} : digest local == digest remote.</li>
+     *   <li>{@link #UPDATE_AVAILABLE} : digests differents, MAJ disponible.</li>
+     *   <li>{@link #UNKNOWN} : impossible de comparer (baseline ou remote manquant).
+     *       L'UI doit afficher un avertissement plutot que de declarer "a jour".</li>
+     * </ul>
+     */
+    public enum ImageStatusKind { UP_TO_DATE, UPDATE_AVAILABLE, UNKNOWN }
+
     public record UpdateStatus(
             boolean enabled,
             boolean updateAvailable,
+            boolean anyUnknown,
             List<ImageStatus> images,
             Instant checkedAt) {}
 
+    /**
+     * Le champ {@code updateAvailable} est conserve pour la compatibilite
+     * avec les anciens clients ; il est strictement derive de {@code status}
+     * dans le constructeur compact.
+     */
     public record ImageStatus(
             String image,
             String localDigest,
             String remoteDigest,
-            boolean updateAvailable) {}
+            ImageStatusKind status,
+            boolean updateAvailable) {
+
+        public ImageStatus(String image, String localDigest, String remoteDigest, ImageStatusKind status) {
+            this(image, localDigest, remoteDigest, status, status == ImageStatusKind.UPDATE_AVAILABLE);
+        }
+    }
 }

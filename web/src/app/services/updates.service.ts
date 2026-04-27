@@ -4,17 +4,29 @@ import { BehaviorSubject, Observable, catchError, of, tap } from 'rxjs';
 
 /**
  * Reflet de UpdateCheckService.UpdateStatus cote backend.
+ *
+ * Etat tri-state par image : UP_TO_DATE / UPDATE_AVAILABLE / UNKNOWN.
+ * UNKNOWN signale que la comparaison est impossible (baseline absente ou
+ * remote injoignable) — l'UI doit afficher un avertissement plutot que
+ * d'annoncer "a jour" silencieusement.
  */
+export type ImageStatusKind = 'UP_TO_DATE' | 'UPDATE_AVAILABLE' | 'UNKNOWN';
+
 export interface ImageStatus {
   image: string;
   localDigest: string | null;
   remoteDigest: string | null;
+  status: ImageStatusKind;
+  /** Conserve pour back-compat ; equivalent a (status === 'UPDATE_AVAILABLE'). */
   updateAvailable: boolean;
 }
 
 export interface UpdateStatus {
   enabled: boolean;
+  /** True si au moins une image a status === 'UPDATE_AVAILABLE'. */
   updateAvailable: boolean;
+  /** True si au moins une image a status === 'UNKNOWN'. */
+  anyUnknown: boolean;
   images: ImageStatus[];
   checkedAt: string;
 }
