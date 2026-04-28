@@ -94,6 +94,19 @@ services:
       UPDATE_CHECK_TAG: ${TAG:-latest}
       WATCHTOWER_URL: http://watchtower:8080
       WATCHTOWER_TOKEN: ${WATCHTOWER_TOKEN:-}
+      # Licensing : la cle publique JWT est embarquee dans le binaire
+      # (core/src/main/resources/licensing/jwt-public-key.pem).
+      # LICENSING_JWT_PUBLIC_KEY est un override optionnel (rotation de cle
+      # sans rebuild) - non defini par defaut.
+      LICENSING_JWT_PUBLIC_KEY: ${LICENSING_JWT_PUBLIC_KEY:-}
+      LICENSING_RELAY_BASE_URL: ${LICENSING_RELAY_BASE_URL:-https://loremind-auth.igmlcreation.fr}
+      # Chemin du docker config.json partage avec Watchtower
+      LICENSING_DOCKER_CONFIG_PATH: /shared/docker/config.json
+    volumes:
+      # Volume partage avec Watchtower : Core ecrit les credentials registry
+      # GHCR (recus du relais) ici, Watchtower les utilise pour pull les images
+      # privees du canal beta. Pas de creds = no-op.
+      - docker-config:/shared/docker
     restart: unless-stopped
 
   # Ollama embarque (option par defaut pour les utilisateurs sans Ollama installe).
@@ -169,7 +182,14 @@ services:
     profiles: ["autoupdate"]
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      # Volume partage avec Core : credentials registry GHCR (canal beta).
+      # Watchtower lit le config.json depuis DOCKER_CONFIG.
+      - docker-config:/shared/docker
     environment:
+      # Indique a Watchtower (et au CLI Docker embarque) ou trouver le
+      # config.json. Active automatiquement l'auth GHCR pour les images
+      # du canal beta des que Core a ecrit le fichier.
+      DOCKER_CONFIG: /shared/docker
       WATCHTOWER_LABEL_ENABLE: "true"
       WATCHTOWER_CLEANUP: "true"
       WATCHTOWER_INCLUDE_RESTARTING: "true"
@@ -191,3 +211,6 @@ volumes:
   minio-data:
   brain-data:
   ollama-data:
+  # Volume partage Core <-> Watchtower : config.json Docker pour
+  # l'authentification au registry prive GHCR (canal beta Patreon).
+  docker-config:

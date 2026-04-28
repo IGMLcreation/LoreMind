@@ -1,6 +1,7 @@
 package com.loremind.infrastructure.web.controller;
 
 import com.loremind.infrastructure.updates.UpdateCheckService;
+import com.loremind.infrastructure.updates.UpdateCheckService.BetaStatus;
 import com.loremind.infrastructure.updates.UpdateCheckService.UpdateStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +43,12 @@ public class UpdatesController {
     public UpdateStatus check() {
         guardDemoMode();
         return updates.check();
+    }
+
+    @GetMapping("/check-beta")
+    public BetaStatus checkBeta() {
+        guardDemoMode();
+        return updates.checkBeta();
     }
 
     @PostMapping("/apply")

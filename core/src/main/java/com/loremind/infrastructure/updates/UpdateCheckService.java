@@ -1,5 +1,9 @@
 package com.loremind.infrastructure.updates;
 
+import com.loremind.application.licensing.LicenseService;
+import com.loremind.domain.licensing.LicenseSnapshot;
+import com.loremind.domain.licensing.LicenseStatus;
+import com.loremind.domain.licensing.RegistryCredentials;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +14,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -19,9 +24,11 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -68,6 +75,9 @@ public class UpdateCheckService {
     private final String tag;
     private final String watchtowerUrl;
     private final String watchtowerToken;
+    private final List<String> betaImages;
+    private final String betaTag;
+    private final LicenseService licenseService;
 
     private final Map<String, String> baselineDigests = new ConcurrentHashMap<>();
 
@@ -77,7 +87,10 @@ public class UpdateCheckService {
             @Value("${update-check.images:}") String imagesCsv,
             @Value("${update-check.tag:latest}") String tag,
             @Value("${update-check.watchtower-url:http://watchtower:8080}") String watchtowerUrl,
-            @Value("${update-check.watchtower-token:}") String watchtowerToken) {
+            @Value("${update-check.watchtower-token:}") String watchtowerToken,
+            @Value("${licensing.beta.images:}") String betaImagesCsv,
+            @Value("${licensing.beta.tag:latest}") String betaTag,
+            LicenseService licenseService) {
         this.http = builder
                 .setConnectTimeout(Duration.ofSeconds(5))
                 .setReadTimeout(Duration.ofSeconds(15))
@@ -87,6 +100,9 @@ public class UpdateCheckService {
         this.tag = tag;
         this.watchtowerUrl = watchtowerUrl;
         this.watchtowerToken = watchtowerToken;
+        this.betaImages = parseImages(betaImagesCsv);
+        this.betaTag = betaTag;
+        this.licenseService = licenseService;
     }
 
     /** Backoff progressif (ms) pour retry de baseline en cas d'echec initial. */
@@ -185,6 +201,118 @@ public class UpdateCheckService {
             statuses.add(new ImageStatus(image, baseline, remote, kind));
         }
         return new UpdateStatus(true, anyUpdate, anyUnknown, statuses, Instant.now());
+    }
+
+    /**
+     * Verifie l'etat du canal beta (images privees GHCR).
+     * Necessite licence valide/grace + toggle beta ON.
+     * Authentification basic auth via le PAT distribue par le relais.
+     *
+     * @return statut beta (peut etre {@link BetaStatus#disabled()} si licence absente,
+     *         beta off ou licence expiree)
+     */
+    public BetaStatus checkBeta() {
+        if (!licenseService.isLicensingEnabled()) {
+            return BetaStatus.disabled("licensing-not-configured");
+        }
+        LicenseSnapshot snap = licenseService.getCurrentSnapshot();
+        if (snap.status() != LicenseStatus.VALID && snap.status() != LicenseStatus.GRACE) {
+            return BetaStatus.disabled("license-" + snap.status().name().toLowerCase());
+        }
+        if (!snap.betaChannelEnabled()) {
+            return BetaStatus.disabled("beta-toggle-off");
+        }
+        if (betaImages.isEmpty()) {
+            return BetaStatus.disabled("no-beta-images-configured");
+        }
+
+        Optional<RegistryCredentials> creds = licenseService.fetchRegistryCredentials();
+        if (creds.isEmpty()) {
+            return new BetaStatus(true, false, true, List.of(), Instant.now(), "relay-unavailable");
+        }
+
+        String basicAuth = "Basic " + Base64.getEncoder().encodeToString(
+                (creds.get().username() + ":" + creds.get().password()).getBytes(StandardCharsets.UTF_8));
+        String betaRegistry = normalizeRegistry(creds.get().registry());
+
+        List<ImageStatus> statuses = new ArrayList<>();
+        boolean anyUpdate = false;
+        boolean anyUnknown = false;
+        for (String image : betaImages) {
+            String remote = null;
+            try {
+                remote = fetchRemoteDigestAuth(betaRegistry, image, betaTag, basicAuth);
+            } catch (Exception e) {
+                log.warn("Beta check failed for {}: {}", image, e.getMessage());
+            }
+            // Pas de baseline pour la beta : on ne peut pas dire "a jour" car on
+            // ne sait pas quelle version le user fait tourner. On expose juste le
+            // digest remote ; l'UI affichera "version disponible : <tag>" sans
+            // comparaison locale tant qu'il n'y a pas un mecanisme de baseline.
+            ImageStatusKind kind = (remote == null) ? ImageStatusKind.UNKNOWN : ImageStatusKind.UPDATE_AVAILABLE;
+            if (kind == ImageStatusKind.UNKNOWN) anyUnknown = true;
+            else anyUpdate = true;
+            statuses.add(new ImageStatus(image, null, remote, kind));
+        }
+        return new BetaStatus(true, anyUpdate, anyUnknown, statuses, Instant.now(), null);
+    }
+
+    private String fetchRemoteDigestAuth(String registryUrl, String image, String tagName, String authHeader) {
+        String url = registryUrl + "/v2/" + image + "/manifests/" + tagName;
+        HttpHeaders headers = new HttpHeaders();
+        headers.setAccept(MANIFEST_ACCEPT);
+        headers.set(HttpHeaders.AUTHORIZATION, authHeader);
+        try {
+            return digestCall(url, headers);
+        } catch (HttpClientErrorException.Unauthorized e) {
+            // GHCR peut exiger d'echanger basic auth contre un bearer token via
+            // le challenge WWW-Authenticate. On reuse la logique existante en
+            // ajoutant l'auth header a la requete /token.
+            String www = e.getResponseHeaders() == null ? null
+                    : e.getResponseHeaders().getFirst(HttpHeaders.WWW_AUTHENTICATE);
+            String token = obtainBearerTokenWithAuth(www, authHeader);
+            if (token == null) return null;
+            HttpHeaders bearerHeaders = new HttpHeaders();
+            bearerHeaders.setAccept(MANIFEST_ACCEPT);
+            bearerHeaders.setBearerAuth(token);
+            return digestCall(url, bearerHeaders);
+        }
+    }
+
+    @SuppressWarnings("rawtypes")
+    private String obtainBearerTokenWithAuth(@Nullable String wwwAuth, String authHeader) {
+        if (wwwAuth == null) return null;
+        String prefix = "Bearer ";
+        if (!wwwAuth.regionMatches(true, 0, prefix, 0, prefix.length())) return null;
+        Map<String, String> params = parseAuthParams(wwwAuth.substring(prefix.length()));
+        String realm = params.get("realm");
+        if (realm == null) return null;
+        StringBuilder url = new StringBuilder(realm);
+        boolean hasQuery = realm.contains("?");
+        for (String key : new String[]{"service", "scope"}) {
+            String v = params.get(key);
+            if (v != null) {
+                String encoded = URLEncoder.encode(v, StandardCharsets.UTF_8)
+                        .replace("%3A", ":")
+                        .replace("%2F", "/");
+                url.append(hasQuery ? '&' : '?').append(key).append('=').append(encoded);
+                hasQuery = true;
+            }
+        }
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.set(HttpHeaders.AUTHORIZATION, authHeader);
+            ResponseEntity<Map> resp = http.exchange(url.toString(), HttpMethod.GET,
+                    new HttpEntity<>(headers), Map.class);
+            Map<?, ?> body = resp.getBody();
+            if (body == null) return null;
+            Object t = body.get("token");
+            if (t == null) t = body.get("access_token");
+            return t == null ? null : t.toString();
+        } catch (Exception e) {
+            log.warn("Beta bearer token request failed: {}", e.getMessage());
+            return null;
+        }
     }
 
     public void apply() {
@@ -347,6 +475,29 @@ public class UpdateCheckService {
             boolean anyUnknown,
             List<ImageStatus> images,
             Instant checkedAt) {}
+
+    /**
+     * Etat du canal beta.
+     * <ul>
+     *   <li>{@code enabled} : true si le canal beta est actif et la licence valide.</li>
+     *   <li>{@code disabledReason} : si {@code enabled=false}, raison technique
+     *       (licensing-not-configured, license-none, license-expired, beta-toggle-off,
+     *       no-beta-images-configured, relay-unavailable). Permet a l'UI d'afficher
+     *       un message contextuel.</li>
+     * </ul>
+     */
+    public record BetaStatus(
+            boolean enabled,
+            boolean updateAvailable,
+            boolean anyUnknown,
+            List<ImageStatus> images,
+            Instant checkedAt,
+            String disabledReason) {
+
+        public static BetaStatus disabled(String reason) {
+            return new BetaStatus(false, false, false, List.of(), Instant.now(), reason);
+        }
+    }
 
     /**
      * Le champ {@code updateAvailable} est conserve pour la compatibilite

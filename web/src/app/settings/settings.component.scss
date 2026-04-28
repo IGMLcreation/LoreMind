@@ -364,3 +364,103 @@
   padding: 0.15rem 0.5rem;
   border-radius: 3px;
 }
+
+// --- Sous-blocs canaux (stable / beta) ----------------------------------
+.channel-block {
+  margin-top: 16px;
+
+  & + & {
+    margin-top: 28px;
+    padding-top: 22px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  &:first-child {
+    margin-top: 0;
+  }
+}
+
+.channel-title {
+  font-size: 1rem;
+  margin: 0 0 12px;
+  color: #c4b8e0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+// --- Section Patreon / canal beta ---------------------------------------
+.license-info {
+  list-style: none;
+  margin: 12px 0 16px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  li {
+    font-size: 0.9rem;
+    padding: 6px 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 4px;
+
+    strong {
+      color: #c4b8e0;
+      margin-right: 6px;
+    }
+  }
+}
+
+.form-row-inline {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.form-row-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-secondary.btn-danger {
+  border-color: rgba(220, 80, 80, 0.4);
+  color: #ff7878;
+
+  &:hover {
+    background: rgba(220, 80, 80, 0.12);
+    border-color: rgba(220, 80, 80, 0.6);
+  }
+}
+
+.beta-status {
+  margin-top: 16px;
+
+  code {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: ui-monospace, SFMono-Regular, monospace;
+    font-size: 0.85em;
+  }
+}
+
+label.checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+
+  input[type="checkbox"] {
+    cursor: pointer;
+  }
+
+  input[type="checkbox"]:disabled + span {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}

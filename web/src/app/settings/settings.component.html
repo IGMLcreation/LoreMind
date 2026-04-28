@@ -221,58 +221,205 @@
     </div>
   </section>
 
-  <!-- Bloc Mises a jour -->
-  <section class="card" *ngIf="config.updateCheckEnabled">
+  <!-- Bloc Mises a jour (canal stable + canal beta Patreon fusionnes) -->
+  <section class="card" *ngIf="config.updateCheckEnabled || licenseStatus?.enabled">
     <h2>Mises a jour</h2>
     <p class="hint">Verifie aupres du registry Docker si une nouvelle version
       des conteneurs (core, brain, web) est disponible. Postgres et MinIO sont
       exclus — ils sont mis a jour manuellement.</p>
 
-    <div class="form-row">
-      <button type="button" class="btn-secondary" (click)="checkUpdates()" [disabled]="updateChecking">
-        <lucide-icon [img]="RefreshCw" [size]="14"></lucide-icon>
-        <span>{{ updateChecking ? 'Verification...' : 'Verifier maintenant' }}</span>
-      </button>
-    </div>
+    <!-- ====================================================== -->
+    <!-- Sous-section : canal stable                              -->
+    <!-- ====================================================== -->
+    <div class="channel-block" *ngIf="config.updateCheckEnabled">
+      <h3 class="channel-title">Canal stable</h3>
 
-    <div *ngIf="updateStatus && !updateStatus.enabled" class="hint">
-      Feature non configuree (WATCHTOWER_TOKEN absent).
-    </div>
-
-    <div *ngIf="updateStatus?.enabled">
-      <div *ngIf="updateStatus?.updateAvailable" class="alert alert-success">
-        <lucide-icon [img]="Download" [size]="16"></lucide-icon>
-        <span>Une mise a jour est disponible.</span>
-      </div>
-      <div *ngIf="updateStatus?.anyUnknown && !updateStatus?.updateAvailable" class="alert alert-warn">
-        <lucide-icon [img]="Download" [size]="16"></lucide-icon>
-        <span>Verification impossible pour certaines images — voir details ci-dessous.</span>
-      </div>
-      <div *ngIf="!updateStatus?.updateAvailable && !updateStatus?.anyUnknown" class="hint">
-        Tout est a jour (verifie le {{ updateStatus?.checkedAt | date:'short' }}).
-      </div>
-
-      <ul class="update-images" *ngIf="updateStatus?.images?.length">
-        <li *ngFor="let img of updateStatus?.images">
-          <strong>{{ img.image }}</strong>
-          <span *ngIf="img.status === 'UPDATE_AVAILABLE'" class="badge-update">MAJ dispo</span>
-          <span *ngIf="img.status === 'UP_TO_DATE'" class="badge-ok">a jour</span>
-          <span *ngIf="img.status === 'UNKNOWN'" class="badge-warn"
-                title="Impossible de comparer (baseline absente ou registry injoignable)">verification impossible</span>
-        </li>
-      </ul>
-
-      <div class="form-row" *ngIf="updateStatus?.updateAvailable">
-        <button type="button" class="btn-primary" (click)="applyUpdate()" [disabled]="updateApplying">
-          <lucide-icon [img]="Download" [size]="16"></lucide-icon>
-          <span>{{ updateApplying ? 'Mise a jour en cours...' : 'Mettre a jour maintenant' }}</span>
+      <div class="form-row">
+        <button type="button" class="btn-secondary" (click)="checkUpdates()" [disabled]="updateChecking">
+          <lucide-icon [img]="RefreshCw" [size]="14"></lucide-icon>
+          <span>{{ updateChecking ? 'Verification...' : 'Verifier maintenant' }}</span>
         </button>
       </div>
 
-      <div *ngIf="updateMessage" class="alert alert-success">
-        <lucide-icon [img]="Check" [size]="16"></lucide-icon>
-        <span>{{ updateMessage }}</span>
+      <div *ngIf="updateStatus && !updateStatus.enabled" class="hint">
+        Feature non configuree (WATCHTOWER_TOKEN absent).
       </div>
+
+      <div *ngIf="updateStatus?.enabled">
+        <div *ngIf="updateStatus?.updateAvailable" class="alert alert-success">
+          <lucide-icon [img]="Download" [size]="16"></lucide-icon>
+          <span>Une mise a jour est disponible.</span>
+        </div>
+        <div *ngIf="updateStatus?.anyUnknown && !updateStatus?.updateAvailable" class="alert alert-warn">
+          <lucide-icon [img]="Download" [size]="16"></lucide-icon>
+          <span>Verification impossible pour certaines images — voir details ci-dessous.</span>
+        </div>
+        <div *ngIf="!updateStatus?.updateAvailable && !updateStatus?.anyUnknown" class="hint">
+          Tout est a jour (verifie le {{ updateStatus?.checkedAt | date:'short' }}).
+        </div>
+
+        <ul class="update-images" *ngIf="updateStatus?.images?.length">
+          <li *ngFor="let img of updateStatus?.images">
+            <strong>{{ img.image }}</strong>
+            <span *ngIf="img.status === 'UPDATE_AVAILABLE'" class="badge-update">MAJ dispo</span>
+            <span *ngIf="img.status === 'UP_TO_DATE'" class="badge-ok">a jour</span>
+            <span *ngIf="img.status === 'UNKNOWN'" class="badge-warn"
+                  title="Impossible de comparer (baseline absente ou registry injoignable)">verification impossible</span>
+          </li>
+        </ul>
+
+        <div class="form-row" *ngIf="updateStatus?.updateAvailable">
+          <button type="button" class="btn-primary" (click)="applyUpdate()" [disabled]="updateApplying">
+            <lucide-icon [img]="Download" [size]="16"></lucide-icon>
+            <span>{{ updateApplying ? 'Mise a jour en cours...' : 'Mettre a jour maintenant' }}</span>
+          </button>
+        </div>
+
+        <div *ngIf="updateMessage" class="alert alert-success">
+          <lucide-icon [img]="Check" [size]="16"></lucide-icon>
+          <span>{{ updateMessage }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================================================== -->
+    <!-- Sous-section : canal beta (Patreon)                      -->
+    <!-- ====================================================== -->
+    <div class="channel-block" *ngIf="licenseStatus?.enabled">
+      <h3 class="channel-title">
+        <lucide-icon [img]="Heart" [size]="16"></lucide-icon>
+        Canal beta &mdash; reserve aux patrons
+      </h3>
+      <p class="hint">
+        Soutiens LoreMind sur Patreon pour acceder aux nouvelles features en avant-premiere.
+        Le tier <strong>Compagnon</strong> (7&euro;/mois) ou superieur debloque ce canal.
+      </p>
+
+      <!-- Pas de licence installee -->
+      <ng-container *ngIf="licenseStatus?.status === 'NONE'">
+        <div class="form-row">
+          <button type="button" class="btn-primary" (click)="connectPatreon()">
+            <lucide-icon [img]="Link2" [size]="16"></lucide-icon>
+            <span>Connecter mon compte Patreon</span>
+          </button>
+        </div>
+        <p class="hint">
+          Une nouvelle fenetre va s'ouvrir vers Patreon. Apres autorisation, copie le token affiche
+          et colle-le ci-dessous.
+        </p>
+        <div class="form-row">
+          <label for="license-jwt">Token Patreon</label>
+          <input
+            id="license-jwt"
+            type="text"
+            [(ngModel)]="licenseJwtInput"
+            placeholder="eyJhbGciOiJFZERTQS..."
+            autocomplete="off"
+          >
+        </div>
+        <div class="form-row">
+          <button type="button" class="btn-primary" (click)="installLicense()" [disabled]="!licenseJwtInput.trim()">
+            <lucide-icon [img]="Check" [size]="16"></lucide-icon>
+            <span>Activer la licence</span>
+          </button>
+        </div>
+        <div *ngIf="licenseError" class="alert alert-error">
+          <lucide-icon [img]="AlertCircle" [size]="16"></lucide-icon>
+          <span>{{ licenseError }}</span>
+        </div>
+      </ng-container>
+
+      <!-- Licence installee (VALID / GRACE / EXPIRED / UNVERIFIABLE) -->
+      <ng-container *ngIf="licenseStatus && licenseStatus.status !== 'NONE'">
+        <div *ngIf="licenseStatus.status === 'VALID'" class="alert alert-success">
+          <lucide-icon [img]="Check" [size]="16"></lucide-icon>
+          <span>Compte Patreon connecte. Tier {{ licenseStatus.tierId }} actif.</span>
+        </div>
+        <div *ngIf="licenseStatus.status === 'GRACE'" class="alert alert-warn">
+          <lucide-icon [img]="AlertCircle" [size]="16"></lucide-icon>
+          <span>
+            Connexion Patreon expiree, mais acces beta maintenu pendant la periode de tolerance.
+            Verifie que ton abonnement Patreon est toujours actif et clique sur "Verifier maintenant".
+          </span>
+        </div>
+        <div *ngIf="licenseStatus.status === 'EXPIRED'" class="alert alert-error">
+          <lucide-icon [img]="AlertCircle" [size]="16"></lucide-icon>
+          <span>
+            Connexion Patreon expiree depuis trop longtemps. Reconnecte-toi pour retrouver l'acces beta.
+          </span>
+        </div>
+        <div *ngIf="licenseStatus.status === 'UNVERIFIABLE'" class="alert alert-error">
+          <lucide-icon [img]="AlertCircle" [size]="16"></lucide-icon>
+          <span>Le token installe ne peut plus etre verifie. Reconnecte-toi.</span>
+        </div>
+
+        <ul class="license-info">
+          <li *ngIf="licenseStatus.tierId"><strong>Tier :</strong> {{ licenseStatus.tierId }}</li>
+          <li *ngIf="licenseStatus.expiresAt">
+            <strong>Validite :</strong>
+            jusqu'au {{ formatDate(licenseStatus.expiresAt) }}
+            <span *ngIf="daysUntilExpiry !== null && daysUntilExpiry > 0">
+              (renouvellement dans {{ daysUntilExpiry }} jour<span *ngIf="daysUntilExpiry > 1">s</span>)
+            </span>
+          </li>
+          <li *ngIf="licenseStatus.lastRefreshAttemptAt">
+            <strong>Dernier refresh :</strong>
+            {{ formatDate(licenseStatus.lastRefreshAttemptAt) }}
+            <span *ngIf="licenseStatus.lastRefreshSucceeded === true" class="badge-ok">OK</span>
+            <span *ngIf="licenseStatus.lastRefreshSucceeded === false" class="badge-warn">echec</span>
+          </li>
+        </ul>
+
+        <div class="form-row form-row-inline">
+          <label class="checkbox">
+            <input
+              type="checkbox"
+              [checked]="licenseStatus.betaChannelEnabled"
+              (change)="toggleBetaChannel(!licenseStatus.betaChannelEnabled)"
+              [disabled]="licenseStatus.status !== 'VALID' && licenseStatus.status !== 'GRACE'"
+            >
+            <span>Activer le canal beta</span>
+          </label>
+        </div>
+
+        <div class="form-row form-row-actions">
+          <button type="button" class="btn-secondary" (click)="refreshLicense()" [disabled]="licenseLoading">
+            <lucide-icon [img]="RefreshCw" [size]="14"></lucide-icon>
+            <span>{{ licenseLoading ? 'Verification...' : 'Verifier maintenant' }}</span>
+          </button>
+          <button type="button" class="btn-secondary btn-danger" (click)="disconnectPatreon()">
+            <lucide-icon [img]="Unlink" [size]="14"></lucide-icon>
+            <span>Deconnecter Patreon</span>
+          </button>
+        </div>
+
+        <!-- Etat du canal beta -->
+        <div *ngIf="licenseStatus.betaChannelEnabled" class="beta-status">
+          <div *ngIf="betaChecking" class="hint">Verification des images beta...</div>
+          <div *ngIf="!betaChecking && betaStatus && !betaStatus.enabled" class="hint">
+            Indisponible : {{ betaStatus.disabledReason }}
+          </div>
+          <div *ngIf="!betaChecking && betaStatus?.enabled">
+            <div *ngIf="betaStatus?.updateAvailable" class="alert alert-success">
+              <lucide-icon [img]="Download" [size]="16"></lucide-icon>
+              <span>Une version beta est disponible. Pour l'installer, modifie ton fichier <code>.env</code> :
+              <code>IMAGE_NAMESPACE=igmlcreation/loremind-beta-</code> puis
+              <code>docker compose pull &amp;&amp; docker compose up -d</code>.</span>
+            </div>
+            <div *ngIf="betaStatus?.anyUnknown && !betaStatus?.updateAvailable" class="alert alert-warn">
+              <lucide-icon [img]="AlertCircle" [size]="16"></lucide-icon>
+              <span>Verification beta impossible pour certaines images.</span>
+            </div>
+            <ul class="update-images" *ngIf="betaStatus?.images?.length">
+              <li *ngFor="let img of betaStatus?.images">
+                <strong>{{ img.image }}</strong>
+                <span *ngIf="img.status === 'UPDATE_AVAILABLE'" class="badge-update">version dispo</span>
+                <span *ngIf="img.status === 'UNKNOWN'" class="badge-warn">verification impossible</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </ng-container>
     </div>
   </section>
 
