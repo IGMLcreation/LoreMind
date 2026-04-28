@@ -34,13 +34,18 @@ import static org.mockito.Mockito.*;
 public class UpdateCheckServiceTest {
 
     private static UpdateCheckService newService(String token) {
+        // licensing.* params left empty + LicenseService null : la feature beta est
+        // desactivee dans ces tests, qui couvrent uniquement le canal stable.
         return new UpdateCheckService(
                 new RestTemplateBuilder(),
                 "ghcr.io",
                 "igmlcreation/loremind-core,igmlcreation/loremind-brain",
                 "latest",
                 "http://watchtower:8080",
-                token
+                token,
+                "",
+                "latest",
+                null
         );
     }
 
