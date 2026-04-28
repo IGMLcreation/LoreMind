@@ -2,11 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { LucideAngularModule, ArrowLeft, RefreshCw, Save, Check, AlertCircle, Download, Trash2, Plus, X } from 'lucide-angular';
+import { LucideAngularModule, ArrowLeft, RefreshCw, Save, Check, AlertCircle, Download, Trash2, Plus, X, Heart, Link2, Unlink } from 'lucide-angular';
 import { SettingsService, AppSettings, AppSettingsUpdate, OneMinModelGroup, OllamaPullEvent } from '../services/settings.service';
 import { Subscription } from 'rxjs';
 import { UpdatesService, UpdateStatus } from '../services/updates.service';
 import { ConfigService } from '../services/config.service';
+import { LicenseService, LicenseStatusDTO, BetaStatusDTO } from '../services/license.service';
 
 /**
  * Ecran de parametrage du LLM utilise par le Brain.
@@ -37,6 +38,19 @@ export class SettingsComponent implements OnInit {
   readonly Trash2 = Trash2;
   readonly Plus = Plus;
   readonly X = X;
+  readonly Heart = Heart;
+  readonly Link2 = Link2;
+  readonly Unlink = Unlink;
+
+  // --- Licence Patreon (canal beta) ---
+  licenseStatus: LicenseStatusDTO | null = null;
+  licenseLoading = false;
+  licenseError = '';
+  /** Token JWT colle par l'utilisateur apres OAuth. */
+  licenseJwtInput = '';
+  /** Etat du canal beta (digests des images privees). */
+  betaStatus: BetaStatusDTO | null = null;
+  betaChecking = false;
 
   // --- Pull / delete de modeles Ollama ---
   /** Dialog d'ajout de modele ouvert/ferme. */
@@ -105,7 +119,8 @@ export class SettingsComponent implements OnInit {
     private settingsService: SettingsService,
     private router: Router,
     private updatesService: UpdatesService,
-    public config: ConfigService
+    public config: ConfigService,
+    private licenseService: LicenseService
   ) {}
 
   ngOnInit(): void {
@@ -113,6 +128,117 @@ export class SettingsComponent implements OnInit {
     if (this.config.updateCheckEnabled) {
       this.checkUpdates();
     }
+    this.loadLicense();
+  }
+
+  // --- Licence Patreon ---------------------------------------------------
+
+  loadLicense(): void {
+    this.licenseLoading = true;
+    this.licenseService.getStatus().subscribe({
+      next: (s) => {
+        this.licenseStatus = s;
+        this.licenseLoading = false;
+        if (s?.enabled && (s.status === 'VALID' || s.status === 'GRACE') && s.betaChannelEnabled) {
+          this.checkBeta();
+        }
+      },
+      error: () => { this.licenseLoading = false; }
+    });
+  }
+
+  /**
+   * Ouvre la page OAuth Patreon dans une nouvelle fenetre.
+   * L'utilisateur copie ensuite le JWT et le colle dans l'input ci-dessous.
+   */
+  connectPatreon(): void {
+    this.licenseError = '';
+    this.licenseService.getConnectUrl().subscribe({
+      next: (r) => {
+        if (!r?.url) {
+          this.licenseError = 'Impossible de generer l\'URL de connexion. Verifie ta config.';
+          return;
+        }
+        window.open(r.url, '_blank', 'noopener');
+      }
+    });
+  }
+
+  installLicense(): void {
+    const jwt = this.licenseJwtInput.trim();
+    if (!jwt) {
+      this.licenseError = 'Colle d\'abord le token recu apres connexion Patreon.';
+      return;
+    }
+    this.licenseError = '';
+    this.licenseService.install(jwt).subscribe((res) => {
+      if ((res as any)?.error) {
+        this.licenseError = (res as any).error;
+        return;
+      }
+      this.licenseStatus = res as LicenseStatusDTO;
+      this.licenseJwtInput = '';
+      this.successMessage = 'Compte Patreon connecte. L\'acces beta est actif.';
+      if (this.licenseStatus.betaChannelEnabled) {
+        this.checkBeta();
+      }
+    });
+  }
+
+  refreshLicense(): void {
+    this.licenseLoading = true;
+    this.licenseService.refresh().subscribe({
+      next: (s) => {
+        this.licenseStatus = s;
+        this.licenseLoading = false;
+      },
+      error: () => { this.licenseLoading = false; }
+    });
+  }
+
+  disconnectPatreon(): void {
+    if (!confirm('Deconnecter ton compte Patreon ? Tu perdras l\'acces au canal beta.')) return;
+    this.licenseService.disconnect().subscribe(() => {
+      this.licenseStatus = null;
+      this.betaStatus = null;
+      this.successMessage = 'Compte Patreon deconnecte.';
+      this.loadLicense();
+    });
+  }
+
+  toggleBetaChannel(enabled: boolean): void {
+    this.licenseService.setBetaChannel(enabled).subscribe({
+      next: (s) => {
+        if (s) this.licenseStatus = s;
+        if (enabled) this.checkBeta();
+        else this.betaStatus = null;
+      }
+    });
+  }
+
+  checkBeta(): void {
+    this.betaChecking = true;
+    this.licenseService.checkBeta().subscribe({
+      next: (s) => {
+        this.betaStatus = s;
+        this.betaChecking = false;
+      },
+      error: () => { this.betaChecking = false; }
+    });
+  }
+
+  /** Format human-readable des dates renvoyees par le backend. */
+  formatDate(iso: string | null | undefined): string {
+    if (!iso) return '';
+    try { return new Date(iso).toLocaleString(); } catch { return iso; }
+  }
+
+  /** Nombre de jours restants avant expiration JWT (peut etre negatif). */
+  get daysUntilExpiry(): number | null {
+    if (!this.licenseStatus?.expiresAt) return null;
+    const exp = new Date(this.licenseStatus.expiresAt).getTime();
+    const now = Date.now();
+    return Math.ceil((exp - now) / (1000 * 60 * 60 * 24));
   }
 
   checkUpdates(): void {

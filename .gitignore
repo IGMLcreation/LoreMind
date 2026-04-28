@@ -97,3 +97,8 @@ loremind-docs/
 # Docker Compose override (dev uniquement, non-distribue aux end users)
 # ============================================================================
 docker-compose.override.yml
+
+# ============================================================================
+# Relais OAuth Patreon (repo Gitea separe, clone localement pour facilite)
+# ============================================================================
+relay/
