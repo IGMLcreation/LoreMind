@@ -3,19 +3,18 @@ import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, catchError, of, tap } from 'rxjs';
 
 /**
- * Reflet de UpdateCheckService.UpdateStatus cote backend.
+ * Reflet de UpdateCheckService.UpdateStatus cote backend (post-refactor v0.8.x).
  *
  * Etat tri-state par image : UP_TO_DATE / UPDATE_AVAILABLE / UNKNOWN.
- * UNKNOWN signale que la comparaison est impossible (baseline absente ou
- * remote injoignable) — l'UI doit afficher un avertissement plutot que
- * d'annoncer "a jour" silencieusement.
+ * Comparaison faite par version semver (BuildProperties cote backend), plus
+ * fiable que les digests qui ne survivaient pas a un restart sans pull.
  */
 export type ImageStatusKind = 'UP_TO_DATE' | 'UPDATE_AVAILABLE' | 'UNKNOWN';
 
 export interface ImageStatus {
   image: string;
-  localDigest: string | null;
-  remoteDigest: string | null;
+  localVersion: string | null;
+  remoteVersion: string | null;
   status: ImageStatusKind;
   /** Conserve pour back-compat ; equivalent a (status === 'UPDATE_AVAILABLE'). */
   updateAvailable: boolean;
@@ -27,6 +26,8 @@ export interface UpdateStatus {
   updateAvailable: boolean;
   /** True si au moins une image a status === 'UNKNOWN'. */
   anyUnknown: boolean;
+  /** Version courante du binaire (BuildProperties). null si build-info absent. */
+  currentVersion: string | null;
   images: ImageStatus[];
   checkedAt: string;
 }
