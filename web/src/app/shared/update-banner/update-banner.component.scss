@@ -1,0 +1,68 @@
+.update-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 20px;
+  background: linear-gradient(90deg, #6d28d9, #7c3aed);
+  color: #fff;
+  font-size: 0.9rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+
+  .banner-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .banner-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-reload {
+    background: #fff;
+    color: #6d28d9;
+    border: 0;
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.85rem;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.92);
+    }
+  }
+
+  .btn-dismiss {
+    background: transparent;
+    border: 0;
+    color: rgba(255, 255, 255, 0.85);
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+    }
+  }
+}
+
+// Decale le contenu de l'app vers le bas quand le bandeau est present
+// (bandeau fixed, ne pousse pas naturellement le layout).
+:host:has(.update-banner) {
+  display: block;
+}
