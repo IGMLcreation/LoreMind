@@ -28,8 +28,8 @@ export interface BetaStatusDTO {
   anyUnknown: boolean;
   images: Array<{
     image: string;
-    localDigest: string | null;
-    remoteDigest: string | null;
+    localVersion: string | null;
+    remoteVersion: string | null;
     status: 'UP_TO_DATE' | 'UPDATE_AVAILABLE' | 'UNKNOWN';
     updateAvailable: boolean;
   }>;

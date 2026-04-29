@@ -7,6 +7,11 @@
 brain/data/settings.json
 *.key
 *.pem
+# Exception : la cle PUBLIQUE JWT du relais Patreon est destinee a etre
+# embarquee dans le binaire. Pas de risque a la committer (c'est une cle
+# publique par construction). Sans cette exception, le module licensing
+# est silencieusement desactive dans les builds CI.
+!core/src/main/resources/licensing/jwt-public-key.pem
 
 # ============================================================================
 # Java / Spring Boot / Maven

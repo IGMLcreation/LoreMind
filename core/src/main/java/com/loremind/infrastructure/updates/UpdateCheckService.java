@@ -4,10 +4,10 @@ import com.loremind.application.licensing.LicenseService;
 import com.loremind.domain.licensing.LicenseSnapshot;
 import com.loremind.domain.licensing.LicenseStatus;
 import com.loremind.domain.licensing.RegistryCredentials;
-import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.info.BuildProperties;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -29,187 +29,121 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Detection des mises a jour disponibles + declenchement via Watchtower.
+ * <p>
+ * <b>Strategie</b> : comparaison de versions semver, pas de digests.
+ * <ul>
+ *   <li>La version courante de l'app est lue depuis {@link BuildProperties}
+ *       (genere par spring-boot-maven-plugin dans META-INF/build-info.properties).</li>
+ *   <li>Pour chaque image suivie, on interroge le registry sur
+ *       {@code /v2/<image>/tags/list}, on extrait les tags semver, on prend le max.</li>
+ *   <li>Si max > version courante => UPDATE_AVAILABLE.</li>
+ *   <li>Si max == version courante => UP_TO_DATE.</li>
+ *   <li>Si registry injoignable ou aucun tag valide => UNKNOWN.</li>
+ * </ul>
  *
- * Strategie :
- *  - Au demarrage, on interroge le registry pour le digest courant de chaque
- *    image suivie ({@code update-check.images}). On stocke ces digests comme
- *    "baseline" (= ce que le conteneur en cours d'execution est cense faire
- *    tourner, puisque le `docker compose pull` precede toujours `up -d`).
- *  - Si l'init echoue (reseau Docker pas encore pret, registry transitoirement
- *    indisponible), un thread daemon de retry avec backoff complete les
- *    baselines manquantes en arriere-plan.
- *  - {@link #check()} re-interroge le registry et compare. Si un digest a
- *    change, une mise a jour est disponible. Si la baseline manque (echec
- *    de tous les retries), retourne {@link ImageStatusKind#UNKNOWN} pour
- *    cette image — JAMAIS d'alignement silencieux (eviterait des MAJ ratees).
- *  - {@link #apply()} POST sur /v1/update de Watchtower (qui doit etre lance
- *    avec WATCHTOWER_HTTP_API_UPDATE=true et le meme token).
- *
- * Apres un apply reussi, Watchtower redemarre core => ce service est
- * re-instancie => baseline re-aligne sur le registry => check renvoie
- * "pas de MAJ" (etat coherent).
- *
- * La feature est <b>desactivee silencieusement</b> si {@code WATCHTOWER_TOKEN}
- * n'est pas defini : check/apply renvoient des reponses neutres et l'UI
- * masque le badge / bouton.
+ * <b>Pourquoi pas les digests ?</b> Le bug historique etait : le baseline-digest
+ * pose au @PostConstruct supposait que le pull venait d'avoir lieu (vrai apres
+ * `docker compose pull && up -d`, faux apres un simple restart de daemon ou un
+ * OOM). La version semver lue depuis le binaire est <b>fiable par construction</b> :
+ * c'est ce que le code source declare faire tourner.
  */
 @Service
 public class UpdateCheckService {
 
     private static final Logger log = LoggerFactory.getLogger(UpdateCheckService.class);
 
-    private static final List<MediaType> MANIFEST_ACCEPT = List.of(
-            MediaType.parseMediaType("application/vnd.docker.distribution.manifest.v2+json"),
-            MediaType.parseMediaType("application/vnd.docker.distribution.manifest.list.v2+json"),
-            MediaType.parseMediaType("application/vnd.oci.image.manifest.v1+json"),
-            MediaType.parseMediaType("application/vnd.oci.image.index.v1+json")
-    );
-
     private final RestTemplate http;
     private final String registry;
     private final List<String> images;
-    private final String tag;
     private final String watchtowerUrl;
     private final String watchtowerToken;
     private final List<String> betaImages;
-    private final String betaTag;
     private final LicenseService licenseService;
-
-    private final Map<String, String> baselineDigests = new ConcurrentHashMap<>();
+    /** Version semver courante du binaire (ex: "0.8.0"). Source de verite. */
+    private final String currentVersion;
 
     public UpdateCheckService(
             RestTemplateBuilder builder,
             @Value("${update-check.registry:}") String registry,
             @Value("${update-check.images:}") String imagesCsv,
-            @Value("${update-check.tag:latest}") String tag,
             @Value("${update-check.watchtower-url:http://watchtower:8080}") String watchtowerUrl,
             @Value("${update-check.watchtower-token:}") String watchtowerToken,
             @Value("${licensing.beta.images:}") String betaImagesCsv,
-            @Value("${licensing.beta.tag:latest}") String betaTag,
-            LicenseService licenseService) {
+            LicenseService licenseService,
+            @Nullable BuildProperties buildProperties) {
         this.http = builder
                 .setConnectTimeout(Duration.ofSeconds(5))
                 .setReadTimeout(Duration.ofSeconds(15))
                 .build();
         this.registry = normalizeRegistry(registry);
         this.images = parseImages(imagesCsv);
-        this.tag = tag;
         this.watchtowerUrl = watchtowerUrl;
         this.watchtowerToken = watchtowerToken;
         this.betaImages = parseImages(betaImagesCsv);
-        this.betaTag = betaTag;
         this.licenseService = licenseService;
-    }
-
-    /** Backoff progressif (ms) pour retry de baseline en cas d'echec initial. */
-    private static final long[] BASELINE_RETRY_BACKOFFS_MS = {2_000, 5_000, 15_000, 30_000, 60_000};
-
-    @PostConstruct
-    void initBaseline() {
-        if (!isEnabled()) {
-            log.info("Update check disabled (WATCHTOWER_TOKEN not set)");
-            return;
-        }
-        log.info("Update check enabled - registry={} images={} tag={}", registry, images, tag);
-        boolean complete = tryBaselineMissing();
-        if (!complete) {
-            startBaselineRetryThread();
-        }
-    }
-
-    /**
-     * Tente de poser la baseline pour les images qui ne l'ont pas encore.
-     * @return true si TOUTES les images ont leur baseline apres cet essai.
-     */
-    private boolean tryBaselineMissing() {
-        for (String image : images) {
-            if (baselineDigests.containsKey(image)) continue;
-            try {
-                String digest = fetchRemoteDigest(image);
-                if (digest != null) {
-                    baselineDigests.put(image, digest);
-                    log.debug("Baseline digest for {} = {}", image, digest);
-                }
-            } catch (Exception e) {
-                log.warn("Cannot baseline digest for {}: {}", image, e.getMessage());
-            }
-        }
-        return baselineDigests.size() == images.size();
-    }
-
-    /**
-     * Lance un thread daemon qui retente de poser les baselines manquantes
-     * avec backoff. Le thread s'arrete des que toutes les baselines sont
-     * posees, ou apres epuisement des backoffs (et alors {@link #check()}
-     * retournera UNKNOWN pour ces images jusqu'au prochain redemarrage).
-     */
-    private void startBaselineRetryThread() {
-        Thread t = new Thread(() -> {
-            for (long backoff : BASELINE_RETRY_BACKOFFS_MS) {
-                try {
-                    Thread.sleep(backoff);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    return;
-                }
-                if (tryBaselineMissing()) {
-                    log.info("Baseline complete after retry");
-                    return;
-                }
-            }
-            log.warn("Baseline incomplete after all retries; check() will return UNKNOWN for missing images");
-        }, "update-baseline-retry");
-        t.setDaemon(true);
-        t.start();
+        this.currentVersion = buildProperties != null ? buildProperties.getVersion() : null;
+        log.info("Update check init - registry={} images={} currentVersion={}",
+                this.registry, this.images, this.currentVersion);
     }
 
     public boolean isEnabled() {
         return watchtowerToken != null && !watchtowerToken.isBlank() && !images.isEmpty();
     }
 
+    /**
+     * @return version courante exposee aux endpoints (ex: pour affichage UI).
+     *         {@code null} si build-info.properties absent (dev en IDE sans build Maven).
+     */
+    public String getCurrentVersion() {
+        return currentVersion;
+    }
+
     public UpdateStatus check() {
         if (!isEnabled()) {
-            return new UpdateStatus(false, false, false, List.of(), Instant.now());
+            return new UpdateStatus(false, false, false, null, List.of(), Instant.now());
         }
+        if (currentVersion == null) {
+            log.warn("Update check : currentVersion absente (build-info manquant). Tous UNKNOWN.");
+            List<ImageStatus> statuses = new ArrayList<>();
+            for (String image : images) {
+                statuses.add(new ImageStatus(image, null, null, ImageStatusKind.UNKNOWN));
+            }
+            return new UpdateStatus(true, false, true, null, statuses, Instant.now());
+        }
+
         List<ImageStatus> statuses = new ArrayList<>();
         boolean anyUpdate = false;
         boolean anyUnknown = false;
         for (String image : images) {
-            String baseline = baselineDigests.get(image);
-            String remote = null;
+            String latest = null;
             try {
-                remote = fetchRemoteDigest(image);
+                latest = fetchLatestSemverTag(registry, image, null);
             } catch (Exception e) {
-                log.warn("Check failed for {}: {}", image, e.getMessage());
+                log.warn("Tags fetch failed for {}: {}", image, e.getMessage());
             }
-            // PAS d'alignement lazy si baseline absente : ce serait un faux negatif
-            // silencieux. On reporte UNKNOWN pour que l'UI le signale.
             ImageStatusKind kind;
-            if (baseline == null || remote == null) {
+            if (latest == null) {
                 kind = ImageStatusKind.UNKNOWN;
                 anyUnknown = true;
-            } else if (baseline.equals(remote)) {
-                kind = ImageStatusKind.UP_TO_DATE;
             } else {
-                kind = ImageStatusKind.UPDATE_AVAILABLE;
-                anyUpdate = true;
+                int cmp = compareSemver(currentVersion, latest);
+                if (cmp >= 0) {
+                    kind = ImageStatusKind.UP_TO_DATE;
+                } else {
+                    kind = ImageStatusKind.UPDATE_AVAILABLE;
+                    anyUpdate = true;
+                }
             }
-            statuses.add(new ImageStatus(image, baseline, remote, kind));
+            statuses.add(new ImageStatus(image, currentVersion, latest, kind));
         }
-        return new UpdateStatus(true, anyUpdate, anyUnknown, statuses, Instant.now());
+        return new UpdateStatus(true, anyUpdate, anyUnknown, currentVersion, statuses, Instant.now());
     }
 
     /**
-     * Verifie l'etat du canal beta (images privees GHCR).
-     * Necessite licence valide/grace + toggle beta ON.
-     * Authentification basic auth via le PAT distribue par le relais.
-     *
-     * @return statut beta (peut etre {@link BetaStatus#disabled()} si licence absente,
-     *         beta off ou licence expiree)
+     * Verifie l'etat du canal beta (images privees GHCR) avec auth basique.
      */
     public BetaStatus checkBeta() {
         if (!licenseService.isLicensingEnabled()) {
@@ -239,48 +173,156 @@ public class UpdateCheckService {
         boolean anyUpdate = false;
         boolean anyUnknown = false;
         for (String image : betaImages) {
-            String remote = null;
+            String latest = null;
             try {
-                remote = fetchRemoteDigestAuth(betaRegistry, image, betaTag, basicAuth);
+                latest = fetchLatestSemverTag(betaRegistry, image, basicAuth);
             } catch (Exception e) {
-                log.warn("Beta check failed for {}: {}", image, e.getMessage());
+                log.warn("Beta tags fetch failed for {}: {}", image, e.getMessage());
             }
-            // Pas de baseline pour la beta : on ne peut pas dire "a jour" car on
-            // ne sait pas quelle version le user fait tourner. On expose juste le
-            // digest remote ; l'UI affichera "version disponible : <tag>" sans
-            // comparaison locale tant qu'il n'y a pas un mecanisme de baseline.
-            ImageStatusKind kind = (remote == null) ? ImageStatusKind.UNKNOWN : ImageStatusKind.UPDATE_AVAILABLE;
-            if (kind == ImageStatusKind.UNKNOWN) anyUnknown = true;
-            else anyUpdate = true;
-            statuses.add(new ImageStatus(image, null, remote, kind));
+            ImageStatusKind kind;
+            if (latest == null) {
+                kind = ImageStatusKind.UNKNOWN;
+                anyUnknown = true;
+            } else if (currentVersion != null && compareSemver(currentVersion, latest) >= 0) {
+                kind = ImageStatusKind.UP_TO_DATE;
+            } else {
+                kind = ImageStatusKind.UPDATE_AVAILABLE;
+                anyUpdate = true;
+            }
+            statuses.add(new ImageStatus(image, currentVersion, latest, kind));
         }
         return new BetaStatus(true, anyUpdate, anyUnknown, statuses, Instant.now(), null);
     }
 
-    private String fetchRemoteDigestAuth(String registryUrl, String image, String tagName, String authHeader) {
-        String url = registryUrl + "/v2/" + image + "/manifests/" + tagName;
-        HttpHeaders headers = new HttpHeaders();
-        headers.setAccept(MANIFEST_ACCEPT);
-        headers.set(HttpHeaders.AUTHORIZATION, authHeader);
-        try {
-            return digestCall(url, headers);
-        } catch (HttpClientErrorException.Unauthorized e) {
-            // GHCR peut exiger d'echanger basic auth contre un bearer token via
-            // le challenge WWW-Authenticate. On reuse la logique existante en
-            // ajoutant l'auth header a la requete /token.
-            String www = e.getResponseHeaders() == null ? null
-                    : e.getResponseHeaders().getFirst(HttpHeaders.WWW_AUTHENTICATE);
-            String token = obtainBearerTokenWithAuth(www, authHeader);
-            if (token == null) return null;
-            HttpHeaders bearerHeaders = new HttpHeaders();
-            bearerHeaders.setAccept(MANIFEST_ACCEPT);
-            bearerHeaders.setBearerAuth(token);
-            return digestCall(url, bearerHeaders);
+    public void apply() {
+        if (!isEnabled()) {
+            throw new IllegalStateException("Update apply not configured (WATCHTOWER_TOKEN missing)");
         }
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(watchtowerToken);
+        http.exchange(
+                watchtowerUrl + "/v1/update",
+                HttpMethod.POST,
+                new HttpEntity<>(headers),
+                Void.class);
     }
 
+    // -----------------------------------------------------------------------
+    // Registry HTTP API v2 - tags listing + auth bearer
+    // -----------------------------------------------------------------------
+
+    /**
+     * Interroge le registry pour la liste des tags d'une image, parse les
+     * versions semver et retourne la plus elevee. {@code null} si echec
+     * ou aucun tag valide.
+     *
+     * @param registryUrl URL normalisee (ex: "https://ghcr.io")
+     * @param image       nom de l'image (ex: "igmlcreation/loremind-core")
+     * @param authHeader  optionnel - "Basic ..." pour les registries prives
+     */
+    private String fetchLatestSemverTag(String registryUrl, String image, @Nullable String authHeader) {
+        String url = registryUrl + "/v2/" + image + "/tags/list";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+        if (authHeader != null) {
+            headers.set(HttpHeaders.AUTHORIZATION, authHeader);
+        }
+        TagsListResponse body;
+        try {
+            body = tagsCall(url, headers);
+        } catch (HttpClientErrorException.Unauthorized e) {
+            String www = e.getResponseHeaders() == null ? null
+                    : e.getResponseHeaders().getFirst(HttpHeaders.WWW_AUTHENTICATE);
+            String token = obtainBearerToken(www, authHeader);
+            if (token == null) {
+                log.warn("Cannot obtain bearer token for {} (registry response: {})", image, www);
+                return null;
+            }
+            HttpHeaders bearerHeaders = new HttpHeaders();
+            bearerHeaders.setAccept(List.of(MediaType.APPLICATION_JSON));
+            bearerHeaders.setBearerAuth(token);
+            body = tagsCall(url, bearerHeaders);
+        }
+        if (body == null || body.tags == null || body.tags.isEmpty()) return null;
+        return findMaxSemver(body.tags);
+    }
+
+    private TagsListResponse tagsCall(String url, HttpHeaders headers) {
+        ResponseEntity<TagsListResponse> resp = http.exchange(
+                url, HttpMethod.GET, new HttpEntity<>(headers), TagsListResponse.class);
+        return resp.getBody();
+    }
+
+    /**
+     * Parcourt la liste des tags, garde uniquement ceux qui parsent en semver
+     * (1 a 3 chiffres separes par des points, optionnel prefix "v"), retourne le max.
+     * Pre-release / build metadata sont strippes pour la comparaison.
+     */
+    @Nullable
+    static String findMaxSemver(List<String> tags) {
+        String maxTag = null;
+        int[] maxParts = null;
+        for (String t : tags) {
+            if (t == null || t.isBlank()) continue;
+            int[] parts = parseSemver(t);
+            if (parts == null) continue;
+            if (maxParts == null || compareParts(parts, maxParts) > 0) {
+                maxParts = parts;
+                maxTag = t;
+            }
+        }
+        return maxTag;
+    }
+
+    /** @return [major, minor, patch] ou null si non parsable. */
+    @Nullable
+    static int[] parseSemver(String tag) {
+        if (tag == null) return null;
+        String s = tag.trim();
+        if (s.isEmpty()) return null;
+        if (s.startsWith("v") || s.startsWith("V")) s = s.substring(1);
+        int dashIdx = s.indexOf('-');
+        if (dashIdx > 0) s = s.substring(0, dashIdx);
+        int plusIdx = s.indexOf('+');
+        if (plusIdx > 0) s = s.substring(0, plusIdx);
+        String[] parts = s.split("\\.");
+        if (parts.length < 1 || parts.length > 3) return null;
+        int[] result = new int[]{0, 0, 0};
+        for (int i = 0; i < parts.length; i++) {
+            try {
+                int v = Integer.parseInt(parts[i]);
+                if (v < 0) return null;
+                result[i] = v;
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        }
+        return result;
+    }
+
+    /** Compare deux versions semver brutes (sans prefix). Negatif si a < b. */
+    static int compareSemver(String a, String b) {
+        int[] aParts = parseSemver(a);
+        int[] bParts = parseSemver(b);
+        if (aParts == null || bParts == null) return 0;
+        return compareParts(aParts, bParts);
+    }
+
+    private static int compareParts(int[] a, int[] b) {
+        for (int i = 0; i < 3; i++) {
+            int diff = Integer.compare(a[i], b[i]);
+            if (diff != 0) return diff;
+        }
+        return 0;
+    }
+
+    /**
+     * Suit le challenge {@code WWW-Authenticate: Bearer realm="..."} pour obtenir
+     * un token. Si {@code basicAuth} est fourni, l'utilise pour l'echange (cas
+     * registry prive). Sinon anonyme (cas registry public).
+     */
     @SuppressWarnings("rawtypes")
-    private String obtainBearerTokenWithAuth(@Nullable String wwwAuth, String authHeader) {
+    private String obtainBearerToken(@Nullable String wwwAuth, @Nullable String basicAuth) {
         if (wwwAuth == null) return null;
         String prefix = "Bearer ";
         if (!wwwAuth.regionMatches(true, 0, prefix, 0, prefix.length())) return null;
@@ -301,100 +343,11 @@ public class UpdateCheckService {
         }
         try {
             HttpHeaders headers = new HttpHeaders();
-            headers.set(HttpHeaders.AUTHORIZATION, authHeader);
+            if (basicAuth != null) {
+                headers.set(HttpHeaders.AUTHORIZATION, basicAuth);
+            }
             ResponseEntity<Map> resp = http.exchange(url.toString(), HttpMethod.GET,
                     new HttpEntity<>(headers), Map.class);
-            Map<?, ?> body = resp.getBody();
-            if (body == null) return null;
-            Object t = body.get("token");
-            if (t == null) t = body.get("access_token");
-            return t == null ? null : t.toString();
-        } catch (Exception e) {
-            log.warn("Beta bearer token request failed: {}", e.getMessage());
-            return null;
-        }
-    }
-
-    public void apply() {
-        if (!isEnabled()) {
-            throw new IllegalStateException("Update apply not configured (WATCHTOWER_TOKEN missing)");
-        }
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(watchtowerToken);
-        // Watchtower /v1/update declenche un scan+update immediat de tous les
-        // conteneurs labellises. La reponse est synchrone et peut prendre
-        // plusieurs secondes; en cas de redemarrage de core, le client
-        // recevra une connexion coupee — c'est attendu, l'UI le gere.
-        http.exchange(
-                watchtowerUrl + "/v1/update",
-                HttpMethod.POST,
-                new HttpEntity<>(headers),
-                Void.class);
-    }
-
-    // -----------------------------------------------------------------------
-    // Registry HTTP API v2
-    // -----------------------------------------------------------------------
-
-    private String fetchRemoteDigest(String image) {
-        String url = registry + "/v2/" + image + "/manifests/" + tag;
-        HttpHeaders headers = new HttpHeaders();
-        headers.setAccept(MANIFEST_ACCEPT);
-        try {
-            return digestCall(url, headers);
-        } catch (HttpClientErrorException.Unauthorized e) {
-            String www = e.getResponseHeaders() == null ? null
-                    : e.getResponseHeaders().getFirst(HttpHeaders.WWW_AUTHENTICATE);
-            String token = obtainBearerToken(www);
-            if (token == null) {
-                log.warn("Cannot obtain bearer token for {} (registry response: {})", image, www);
-                return null;
-            }
-            headers.setBearerAuth(token);
-            return digestCall(url, headers);
-        }
-    }
-
-    private String digestCall(String url, HttpHeaders headers) {
-        ResponseEntity<Void> resp = http.exchange(
-                url, HttpMethod.HEAD, new HttpEntity<>(headers), Void.class);
-        return resp.getHeaders().getFirst("Docker-Content-Digest");
-    }
-
-    /**
-     * Suit le challenge {@code WWW-Authenticate: Bearer realm="...",service="...",scope="..."}
-     * pour obtenir un jeton (anonyme — suffisant pour les images publiques).
-     */
-    @SuppressWarnings("rawtypes")
-    private String obtainBearerToken(String wwwAuth) {
-        if (wwwAuth == null) return null;
-        String prefix = "Bearer ";
-        if (!wwwAuth.regionMatches(true, 0, prefix, 0, prefix.length())) return null;
-        Map<String, String> params = parseAuthParams(wwwAuth.substring(prefix.length()));
-        String realm = params.get("realm");
-        if (realm == null) return null;
-        StringBuilder url = new StringBuilder(realm);
-        boolean hasQuery = realm.contains("?");
-        for (String key : new String[]{"service", "scope"}) {
-            String v = params.get(key);
-            if (v != null) {
-                // URLEncoder fait du "form encoding" qui transforme `:` et `/`
-                // en %3A et %2F. La plupart des registries (Docker Hub, Gitea)
-                // acceptent les deux, mais GHCR est strict et rejette le scope
-                // encode (403 DENIED). On preserve donc `:` et `/` dans la
-                // valeur, conformement a ce que GHCR attend
-                // (et que docker pull lui-meme envoie).
-                String encoded = URLEncoder.encode(v, StandardCharsets.UTF_8)
-                        .replace("%3A", ":")
-                        .replace("%2F", "/");
-                url.append(hasQuery ? '&' : '?')
-                   .append(key).append('=')
-                   .append(encoded);
-                hasQuery = true;
-            }
-        }
-        try {
-            ResponseEntity<Map> resp = http.getForEntity(url.toString(), Map.class);
             Map<?, ?> body = resp.getBody();
             if (body == null) return null;
             Object t = body.get("token");
@@ -455,37 +408,36 @@ public class UpdateCheckService {
     }
 
     // -----------------------------------------------------------------------
-    // Records de retour (sortis sous forme JSON par Jackson)
+    // Records / DTO
     // -----------------------------------------------------------------------
 
-    /**
-     * Etat tri-state d'une image vis-a-vis du registry.
-     * <ul>
-     *   <li>{@link #UP_TO_DATE} : digest local == digest remote.</li>
-     *   <li>{@link #UPDATE_AVAILABLE} : digests differents, MAJ disponible.</li>
-     *   <li>{@link #UNKNOWN} : impossible de comparer (baseline ou remote manquant).
-     *       L'UI doit afficher un avertissement plutot que de declarer "a jour".</li>
-     * </ul>
-     */
     public enum ImageStatusKind { UP_TO_DATE, UPDATE_AVAILABLE, UNKNOWN }
 
     public record UpdateStatus(
             boolean enabled,
             boolean updateAvailable,
             boolean anyUnknown,
+            String currentVersion,
             List<ImageStatus> images,
             Instant checkedAt) {}
 
     /**
-     * Etat du canal beta.
-     * <ul>
-     *   <li>{@code enabled} : true si le canal beta est actif et la licence valide.</li>
-     *   <li>{@code disabledReason} : si {@code enabled=false}, raison technique
-     *       (licensing-not-configured, license-none, license-expired, beta-toggle-off,
-     *       no-beta-images-configured, relay-unavailable). Permet a l'UI d'afficher
-     *       un message contextuel.</li>
-     * </ul>
+     * Statut par image. {@code localVersion} = version embarquee dans le binaire ;
+     * {@code remoteVersion} = plus haute version semver trouvee dans le registry.
+     * {@code updateAvailable} est derive de {@code status} (back-compat front).
      */
+    public record ImageStatus(
+            String image,
+            String localVersion,
+            String remoteVersion,
+            ImageStatusKind status,
+            boolean updateAvailable) {
+
+        public ImageStatus(String image, String localVersion, String remoteVersion, ImageStatusKind status) {
+            this(image, localVersion, remoteVersion, status, status == ImageStatusKind.UPDATE_AVAILABLE);
+        }
+    }
+
     public record BetaStatus(
             boolean enabled,
             boolean updateAvailable,
@@ -499,20 +451,9 @@ public class UpdateCheckService {
         }
     }
 
-    /**
-     * Le champ {@code updateAvailable} est conserve pour la compatibilite
-     * avec les anciens clients ; il est strictement derive de {@code status}
-     * dans le constructeur compact.
-     */
-    public record ImageStatus(
-            String image,
-            String localDigest,
-            String remoteDigest,
-            ImageStatusKind status,
-            boolean updateAvailable) {
-
-        public ImageStatus(String image, String localDigest, String remoteDigest, ImageStatusKind status) {
-            this(image, localDigest, remoteDigest, status, status == ImageStatusKind.UPDATE_AVAILABLE);
-        }
+    /** DTO pour deserialisation Jackson de /v2/.../tags/list. */
+    static class TagsListResponse {
+        public String name;
+        public List<String> tags;
     }
 }

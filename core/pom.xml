@@ -14,7 +14,7 @@
 
     <groupId>com.loremind</groupId>
     <artifactId>loremind-core</artifactId>
-    <version>0.8.0</version>
+    <version>0.8.1</version>
     <name>LoreMind Core</name>
     <description>Backend Core - Architecture Hexagonale</description>
 
@@ -111,6 +111,16 @@
                         </exclude>
                     </excludes>
                 </configuration>
+                <executions>
+                    <!-- Genere META-INF/build-info.properties (project.version)
+                         consomme par Spring BuildProperties pour exposer la
+                         version courante a l'application (UpdateCheckService). -->
+                    <execution>
+                        <goals>
+                            <goal>build-info</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
             <!-- JaCoCo : rapport de couverture des tests unitaires.
