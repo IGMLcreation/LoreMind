@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, Save, ArrowLeft, Dices, Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-angular';
 import { GameSystemService } from '../../services/game-system.service';
-import { TemplateField } from '../../services/template-field.model';
+import { TemplateField } from '../../services/template.model';
 import { TemplateFieldsEditorComponent } from '../../shared/template-fields-editor/template-fields-editor.component';
 
 /**

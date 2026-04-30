@@ -2,6 +2,8 @@ package com.loremind.infrastructure.persistence;
 
 import com.loremind.domain.gamesystemcontext.GameSystem;
 import com.loremind.domain.gamesystemcontext.ports.GameSystemRepository;
+import com.loremind.domain.shared.template.ImageLayout;
+import com.loremind.domain.shared.template.TemplateField;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -23,6 +25,10 @@ import java.util.List;
  * <p>
  * Idempotence : ne seed qu'une fois. Si l'utilisateur supprime un ruleset seedé,
  * il ne revient pas au redémarrage — c'est voulu (respect du choix utilisateur).
+ * <p>
+ * Backfill 2026-04-30 : pour les GameSystems existants (avant la refonte
+ * template-based), on remplit aussi les templates PJ/PNJ par defaut s'ils
+ * sont vides — sinon les fiches restent inutilisables.
  */
 @Component
 public class GameSystemSeeder {
@@ -37,15 +43,37 @@ public class GameSystemSeeder {
 
     @EventListener(ApplicationReadyEvent.class)
     public void seedIfEmpty() {
-        if (!gameSystemRepository.findAll().isEmpty()) {
-            log.debug("GameSystem seed skipped — table non vide.");
+        List<GameSystem> existing = gameSystemRepository.findAll();
+        if (existing.isEmpty()) {
+            log.info("Seed initial des GameSystems (table vide)...");
+            for (GameSystem gs : defaultSystems()) {
+                gameSystemRepository.save(gs);
+            }
+            log.info("GameSystems seedés : {}", defaultSystems().size());
             return;
         }
-        log.info("Seed initial des GameSystems (table vide)...");
-        for (GameSystem gs : defaultSystems()) {
-            gameSystemRepository.save(gs);
+        log.debug("GameSystem seed skipped — table non vide. Backfill templates si necessaire...");
+        backfillEmptyTemplates(existing);
+    }
+
+    /**
+     * Backfill idempotent : pour chaque GameSystem existant ou les deux templates
+     * sont vides (PJ ET PNJ), injecte le template generique. Si l'utilisateur a
+     * deja personnalise au moins un des deux, on ne touche a rien.
+     */
+    private void backfillEmptyTemplates(List<GameSystem> systems) {
+        int patched = 0;
+        for (GameSystem gs : systems) {
+            boolean charEmpty = gs.getCharacterTemplate() == null || gs.getCharacterTemplate().isEmpty();
+            boolean npcEmpty = gs.getNpcTemplate() == null || gs.getNpcTemplate().isEmpty();
+            if (charEmpty && npcEmpty) {
+                gs.replaceCharacterTemplate(genericCharacterTemplate());
+                gs.replaceNpcTemplate(genericNpcTemplate());
+                gameSystemRepository.save(gs);
+                patched++;
+            }
         }
-        log.info("GameSystems seedés : {}", defaultSystems().size());
+        if (patched > 0) log.info("Backfill templates GameSystem : {} systeme(s) patche(s).", patched);
     }
 
     private List<GameSystem> defaultSystems() {
@@ -56,6 +84,8 @@ public class GameSystemSeeder {
                         .author("LoreMind seed")
                         .isPublic(false)
                         .rulesMarkdown(NIMBLE_RULES)
+                        .characterTemplate(nimbleCharacterTemplate())
+                        .npcTemplate(genericNpcTemplate())
                         .build(),
                 GameSystem.builder()
                         .name("D&D 5e SRD (extrait)")
@@ -63,6 +93,8 @@ public class GameSystemSeeder {
                         .author("LoreMind seed")
                         .isPublic(false)
                         .rulesMarkdown(DND_SRD_RULES)
+                        .characterTemplate(dndCharacterTemplate())
+                        .npcTemplate(genericNpcTemplate())
                         .build(),
                 GameSystem.builder()
                         .name("Homebrew Exemple")
@@ -70,7 +102,67 @@ public class GameSystemSeeder {
                         .author("LoreMind seed")
                         .isPublic(false)
                         .rulesMarkdown(HOMEBREW_EXAMPLE)
+                        .characterTemplate(genericCharacterTemplate())
+                        .npcTemplate(genericNpcTemplate())
                         .build()
+        );
+    }
+
+    // --- Templates par defaut ---------------------------------------------
+
+    /** Template generique PJ — utilise pour Homebrew, backfill, et fallback. */
+    private static List<TemplateField> genericCharacterTemplate() {
+        return List.of(
+                TemplateField.text("Histoire"),
+                TemplateField.text("Personnalite"),
+                TemplateField.text("Apparence"),
+                TemplateField.image("Galerie", ImageLayout.GALLERY),
+                TemplateField.text("Notes")
+        );
+    }
+
+    /** Template generique PNJ — focus besoins MJ. */
+    private static List<TemplateField> genericNpcTemplate() {
+        return List.of(
+                TemplateField.text("Apparence"),
+                TemplateField.text("Motivation"),
+                TemplateField.text("Faction"),
+                TemplateField.text("Notes MJ")
+        );
+    }
+
+    private static List<TemplateField> nimbleCharacterTemplate() {
+        return List.of(
+                TemplateField.text("Classe"),
+                TemplateField.number("Blessures graves max"),
+                TemplateField.text("Capacites de classe"),
+                TemplateField.text("Equipement"),
+                TemplateField.text("Histoire"),
+                TemplateField.text("Objectifs personnels"),
+                TemplateField.image("Galerie", ImageLayout.GALLERY)
+        );
+    }
+
+    private static List<TemplateField> dndCharacterTemplate() {
+        return List.of(
+                TemplateField.text("Classe"),
+                TemplateField.text("Race"),
+                TemplateField.text("Historique"),
+                TemplateField.text("Alignement"),
+                TemplateField.number("Niveau"),
+                TemplateField.number("PV max"),
+                TemplateField.number("CA"),
+                TemplateField.number("FOR"),
+                TemplateField.number("DEX"),
+                TemplateField.number("CON"),
+                TemplateField.number("INT"),
+                TemplateField.number("SAG"),
+                TemplateField.number("CHA"),
+                TemplateField.text("Competences"),
+                TemplateField.text("Equipement"),
+                TemplateField.text("Sorts"),
+                TemplateField.text("Histoire"),
+                TemplateField.image("Galerie", ImageLayout.GALLERY)
         );
     }
 

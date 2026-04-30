@@ -1,0 +1,228 @@
+// Vue WorldAnvil-style : bandeau, portrait latteral, sections elegantes, drop cap.
+
+.pv {
+  max-width: 1100px;
+  margin: 0 auto;
+  color: #e5e7eb;
+}
+
+// --- Bandeau ----------------------------------------------------------------
+
+.pv-banner {
+  position: relative;
+  height: 280px;
+  overflow: hidden;
+  border-radius: 8px 8px 0 0;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+}
+
+.pv-banner-fade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent 60%,
+    rgba(15, 17, 23, 0.85) 100%
+  );
+}
+
+// --- Hero (portrait + titre) ------------------------------------------------
+
+.pv-hero {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 28px;
+  padding: 20px 32px;
+  margin-top: -90px;
+  position: relative;
+  z-index: 1;
+
+  &.no-banner {
+    margin-top: 0;
+    padding-top: 32px;
+  }
+}
+
+.pv-portrait {
+  width: 220px;
+  height: 220px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 3px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  background: #1a1d24;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+}
+
+.pv-title-block {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding-bottom: 8px;
+}
+
+.pv-name {
+  font-family: 'Cinzel', 'EB Garamond', Georgia, serif;
+  font-size: 3rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin: 0;
+  color: #f3f4f6;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
+}
+
+.pv-subtitle {
+  margin: 8px 0 0;
+  font-size: 1.05rem;
+  font-style: italic;
+  color: #b5b9c4;
+  letter-spacing: 0.05em;
+}
+
+// --- Bandeau de stats (NUMBER) ---------------------------------------------
+
+.pv-stat-band {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 12px 32px;
+  margin: 16px 32px 0;
+  background: rgba(255, 255, 255, 0.04);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pv-stat {
+  display: none;
+
+  &.pv-stat-number {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 60px;
+  }
+
+  .pv-stat-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #9ca3af;
+  }
+
+  .pv-stat-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #f3f4f6;
+    font-family: 'Cinzel', Georgia, serif;
+  }
+}
+
+// --- Sections ---------------------------------------------------------------
+
+.pv-sections {
+  padding: 32px 32px 48px;
+}
+
+.pv-section {
+  margin-bottom: 36px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.pv-section-title {
+  font-family: 'Cinzel', 'EB Garamond', Georgia, serif;
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #d1a878;
+  margin: 0 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(209, 168, 120, 0.25);
+  position: relative;
+
+  // Petit ornement central
+  &::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -3px;
+    width: 6px;
+    height: 6px;
+    background: #d1a878;
+    border-radius: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+.pv-section-body {
+  font-size: 1rem;
+  line-height: 1.65;
+  color: #d6d8de;
+}
+
+.pv-paragraph {
+  margin: 0 0 14px;
+  white-space: pre-wrap;
+
+  &.with-dropcap::first-letter {
+    float: left;
+    font-family: 'Cinzel', 'EB Garamond', Georgia, serif;
+    font-size: 3.5rem;
+    line-height: 0.9;
+    font-weight: 700;
+    color: #d1a878;
+    padding: 4px 8px 0 0;
+    margin-top: 4px;
+  }
+}
+
+// --- Etat vide --------------------------------------------------------------
+
+.pv-empty {
+  text-align: center;
+  padding: 64px 24px;
+  color: #6b7280;
+  font-style: italic;
+
+  p {
+    margin: 12px 0 0;
+  }
+}
+
+// --- Responsive -------------------------------------------------------------
+
+@media (max-width: 720px) {
+  .pv-hero {
+    grid-template-columns: 1fr;
+    margin-top: -60px;
+  }
+
+  .pv-portrait {
+    width: 160px;
+    height: 160px;
+  }
+
+  .pv-name {
+    font-size: 2.2rem;
+  }
+
+  .pv-banner {
+    height: 180px;
+  }
+}

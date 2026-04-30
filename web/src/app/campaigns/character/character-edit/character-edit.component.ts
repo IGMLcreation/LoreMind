@@ -6,9 +6,10 @@ import { LucideAngularModule, Save, ArrowLeft, User, Trash2, Sparkles } from 'lu
 import { CharacterService } from '../../../services/character.service';
 import { CampaignService } from '../../../services/campaign.service';
 import { GameSystemService } from '../../../services/game-system.service';
-import { TemplateField } from '../../../services/template-field.model';
+import { TemplateField } from '../../../services/template.model';
 import { AiChatDrawerComponent } from '../../../shared/ai-chat-drawer/ai-chat-drawer.component';
 import { DynamicFieldsFormComponent } from '../../../shared/dynamic-fields-form/dynamic-fields-form.component';
+import { SingleImagePickerComponent } from '../../../shared/single-image-picker/single-image-picker.component';
 
 /**
  * Editeur plein ecran d'une fiche de personnage (PJ).
@@ -24,7 +25,7 @@ import { DynamicFieldsFormComponent } from '../../../shared/dynamic-fields-form/
 @Component({
   selector: 'app-character-edit',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, AiChatDrawerComponent, DynamicFieldsFormComponent],
+  imports: [CommonModule, FormsModule, LucideAngularModule, AiChatDrawerComponent, DynamicFieldsFormComponent, SingleImagePickerComponent],
   templateUrl: './character-edit.component.html',
   styleUrls: ['./character-edit.component.scss']
 })
@@ -48,8 +49,8 @@ export class CharacterEditComponent implements OnInit {
   characterId: string | null = null;
 
   name = '';
-  portraitImageId = '';
-  headerImageId = '';
+  portraitImageId: string | null = null;
+  headerImageId: string | null = null;
   values: Record<string, string> = {};
   imageValues: Record<string, string[]> = {};
   templateFields: TemplateField[] = [];
@@ -76,8 +77,8 @@ export class CharacterEditComponent implements OnInit {
       this.service.getById(this.characterId).subscribe({
         next: (c) => {
           this.name = c.name;
-          this.portraitImageId = c.portraitImageId ?? '';
-          this.headerImageId = c.headerImageId ?? '';
+          this.portraitImageId = c.portraitImageId ?? null;
+          this.headerImageId = c.headerImageId ?? null;
           this.values = c.values ?? {};
           this.imageValues = c.imageValues ?? {};
           this.order = c.order ?? 0;
@@ -107,8 +108,8 @@ export class CharacterEditComponent implements OnInit {
     if (!this.name.trim() || !this.campaignId) return;
     const payload = {
       name: this.name.trim(),
-      portraitImageId: this.portraitImageId.trim() || null,
-      headerImageId: this.headerImageId.trim() || null,
+      portraitImageId: this.portraitImageId,
+      headerImageId: this.headerImageId,
       values: this.values,
       imageValues: this.imageValues,
       campaignId: this.campaignId

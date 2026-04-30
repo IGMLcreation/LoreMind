@@ -1,0 +1,48 @@
+.sip {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sip-frame {
+  position: relative;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+}
+
+.sip-remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 120ms;
+
+  &:hover {
+    background: rgba(220, 38, 38, 0.9);
+  }
+}
+
+.sip-hint {
+  font-size: 0.75rem;
+  font-style: italic;
+  color: var(--color-text-muted, #888);
+}

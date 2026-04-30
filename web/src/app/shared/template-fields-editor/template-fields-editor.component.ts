@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, Plus, Trash2, ArrowUp, ArrowDown, Type, Image as ImageIcon, Hash } from 'lucide-angular';
-import { TemplateField, FieldType, ImageLayout } from '../../services/template-field.model';
+import { TemplateField, FieldType, ImageLayout } from '../../services/template.model';
 
 /**
  * Editeur reutilisable d'une liste de TemplateField.

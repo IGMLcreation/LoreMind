@@ -90,7 +90,7 @@
       </div>
 
       <div class="characters-grid" *ngIf="characters.length > 0">
-        <div class="character-card" *ngFor="let character of characters" (click)="editCharacter(character)">
+        <div class="character-card" *ngFor="let character of characters" (click)="viewCharacter(character)">
           <lucide-icon [img]="User" [size]="20" class="character-icon"></lucide-icon>
           <div class="character-info">
             <span class="character-name">{{ character.name }}</span>
@@ -123,7 +123,7 @@
       </div>
 
       <div class="characters-grid" *ngIf="npcs.length > 0">
-        <div class="character-card" *ngFor="let npc of npcs" (click)="editNpc(npc)">
+        <div class="character-card" *ngFor="let npc of npcs" (click)="viewNpc(npc)">
           <lucide-icon [img]="Drama" [size]="20" class="character-icon character-icon--npc"></lucide-icon>
           <div class="character-info">
             <span class="character-name">{{ npc.name }}</span>

@@ -35,19 +35,26 @@
       />
     </div>
 
-    <div class="field-row">
-      <div class="field">
-        <label>Portrait (ID image)</label>
-        <input type="text" [(ngModel)]="portraitImageId" name="portraitImageId" placeholder="ID de l'image portrait" />
+    <div class="field-row image-row">
+      <div class="field portrait-field">
+        <label>Portrait</label>
+        <app-single-image-picker
+          [imageId]="portraitImageId"
+          aspectRatio="1 / 1"
+          hint="Carre conseille (400×400)."
+          (imageIdChange)="portraitImageId = $event">
+        </app-single-image-picker>
       </div>
-      <div class="field">
-        <label>Bandeau / Header (ID image)</label>
-        <input type="text" [(ngModel)]="headerImageId" name="headerImageId" placeholder="ID de l'image bandeau" />
+      <div class="field header-field">
+        <label>Bandeau / Header</label>
+        <app-single-image-picker
+          [imageId]="headerImageId"
+          aspectRatio="3 / 1"
+          hint="Format paysage conseille (1200×400)."
+          (imageIdChange)="headerImageId = $event">
+        </app-single-image-picker>
       </div>
     </div>
-    <p class="hint">
-      Les portraits et bandeaux acceptent un ID d'image (MVP). Picker visuel a venir.
-    </p>
 
     <div class="template-fields">
       <app-dynamic-fields-form

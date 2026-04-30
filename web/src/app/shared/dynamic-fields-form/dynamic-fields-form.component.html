@@ -21,16 +21,13 @@
         placeholder="0"
       />
 
-      <div *ngSwitchCase="'IMAGE'" class="image-mvp">
-        <input
-          type="text"
-          [ngModel]="imageCsvCache[f.name] || ''"
-          (ngModelChange)="onImageCsvChange(f, $event)"
-          [name]="'img-' + f.name"
-          placeholder="IDs d'images separes par des virgules (MVP)"
-        />
-        <small class="hint">Layout : {{ f.layout || 'GALLERY' }}. Picker dedie a venir.</small>
-      </div>
+      <app-image-gallery
+        *ngSwitchCase="'IMAGE'"
+        [editable]="true"
+        [layout]="f.layout || 'GALLERY'"
+        [imageIds]="imagesFor(f)"
+        (imageIdsChange)="onImageIdsChange(f, $event)">
+      </app-image-gallery>
     </ng-container>
   </div>
 </div>

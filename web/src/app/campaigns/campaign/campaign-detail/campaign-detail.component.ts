@@ -194,6 +194,17 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
     this.router.navigate(['/campaigns', this.campaign.id, 'characters', character.id, 'edit']);
   }
 
+  /** Ouvre la vue lecture seule (style WorldAnvil) — clic sur la carte. */
+  viewCharacter(character: Character): void {
+    if (!this.campaign || !character.id) return;
+    this.router.navigate(['/campaigns', this.campaign.id, 'characters', character.id]);
+  }
+
+  viewNpc(npc: Npc): void {
+    if (!this.campaign || !npc.id) return;
+    this.router.navigate(['/campaigns', this.campaign.id, 'npcs', npc.id]);
+  }
+
   createArc(): void {
     if (!this.campaign) return;
     this.router.navigate(['/campaigns', this.campaign.id, 'arcs', 'create']);
