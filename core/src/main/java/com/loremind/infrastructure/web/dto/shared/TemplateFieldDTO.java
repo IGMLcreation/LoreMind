@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 /**
  * DTO pour un champ de Template.
  * <p>
@@ -17,13 +19,20 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class TemplateFieldDTO {
     private String name;
-    /** "TEXT" ou "IMAGE" (string pour serialisation JSON transparente). */
+    /** "TEXT" | "IMAGE" | "NUMBER" | "KEY_VALUE_LIST". */
     private String type;
-    /** "GALLERY" | "HERO" | "MASONRY" | "CAROUSEL", null si type=TEXT. */
+    /** "GALLERY" | "HERO" | "MASONRY" | "CAROUSEL", uniquement pour IMAGE. */
     private String layout;
+    /** Labels predefinis pour KEY_VALUE_LIST (ordre significatif). */
+    private List<String> labels;
 
-    /** Retrocompat : constructeur sans layout. */
+    /** Retrocompat : constructeur sans labels. */
+    public TemplateFieldDTO(String name, String type, String layout) {
+        this(name, type, layout, null);
+    }
+
+    /** Retrocompat : constructeur sans layout ni labels. */
     public TemplateFieldDTO(String name, String type) {
-        this(name, type, null);
+        this(name, type, null, null);
     }
 }

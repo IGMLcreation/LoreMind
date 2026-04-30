@@ -27,6 +27,7 @@ public class NpcService {
             String headerImageId,
             Map<String, String> values,
             Map<String, List<String>> imageValues,
+            Map<String, Map<String, String>> keyValueValues,
             String campaignId,
             Integer order
     ) {}
@@ -41,6 +42,7 @@ public class NpcService {
                 .headerImageId(data.headerImageId())
                 .values(data.values() != null ? new HashMap<>(data.values()) : new HashMap<>())
                 .imageValues(data.imageValues() != null ? new HashMap<>(data.imageValues()) : new HashMap<>())
+                .keyValueValues(data.keyValueValues() != null ? new HashMap<>(data.keyValueValues()) : new HashMap<>())
                 .campaignId(data.campaignId())
                 .order(order)
                 .build();
@@ -63,6 +65,7 @@ public class NpcService {
         existing.setHeaderImageId(data.headerImageId());
         existing.setValues(data.values() != null ? new HashMap<>(data.values()) : new HashMap<>());
         existing.setImageValues(data.imageValues() != null ? new HashMap<>(data.imageValues()) : new HashMap<>());
+        existing.setKeyValueValues(data.keyValueValues() != null ? new HashMap<>(data.keyValueValues()) : new HashMap<>());
         if (data.order() != null) {
             existing.setOrder(data.order());
         }

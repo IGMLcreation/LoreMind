@@ -18,6 +18,7 @@ public class NpcMapper {
         dto.setHeaderImageId(n.getHeaderImageId());
         dto.setValues(n.getValues() != null ? new HashMap<>(n.getValues()) : new HashMap<>());
         dto.setImageValues(n.getImageValues() != null ? new HashMap<>(n.getImageValues()) : new HashMap<>());
+        dto.setKeyValueValues(n.getKeyValueValues() != null ? new HashMap<>(n.getKeyValueValues()) : new HashMap<>());
         dto.setCampaignId(n.getCampaignId());
         dto.setOrder(n.getOrder());
         return dto;
@@ -32,6 +33,7 @@ public class NpcMapper {
                 .headerImageId(dto.getHeaderImageId())
                 .values(dto.getValues() != null ? new HashMap<>(dto.getValues()) : new HashMap<>())
                 .imageValues(dto.getImageValues() != null ? new HashMap<>(dto.getImageValues()) : new HashMap<>())
+                .keyValueValues(dto.getKeyValueValues() != null ? new HashMap<>(dto.getKeyValueValues()) : new HashMap<>())
                 .campaignId(dto.getCampaignId())
                 .order(dto.getOrder())
                 .build();

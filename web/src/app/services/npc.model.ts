@@ -9,6 +9,7 @@ export interface Npc {
   headerImageId?: string | null;
   values?: Record<string, string>;
   imageValues?: Record<string, string[]>;
+  keyValueValues?: Record<string, Record<string, string>>;
   campaignId: string;
   order?: number;
 }
@@ -19,5 +20,6 @@ export interface NpcCreate {
   headerImageId?: string | null;
   values?: Record<string, string>;
   imageValues?: Record<string, string[]>;
+  keyValueValues?: Record<string, Record<string, string>>;
   campaignId: string;
 }

@@ -137,3 +137,88 @@
 .chip-custom {
   border-style: dashed;
 }
+
+.chip-mini {
+  padding: 3px 8px;
+  font-size: 0.72rem;
+  align-self: flex-start;
+}
+
+// --- Sous-editeur labels (KEY_VALUE_LIST) ---
+
+.tfe-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tfe-labels {
+  margin-left: 32px;
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tfe-labels-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--color-text-muted, #aaa);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.tfe-labels-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.tfe-label-row {
+  display: grid;
+  grid-template-columns: auto auto 1fr auto;
+  gap: 4px;
+  align-items: center;
+}
+
+.btn-arrow-mini,
+.btn-remove-mini {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  color: var(--color-text-muted, #888);
+  cursor: pointer;
+  transition: all 100ms;
+
+  &:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--color-text, #fff);
+  }
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+}
+
+.btn-remove-mini:hover {
+  border-color: rgba(255, 100, 100, 0.4);
+  color: rgba(255, 100, 100, 0.9);
+}
+
+.tfe-label-input {
+  padding: 4px 6px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  color: var(--color-text, #fff);
+  font-size: 0.8rem;
+}

@@ -40,6 +40,50 @@
   }
 }
 
+.dff-kv-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 8px;
+}
+
+.dff-kv-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 6px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+
+  .dff-kv-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-text-muted, #9ca3af);
+  }
+
+  input {
+    width: 100%;
+    text-align: center;
+    padding: 4px 6px;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 3px;
+    color: var(--color-text, #fff);
+    font-family: 'Cinzel', 'EB Garamond', Georgia, serif;
+    font-weight: 700;
+    font-size: 1.05rem;
+  }
+}
+
+.dff-kv-empty {
+  padding: 8px;
+  font-size: 0.8rem;
+  color: var(--color-text-muted, #888);
+  font-style: italic;
+}
+
 .dff-empty {
   padding: 24px;
   text-align: center;

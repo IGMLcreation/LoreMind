@@ -61,8 +61,10 @@
         [fields]="templateFields"
         [values]="values"
         [imageValues]="imageValues"
+        [keyValueValues]="keyValueValues"
         (valuesChange)="values = $event"
-        (imageValuesChange)="imageValues = $event">
+        (imageValuesChange)="imageValues = $event"
+        (keyValueValuesChange)="keyValueValues = $event">
       </app-dynamic-fields-form>
     </div>
 

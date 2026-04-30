@@ -2,6 +2,7 @@ package com.loremind.infrastructure.persistence.entity;
 
 import com.loremind.infrastructure.persistence.converter.StringListMapJsonConverter;
 import com.loremind.infrastructure.persistence.converter.StringMapJsonConverter;
+import com.loremind.infrastructure.persistence.converter.StringMapMapJsonConverter;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -53,6 +54,11 @@ public class CharacterJpaEntity {
     @Column(name = "image_values", columnDefinition = "TEXT")
     private Map<String, List<String>> imageValues;
 
+    /** Valeurs KEY_VALUE_LIST serialisees JSON (fieldName -> label -> value). */
+    @Convert(converter = StringMapMapJsonConverter.class)
+    @Column(name = "key_value_values", columnDefinition = "TEXT")
+    private Map<String, Map<String, String>> keyValueValues;
+
     @Column(name = "campaign_id", nullable = false)
     private Long campaignId;
 
@@ -71,6 +77,7 @@ public class CharacterJpaEntity {
         updatedAt = LocalDateTime.now();
         if (values == null) values = new HashMap<>();
         if (imageValues == null) imageValues = new HashMap<>();
+        if (keyValueValues == null) keyValueValues = new HashMap<>();
     }
 
     @PreUpdate

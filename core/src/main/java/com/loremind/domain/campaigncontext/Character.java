@@ -51,6 +51,14 @@ public class Character {
      */
     private Map<String, List<String>> imageValues;
 
+    /**
+     * Valeurs des champs KEY_VALUE_LIST du template PJ. Cle externe = nom du
+     * champ template (ex: "Caracteristiques"), cle interne = label predefini
+     * dans le template (ex: "FOR"), valeur = valeur saisie (ex: "16").
+     * Les labels suivent l'ordre defini dans TemplateField.labels.
+     */
+    private Map<String, Map<String, String>> keyValueValues;
+
     /** Référence vers la Campaign parente. */
     private String campaignId;
 
@@ -69,5 +77,10 @@ public class Character {
     public Map<String, List<String>> getImageValues() {
         if (imageValues == null) imageValues = new HashMap<>();
         return imageValues;
+    }
+
+    public Map<String, Map<String, String>> getKeyValueValues() {
+        if (keyValueValues == null) keyValueValues = new HashMap<>();
+        return keyValueValues;
     }
 }

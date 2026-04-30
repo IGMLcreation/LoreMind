@@ -92,41 +92,145 @@
   letter-spacing: 0.05em;
 }
 
-// --- Bandeau de stats (NUMBER) ---------------------------------------------
-
-.pv-stat-band {
+// Badges compacts pour les NUMBER isoles (Niveau, etc.) — evite la grosse card.
+.pv-hero-badges {
+  margin-top: 12px;
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
-  padding: 12px 32px;
-  margin: 16px 32px 0;
-  background: rgba(255, 255, 255, 0.04);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 8px;
 }
 
-.pv-stat {
-  display: none;
+.pv-hero-badge {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 4px 12px;
+  background: rgba(209, 168, 120, 0.08);
+  border: 1px solid rgba(209, 168, 120, 0.3);
+  border-radius: 100px;
 
-  &.pv-stat-number {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-width: 60px;
-  }
-
-  .pv-stat-label {
+  .pv-hero-badge-label {
     font-size: 0.7rem;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.1em;
     color: #9ca3af;
   }
-
-  .pv-stat-value {
-    font-size: 1.25rem;
+  .pv-hero-badge-value {
+    font-family: 'Cinzel', 'EB Garamond', Georgia, serif;
     font-weight: 700;
-    color: #f3f4f6;
-    font-family: 'Cinzel', Georgia, serif;
+    font-size: 1.05rem;
+    color: #d1a878;
+  }
+}
+
+// --- Table compacte (NUMBER_GROUP / KEY_VALUE_LIST) ------------------------
+// Style Foundry : 2 rangees (labels uppercase / valeurs serif), separateurs
+// fins, sans gros ornements. --cols est la variable CSS pour le nombre
+// d'entrees, posee inline dans le HTML.
+
+.pv-kv-table {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.pv-kv-row {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr));
+}
+
+.pv-kv-row-labels {
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+
+  .pv-kv-cell {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #9ca3af;
+    padding: 6px 4px;
+    text-align: center;
+  }
+}
+
+.pv-kv-row-values {
+  .pv-kv-cell {
+    font-family: 'Cinzel', 'EB Garamond', Georgia, serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #d1a878;
+    padding: 8px 4px;
+    text-align: center;
+  }
+}
+
+.pv-kv-cell {
+  border-right: 1px solid rgba(255, 255, 255, 0.04);
+
+  &:last-child {
+    border-right: none;
+  }
+}
+
+@media (max-width: 600px) {
+  // Sur mobile : si plus de 4 colonnes, on retombe en wrap (sacrifice de la
+  // structure tableau pour eviter le scroll horizontal sur les stats blocks).
+  .pv-kv-row {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+// --- Liste 2 colonnes (KV avec >6 entrees, type "skills" Foundry) ---------
+
+.pv-kv-list {
+  column-count: 2;
+  column-gap: 32px;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+}
+
+.pv-kv-list-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  break-inside: avoid; // empeche un row de se couper entre 2 colonnes
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  .pv-kv-list-label {
+    font-size: 0.85rem;
+    color: #d6d8de;
+    flex-shrink: 0;
+  }
+
+  // Pointilles entre label et valeur (style fiche papier)
+  .pv-kv-list-dots {
+    flex: 1;
+    border-bottom: 1px dotted rgba(255, 255, 255, 0.12);
+    transform: translateY(-3px);
+  }
+
+  .pv-kv-list-value {
+    font-family: 'Cinzel', 'EB Garamond', Georgia, serif;
+    font-weight: 700;
+    font-size: 1rem;
+    color: #d1a878;
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .pv-kv-list {
+    column-count: 1;
   }
 }
 
@@ -141,6 +245,13 @@
 
   &:last-child {
     margin-bottom: 0;
+  }
+}
+
+.pv-section-kv,
+.pv-section-number {
+  .pv-kv-table {
+    margin-top: 8px;
   }
 }
 

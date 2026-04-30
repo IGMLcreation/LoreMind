@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 /**
  * Value Object d'un champ de Template (kernel partage).
  * <p>
@@ -27,29 +29,45 @@ public class TemplateField {
     private FieldType type;
     /** Variante de rendu pour les champs IMAGE. Null = GALLERY. */
     private ImageLayout layout;
+    /**
+     * Labels predefinis pour les champs KEY_VALUE_LIST (ordre significatif).
+     * Ex: ["FOR","DEX","CON","INT","SAG","CHA"] pour un champ "Caracteristiques".
+     * Null/vide pour les autres types.
+     */
+    private List<String> labels;
 
-    /** Constructeur de retrocompat : type seul, layout=null. */
+    /** Constructeur de retrocompat : type seul, layout/labels=null. */
     public TemplateField(String name, FieldType type) {
-        this(name, type, null);
+        this(name, type, null, null);
+    }
+
+    /** Constructeur de retrocompat : type + layout, labels=null. */
+    public TemplateField(String name, FieldType type, ImageLayout layout) {
+        this(name, type, layout, null);
     }
 
     /** Raccourci : construit un champ de type TEXT (cas le plus courant). */
     public static TemplateField text(String name) {
-        return new TemplateField(name, FieldType.TEXT, null);
+        return new TemplateField(name, FieldType.TEXT, null, null);
     }
 
     /** Raccourci : construit un champ de type IMAGE avec layout GALLERY. */
     public static TemplateField image(String name) {
-        return new TemplateField(name, FieldType.IMAGE, ImageLayout.GALLERY);
+        return new TemplateField(name, FieldType.IMAGE, ImageLayout.GALLERY, null);
     }
 
     /** Raccourci : construit un champ IMAGE avec un layout specifique. */
     public static TemplateField image(String name, ImageLayout layout) {
-        return new TemplateField(name, FieldType.IMAGE, layout);
+        return new TemplateField(name, FieldType.IMAGE, layout, null);
     }
 
     /** Raccourci : construit un champ de type NUMBER. */
     public static TemplateField number(String name) {
-        return new TemplateField(name, FieldType.NUMBER, null);
+        return new TemplateField(name, FieldType.NUMBER, null, null);
+    }
+
+    /** Raccourci : construit un champ KEY_VALUE_LIST avec labels predefinis. */
+    public static TemplateField keyValueList(String name, List<String> labels) {
+        return new TemplateField(name, FieldType.KEY_VALUE_LIST, null, labels);
     }
 }

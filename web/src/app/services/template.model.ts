@@ -2,11 +2,12 @@
 
 /**
  * Type d'un champ de Template. Miroir de com.loremind.domain.shared.template.FieldType.
- * - 'TEXT'   : champ textuel libre (rendu en textarea)
- * - 'IMAGE'  : galerie d'images (rendu en app-image-gallery)
- * - 'NUMBER' : valeur numerique (rendu en input number)
+ * - 'TEXT'           : champ textuel libre (rendu en textarea)
+ * - 'IMAGE'          : galerie d'images (rendu en app-image-gallery)
+ * - 'NUMBER'         : valeur numerique (rendu en input number)
+ * - 'KEY_VALUE_LIST' : liste de paires {label, value} avec labels figes au template
  */
-export type FieldType = 'TEXT' | 'IMAGE' | 'NUMBER';
+export type FieldType = 'TEXT' | 'IMAGE' | 'NUMBER' | 'KEY_VALUE_LIST';
 
 /**
  * Variante de rendu pour un champ IMAGE. Miroir de
@@ -27,6 +28,8 @@ export interface TemplateField {
   type: FieldType;
   /** Uniquement pour type='IMAGE'. Absent/null = 'GALLERY'. */
   layout?: ImageLayout | null;
+  /** Labels predefinis pour KEY_VALUE_LIST (ordre significatif). */
+  labels?: string[] | null;
 }
 
 export interface Template {

@@ -28,6 +28,23 @@
         [imageIds]="imagesFor(f)"
         (imageIdsChange)="onImageIdsChange(f, $event)">
       </app-image-gallery>
+
+      <!-- KEY_VALUE_LIST : grille d'inputs avec labels figes du template -->
+      <div *ngSwitchCase="'KEY_VALUE_LIST'" class="dff-kv-grid">
+        <div class="dff-kv-cell" *ngFor="let lbl of f.labels; trackBy: trackByLabel">
+          <span class="dff-kv-label">{{ lbl }}</span>
+          <input
+            type="text"
+            [ngModel]="kvValue(f, lbl)"
+            (ngModelChange)="onKvChange(f, lbl, $event)"
+            [name]="'kv-' + f.name + '-' + lbl"
+            placeholder="—"
+          />
+        </div>
+        <div *ngIf="!f.labels?.length" class="dff-kv-empty">
+          Aucun label defini dans le template pour ce champ.
+        </div>
+      </div>
     </ng-container>
   </div>
 </div>
