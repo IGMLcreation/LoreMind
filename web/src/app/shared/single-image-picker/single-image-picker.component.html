@@ -1,0 +1,14 @@
+<div class="sip">
+  <div class="sip-frame" [style.aspectRatio]="aspectRatio">
+    <ng-container *ngIf="imageId; else uploadTpl">
+      <img [src]="contentUrl(imageId)" alt="" />
+      <button type="button" class="sip-remove" (click)="remove()" title="Retirer l'image">
+        <lucide-icon [img]="X" [size]="14"></lucide-icon>
+      </button>
+    </ng-container>
+    <ng-template #uploadTpl>
+      <app-image-uploader [compact]="true" (uploaded)="onUploaded($event)"></app-image-uploader>
+    </ng-template>
+  </div>
+  <small *ngIf="hint" class="sip-hint">{{ hint }}</small>
+</div>

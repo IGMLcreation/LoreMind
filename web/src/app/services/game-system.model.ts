@@ -1,4 +1,4 @@
-import { TemplateField } from './template-field.model';
+import { TemplateField } from './template.model';
 
 /**
  * Interface TypeScript pour GameSystemDTO (jumeau du DTO Java).

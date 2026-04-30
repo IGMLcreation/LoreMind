@@ -1,0 +1,60 @@
+<div class="pv" *ngIf="persona">
+
+  <!-- Bandeau / Header -->
+  <div class="pv-banner" *ngIf="persona.headerImageId">
+    <img [src]="contentUrl(persona.headerImageId)" alt="" />
+    <div class="pv-banner-fade"></div>
+  </div>
+
+  <!-- En-tete : portrait + titre -->
+  <div class="pv-hero" [class.no-banner]="!persona.headerImageId">
+    <div class="pv-portrait" *ngIf="persona.portraitImageId">
+      <img [src]="contentUrl(persona.portraitImageId)" alt="" />
+    </div>
+
+    <div class="pv-title-block">
+      <h1 class="pv-name">{{ persona.name }}</h1>
+      <p *ngIf="subtitle" class="pv-subtitle">{{ subtitle }}</p>
+    </div>
+  </div>
+
+  <!-- Stats numeriques en bandeau si presentes -->
+  <div *ngIf="textFields.length && hasAnyNumber(textFields)" class="pv-stat-band">
+    <div *ngFor="let f of textFields" class="pv-stat" [class.pv-stat-number]="f.isNumber">
+      <ng-container *ngIf="f.isNumber">
+        <span class="pv-stat-label">{{ f.name }}</span>
+        <span class="pv-stat-value">{{ f.value }}</span>
+      </ng-container>
+    </div>
+  </div>
+
+  <!-- Sections texte -->
+  <div class="pv-sections">
+    <ng-container *ngFor="let f of textFields; let first = first">
+      <section *ngIf="!f.isNumber" class="pv-section">
+        <h2 class="pv-section-title">{{ f.name }}</h2>
+        <div class="pv-section-body">
+          <p [class.with-dropcap]="first" class="pv-paragraph">
+            {{ firstParagraph(f.value) }}
+          </p>
+          <p *ngIf="restAfterFirstParagraph(f.value)" class="pv-paragraph">
+            {{ restAfterFirstParagraph(f.value) }}
+          </p>
+        </div>
+      </section>
+    </ng-container>
+
+    <!-- Galeries d'images templates -->
+    <section *ngFor="let img of imageFields" class="pv-section pv-section-images">
+      <h2 class="pv-section-title">{{ img.field.name }}</h2>
+      <app-image-gallery [imageIds]="img.ids" [layout]="img.field.layout || 'GALLERY'" [editable]="false">
+      </app-image-gallery>
+    </section>
+
+    <!-- Etat vide -->
+    <div *ngIf="textFields.length === 0 && imageFields.length === 0" class="pv-empty">
+      <lucide-icon [img]="BookOpen" [size]="32"></lucide-icon>
+      <p>Cette fiche est encore vide.</p>
+    </div>
+  </div>
+</div>

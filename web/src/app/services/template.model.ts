@@ -1,11 +1,12 @@
 // Interfaces TypeScript pour TemplateDTO (Backend Java).
 
 /**
- * Type d'un champ de Template. Miroir de com.loremind.domain.lorecontext.FieldType.
- * - 'TEXT'  : champ textuel libre (rendu en textarea)
- * - 'IMAGE' : galerie d'images (rendu en app-image-gallery)
+ * Type d'un champ de Template. Miroir de com.loremind.domain.shared.template.FieldType.
+ * - 'TEXT'   : champ textuel libre (rendu en textarea)
+ * - 'IMAGE'  : galerie d'images (rendu en app-image-gallery)
+ * - 'NUMBER' : valeur numerique (rendu en input number)
  */
-export type FieldType = 'TEXT' | 'IMAGE';
+export type FieldType = 'TEXT' | 'IMAGE' | 'NUMBER';
 
 /**
  * Variante de rendu pour un champ IMAGE. Miroir de

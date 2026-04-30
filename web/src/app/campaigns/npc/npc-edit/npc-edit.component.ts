@@ -6,9 +6,10 @@ import { LucideAngularModule, Save, ArrowLeft, Drama, Trash2, Sparkles } from 'l
 import { NpcService } from '../../../services/npc.service';
 import { CampaignService } from '../../../services/campaign.service';
 import { GameSystemService } from '../../../services/game-system.service';
-import { TemplateField } from '../../../services/template-field.model';
+import { TemplateField } from '../../../services/template.model';
 import { AiChatDrawerComponent } from '../../../shared/ai-chat-drawer/ai-chat-drawer.component';
 import { DynamicFieldsFormComponent } from '../../../shared/dynamic-fields-form/dynamic-fields-form.component';
+import { SingleImagePickerComponent } from '../../../shared/single-image-picker/single-image-picker.component';
 
 /**
  * Editeur plein ecran d'une fiche de PNJ.
@@ -19,7 +20,7 @@ import { DynamicFieldsFormComponent } from '../../../shared/dynamic-fields-form/
 @Component({
   selector: 'app-npc-edit',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, AiChatDrawerComponent, DynamicFieldsFormComponent],
+  imports: [CommonModule, FormsModule, LucideAngularModule, AiChatDrawerComponent, DynamicFieldsFormComponent, SingleImagePickerComponent],
   templateUrl: './npc-edit.component.html',
   styleUrls: ['./npc-edit.component.scss']
 })
@@ -43,8 +44,8 @@ export class NpcEditComponent implements OnInit {
   npcId: string | null = null;
 
   name = '';
-  portraitImageId = '';
-  headerImageId = '';
+  portraitImageId: string | null = null;
+  headerImageId: string | null = null;
   values: Record<string, string> = {};
   imageValues: Record<string, string[]> = {};
   templateFields: TemplateField[] = [];
@@ -71,8 +72,8 @@ export class NpcEditComponent implements OnInit {
       this.service.getById(this.npcId).subscribe({
         next: (n) => {
           this.name = n.name;
-          this.portraitImageId = n.portraitImageId ?? '';
-          this.headerImageId = n.headerImageId ?? '';
+          this.portraitImageId = n.portraitImageId ?? null;
+          this.headerImageId = n.headerImageId ?? null;
           this.values = n.values ?? {};
           this.imageValues = n.imageValues ?? {};
           this.order = n.order ?? 0;
@@ -102,8 +103,8 @@ export class NpcEditComponent implements OnInit {
     if (!this.name.trim() || !this.campaignId) return;
     const payload = {
       name: this.name.trim(),
-      portraitImageId: this.portraitImageId.trim() || null,
-      headerImageId: this.headerImageId.trim() || null,
+      portraitImageId: this.portraitImageId,
+      headerImageId: this.headerImageId,
       values: this.values,
       imageValues: this.imageValues,
       campaignId: this.campaignId
