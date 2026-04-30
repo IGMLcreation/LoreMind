@@ -104,23 +104,32 @@ public class CampaignStructuralContextBuilder {
      * sans injecter toute sa fiche.
      */
     private CharacterSummary toCharacterSummary(Character c) {
-        return new CharacterSummary(c.getName(), extractSnippet(c.getMarkdownContent()));
+        return new CharacterSummary(c.getName(), extractSnippet(c.getValues()));
     }
 
     /** Symétrique à {@link #toCharacterSummary} pour les PNJ. */
     private NpcSummary toNpcSummary(Npc n) {
-        return new NpcSummary(n.getName(), extractSnippet(n.getMarkdownContent()));
+        return new NpcSummary(n.getName(), extractSnippet(n.getValues()));
     }
 
-    private static String extractSnippet(String markdown) {
-        if (markdown == null || markdown.isBlank()) return "";
-        String firstLine = markdown.lines()
-                .map(String::strip)
-                .filter(l -> !l.isEmpty() && !l.startsWith("#"))
-                .findFirst()
-                .orElse("");
-        if (firstLine.length() <= CHARACTER_SNIPPET_MAX_LEN) return firstLine;
-        return firstLine.substring(0, CHARACTER_SNIPPET_MAX_LEN - 1).stripTrailing() + "…";
+    /**
+     * Snippet pour le resume IA : 1re ligne signifiante de la 1re valeur non vide
+     * du template (refonte 2026-04-30 — remplace l'ancien parsing markdown).
+     */
+    private static String extractSnippet(java.util.Map<String, String> values) {
+        if (values == null || values.isEmpty()) return "";
+        for (String value : values.values()) {
+            if (value == null || value.isBlank()) continue;
+            String firstLine = value.lines()
+                    .map(String::strip)
+                    .filter(l -> !l.isEmpty() && !l.startsWith("#"))
+                    .findFirst()
+                    .orElse("");
+            if (firstLine.isEmpty()) continue;
+            if (firstLine.length() <= CHARACTER_SNIPPET_MAX_LEN) return firstLine;
+            return firstLine.substring(0, CHARACTER_SNIPPET_MAX_LEN - 1).stripTrailing() + "…";
+        }
+        return "";
     }
 
     private ArcSummary toArcSummary(Arc arc) {

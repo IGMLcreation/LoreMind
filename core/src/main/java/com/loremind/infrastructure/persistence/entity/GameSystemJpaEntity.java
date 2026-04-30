@@ -1,5 +1,7 @@
 package com.loremind.infrastructure.persistence.entity;
 
+import com.loremind.domain.shared.template.TemplateField;
+import com.loremind.infrastructure.persistence.converter.TemplateFieldListJsonConverter;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -7,6 +9,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Entité JPA pour la persistance des GameSystems (systèmes de JDR).
@@ -32,6 +36,16 @@ public class GameSystemJpaEntity {
     @Column(name = "rules_markdown", columnDefinition = "TEXT")
     private String rulesMarkdown;
 
+    /** Template PJ serialise en JSON via {@link TemplateFieldListJsonConverter}. */
+    @Convert(converter = TemplateFieldListJsonConverter.class)
+    @Column(name = "character_template", columnDefinition = "TEXT")
+    private List<TemplateField> characterTemplate;
+
+    /** Template PNJ serialise en JSON. */
+    @Convert(converter = TemplateFieldListJsonConverter.class)
+    @Column(name = "npc_template", columnDefinition = "TEXT")
+    private List<TemplateField> npcTemplate;
+
     @Column
     private String author;
 
@@ -48,6 +62,8 @@ public class GameSystemJpaEntity {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
+        if (characterTemplate == null) characterTemplate = new ArrayList<>();
+        if (npcTemplate == null) npcTemplate = new ArrayList<>();
     }
 
     @PreUpdate

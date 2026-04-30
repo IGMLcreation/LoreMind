@@ -1,6 +1,6 @@
 package com.loremind.infrastructure.persistence.entity;
 
-import com.loremind.domain.lorecontext.TemplateField;
+import com.loremind.domain.shared.template.TemplateField;
 import com.loremind.infrastructure.persistence.converter.TemplateFieldListJsonConverter;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

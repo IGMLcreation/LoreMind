@@ -1,4 +1,4 @@
-package com.loremind.domain.lorecontext;
+package com.loremind.domain.shared.template;
 
 import org.junit.jupiter.api.Test;
 

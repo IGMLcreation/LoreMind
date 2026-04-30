@@ -115,8 +115,13 @@ public class NarrativeEntityContextBuilderTest {
 
     @Test
     void testBuild_Character_MarkdownProjected() {
+        // Refonte 2026-04-30 : les valeurs templates sont projetees individuellement
+        // dans la map fields (cle = nom du champ template).
         Character c = Character.builder()
-                .id("c-1").name("Aragorn").markdownContent("# Aragorn\nRôdeur")
+                .id("c-1").name("Aragorn")
+                .values(new java.util.HashMap<>(java.util.Map.of(
+                        "Histoire", "# Aragorn\nRôdeur",
+                        "Race", "Humain")))
                 .build();
         when(characterRepository.findById("c-1")).thenReturn(Optional.of(c));
 
@@ -124,14 +129,17 @@ public class NarrativeEntityContextBuilderTest {
 
         assertEquals("character", ctx.entityType());
         assertEquals("Aragorn", ctx.title());
-        assertEquals("# Aragorn\nRôdeur", ctx.fields().get("fiche complète (markdown)"));
+        assertEquals("# Aragorn\nRôdeur", ctx.fields().get("Histoire"));
+        assertEquals("Humain", ctx.fields().get("Race"));
     }
 
     @Test
     void testBuild_Npc_MarkdownProjected() {
         Npc n = Npc.builder()
                 .id("n-1").name("Borin le forgeron")
-                .markdownContent("# Borin\n**Faction :** Clan Feuillefer")
+                .values(new java.util.HashMap<>(java.util.Map.of(
+                        "Faction", "Clan Feuillefer",
+                        "Histoire", "# Borin")))
                 .build();
         when(npcRepository.findById("n-1")).thenReturn(Optional.of(n));
 
@@ -139,13 +147,14 @@ public class NarrativeEntityContextBuilderTest {
 
         assertEquals("npc", ctx.entityType());
         assertEquals("Borin le forgeron", ctx.title());
-        assertEquals("# Borin\n**Faction :** Clan Feuillefer",
-                ctx.fields().get("fiche complète (markdown)"));
+        assertEquals("Clan Feuillefer", ctx.fields().get("Faction"));
+        assertEquals("# Borin", ctx.fields().get("Histoire"));
     }
 
     @Test
     void testBuild_Npc_NormalizesCase() {
-        Npc n = Npc.builder().id("n-1").name("Elara").markdownContent("desc").build();
+        Npc n = Npc.builder().id("n-1").name("Elara")
+                .values(new java.util.HashMap<>(java.util.Map.of("Notes", "desc"))).build();
         when(npcRepository.findById("n-1")).thenReturn(Optional.of(n));
 
         NarrativeEntityContext ctx = builder.build("  NPC  ", "n-1");

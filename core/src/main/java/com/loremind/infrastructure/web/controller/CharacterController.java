@@ -24,9 +24,7 @@ public class CharacterController {
 
     @PostMapping
     public ResponseEntity<CharacterDTO> createCharacter(@RequestBody CharacterDTO dto) {
-        Character created = characterService.createCharacter(
-                new CharacterService.CharacterData(dto.getName(), dto.getMarkdownContent(), dto.getCampaignId(), null)
-        );
+        Character created = characterService.createCharacter(toData(dto, null));
         return ResponseEntity.ok(characterMapper.toDTO(created));
     }
 
@@ -47,10 +45,7 @@ public class CharacterController {
 
     @PutMapping("/{id}")
     public ResponseEntity<CharacterDTO> updateCharacter(@PathVariable String id, @RequestBody CharacterDTO dto) {
-        Character updated = characterService.updateCharacter(
-                id,
-                new CharacterService.CharacterData(dto.getName(), dto.getMarkdownContent(), dto.getCampaignId(), dto.getOrder())
-        );
+        Character updated = characterService.updateCharacter(id, toData(dto, dto.getOrder()));
         return ResponseEntity.ok(characterMapper.toDTO(updated));
     }
 
@@ -58,5 +53,17 @@ public class CharacterController {
     public ResponseEntity<Void> deleteCharacter(@PathVariable String id) {
         characterService.deleteCharacter(id);
         return ResponseEntity.noContent().build();
+    }
+
+    private CharacterService.CharacterData toData(CharacterDTO dto, Integer order) {
+        return new CharacterService.CharacterData(
+                dto.getName(),
+                dto.getPortraitImageId(),
+                dto.getHeaderImageId(),
+                dto.getValues(),
+                dto.getImageValues(),
+                dto.getCampaignId(),
+                order
+        );
     }
 }

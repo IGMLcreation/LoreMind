@@ -24,9 +24,7 @@ public class NpcController {
 
     @PostMapping
     public ResponseEntity<NpcDTO> createNpc(@RequestBody NpcDTO dto) {
-        Npc created = npcService.createNpc(
-                new NpcService.NpcData(dto.getName(), dto.getMarkdownContent(), dto.getCampaignId(), null)
-        );
+        Npc created = npcService.createNpc(toData(dto, null));
         return ResponseEntity.ok(npcMapper.toDTO(created));
     }
 
@@ -47,10 +45,7 @@ public class NpcController {
 
     @PutMapping("/{id}")
     public ResponseEntity<NpcDTO> updateNpc(@PathVariable String id, @RequestBody NpcDTO dto) {
-        Npc updated = npcService.updateNpc(
-                id,
-                new NpcService.NpcData(dto.getName(), dto.getMarkdownContent(), dto.getCampaignId(), dto.getOrder())
-        );
+        Npc updated = npcService.updateNpc(id, toData(dto, dto.getOrder()));
         return ResponseEntity.ok(npcMapper.toDTO(updated));
     }
 
@@ -58,5 +53,17 @@ public class NpcController {
     public ResponseEntity<Void> deleteNpc(@PathVariable String id) {
         npcService.deleteNpc(id);
         return ResponseEntity.noContent().build();
+    }
+
+    private NpcService.NpcData toData(NpcDTO dto, Integer order) {
+        return new NpcService.NpcData(
+                dto.getName(),
+                dto.getPortraitImageId(),
+                dto.getHeaderImageId(),
+                dto.getValues(),
+                dto.getImageValues(),
+                dto.getCampaignId(),
+                order
+        );
     }
 }

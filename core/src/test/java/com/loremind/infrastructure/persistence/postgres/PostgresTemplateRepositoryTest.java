@@ -1,10 +1,10 @@
 package com.loremind.infrastructure.persistence.postgres;
 
-import com.loremind.domain.lorecontext.FieldType;
-import com.loremind.domain.lorecontext.ImageLayout;
+import com.loremind.domain.shared.template.FieldType;
+import com.loremind.domain.shared.template.ImageLayout;
 import com.loremind.domain.lorecontext.Lore;
 import com.loremind.domain.lorecontext.Template;
-import com.loremind.domain.lorecontext.TemplateField;
+import com.loremind.domain.shared.template.TemplateField;
 import com.loremind.domain.lorecontext.ports.LoreRepository;
 import com.loremind.domain.lorecontext.ports.TemplateRepository;
 import org.junit.jupiter.api.BeforeEach;

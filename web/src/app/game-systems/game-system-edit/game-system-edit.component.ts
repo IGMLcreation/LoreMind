@@ -4,6 +4,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, Save, ArrowLeft, Dices, Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-angular';
 import { GameSystemService } from '../../services/game-system.service';
+import { TemplateField } from '../../services/template-field.model';
+import { TemplateFieldsEditorComponent } from '../../shared/template-fields-editor/template-fields-editor.component';
 
 /**
  * Éditeur plein écran d'un GameSystem. Rôle double création/édition :
@@ -31,10 +33,16 @@ const SUGGESTED_SECTIONS = [
   'Combat', 'Classes', 'Stats', 'Magie', 'Monstres', 'Progression'
 ];
 
+/** Suggestions de champs pour la fiche PJ — generiques (extension par template). */
+const CHARACTER_FIELD_SUGGESTIONS = ['Histoire', 'Personnalite', 'Apparence', 'Notes'];
+
+/** Suggestions de champs pour la fiche PNJ — focus sur les besoins MJ. */
+const NPC_FIELD_SUGGESTIONS = ['Motivation', 'Apparence', 'Faction', 'Notes MJ'];
+
 @Component({
   selector: 'app-game-system-edit',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule],
+  imports: [CommonModule, FormsModule, LucideAngularModule, TemplateFieldsEditorComponent],
   templateUrl: './game-system-edit.component.html',
   styleUrls: ['./game-system-edit.component.scss']
 })
@@ -53,8 +61,12 @@ export class GameSystemEditComponent implements OnInit {
   description = '';
   author = '';
   sections: RuleSection[] = [];
+  characterTemplate: TemplateField[] = [];
+  npcTemplate: TemplateField[] = [];
 
   readonly suggestedSections = SUGGESTED_SECTIONS;
+  readonly characterFieldSuggestions = CHARACTER_FIELD_SUGGESTIONS;
+  readonly npcFieldSuggestions = NPC_FIELD_SUGGESTIONS;
 
   constructor(
     private route: ActivatedRoute,
@@ -71,6 +83,8 @@ export class GameSystemEditComponent implements OnInit {
           this.description = gs.description ?? '';
           this.author = gs.author ?? '';
           this.sections = this.parseMarkdown(gs.rulesMarkdown ?? '');
+          this.characterTemplate = gs.characterTemplate ? [...gs.characterTemplate] : [];
+          this.npcTemplate = gs.npcTemplate ? [...gs.npcTemplate] : [];
         },
         error: () => this.back()
       });
@@ -104,11 +118,17 @@ export class GameSystemEditComponent implements OnInit {
 
   submit(): void {
     if (!this.name.trim()) return;
+    if (this.hasInvalidTemplateFields()) {
+      console.warn('Champs templates invalides (noms vides ou doublons) — sauvegarde bloquee.');
+      return;
+    }
     const payload = {
       name: this.name.trim(),
       description: this.description.trim() || null,
       author: this.author.trim() || null,
       rulesMarkdown: this.serializeMarkdown(),
+      characterTemplate: this.characterTemplate,
+      npcTemplate: this.npcTemplate,
       isPublic: false
     };
     const req = this.id
@@ -122,6 +142,22 @@ export class GameSystemEditComponent implements OnInit {
 
   back(): void {
     this.router.navigate(['/game-systems']);
+  }
+
+  /** Validation cote front : nom vide ou doublons (case-insensitive). */
+  private hasInvalidTemplateFields(): boolean {
+    return this.hasInvalidList(this.characterTemplate) || this.hasInvalidList(this.npcTemplate);
+  }
+
+  private hasInvalidList(fields: TemplateField[]): boolean {
+    const seen = new Set<string>();
+    for (const f of fields) {
+      const name = f.name?.trim().toLowerCase();
+      if (!name) return true;
+      if (seen.has(name)) return true;
+      seen.add(name);
+    }
+    return false;
   }
 
   // --- Parse / Serialize markdown ------------------------------------------

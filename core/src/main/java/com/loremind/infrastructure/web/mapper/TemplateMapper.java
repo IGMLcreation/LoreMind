@@ -1,9 +1,9 @@
 package com.loremind.infrastructure.web.mapper;
 
 import com.loremind.domain.lorecontext.Template;
-import com.loremind.domain.lorecontext.TemplateField;
+import com.loremind.domain.shared.template.TemplateField;
 import com.loremind.infrastructure.web.dto.lorecontext.TemplateDTO;
-import com.loremind.infrastructure.web.dto.lorecontext.TemplateFieldDTO;
+import com.loremind.infrastructure.web.dto.shared.TemplateFieldDTO;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;

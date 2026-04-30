@@ -130,13 +130,19 @@ public class NarrativeEntityContextBuilder {
 
     private NarrativeEntityContext fromCharacter(Character c) {
         Map<String, String> fields = new LinkedHashMap<>();
-        putField(fields, "fiche complète (markdown)", c.getMarkdownContent());
+        if (c.getValues() != null) {
+            // Champs templates exposes individuellement — meilleur pour le LLM que
+            // l'ancien blob markdown monolithique.
+            c.getValues().forEach((k, v) -> putField(fields, k, v));
+        }
         return new NarrativeEntityContext("character", c.getName(), fields);
     }
 
     private NarrativeEntityContext fromNpc(Npc n) {
         Map<String, String> fields = new LinkedHashMap<>();
-        putField(fields, "fiche complète (markdown)", n.getMarkdownContent());
+        if (n.getValues() != null) {
+            n.getValues().forEach((k, v) -> putField(fields, k, v));
+        }
         return new NarrativeEntityContext("npc", n.getName(), fields);
     }
 

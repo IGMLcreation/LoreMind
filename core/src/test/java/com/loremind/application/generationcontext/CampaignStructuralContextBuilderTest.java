@@ -153,19 +153,19 @@ public class CampaignStructuralContextBuilderTest {
     void testBuild_ProjectsCharactersAndNpcsWithSnippets() {
         Character pj1 = Character.builder().id("c-1").campaignId("camp-1").order(1)
                 .name("Aragorn")
-                .markdownContent("# Aragorn\n\nRôdeur du Nord, héritier d'Isildur.")
+                .values(new java.util.HashMap<>(java.util.Map.of("Histoire", "# Aragorn\n\nRôdeur du Nord, héritier d'Isildur.")))
                 .build();
         Character pj2 = Character.builder().id("c-2").campaignId("camp-1").order(2)
                 .name("Legolas")
-                .markdownContent(null) // pas de snippet → string vide
+                .values(null) // pas de snippet → string vide
                 .build();
         Npc npc1 = Npc.builder().id("n-1").campaignId("camp-1").order(2)
                 .name("Borin le forgeron")
-                .markdownContent("# Borin\n\nNain barbu au regard perçant, ancien clan Feuillefer.")
+                .values(new java.util.HashMap<>(java.util.Map.of("Histoire", "# Borin\n\nNain barbu au regard perçant, ancien clan Feuillefer.")))
                 .build();
         Npc npc2 = Npc.builder().id("n-2").campaignId("camp-1").order(1)
                 .name("Dame Elara")
-                .markdownContent("")
+                .values(new java.util.HashMap<>(java.util.Map.of("Histoire", "")))
                 .build();
 
         when(campaignRepository.findById("camp-1")).thenReturn(Optional.of(campaign));
@@ -196,7 +196,7 @@ public class CampaignStructuralContextBuilderTest {
         // Snippet > 160 chars : doit être tronqué à 159 + "…"
         String longLine = "x".repeat(200);
         Npc longNpc = Npc.builder().id("n-1").campaignId("camp-1").order(1)
-                .name("Verbeux").markdownContent(longLine).build();
+                .name("Verbeux").values(new java.util.HashMap<>(java.util.Map.of("Histoire", longLine))).build();
 
         when(campaignRepository.findById("camp-1")).thenReturn(Optional.of(campaign));
         when(arcRepository.findByCampaignId("camp-1")).thenReturn(List.of());

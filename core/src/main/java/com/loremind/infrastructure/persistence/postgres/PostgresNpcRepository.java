@@ -6,6 +6,7 @@ import com.loremind.infrastructure.persistence.entity.NpcJpaEntity;
 import com.loremind.infrastructure.persistence.jpa.NpcJpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -52,7 +53,10 @@ public class PostgresNpcRepository implements NpcRepository {
         return Npc.builder()
                 .id(e.getId().toString())
                 .name(e.getName())
-                .markdownContent(e.getMarkdownContent())
+                .portraitImageId(e.getPortraitImageId())
+                .headerImageId(e.getHeaderImageId())
+                .values(e.getValues() != null ? new HashMap<>(e.getValues()) : new HashMap<>())
+                .imageValues(e.getImageValues() != null ? new HashMap<>(e.getImageValues()) : new HashMap<>())
                 .campaignId(e.getCampaignId().toString())
                 .order(e.getOrder())
                 .createdAt(e.getCreatedAt())
@@ -65,7 +69,10 @@ public class PostgresNpcRepository implements NpcRepository {
         return NpcJpaEntity.builder()
                 .id(id)
                 .name(n.getName())
-                .markdownContent(n.getMarkdownContent())
+                .portraitImageId(n.getPortraitImageId())
+                .headerImageId(n.getHeaderImageId())
+                .values(n.getValues() != null ? new HashMap<>(n.getValues()) : new HashMap<>())
+                .imageValues(n.getImageValues() != null ? new HashMap<>(n.getImageValues()) : new HashMap<>())
                 .campaignId(Long.parseLong(n.getCampaignId()))
                 .order(n.getOrder())
                 .createdAt(n.getCreatedAt())

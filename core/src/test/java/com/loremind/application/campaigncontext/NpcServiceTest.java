@@ -11,6 +11,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -38,7 +39,7 @@ public class NpcServiceTest {
         testNpc = Npc.builder()
                 .id("npc-1")
                 .name("Borin le forgeron")
-                .markdownContent("# Borin\nForgeron nain")
+                .values(new java.util.HashMap<>(Map.of("Notes", "Forgeron nain")))
                 .campaignId("camp-1")
                 .order(1)
                 .build();
@@ -49,7 +50,8 @@ public class NpcServiceTest {
         when(npcRepository.save(any(Npc.class))).thenReturn(testNpc);
 
         Npc result = npcService.createNpc(
-                new NpcService.NpcData("Borin le forgeron", "# Borin", "camp-1", 5));
+                new NpcService.NpcData("Borin le forgeron", null, null,
+                        Map.of("Notes", "Borin"), null, "camp-1", 5));
 
         assertNotNull(result);
         ArgumentCaptor<Npc> captor = ArgumentCaptor.forClass(Npc.class);
@@ -65,7 +67,7 @@ public class NpcServiceTest {
         when(npcRepository.findByCampaignId("camp-1")).thenReturn(List.of(a, b));
         when(npcRepository.save(any(Npc.class))).thenReturn(testNpc);
 
-        npcService.createNpc(new NpcService.NpcData("Nouveau", null, "camp-1", null));
+        npcService.createNpc(new NpcService.NpcData("Nouveau", null, null, null, null, "camp-1", null));
 
         ArgumentCaptor<Npc> captor = ArgumentCaptor.forClass(Npc.class);
         verify(npcRepository).save(captor.capture());
@@ -77,7 +79,7 @@ public class NpcServiceTest {
         when(npcRepository.findByCampaignId("camp-1")).thenReturn(List.of());
         when(npcRepository.save(any(Npc.class))).thenReturn(testNpc);
 
-        npcService.createNpc(new NpcService.NpcData("Premier", null, "camp-1", null));
+        npcService.createNpc(new NpcService.NpcData("Premier", null, null, null, null, "camp-1", null));
 
         ArgumentCaptor<Npc> captor = ArgumentCaptor.forClass(Npc.class);
         verify(npcRepository).save(captor.capture());
@@ -121,10 +123,11 @@ public class NpcServiceTest {
         when(npcRepository.save(any(Npc.class))).thenAnswer(inv -> inv.getArgument(0));
 
         Npc result = npcService.updateNpc("npc-1",
-                new NpcService.NpcData("Borin renommé", "# v2", "camp-1", 7));
+                new NpcService.NpcData("Borin renommé", null, null,
+                        Map.of("Notes", "v2"), null, "camp-1", 7));
 
         assertEquals("Borin renommé", result.getName());
-        assertEquals("# v2", result.getMarkdownContent());
+        assertEquals("v2", result.getValues().get("Notes"));
         assertEquals(7, result.getOrder());
     }
 
@@ -134,7 +137,8 @@ public class NpcServiceTest {
         when(npcRepository.save(any(Npc.class))).thenAnswer(inv -> inv.getArgument(0));
 
         Npc result = npcService.updateNpc("npc-1",
-                new NpcService.NpcData("Borin", "# txt", "camp-1", null));
+                new NpcService.NpcData("Borin", null, null,
+                        Map.of("Notes", "txt"), null, "camp-1", null));
 
         // testNpc avait order=1 → préservé
         assertEquals(1, result.getOrder());
@@ -146,7 +150,7 @@ public class NpcServiceTest {
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> npcService.updateNpc("missing",
-                        new NpcService.NpcData("x", null, "camp-1", null)));
+                        new NpcService.NpcData("x", null, null, null, null, "camp-1", null)));
         assertTrue(ex.getMessage().contains("missing"));
         verify(npcRepository, never()).save(any());
     }

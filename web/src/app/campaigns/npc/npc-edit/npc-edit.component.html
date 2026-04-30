@@ -35,18 +35,28 @@
       />
     </div>
 
-    <div class="field content-field">
-      <label>Fiche (markdown)</label>
-      <p class="hint">
-        Tout en markdown libre : apparence, motivations, faction, secrets, stats, notes MJ…
-        À terme, l'IA pourra exploiter ces infos pour incarner le PNJ avec cohérence dans les scènes.
-      </p>
-      <textarea
-        [(ngModel)]="markdownContent"
-        name="markdownContent"
-        rows="22"
-        placeholder="# Borin le forgeron&#10;&#10;**Race :** Nain&#10;**Faction :** Clan Feuillefer&#10;**Statut :** Vivant&#10;&#10;## Apparence&#10;Barbe rousse tressée, tablier de cuir brûlé...&#10;&#10;## Motivations&#10;Venger son clan décimé par les orcs il y a 10 hivers.&#10;&#10;## Notes MJ (secret)&#10;Connaît l'emplacement du marteau de Durin..."
-      ></textarea>
+    <div class="field-row">
+      <div class="field">
+        <label>Portrait (ID image)</label>
+        <input type="text" [(ngModel)]="portraitImageId" name="portraitImageId" placeholder="ID de l'image portrait" />
+      </div>
+      <div class="field">
+        <label>Bandeau / Header (ID image)</label>
+        <input type="text" [(ngModel)]="headerImageId" name="headerImageId" placeholder="ID de l'image bandeau" />
+      </div>
+    </div>
+    <p class="hint">
+      Les portraits et bandeaux acceptent un ID d'image (MVP). Picker visuel a venir.
+    </p>
+
+    <div class="template-fields">
+      <app-dynamic-fields-form
+        [fields]="templateFields"
+        [values]="values"
+        [imageValues]="imageValues"
+        (valuesChange)="values = $event"
+        (imageValuesChange)="imageValues = $event">
+      </app-dynamic-fields-form>
     </div>
 
     <div class="actions">
