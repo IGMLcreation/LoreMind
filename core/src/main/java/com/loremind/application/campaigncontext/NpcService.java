@@ -4,7 +4,9 @@ import com.loremind.domain.campaigncontext.Npc;
 import com.loremind.domain.campaigncontext.ports.NpcRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -19,11 +21,15 @@ public class NpcService {
         this.npcRepository = npcRepository;
     }
 
-    /**
-     * Parameter Object pour la création / mise à jour d'un Npc.
-     * `order` est fourni par le controller ; si absent, le service le calcule.
-     */
-    public record NpcData(String name, String markdownContent, String campaignId, Integer order) {}
+    public record NpcData(
+            String name,
+            String portraitImageId,
+            String headerImageId,
+            Map<String, String> values,
+            Map<String, List<String>> imageValues,
+            String campaignId,
+            Integer order
+    ) {}
 
     public Npc createNpc(NpcData data) {
         int order = data.order() != null
@@ -31,7 +37,10 @@ public class NpcService {
                 : nextOrderFor(data.campaignId());
         Npc npc = Npc.builder()
                 .name(data.name())
-                .markdownContent(data.markdownContent())
+                .portraitImageId(data.portraitImageId())
+                .headerImageId(data.headerImageId())
+                .values(data.values() != null ? new HashMap<>(data.values()) : new HashMap<>())
+                .imageValues(data.imageValues() != null ? new HashMap<>(data.imageValues()) : new HashMap<>())
                 .campaignId(data.campaignId())
                 .order(order)
                 .build();
@@ -50,7 +59,10 @@ public class NpcService {
         Npc existing = npcRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Npc non trouvé avec l'ID: " + id));
         existing.setName(data.name());
-        existing.setMarkdownContent(data.markdownContent());
+        existing.setPortraitImageId(data.portraitImageId());
+        existing.setHeaderImageId(data.headerImageId());
+        existing.setValues(data.values() != null ? new HashMap<>(data.values()) : new HashMap<>());
+        existing.setImageValues(data.imageValues() != null ? new HashMap<>(data.imageValues()) : new HashMap<>());
         if (data.order() != null) {
             existing.setOrder(data.order());
         }
@@ -61,7 +73,6 @@ public class NpcService {
         npcRepository.deleteById(id);
     }
 
-    /** Renvoie la prochaine position libre — append en fin de liste. */
     private int nextOrderFor(String campaignId) {
         return npcRepository.findByCampaignId(campaignId).stream()
                 .mapToInt(Npc::getOrder)

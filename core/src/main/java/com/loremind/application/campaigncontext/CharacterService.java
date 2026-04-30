@@ -4,7 +4,9 @@ import com.loremind.domain.campaigncontext.Character;
 import com.loremind.domain.campaigncontext.ports.CharacterRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -22,8 +24,17 @@ public class CharacterService {
     /**
      * Parameter Object pour la création / mise à jour d'un Character.
      * `order` est fourni par le controller ; si absent, le service le calcule.
+     * Les maps {@code values}/{@code imageValues} peuvent etre null (interpretees vides).
      */
-    public record CharacterData(String name, String markdownContent, String campaignId, Integer order) {}
+    public record CharacterData(
+            String name,
+            String portraitImageId,
+            String headerImageId,
+            Map<String, String> values,
+            Map<String, List<String>> imageValues,
+            String campaignId,
+            Integer order
+    ) {}
 
     public Character createCharacter(CharacterData data) {
         int order = data.order() != null
@@ -31,7 +42,10 @@ public class CharacterService {
                 : nextOrderFor(data.campaignId());
         Character character = Character.builder()
                 .name(data.name())
-                .markdownContent(data.markdownContent())
+                .portraitImageId(data.portraitImageId())
+                .headerImageId(data.headerImageId())
+                .values(data.values() != null ? new HashMap<>(data.values()) : new HashMap<>())
+                .imageValues(data.imageValues() != null ? new HashMap<>(data.imageValues()) : new HashMap<>())
                 .campaignId(data.campaignId())
                 .order(order)
                 .build();
@@ -50,7 +64,10 @@ public class CharacterService {
         Character existing = characterRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Character non trouvé avec l'ID: " + id));
         existing.setName(data.name());
-        existing.setMarkdownContent(data.markdownContent());
+        existing.setPortraitImageId(data.portraitImageId());
+        existing.setHeaderImageId(data.headerImageId());
+        existing.setValues(data.values() != null ? new HashMap<>(data.values()) : new HashMap<>());
+        existing.setImageValues(data.imageValues() != null ? new HashMap<>(data.imageValues()) : new HashMap<>());
         if (data.order() != null) {
             existing.setOrder(data.order());
         }

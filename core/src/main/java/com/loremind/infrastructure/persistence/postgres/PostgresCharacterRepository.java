@@ -6,6 +6,7 @@ import com.loremind.infrastructure.persistence.entity.CharacterJpaEntity;
 import com.loremind.infrastructure.persistence.jpa.CharacterJpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -52,7 +53,10 @@ public class PostgresCharacterRepository implements CharacterRepository {
         return Character.builder()
                 .id(e.getId().toString())
                 .name(e.getName())
-                .markdownContent(e.getMarkdownContent())
+                .portraitImageId(e.getPortraitImageId())
+                .headerImageId(e.getHeaderImageId())
+                .values(e.getValues() != null ? new HashMap<>(e.getValues()) : new HashMap<>())
+                .imageValues(e.getImageValues() != null ? new HashMap<>(e.getImageValues()) : new HashMap<>())
                 .campaignId(e.getCampaignId().toString())
                 .order(e.getOrder())
                 .createdAt(e.getCreatedAt())
@@ -65,7 +69,10 @@ public class PostgresCharacterRepository implements CharacterRepository {
         return CharacterJpaEntity.builder()
                 .id(id)
                 .name(c.getName())
-                .markdownContent(c.getMarkdownContent())
+                .portraitImageId(c.getPortraitImageId())
+                .headerImageId(c.getHeaderImageId())
+                .values(c.getValues() != null ? new HashMap<>(c.getValues()) : new HashMap<>())
+                .imageValues(c.getImageValues() != null ? new HashMap<>(c.getImageValues()) : new HashMap<>())
                 .campaignId(Long.parseLong(c.getCampaignId()))
                 .order(c.getOrder())
                 .createdAt(c.getCreatedAt())

@@ -1,4 +1,4 @@
-package com.loremind.domain.lorecontext;
+package com.loremind.domain.shared.template;
 
 /**
  * Variante de rendu pour un champ de type IMAGE.
@@ -8,7 +8,7 @@ package com.loremind.domain.lorecontext;
  * - MASONRY  : mosaique hauteurs variables facon Pinterest
  * - CAROUSEL : defilement horizontal
  * <p>
- * Uniquement significatif quand {@link FieldType} = IMAGE. Ignore pour TEXT.
+ * Uniquement significatif quand {@link FieldType} = IMAGE. Ignore sinon.
  */
 public enum ImageLayout {
     GALLERY,

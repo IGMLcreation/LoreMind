@@ -4,21 +4,22 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Fiche de personnage non-joueur (PNJ) d'une campagne.
  * <p>
- * MVP : entité dédiée, distincte de {@link Character} (PJ). Choix DDD assumé —
- * un PNJ a vocation à porter à terme des invariants métier propres (faction,
- * statut vivant/mort/disparu, visibilité côté joueurs, relations inter-PNJ)
- * qui n'ont aucun sens sur un PJ. Mutualiser via un enum aurait pollué l'entité
- * PJ avec des champs inutiles ({@code if (type == NPC)} partout = anti-pattern).
+ * Entité dédiée distincte de {@link Character} (DDD assumé : invariants divergents
+ * à terme — faction, statut vivant/mort, visibilité côté joueurs, etc.).
  * <p>
- * Contenu markdown libre comme les PJ. Évolution prévue : templating partagé
- * PJ/PNJ piloté par GameSystem.
+ * Mêmes champs universels hard-codés et meme structure de templating que Character,
+ * pilotée par le template PNJ du GameSystem
+ * ({@link com.loremind.domain.gamesystemcontext.GameSystem#getNpcTemplate}).
  * <p>
- * Scope campagne : les PNJ "univers" (worldboss, figures du Lore) restent
- * gérés via le système Page/Template du LoreContext.
+ * Scope campagne : les PNJ "univers" (worldboss, figures du Lore) restent gérés
+ * via le système Page/Template du LoreContext.
  */
 @Data
 @Builder
@@ -27,10 +28,19 @@ public class Npc {
     private String id;
     private String name;
 
-    /** Contenu libre markdown — description, motivation, stats, notes MJ. Nullable à la création. */
-    private String markdownContent;
+    /** ID de l'image portrait (champ universel hard-code). Nullable. */
+    private String portraitImageId;
 
-    /** Référence vers la Campaign parente (cross-aggregate via ID, jamais d'objet). */
+    /** ID de l'image header/banniere (champ universel hard-code). Nullable. */
+    private String headerImageId;
+
+    /** Valeurs TEXT/NUMBER du template PNJ. Jamais null apres construction. */
+    private Map<String, String> values;
+
+    /** Valeurs IMAGE du template PNJ (listes d'IDs ordonnees par champ). Jamais null. */
+    private Map<String, List<String>> imageValues;
+
+    /** Référence vers la Campaign parente (cross-aggregate via ID). */
     private String campaignId;
 
     /** Ordre d'affichage dans la liste des PNJ de la campagne. */
@@ -38,4 +48,14 @@ public class Npc {
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    public Map<String, String> getValues() {
+        if (values == null) values = new HashMap<>();
+        return values;
+    }
+
+    public Map<String, List<String>> getImageValues() {
+        if (imageValues == null) imageValues = new HashMap<>();
+        return imageValues;
+    }
 }

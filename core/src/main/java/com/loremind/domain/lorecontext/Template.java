@@ -1,5 +1,7 @@
 package com.loremind.domain.lorecontext;
 
+import com.loremind.domain.shared.template.FieldType;
+import com.loremind.domain.shared.template.TemplateField;
 import lombok.Builder;
 import lombok.Data;
 

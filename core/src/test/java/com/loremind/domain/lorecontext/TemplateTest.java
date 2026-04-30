@@ -1,5 +1,7 @@
 package com.loremind.domain.lorecontext;
 
+import com.loremind.domain.shared.template.ImageLayout;
+import com.loremind.domain.shared.template.TemplateField;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

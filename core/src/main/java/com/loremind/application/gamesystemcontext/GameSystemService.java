@@ -2,6 +2,7 @@ package com.loremind.application.gamesystemcontext;
 
 import com.loremind.domain.gamesystemcontext.GameSystem;
 import com.loremind.domain.gamesystemcontext.ports.GameSystemRepository;
+import com.loremind.domain.shared.template.TemplateField;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,11 +19,14 @@ public class GameSystemService {
 
     /**
      * Parameter Object pour la création / mise à jour d'un GameSystem.
+     * Les templates peuvent etre null (interpretes comme listes vides).
      */
     public record GameSystemData(
             String name,
             String description,
             String rulesMarkdown,
+            List<TemplateField> characterTemplate,
+            List<TemplateField> npcTemplate,
             String author,
             boolean isPublic
     ) {}
@@ -35,6 +39,8 @@ public class GameSystemService {
                 .author(normalize(data.author()))
                 .isPublic(data.isPublic())
                 .build();
+        gameSystem.replaceCharacterTemplate(data.characterTemplate());
+        gameSystem.replaceNpcTemplate(data.npcTemplate());
         return gameSystemRepository.save(gameSystem);
     }
 
@@ -52,6 +58,8 @@ public class GameSystemService {
         existing.setName(data.name());
         existing.setDescription(data.description());
         existing.setRulesMarkdown(data.rulesMarkdown());
+        existing.replaceCharacterTemplate(data.characterTemplate());
+        existing.replaceNpcTemplate(data.npcTemplate());
         existing.setAuthor(normalize(data.author()));
         existing.setPublic(data.isPublic());
         return gameSystemRepository.save(existing);

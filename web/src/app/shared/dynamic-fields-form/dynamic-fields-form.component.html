@@ -1,0 +1,42 @@
+<div class="dff" *ngIf="fields?.length; else emptyTpl">
+  <div class="dff-field" *ngFor="let f of fields; trackBy: trackByName">
+    <label>{{ f.name }}</label>
+
+    <ng-container [ngSwitch]="f.type">
+      <textarea
+        *ngSwitchCase="'TEXT'"
+        rows="4"
+        [ngModel]="values[f.name] || ''"
+        (ngModelChange)="onTextChange(f, $event)"
+        [name]="'val-' + f.name"
+        placeholder="Renseignez {{ f.name }}…">
+      </textarea>
+
+      <input
+        *ngSwitchCase="'NUMBER'"
+        type="number"
+        [ngModel]="values[f.name] || ''"
+        (ngModelChange)="onTextChange(f, $event)"
+        [name]="'val-' + f.name"
+        placeholder="0"
+      />
+
+      <div *ngSwitchCase="'IMAGE'" class="image-mvp">
+        <input
+          type="text"
+          [ngModel]="imageCsvCache[f.name] || ''"
+          (ngModelChange)="onImageCsvChange(f, $event)"
+          [name]="'img-' + f.name"
+          placeholder="IDs d'images separes par des virgules (MVP)"
+        />
+        <small class="hint">Layout : {{ f.layout || 'GALLERY' }}. Picker dedie a venir.</small>
+      </div>
+    </ng-container>
+  </div>
+</div>
+
+<ng-template #emptyTpl>
+  <div class="dff-empty">
+    Aucun champ defini dans le template de ce systeme. Editez le GameSystem pour ajouter des champs.
+  </div>
+</ng-template>

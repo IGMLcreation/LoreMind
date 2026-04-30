@@ -35,18 +35,38 @@
       />
     </div>
 
-    <div class="field content-field">
-      <label>Fiche (markdown)</label>
-      <p class="hint">
-        Tout en markdown libre : stats, classe, backstory, équipement, objectifs personnels…
-        L'IA lira ces infos pour rester cohérente quand vous générez des scènes impliquant ce PJ.
-      </p>
-      <textarea
-        [(ngModel)]="markdownContent"
-        name="markdownContent"
-        rows="22"
-        placeholder="# Thorin Grand-Hache&#10;&#10;**Race :** Nain&#10;**Classe :** Guerrier niveau 4&#10;**PV :** 35 / 35&#10;&#10;## Stats&#10;- Force : 16&#10;- Dextérité : 12&#10;...&#10;&#10;## Backstory&#10;Originaire des montagnes du Nord, Thorin a fui son clan après..."
-      ></textarea>
+    <div class="field-row">
+      <div class="field">
+        <label>Portrait (ID image)</label>
+        <input
+          type="text"
+          [(ngModel)]="portraitImageId"
+          name="portraitImageId"
+          placeholder="ID de l'image portrait"
+        />
+      </div>
+      <div class="field">
+        <label>Bandeau / Header (ID image)</label>
+        <input
+          type="text"
+          [(ngModel)]="headerImageId"
+          name="headerImageId"
+          placeholder="ID de l'image bandeau"
+        />
+      </div>
+    </div>
+    <p class="hint">
+      Les portraits et bandeaux acceptent un ID d'image (MVP). Picker visuel a venir.
+    </p>
+
+    <div class="template-fields">
+      <app-dynamic-fields-form
+        [fields]="templateFields"
+        [values]="values"
+        [imageValues]="imageValues"
+        (valuesChange)="values = $event"
+        (imageValuesChange)="imageValues = $event">
+      </app-dynamic-fields-form>
     </div>
 
     <div class="actions">

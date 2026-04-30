@@ -1,7 +1,7 @@
 package com.loremind.application.lorecontext;
 
 import com.loremind.domain.lorecontext.Template;
-import com.loremind.domain.lorecontext.TemplateField;
+import com.loremind.domain.shared.template.TemplateField;
 import com.loremind.domain.lorecontext.ports.TemplateRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

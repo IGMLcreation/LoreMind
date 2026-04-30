@@ -6,7 +6,7 @@ import com.loremind.domain.lorecontext.Template;
 import com.loremind.domain.lorecontext.ports.LoreRepository;
 import com.loremind.domain.lorecontext.ports.TemplateRepository;
 import com.loremind.infrastructure.web.dto.lorecontext.TemplateDTO;
-import com.loremind.infrastructure.web.dto.lorecontext.TemplateFieldDTO;
+import com.loremind.infrastructure.web.dto.shared.TemplateFieldDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

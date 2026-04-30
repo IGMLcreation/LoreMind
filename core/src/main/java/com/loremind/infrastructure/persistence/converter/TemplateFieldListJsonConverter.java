@@ -3,9 +3,9 @@ package com.loremind.infrastructure.persistence.converter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.loremind.domain.lorecontext.FieldType;
-import com.loremind.domain.lorecontext.ImageLayout;
-import com.loremind.domain.lorecontext.TemplateField;
+import com.loremind.domain.shared.template.FieldType;
+import com.loremind.domain.shared.template.ImageLayout;
+import com.loremind.domain.shared.template.TemplateField;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 

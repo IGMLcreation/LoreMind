@@ -1,18 +1,23 @@
 /**
  * Fiche de personnage non-joueur (PNJ) d'une campagne.
- * MVP : markdownContent libre (description, motivation, stats, notes MJ).
- * Évolution prévue : templating partagé PJ/PNJ piloté par GameSystem.
+ * Refonte 2026-04-30 : meme structure que Character (template-based).
  */
 export interface Npc {
   id?: string;
   name: string;
-  markdownContent?: string | null;
+  portraitImageId?: string | null;
+  headerImageId?: string | null;
+  values?: Record<string, string>;
+  imageValues?: Record<string, string[]>;
   campaignId: string;
   order?: number;
 }
 
 export interface NpcCreate {
   name: string;
-  markdownContent?: string | null;
+  portraitImageId?: string | null;
+  headerImageId?: string | null;
+  values?: Record<string, string>;
+  imageValues?: Record<string, string[]>;
   campaignId: string;
 }

@@ -1,0 +1,79 @@
+<div class="tfe">
+  <div class="tfe-header">
+    <h3 class="tfe-label">{{ label }}</h3>
+    <p *ngIf="hint" class="tfe-hint">{{ hint }}</p>
+  </div>
+
+  <div class="tfe-list">
+    <div class="tfe-row" *ngFor="let f of fields; let i = index" [class.invalid]="isDuplicate(f, i) || !f.name.trim()">
+      <div class="tfe-row-controls">
+        <button type="button" class="btn-arrow" (click)="moveUp(i)" [disabled]="i === 0" title="Monter">
+          <lucide-icon [img]="ArrowUp" [size]="14"></lucide-icon>
+        </button>
+        <button type="button" class="btn-arrow" (click)="moveDown(i)" [disabled]="i === fields.length - 1" title="Descendre">
+          <lucide-icon [img]="ArrowDown" [size]="14"></lucide-icon>
+        </button>
+      </div>
+
+      <input
+        type="text"
+        class="tfe-name"
+        [(ngModel)]="f.name"
+        [name]="'name-' + i"
+        (ngModelChange)="onFieldChanged()"
+        placeholder="Nom du champ (ex: Histoire, PV...)"
+      />
+
+      <select
+        class="tfe-type"
+        [(ngModel)]="f.type"
+        [name]="'type-' + i"
+        (ngModelChange)="onFieldChanged()">
+        <option *ngFor="let opt of typeOptions" [value]="opt.value">{{ opt.label }}</option>
+      </select>
+
+      <select
+        class="tfe-layout"
+        *ngIf="f.type === 'IMAGE'"
+        [(ngModel)]="f.layout"
+        [name]="'layout-' + i"
+        (ngModelChange)="onFieldChanged()">
+        <option *ngFor="let opt of layoutOptions" [value]="opt.value">{{ opt.label }}</option>
+      </select>
+
+      <button type="button" class="btn-remove" (click)="remove(i)" title="Supprimer ce champ">
+        <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+      </button>
+    </div>
+
+    <div *ngIf="fields.length === 0" class="tfe-empty">
+      Aucun champ pour l'instant — ajoutez-en avec les boutons ci-dessous.
+    </div>
+  </div>
+
+  <div class="tfe-add">
+    <span class="tfe-add-label">Ajouter :</span>
+    <button
+      type="button"
+      class="chip"
+      *ngFor="let s of suggestions"
+      [class.disabled]="isSuggestionUsed(s)"
+      [disabled]="isSuggestionUsed(s)"
+      (click)="addSuggestion(s)">
+      <lucide-icon [img]="Plus" [size]="12"></lucide-icon>
+      {{ s }}
+    </button>
+    <button type="button" class="chip chip-custom" (click)="addBlank('TEXT')">
+      <lucide-icon [img]="Type" [size]="12"></lucide-icon>
+      Texte
+    </button>
+    <button type="button" class="chip chip-custom" (click)="addBlank('NUMBER')">
+      <lucide-icon [img]="Hash" [size]="12"></lucide-icon>
+      Nombre
+    </button>
+    <button type="button" class="chip chip-custom" (click)="addBlank('IMAGE')">
+      <lucide-icon [img]="ImageIcon" [size]="12"></lucide-icon>
+      Image(s)
+    </button>
+  </div>
+</div>

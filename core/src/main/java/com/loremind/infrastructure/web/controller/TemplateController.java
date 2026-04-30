@@ -2,7 +2,7 @@ package com.loremind.infrastructure.web.controller;
 
 import com.loremind.application.lorecontext.TemplateService;
 import com.loremind.domain.lorecontext.Template;
-import com.loremind.domain.lorecontext.TemplateField;
+import com.loremind.domain.shared.template.TemplateField;
 import com.loremind.infrastructure.web.dto.lorecontext.TemplateDTO;
 import com.loremind.infrastructure.web.mapper.TemplateFieldMapper;
 import com.loremind.infrastructure.web.mapper.TemplateMapper;

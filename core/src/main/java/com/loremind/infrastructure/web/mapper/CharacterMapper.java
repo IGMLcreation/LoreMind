@@ -4,6 +4,8 @@ import com.loremind.domain.campaigncontext.Character;
 import com.loremind.infrastructure.web.dto.campaigncontext.CharacterDTO;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
+
 @Component
 public class CharacterMapper {
 
@@ -12,7 +14,10 @@ public class CharacterMapper {
         CharacterDTO dto = new CharacterDTO();
         dto.setId(c.getId());
         dto.setName(c.getName());
-        dto.setMarkdownContent(c.getMarkdownContent());
+        dto.setPortraitImageId(c.getPortraitImageId());
+        dto.setHeaderImageId(c.getHeaderImageId());
+        dto.setValues(c.getValues() != null ? new HashMap<>(c.getValues()) : new HashMap<>());
+        dto.setImageValues(c.getImageValues() != null ? new HashMap<>(c.getImageValues()) : new HashMap<>());
         dto.setCampaignId(c.getCampaignId());
         dto.setOrder(c.getOrder());
         return dto;
@@ -23,7 +28,10 @@ public class CharacterMapper {
         return Character.builder()
                 .id(dto.getId())
                 .name(dto.getName())
-                .markdownContent(dto.getMarkdownContent())
+                .portraitImageId(dto.getPortraitImageId())
+                .headerImageId(dto.getHeaderImageId())
+                .values(dto.getValues() != null ? new HashMap<>(dto.getValues()) : new HashMap<>())
+                .imageValues(dto.getImageValues() != null ? new HashMap<>(dto.getImageValues()) : new HashMap<>())
                 .campaignId(dto.getCampaignId())
                 .order(dto.getOrder())
                 .build();

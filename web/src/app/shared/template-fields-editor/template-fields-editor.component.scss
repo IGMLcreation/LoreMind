@@ -1,0 +1,139 @@
+.tfe {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+}
+
+.tfe-header {
+  .tfe-label {
+    margin: 0 0 4px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-text, #fff);
+  }
+  .tfe-hint {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--color-text-muted, #aaa);
+  }
+}
+
+.tfe-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tfe-row {
+  display: grid;
+  grid-template-columns: auto 1fr 130px auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  transition: border-color 120ms;
+
+  &.invalid {
+    border-color: rgba(255, 100, 100, 0.5);
+  }
+}
+
+.tfe-row-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.btn-arrow,
+.btn-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  color: var(--color-text-muted, #aaa);
+  cursor: pointer;
+  transition: all 120ms;
+
+  &:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--color-text, #fff);
+  }
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+}
+
+.btn-remove:hover {
+  border-color: rgba(255, 100, 100, 0.4);
+  color: rgba(255, 100, 100, 0.9);
+}
+
+.tfe-name,
+.tfe-type,
+.tfe-layout {
+  padding: 6px 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  color: var(--color-text, #fff);
+  font-size: 0.9rem;
+}
+
+.tfe-empty {
+  padding: 12px;
+  text-align: center;
+  font-size: 0.85rem;
+  font-style: italic;
+  color: var(--color-text-muted, #888);
+}
+
+.tfe-add {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+
+  .tfe-add-label {
+    font-size: 0.85rem;
+    color: var(--color-text-muted, #aaa);
+    margin-right: 4px;
+  }
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  color: var(--color-text-muted, #ccc);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 120ms;
+
+  &:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--color-text, #fff);
+  }
+  &.disabled,
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+.chip-custom {
+  border-style: dashed;
+}

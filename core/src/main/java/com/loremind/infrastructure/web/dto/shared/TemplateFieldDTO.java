@@ -1,4 +1,4 @@
-package com.loremind.infrastructure.web.dto.lorecontext;
+package com.loremind.infrastructure.web.dto.shared;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 /**
  * DTO pour un champ de Template.
  * <p>
- * Miroir wire-friendly de {@link com.loremind.domain.lorecontext.TemplateField}.
+ * Miroir wire-friendly de {@link com.loremind.domain.shared.template.TemplateField}.
  * Le type est serialise en string (TEXT/IMAGE) pour interop facile avec Angular.
  * Le layout (null pour TEXT, ou GALLERY/HERO/MASONRY/CAROUSEL pour IMAGE) pilote
  * le rendu visuel des champs image cote front.

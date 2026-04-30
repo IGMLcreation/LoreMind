@@ -1,0 +1,50 @@
+.dff {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dff-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-text, #fff);
+  }
+
+  input,
+  textarea {
+    padding: 8px 10px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    color: var(--color-text, #fff);
+    font-size: 0.95rem;
+    font-family: inherit;
+    resize: vertical;
+  }
+}
+
+.image-mvp {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  .hint {
+    font-size: 0.75rem;
+    color: var(--color-text-muted, #888);
+    font-style: italic;
+  }
+}
+
+.dff-empty {
+  padding: 24px;
+  text-align: center;
+  color: var(--color-text-muted, #888);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+}

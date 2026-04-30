@@ -1,5 +1,6 @@
 package com.loremind.infrastructure.web.dto.lorecontext;
 
+import com.loremind.infrastructure.web.dto.shared.TemplateFieldDTO;
 import lombok.Data;
 
 import java.util.List;

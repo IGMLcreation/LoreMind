@@ -61,6 +61,12 @@ public class PostgresGameSystemRepository implements GameSystemRepository {
                 .name(e.getName())
                 .description(e.getDescription())
                 .rulesMarkdown(e.getRulesMarkdown())
+                .characterTemplate(e.getCharacterTemplate() != null
+                        ? new java.util.ArrayList<>(e.getCharacterTemplate())
+                        : new java.util.ArrayList<>())
+                .npcTemplate(e.getNpcTemplate() != null
+                        ? new java.util.ArrayList<>(e.getNpcTemplate())
+                        : new java.util.ArrayList<>())
                 .author(e.getAuthor())
                 .isPublic(e.isPublic())
                 .createdAt(e.getCreatedAt())
@@ -75,6 +81,12 @@ public class PostgresGameSystemRepository implements GameSystemRepository {
                 .name(g.getName())
                 .description(g.getDescription())
                 .rulesMarkdown(g.getRulesMarkdown())
+                .characterTemplate(g.getCharacterTemplate() != null
+                        ? new java.util.ArrayList<>(g.getCharacterTemplate())
+                        : new java.util.ArrayList<>())
+                .npcTemplate(g.getNpcTemplate() != null
+                        ? new java.util.ArrayList<>(g.getNpcTemplate())
+                        : new java.util.ArrayList<>())
                 .author(g.getAuthor())
                 .isPublic(g.isPublic())
                 .createdAt(g.getCreatedAt())

@@ -205,19 +205,23 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Extrait une ligne de résumé depuis le markdown (1re ligne non-vide, non-titre).
-   * Générique : utilisé pour les fiches PJ comme PNJ (mêmes besoins d'aperçu carte).
+   * Extrait une ligne de resume pour la fiche PJ/PNJ — 1re valeur de template
+   * non-vide (apres refonte 2026-04-30, remplace l'ancien parsing markdown).
    */
-  personaSnippet(p: { markdownContent?: string | null }): string {
-    if (!p.markdownContent) return '(Fiche vide)';
-    const firstMeaningful = p.markdownContent
-      .split('\n')
-      .map(l => l.trim())
-      .find(l => l && !l.startsWith('#'));
-    if (!firstMeaningful) return '(Fiche vide)';
-    return firstMeaningful.length > 80
-      ? firstMeaningful.substring(0, 77) + '…'
-      : firstMeaningful;
+  personaSnippet(p: { values?: Record<string, string> }): string {
+    const values = p.values ?? {};
+    for (const v of Object.values(values)) {
+      if (!v) continue;
+      const firstMeaningful = v
+        .split('\n')
+        .map(l => l.trim())
+        .find(l => l && !l.startsWith('#'));
+      if (!firstMeaningful) continue;
+      return firstMeaningful.length > 80
+        ? firstMeaningful.substring(0, 77) + '…'
+        : firstMeaningful;
+    }
+    return '(Fiche vide)';
   }
 
   /** Alias gardé pour compatibilité avec les anciens templates. */

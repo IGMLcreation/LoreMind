@@ -90,6 +90,32 @@
       </div>
     </div>
 
+    <!-- Templates de fiches PJ/PNJ -->
+    <div class="templates-area">
+      <h2 class="sections-title">Fiches de personnages</h2>
+      <p class="sections-hint">
+        Definissez la structure des fiches PJ et PNJ pour ce systeme. Les champs
+        universels (nom, portrait, header) sont automatiques — ne rajoutez ici
+        que les champs specifiques au systeme (Histoire, PV, Stats…).
+      </p>
+
+      <app-template-fields-editor
+        label="Champs de la fiche PJ"
+        hint="Affiches lors de la creation/edition d'un personnage joueur."
+        [fields]="characterTemplate"
+        [suggestions]="characterFieldSuggestions"
+        (fieldsChange)="characterTemplate = $event">
+      </app-template-fields-editor>
+
+      <app-template-fields-editor
+        label="Champs de la fiche PNJ"
+        hint="Affiches lors de la creation/edition d'un personnage non-joueur."
+        [fields]="npcTemplate"
+        [suggestions]="npcFieldSuggestions"
+        (fieldsChange)="npcTemplate = $event">
+      </app-template-fields-editor>
+    </div>
+
     <div class="actions">
       <button type="button" class="btn-primary" [disabled]="!name.trim()" (click)="submit()">
         <lucide-icon [img]="Save" [size]="16"></lucide-icon>

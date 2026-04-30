@@ -1,8 +1,8 @@
 package com.loremind.infrastructure.persistence.converter;
 
-import com.loremind.domain.lorecontext.FieldType;
-import com.loremind.domain.lorecontext.ImageLayout;
-import com.loremind.domain.lorecontext.TemplateField;
+import com.loremind.domain.shared.template.FieldType;
+import com.loremind.domain.shared.template.ImageLayout;
+import com.loremind.domain.shared.template.TemplateField;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
