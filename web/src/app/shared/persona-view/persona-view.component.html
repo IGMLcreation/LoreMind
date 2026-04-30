@@ -15,44 +15,92 @@
     <div class="pv-title-block">
       <h1 class="pv-name">{{ persona.name }}</h1>
       <p *ngIf="subtitle" class="pv-subtitle">{{ subtitle }}</p>
+
+      <!-- Badges des NUMBER isoles (rendu compact, evite la grosse card pour 1 valeur) -->
+      <div *ngIf="heroBadges.length" class="pv-hero-badges">
+        <span *ngFor="let b of heroBadges" class="pv-hero-badge">
+          <span class="pv-hero-badge-label">{{ b.label }}</span>
+          <span class="pv-hero-badge-value">{{ b.value }}</span>
+        </span>
+      </div>
     </div>
   </div>
 
-  <!-- Stats numeriques en bandeau si presentes -->
-  <div *ngIf="textFields.length && hasAnyNumber(textFields)" class="pv-stat-band">
-    <div *ngFor="let f of textFields" class="pv-stat" [class.pv-stat-number]="f.isNumber">
-      <ng-container *ngIf="f.isNumber">
-        <span class="pv-stat-label">{{ f.name }}</span>
-        <span class="pv-stat-value">{{ f.value }}</span>
-      </ng-container>
-    </div>
-  </div>
-
-  <!-- Sections texte -->
+  <!-- Sections rendues dans l'ordre du template -->
   <div class="pv-sections">
-    <ng-container *ngFor="let f of textFields; let first = first">
-      <section *ngIf="!f.isNumber" class="pv-section">
-        <h2 class="pv-section-title">{{ f.name }}</h2>
+    <ng-container *ngFor="let s of orderedSections">
+
+      <!-- TEXT -->
+      <section *ngIf="s.kind === 'TEXT'" class="pv-section">
+        <h2 class="pv-section-title">{{ s.name }}</h2>
         <div class="pv-section-body">
-          <p [class.with-dropcap]="first" class="pv-paragraph">
-            {{ firstParagraph(f.value) }}
+          <p [class.with-dropcap]="s.name === firstTextSectionName" class="pv-paragraph">
+            {{ firstParagraph(s.value) }}
           </p>
-          <p *ngIf="restAfterFirstParagraph(f.value)" class="pv-paragraph">
-            {{ restAfterFirstParagraph(f.value) }}
+          <p *ngIf="restAfterFirstParagraph(s.value)" class="pv-paragraph">
+            {{ restAfterFirstParagraph(s.value) }}
           </p>
         </div>
       </section>
+
+      <!-- NUMBER_GROUP : NUMBER consecutifs - table si <=6, sinon liste 2 cols -->
+      <section *ngIf="s.kind === 'NUMBER_GROUP'" class="pv-section pv-section-number">
+        <ng-container *ngIf="s.entries.length <= 6; else numGroupList">
+          <div class="pv-kv-table" [style.--cols]="s.entries.length">
+            <div class="pv-kv-row pv-kv-row-labels">
+              <div class="pv-kv-cell" *ngFor="let e of s.entries">{{ e.label }}</div>
+            </div>
+            <div class="pv-kv-row pv-kv-row-values">
+              <div class="pv-kv-cell" *ngFor="let e of s.entries">{{ e.value }}</div>
+            </div>
+          </div>
+        </ng-container>
+        <ng-template #numGroupList>
+          <div class="pv-kv-list">
+            <div class="pv-kv-list-row" *ngFor="let e of s.entries">
+              <span class="pv-kv-list-label">{{ e.label }}</span>
+              <span class="pv-kv-list-dots"></span>
+              <span class="pv-kv-list-value">{{ e.value }}</span>
+            </div>
+          </div>
+        </ng-template>
+      </section>
+
+      <!-- KEY_VALUE_LIST : table style Foundry si <=6, sinon liste 2 cols (skills) -->
+      <section *ngIf="s.kind === 'KEY_VALUE_LIST'" class="pv-section pv-section-kv">
+        <h2 class="pv-section-title">{{ s.name }}</h2>
+        <ng-container *ngIf="s.entries.length <= 6; else kvList">
+          <div class="pv-kv-table" [style.--cols]="s.entries.length">
+            <div class="pv-kv-row pv-kv-row-labels">
+              <div class="pv-kv-cell" *ngFor="let e of s.entries">{{ e.label }}</div>
+            </div>
+            <div class="pv-kv-row pv-kv-row-values">
+              <div class="pv-kv-cell" *ngFor="let e of s.entries">{{ e.value || '—' }}</div>
+            </div>
+          </div>
+        </ng-container>
+        <ng-template #kvList>
+          <div class="pv-kv-list">
+            <div class="pv-kv-list-row" *ngFor="let e of s.entries">
+              <span class="pv-kv-list-label">{{ e.label }}</span>
+              <span class="pv-kv-list-dots"></span>
+              <span class="pv-kv-list-value">{{ e.value || '—' }}</span>
+            </div>
+          </div>
+        </ng-template>
+      </section>
+
+      <!-- IMAGE : galerie -->
+      <section *ngIf="s.kind === 'IMAGE'" class="pv-section pv-section-images">
+        <h2 class="pv-section-title">{{ s.name }}</h2>
+        <app-image-gallery [imageIds]="s.ids" [layout]="s.layout" [editable]="false">
+        </app-image-gallery>
+      </section>
+
     </ng-container>
 
-    <!-- Galeries d'images templates -->
-    <section *ngFor="let img of imageFields" class="pv-section pv-section-images">
-      <h2 class="pv-section-title">{{ img.field.name }}</h2>
-      <app-image-gallery [imageIds]="img.ids" [layout]="img.field.layout || 'GALLERY'" [editable]="false">
-      </app-image-gallery>
-    </section>
-
     <!-- Etat vide -->
-    <div *ngIf="textFields.length === 0 && imageFields.length === 0" class="pv-empty">
+    <div *ngIf="orderedSections.length === 0" class="pv-empty">
       <lucide-icon [img]="BookOpen" [size]="32"></lucide-icon>
       <p>Cette fiche est encore vide.</p>
     </div>

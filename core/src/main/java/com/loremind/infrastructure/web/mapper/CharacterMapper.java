@@ -18,6 +18,7 @@ public class CharacterMapper {
         dto.setHeaderImageId(c.getHeaderImageId());
         dto.setValues(c.getValues() != null ? new HashMap<>(c.getValues()) : new HashMap<>());
         dto.setImageValues(c.getImageValues() != null ? new HashMap<>(c.getImageValues()) : new HashMap<>());
+        dto.setKeyValueValues(c.getKeyValueValues() != null ? new HashMap<>(c.getKeyValueValues()) : new HashMap<>());
         dto.setCampaignId(c.getCampaignId());
         dto.setOrder(c.getOrder());
         return dto;
@@ -32,6 +33,7 @@ public class CharacterMapper {
                 .headerImageId(dto.getHeaderImageId())
                 .values(dto.getValues() != null ? new HashMap<>(dto.getValues()) : new HashMap<>())
                 .imageValues(dto.getImageValues() != null ? new HashMap<>(dto.getImageValues()) : new HashMap<>())
+                .keyValueValues(dto.getKeyValueValues() != null ? new HashMap<>(dto.getKeyValueValues()) : new HashMap<>())
                 .campaignId(dto.getCampaignId())
                 .order(dto.getOrder())
                 .build();

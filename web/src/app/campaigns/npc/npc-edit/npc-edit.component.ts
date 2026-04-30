@@ -48,6 +48,7 @@ export class NpcEditComponent implements OnInit {
   headerImageId: string | null = null;
   values: Record<string, string> = {};
   imageValues: Record<string, string[]> = {};
+  keyValueValues: Record<string, Record<string, string>> = {};
   templateFields: TemplateField[] = [];
   private order = 0;
 
@@ -76,6 +77,7 @@ export class NpcEditComponent implements OnInit {
           this.headerImageId = n.headerImageId ?? null;
           this.values = n.values ?? {};
           this.imageValues = n.imageValues ?? {};
+          this.keyValueValues = n.keyValueValues ?? {};
           this.order = n.order ?? 0;
         },
         error: () => this.back()
@@ -107,6 +109,7 @@ export class NpcEditComponent implements OnInit {
       headerImageId: this.headerImageId,
       values: this.values,
       imageValues: this.imageValues,
+      keyValueValues: this.keyValueValues,
       campaignId: this.campaignId
     };
     const req = this.npcId

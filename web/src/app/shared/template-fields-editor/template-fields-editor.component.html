@@ -5,45 +5,80 @@
   </div>
 
   <div class="tfe-list">
-    <div class="tfe-row" *ngFor="let f of fields; let i = index" [class.invalid]="isDuplicate(f, i) || !f.name.trim()">
-      <div class="tfe-row-controls">
-        <button type="button" class="btn-arrow" (click)="moveUp(i)" [disabled]="i === 0" title="Monter">
-          <lucide-icon [img]="ArrowUp" [size]="14"></lucide-icon>
-        </button>
-        <button type="button" class="btn-arrow" (click)="moveDown(i)" [disabled]="i === fields.length - 1" title="Descendre">
-          <lucide-icon [img]="ArrowDown" [size]="14"></lucide-icon>
+    <div class="tfe-item" *ngFor="let f of fields; let i = index">
+      <div class="tfe-row" [class.invalid]="isDuplicate(f, i) || !f.name.trim()">
+        <div class="tfe-row-controls">
+          <button type="button" class="btn-arrow" (click)="moveUp(i)" [disabled]="i === 0" title="Monter">
+            <lucide-icon [img]="ArrowUp" [size]="14"></lucide-icon>
+          </button>
+          <button type="button" class="btn-arrow" (click)="moveDown(i)" [disabled]="i === fields.length - 1" title="Descendre">
+            <lucide-icon [img]="ArrowDown" [size]="14"></lucide-icon>
+          </button>
+        </div>
+
+        <input
+          type="text"
+          class="tfe-name"
+          [(ngModel)]="f.name"
+          [name]="'name-' + i"
+          (ngModelChange)="onFieldChanged()"
+          placeholder="Nom du champ (ex: Histoire, PV...)"
+        />
+
+        <select
+          class="tfe-type"
+          [(ngModel)]="f.type"
+          [name]="'type-' + i"
+          (ngModelChange)="onFieldChanged()">
+          <option *ngFor="let opt of typeOptions" [value]="opt.value">{{ opt.label }}</option>
+        </select>
+
+        <select
+          class="tfe-layout"
+          *ngIf="f.type === 'IMAGE'"
+          [(ngModel)]="f.layout"
+          [name]="'layout-' + i"
+          (ngModelChange)="onFieldChanged()">
+          <option *ngFor="let opt of layoutOptions" [value]="opt.value">{{ opt.label }}</option>
+        </select>
+
+        <button type="button" class="btn-remove" (click)="remove(i)" title="Supprimer ce champ">
+          <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
         </button>
       </div>
 
-      <input
-        type="text"
-        class="tfe-name"
-        [(ngModel)]="f.name"
-        [name]="'name-' + i"
-        (ngModelChange)="onFieldChanged()"
-        placeholder="Nom du champ (ex: Histoire, PV...)"
-      />
-
-      <select
-        class="tfe-type"
-        [(ngModel)]="f.type"
-        [name]="'type-' + i"
-        (ngModelChange)="onFieldChanged()">
-        <option *ngFor="let opt of typeOptions" [value]="opt.value">{{ opt.label }}</option>
-      </select>
-
-      <select
-        class="tfe-layout"
-        *ngIf="f.type === 'IMAGE'"
-        [(ngModel)]="f.layout"
-        [name]="'layout-' + i"
-        (ngModelChange)="onFieldChanged()">
-        <option *ngFor="let opt of layoutOptions" [value]="opt.value">{{ opt.label }}</option>
-      </select>
-
-      <button type="button" class="btn-remove" (click)="remove(i)" title="Supprimer ce champ">
-        <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
-      </button>
+      <!-- Sous-editeur des labels pour KEY_VALUE_LIST -->
+      <div class="tfe-labels" *ngIf="f.type === 'KEY_VALUE_LIST'">
+        <div class="tfe-labels-header">
+          <lucide-icon [img]="ListOrdered" [size]="12"></lucide-icon>
+          <span>Labels (cles fixes pour toutes les fiches)</span>
+        </div>
+        <div class="tfe-labels-list">
+          <div class="tfe-label-row" *ngFor="let lbl of f.labels; let li = index; trackBy: trackByIndex">
+            <button type="button" class="btn-arrow-mini" (click)="moveLabelUp(f, li)" [disabled]="li === 0" title="Monter">
+              <lucide-icon [img]="ArrowUp" [size]="11"></lucide-icon>
+            </button>
+            <button type="button" class="btn-arrow-mini" (click)="moveLabelDown(f, li)" [disabled]="li === (f.labels?.length || 0) - 1" title="Descendre">
+              <lucide-icon [img]="ArrowDown" [size]="11"></lucide-icon>
+            </button>
+            <input
+              type="text"
+              class="tfe-label-input"
+              [ngModel]="lbl"
+              (ngModelChange)="updateLabelAt(f, li, $event)"
+              [name]="'lbl-' + i + '-' + li"
+              placeholder="Ex: FOR, DEX..."
+            />
+            <button type="button" class="btn-remove-mini" (click)="removeLabel(f, li)" title="Retirer ce label">
+              <lucide-icon [img]="X" [size]="11"></lucide-icon>
+            </button>
+          </div>
+        </div>
+        <button type="button" class="chip chip-mini" (click)="addLabel(f)">
+          <lucide-icon [img]="Plus" [size]="11"></lucide-icon>
+          Ajouter un label
+        </button>
+      </div>
     </div>
 
     <div *ngIf="fields.length === 0" class="tfe-empty">
@@ -74,6 +109,10 @@
     <button type="button" class="chip chip-custom" (click)="addBlank('IMAGE')">
       <lucide-icon [img]="ImageIcon" [size]="12"></lucide-icon>
       Image(s)
+    </button>
+    <button type="button" class="chip chip-custom" (click)="addBlank('KEY_VALUE_LIST')">
+      <lucide-icon [img]="ListOrdered" [size]="12"></lucide-icon>
+      Liste cle/valeur
     </button>
   </div>
 </div>

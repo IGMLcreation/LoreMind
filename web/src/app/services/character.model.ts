@@ -13,6 +13,8 @@ export interface Character {
   headerImageId?: string | null;
   values?: Record<string, string>;
   imageValues?: Record<string, string[]>;
+  /** Champs KEY_VALUE_LIST : fieldName -> label -> value. */
+  keyValueValues?: Record<string, Record<string, string>>;
   campaignId: string;
   order?: number;
 }
@@ -23,5 +25,6 @@ export interface CharacterCreate {
   headerImageId?: string | null;
   values?: Record<string, string>;
   imageValues?: Record<string, string[]>;
+  keyValueValues?: Record<string, Record<string, string>>;
   campaignId: string;
 }

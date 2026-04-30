@@ -6,14 +6,16 @@ import com.loremind.domain.shared.template.TemplateField;
 import com.loremind.infrastructure.web.dto.shared.TemplateFieldDTO;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Mapper pour convertir entre {@link TemplateField} (domaine) et
  * {@link TemplateFieldDTO} (wire).
  * <p>
- * Tolerance : un type inconnu recu du client est interprete comme TEXT
- * (plus safe que de rejeter la requete et d'interrompre la sauvegarde).
+ * Tolerance : un type inconnu recu du client est interprete comme TEXT.
  * Un layout inconnu ou absent sur un champ IMAGE est interprete comme GALLERY.
- * Le layout est force a null pour les champs TEXT.
+ * Layout/labels forces a null pour les types qui ne les utilisent pas.
  */
 @Component
 public class TemplateFieldMapper {
@@ -26,7 +28,11 @@ public class TemplateFieldMapper {
             ImageLayout layout = field.getLayout() != null ? field.getLayout() : ImageLayout.GALLERY;
             layoutStr = layout.name();
         }
-        return new TemplateFieldDTO(field.getName(), typeStr, layoutStr);
+        List<String> labels = null;
+        if (field.getType() == FieldType.KEY_VALUE_LIST && field.getLabels() != null) {
+            labels = new ArrayList<>(field.getLabels());
+        }
+        return new TemplateFieldDTO(field.getName(), typeStr, layoutStr, labels);
     }
 
     public TemplateField toDomain(TemplateFieldDTO dto) {
@@ -47,6 +53,10 @@ public class TemplateFieldMapper {
                 layout = ImageLayout.GALLERY;
             }
         }
-        return new TemplateField(dto.getName(), type, layout);
+        List<String> labels = null;
+        if (type == FieldType.KEY_VALUE_LIST && dto.getLabels() != null) {
+            labels = new ArrayList<>(dto.getLabels());
+        }
+        return new TemplateField(dto.getName(), type, layout, labels);
     }
 }

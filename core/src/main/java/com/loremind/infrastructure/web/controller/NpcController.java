@@ -62,6 +62,7 @@ public class NpcController {
                 dto.getHeaderImageId(),
                 dto.getValues(),
                 dto.getImageValues(),
+                dto.getKeyValueValues(),
                 dto.getCampaignId(),
                 order
         );

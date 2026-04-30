@@ -53,6 +53,7 @@ export class CharacterEditComponent implements OnInit {
   headerImageId: string | null = null;
   values: Record<string, string> = {};
   imageValues: Record<string, string[]> = {};
+  keyValueValues: Record<string, Record<string, string>> = {};
   templateFields: TemplateField[] = [];
   private order = 0;
 
@@ -81,6 +82,7 @@ export class CharacterEditComponent implements OnInit {
           this.headerImageId = c.headerImageId ?? null;
           this.values = c.values ?? {};
           this.imageValues = c.imageValues ?? {};
+          this.keyValueValues = c.keyValueValues ?? {};
           this.order = c.order ?? 0;
         },
         error: () => this.back()
@@ -112,6 +114,7 @@ export class CharacterEditComponent implements OnInit {
       headerImageId: this.headerImageId,
       values: this.values,
       imageValues: this.imageValues,
+      keyValueValues: this.keyValueValues,
       campaignId: this.campaignId
     };
     const req = this.characterId

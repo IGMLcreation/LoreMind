@@ -85,8 +85,18 @@ public class TemplateFieldListJsonConverter
                             }
                         }
                     }
+                    List<String> labels = null;
+                    if (type == FieldType.KEY_VALUE_LIST) {
+                        JsonNode labelsNode = item.path("labels");
+                        if (labelsNode.isArray()) {
+                            labels = new ArrayList<>();
+                            for (JsonNode label : labelsNode) {
+                                if (label.isTextual()) labels.add(label.asText());
+                            }
+                        }
+                    }
                     if (name != null && !name.isBlank()) {
-                        result.add(new TemplateField(name, type, layout));
+                        result.add(new TemplateField(name, type, layout, labels));
                     }
                 }
                 // Autres types de noeuds (nombre, booleen...) : ignores silencieusement.

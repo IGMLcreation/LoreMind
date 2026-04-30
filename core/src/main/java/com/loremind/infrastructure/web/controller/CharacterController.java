@@ -62,6 +62,7 @@ public class CharacterController {
                 dto.getHeaderImageId(),
                 dto.getValues(),
                 dto.getImageValues(),
+                dto.getKeyValueValues(),
                 dto.getCampaignId(),
                 order
         );

@@ -40,6 +40,9 @@ public class Npc {
     /** Valeurs IMAGE du template PNJ (listes d'IDs ordonnees par champ). Jamais null. */
     private Map<String, List<String>> imageValues;
 
+    /** Valeurs KEY_VALUE_LIST : fieldName -> label -> value. Jamais null. */
+    private Map<String, Map<String, String>> keyValueValues;
+
     /** Référence vers la Campaign parente (cross-aggregate via ID). */
     private String campaignId;
 
@@ -57,5 +60,10 @@ public class Npc {
     public Map<String, List<String>> getImageValues() {
         if (imageValues == null) imageValues = new HashMap<>();
         return imageValues;
+    }
+
+    public Map<String, Map<String, String>> getKeyValueValues() {
+        if (keyValueValues == null) keyValueValues = new HashMap<>();
+        return keyValueValues;
     }
 }
