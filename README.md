@@ -1,37 +1,66 @@
 # LoreMind
 
+> Application web auto-hébergeable pour MJ qui veulent centraliser leur univers, leurs campagnes et leurs personnages — avec un assistant IA contextuel.
+
+[![Licence: AGPL v3](https://img.shields.io/badge/Licence-AGPL%20v3-blue.svg)](LICENSE)
+[![Documentation](https://img.shields.io/badge/docs-loremind--docs-green)](https://loremind-docs.igmlcreation.fr/)
+[![Démo](https://img.shields.io/badge/d%C3%A9mo-en%20ligne-orange)](https://loremind-demo.igmlcreation.fr/)
+[![Patreon](https://img.shields.io/badge/Patreon-soutenir-red)](https://www.patreon.com/c/IGMLCreation)
+[![Discord](https://img.shields.io/badge/Discord-rejoindre-5865F2)](https://discord.gg/cPpFzCjEzQ)
+
+## Découvrir LoreMind en vidéo
+
+[![Présentation LoreMind](https://img.youtube.com/vi/llJkmlotbB8/maxresdefault.jpg)](https://www.youtube.com/watch?v=llJkmlotbB8)
+
 ![Tableau de bord](https://raw.githubusercontent.com/IGMLcreation/loremind-docs/main/static/img/screenshots/dashboard.png)
 
-Loremind est une application web angular auto-hébergable afin de venir en aide aux Maîtres de jeu qui souhaitent centraliser leur univers et leurs campagnes.
-Cette dernière intègre un moteur IA qui va ingérer le contenu du lore et de la campagne afin de pouvoir répondre à des questions précises sur l'univers ou la campagne, mais également proposer des idées de création dans le contexte de la campagne et du lore.
-Pour le moment seul Ollama est supporté pour la partie locale, il y-a également une intégration pour 1min.ai. Plus tard, d'autres moteurs seront supportés.
+## Ce que ça fait
+
+LoreMind regroupe ce qu'un MJ utilise habituellement éparpillé entre plusieurs outils. L'application s'articule autour de trois modules principaux, augmentés par un assistant IA qui exploite tout votre contenu.
+
+### Lore
+
+Construire votre univers avec une arborescence de pages templatées : lieux, factions, PNJ, événements, organisations... Chaque type de page suit un template configurable, ce qui garantit la cohérence et facilite la navigation dans des univers riches.
+
+### Game System
+
+Stocker les règles de votre système de jeu (D&D, Nimble, créations maison...) et définir les modèles de fiches de personnages associés. Les règles indexées peuvent être injectées dans le contexte de l'IA pour des réponses fidèles à votre système.
+
+### Campaign
+
+Structurer vos campagnes en Arcs → Chapitres → Scènes avec séparation claire du contenu MJ et du contenu joueurs. Gérer les PJ et PNJ via des fiches dynamiques basées sur les templates du game system retenu.
+
+### Assistant IA
+
+Un assistant contextuel qui pioche dans votre Lore, vos règles et vos campagnes pour répondre à vos questions, suggérer du contenu cohérent, ou rebondir sur une situation improvisée en table.
+
+L'IA s'exécute **en local via [Ollama](https://ollama.com/)** ou via **[1min.ai](https://1min.ai/)**. D'autres moteurs seront supportés à l'avenir.
 
 ## Documentation
 
-La documentation complète est accessible sur le site [loremind-docs](https://loremind-docs.igmlcreation.fr/)
+Toute la documentation (installation, configuration, prise en main) est sur **[loremind-docs.igmlcreation.fr](https://loremind-docs.igmlcreation.fr/)**.
 
-Pour l'installation, consultez le guide dans cette dernière .
+## Démo en ligne
 
-## Fonctionnalités
+Une instance de démonstration est disponible sur **[loremind-demo.igmlcreation.fr](https://loremind-demo.igmlcreation.fr/)**.
 
-- Gestion centralisée du Lore : Lieux, Factions, PNJ, et tous les éléments de votre univers
-- Suivi de campagnes : Sessions, actions des joueurs, chronologie
-- Moteur IA intégré : Génération automatique de contenu (PNJ, Villes, Quêtes) à partir de templates
+Quelques limites à connaître :
+- 10 utilisateurs maximum simultanés (instances isolées)
+- Session limitée à 20 minutes avant réinitialisation
+- Partie IA non incluse dans la démo (nécessite Ollama ou 1min.ai côté serveur)
 
-## Démo
+## Soutenir le projet
 
-Une démo est disponible sur le site [loremind-demo](https://loremind-demo.igmlcreation.fr/)
+LoreMind est **et restera gratuit en auto-hébergement**. Le développement avance plus vite avec votre soutien :
 
-!! Attention, la démo est uniquement accessible à 10 personnes à la fois (instances personnalisées). Cette limite est mise en place pour éviter l'overhead sur les ressources serveur.
+- **[Patreon](https://www.patreon.com/c/IGMLCreation)** — accès anticipé aux features, vote sur la roadmap, devlogs exclusifs
+- **[Discord](https://discord.gg/cPpFzCjEzQ)** — annonces, support, retours utilisateurs
 
-Cette dernière est utilisable 20 minutes maximum par session avant d'être réinitialiser.
-Vous comprendrez également qu'elle ne contient pas de démo pour la partie IA, pour laquelle il faut configurer un serveur Ollama (et qui ferait donc exploser le serveur) ou utiliser 1min.ai.
-
-## License
+## Licence
 
 LoreMind est distribué sous licence **[GNU AGPL v3](LICENSE)**.
 
 En pratique :
-- Tu peux l'utiliser gratuitement, l'héberger où tu veux, le modifier, le redistribuer.
-- Si tu modifies le code et que tu exposes l'application modifiée sur un réseau (même en SaaS privé), tu dois rendre tes modifications publiques sous la même licence.
-- Les univers (Lore) et campagnes que tu crées avec LoreMind **t'appartiennent entièrement** — la licence ne couvre que le code de l'application.
+- Vous pouvez l'utiliser gratuitement, l'héberger, la modifier, la redistribuer.
+- Si vous modifiez le code et que vous exposez l'application modifiée sur un réseau (même en SaaS privé), vous devez rendre vos modifications publiques sous la même licence.
+- Les univers (Lore) et campagnes que vous créez avec LoreMind **vous appartiennent entièrement** — la licence ne couvre que le code de l'application.
