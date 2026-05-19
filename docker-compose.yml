@@ -202,6 +202,10 @@ services:
       - ${COMPOSE_PROJECT_DIR:-./}:/compose
       # Volume partage avec le Core pour la commande + le resultat.
       - switcher-data:/data
+      # Volume partage avec le Core + Watchtower : contient config.json avec
+      # les creds GHCR (ecrits par le Core a partir du token Patreon).
+      # Indispensable pour pull les images privees du canal beta.
+      - docker-config:/shared/docker
     environment:
       # Repertoire interne ou trouver docker-compose.yml et .env. Bind au
       # volume ci-dessus (COMPOSE_PROJECT_DIR = repertoire d'install du host).
@@ -210,6 +214,9 @@ services:
       # le MEME stack que celui qui tourne (sinon il creerait un duplicate).
       # Doit matcher le `name:` (en V2.x) ou le nom du dossier du host.
       COMPOSE_PROJECT_NAME: ${COMPOSE_PROJECT_NAME:-loremind}
+      # Indique au CLI Docker du switcher ou trouver config.json (auth GHCR
+      # pour les images privees beta). Meme mecanisme que sur Watchtower.
+      DOCKER_CONFIG: /shared/docker
     restart: unless-stopped
 
   # Mises a jour automatiques des images core/brain/web.

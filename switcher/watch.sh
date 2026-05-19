@@ -70,10 +70,14 @@ while true; do
         # Lance le switch. On capture stdout+stderr et le code de sortie.
         if output=$(/switcher/switch.sh "${channel}" 2>&1); then
             log "Switch SUCCESS for id=${id} channel=${channel}"
+            # Log la sortie sur plusieurs lignes pour faciliter le debug
+            # (ce qu'on voit en docker logs).
+            while IFS= read -r line; do log "  | ${line}"; done <<< "${output}"
             write_result "success" "${channel}" "${output}" "${id}"
         else
             rc=$?
             log "Switch FAILED for id=${id} channel=${channel} rc=${rc}"
+            while IFS= read -r line; do log "  | ${line}"; done <<< "${output}"
             write_result "error" "${channel}" "${output}" "${id}"
         fi
 
