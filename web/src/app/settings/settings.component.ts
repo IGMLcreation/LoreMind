@@ -7,6 +7,7 @@ import { LucideAngularModule, ArrowLeft, RefreshCw, Save, Check, AlertCircle, Do
 import { SettingsService, AppSettings, AppSettingsUpdate, OneMinModelGroup, OllamaPullEvent } from '../services/settings.service';
 import { UpdatesService, UpdateStatus } from '../services/updates.service';
 import { ConfigService } from '../services/config.service';
+import { LayoutService } from '../services/layout.service';
 import { LicenseService, LicenseStatusDTO, BetaStatusDTO, ChannelStatusDTO, ChannelName } from '../services/license.service';
 import { ConfirmDialogService } from '../shared/confirm-dialog/confirm-dialog.service';
 
@@ -133,10 +134,14 @@ export class SettingsComponent implements OnInit, OnDestroy {
     private updatesService: UpdatesService,
     public config: ConfigService,
     private licenseService: LicenseService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private layoutService: LayoutService
   ) {}
 
   ngOnInit(): void {
+    // Page racine : on s'assure de ne pas heriter de la sidebar d'une
+    // section precedente (cf. fix CampaignsComponent / LoreComponent).
+    this.layoutService.hide();
     this.loadSettings();
     if (this.config.updateCheckEnabled) {
       this.checkUpdates();

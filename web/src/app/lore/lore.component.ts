@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { LucideAngularModule, BookOpen, Folder, Plus } from 'lucide-angular';
 import { LoreService } from '../services/lore.service';
+import { LayoutService } from '../services/layout.service';
 import { Lore } from '../services/lore.model';
 import { LoreCreateComponent } from './lore-create/lore-create.component';
 
@@ -26,10 +27,15 @@ export class LoreComponent implements OnInit {
 
   constructor(
     private loreService: LoreService,
+    private layoutService: LayoutService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
+    // Liste racine de la section Lore : aucune sidebar secondaire ne doit
+    // subsister (sinon elle persiste depuis la section precedente — bug
+    // symetrique a celui de CampaignsComponent).
+    this.layoutService.hide();
     this.loadLores();
   }
 

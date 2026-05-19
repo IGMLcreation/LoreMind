@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { LucideAngularModule, Dices, Plus, Pencil, Trash2 } from 'lucide-angular';
 import { GameSystemService } from '../services/game-system.service';
+import { LayoutService } from '../services/layout.service';
 import { GameSystem } from '../services/game-system.model';
 import { ConfirmDialogService } from '../shared/confirm-dialog/confirm-dialog.service';
 
@@ -24,10 +25,14 @@ export class GameSystemsComponent implements OnInit {
   constructor(
     private router: Router,
     private gameSystemService: GameSystemService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private layoutService: LayoutService
   ) {}
 
   ngOnInit(): void {
+    // Page racine : on s'assure de ne pas heriter de la sidebar d'une
+    // section precedente (cf. fix CampaignsComponent / LoreComponent).
+    this.layoutService.hide();
     this.load();
   }
 
