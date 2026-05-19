@@ -237,6 +237,26 @@ export class SettingsComponent implements OnInit {
     });
   }
 
+  /**
+   * Mapping tier_id Patreon → nom lisible. Les IDs viennent du dashboard
+   * Patreon de LoreMind (Settings -> Tiers). Sans entree dans la map, on
+   * affiche l'ID brut pour rester debuggable.
+   *
+   * Si tu ajoutes un nouveau tier Patreon, complete cette map et redeploie.
+   * (Pas besoin de toucher au backend — c'est juste un libelle d'UI.)
+   */
+  private static readonly TIER_LABELS: Record<string, string> = {
+    '28448887': 'Compagnon',
+    // '0000000': 'Aventurier',
+    // '0000000': 'Heros',
+  };
+
+  /** Libelle lisible d'un tier Patreon, fallback sur l'ID brut. */
+  tierLabel(tierId: string | null | undefined): string {
+    if (!tierId) return '';
+    return SettingsComponent.TIER_LABELS[tierId] ?? tierId;
+  }
+
   /** Format human-readable des dates renvoyees par le backend. */
   formatDate(iso: string | null | undefined): string {
     if (!iso) return '';

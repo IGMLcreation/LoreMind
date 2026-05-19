@@ -252,21 +252,11 @@
         </div>
         <div *ngIf="updateStatus?.anyUnknown && !updateStatus?.updateAvailable" class="alert alert-warn">
           <lucide-icon [img]="Download" [size]="16"></lucide-icon>
-          <span>Verification impossible pour certaines images — voir details ci-dessous.</span>
+          <span>Verification impossible (baseline absente ou registry injoignable).</span>
         </div>
         <div *ngIf="!updateStatus?.updateAvailable && !updateStatus?.anyUnknown" class="hint">
           Tout est a jour (verifie le {{ updateStatus?.checkedAt | date:'short' }}).
         </div>
-
-        <ul class="update-images" *ngIf="updateStatus?.images?.length">
-          <li *ngFor="let img of updateStatus?.images">
-            <strong>{{ img.image }}</strong>
-            <span *ngIf="img.status === 'UPDATE_AVAILABLE'" class="badge-update">MAJ dispo</span>
-            <span *ngIf="img.status === 'UP_TO_DATE'" class="badge-ok">a jour</span>
-            <span *ngIf="img.status === 'UNKNOWN'" class="badge-warn"
-                  title="Impossible de comparer (baseline absente ou registry injoignable)">verification impossible</span>
-          </li>
-        </ul>
 
         <div class="form-row" *ngIf="updateStatus?.updateAvailable">
           <button type="button" class="btn-primary" (click)="applyUpdate()" [disabled]="updateApplying">
@@ -333,7 +323,7 @@
       <ng-container *ngIf="licenseStatus && licenseStatus.status !== 'NONE'">
         <div *ngIf="licenseStatus.status === 'VALID'" class="alert alert-success">
           <lucide-icon [img]="Check" [size]="16"></lucide-icon>
-          <span>Compte Patreon connecte. Tier {{ licenseStatus.tierId }} actif.</span>
+          <span>Compte Patreon connecte. Tier {{ tierLabel(licenseStatus.tierId) }} actif.</span>
         </div>
         <div *ngIf="licenseStatus.status === 'GRACE'" class="alert alert-warn">
           <lucide-icon [img]="AlertCircle" [size]="16"></lucide-icon>
@@ -354,7 +344,7 @@
         </div>
 
         <ul class="license-info">
-          <li *ngIf="licenseStatus.tierId"><strong>Tier :</strong> {{ licenseStatus.tierId }}</li>
+          <li *ngIf="licenseStatus.tierId"><strong>Tier :</strong> {{ tierLabel(licenseStatus.tierId) }}</li>
           <li *ngIf="licenseStatus.expiresAt">
             <strong>Validite :</strong>
             jusqu'au {{ formatDate(licenseStatus.expiresAt) }}
@@ -408,15 +398,11 @@
             </div>
             <div *ngIf="betaStatus?.anyUnknown && !betaStatus?.updateAvailable" class="alert alert-warn">
               <lucide-icon [img]="AlertCircle" [size]="16"></lucide-icon>
-              <span>Verification beta impossible pour certaines images.</span>
+              <span>Verification beta impossible (registry beta injoignable ou baseline absente).</span>
             </div>
-            <ul class="update-images" *ngIf="betaStatus?.images?.length">
-              <li *ngFor="let img of betaStatus?.images">
-                <strong>{{ img.image }}</strong>
-                <span *ngIf="img.status === 'UPDATE_AVAILABLE'" class="badge-update">version dispo</span>
-                <span *ngIf="img.status === 'UNKNOWN'" class="badge-warn">verification impossible</span>
-              </li>
-            </ul>
+            <div *ngIf="!betaStatus?.updateAvailable && !betaStatus?.anyUnknown" class="hint">
+              Aucune version beta plus recente disponible.
+            </div>
           </div>
         </div>
       </ng-container>

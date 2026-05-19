@@ -7,7 +7,6 @@ import com.loremind.infrastructure.web.dto.gamesystemcontext.GameSystemDTO;
 import com.loremind.infrastructure.web.dto.shared.TemplateFieldDTO;
 import com.loremind.infrastructure.web.mapper.GameSystemMapper;
 import com.loremind.infrastructure.web.mapper.TemplateFieldMapper;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -70,12 +69,6 @@ public class GameSystemController {
     public ResponseEntity<Void> deleteGameSystem(@PathVariable String id) {
         gameSystemService.deleteGameSystem(id);
         return ResponseEntity.noContent().build();
-    }
-
-    /** Mappe les violations d'invariants domaine (doublons de champs, etc.) en 400. */
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<String> onIllegalArgument(IllegalArgumentException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
     }
 
     private GameSystemService.GameSystemData toData(GameSystemDTO dto) {
