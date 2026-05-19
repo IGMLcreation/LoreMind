@@ -5,6 +5,7 @@ import { SidebarComponent } from './sidebar/sidebar.component';
 import { SecondarySidebarComponent } from './shared/secondary-sidebar/secondary-sidebar.component';
 import { GlobalSearchComponent } from './shared/global-search/global-search.component';
 import { UpdateBannerComponent } from './shared/update-banner/update-banner.component';
+import { ConfirmDialogHostComponent } from './shared/confirm-dialog/confirm-dialog-host.component';
 import { LayoutService } from './services/layout.service';
 import { GlobalSearchService } from './services/global-search.service';
 import { VersionCheckerService } from './services/version-checker.service';
@@ -18,6 +19,7 @@ import { VersionCheckerService } from './services/version-checker.service';
     SecondarySidebarComponent,
     GlobalSearchComponent,
     UpdateBannerComponent,
+    ConfirmDialogHostComponent,
     AsyncPipe,
     NgIf,
   ],

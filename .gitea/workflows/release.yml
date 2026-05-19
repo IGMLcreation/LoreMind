@@ -42,19 +42,24 @@ jobs:
           username: ${{ env.GHCR_NAMESPACE }}
           password: ${{ secrets.GHCR_TOKEN }}
 
-      - name: Extract version
+      # Detection du canal :
+      #   - tag vX.Y.Z         -> stable (push :latest + :version sur les repos publics)
+      #   - tag vX.Y.Z-beta*   -> beta  (push :beta + :version sur les repos GHCR prives
+      #                                  loremind-beta-<component> ; backup Gitea avec :version)
+      - name: Extract version & channel
         id: meta
-        run: echo "version=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          if [[ "${VERSION}" == *-beta* ]]; then
+            echo "channel=beta" >> $GITHUB_OUTPUT
+          else
+            echo "channel=stable" >> $GITHUB_OUTPUT
+          fi
 
-      # Push vers les deux registries en un seul build (build-push-action
-      # accepte une liste de tags ; aucun build supplementaire necessaire).
-      # Naming :
-      #   - Gitea : conserve l'ancien pattern ietm64/<component> pour ne pas
-      #             casser les installs existantes qui ont REGISTRY=git.igmlcreation.fr
-      #             dans leur .env.
-      #   - GHCR  : nouveau pattern igmlcreation/loremind-<component> qui evite
-      #             la collision avec d'autres projets de l'org.
-      - name: Build & push ${{ matrix.component }}
+      # Build & push canal STABLE
+      - name: Build & push ${{ matrix.component }} (stable)
+        if: steps.meta.outputs.channel == 'stable'
         uses: docker/build-push-action@v5
         with:
           context: ./${{ matrix.component }}
@@ -64,3 +69,19 @@ jobs:
             ${{ env.GITEA_REGISTRY }}/${{ env.GITEA_REGISTRY_USER }}/${{ matrix.component }}:${{ steps.meta.outputs.version }}
             ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_NAMESPACE }}/loremind-${{ matrix.component }}:latest
             ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_NAMESPACE }}/loremind-${{ matrix.component }}:${{ steps.meta.outputs.version }}
+
+      # Build & push canal BETA
+      # GHCR : repos prives loremind-beta-<component> (gated par PAT distribue
+      #        via le relais Patreon aux tiers Compagnon).
+      # Gitea : backup prive avec :version uniquement (pas de :latest pour ne
+      #         pas faire upgrader les installs branchees sur Gitea).
+      - name: Build & push ${{ matrix.component }} (beta)
+        if: steps.meta.outputs.channel == 'beta'
+        uses: docker/build-push-action@v5
+        with:
+          context: ./${{ matrix.component }}
+          push: true
+          tags: |
+            ${{ env.GITEA_REGISTRY }}/${{ env.GITEA_REGISTRY_USER }}/${{ matrix.component }}:${{ steps.meta.outputs.version }}
+            ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_NAMESPACE }}/loremind-beta-${{ matrix.component }}:beta
+            ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_NAMESPACE }}/loremind-beta-${{ matrix.component }}:${{ steps.meta.outputs.version }}

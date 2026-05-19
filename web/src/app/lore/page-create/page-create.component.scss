@@ -116,6 +116,27 @@
   }
 }
 
+// Carte "+" pour creer un nouveau template depuis l'ecran de creation de page.
+// Bordure pointillee + couleurs attenuees pour la distinguer visuellement des
+// vraies cartes selectionnables (et indiquer que c'est une action, pas un
+// element de donnees).
+.template-card-create {
+  border-style: dashed !important;
+  border-color: #3a3a55 !important;
+  background: transparent !important;
+  text-decoration: none;
+
+  .template-card-head {
+    color: #d1a878;
+    .template-name { color: #d1a878; }
+  }
+
+  &:hover {
+    border-color: #d1a878 !important;
+    background: rgba(209, 168, 120, 0.05) !important;
+  }
+}
+
 .info-box {
   background: #1a1a2e;
   border: 1px solid #2a2a3d;

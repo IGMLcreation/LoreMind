@@ -30,6 +30,23 @@
           </div>
           <p class="template-description">{{ t.description || '—' }}</p>
         </button>
+
+        <!-- Carte "+" : sauvegarde le brouillon et part creer un nouveau template ;
+             template-create renverra ici via le mecanisme returnTo. -->
+        <a
+          class="template-card template-card-create"
+          [routerLink]="['/lore', loreId, 'templates', 'create']"
+          [queryParams]="{ returnTo: 'page-create' }"
+          (click)="saveDraft()"
+          title="Créer un nouveau template pour ce Lore">
+          <div class="template-card-head">
+            <lucide-icon [img]="Plus" [size]="16"></lucide-icon>
+            <span class="template-name">Créer un template</span>
+          </div>
+          <p class="template-description">
+            Vous reviendrez ici automatiquement, votre saisie sera conservée.
+          </p>
+        </a>
       </div>
 
       <ng-template #emptyTemplates>

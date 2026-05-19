@@ -14,19 +14,19 @@ test.describe('NPC edit', () => {
 
   test.beforeEach(async ({ request }) => {
     campaign = await seedCampaign(request);
-    npc = await seedNpc(request, {
-      campaignId: campaign.id,
-      markdownContent: '# Initial\n\nFiche de départ.',
-    });
+    npc = await seedNpc(request, { campaignId: campaign.id });
   });
 
   test.afterEach(async ({ request }) => {
     if (campaign?.id) await deleteCampaign(request, campaign.id);
   });
 
-  test('edits name + markdown content and persists via API', async ({ page, request }) => {
+  test('edits name and persists via API', async ({ page, request }) => {
+    // Note : depuis la refonte 2026-04-30 les fiches PNJ utilisent des champs
+    // templates dynamiques pilotes par le GameSystem, plus le markdownContent
+    // libre. La campagne seedee n'a pas de GameSystem donc pas de champs
+    // dynamiques a tester ici — on se contente du nom (champ universel).
     const newName = `${npc.name} (renommé)`;
-    const newMarkdown = '# Borin réécrit\n\n**Statut :** Disparu\n\nDes traces dans la neige...';
 
     await page.goto(`/campaigns/${campaign.id}/npcs/${npc.id}/edit`);
 
@@ -34,7 +34,6 @@ test.describe('NPC edit', () => {
     await expect(page.getByLabel(/Nom du PNJ/i)).toHaveValue(npc.name);
 
     await page.getByLabel(/Nom du PNJ/i).fill(newName);
-    await page.getByLabel(/Fiche \(markdown\)/i).fill(newMarkdown);
 
     await page.getByRole('button', { name: /^Enregistrer$/i }).click();
 
@@ -43,7 +42,6 @@ test.describe('NPC edit', () => {
 
     const persisted = await getNpcById(request, npc.id);
     expect(persisted.name).toBe(newName);
-    expect(persisted.markdownContent).toBe(newMarkdown);
   });
 
   test('save button is disabled when name is cleared', async ({ page }) => {

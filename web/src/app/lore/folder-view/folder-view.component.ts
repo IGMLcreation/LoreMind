@@ -12,6 +12,7 @@ import { Lore, LoreNode } from '../../services/lore.model';
 import { Page } from '../../services/page.model';
 import { loadLoreSidebarData, buildLoreSidebarConfig } from '../lore-sidebar.helper';
 import { resolveIcon } from '../lore-icons';
+import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 
 /**
  * Vue "détail" d'un dossier : affiche son contenu (sous-dossiers + pages) et
@@ -52,7 +53,8 @@ export class FolderViewComponent implements OnInit, OnDestroy {
     private templateService: TemplateService,
     private pageService: PageService,
     private layoutService: LayoutService,
-    private pageTitleService: PageTitleService
+    private pageTitleService: PageTitleService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -148,25 +150,31 @@ export class FolderViewComponent implements OnInit, OnDestroy {
         if (impact.folders > 0) parts.push(`${impact.folders} sous-dossier${impact.folders > 1 ? 's' : ''}`);
         if (impact.pages > 0) parts.push(`${impact.pages} page${impact.pages > 1 ? 's' : ''}`);
 
-        const lines = [`Supprimer le dossier "${node.name}" ?`];
+        const details: string[] = [];
         if (parts.length) {
-          lines.push('');
-          lines.push(`Cette action supprimera aussi : ${parts.join(', ')}.`);
+          details.push(`Cette action supprimera aussi : ${parts.join(', ')}.`);
         }
-        lines.push('');
-        lines.push('Cette action est irréversible.');
+        details.push('Cette action est irréversible.');
 
-        if (!confirm(lines.join('\n'))) return;
-        this.loreService.deleteLoreNode(this.folderId).subscribe({
-          next: () => {
-            // Remonte au dossier parent si présent, sinon au Lore.
-            if (node.parentId) {
-              this.router.navigate(['/lore', this.loreId, 'folders', node.parentId]);
-            } else {
-              this.router.navigate(['/lore', this.loreId]);
-            }
-          },
-          error: () => console.error('Erreur lors de la suppression du dossier')
+        this.confirmDialog.confirm({
+          title: 'Supprimer le dossier',
+          message: `Supprimer le dossier "${node.name}" ?`,
+          details,
+          confirmLabel: 'Supprimer',
+          variant: 'danger'
+        }).then(ok => {
+          if (!ok) return;
+          this.loreService.deleteLoreNode(this.folderId).subscribe({
+            next: () => {
+              // Remonte au dossier parent si présent, sinon au Lore.
+              if (node.parentId) {
+                this.router.navigate(['/lore', this.loreId, 'folders', node.parentId]);
+              } else {
+                this.router.navigate(['/lore', this.loreId]);
+              }
+            },
+            error: () => console.error('Erreur lors de la suppression du dossier')
+          });
         });
       },
       error: () => console.error('Impossible de récupérer les dépendances du dossier')
@@ -174,6 +182,9 @@ export class FolderViewComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.layoutService.hide();
+    // Volontairement vide : la sidebar reste prise en charge par le composant
+    // suivant (autre sous-route ou le composant detail parent) qui appellera
+    // show(). Eviter d'appeler hide() ici previent le clignotement / la
+    // disparition de la sidebar lors des navigations internes a la section.
   }
 }

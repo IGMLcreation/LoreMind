@@ -3,8 +3,8 @@ import { switchMap, map } from 'rxjs/operators';
 import { CampaignService } from '../services/campaign.service';
 import { CharacterService } from '../services/character.service';
 import { NpcService } from '../services/npc.service';
-import { TreeItem } from '../services/layout.service';
-import { Arc, Chapter, Scene } from '../services/campaign.model';
+import { TreeItem, SecondarySidebarConfig, GlobalItem } from '../services/layout.service';
+import { Arc, Chapter, Scene, Campaign } from '../services/campaign.model';
 import { Character } from '../services/character.model';
 import { Npc } from '../services/npc.model';
 
@@ -83,7 +83,7 @@ export function buildCampaignTree(campaignId: string, data: CampaignTreeData): T
   const characterItems: TreeItem[] = sortedCharacters.map(ch => ({
     id: `character-${ch.id}`,
     label: ch.name,
-    route: `/campaigns/${campaignId}/characters/${ch.id}/edit`
+    route: `/campaigns/${campaignId}/characters/${ch.id}`
   }));
 
   const charactersNode: TreeItem = {
@@ -107,7 +107,7 @@ export function buildCampaignTree(campaignId: string, data: CampaignTreeData): T
   const npcItems: TreeItem[] = sortedNpcs.map(n => ({
     id: `npc-${n.id}`,
     label: n.name,
-    route: `/campaigns/${campaignId}/npcs/${n.id}/edit`
+    route: `/campaigns/${campaignId}/npcs/${n.id}`
   }));
 
   const npcsNode: TreeItem = {
@@ -171,4 +171,36 @@ export function buildCampaignTree(campaignId: string, data: CampaignTreeData): T
   });
 
   return [...arcNodes, charactersNode, npcsNode];
+}
+
+/**
+ * Construit la SecondarySidebarConfig complete d'une campagne a partir des
+ * donnees deja chargees. A utiliser quand le composant fait deja un forkJoin
+ * pour ses propres donnees (arc-view, scene-edit, etc.) et a deja `campaign`,
+ * `allCampaigns` et `treeData` en main — evite de refaire les memes HTTP.
+ *
+ * Pour les composants qui n'ont pas d'autre fetch a faire (character-view,
+ * npc-view...), preferer CampaignSidebarService.show(campaignId) qui orchestre
+ * le forkJoin et appelle layoutService.show() en une seule ligne.
+ */
+export function buildCampaignSidebarConfig(
+  campaign: Campaign,
+  allCampaigns: Campaign[],
+  treeData: CampaignTreeData,
+  campaignId: string
+): SecondarySidebarConfig {
+  const globalItems: GlobalItem[] = allCampaigns.map(c => ({
+    id: c.id!, name: c.name, route: `/campaigns/${c.id}`
+  }));
+  return {
+    title: campaign.name,
+    items: buildCampaignTree(campaignId, treeData),
+    footerLabel: 'Toutes les campagnes',
+    createActions: [
+      { id: 'create-arc', label: '+ Nouvel arc', variant: 'primary', route: `/campaigns/${campaignId}/arcs/create` }
+    ],
+    globalItems,
+    globalBackLabel: 'Toutes les campagnes',
+    globalBackRoute: '/campaigns'
+  };
 }

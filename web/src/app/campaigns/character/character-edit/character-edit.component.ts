@@ -6,10 +6,12 @@ import { LucideAngularModule, Save, ArrowLeft, User, Trash2, Sparkles } from 'lu
 import { CharacterService } from '../../../services/character.service';
 import { CampaignService } from '../../../services/campaign.service';
 import { GameSystemService } from '../../../services/game-system.service';
+import { CampaignSidebarService } from '../../../services/campaign-sidebar.service';
 import { TemplateField } from '../../../services/template.model';
 import { AiChatDrawerComponent } from '../../../shared/ai-chat-drawer/ai-chat-drawer.component';
 import { DynamicFieldsFormComponent } from '../../../shared/dynamic-fields-form/dynamic-fields-form.component';
 import { SingleImagePickerComponent } from '../../../shared/single-image-picker/single-image-picker.component';
+import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 
 /**
  * Editeur plein ecran d'une fiche de personnage (PJ).
@@ -62,7 +64,9 @@ export class CharacterEditComponent implements OnInit {
     private router: Router,
     private service: CharacterService,
     private campaignService: CampaignService,
-    private gameSystemService: GameSystemService
+    private gameSystemService: GameSystemService,
+    private campaignSidebar: CampaignSidebarService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -72,6 +76,7 @@ export class CharacterEditComponent implements OnInit {
 
     if (this.campaignId) {
       this.loadTemplateForCampaign(this.campaignId);
+      this.campaignSidebar.show(this.campaignId);
     }
 
     if (this.characterId) {
@@ -106,6 +111,7 @@ export class CharacterEditComponent implements OnInit {
     });
   }
 
+
   submit(): void {
     if (!this.name.trim() || !this.campaignId) return;
     const payload = {
@@ -117,21 +123,36 @@ export class CharacterEditComponent implements OnInit {
       keyValueValues: this.keyValueValues,
       campaignId: this.campaignId
     };
+    const isCreation = !this.characterId;
     const req = this.characterId
       ? this.service.update(this.characterId, { ...payload, id: this.characterId, order: this.order })
       : this.service.create(payload);
     req.subscribe({
-      next: () => this.back(),
+      next: (saved) => {
+        if (isCreation && saved.id) {
+          this.router.navigate(['/campaigns', this.campaignId, 'characters', saved.id]);
+        } else {
+          this.back();
+        }
+      },
       error: () => console.error('Erreur sauvegarde Character')
     });
   }
 
   deleteCharacter(): void {
     if (!this.characterId) return;
-    if (!confirm(`Supprimer la fiche de "${this.name}" ? Cette action est irreversible.`)) return;
-    this.service.delete(this.characterId).subscribe({
-      next: () => this.back(),
-      error: () => console.error('Erreur suppression Character')
+    this.confirmDialog.confirm({
+      title: 'Supprimer la fiche ?',
+      message: `Supprimer la fiche de "${this.name}" ?`,
+      details: ['Cette action est irreversible.'],
+      confirmLabel: 'Supprimer',
+      variant: 'danger'
+    }).then(ok => {
+      if (!ok || !this.characterId) return;
+      this.service.delete(this.characterId).subscribe({
+        next: () => this.back(),
+        error: () => console.error('Erreur suppression Character')
+      });
     });
   }
 

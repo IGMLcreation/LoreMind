@@ -17,20 +17,22 @@ test.describe('NPC creation', () => {
     if (campaign?.id) await deleteCampaign(request, campaign.id);
   });
 
-  test('creates an NPC and redirects back to the campaign', async ({ page, request }) => {
+  test('creates an NPC and redirects to the NPC detail page', async ({ page, request }) => {
+    // Note : depuis la refonte 2026-04-30 les fiches PNJ utilisent des champs
+    // templates dynamiques pilotes par le GameSystem (plus de markdownContent
+    // libre). La campagne seedee n'a pas de GameSystem donc on ne fill que le
+    // nom — c'est suffisant pour valider la creation + la redirection.
     const npcName = `Borin le forgeron ${Date.now()}`;
-    const markdown = '# Borin\n\n**Faction :** Clan Feuillefer\n\nNain barbu au regard perçant.';
 
     await page.goto(`/campaigns/${campaign.id}/npcs/create`);
     await expect(page.getByRole('heading', { name: /Nouveau PNJ/i })).toBeVisible();
 
     await page.getByLabel(/Nom du PNJ/i).fill(npcName);
-    await page.getByLabel(/Fiche \(markdown\)/i).fill(markdown);
 
     await page.getByRole('button', { name: /^Créer$/i }).click();
 
-    // Retour à la page campagne après création
-    await expect(page).toHaveURL(new RegExp(`/campaigns/${campaign.id}$`));
+    // Redirection vers la fiche du PNJ après création
+    await expect(page).toHaveURL(new RegExp(`/campaigns/${campaign.id}/npcs/\\d+$`));
 
     // Persistance vérifiée via API
     const npcs = await getNpcsByCampaign(request, campaign.id);
@@ -58,7 +60,7 @@ test.describe('NPC creation', () => {
     await page.getByLabel(/Nom du PNJ/i).fill(npcName);
     await page.getByRole('button', { name: /^Créer$/i }).click();
 
-    await expect(page).toHaveURL(new RegExp(`/campaigns/${campaign.id}$`));
+    await expect(page).toHaveURL(new RegExp(`/campaigns/${campaign.id}/npcs/\\d+$`));
 
     // Le nœud "PNJ" doit apparaître dans la sidebar avec le nouveau PNJ.
     // On clique sur le nœud PNJ pour le déplier au cas où il serait fermé,

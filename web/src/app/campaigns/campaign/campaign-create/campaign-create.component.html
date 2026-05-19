@@ -50,13 +50,49 @@
 
       <div class="field">
         <label for="campaign-game-system">Système de JDR</label>
-        <select id="campaign-game-system" formControlName="gameSystemId">
+        <select *ngIf="!creatingGameSystem" id="campaign-game-system" formControlName="gameSystemId">
           <option value="">— Aucun (campagne générique) —</option>
           <option *ngFor="let gs of availableGameSystems" [value]="gs.id">{{ gs.name }}</option>
+          <option [value]="CREATE_GAMESYSTEM_SENTINEL">+ Créer un nouveau système…</option>
         </select>
-        <p class="hint">
+
+        <!-- Mode creation inline : remplace temporairement le select. -->
+        <div *ngIf="creatingGameSystem" class="inline-create">
+          <input
+            type="text"
+            [(ngModel)]="newGameSystemName"
+            [ngModelOptions]="{ standalone: true }"
+            placeholder="Nom du nouveau système (ex: D&D 5e, Nimble, Maison)"
+            (keydown.enter)="$event.preventDefault(); submitCreateGameSystem()"
+            (keydown.escape)="cancelCreateGameSystem()"
+            autofocus
+          />
+          <div class="inline-create-actions">
+            <button type="button" class="btn-inline-primary"
+                    [disabled]="!newGameSystemName.trim() || creatingGameSystemInFlight"
+                    (click)="submitCreateGameSystem()">
+              <lucide-icon [img]="Check" [size]="14"></lucide-icon>
+              Créer
+            </button>
+            <button type="button" class="btn-inline-secondary" (click)="cancelCreateGameSystem()">
+              Annuler
+            </button>
+          </div>
+          <p class="hint">
+            Création rapide — vous pourrez ajouter les règles, les templates de fiches PJ/PNJ
+            et le reste depuis la section "Systèmes" plus tard.
+          </p>
+        </div>
+
+        <p *ngIf="!creatingGameSystem" class="hint">
           Optionnel. Si défini, l'IA injectera les règles du système (classes, combat, lore...)
           dans ses suggestions pour respecter les mécaniques du JDR.
+        </p>
+        <p *ngIf="!creatingGameSystem" class="hint hint-warning">
+          ⚠️ Le système de jeu choisi détermine aussi le <strong>template des fiches de PJ et PNJ</strong>.
+          Le changer plus tard rendra les champs des fiches existantes invisibles
+          (les données restent stockées mais ne s'afficheront qu'en revenant à l'ancien système).
+          Choisissez bien dès le départ si possible.
         </p>
       </div>
 

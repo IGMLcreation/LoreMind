@@ -1,0 +1,34 @@
+<div class="confirm-backdrop" *ngIf="open" (click)="onCancel()">
+  <div class="confirm-modal"
+       role="dialog"
+       aria-modal="true"
+       [attr.aria-label]="title"
+       [class.variant-warning]="variant === 'warning'"
+       [class.variant-danger]="variant === 'danger'"
+       [class.variant-info]="variant === 'info'"
+       (click)="$event.stopPropagation()">
+
+    <div class="confirm-header">
+      <div class="confirm-icon">
+        <lucide-icon [img]="TriangleAlert" [size]="22"></lucide-icon>
+      </div>
+      <h2>{{ title }}</h2>
+      <button type="button" class="btn-close" (click)="onCancel()" aria-label="Fermer">
+        <lucide-icon [img]="X" [size]="18"></lucide-icon>
+      </button>
+    </div>
+
+    <div class="confirm-body">
+      <p class="confirm-message">{{ message }}</p>
+      <ul *ngIf="details.length > 0" class="confirm-details">
+        <li *ngFor="let line of details">{{ line }}</li>
+      </ul>
+    </div>
+
+    <div class="confirm-actions">
+      <button type="button" class="btn-secondary" (click)="onCancel()">{{ cancelLabel }}</button>
+      <button type="button" class="btn-confirm" (click)="onConfirm()">{{ confirmLabel }}</button>
+    </div>
+
+  </div>
+</div>

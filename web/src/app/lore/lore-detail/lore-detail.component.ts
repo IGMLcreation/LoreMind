@@ -10,6 +10,7 @@ import { LayoutService } from '../../services/layout.service';
 import { PageTitleService } from '../../services/page-title.service';
 import { Lore, LoreNode } from '../../services/lore.model';
 import { loadLoreSidebarData, buildLoreSidebarConfig } from '../lore-sidebar.helper';
+import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 
 @Component({
   selector: 'app-lore-detail',
@@ -42,7 +43,8 @@ export class LoreDetailComponent implements OnInit, OnDestroy {
     private templateService: TemplateService,
     private pageService: PageService,
     private layoutService: LayoutService,
-    private pageTitleService: PageTitleService
+    private pageTitleService: PageTitleService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -125,25 +127,30 @@ export class LoreDetailComponent implements OnInit, OnDestroy {
         if (impact.pages > 0) deleted.push(`${impact.pages} page${impact.pages > 1 ? 's' : ''}`);
         if (impact.templates > 0) deleted.push(`${impact.templates} template${impact.templates > 1 ? 's' : ''}`);
 
-        const lines = [`Supprimer définitivement le Lore "${lore.name}" ?`];
+        const details: string[] = [];
         if (deleted.length) {
-          lines.push('');
-          lines.push(`Cette action supprimera aussi : ${deleted.join(', ')}.`);
+          details.push(`Cette action supprimera aussi : ${deleted.join(', ')}.`);
         }
         if (impact.detachedCampaigns > 0) {
-          lines.push('');
-          lines.push(
+          details.push(
             `${impact.detachedCampaigns} campagne${impact.detachedCampaigns > 1 ? 's' : ''} ${impact.detachedCampaigns > 1 ? 'seront conservées' : 'sera conservée'} ` +
             `mais ${impact.detachedCampaigns > 1 ? 'perdront' : 'perdra'} leur lien vers cet univers.`
           );
         }
-        lines.push('');
-        lines.push('Cette action est irréversible.');
+        details.push('Cette action est irréversible.');
 
-        if (!confirm(lines.join('\n'))) return;
-        this.loreService.deleteLore(lore.id!).subscribe({
-          next: () => this.router.navigate(['/lore']),
-          error: () => console.error('Erreur lors de la suppression du Lore')
+        this.confirmDialog.confirm({
+          title: 'Supprimer le Lore',
+          message: `Supprimer définitivement le Lore "${lore.name}" ?`,
+          details,
+          confirmLabel: 'Supprimer',
+          variant: 'danger'
+        }).then(ok => {
+          if (!ok) return;
+          this.loreService.deleteLore(lore.id!).subscribe({
+            next: () => this.router.navigate(['/lore']),
+            error: () => console.error('Erreur lors de la suppression du Lore')
+          });
         });
       },
       error: () => console.error('Impossible de récupérer les dépendances du Lore')

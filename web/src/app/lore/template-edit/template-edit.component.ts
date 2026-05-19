@@ -2,7 +2,8 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { forkJoin, Subject } from 'rxjs';
+import { switchMap, takeUntil } from 'rxjs/operators';
 import { LucideAngularModule, Plus, Trash2, Type, Image as ImageIcon, ChevronUp, ChevronDown } from 'lucide-angular';
 import { LoreService } from '../../services/lore.service';
 import { TemplateService } from '../../services/template.service';
@@ -12,6 +13,7 @@ import { PageTitleService } from '../../services/page-title.service';
 import { LoreNode } from '../../services/lore.model';
 import { FieldType, ImageLayout, Template, TemplateField } from '../../services/template.model';
 import { loadLoreSidebarData, buildLoreSidebarConfig } from '../lore-sidebar.helper';
+import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 
 /**
  * Écran d'édition d'un Template existant.
@@ -47,6 +49,8 @@ export class TemplateEditComponent implements OnInit, OnDestroy {
    */
   private originalFieldNames = new Set<string>();
 
+  private destroy$ = new Subject<void>();
+
   /** True si le champ est présent depuis le chargement du template. */
   isExistingField(field: TemplateField): boolean {
     return this.originalFieldNames.has(field.name);
@@ -60,7 +64,8 @@ export class TemplateEditComponent implements OnInit, OnDestroy {
     private templateService: TemplateService,
     private pageService: PageService,
     private layoutService: LayoutService,
-    private pageTitleService: PageTitleService
+    private pageTitleService: PageTitleService,
+    private confirmDialog: ConfirmDialogService
   ) {
     this.form = this.fb.group({
       name:          ['', Validators.required],
@@ -70,13 +75,21 @@ export class TemplateEditComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.loreId = this.route.snapshot.paramMap.get('loreId')!;
-    this.templateId = this.route.snapshot.paramMap.get('templateId')!;
-
-    forkJoin({
-      sidebar: loadLoreSidebarData(this.loreId, this.loreService, this.templateService, this.pageService),
-      template: this.templateService.getById(this.templateId)
-    }).subscribe(({ sidebar, template }) => {
+    // switchMap pour annuler le chargement precedent si l'utilisateur change
+    // de template avant la fin de la requete (Angular reutilise l'instance du
+    // composant entre /templates/T1 et /templates/T2, donc ngOnInit ne refire
+    // pas et il faut reagir aux changements de params nous-memes).
+    this.route.paramMap.pipe(
+      switchMap(params => {
+        this.loreId = params.get('loreId')!;
+        this.templateId = params.get('templateId')!;
+        return forkJoin({
+          sidebar: loadLoreSidebarData(this.loreId, this.loreService, this.templateService, this.pageService),
+          template: this.templateService.getById(this.templateId)
+        });
+      }),
+      takeUntil(this.destroy$)
+    ).subscribe(({ sidebar, template }) => {
       this.nodes = sidebar.nodes;
       this.layoutService.show(buildLoreSidebarConfig(sidebar));
       this.hydrate(template);
@@ -162,14 +175,25 @@ export class TemplateEditComponent implements OnInit, OnDestroy {
   }
 
   delete(): void {
-    if (!confirm(`Supprimer le template "${this.template?.name}" ?`)) return;
-    this.templateService.delete(this.templateId).subscribe({
-      next: () => this.router.navigate(['/lore', this.loreId]),
-      error: () => console.error('Erreur lors de la suppression du template')
+    this.confirmDialog.confirm({
+      title: 'Supprimer le template',
+      message: `Supprimer le template "${this.template?.name}" ?`,
+      confirmLabel: 'Supprimer',
+      variant: 'danger'
+    }).then(ok => {
+      if (!ok) return;
+      this.templateService.delete(this.templateId).subscribe({
+        next: () => this.router.navigate(['/lore', this.loreId]),
+        error: () => console.error('Erreur lors de la suppression du template')
+      });
     });
   }
 
   ngOnDestroy(): void {
-    this.layoutService.hide();
+    this.destroy$.next();
+    this.destroy$.complete();
+    // hide() volontairement retire : la sidebar reste prise en charge par le
+    // composant suivant (sous-route ou detail parent) afin d'eviter qu'elle
+    // disparaisse lors des navigations internes a la section.
   }
 }

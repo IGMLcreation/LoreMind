@@ -5,6 +5,7 @@ import { LucideAngularModule, ArrowLeft, Edit3, Sparkles } from 'lucide-angular'
 import { CharacterService } from '../../../services/character.service';
 import { CampaignService } from '../../../services/campaign.service';
 import { GameSystemService } from '../../../services/game-system.service';
+import { CampaignSidebarService } from '../../../services/campaign-sidebar.service';
 import { TemplateField } from '../../../services/template.model';
 import { Character } from '../../../services/character.model';
 import { PersonaViewComponent } from '../../../shared/persona-view/persona-view.component';
@@ -40,7 +41,8 @@ export class CharacterViewComponent implements OnInit {
     private router: Router,
     private service: CharacterService,
     private campaignService: CampaignService,
-    private gameSystemService: GameSystemService
+    private gameSystemService: GameSystemService,
+    private campaignSidebar: CampaignSidebarService
   ) {}
 
   ngOnInit(): void {
@@ -54,6 +56,7 @@ export class CharacterViewComponent implements OnInit {
       });
     }
     if (this.campaignId) {
+      this.campaignSidebar.show(this.campaignId);
       this.campaignService.getCampaignById(this.campaignId).subscribe(camp => {
         if (camp.gameSystemId) {
           this.gameSystemService.getById(camp.gameSystemId).subscribe(gs => {

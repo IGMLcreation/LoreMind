@@ -7,9 +7,8 @@ import { LucideAngularModule } from 'lucide-angular';
 import { CampaignService } from '../../../services/campaign.service';
 import { CharacterService } from '../../../services/character.service';
 import { NpcService } from '../../../services/npc.service';
-import { LayoutService, GlobalItem } from '../../../services/layout.service';
-import { Campaign } from '../../../services/campaign.model';
-import { loadCampaignTreeData, buildCampaignTree } from '../../campaign-tree.helper';
+import { LayoutService } from '../../../services/layout.service';
+import { loadCampaignTreeData, buildCampaignSidebarConfig } from '../../campaign-tree.helper';
 import { IconPickerComponent } from '../../../shared/icon-picker/icon-picker.component';
 import { CAMPAIGN_ICON_OPTIONS } from '../../campaign-icons';
 
@@ -65,21 +64,7 @@ export class ChapterCreateComponent implements OnInit, OnDestroy {
       this.arcName = currentArc?.name ?? '';
       this.existingChapterCount = treeData.chaptersByArc[this.arcId]?.length ?? 0;
 
-      const globalItems: GlobalItem[] = allCampaigns.map((c: Campaign) => ({
-        id: c.id!, name: c.name, route: `/campaigns/${c.id}`
-      }));
-
-      this.layoutService.show({
-        title: campaign.name,
-        items: buildCampaignTree(this.campaignId, treeData),
-        footerLabel: 'Toutes les campagnes',
-        createActions: [
-          { id: 'create-arc', label: '+ Nouvel arc', variant: 'primary', route: `/campaigns/${this.campaignId}/arcs/create` }
-        ],
-        globalItems,
-        globalBackLabel: 'Toutes les campagnes',
-        globalBackRoute: '/campaigns'
-      });
+      this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId));
     });
   }
 
@@ -102,6 +87,9 @@ export class ChapterCreateComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.layoutService.hide();
+    // Volontairement vide : la sidebar reste prise en charge par le composant
+    // suivant (autre sous-route ou le composant detail parent) qui appellera
+    // show(). Eviter d'appeler hide() ici previent le clignotement / la
+    // disparition de la sidebar lors des navigations internes a la section.
   }
 }

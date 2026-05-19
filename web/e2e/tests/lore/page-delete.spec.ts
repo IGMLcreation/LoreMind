@@ -32,10 +32,12 @@ test.describe('Page delete', () => {
   });
 
   test('deletes the page after accepting confirm', async ({ page, request }) => {
-    page.on('dialog', (dialog) => dialog.accept());
-
     await page.goto(`/lore/${seeded.id}/pages/${pageEntity.id}/edit`);
-    await page.getByRole('button', { name: /^Supprimer$/i }).click();
+    await page.getByRole('button', { name: /^Supprimer$/i }).first().click();
+
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole('button', { name: /^Supprimer$/i }).click();
 
     // Le composant redirige vers la racine du Lore après suppression.
     await expect(page).toHaveURL(new RegExp(`/lore/${seeded.id}$`));
@@ -45,10 +47,12 @@ test.describe('Page delete', () => {
   });
 
   test('keeps the page when confirm is dismissed', async ({ page, request }) => {
-    page.on('dialog', (dialog) => dialog.dismiss());
-
     await page.goto(`/lore/${seeded.id}/pages/${pageEntity.id}/edit`);
-    await page.getByRole('button', { name: /^Supprimer$/i }).click();
+    await page.getByRole('button', { name: /^Supprimer$/i }).first().click();
+
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole('button', { name: /^Annuler$/i }).click();
 
     await expect(page).toHaveURL(new RegExp(`/lore/${seeded.id}/pages/${pageEntity.id}/edit$`));
 

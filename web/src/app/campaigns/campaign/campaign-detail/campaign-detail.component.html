@@ -55,10 +55,37 @@
     </div>
     <div class="field">
       <label>Système de JDR</label>
-      <select [(ngModel)]="editGameSystemId" name="editGameSystemId">
+      <select *ngIf="!creatingGameSystem"
+              [(ngModel)]="editGameSystemId"
+              name="editGameSystemId"
+              (ngModelChange)="onEditGameSystemChange($event)">
         <option value="">— Aucun (générique) —</option>
         <option *ngFor="let gs of availableGameSystems" [value]="gs.id">{{ gs.name }}</option>
+        <option [value]="CREATE_GAMESYSTEM_SENTINEL">+ Créer un nouveau système…</option>
       </select>
+
+      <div *ngIf="creatingGameSystem" class="inline-create">
+        <input
+          type="text"
+          [(ngModel)]="newGameSystemName"
+          name="newGameSystemName"
+          placeholder="Nom du nouveau système (ex: D&D 5e, Nimble, Maison)"
+          (keydown.enter)="$event.preventDefault(); submitCreateGameSystem()"
+          (keydown.escape)="cancelCreateGameSystem()"
+          autofocus
+        />
+        <div class="inline-create-actions">
+          <button type="button" class="btn-inline-primary"
+                  [disabled]="!newGameSystemName.trim() || creatingGameSystemInFlight"
+                  (click)="submitCreateGameSystem()">
+            <lucide-icon [img]="Check" [size]="14"></lucide-icon>
+            Créer
+          </button>
+          <button type="button" class="btn-inline-secondary" (click)="cancelCreateGameSystem()">
+            Annuler
+          </button>
+        </div>
+      </div>
     </div>
     <div class="header-actions">
       <button type="button" class="btn-primary" (click)="saveEdit()" [disabled]="!editName.trim()">

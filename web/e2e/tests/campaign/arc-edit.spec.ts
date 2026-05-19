@@ -38,6 +38,10 @@ test.describe('Arc edit', () => {
     };
 
     await page.goto(`/campaigns/${campaign.id}/arcs/${arc.id}/edit`);
+    // Attend que le formulaire soit prerempli par le ngOnInit (HTTP async) avant
+    // de fill — sinon le patchValue du load arrive APRES nos fills et ecrase
+    // les valeurs, le test echoue alors a la verif persisted.name.
+    await expect(page.getByLabel(/Titre de l'arc/i)).toHaveValue(arc.name);
 
     await page.getByLabel(/Titre de l'arc/i).fill(newName);
     await page.getByLabel(/Synopsis de l'arc/i).fill(values.description);

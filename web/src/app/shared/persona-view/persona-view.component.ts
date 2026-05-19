@@ -111,15 +111,7 @@ export class PersonaViewComponent {
     return this.rendered().sections;
   }
 
-  /** Pour la drop cap : seul le 1er TEXT la recoit. */
-  get firstTextSectionName(): string | null {
-    for (const s of this.orderedSections) {
-      if (s.kind === 'TEXT') return s.name;
-    }
-    return null;
-  }
-
-  /** Premier paragraphe d'un texte (utilise pour la drop cap). */
+  /** Premier paragraphe d'un texte (separe pour permettre un styling specifique). */
   firstParagraph(text: string): string {
     if (!text) return '';
     const paragraphs = text.split(/\n\s*\n/);

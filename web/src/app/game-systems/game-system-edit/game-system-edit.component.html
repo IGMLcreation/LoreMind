@@ -14,18 +14,18 @@
   <div class="gse-form">
 
     <div class="field">
-      <label>Nom *</label>
-      <input type="text" [(ngModel)]="name" name="name" placeholder="Ex: Nimble, D&D 5.1 SRD, Mon Homebrew..." />
+      <label for="gs-name">Nom *</label>
+      <input id="gs-name" type="text" [(ngModel)]="name" name="name" placeholder="Ex: Nimble, D&D 5.1 SRD, Mon Homebrew..." />
     </div>
 
     <div class="field">
-      <label>Description courte</label>
-      <textarea [(ngModel)]="description" name="description" rows="2" placeholder="En une ligne, de quoi parle ce système ?"></textarea>
+      <label for="gs-description">Description courte</label>
+      <textarea id="gs-description" [(ngModel)]="description" name="description" rows="2" placeholder="En une ligne, de quoi parle ce système ?"></textarea>
     </div>
 
     <div class="field">
-      <label>Auteur</label>
-      <input type="text" [(ngModel)]="author" name="author" placeholder="Ex: Hasbro, Homebrew, moi-même..." />
+      <label for="gs-author">Auteur</label>
+      <input id="gs-author" type="text" [(ngModel)]="author" name="author" placeholder="Ex: Hasbro, Homebrew, moi-même..." />
     </div>
 
     <!-- Sections de règles -->

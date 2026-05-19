@@ -25,10 +25,12 @@ test.describe('Template delete', () => {
   });
 
   test('deletes the template after accepting confirm', async ({ page, request }) => {
-    page.on('dialog', (dialog) => dialog.accept());
-
     await page.goto(`/lore/${seeded.id}/templates/${template.id}`);
     await page.locator('.page-header .btn-danger').click();
+
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole('button', { name: /^Supprimer$/i }).click();
 
     await expect(page).toHaveURL(new RegExp(`/lore/${seeded.id}$`));
 
@@ -37,10 +39,12 @@ test.describe('Template delete', () => {
   });
 
   test('keeps the template when confirm is dismissed', async ({ page, request }) => {
-    page.on('dialog', (dialog) => dialog.dismiss());
-
     await page.goto(`/lore/${seeded.id}/templates/${template.id}`);
     await page.locator('.page-header .btn-danger').click();
+
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole('button', { name: /^Annuler$/i }).click();
 
     // On reste sur l'écran d'édition (l'URL ne change pas).
     await expect(page).toHaveURL(new RegExp(`/lore/${seeded.id}/templates/${template.id}$`));

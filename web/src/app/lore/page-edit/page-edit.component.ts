@@ -19,6 +19,7 @@ import { BreadcrumbComponent, BreadcrumbItem } from '../../shared/breadcrumb/bre
 import { AiChatDrawerComponent, ChatPrimaryAction } from '../../shared/ai-chat-drawer/ai-chat-drawer.component';
 import { ImageGalleryComponent } from '../../shared/image-gallery/image-gallery.component';
 import { Lore } from '../../services/lore.model';
+import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 
 /**
  * Écran d'édition d'une Page.
@@ -90,7 +91,8 @@ export class PageEditComponent implements OnInit, OnDestroy {
     private templateService: TemplateService,
     private pageService: PageService,
     private layoutService: LayoutService,
-    private pageTitleService: PageTitleService
+    private pageTitleService: PageTitleService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -258,14 +260,24 @@ export class PageEditComponent implements OnInit, OnDestroy {
 
   delete(): void {
     if (!this.page) return;
-    if (!confirm(`Supprimer la page "${this.page.title}" ?`)) return;
-    this.pageService.delete(this.pageId).subscribe({
-      next: () => this.router.navigate(['/lore', this.loreId]),
-      error: () => console.error('Erreur lors de la suppression de la page')
+    this.confirmDialog.confirm({
+      title: 'Supprimer la page',
+      message: `Supprimer la page "${this.page.title}" ?`,
+      confirmLabel: 'Supprimer',
+      variant: 'danger'
+    }).then(ok => {
+      if (!ok || !this.page) return;
+      this.pageService.delete(this.pageId).subscribe({
+        next: () => this.router.navigate(['/lore', this.loreId]),
+        error: () => console.error('Erreur lors de la suppression de la page')
+      });
     });
   }
 
   ngOnDestroy(): void {
-    this.layoutService.hide();
+    // Volontairement vide : la sidebar reste prise en charge par le composant
+    // suivant (autre sous-route ou le composant detail parent) qui appellera
+    // show(). Eviter d'appeler hide() ici previent le clignotement / la
+    // disparition de la sidebar lors des navigations internes a la section.
   }
 }

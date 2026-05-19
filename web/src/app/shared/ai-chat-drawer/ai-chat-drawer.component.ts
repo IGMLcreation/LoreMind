@@ -7,6 +7,7 @@ import { AiChatService, ChatMessage, ChatUsage, NarrativeEntityType } from '../.
 import { Conversation, ConversationContext } from '../../services/conversation.model';
 import { ConversationService } from '../../services/conversation.service';
 import { MarkdownPipe } from '../markdown.pipe';
+import { ConfirmDialogService } from '../confirm-dialog/confirm-dialog.service';
 
 /**
  * Action primaire optionnelle rendue en gros bouton au-dessus des suggestions.
@@ -119,6 +120,7 @@ export class AiChatDrawerComponent implements OnInit, OnChanges, OnDestroy {
   constructor(
     private readonly chatService: AiChatService,
     private readonly conversationService: ConversationService,
+    private readonly confirmDialog: ConfirmDialogService,
   ) {}
 
   // --- Jauge de contexte --------------------------------------------------
@@ -312,12 +314,19 @@ export class AiChatDrawerComponent implements OnInit, OnChanges, OnDestroy {
   deleteConversation(conv: Conversation, event: Event): void {
     event.stopPropagation();
     if (this.isStreaming) return;
-    if (!confirm(`Supprimer la conversation "${conv.title}" ?`)) return;
-    this.conversationService.delete(conv.id).subscribe({
-      next: () => {
-        this.conversations = this.conversations.filter((c) => c.id !== conv.id);
-        if (this.currentConversationId === conv.id) this.resetConversationState();
-      },
+    this.confirmDialog.confirm({
+      title: 'Supprimer la conversation',
+      message: `Supprimer la conversation "${conv.title}" ?`,
+      confirmLabel: 'Supprimer',
+      variant: 'danger'
+    }).then(ok => {
+      if (!ok) return;
+      this.conversationService.delete(conv.id).subscribe({
+        next: () => {
+          this.conversations = this.conversations.filter((c) => c.id !== conv.id);
+          if (this.currentConversationId === conv.id) this.resetConversationState();
+        },
+      });
     });
   }
 

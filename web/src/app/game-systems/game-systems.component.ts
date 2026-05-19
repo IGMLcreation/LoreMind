@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { LucideAngularModule, Dices, Plus, Pencil, Trash2 } from 'lucide-angular';
 import { GameSystemService } from '../services/game-system.service';
 import { GameSystem } from '../services/game-system.model';
+import { ConfirmDialogService } from '../shared/confirm-dialog/confirm-dialog.service';
 
 @Component({
   selector: 'app-game-systems',
@@ -22,7 +23,8 @@ export class GameSystemsComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private gameSystemService: GameSystemService
+    private gameSystemService: GameSystemService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -47,10 +49,18 @@ export class GameSystemsComponent implements OnInit {
   delete(system: GameSystem, event: MouseEvent): void {
     event.stopPropagation();
     if (!system.id) return;
-    if (!confirm(`Supprimer le système "${system.name}" ? Les campagnes qui l'utilisent ne seront plus associées à aucun système.`)) return;
-    this.gameSystemService.delete(system.id).subscribe({
-      next: () => this.load(),
-      error: () => console.error('Erreur suppression GameSystem')
+    this.confirmDialog.confirm({
+      title: 'Supprimer le système',
+      message: `Supprimer le système "${system.name}" ?`,
+      details: ['Les campagnes qui l\'utilisent ne seront plus associées à aucun système.'],
+      confirmLabel: 'Supprimer',
+      variant: 'danger'
+    }).then(ok => {
+      if (!ok || !system.id) return;
+      this.gameSystemService.delete(system.id).subscribe({
+        next: () => this.load(),
+        error: () => console.error('Erreur suppression GameSystem')
+      });
     });
   }
 }

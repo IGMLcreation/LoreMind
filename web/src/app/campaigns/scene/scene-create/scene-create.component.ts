@@ -7,9 +7,8 @@ import { LucideAngularModule } from 'lucide-angular';
 import { CampaignService } from '../../../services/campaign.service';
 import { CharacterService } from '../../../services/character.service';
 import { NpcService } from '../../../services/npc.service';
-import { LayoutService, GlobalItem } from '../../../services/layout.service';
-import { Campaign } from '../../../services/campaign.model';
-import { loadCampaignTreeData, buildCampaignTree } from '../../campaign-tree.helper';
+import { LayoutService } from '../../../services/layout.service';
+import { loadCampaignTreeData, buildCampaignSidebarConfig } from '../../campaign-tree.helper';
 import { IconPickerComponent } from '../../../shared/icon-picker/icon-picker.component';
 import { CAMPAIGN_ICON_OPTIONS } from '../../campaign-icons';
 
@@ -67,21 +66,7 @@ export class SceneCreateComponent implements OnInit, OnDestroy {
       this.chapterName = currentChapter?.name ?? '';
       this.existingSceneCount = treeData.scenesByChapter[this.chapterId]?.length ?? 0;
 
-      const globalItems: GlobalItem[] = allCampaigns.map((c: Campaign) => ({
-        id: c.id!, name: c.name, route: `/campaigns/${c.id}`
-      }));
-
-      this.layoutService.show({
-        title: campaign.name,
-        items: buildCampaignTree(this.campaignId, treeData),
-        footerLabel: 'Toutes les campagnes',
-        createActions: [
-          { id: 'create-arc', label: '+ Nouvel arc', variant: 'primary', route: `/campaigns/${this.campaignId}/arcs/create` }
-        ],
-        globalItems,
-        globalBackLabel: 'Toutes les campagnes',
-        globalBackRoute: '/campaigns'
-      });
+      this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId));
     });
   }
 
@@ -94,7 +79,7 @@ export class SceneCreateComponent implements OnInit, OnDestroy {
       order: this.existingSceneCount + 1,
       icon: this.selectedIcon
     }).subscribe({
-      next: (created) => this.router.navigate(['/campaigns', this.campaignId, 'arcs', this.arcId, 'chapters', this.chapterId, 'scenes', created.id, 'edit']),
+      next: (created) => this.router.navigate(['/campaigns', this.campaignId, 'arcs', this.arcId, 'chapters', this.chapterId, 'scenes', created.id]),
       error: () => console.error('Erreur lors de la création de la scène')
     });
   }
@@ -104,6 +89,9 @@ export class SceneCreateComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.layoutService.hide();
+    // Volontairement vide : la sidebar reste prise en charge par le composant
+    // suivant (autre sous-route ou le composant detail parent) qui appellera
+    // show(). Eviter d'appeler hide() ici previent le clignotement / la
+    // disparition de la sidebar lors des navigations internes a la section.
   }
 }

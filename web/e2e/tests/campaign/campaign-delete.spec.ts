@@ -16,10 +16,12 @@ test.describe('Campaign delete', () => {
     page,
     request,
   }) => {
-    page.on('dialog', (dialog) => dialog.accept());
-
     await page.goto(`/campaigns/${campaign.id}`);
-    await page.getByRole('button', { name: /^Supprimer$/i }).click();
+    await page.getByRole('button', { name: /^Supprimer$/i }).first().click();
+
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole('button', { name: /^Supprimer$/i }).click();
 
     await expect(page).toHaveURL(/\/campaigns$/);
 
@@ -28,10 +30,12 @@ test.describe('Campaign delete', () => {
   });
 
   test('keeps the campaign when confirm is dismissed', async ({ page, request }) => {
-    page.on('dialog', (dialog) => dialog.dismiss());
-
     await page.goto(`/campaigns/${campaign.id}`);
-    await page.getByRole('button', { name: /^Supprimer$/i }).click();
+    await page.getByRole('button', { name: /^Supprimer$/i }).first().click();
+
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole('button', { name: /^Annuler$/i }).click();
 
     await expect(page).toHaveURL(new RegExp(`/campaigns/${campaign.id}$`));
 

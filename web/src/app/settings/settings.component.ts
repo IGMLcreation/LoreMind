@@ -8,6 +8,7 @@ import { Subscription } from 'rxjs';
 import { UpdatesService, UpdateStatus } from '../services/updates.service';
 import { ConfigService } from '../services/config.service';
 import { LicenseService, LicenseStatusDTO, BetaStatusDTO } from '../services/license.service';
+import { ConfirmDialogService } from '../shared/confirm-dialog/confirm-dialog.service';
 
 /**
  * Ecran de parametrage du LLM utilise par le Brain.
@@ -120,7 +121,8 @@ export class SettingsComponent implements OnInit {
     private router: Router,
     private updatesService: UpdatesService,
     public config: ConfigService,
-    private licenseService: LicenseService
+    private licenseService: LicenseService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -197,12 +199,20 @@ export class SettingsComponent implements OnInit {
   }
 
   disconnectPatreon(): void {
-    if (!confirm('Deconnecter ton compte Patreon ? Tu perdras l\'acces au canal beta.')) return;
-    this.licenseService.disconnect().subscribe(() => {
-      this.licenseStatus = null;
-      this.betaStatus = null;
-      this.successMessage = 'Compte Patreon deconnecte.';
-      this.loadLicense();
+    this.confirmDialog.confirm({
+      title: 'Deconnecter Patreon',
+      message: 'Deconnecter ton compte Patreon ?',
+      details: ['Tu perdras l\'acces au canal beta.'],
+      confirmLabel: 'Deconnecter',
+      variant: 'warning'
+    }).then(ok => {
+      if (!ok) return;
+      this.licenseService.disconnect().subscribe(() => {
+        this.licenseStatus = null;
+        this.betaStatus = null;
+        this.successMessage = 'Compte Patreon deconnecte.';
+        this.loadLicense();
+      });
     });
   }
 
@@ -256,23 +266,29 @@ export class SettingsComponent implements OnInit {
   }
 
   applyUpdate(): void {
-    if (!confirm('Telecharger et redemarrer les conteneurs maintenant ? L\'app sera indisponible quelques secondes.')) {
-      return;
-    }
-    this.updateApplying = true;
-    this.updateMessage = '';
-    this.updatesService.apply().subscribe({
-      next: (r) => {
-        this.updateApplying = false;
-        // Le redemarrage de core peut couper la connexion avant la reponse —
-        // dans ce cas r vaut null (gere par catchError dans le service).
-        this.updateMessage = r?.message
-          ?? 'Mise a jour declenchee. Rechargez la page dans 30s.';
-      },
-      error: () => {
-        this.updateApplying = false;
-        this.updateMessage = 'Mise a jour declenchee. Rechargez la page dans 30s.';
-      }
+    this.confirmDialog.confirm({
+      title: 'Mettre a jour',
+      message: 'Telecharger et redemarrer les conteneurs maintenant ?',
+      details: ['L\'app sera indisponible quelques secondes.'],
+      confirmLabel: 'Mettre à jour',
+      variant: 'warning'
+    }).then(ok => {
+      if (!ok) return;
+      this.updateApplying = true;
+      this.updateMessage = '';
+      this.updatesService.apply().subscribe({
+        next: (r) => {
+          this.updateApplying = false;
+          // Le redemarrage de core peut couper la connexion avant la reponse —
+          // dans ce cas r vaut null (gere par catchError dans le service).
+          this.updateMessage = r?.message
+            ?? 'Mise a jour declenchee. Rechargez la page dans 30s.';
+        },
+        error: () => {
+          this.updateApplying = false;
+          this.updateMessage = 'Mise a jour declenchee. Rechargez la page dans 30s.';
+        }
+      });
     });
   }
 
@@ -491,25 +507,33 @@ export class SettingsComponent implements OnInit {
   }
 
   deleteModel(name: string): void {
-    if (!confirm(`Supprimer le modele '${name}' ? L'espace disque sera libere.`)) return;
-    this.deletingModel = name;
-    this.errorMessage = '';
-    this.settingsService.deleteOllamaModel(name).subscribe({
-      next: () => {
-        this.deletingModel = null;
-        this.successMessage = `Modele ${name} supprime.`;
-        // Si l'utilisateur supprime le modele actuellement selectionne,
-        // on bascule sur le premier disponible (ou vide).
-        this.refreshModels();
-        if (this.settings && this.settings.llm_model === name) {
-          this.settings.llm_model = '';
-          this.ollamaModelMaxContext = 0;
+    this.confirmDialog.confirm({
+      title: 'Supprimer le modele',
+      message: `Supprimer le modele '${name}' ?`,
+      details: ['L\'espace disque sera libere.'],
+      confirmLabel: 'Supprimer',
+      variant: 'danger'
+    }).then(ok => {
+      if (!ok) return;
+      this.deletingModel = name;
+      this.errorMessage = '';
+      this.settingsService.deleteOllamaModel(name).subscribe({
+        next: () => {
+          this.deletingModel = null;
+          this.successMessage = `Modele ${name} supprime.`;
+          // Si l'utilisateur supprime le modele actuellement selectionne,
+          // on bascule sur le premier disponible (ou vide).
+          this.refreshModels();
+          if (this.settings && this.settings.llm_model === name) {
+            this.settings.llm_model = '';
+            this.ollamaModelMaxContext = 0;
+          }
+        },
+        error: (err) => {
+          this.deletingModel = null;
+          this.errorMessage = this.extractError(err, `Echec de la suppression de ${name}.`);
         }
-      },
-      error: (err) => {
-        this.deletingModel = null;
-        this.errorMessage = this.extractError(err, `Echec de la suppression de ${name}.`);
-      }
+      });
     });
   }
 

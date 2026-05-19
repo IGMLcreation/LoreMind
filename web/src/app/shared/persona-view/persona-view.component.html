@@ -34,7 +34,7 @@
       <section *ngIf="s.kind === 'TEXT'" class="pv-section">
         <h2 class="pv-section-title">{{ s.name }}</h2>
         <div class="pv-section-body">
-          <p [class.with-dropcap]="s.name === firstTextSectionName" class="pv-paragraph">
+          <p class="pv-paragraph">
             {{ firstParagraph(s.value) }}
           </p>
           <p *ngIf="restAfterFirstParagraph(s.value)" class="pv-paragraph">

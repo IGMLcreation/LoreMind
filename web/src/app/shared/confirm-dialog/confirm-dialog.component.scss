@@ -1,0 +1,127 @@
+.confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.confirm-modal {
+  background: #111827;
+  border: 1px solid #1f2937;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+
+  &.variant-warning { border-top: 4px solid #eab308; }
+  &.variant-danger  { border-top: 4px solid #ef4444; }
+  &.variant-info    { border-top: 4px solid #6c63ff; }
+}
+
+.confirm-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #1f2937;
+
+  h2 {
+    flex: 1;
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+  }
+}
+
+.confirm-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  flex-shrink: 0;
+
+  .variant-warning & { background: rgba(234, 179, 8, 0.15); color: #eab308; }
+  .variant-danger  & { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+  .variant-info    & { background: rgba(108, 99, 255, 0.15); color: #6c63ff; }
+}
+
+.btn-close {
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 6px;
+  display: flex;
+  transition: color 0.2s;
+
+  &:hover { color: white; }
+}
+
+.confirm-body {
+  padding: 1.25rem 1.5rem;
+  color: #d1d5db;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.confirm-message {
+  margin: 0;
+  white-space: pre-line;
+}
+
+.confirm-details {
+  margin: 0.875rem 0 0 1.25rem;
+  padding: 0;
+  color: #9ca3af;
+  font-size: 0.85rem;
+
+  li { margin-bottom: 0.25rem; }
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  background: #0d121d;
+  border-top: 1px solid #1f2937;
+}
+
+.btn-secondary {
+  padding: 0.6rem 1.25rem;
+  background: #1f2937;
+  color: #d1d5db;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover { background: #374151; }
+}
+
+.btn-confirm {
+  padding: 0.6rem 1.25rem;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  .variant-warning & { background: #eab308; color: #1f1300; &:hover { background: #d4a106; } }
+  .variant-danger  & { background: #ef4444; &:hover { background: #dc2626; } }
+  .variant-info    & { background: #6c63ff; &:hover { background: #5b52e0; } }
+}

@@ -107,3 +107,4 @@ docker-compose.override.yml
 # Relais OAuth Patreon (repo Gitea separe, clone localement pour facilite)
 # ============================================================================
 relay/
+scripts/bump-version.mjs

@@ -9,12 +9,13 @@ import { CampaignService } from '../../../services/campaign.service';
 import { CharacterService } from '../../../services/character.service';
 import { NpcService } from '../../../services/npc.service';
 import { PageService } from '../../../services/page.service';
-import { LayoutService, GlobalItem } from '../../../services/layout.service';
+import { LayoutService } from '../../../services/layout.service';
 import { PageTitleService } from '../../../services/page-title.service';
-import { Campaign, Chapter } from '../../../services/campaign.model';
+import { Chapter } from '../../../services/campaign.model';
 import { Page } from '../../../services/page.model';
-import { loadCampaignTreeData, buildCampaignTree } from '../../campaign-tree.helper';
+import { loadCampaignTreeData, buildCampaignSidebarConfig } from '../../campaign-tree.helper';
 import { ImageGalleryComponent } from '../../../shared/image-gallery/image-gallery.component';
+import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 
 /**
  * Écran de consultation d'un Chapitre (lecture seule).
@@ -49,7 +50,8 @@ export class ChapterViewComponent implements OnInit, OnDestroy {
     private npcService: NpcService,
     private pageService: PageService,
     private layoutService: LayoutService,
-    private pageTitleService: PageTitleService
+    private pageTitleService: PageTitleService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -86,20 +88,7 @@ export class ChapterViewComponent implements OnInit, OnDestroy {
       this.availablePages = pages;
       this.pageTitleService.set(chapter.name);
 
-      const globalItems: GlobalItem[] = allCampaigns.map((c: Campaign) => ({
-        id: c.id!, name: c.name, route: `/campaigns/${c.id}`
-      }));
-      this.layoutService.show({
-        title: campaign.name,
-        items: buildCampaignTree(this.campaignId, treeData),
-        footerLabel: 'Toutes les campagnes',
-        createActions: [
-          { id: 'create-arc', label: '+ Nouvel arc', variant: 'primary', route: `/campaigns/${this.campaignId}/arcs/create` }
-        ],
-        globalItems,
-        globalBackLabel: 'Toutes les campagnes',
-        globalBackRoute: '/campaigns'
-      });
+      this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId));
     });
   }
 
@@ -128,18 +117,24 @@ export class ChapterViewComponent implements OnInit, OnDestroy {
     const chapter = this.chapter;
     this.campaignService.getChapterDeletionImpact(chapter.id!).subscribe({
       next: impact => {
-        const lines = [`Supprimer le chapitre "${chapter.name}" ?`];
+        const details: string[] = [];
         if (impact.scenes > 0) {
-          lines.push('');
-          lines.push(`Cette action supprimera aussi : ${impact.scenes} scène${impact.scenes > 1 ? 's' : ''}.`);
+          details.push(`Cette action supprimera aussi : ${impact.scenes} scène${impact.scenes > 1 ? 's' : ''}.`);
         }
-        lines.push('');
-        lines.push('Cette action est irréversible.');
+        details.push('Cette action est irréversible.');
 
-        if (!confirm(lines.join('\n'))) return;
-        this.campaignService.deleteChapter(chapter.id!).subscribe({
-          next: () => this.router.navigate(['/campaigns', this.campaignId, 'arcs', this.arcId]),
-          error: () => console.error('Erreur lors de la suppression du chapitre')
+        this.confirmDialog.confirm({
+          title: 'Supprimer le chapitre',
+          message: `Supprimer le chapitre "${chapter.name}" ?`,
+          details,
+          confirmLabel: 'Supprimer',
+          variant: 'danger'
+        }).then(ok => {
+          if (!ok) return;
+          this.campaignService.deleteChapter(chapter.id!).subscribe({
+            next: () => this.router.navigate(['/campaigns', this.campaignId, 'arcs', this.arcId]),
+            error: () => console.error('Erreur lors de la suppression du chapitre')
+          });
         });
       },
       error: () => console.error('Impossible de récupérer les dépendances du chapitre')
@@ -147,6 +142,9 @@ export class ChapterViewComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.layoutService.hide();
+    // Volontairement vide : la sidebar reste prise en charge par le composant
+    // suivant (autre sous-route ou le composant detail parent) qui appellera
+    // show(). Eviter d'appeler hide() ici previent le clignotement / la
+    // disparition de la sidebar lors des navigations internes a la section.
   }
 }

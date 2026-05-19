@@ -9,16 +9,17 @@ import { CampaignService } from '../../../services/campaign.service';
 import { CharacterService } from '../../../services/character.service';
 import { NpcService } from '../../../services/npc.service';
 import { PageService } from '../../../services/page.service';
-import { LayoutService, GlobalItem } from '../../../services/layout.service';
+import { LayoutService } from '../../../services/layout.service';
 import { PageTitleService } from '../../../services/page-title.service';
-import { Campaign, Arc } from '../../../services/campaign.model';
+import { Arc } from '../../../services/campaign.model';
 import { Page } from '../../../services/page.model';
-import { loadCampaignTreeData, buildCampaignTree } from '../../campaign-tree.helper';
+import { loadCampaignTreeData, buildCampaignSidebarConfig } from '../../campaign-tree.helper';
 import { LoreLinkPickerComponent } from '../../../shared/lore-link-picker/lore-link-picker.component';
 import { AiChatDrawerComponent } from '../../../shared/ai-chat-drawer/ai-chat-drawer.component';
 import { ImageGalleryComponent } from '../../../shared/image-gallery/image-gallery.component';
 import { IconPickerComponent } from '../../../shared/icon-picker/icon-picker.component';
 import { CAMPAIGN_ICON_OPTIONS } from '../../campaign-icons';
+import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 
 /**
  * Écran de détail/modification d'un Arc.
@@ -78,7 +79,8 @@ export class ArcEditComponent implements OnInit, OnDestroy {
     private npcService: NpcService,
     private pageService: PageService,
     private layoutService: LayoutService,
-    private pageTitleService: PageTitleService
+    private pageTitleService: PageTitleService,
+    private confirmDialog: ConfirmDialogService
   ) {
     this.form = this.fb.group({
       name:        ['', Validators.required],
@@ -142,21 +144,7 @@ export class ArcEditComponent implements OnInit, OnDestroy {
         resolution:  arc.resolution ?? ''
       });
 
-      const globalItems: GlobalItem[] = allCampaigns.map((c: Campaign) => ({
-        id: c.id!, name: c.name, route: `/campaigns/${c.id}`
-      }));
-
-      this.layoutService.show({
-        title: campaign.name,
-        items: buildCampaignTree(this.campaignId, treeData),
-        footerLabel: 'Toutes les campagnes',
-        createActions: [
-          { id: 'create-arc', label: '+ Nouvel arc', variant: 'primary', route: `/campaigns/${this.campaignId}/arcs/create` }
-        ],
-        globalItems,
-        globalBackLabel: 'Toutes les campagnes',
-        globalBackRoute: '/campaigns'
-      });
+      this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId));
     });
   }
 
@@ -183,10 +171,18 @@ export class ArcEditComponent implements OnInit, OnDestroy {
   }
 
   delete(): void {
-    if (!confirm(`Supprimer l'arc "${this.arc?.name}" ? Cette action est irréversible.`)) return;
-    this.campaignService.deleteArc(this.arcId).subscribe({
-      next: () => this.router.navigate(['/campaigns', this.campaignId]),
-      error: () => console.error('Erreur lors de la suppression')
+    this.confirmDialog.confirm({
+      title: 'Supprimer l\'arc',
+      message: `Supprimer l'arc "${this.arc?.name}" ?`,
+      details: ['Cette action est irréversible.'],
+      confirmLabel: 'Supprimer',
+      variant: 'danger'
+    }).then(ok => {
+      if (!ok) return;
+      this.campaignService.deleteArc(this.arcId).subscribe({
+        next: () => this.router.navigate(['/campaigns', this.campaignId]),
+        error: () => console.error('Erreur lors de la suppression')
+      });
     });
   }
 
@@ -195,6 +191,9 @@ export class ArcEditComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.layoutService.hide();
+    // Volontairement vide : la sidebar reste prise en charge par le composant
+    // suivant (autre sous-route ou le composant detail parent) qui appellera
+    // show(). Eviter d'appeler hide() ici previent le clignotement / la
+    // disparition de la sidebar lors des navigations internes a la section.
   }
 }

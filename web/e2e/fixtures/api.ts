@@ -355,3 +355,55 @@ export async function getTemplateById(
   expect(res.ok(), `GET /api/templates/${templateId} -> ${res.status()}`).toBeTruthy();
   return res.json();
 }
+
+// ─────────────── GameSystem ───────────────
+
+export interface SeededGameSystem {
+  id: string;
+  name: string;
+}
+
+export async function seedGameSystem(
+  request: APIRequestContext,
+  opts: { name?: string; description?: string; author?: string; rulesMarkdown?: string } = {},
+): Promise<SeededGameSystem> {
+  const name = opts.name ?? `E2E GameSystem ${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+  const res = await request.post('/api/game-systems', {
+    data: {
+      name,
+      description: opts.description ?? null,
+      author: opts.author ?? null,
+      rulesMarkdown: opts.rulesMarkdown ?? null,
+      characterTemplate: [],
+      npcTemplate: [],
+      isPublic: false,
+    },
+  });
+  expect(res.ok(), `POST /api/game-systems -> ${res.status()}`).toBeTruthy();
+  const gs = await res.json();
+  return { id: gs.id, name };
+}
+
+export async function deleteGameSystem(
+  request: APIRequestContext,
+  id: string,
+): Promise<void> {
+  // Best-effort : ignore 404 si déjà supprimé par le test (ex: delete spec).
+  await request.delete(`/api/game-systems/${id}`);
+}
+
+export async function getGameSystemById(
+  request: APIRequestContext,
+  id: string,
+): Promise<{
+  id: string;
+  name: string;
+  description: string | null;
+  author: string | null;
+  rulesMarkdown: string | null;
+  isPublic: boolean;
+}> {
+  const res = await request.get(`/api/game-systems/${id}`);
+  expect(res.ok(), `GET /api/game-systems/${id} -> ${res.status()}`).toBeTruthy();
+  return res.json();
+}

@@ -14,6 +14,7 @@ import { Page } from '../../services/page.model';
 import { loadLoreSidebarData, buildLoreSidebarConfig } from '../lore-sidebar.helper';
 import { BreadcrumbComponent, BreadcrumbItem } from '../../shared/breadcrumb/breadcrumb.component';
 import { ImageGalleryComponent } from '../../shared/image-gallery/image-gallery.component';
+import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 
 /**
  * Écran de consultation d'une Page (mode lecture seule).
@@ -51,7 +52,8 @@ export class PageViewComponent implements OnInit, OnDestroy {
     private templateService: TemplateService,
     private pageService: PageService,
     private layoutService: LayoutService,
-    private pageTitleService: PageTitleService
+    private pageTitleService: PageTitleService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -129,20 +131,31 @@ export class PageViewComponent implements OnInit, OnDestroy {
   deletePage(): void {
     if (!this.page) return;
     const page = this.page;
-    if (!confirm(`Supprimer la page "${page.title}" ?\n\nCette action est irréversible.`)) return;
-    this.pageService.delete(page.id!).subscribe({
-      next: () => {
-        if (page.nodeId) {
-          this.router.navigate(['/lore', this.loreId, 'folders', page.nodeId]);
-        } else {
-          this.router.navigate(['/lore', this.loreId]);
-        }
-      },
-      error: () => console.error('Erreur lors de la suppression de la page')
+    this.confirmDialog.confirm({
+      title: 'Supprimer la page',
+      message: `Supprimer la page "${page.title}" ?`,
+      details: ['Cette action est irréversible.'],
+      confirmLabel: 'Supprimer',
+      variant: 'danger'
+    }).then(ok => {
+      if (!ok) return;
+      this.pageService.delete(page.id!).subscribe({
+        next: () => {
+          if (page.nodeId) {
+            this.router.navigate(['/lore', this.loreId, 'folders', page.nodeId]);
+          } else {
+            this.router.navigate(['/lore', this.loreId]);
+          }
+        },
+        error: () => console.error('Erreur lors de la suppression de la page')
+      });
     });
   }
 
   ngOnDestroy(): void {
-    this.layoutService.hide();
+    // Volontairement vide : la sidebar reste prise en charge par le composant
+    // suivant (autre sous-route ou le composant detail parent) qui appellera
+    // show(). Eviter d'appeler hide() ici previent le clignotement / la
+    // disparition de la sidebar lors des navigations internes a la section.
   }
 }

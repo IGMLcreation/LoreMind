@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { LucideAngularModule, FileText, Sparkles } from 'lucide-angular';
+import { LucideAngularModule, FileText, Sparkles, Plus } from 'lucide-angular';
 import { LoreService } from '../../services/lore.service';
 import { TemplateService } from '../../services/template.service';
 import { PageService } from '../../services/page.service';
@@ -34,6 +34,7 @@ import { AiChatDrawerComponent, ChatPrimaryAction } from '../../shared/ai-chat-d
 export class PageCreateComponent implements OnInit, OnDestroy {
   readonly FileText = FileText;
   readonly Sparkles = Sparkles;
+  readonly Plus = Plus;
 
   form: FormGroup;
   loreId = '';
@@ -117,6 +118,22 @@ export class PageCreateComponent implements OnInit, OnDestroy {
         });
 
         this.restoreDraft();
+
+        // Retour depuis template-create avec selectTemplateId=ID : selectionne
+        // automatiquement le template fraichement cree (gagne sur restoreDraft).
+        const selectId = this.route.snapshot.queryParamMap.get('selectTemplateId');
+        if (selectId) {
+          const tpl = this.templates.find(t => t.id === selectId);
+          if (tpl) this.selectTemplate(tpl);
+          // On nettoie le query-param pour ne pas re-selectionner si la page
+          // est rechargee plus tard.
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: { selectTemplateId: null },
+            queryParamsHandling: 'merge',
+            replaceUrl: true
+          });
+        }
       });
   }
 
@@ -322,6 +339,9 @@ Les clés du JSON doivent correspondre EXACTEMENT aux noms de champs indiqués. 
   }
 
   ngOnDestroy(): void {
-    this.layoutService.hide();
+    // Volontairement vide : la sidebar reste prise en charge par le composant
+    // suivant (autre sous-route ou le composant detail parent) qui appellera
+    // show(). Eviter d'appeler hide() ici previent le clignotement / la
+    // disparition de la sidebar lors des navigations internes a la section.
   }
 }

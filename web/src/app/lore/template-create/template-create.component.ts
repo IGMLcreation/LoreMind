@@ -176,32 +176,40 @@ export class TemplateCreateComponent implements OnInit, OnDestroy {
       defaultNodeId: raw.defaultNodeId,
       fields: this.fields
     }).subscribe({
-      next: () => this.navigateBack(),
+      next: (created) => this.navigateBack(created.id ?? null),
       error: () => console.error('Erreur lors de la création du template')
     });
   }
 
   cancel(): void {
-    this.navigateBack();
+    this.navigateBack(null);
   }
 
   /**
    * Redirige vers l'écran d'origine en dépilant le premier élément du query-param
    * `returnTo` (pile de retours séparés par des virgules, ex : `page-create` ou
    * `template-create,page-create`). Sinon retombe sur la page détail du Lore.
+   *
+   * Si `createdTemplateId` est fourni (cas submit), on l'embarque dans le
+   * query-param `selectTemplateId` pour que page-create puisse pre-selectionner
+   * le template fraichement cree.
    */
-  private navigateBack(): void {
+  private navigateBack(createdTemplateId: string | null): void {
     const { next, rest } = popReturnTo(this.route.snapshot.queryParamMap.get('returnTo'));
     if (next === 'page-create') {
-      this.router.navigate(['/lore', this.loreId, 'pages', 'create'], {
-        queryParams: rest ? { returnTo: rest } : {}
-      });
+      const queryParams: Record<string, string> = {};
+      if (rest) queryParams['returnTo'] = rest;
+      if (createdTemplateId) queryParams['selectTemplateId'] = createdTemplateId;
+      this.router.navigate(['/lore', this.loreId, 'pages', 'create'], { queryParams });
       return;
     }
     this.router.navigate(['/lore', this.loreId]);
   }
 
   ngOnDestroy(): void {
-    this.layoutService.hide();
+    // Volontairement vide : la sidebar reste prise en charge par le composant
+    // suivant (autre sous-route ou le composant detail parent) qui appellera
+    // show(). Eviter d'appeler hide() ici previent le clignotement / la
+    // disparition de la sidebar lors des navigations internes a la section.
   }
 }

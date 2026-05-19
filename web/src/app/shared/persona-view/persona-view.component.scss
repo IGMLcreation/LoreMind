@@ -290,17 +290,6 @@
 .pv-paragraph {
   margin: 0 0 14px;
   white-space: pre-wrap;
-
-  &.with-dropcap::first-letter {
-    float: left;
-    font-family: 'Cinzel', 'EB Garamond', Georgia, serif;
-    font-size: 3.5rem;
-    line-height: 0.9;
-    font-weight: 700;
-    color: #d1a878;
-    padding: 4px 8px 0 0;
-    margin-top: 4px;
-  }
 }
 
 // --- Etat vide --------------------------------------------------------------

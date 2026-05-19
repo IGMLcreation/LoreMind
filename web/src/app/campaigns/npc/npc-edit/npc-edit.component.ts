@@ -6,10 +6,12 @@ import { LucideAngularModule, Save, ArrowLeft, Drama, Trash2, Sparkles } from 'l
 import { NpcService } from '../../../services/npc.service';
 import { CampaignService } from '../../../services/campaign.service';
 import { GameSystemService } from '../../../services/game-system.service';
+import { CampaignSidebarService } from '../../../services/campaign-sidebar.service';
 import { TemplateField } from '../../../services/template.model';
 import { AiChatDrawerComponent } from '../../../shared/ai-chat-drawer/ai-chat-drawer.component';
 import { DynamicFieldsFormComponent } from '../../../shared/dynamic-fields-form/dynamic-fields-form.component';
 import { SingleImagePickerComponent } from '../../../shared/single-image-picker/single-image-picker.component';
+import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 
 /**
  * Editeur plein ecran d'une fiche de PNJ.
@@ -57,7 +59,9 @@ export class NpcEditComponent implements OnInit {
     private router: Router,
     private service: NpcService,
     private campaignService: CampaignService,
-    private gameSystemService: GameSystemService
+    private gameSystemService: GameSystemService,
+    private campaignSidebar: CampaignSidebarService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -67,6 +71,7 @@ export class NpcEditComponent implements OnInit {
 
     if (this.campaignId) {
       this.loadTemplateForCampaign(this.campaignId);
+      this.campaignSidebar.show(this.campaignId);
     }
 
     if (this.npcId) {
@@ -101,6 +106,7 @@ export class NpcEditComponent implements OnInit {
     });
   }
 
+
   submit(): void {
     if (!this.name.trim() || !this.campaignId) return;
     const payload = {
@@ -112,21 +118,36 @@ export class NpcEditComponent implements OnInit {
       keyValueValues: this.keyValueValues,
       campaignId: this.campaignId
     };
+    const isCreation = !this.npcId;
     const req = this.npcId
       ? this.service.update(this.npcId, { ...payload, id: this.npcId, order: this.order })
       : this.service.create(payload);
     req.subscribe({
-      next: () => this.back(),
+      next: (saved) => {
+        if (isCreation && saved.id) {
+          this.router.navigate(['/campaigns', this.campaignId, 'npcs', saved.id]);
+        } else {
+          this.back();
+        }
+      },
       error: () => console.error('Erreur sauvegarde Npc')
     });
   }
 
   deleteNpc(): void {
     if (!this.npcId) return;
-    if (!confirm(`Supprimer la fiche de "${this.name}" ? Cette action est irreversible.`)) return;
-    this.service.delete(this.npcId).subscribe({
-      next: () => this.back(),
-      error: () => console.error('Erreur suppression Npc')
+    this.confirmDialog.confirm({
+      title: 'Supprimer la fiche ?',
+      message: `Supprimer la fiche de "${this.name}" ?`,
+      details: ['Cette action est irreversible.'],
+      confirmLabel: 'Supprimer',
+      variant: 'danger'
+    }).then(ok => {
+      if (!ok || !this.npcId) return;
+      this.service.delete(this.npcId).subscribe({
+        next: () => this.back(),
+        error: () => console.error('Erreur suppression Npc')
+      });
     });
   }
 

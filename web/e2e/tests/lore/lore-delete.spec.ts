@@ -17,32 +17,31 @@ test.describe('Lore delete', () => {
     page,
     request,
   }) => {
-    let confirmMessage = '';
-    page.on('dialog', async (dialog) => {
-      confirmMessage = dialog.message();
-      await dialog.accept();
-    });
-
     await page.goto(`/lore/${seeded.id}`);
-    await page.getByRole('button', { name: /^Supprimer$/i }).click();
+    await page.getByRole('button', { name: /^Supprimer$/i }).first().click();
 
-    // Attente du dialog et du retour sur la liste des lores.
-    await expect(page).toHaveURL(/\/lore$/);
-    expect(confirmMessage).toContain(seeded.name);
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toContainText(seeded.name);
     // Lore contient un dossier seedé : le récapitulatif doit l'indiquer.
-    expect(confirmMessage).toMatch(/1 dossier/i);
+    await expect(dialog).toContainText(/1 dossier/i);
+
+    await dialog.getByRole('button', { name: /^Supprimer$/i }).click();
+
+    // Attente du retour sur la liste des lores.
+    await expect(page).toHaveURL(/\/lore$/);
 
     const res = await request.get(`/api/lores/${seeded.id}`);
     expect(res.status()).toBe(404);
   });
 
   test('keeps the lore when the confirm is dismissed', async ({ page, request }) => {
-    page.on('dialog', async (dialog) => {
-      await dialog.dismiss();
-    });
-
     await page.goto(`/lore/${seeded.id}`);
-    await page.getByRole('button', { name: /^Supprimer$/i }).click();
+    await page.getByRole('button', { name: /^Supprimer$/i }).first().click();
+
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole('button', { name: /^Annuler$/i }).click();
 
     // On reste sur le détail, le titre du lore est toujours visible.
     await expect(page.locator('.detail-header h1')).toHaveText(seeded.name);

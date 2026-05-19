@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { LucideAngularModule, Swords, Plus, Globe, Pencil, Trash2, User, Dices, Drama } from 'lucide-angular';
+import { LucideAngularModule, Swords, Plus, Globe, Pencil, Trash2, User, Dices, Drama, Check } from 'lucide-angular';
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError, switchMap, filter, map } from 'rxjs/operators';
@@ -14,11 +14,12 @@ import { CharacterService } from '../../../services/character.service';
 import { NpcService } from '../../../services/npc.service';
 import { Character } from '../../../services/character.model';
 import { Npc } from '../../../services/npc.model';
-import { LayoutService, GlobalItem } from '../../../services/layout.service';
+import { LayoutService } from '../../../services/layout.service';
 import { PageTitleService } from '../../../services/page-title.service';
 import { Campaign, Arc } from '../../../services/campaign.model';
 import { Lore } from '../../../services/lore.model';
-import { loadCampaignTreeData, buildCampaignTree, CampaignTreeData } from '../../campaign-tree.helper';
+import { loadCampaignTreeData, buildCampaignSidebarConfig, CampaignTreeData } from '../../campaign-tree.helper';
+import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 
 @Component({
   selector: 'app-campaign-detail',
@@ -36,6 +37,7 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   readonly User = User;
   readonly Dices = Dices;
   readonly Drama = Drama;
+  readonly Check = Check;
 
   campaign: Campaign | null = null;
   arcs: Arc[] = [];
@@ -61,6 +63,13 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   editLoreId = '';
   editGameSystemId = '';
 
+  /** Valeur sentinelle de l'option "Creer un systeme" dans le <select>. */
+  readonly CREATE_GAMESYSTEM_SENTINEL = '__create__';
+  /** Mode creation inline d'un GameSystem depuis le dropdown d'edition. */
+  creatingGameSystem = false;
+  newGameSystemName = '';
+  creatingGameSystemInFlight = false;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -70,7 +79,8 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
     private characterService: CharacterService,
     private npcService: NpcService,
     private layoutService: LayoutService,
-    private pageTitleService: PageTitleService
+    private pageTitleService: PageTitleService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -241,24 +251,7 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   }
 
   private showLayout(allCampaigns: Campaign[], data: CampaignTreeData): void {
-    const campaignId = this.campaign!.id!;
-    const globalItems: GlobalItem[] = allCampaigns.map(c => ({
-      id: c.id!,
-      name: c.name,
-      route: `/campaigns/${c.id}`
-    }));
-
-    this.layoutService.show({
-      title: this.campaign!.name,
-      items: buildCampaignTree(campaignId, data),
-      footerLabel: 'Toutes les campagnes',
-      createActions: [
-        { id: 'create-arc', label: '+ Nouvel arc', variant: 'primary', route: `/campaigns/${campaignId}/arcs/create` }
-      ],
-      globalItems,
-      globalBackLabel: 'Toutes les campagnes',
-      globalBackRoute: '/campaigns'
-    });
+    this.layoutService.show(buildCampaignSidebarConfig(this.campaign!, allCampaigns, data, this.campaign!.id!));
   }
 
   // ─────────────── Édition / suppression de la Campagne ───────────────
@@ -283,16 +276,83 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
 
   cancelEdit(): void {
     this.editing = false;
+    this.creatingGameSystem = false;
+    this.newGameSystemName = '';
+  }
+
+  /** Detecte la selection de l'option sentinelle dans le <select> GameSystem. */
+  onEditGameSystemChange(value: string): void {
+    if (value === this.CREATE_GAMESYSTEM_SENTINEL) {
+      this.editGameSystemId = '';
+      this.startCreateGameSystem();
+    }
+  }
+
+  startCreateGameSystem(): void {
+    this.creatingGameSystem = true;
+    this.newGameSystemName = '';
+  }
+
+  cancelCreateGameSystem(): void {
+    this.creatingGameSystem = false;
+    this.newGameSystemName = '';
+  }
+
+  submitCreateGameSystem(): void {
+    const name = this.newGameSystemName.trim();
+    if (!name || this.creatingGameSystemInFlight) return;
+    this.creatingGameSystemInFlight = true;
+    this.gameSystemService.create({ name, isPublic: false }).subscribe({
+      next: (created) => {
+        this.creatingGameSystemInFlight = false;
+        this.availableGameSystems = [...this.availableGameSystems, created];
+        if (created.id) {
+          this.editGameSystemId = created.id;
+        }
+        this.creatingGameSystem = false;
+        this.newGameSystemName = '';
+      },
+      error: () => {
+        this.creatingGameSystemInFlight = false;
+        console.error('Erreur lors de la creation du systeme de jeu');
+      }
+    });
   }
 
   saveEdit(): void {
     if (!this.campaign || !this.editName.trim()) return;
+    const newGameSystemId = this.editGameSystemId ? this.editGameSystemId : null;
+    const currentGameSystemId = this.campaign.gameSystemId ?? null;
+    const gameSystemChanged = newGameSystemId !== currentGameSystemId;
+    const hasSheets = this.characters.length > 0 || this.npcs.length > 0;
+    if (gameSystemChanged && hasSheets) {
+      const count = this.characters.length + this.npcs.length;
+      this.confirmDialog.confirm({
+        title: 'Changer le systeme de jeu ?',
+        message:
+          `Vous etes sur le point de changer le systeme de jeu de cette campagne. ` +
+          `Cela change egalement le template des fiches de PJ et PNJ.`,
+        details: [
+          `${count} fiche(s) existante(s) sont liees au template du systeme actuel.`,
+          `Leurs champs ne s'afficheront plus avec le nouveau systeme.`,
+          `Les donnees restent stockees : revenir a l'ancien systeme les rendra a nouveau visibles.`
+        ],
+        confirmLabel: 'Changer quand meme',
+        variant: 'warning'
+      }).then(ok => { if (ok) this.persistEdit(newGameSystemId); });
+      return;
+    }
+    this.persistEdit(newGameSystemId);
+  }
+
+  private persistEdit(newGameSystemId: string | null): void {
+    if (!this.campaign) return;
     this.campaignService.updateCampaign(this.campaign.id!, {
       name: this.editName.trim(),
       description: this.editDescription,
       playerCount: this.campaign.playerCount ?? 0,
       loreId: this.editLoreId ? this.editLoreId : null,
-      gameSystemId: this.editGameSystemId ? this.editGameSystemId : null
+      gameSystemId: newGameSystemId
     }).subscribe({
       next: (updated) => {
         this.campaign = updated;
@@ -321,18 +381,22 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
         if (impact.scenes > 0) parts.push(`${impact.scenes} scène${impact.scenes > 1 ? 's' : ''}`);
         if (impact.characters > 0) parts.push(`${impact.characters} personnage${impact.characters > 1 ? 's' : ''}`);
 
-        const lines = [`Supprimer définitivement la campagne "${campaign.name}" ?`];
-        if (parts.length) {
-          lines.push('');
-          lines.push(`Cette action supprimera aussi : ${parts.join(', ')}.`);
-        }
-        lines.push('');
-        lines.push('Cette action est irréversible.');
+        const details: string[] = [];
+        if (parts.length) details.push(`Sera aussi supprime : ${parts.join(', ')}.`);
+        details.push('Cette action est irreversible.');
 
-        if (!confirm(lines.join('\n'))) return;
-        this.campaignService.deleteCampaign(campaign.id!).subscribe({
-          next: () => this.router.navigate(['/campaigns']),
-          error: () => console.error('Erreur lors de la suppression de la campagne')
+        this.confirmDialog.confirm({
+          title: 'Supprimer la campagne ?',
+          message: `Supprimer definitivement la campagne "${campaign.name}" ?`,
+          details,
+          confirmLabel: 'Supprimer',
+          variant: 'danger'
+        }).then(ok => {
+          if (!ok) return;
+          this.campaignService.deleteCampaign(campaign.id!).subscribe({
+            next: () => this.router.navigate(['/campaigns']),
+            error: () => console.error('Erreur lors de la suppression de la campagne')
+          });
         });
       },
       error: () => console.error('Impossible de récupérer les dépendances de la campagne')
