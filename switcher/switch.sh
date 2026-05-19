@@ -64,33 +64,44 @@ fi
 export COMPOSE_PROJECT_NAME="${PROJECT_NAME}"
 echo "→ Projet compose cible: ${PROJECT_NAME}"
 
-# --- Mapping canal -> namespace --------------------------------------------
-# Le slash final est important : il est concatene avec le suffixe image
+# --- Mapping canal -> (namespace, tag) -------------------------------------
+# Le slash final du namespace est important : concatene avec le suffixe image
 # (core/brain/web) dans le docker-compose.yml.
+# Cote tag : le workflow CI pousse :latest pour le canal stable, :beta pour
+# le canal beta. Le switcher doit donc forcer ces deux variables ensemble.
 case "${CHANNEL}" in
-    stable) NAMESPACE="igmlcreation/loremind-" ;;
-    beta)   NAMESPACE="igmlcreation/loremind-beta-" ;;
+    stable)
+        NAMESPACE="igmlcreation/loremind-"
+        TAG="latest"
+        ;;
+    beta)
+        NAMESPACE="igmlcreation/loremind-beta-"
+        TAG="beta"
+        ;;
 esac
 
+# Helper : met a jour (ou ajoute) une variable key=value dans le .env.
+update_env_var() {
+    local key="$1"
+    local value="$2"
+    if grep -q "^${key}=" "${ENV_FILE}"; then
+        # Sur Alpine, sed -i sans backup. Le pattern '/' dans la valeur impose
+        # un delimiter alternatif (|).
+        sed -i "s|^${key}=.*|${key}=${value}|" "${ENV_FILE}"
+    else
+        # Ligne absente → on l'ajoute en fin de fichier la premiere fois.
+        {
+            echo ""
+            echo "# Ajoute automatiquement par le switcher de canal LoreMind."
+            echo "${key}=${value}"
+        } >> "${ENV_FILE}"
+    fi
+}
+
 # --- Etape 1 : sed le .env -------------------------------------------------
-# On veut REMPLACER une ligne existante IMAGE_NAMESPACE=... ou AJOUTER
-# si absente. Cas typique : .env utilisateur peut avoir cette ligne ou non.
-#
-# Sed -i avec un pattern qui matche la ligne entiere. Si pas de match,
-# on append.
-echo "→ Mise a jour de IMAGE_NAMESPACE dans .env (canal: ${CHANNEL})"
-if grep -q '^IMAGE_NAMESPACE=' "${ENV_FILE}"; then
-    # Sur Alpine, sed -i sans backup. Le pattern d'echappement '/' dans
-    # le namespace impose un delimiter alternatif (|).
-    sed -i "s|^IMAGE_NAMESPACE=.*|IMAGE_NAMESPACE=${NAMESPACE}|" "${ENV_FILE}"
-else
-    # Ligne absente → on l'ajoute en fin de fichier avec un commentaire.
-    {
-        echo ""
-        echo "# Ajoute automatiquement par le switcher de canal LoreMind."
-        echo "IMAGE_NAMESPACE=${NAMESPACE}"
-    } >> "${ENV_FILE}"
-fi
+echo "→ Mise a jour de IMAGE_NAMESPACE + TAG dans .env (canal: ${CHANNEL})"
+update_env_var "IMAGE_NAMESPACE" "${NAMESPACE}"
+update_env_var "TAG" "${TAG}"
 
 # --- Etape 2 : docker compose pull -----------------------------------------
 echo "→ Pull des nouvelles images (${NAMESPACE}*)"
@@ -109,4 +120,4 @@ docker compose up -d --no-deps core brain web
 
 echo ""
 echo "Switch vers le canal ${CHANNEL} termine avec succes."
-echo "Containers core/brain/web recrees avec ${NAMESPACE}*."
+echo "Containers core/brain/web recrees avec ${NAMESPACE}*:${TAG}."
