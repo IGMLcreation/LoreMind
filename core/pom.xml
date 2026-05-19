@@ -96,6 +96,15 @@
             <artifactId>bcprov-jdk18on</artifactId>
             <version>1.78.1</version>
         </dependency>
+        <!-- Google Tink : runtime requis par com.nimbusds.jose.crypto.Ed25519Verifier
+             (depuis Nimbus 9.x, la verification EdDSA delegue a Tink.subtle.Ed25519Verify).
+             Tink n'est PAS une dependance transitive de nimbus-jose-jwt → il faut
+             l'ajouter explicitement, sinon NoClassDefFoundError au premier verify(). -->
+        <dependency>
+            <groupId>com.google.crypto.tink</groupId>
+            <artifactId>tink</artifactId>
+            <version>1.14.1</version>
+        </dependency>
     </dependencies>
 
     <build>
