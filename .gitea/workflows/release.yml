@@ -85,3 +85,57 @@ jobs:
             ${{ env.GITEA_REGISTRY }}/${{ env.GITEA_REGISTRY_USER }}/${{ matrix.component }}:${{ steps.meta.outputs.version }}
             ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_NAMESPACE }}/loremind-beta-${{ matrix.component }}:beta
             ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_NAMESPACE }}/loremind-beta-${{ matrix.component }}:${{ steps.meta.outputs.version }}
+
+  # Job separe pour le sidecar `switcher`.
+  # Pourquoi separe : le switcher est volontairement HORS de IMAGE_NAMESPACE
+  # (cf. docker-compose.yml). Il est toujours pulle depuis le repo public
+  # `loremind-switcher`, quel que soit le canal de l'instance. On le build
+  # donc uniquement sur les releases stables — pas la peine de re-publier
+  # une variante beta du switcher, c'est une infrastructure neutre.
+  build-switcher:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Detect channel
+        id: meta
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          if [[ "${VERSION}" == *-beta* ]]; then
+            echo "channel=beta" >> $GITHUB_OUTPUT
+          else
+            echo "channel=stable" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Login to Gitea Registry
+        if: steps.meta.outputs.channel == 'stable'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.GITEA_REGISTRY }}
+          username: ${{ env.GITEA_REGISTRY_USER }}
+          password: ${{ secrets.DOCKER_PAT }}
+
+      - name: Login to GHCR
+        if: steps.meta.outputs.channel == 'stable'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.GHCR_REGISTRY }}
+          username: ${{ env.GHCR_NAMESPACE }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Build & push switcher (stable only)
+        if: steps.meta.outputs.channel == 'stable'
+        uses: docker/build-push-action@v5
+        with:
+          context: ./switcher
+          push: true
+          tags: |
+            ${{ env.GITEA_REGISTRY }}/${{ env.GITEA_REGISTRY_USER }}/switcher:latest
+            ${{ env.GITEA_REGISTRY }}/${{ env.GITEA_REGISTRY_USER }}/switcher:${{ steps.meta.outputs.version }}
+            ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_NAMESPACE }}/loremind-switcher:latest
+            ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_NAMESPACE }}/loremind-switcher:${{ steps.meta.outputs.version }}

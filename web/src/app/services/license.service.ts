@@ -20,6 +20,24 @@ export interface LicenseStatusDTO {
 }
 
 /**
+ * Etat du canal courant + dernier resultat de bascule (cf. ChannelStatusDTO cote backend).
+ */
+export type ChannelName = 'stable' | 'beta';
+export type SwitchStatus = 'IN_PROGRESS' | 'SUCCESS' | 'ERROR';
+
+export interface ChannelStatusDTO {
+  currentChannel: ChannelName;
+  switcherAvailable: boolean;
+  lastSwitch: {
+    id: string;
+    status: SwitchStatus;
+    channel: ChannelName;
+    message: string;
+    completedAt: string;
+  } | null;
+}
+
+/**
  * Reflet de UpdateCheckService.BetaStatus.
  */
 export interface BetaStatusDTO {
@@ -89,6 +107,25 @@ export class LicenseService {
   checkBeta(): Observable<BetaStatusDTO | null> {
     return this.http.get<BetaStatusDTO>('/api/admin/updates/check-beta', this.authOptions).pipe(
       catchError(() => of(null))
+    );
+  }
+
+  /** Etat du canal courant et dernier resultat de switch (pour polling UI). */
+  getChannelStatus(): Observable<ChannelStatusDTO | null> {
+    return this.http.get<ChannelStatusDTO>(`${this.apiUrl}/channel`, this.authOptions).pipe(
+      catchError(() => of(null))
+    );
+  }
+
+  /**
+   * Declenche un switch de canal. 202 + { id, channel } si accepte,
+   * sinon erreur (403 = pas de licence, 503 = sidecar indispo, etc.).
+   */
+  switchChannel(channel: ChannelName): Observable<{ id: string; channel: ChannelName } | { error: string }> {
+    return this.http.post<{ id: string; channel: ChannelName }>(
+      `${this.apiUrl}/channel/switch`, { channel }, this.authOptions
+    ).pipe(
+      catchError((err) => of({ error: err?.error?.error ?? 'Echec du switch de canal' }))
     );
   }
 }

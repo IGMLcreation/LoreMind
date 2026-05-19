@@ -1,13 +1,13 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { interval, switchMap, Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LucideAngularModule, ArrowLeft, RefreshCw, Save, Check, AlertCircle, Download, Trash2, Plus, X, Heart, Link2, Unlink } from 'lucide-angular';
 import { SettingsService, AppSettings, AppSettingsUpdate, OneMinModelGroup, OllamaPullEvent } from '../services/settings.service';
-import { Subscription } from 'rxjs';
 import { UpdatesService, UpdateStatus } from '../services/updates.service';
 import { ConfigService } from '../services/config.service';
-import { LicenseService, LicenseStatusDTO, BetaStatusDTO } from '../services/license.service';
+import { LicenseService, LicenseStatusDTO, BetaStatusDTO, ChannelStatusDTO, ChannelName } from '../services/license.service';
 import { ConfirmDialogService } from '../shared/confirm-dialog/confirm-dialog.service';
 
 /**
@@ -28,7 +28,7 @@ import { ConfirmDialogService } from '../shared/confirm-dialog/confirm-dialog.se
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.scss']
 })
-export class SettingsComponent implements OnInit {
+export class SettingsComponent implements OnInit, OnDestroy {
 
   readonly ArrowLeft = ArrowLeft;
   readonly RefreshCw = RefreshCw;
@@ -52,6 +52,17 @@ export class SettingsComponent implements OnInit {
   /** Etat du canal beta (digests des images privees). */
   betaStatus: BetaStatusDTO | null = null;
   betaChecking = false;
+
+  // --- Bascule de canal stable <-> beta via sidecar switcher ---
+  channelStatus: ChannelStatusDTO | null = null;
+  /** True pendant le polling apres clic. Bloque les boutons. */
+  switchInFlight = false;
+  /** ID de la commande de switch en cours, pour ignorer les vieux resultats. */
+  private switchCommandId: string | null = null;
+  /** Subscription du polling pour pouvoir l'arreter. */
+  private switchPollSub: Subscription | null = null;
+  /** Erreur affichee si le switch a echoue. */
+  switchError = '';
 
   // --- Pull / delete de modeles Ollama ---
   /** Dialog d'ajout de modele ouvert/ferme. */
@@ -131,6 +142,7 @@ export class SettingsComponent implements OnInit {
       this.checkUpdates();
     }
     this.loadLicense();
+    this.loadChannelStatus();
   }
 
   // --- Licence Patreon ---------------------------------------------------
@@ -235,6 +247,106 @@ export class SettingsComponent implements OnInit {
       },
       error: () => { this.betaChecking = false; }
     });
+  }
+
+  // --- Bascule de canal stable <-> beta --------------------------------------
+
+  loadChannelStatus(): void {
+    this.licenseService.getChannelStatus().subscribe({
+      next: (s) => {
+        this.channelStatus = s;
+        // Si on revient sur l'ecran apres un reload (post-switch reussi),
+        // on affiche le dernier resultat eventuel jusqu'a interaction utilisateur.
+      },
+      error: () => { this.channelStatus = null; }
+    });
+  }
+
+  /**
+   * Declenche un switch de canal. La sequence cote UI :
+   *   1. Confirm modal (action destructrice : recreate des containers)
+   *   2. POST /api/license/channel/switch -> 202 avec l'ID de la commande
+   *   3. Polling /api/license/channel toutes les 2s jusqu'a status != IN_PROGRESS
+   *   4. Si SUCCESS : la page va se rendre injoignable (Core recree). On affiche
+   *      "Recharge la page dans quelques secondes" et on essaie de poll quand
+   *      meme — au retour de Core, on detectera SUCCESS et on rechargera auto.
+   *   5. Si ERROR : on affiche le message d'erreur et on debloque les boutons.
+   */
+  requestChannelSwitch(target: ChannelName): void {
+    const confirmMessage = target === 'beta'
+      ? 'Basculer LoreMind sur le canal beta ? Les containers core/brain/web vont etre recrees avec les images beta. L\'application sera indisponible 10-30 secondes.'
+      : 'Repasser LoreMind sur le canal stable ? Les containers core/brain/web vont etre recrees avec les images stables. L\'application sera indisponible 10-30 secondes.';
+
+    this.confirmDialog.confirm({
+      title: target === 'beta' ? 'Passer en beta ?' : 'Repasser en stable ?',
+      message: confirmMessage,
+      details: [
+        'Les donnees (DB, images) sont preservees.',
+        'Tu pourras refaire le chemin inverse a tout moment depuis cet ecran.'
+      ],
+      confirmLabel: target === 'beta' ? 'Passer en beta' : 'Repasser en stable',
+      variant: 'warning'
+    }).then(ok => {
+      if (!ok) return;
+      this.doChannelSwitch(target);
+    });
+  }
+
+  private doChannelSwitch(target: ChannelName): void {
+    this.switchInFlight = true;
+    this.switchError = '';
+    this.licenseService.switchChannel(target).subscribe((res) => {
+      if ('error' in res) {
+        this.switchError = res.error;
+        this.switchInFlight = false;
+        return;
+      }
+      this.switchCommandId = res.id;
+      this.startSwitchPolling();
+    });
+  }
+
+  /**
+   * Poll /api/license/channel toutes les 2s. S'arrete quand on detecte un
+   * resultat avec un ID >= a celui qu'on a soumis (le sidecar le met a jour
+   * a la fin de son traitement).
+   */
+  private startSwitchPolling(): void {
+    this.stopSwitchPolling();
+    this.switchPollSub = interval(2000).pipe(
+      switchMap(() => this.licenseService.getChannelStatus())
+    ).subscribe((status) => {
+      if (!status) return;
+      this.channelStatus = status;
+      const last = status.lastSwitch;
+      if (!last || last.id !== this.switchCommandId) return;
+      if (last.status === 'SUCCESS') {
+        // La page va se rafraichir auto via l'update-banner qui detecte le
+        // restart de Core. On laisse switchInFlight a true pour bloquer
+        // toute autre action en attendant.
+        this.stopSwitchPolling();
+        this.switchInFlight = false;
+      } else if (last.status === 'ERROR') {
+        this.switchError = last.message || 'Echec du switch';
+        this.stopSwitchPolling();
+        this.switchInFlight = false;
+      }
+      // IN_PROGRESS : on continue a poll.
+    });
+  }
+
+  private stopSwitchPolling(): void {
+    if (this.switchPollSub) {
+      this.switchPollSub.unsubscribe();
+      this.switchPollSub = null;
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.stopSwitchPolling();
+    if (this.pullSubscription) {
+      this.pullSubscription.unsubscribe();
+    }
   }
 
   /**

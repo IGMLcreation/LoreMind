@@ -322,6 +322,42 @@
   accent-color: #6c63ff;
 }
 
+.channel-switch {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.channel-current {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+
+  .channel-label { color: #9ca3af; }
+}
+.channel-badge {
+  padding: 0.2rem 0.65rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+
+  &.channel-stable {
+    background: rgba(76, 175, 80, 0.2);
+    color: #81c784;
+  }
+  &.channel-beta {
+    background: rgba(108, 99, 255, 0.2);
+    color: #a39bff;
+  }
+}
+
 .badge-ok {
   margin-left: auto;
   background: rgba(76, 175, 80, 0.2);
