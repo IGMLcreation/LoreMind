@@ -26,6 +26,7 @@ from app.domain.models import (
     NpcSummary,
     ChatMessage,
     GameSystemContext,
+    JournalEntrySummary,
     LoreStructuralContext,
     NarrativeEntityContext,
     PageContext,
@@ -33,6 +34,7 @@ from app.domain.models import (
     PageSummary,
     SceneBranchHint,
     SceneSummary,
+    SessionContext,
 )
 from app.domain.ports import LLMProvider, LLMProviderError
 from app.infrastructure.ollama_adapter import OllamaLLMProvider
@@ -41,7 +43,7 @@ from app.infrastructure.onemin_adapter import OneMinAiLLMProvider
 app = FastAPI(
     title="LoreMind Brain",
     description="Backend IA pour la génération de contenu narratif.",
-    version="0.8.7-beta",
+    version="0.9.0-beta",
 )
 
 
@@ -243,13 +245,34 @@ class GameSystemContextDTO(BaseModel):
     sections: dict[str, str] = Field(default_factory=dict)
 
 
+class JournalEntrySummaryDTO(BaseModel):
+    """Une entrée du journal de session — type + contenu + horodatage."""
+
+    type: str
+    content: str
+    occurred_at: str | None = None
+
+
+class SessionContextDTO(BaseModel):
+    """Contexte d'une Session de jeu en cours (Play Context).
+
+    Injecté par le Core quand le chat est ancré sur une Session.
+    Contient le journal chronologique (déjà plafonné côté Core).
+    """
+
+    session_name: str
+    active: bool
+    started_at: str | None = None
+    entries: list[JournalEntrySummaryDTO] = Field(default_factory=list)
+
+
 class ChatStreamRequestDTO(BaseModel):
     """Requête de chat streamé : historique + contextes structurels.
 
-    Les 4 contextes (lore, page, campaign, narrative_entity) sont optionnels,
-    mais au moins l'un des deux "niveaux haut" (lore_context ou
-    campaign_context) doit être fourni. Le validateur `check_scope` applique
-    cette règle à la frontière HTTP.
+    Les contextes (lore, page, campaign, narrative_entity, session) sont
+    optionnels, mais au moins l'un des contextes "racines" (lore_context,
+    campaign_context ou session_context) doit être fourni. Le validateur
+    `check_scope` applique cette règle à la frontière HTTP.
     """
 
     messages: list[ChatMessageDTO] = Field(min_length=1)
@@ -258,10 +281,15 @@ class ChatStreamRequestDTO(BaseModel):
     campaign_context: CampaignContextDTO | None = None
     narrative_entity: NarrativeEntityDTO | None = None
     game_system_context: GameSystemContextDTO | None = None
+    session_context: SessionContextDTO | None = None
 
     def has_scope(self) -> bool:
-        """Vrai si au moins un contexte racine (Lore ou Campagne) est fourni."""
-        return self.lore_context is not None or self.campaign_context is not None
+        """Vrai si au moins un contexte racine (Lore, Campagne ou Session) est fourni."""
+        return (
+            self.lore_context is not None
+            or self.campaign_context is not None
+            or self.session_context is not None
+        )
 
 
 # --- Factories d'injection de dépendance ---
@@ -385,6 +413,7 @@ async def chat_stream(
     campaign_context = _to_campaign_context(body.campaign_context)
     narrative_entity = _to_narrative_entity(body.narrative_entity)
     game_system_context = _to_game_system_context(body.game_system_context)
+    session_context = _to_session_context(body.session_context)
 
     # --- Comptage tokens pour la jauge de contexte frontend ---
     # On construit le system prompt une fois ici pour le compter — le use case
@@ -397,6 +426,7 @@ async def chat_stream(
         campaign_context=campaign_context,
         narrative_entity=narrative_entity,
         game_system_context=game_system_context,
+        session_context=session_context,
     )
     # Dernier message = "current" (souvent user), le reste = historique accumulé.
     current_msg = messages[-1] if messages else None
@@ -421,6 +451,7 @@ async def chat_stream(
                 campaign_context=campaign_context,
                 narrative_entity=narrative_entity,
                 game_system_context=game_system_context,
+                session_context=session_context,
             ):
                 # json.dumps avec ensure_ascii=False pour préserver les accents
                 yield f"data: {json.dumps({'token': token}, ensure_ascii=False)}\n\n"
@@ -866,4 +897,23 @@ def _to_game_system_context(dto: GameSystemContextDTO | None) -> GameSystemConte
         system_name=dto.system_name,
         system_description=dto.system_description,
         sections=dict(dto.sections),
+    )
+
+
+def _to_session_context(dto: SessionContextDTO | None) -> SessionContext | None:
+    if dto is None:
+        return None
+    entries = [
+        JournalEntrySummary(
+            type=e.type,
+            content=e.content,
+            occurred_at=e.occurred_at,
+        )
+        for e in dto.entries
+    ]
+    return SessionContext(
+        session_name=dto.session_name,
+        active=dto.active,
+        started_at=dto.started_at,
+        entries=entries,
     )

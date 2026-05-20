@@ -47,6 +47,7 @@ export type NarrativeEntityType = 'arc' | 'chapter' | 'scene' | 'character' | 'n
 export class AiChatService {
   private readonly loreEndpoint = '/api/ai/chat/stream';
   private readonly campaignEndpoint = '/api/ai/chat/stream-campaign';
+  private readonly sessionEndpoint = '/api/ai/chat/stream-session';
 
   /**
    * Streame la réponse de l'IA pour un historique de messages donné (chat ancré Lore).
@@ -89,7 +90,16 @@ export class AiChatService {
     return this.streamSse(this.campaignEndpoint, body);
   }
 
-  /** Plumbing SSE mutualisé entre les 2 endpoints (Lore et Campaign). */
+  /**
+   * Streame la réponse de l'IA pour un chat pendant une Session de jeu.
+   * Le backend reconstitue automatiquement le contexte complet (lore +
+   * campagne + système de JDR + journal de session).
+   */
+  streamChatForSession(sessionId: string, messages: ChatMessage[]): Observable<ChatStreamEvent> {
+    return this.streamSse(this.sessionEndpoint, { sessionId, messages });
+  }
+
+  /** Plumbing SSE mutualisé entre les endpoints (Lore / Campaign / Session). */
   private streamSse(endpoint: string, body: Record<string, unknown>): Observable<ChatStreamEvent> {
     return new Observable<ChatStreamEvent>((subscriber) => {
       const controller = new AbortController();

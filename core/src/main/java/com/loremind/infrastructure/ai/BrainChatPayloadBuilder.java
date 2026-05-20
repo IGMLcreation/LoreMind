@@ -14,6 +14,8 @@ import com.loremind.domain.generationcontext.LoreStructuralContext;
 import com.loremind.domain.generationcontext.LoreStructuralContext.PageSummary;
 import com.loremind.domain.generationcontext.NarrativeEntityContext;
 import com.loremind.domain.generationcontext.PageContext;
+import com.loremind.domain.generationcontext.SessionContext;
+import com.loremind.domain.generationcontext.SessionContext.JournalEntrySummary;
 import org.springframework.stereotype.Component;
 
 import java.util.LinkedHashMap;
@@ -58,7 +60,33 @@ public class BrainChatPayloadBuilder {
         if (request.gameSystemContext() != null) {
             root.put("game_system_context", gameSystemContextToMap(request.gameSystemContext()));
         }
+        if (request.sessionContext() != null) {
+            root.put("session_context", sessionContextToMap(request.sessionContext()));
+        }
         return root;
+    }
+
+    private Map<String, Object> sessionContextToMap(SessionContext sc) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("session_name", sc.sessionName());
+        map.put("active", sc.active());
+        if (sc.startedAt() != null) {
+            map.put("started_at", sc.startedAt().toString());
+        }
+        map.put("entries", sc.entries() != null
+                ? sc.entries().stream().map(this::journalEntryToMap).collect(Collectors.toList())
+                : List.of());
+        return map;
+    }
+
+    private Map<String, Object> journalEntryToMap(JournalEntrySummary e) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("type", e.type());
+        map.put("content", e.content());
+        if (e.occurredAt() != null) {
+            map.put("occurred_at", e.occurredAt().toString());
+        }
+        return map;
     }
 
     private Map<String, Object> gameSystemContextToMap(GameSystemContext gs) {

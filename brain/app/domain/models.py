@@ -229,3 +229,30 @@ class GameSystemContext:
     system_name: str
     system_description: str | None
     sections: dict[str, str]
+
+
+@dataclass(frozen=True)
+class JournalEntrySummary:
+    """Une entrée du journal d'une Session : type + contenu + horodatage."""
+
+    type: str
+    content: str
+    occurred_at: str | None
+
+
+@dataclass(frozen=True)
+class SessionContext:
+    """Contexte d'une Session de jeu en cours (Play Context).
+
+    Injecté dans le system prompt pendant qu'une partie est jouée pour que
+    l'IA voit le nom de la session, son statut, et un historique chronologique
+    des évènements/notes/jets capturés par le MJ.
+
+    Le journal a déjà été tronqué côté Core (cap à ~80 entrées récentes)
+    pour ne pas saturer le contexte LLM sur les sessions très longues.
+    """
+
+    session_name: str
+    active: bool
+    started_at: str | None
+    entries: list[JournalEntrySummary]

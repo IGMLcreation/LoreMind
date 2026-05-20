@@ -36,7 +36,8 @@ public record ChatRequest(
         PageContext pageContext,
         CampaignStructuralContext campaignContext,
         NarrativeEntityContext narrativeEntity,
-        GameSystemContext gameSystemContext) {
+        GameSystemContext gameSystemContext,
+        SessionContext sessionContext) {
 
     public static Builder builder() {
         return new Builder();
@@ -50,6 +51,7 @@ public record ChatRequest(
         private CampaignStructuralContext campaignContext;
         private NarrativeEntityContext narrativeEntity;
         private GameSystemContext gameSystemContext;
+        private SessionContext sessionContext;
 
         private Builder() {}
 
@@ -83,9 +85,14 @@ public record ChatRequest(
             return this;
         }
 
+        public Builder sessionContext(SessionContext sessionContext) {
+            this.sessionContext = sessionContext;
+            return this;
+        }
+
         public ChatRequest build() {
             return new ChatRequest(messages, loreContext, pageContext,
-                    campaignContext, narrativeEntity, gameSystemContext);
+                    campaignContext, narrativeEntity, gameSystemContext, sessionContext);
         }
     }
 }

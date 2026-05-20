@@ -32,6 +32,7 @@ export const routes: Routes = [
   { path: 'campaigns/:campaignId/arcs/:arcId/chapters/:chapterId/scenes/create', loadComponent: () => import('./campaigns/scene/scene-create/scene-create.component').then(m => m.SceneCreateComponent) },
   { path: 'campaigns/:campaignId/arcs/:arcId/chapters/:chapterId/scenes/:sceneId', loadComponent: () => import('./campaigns/scene/scene-view/scene-view.component').then(m => m.SceneViewComponent) },
   { path: 'campaigns/:campaignId/arcs/:arcId/chapters/:chapterId/scenes/:sceneId/edit', loadComponent: () => import('./campaigns/scene/scene-edit/scene-edit.component').then(m => m.SceneEditComponent) },
+  { path: 'sessions/:id', loadComponent: () => import('./sessions/session-detail/session-detail.component').then(m => m.SessionDetailComponent) },
   { path: 'game-systems', loadComponent: () => import('./game-systems/game-systems.component').then(m => m.GameSystemsComponent) },
   { path: 'game-systems/create', loadComponent: () => import('./game-systems/game-system-edit/game-system-edit.component').then(m => m.GameSystemEditComponent) },
   { path: 'game-systems/:id/edit', loadComponent: () => import('./game-systems/game-system-edit/game-system-edit.component').then(m => m.GameSystemEditComponent) },

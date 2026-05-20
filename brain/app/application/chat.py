@@ -27,6 +27,7 @@ from app.domain.models import (
     NarrativeEntityContext,
     PageContext,
     PageSummary,
+    SessionContext,
 )
 from app.domain.ports import LLMChatProvider
 
@@ -67,6 +68,7 @@ class ChatUseCase:
         campaign_context: CampaignStructuralContext | None = None,
         narrative_entity: NarrativeEntityContext | None = None,
         game_system_context: GameSystemContext | None = None,
+        session_context: SessionContext | None = None,
     ) -> AsyncIterator[str]:
         """Streame les tokens de la réponse assistant pour le dernier message user.
 
@@ -76,7 +78,7 @@ class ChatUseCase:
         cette règle à la frontière HTTP.
         """
         system_prompt = self._build_system_prompt(
-            lore_context, page_context, campaign_context, narrative_entity, game_system_context
+            lore_context, page_context, campaign_context, narrative_entity, game_system_context, session_context
         )
         async for token in self._llm.stream_chat(
             messages,
@@ -92,12 +94,13 @@ class ChatUseCase:
         campaign_context: CampaignStructuralContext | None = None,
         narrative_entity: NarrativeEntityContext | None = None,
         game_system_context: GameSystemContext | None = None,
+        session_context: SessionContext | None = None,
     ) -> str:
         """Version publique — utilisée par le controller HTTP pour compter
         les tokens du system prompt avant de streamer (jauge de contexte).
         """
         return self._build_system_prompt(
-            lore_context, page_context, campaign_context, narrative_entity, game_system_context
+            lore_context, page_context, campaign_context, narrative_entity, game_system_context, session_context
         )
 
     # --- Construction du system prompt --------------------------------------
@@ -109,6 +112,7 @@ class ChatUseCase:
         campaign: CampaignStructuralContext | None,
         narrative: NarrativeEntityContext | None,
         game_system: GameSystemContext | None = None,
+        session: SessionContext | None = None,
     ) -> str:
         sections = [_BASE_SYSTEM]
         if lore is not None:
@@ -121,6 +125,8 @@ class ChatUseCase:
             sections.append(self._format_page(page))
         if narrative is not None:
             sections.append(self._format_narrative_entity(narrative))
+        if session is not None:
+            sections.append(self._format_session(session))
         return "\n\n".join(sections)
 
     # --- Blocs Lore ---------------------------------------------------------
@@ -340,6 +346,53 @@ class ChatUseCase:
             "d'ambiance. Les noms propres (classes, sorts, monstres) doivent "
             "venir de ces règles — n'en invente pas d'autres.\n\n"
             f"{sections_block}"
+        )
+
+    # --- Bloc Session de jeu (Play Context) ---------------------------------
+
+    _ENTRY_TYPE_LABELS = {
+        "NOTE": "Note du MJ",
+        "EVENT": "Évènement",
+        "DICE_ROLL": "Jet de dés",
+        "PLAYER_ACTION": "Action joueur",
+    }
+
+    @staticmethod
+    def _format_session(sc: SessionContext) -> str:
+        """Bloc journal de la session en cours.
+
+        Fournit à l'IA le contexte temporel : ce qui s'est passé jusqu'ici,
+        dans l'ordre chronologique. Permet de référencer un PNJ rencontré,
+        rappeler un évènement antérieur, ou rebondir sur une action joueur.
+        """
+        status = "EN COURS" if sc.active else "TERMINÉE"
+        started = f" — démarrée {sc.started_at}" if sc.started_at else ""
+
+        if not sc.entries:
+            entries_block = "(Aucune entrée dans le journal pour l'instant — la session vient de commencer.)"
+        else:
+            lines: list[str] = []
+            for e in sc.entries:
+                label = ChatUseCase._ENTRY_TYPE_LABELS.get(e.type, e.type)
+                ts = f" [{e.occurred_at}]" if e.occurred_at else ""
+                # Indentation sur les contenus multi-lignes pour préserver la lisibilité
+                content = e.content.replace("\n", "\n    ")
+                lines.append(f"- {label}{ts} : {content}")
+            entries_block = "\n".join(lines)
+
+        return (
+            "--- SESSION DE JEU EN COURS ---\n"
+            f"Nom : {sc.session_name}\n"
+            f"Statut : {status}{started}\n\n"
+            "Journal chronologique (du plus ancien au plus récent) :\n"
+            f"{entries_block}\n\n"
+            "IMPORTANT : tu es l'assistant du MJ PENDANT la partie. Tes réponses doivent :\n"
+            "- Tenir compte des évènements déjà capturés dans le journal ci-dessus.\n"
+            "- Être concrètes et utiles en temps réel : descriptions sensorielles, "
+            "réactions de PNJ cohérentes avec leur fiche, suggestions de complications "
+            "qui s'enchaînent à ce qui vient de se passer.\n"
+            "- Éviter les longs développements : le MJ est en train d'animer une partie, "
+            "il a besoin d'idées immédiatement actionnables."
         )
 
     @staticmethod

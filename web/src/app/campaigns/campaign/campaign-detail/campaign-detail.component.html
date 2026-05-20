@@ -196,4 +196,60 @@
     </div>
   </section>
 
+  <!-- ============ Sessions de jeu ============ -->
+  <section class="detail-section sessions-section" *ngIf="!editing">
+    <div class="section-header">
+      <h2>
+        <lucide-icon [img]="Dices" [size]="18"></lucide-icon>
+        Sessions de jeu
+      </h2>
+
+      <!-- Cas 1 : aucune session active dans l'app → on peut lancer -->
+      <button *ngIf="!activeSessionGlobal"
+              class="btn-add"
+              [disabled]="startingSession"
+              (click)="startSession()">
+        <lucide-icon [img]="Play" [size]="14"></lucide-icon>
+        Lancer une nouvelle session
+      </button>
+
+      <!-- Cas 2 : session active sur cette campagne → reprendre -->
+      <button *ngIf="activeSessionOnCurrentCampaign"
+              class="btn-add"
+              (click)="openSession(activeSessionOnCurrentCampaign)">
+        <lucide-icon [img]="Play" [size]="14"></lucide-icon>
+        Reprendre la session en cours
+      </button>
+
+      <!-- Cas 3 : session active sur une autre campagne → bloqué -->
+      <button *ngIf="isLaunchBlockedByOtherCampaign"
+              class="btn-add"
+              disabled
+              title="Une session est déjà en cours sur une autre campagne. Termine-la d'abord.">
+        <lucide-icon [img]="Play" [size]="14"></lucide-icon>
+        Session en cours ailleurs
+      </button>
+    </div>
+
+    <div class="sessions-grid" *ngIf="sessions.length > 0">
+      <div class="session-card"
+           *ngFor="let session of sessions"
+           [class.session-card--active]="session.active"
+           (click)="openSession(session)">
+        <lucide-icon [img]="Dices" [size]="20" class="session-icon"></lucide-icon>
+        <div class="session-info">
+          <span class="session-name">{{ session.name }}</span>
+          <span class="session-meta">
+            <span class="session-status" *ngIf="session.active">● En cours</span>
+            <span *ngIf="!session.active">Terminée le {{ session.endedAt | date:'dd/MM/yyyy' }}</span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="empty-state empty-state--compact" *ngIf="sessions.length === 0">
+      <p>Aucune session de jeu pour le moment.</p>
+    </div>
+  </section>
+
 </div>

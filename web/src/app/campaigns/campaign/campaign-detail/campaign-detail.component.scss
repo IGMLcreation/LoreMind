@@ -382,3 +382,57 @@
 
   &:hover { background: #5b52e0; }
 }
+
+// ─────────────── Sessions de jeu (Play Context) ───────────────
+.sessions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+
+.session-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #111827;
+  border: 1px solid #1f2937;
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.2s;
+
+  &:hover { border-color: #6c63ff; transform: translateY(-1px); }
+
+  &--active {
+    border-color: #10b981;
+    background: linear-gradient(180deg, #0d1f1a 0%, #111827 100%);
+  }
+
+  .session-icon { color: #6c63ff; flex-shrink: 0; }
+
+  .session-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+  }
+
+  .session-name {
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .session-meta {
+    color: #6b7280;
+    font-size: 0.75rem;
+  }
+
+  .session-status {
+    color: #10b981;
+    font-weight: 600;
+  }
+}

@@ -2,11 +2,13 @@ package com.loremind.infrastructure.web.controller;
 
 import com.loremind.application.generationcontext.StreamChatForCampaignUseCase;
 import com.loremind.application.generationcontext.StreamChatForLoreUseCase;
+import com.loremind.application.generationcontext.StreamChatForSessionUseCase;
 import com.loremind.domain.generationcontext.ChatMessage;
 import com.loremind.domain.generationcontext.ChatUsage;
 import com.loremind.infrastructure.web.dto.generationcontext.ChatMessageDTO;
 import com.loremind.infrastructure.web.dto.generationcontext.ChatStreamCampaignRequestDTO;
 import com.loremind.infrastructure.web.dto.generationcontext.ChatStreamRequestDTO;
+import com.loremind.infrastructure.web.dto.generationcontext.ChatStreamSessionRequestDTO;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.http.MediaType;
@@ -42,14 +44,17 @@ public class AiChatController {
 
     private final StreamChatForLoreUseCase streamChatForLoreUseCase;
     private final StreamChatForCampaignUseCase streamChatForCampaignUseCase;
+    private final StreamChatForSessionUseCase streamChatForSessionUseCase;
     private final TaskExecutor taskExecutor;
 
     public AiChatController(
             StreamChatForLoreUseCase streamChatForLoreUseCase,
             StreamChatForCampaignUseCase streamChatForCampaignUseCase,
+            StreamChatForSessionUseCase streamChatForSessionUseCase,
             @Qualifier("applicationTaskExecutor") TaskExecutor taskExecutor) {
         this.streamChatForLoreUseCase = streamChatForLoreUseCase;
         this.streamChatForCampaignUseCase = streamChatForCampaignUseCase;
+        this.streamChatForSessionUseCase = streamChatForSessionUseCase;
         this.taskExecutor = taskExecutor;
     }
 
@@ -71,6 +76,19 @@ public class AiChatController {
 
         taskExecutor.execute(() -> runCampaignStreaming(
                 emitter, body.getCampaignId(), body.getEntityType(), body.getEntityId(), messages));
+        return emitter;
+    }
+
+    /**
+     * Chat IA ancré sur une Session de jeu : récupère automatiquement la
+     * Campagne / Lore / GameSystem associés + injecte le journal horodaté.
+     */
+    @PostMapping(value = "/chat/stream-session", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter chatStreamSession(@RequestBody ChatStreamSessionRequestDTO body) {
+        SseEmitter emitter = new SseEmitter(SSE_TIMEOUT_MS);
+        List<ChatMessage> messages = toDomainMessages(body.getMessages());
+
+        taskExecutor.execute(() -> runSessionStreaming(emitter, body.getSessionId(), messages));
         return emitter;
     }
 
@@ -102,6 +120,22 @@ public class AiChatController {
         try {
             streamChatForCampaignUseCase.execute(
                     campaignId, entityType, entityId, messages,
+                    usage -> sendUsage(emitter, usage),
+                    token -> sendToken(emitter, token),
+                    () -> complete(emitter),
+                    error -> fail(emitter, error));
+        } catch (Exception e) {
+            fail(emitter, e);
+        }
+    }
+
+    private void runSessionStreaming(
+            SseEmitter emitter,
+            String sessionId,
+            List<ChatMessage> messages) {
+        try {
+            streamChatForSessionUseCase.execute(
+                    sessionId, messages,
                     usage -> sendUsage(emitter, usage),
                     token -> sendToken(emitter, token),
                     () -> complete(emitter),

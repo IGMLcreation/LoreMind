@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { LucideAngularModule, Swords, Plus, Globe, Pencil, Trash2, User, Dices, Drama, Check } from 'lucide-angular';
+import { LucideAngularModule, Swords, Plus, Globe, Pencil, Trash2, User, Dices, Drama, Check, Play } from 'lucide-angular';
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError, switchMap, filter, map } from 'rxjs/operators';
@@ -12,6 +12,8 @@ import { GameSystemService } from '../../../services/game-system.service';
 import { GameSystem } from '../../../services/game-system.model';
 import { CharacterService } from '../../../services/character.service';
 import { NpcService } from '../../../services/npc.service';
+import { SessionService } from '../../../services/session.service';
+import { Session } from '../../../services/session.model';
 import { Character } from '../../../services/character.model';
 import { Npc } from '../../../services/npc.model';
 import { LayoutService } from '../../../services/layout.service';
@@ -38,6 +40,7 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   readonly Dices = Dices;
   readonly Drama = Drama;
   readonly Check = Check;
+  readonly Play = Play;
 
   campaign: Campaign | null = null;
   arcs: Arc[] = [];
@@ -55,6 +58,16 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   characters: Character[] = [];
   /** Fiches de personnages non-joueurs (PNJ) de la campagne. */
   npcs: Npc[] = [];
+  /** Sessions de jeu (passées et en cours) liées à cette campagne. */
+  sessions: Session[] = [];
+  /**
+   * Session active globale (toutes campagnes confondues).
+   * Sert à désactiver le bouton "Lancer" si une session tourne déjà ailleurs.
+   * Null si aucune session active dans l'app.
+   */
+  activeSessionGlobal: Session | null = null;
+  /** Indicateur de lancement en cours pour éviter les double-clics. */
+  startingSession = false;
 
   /** Mode édition inline. */
   editing = false;
@@ -78,6 +91,7 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
     private gameSystemService: GameSystemService,
     private characterService: CharacterService,
     private npcService: NpcService,
+    private sessionService: SessionService,
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService,
     private confirmDialog: ConfirmDialogService
@@ -104,6 +118,7 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
       this.loadLinkedGameSystem(campaign);
       this.loadCharacters(campaign.id!);
       this.loadNpcs(campaign.id!);
+      this.loadSessions(campaign.id!);
       this.arcs = treeData.arcs;
       this.chapterCountByArc = this.computeChapterCounts(treeData);
       this.showLayout(allCampaigns, treeData);
@@ -138,6 +153,7 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
       this.loadLinkedGameSystem(campaign);
       this.loadCharacters(campaign.id!);
       this.loadNpcs(campaign.id!);
+      this.loadSessions(campaign.id!);
       this.arcs = treeData.arcs;
       this.chapterCountByArc = this.computeChapterCounts(treeData);
       this.showLayout(allCampaigns, treeData);
@@ -182,6 +198,55 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
     this.npcService.getByCampaign(campaignId).pipe(
       catchError(() => of([] as Npc[]))
     ).subscribe(list => this.npcs = list);
+  }
+
+  /**
+   * Charge les sessions de cette campagne ET la session active globale.
+   * La session globale conditionne si le bouton "Lancer" est activable
+   * (règle métier : une seule session active simultanément dans l'app).
+   */
+  private loadSessions(campaignId: string): void {
+    this.sessionService.getSessions(campaignId).pipe(
+      catchError(() => of([] as Session[]))
+    ).subscribe(list => this.sessions = list);
+
+    this.sessionService.getActiveSession().pipe(
+      catchError(() => of(null))
+    ).subscribe(active => this.activeSessionGlobal = active);
+  }
+
+  /** True si une session est active mais sur une AUTRE campagne (lancement bloqué). */
+  get isLaunchBlockedByOtherCampaign(): boolean {
+    return !!this.activeSessionGlobal
+      && !!this.campaign
+      && this.activeSessionGlobal.campaignId !== this.campaign.id;
+  }
+
+  /** Session active sur la campagne courante (le MJ joue déjà ici). */
+  get activeSessionOnCurrentCampaign(): Session | null {
+    if (!this.activeSessionGlobal || !this.campaign) return null;
+    return this.activeSessionGlobal.campaignId === this.campaign.id
+      ? this.activeSessionGlobal
+      : null;
+  }
+
+  startSession(): void {
+    if (!this.campaign || this.startingSession || this.isLaunchBlockedByOtherCampaign) return;
+    this.startingSession = true;
+    this.sessionService.startSession(this.campaign.id!).subscribe({
+      next: session => {
+        this.startingSession = false;
+        this.router.navigate(['/sessions', session.id]);
+      },
+      error: () => {
+        this.startingSession = false;
+        console.error('Erreur lors du lancement de la session');
+      }
+    });
+  }
+
+  openSession(session: Session): void {
+    this.router.navigate(['/sessions', session.id]);
   }
 
   createCharacter(): void {
