@@ -151,11 +151,11 @@ public class CampaignStructuralContextBuilderTest {
 
     @Test
     void testBuild_ProjectsCharactersAndNpcsWithSnippets() {
-        Character pj1 = Character.builder().id("c-1").campaignId("camp-1").order(1)
+        Character pj1 = Character.builder().id("c-1").playthroughId("play-1").order(1)
                 .name("Aragorn")
                 .values(new java.util.HashMap<>(java.util.Map.of("Histoire", "# Aragorn\n\nRôdeur du Nord, héritier d'Isildur.")))
                 .build();
-        Character pj2 = Character.builder().id("c-2").campaignId("camp-1").order(2)
+        Character pj2 = Character.builder().id("c-2").playthroughId("play-1").order(2)
                 .name("Legolas")
                 .values(null) // pas de snippet → string vide
                 .build();
@@ -170,10 +170,10 @@ public class CampaignStructuralContextBuilderTest {
 
         when(campaignRepository.findById("camp-1")).thenReturn(Optional.of(campaign));
         when(arcRepository.findByCampaignId("camp-1")).thenReturn(List.of());
-        when(characterRepository.findByCampaignId("camp-1")).thenReturn(List.of(pj2, pj1));
+        when(characterRepository.findByPlaythroughId("play-1")).thenReturn(List.of(pj2, pj1));
         when(npcRepository.findByCampaignId("camp-1")).thenReturn(List.of(npc1, npc2));
 
-        CampaignStructuralContext ctx = builder.build("camp-1");
+        CampaignStructuralContext ctx = builder.build("camp-1", "play-1");
 
         // PJ triés par order croissant
         assertEquals(2, ctx.characters().size());

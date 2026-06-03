@@ -163,7 +163,7 @@ class BrainChatPayloadBuilderTest {
     @SuppressWarnings("unchecked")
     void build_campaignContext_serializesFullNarrativeTree() {
         BranchHint branch = new BranchHint("fuite", "La poursuite", "HP < 50%");
-        SceneSummary scene = new SceneSummary("L'auberge", "Rencontre tendue", 3, List.of(branch));
+        SceneSummary scene = new SceneSummary("L'auberge", "Rencontre tendue", 3, List.of(branch), List.of());
         ChapterSummary chapter = new ChapterSummary("L'arrivee", "...", 0, List.of(scene));
         ArcSummary arc = new ArcSummary("Acte I", "Mise en place", 1, List.of(chapter));
         CampaignStructuralContext camp = new CampaignStructuralContext(
@@ -213,7 +213,7 @@ class BrainChatPayloadBuilderTest {
     @Test
     @SuppressWarnings("unchecked")
     void build_sceneSummary_omitsBranches_whenEmpty() {
-        SceneSummary scene = new SceneSummary("S", "", 0, List.of());
+        SceneSummary scene = new SceneSummary("S", "", 0, List.of(), List.of());
         ChapterSummary chapter = new ChapterSummary("Ch", "", 0, List.of(scene));
         ArcSummary arc = new ArcSummary("A", "", 0, List.of(chapter));
         CampaignStructuralContext camp = new CampaignStructuralContext(
@@ -232,7 +232,7 @@ class BrainChatPayloadBuilderTest {
     @SuppressWarnings("unchecked")
     void build_branchHint_omitsCondition_whenBlank() {
         BranchHint branch = new BranchHint("X", "Y", "   ");
-        SceneSummary scene = new SceneSummary("S", "", 0, List.of(branch));
+        SceneSummary scene = new SceneSummary("S", "", 0, List.of(branch), List.of());
         ChapterSummary chapter = new ChapterSummary("Ch", "", 0, List.of(scene));
         ArcSummary arc = new ArcSummary("A", "", 0, List.of(chapter));
         CampaignStructuralContext camp = new CampaignStructuralContext(
