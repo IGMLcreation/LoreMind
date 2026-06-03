@@ -12,7 +12,7 @@ public class SessionDTO {
 
     private String id;
     private String name;
-    private String campaignId;
+    private String playthroughId;
     private LocalDateTime startedAt;
     /** Null = session en cours. */
     private LocalDateTime endedAt;

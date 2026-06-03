@@ -196,60 +196,38 @@
     </div>
   </section>
 
-  <!-- ============ Sessions de jeu ============ -->
-  <section class="detail-section sessions-section" *ngIf="!editing">
+  <!-- ============ Parties (Playthroughs) ============ -->
+  <section class="detail-section playthroughs-section" *ngIf="!editing">
     <div class="section-header">
       <h2>
         <lucide-icon [img]="Dices" [size]="18"></lucide-icon>
-        Sessions de jeu
+        Mes parties
       </h2>
-
-      <!-- Cas 1 : aucune session active dans l'app → on peut lancer -->
-      <button *ngIf="!activeSessionGlobal"
-              class="btn-add"
-              [disabled]="startingSession"
-              (click)="startSession()">
-        <lucide-icon [img]="Play" [size]="14"></lucide-icon>
-        Lancer une nouvelle session
-      </button>
-
-      <!-- Cas 2 : session active sur cette campagne → reprendre -->
-      <button *ngIf="activeSessionOnCurrentCampaign"
-              class="btn-add"
-              (click)="openSession(activeSessionOnCurrentCampaign)">
-        <lucide-icon [img]="Play" [size]="14"></lucide-icon>
-        Reprendre la session en cours
-      </button>
-
-      <!-- Cas 3 : session active sur une autre campagne → bloqué -->
-      <button *ngIf="isLaunchBlockedByOtherCampaign"
-              class="btn-add"
-              disabled
-              title="Une session est déjà en cours sur une autre campagne. Termine-la d'abord.">
-        <lucide-icon [img]="Play" [size]="14"></lucide-icon>
-        Session en cours ailleurs
+      <button class="btn-add" [disabled]="newPlaythroughInFlight" (click)="createPlaythrough()">
+        <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
+        Nouvelle partie
       </button>
     </div>
 
-    <div class="sessions-grid" *ngIf="sessions.length > 0">
-      <div class="session-card"
-           *ngFor="let session of sessions"
-           [class.session-card--active]="session.active"
-           (click)="openSession(session)">
-        <lucide-icon [img]="Dices" [size]="20" class="session-icon"></lucide-icon>
-        <div class="session-info">
-          <span class="session-name">{{ session.name }}</span>
-          <span class="session-meta">
-            <span class="session-status" *ngIf="session.active">● En cours</span>
-            <span *ngIf="!session.active">Terminée le {{ session.endedAt | date:'dd/MM/yyyy' }}</span>
-          </span>
+    <div class="playthroughs-grid" *ngIf="playthroughs.length > 0">
+      <div class="playthrough-card"
+           *ngFor="let p of playthroughs"
+           (click)="openPlaythrough(p)">
+        <lucide-icon [img]="Dices" [size]="22" class="playthrough-icon"></lucide-icon>
+        <div class="playthrough-info">
+          <span class="playthrough-name">{{ p.name }}</span>
+          <span class="playthrough-meta" *ngIf="p.description">{{ p.description }}</span>
         </div>
       </div>
     </div>
 
-    <div class="empty-state empty-state--compact" *ngIf="sessions.length === 0">
-      <p>Aucune session de jeu pour le moment.</p>
+    <div class="empty-state empty-state--compact" *ngIf="playthroughs.length === 0">
+      <p>Aucune partie. Créez-en une pour démarrer une session avec une table.</p>
     </div>
   </section>
+
+  <!-- Sessions retirées : elles vivent désormais dans une Partie.
+       Les faits narratifs sont définis dans les conditions de chaque quête
+       (chapter-edit > « Conditions de déblocage »). -->
 
 </div>

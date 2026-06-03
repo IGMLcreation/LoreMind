@@ -26,28 +26,32 @@ public class SessionController {
         this.sessionMapper = sessionMapper;
     }
 
-    public record StartSessionRequest(String campaignId) {}
+    public record StartSessionRequest(String playthroughId) {}
 
     public record RenameSessionRequest(String name) {}
 
     @PostMapping
     public ResponseEntity<SessionDTO> startSession(@RequestBody StartSessionRequest request) {
-        Session session = sessionService.startSession(request.campaignId());
+        Session session = sessionService.startSession(request.playthroughId());
         return ResponseEntity.ok(sessionMapper.toDTO(session));
     }
 
     @GetMapping("/active")
-    public ResponseEntity<SessionDTO> getActiveSession() {
-        return sessionService.getActive()
+    public ResponseEntity<SessionDTO> getActiveSession(
+            @RequestParam(value = "playthroughId", required = false) String playthroughId) {
+        var maybe = (playthroughId == null || playthroughId.isBlank())
+                ? sessionService.getActive()
+                : sessionService.getActiveByPlaythrough(playthroughId);
+        return maybe
                 .map(s -> ResponseEntity.ok(sessionMapper.toDTO(s)))
                 .orElse(ResponseEntity.noContent().build());
     }
 
     @GetMapping
-    public ResponseEntity<List<SessionDTO>> getSessions(@RequestParam(value = "campaignId", required = false) String campaignId) {
-        List<Session> sessions = (campaignId == null || campaignId.isBlank())
+    public ResponseEntity<List<SessionDTO>> getSessions(@RequestParam(value = "playthroughId", required = false) String playthroughId) {
+        List<Session> sessions = (playthroughId == null || playthroughId.isBlank())
                 ? sessionService.getAll()
-                : sessionService.getByCampaignId(campaignId);
+                : sessionService.getByPlaythroughId(playthroughId);
         List<SessionDTO> dtos = sessions.stream()
                 .map(sessionMapper::toDTO)
                 .collect(Collectors.toList());

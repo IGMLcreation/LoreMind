@@ -85,6 +85,7 @@ export class ArcEditComponent implements OnInit, OnDestroy {
     this.form = this.fb.group({
       name:        ['', Validators.required],
       description: [''],
+      type:        ['LINEAR', Validators.required],
       themes:      [''],
       stakes:      [''],
       gmNotes:     [''],
@@ -137,6 +138,7 @@ export class ArcEditComponent implements OnInit, OnDestroy {
       this.form.patchValue({
         name:        arc.name,
         description: arc.description ?? '',
+        type:        arc.type ?? 'LINEAR',
         themes:      arc.themes ?? '',
         stakes:      arc.stakes ?? '',
         gmNotes:     arc.gmNotes ?? '',
@@ -155,6 +157,7 @@ export class ArcEditComponent implements OnInit, OnDestroy {
       description:    this.form.value.description,
       campaignId:     this.campaignId,
       order:          this.arc.order ?? 1,
+      type:           this.form.value.type,
       themes:         this.form.value.themes,
       stakes:         this.form.value.stakes,
       gmNotes:        this.form.value.gmNotes,

@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, Save, ArrowLeft, User, Trash2, Sparkles } from 'lucide-angular';
 import { CharacterService } from '../../../services/character.service';
 import { CampaignService } from '../../../services/campaign.service';
+import { PlaythroughService } from '../../../services/playthrough.service';
 import { GameSystemService } from '../../../services/game-system.service';
 import { CampaignSidebarService } from '../../../services/campaign-sidebar.service';
 import { TemplateField } from '../../../services/template.model';
@@ -48,6 +49,8 @@ export class CharacterEditComponent implements OnInit {
   toggleChat(): void { this.chatOpen = !this.chatOpen; }
 
   campaignId: string | null = null;
+  /** Partie cible — déduite du 1er Playthrough de la campagne. */
+  playthroughId: string | null = null;
   characterId: string | null = null;
 
   name = '';
@@ -64,6 +67,7 @@ export class CharacterEditComponent implements OnInit {
     private router: Router,
     private service: CharacterService,
     private campaignService: CampaignService,
+    private playthroughService: PlaythroughService,
     private gameSystemService: GameSystemService,
     private campaignSidebar: CampaignSidebarService,
     private confirmDialog: ConfirmDialogService
@@ -77,6 +81,10 @@ export class CharacterEditComponent implements OnInit {
     if (this.campaignId) {
       this.loadTemplateForCampaign(this.campaignId);
       this.campaignSidebar.show(this.campaignId);
+      // Résolution Partie par défaut (1er Playthrough) — nécessaire pour create/update.
+      this.playthroughService.listByCampaign(this.campaignId).subscribe({
+        next: list => { this.playthroughId = list.length > 0 ? list[0].id! : null; }
+      });
     }
 
     if (this.characterId) {
@@ -113,7 +121,7 @@ export class CharacterEditComponent implements OnInit {
 
 
   submit(): void {
-    if (!this.name.trim() || !this.campaignId) return;
+    if (!this.name.trim() || !this.campaignId || !this.playthroughId) return;
     const payload = {
       name: this.name.trim(),
       portraitImageId: this.portraitImageId,
@@ -121,7 +129,7 @@ export class CharacterEditComponent implements OnInit {
       values: this.values,
       imageValues: this.imageValues,
       keyValueValues: this.keyValueValues,
-      campaignId: this.campaignId
+      playthroughId: this.playthroughId
     };
     const isCreation = !this.characterId;
     const req = this.characterId

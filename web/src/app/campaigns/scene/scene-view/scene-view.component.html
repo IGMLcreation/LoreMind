@@ -100,4 +100,48 @@
     </div>
   </section>
 
+  <!-- Lieu explorable : pièces (mode donjon) -->
+  <section class="view-section" *ngIf="(scene.rooms?.length ?? 0) > 0">
+    <h2 class="view-section-title"><span class="view-section-icon">🏰</span> Pièces du lieu</h2>
+    <div class="rooms-readonly">
+      <article class="room-readonly" *ngFor="let r of scene.rooms; let i = index">
+        <header class="room-readonly-head">
+          <span class="room-readonly-index">#{{ i + 1 }}</span>
+          <span class="room-readonly-name">{{ r.name }}</span>
+          <span class="room-readonly-floor" *ngIf="r.floor !== null && r.floor !== undefined">
+            Étage {{ r.floor }}
+          </span>
+        </header>
+        <p class="room-readonly-desc" *ngIf="r.description?.trim()">{{ r.description }}</p>
+        <div class="room-readonly-grid">
+          <div *ngIf="r.enemies?.trim()">
+            <strong>⚔️ Ennemis</strong>
+            <p>{{ r.enemies }}</p>
+          </div>
+          <div *ngIf="r.loot?.trim()">
+            <strong>💰 Loot</strong>
+            <p>{{ r.loot }}</p>
+          </div>
+          <div *ngIf="r.traps?.trim()">
+            <strong>⚠️ Pièges</strong>
+            <p>{{ r.traps }}</p>
+          </div>
+          <div *ngIf="r.gmNotes?.trim()" class="room-readonly-private">
+            <strong>🔒 Notes MJ</strong>
+            <p>{{ r.gmNotes }}</p>
+          </div>
+        </div>
+        <div class="room-readonly-branches" *ngIf="(r.branches?.length ?? 0) > 0">
+          <strong>→ Sorties</strong>
+          <ul>
+            <li *ngFor="let b of r.branches">
+              <em>{{ b.label }}</em> → {{ roomNameById(scene, b.targetRoomId) }}
+              <span class="branch-cond" *ngIf="b.condition?.trim()">(si : {{ b.condition }})</span>
+            </li>
+          </ul>
+        </div>
+      </article>
+    </div>
+  </section>
+
 </div>

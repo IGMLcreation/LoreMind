@@ -1,0 +1,126 @@
+<div class="rooms-editor">
+
+  <p class="rooms-empty" *ngIf="rooms.length === 0">
+    Aucune pièce. La scène se comporte comme un beat narratif classique.
+    Ajoutez une première pièce pour la convertir en lieu explorable (donjon, crypte…).
+  </p>
+
+  <ul class="room-list" *ngIf="rooms.length > 0">
+    <li class="room-card" *ngFor="let r of rooms; let i = index; trackBy: trackById">
+
+      <!-- Header repliable -->
+      <header class="room-head" (click)="toggleExpanded(r.id)">
+        <button type="button" class="room-toggle" type="button">
+          <lucide-icon [img]="isExpanded(r.id) ? ChevronUp : ChevronDown" [size]="16"></lucide-icon>
+        </button>
+        <span class="room-index">#{{ i + 1 }}</span>
+        <input type="text" class="room-name-input"
+               [ngModel]="r.name"
+               (ngModelChange)="patch(r, { name: $event })"
+               (click)="$event.stopPropagation()"
+               placeholder="Nom de la pièce" />
+        <input type="number" class="room-floor-input"
+               [ngModel]="r.floor"
+               (ngModelChange)="patch(r, { floor: $event === null || $event === '' ? null : +$event })"
+               (click)="$event.stopPropagation()"
+               placeholder="Ét." title="Étage (0 = RdC)" />
+        <div class="room-actions" (click)="$event.stopPropagation()">
+          <button type="button" class="btn-icon" (click)="moveUp(r)" [disabled]="i === 0" title="Monter">↑</button>
+          <button type="button" class="btn-icon" (click)="moveDown(r)" [disabled]="i === rooms.length - 1" title="Descendre">↓</button>
+          <button type="button" class="btn-icon-danger" (click)="removeRoom(r)" title="Supprimer la pièce">
+            <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+          </button>
+        </div>
+      </header>
+
+      <!-- Corps déplié -->
+      <div class="room-body" *ngIf="isExpanded(r.id)">
+
+        <div class="field">
+          <label>Description (lue/résumée aux joueurs)</label>
+          <textarea rows="3"
+                    [ngModel]="r.description"
+                    (ngModelChange)="patch(r, { description: $event })"
+                    placeholder="Atmosphère, ce que voient les PJ en entrant…"></textarea>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Ennemis / créatures / boss</label>
+            <textarea rows="3"
+                      [ngModel]="r.enemies"
+                      (ngModelChange)="patch(r, { enemies: $event })"
+                      placeholder="2 gobelins, 1 ogre boss (PV 60, AC 14)…"></textarea>
+          </div>
+          <div class="field">
+            <label>Loot / trésors</label>
+            <textarea rows="3"
+                      [ngModel]="r.loot"
+                      (ngModelChange)="patch(r, { loot: $event })"
+                      placeholder="50 po, potion de soin, clé en argent…"></textarea>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Pièges / dangers</label>
+            <textarea rows="2"
+                      [ngModel]="r.traps"
+                      (ngModelChange)="patch(r, { traps: $event })"
+                      placeholder="Trappe (DC 15 Perception), flèches empoisonnées…"></textarea>
+          </div>
+          <div class="field">
+            <label>Notes MJ (privé)</label>
+            <textarea rows="2"
+                      [ngModel]="r.gmNotes"
+                      (ngModelChange)="patch(r, { gmNotes: $event })"
+                      placeholder="Le boss connaît les PJ par leur nom, indice…"></textarea>
+          </div>
+        </div>
+
+        <!-- Branches inter-pièces -->
+        <div class="field">
+          <label>
+            <lucide-icon [img]="GitBranch" [size]="14"></lucide-icon>
+            Sorties / portes vers d'autres pièces
+          </label>
+          <ul class="branch-list" *ngIf="(r.branches?.length ?? 0) > 0">
+            <li class="branch-row" *ngFor="let b of r.branches; let bi = index">
+              <input type="text" class="branch-label"
+                     [ngModel]="b.label"
+                     (ngModelChange)="updateBranch(r, bi, { label: $event })"
+                     placeholder="Porte nord" />
+              <span class="branch-arrow">→</span>
+              <select class="branch-target"
+                      [ngModel]="b.targetRoomId"
+                      (ngModelChange)="updateBranch(r, bi, { targetRoomId: $event })"
+                      [disabled]="otherRooms(r).length === 0">
+                <option *ngIf="otherRooms(r).length === 0" value="">(aucune autre pièce)</option>
+                <option *ngFor="let o of otherRooms(r)" [value]="o.id">{{ o.name }}</option>
+              </select>
+              <input type="text" class="branch-condition"
+                     [ngModel]="b.condition"
+                     (ngModelChange)="updateBranch(r, bi, { condition: $event })"
+                     placeholder="Condition (optionnelle)" />
+              <button type="button" class="btn-icon-danger" (click)="removeBranch(r, bi)">
+                <lucide-icon [img]="X" [size]="14"></lucide-icon>
+              </button>
+            </li>
+          </ul>
+          <button type="button" class="btn-secondary btn-small"
+                  (click)="addBranch(r)"
+                  [disabled]="otherRooms(r).length === 0">
+            <lucide-icon [img]="Plus" [size]="13"></lucide-icon>
+            Ajouter une sortie
+          </button>
+        </div>
+      </div>
+    </li>
+  </ul>
+
+  <button type="button" class="btn-primary" (click)="addRoom()">
+    <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
+    Ajouter une pièce
+  </button>
+
+</div>

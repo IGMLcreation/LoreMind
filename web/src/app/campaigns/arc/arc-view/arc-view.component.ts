@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
-import { LucideAngularModule, Pencil, Trash2 } from 'lucide-angular';
+import { LucideAngularModule, Pencil, Trash2, AlertCircle } from 'lucide-angular';
 import { resolveCampaignIcon } from '../../campaign-icons';
 import { CampaignService } from '../../../services/campaign.service';
 import { CharacterService } from '../../../services/character.service';
@@ -11,7 +11,7 @@ import { NpcService } from '../../../services/npc.service';
 import { PageService } from '../../../services/page.service';
 import { LayoutService } from '../../../services/layout.service';
 import { PageTitleService } from '../../../services/page-title.service';
-import { Arc } from '../../../services/campaign.model';
+import { Arc, Chapter, Prerequisite } from '../../../services/campaign.model';
 import { Page } from '../../../services/page.model';
 import { loadCampaignTreeData, buildCampaignSidebarConfig } from '../../campaign-tree.helper';
 import { ImageGalleryComponent } from '../../../shared/image-gallery/image-gallery.component';
@@ -32,11 +32,21 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
 export class ArcViewComponent implements OnInit, OnDestroy {
   readonly Pencil = Pencil;
   readonly Trash2 = Trash2;
+  readonly AlertCircle = AlertCircle;
   readonly resolveCampaignIcon = resolveCampaignIcon;
 
   campaignId = '';
   arcId = '';
   arc: Arc | null = null;
+
+  /** Chapitres de l'arc courant — exploités pour le rendu HUB (grille de quêtes). */
+  hubQuests: Chapter[] = [];
+
+  /**
+   * Indexe les chapitres de toute la campagne par id pour résoudre les libellés
+   * des prérequis QUEST_COMPLETED quand on les affiche dans les tooltips de verrouillage.
+   */
+  private allChaptersById: Record<string, Chapter> = {};
 
   /** ID du Lore associé à la campagne (null si pas d'univers lié). */
   loreId: string | null = null;
@@ -85,8 +95,40 @@ export class ArcViewComponent implements OnInit, OnDestroy {
       this.availablePages = pages;
       this.pageTitleService.set(arc.name);
 
+      // Quêtes du Hub : chapitres de l'arc courant, triés par order puis par nom.
+      this.hubQuests = [...(treeData.chaptersByArc[this.arcId] ?? [])].sort((a, b) => {
+        const oa = a.order ?? 0;
+        const ob = b.order ?? 0;
+        if (oa !== ob) return oa - ob;
+        return a.name.localeCompare(b.name, 'fr', { numeric: true, sensitivity: 'base' });
+      });
+      // Index global pour résoudre les noms de quêtes référencées par les prérequis.
+      this.allChaptersById = {};
+      Object.values(treeData.chaptersByArc).forEach(list =>
+          list.forEach(c => { if (c.id) this.allChaptersById[c.id] = c; })
+      );
+
       this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId));
     });
+  }
+
+  /** Construit un libellé lisible pour un prérequis (tooltip de verrouillage). */
+  describePrerequisite(p: Prerequisite): string {
+    switch (p.kind) {
+      case 'QUEST_COMPLETED':
+        return `Quête « ${this.allChaptersById[p.questId]?.name ?? '?'} » terminée`;
+      case 'SESSION_REACHED':
+        return `Session ${p.minSessionNumber} atteinte`;
+      case 'FLAG_SET':
+        return `Fait : ${p.flagName}`;
+    }
+  }
+
+  openQuest(q: Chapter): void {
+    if (!q.id) return;
+    this.router.navigate([
+      '/campaigns', this.campaignId, 'arcs', this.arcId, 'chapters', q.id
+    ]);
   }
 
   titleOfRelated(pageId: string): string {

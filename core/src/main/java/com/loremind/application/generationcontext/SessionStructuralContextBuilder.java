@@ -1,42 +1,71 @@
 package com.loremind.application.generationcontext;
 
+import com.loremind.domain.campaigncontext.Arc;
+import com.loremind.domain.campaigncontext.ArcType;
+import com.loremind.domain.campaigncontext.Chapter;
+import com.loremind.domain.campaigncontext.PrerequisiteEvaluator;
+import com.loremind.domain.campaigncontext.ProgressionStatus;
+import com.loremind.domain.campaigncontext.QuestStatus;
+import com.loremind.domain.campaigncontext.ports.ArcRepository;
+import com.loremind.domain.campaigncontext.ports.ChapterRepository;
 import com.loremind.domain.generationcontext.SessionContext;
 import com.loremind.domain.generationcontext.SessionContext.JournalEntrySummary;
+import com.loremind.domain.generationcontext.SessionContext.QuestSummary;
+import com.loremind.domain.playcontext.EntryType;
+import com.loremind.domain.playcontext.Playthrough;
+import com.loremind.domain.playcontext.QuestProgression;
 import com.loremind.domain.playcontext.Session;
 import com.loremind.domain.playcontext.SessionEntry;
+import com.loremind.domain.playcontext.ports.PlaythroughFlagRepository;
+import com.loremind.domain.playcontext.ports.PlaythroughRepository;
+import com.loremind.domain.playcontext.ports.QuestProgressionRepository;
 import com.loremind.domain.playcontext.ports.SessionEntryRepository;
 import com.loremind.domain.playcontext.ports.SessionRepository;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
  * Construit le SessionContext injecté dans le prompt IA pendant une partie.
  *
- * <p>Charge la Session + les N dernières entrées du journal et les mappe vers
- * le Value Object {@link SessionContext}. La limite d'entrées évite de saturer
- * la fenêtre de contexte du LLM sur des sessions très longues.</p>
+ * <p>Depuis la refonte Playthrough : la session connaît son playthroughId ; la progression
+ * et les flags viennent du Playthrough (pas plus de la Campagne ni du Chapter).</p>
  */
 @Component
 public class SessionStructuralContextBuilder {
 
-    /**
-     * Plafond du nombre d'entrées remontées au LLM.
-     * Choisi pour rester dans des limites raisonnables (≈ 5-10k tokens max
-     * pour des entrées moyennes de 200 chars). Si la session déborde,
-     * on garde les entrées les plus récentes (fin de chronologie).
-     */
-    private static final int MAX_ENTRIES = 80;
+    private static final int MAX_CURRENT_ENTRIES = 80;
+    private static final int MAX_PREVIOUS_EVENTS = 60;
 
     private final SessionRepository sessionRepository;
     private final SessionEntryRepository entryRepository;
+    private final PlaythroughRepository playthroughRepository;
+    private final ArcRepository arcRepository;
+    private final ChapterRepository chapterRepository;
+    private final PlaythroughFlagRepository playthroughFlagRepository;
+    private final QuestProgressionRepository questProgressionRepository;
+    private final PrerequisiteEvaluator prerequisiteEvaluator = new PrerequisiteEvaluator();
 
     public SessionStructuralContextBuilder(SessionRepository sessionRepository,
-                                           SessionEntryRepository entryRepository) {
+                                           SessionEntryRepository entryRepository,
+                                           PlaythroughRepository playthroughRepository,
+                                           ArcRepository arcRepository,
+                                           ChapterRepository chapterRepository,
+                                           PlaythroughFlagRepository playthroughFlagRepository,
+                                           QuestProgressionRepository questProgressionRepository) {
         this.sessionRepository = sessionRepository;
         this.entryRepository = entryRepository;
+        this.playthroughRepository = playthroughRepository;
+        this.arcRepository = arcRepository;
+        this.chapterRepository = chapterRepository;
+        this.playthroughFlagRepository = playthroughFlagRepository;
+        this.questProgressionRepository = questProgressionRepository;
     }
 
     public Optional<SessionContext> buildOptional(String sessionId) {
@@ -50,24 +79,155 @@ public class SessionStructuralContextBuilder {
     }
 
     private SessionContext toContext(Session session) {
-        List<SessionEntry> allEntries = entryRepository.findBySessionId(session.getId());
-        // findBySessionId renvoie en ASC. On garde la fin si la liste dépasse le plafond
-        // — c'est l'info récente qui aide le plus l'IA pendant la partie.
-        List<SessionEntry> kept = allEntries.size() <= MAX_ENTRIES
-                ? allEntries
-                : allEntries.subList(allEntries.size() - MAX_ENTRIES, allEntries.size());
-
-        List<JournalEntrySummary> summaries = kept.stream()
-                .map(e -> new JournalEntrySummary(
-                        e.getType() != null ? e.getType().name() : "NOTE",
-                        e.getContent(),
-                        e.getOccurredAt()))
-                .collect(Collectors.toList());
+        List<JournalEntrySummary> currentEntries = loadCurrentEntries(session);
+        List<JournalEntrySummary> previousEvents = loadPreviousEvents(session);
+        HubStatus hub = computeHubStatus(session.getPlaythroughId());
 
         return new SessionContext(
                 session.getName(),
                 session.isActive(),
                 session.getStartedAt(),
-                summaries);
+                currentEntries,
+                previousEvents,
+                hub.available(),
+                hub.inProgress(),
+                hub.lockedTitles(),
+                hub.activeFlags());
+    }
+
+    private List<JournalEntrySummary> loadCurrentEntries(Session session) {
+        List<SessionEntry> allEntries = entryRepository.findBySessionId(session.getId());
+        List<SessionEntry> kept = allEntries.size() <= MAX_CURRENT_ENTRIES
+                ? allEntries
+                : allEntries.subList(allEntries.size() - MAX_CURRENT_ENTRIES, allEntries.size());
+
+        return kept.stream()
+                .map(e -> toSummary(e, null))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * EVENTs des sessions précédentes du MÊME Playthrough (même table).
+     * On ne mélange jamais les EVENTs de tables différentes.
+     */
+    private List<JournalEntrySummary> loadPreviousEvents(Session current) {
+        if (current.getPlaythroughId() == null) return List.of();
+        List<Session> siblingSessions = sessionRepository.findByPlaythroughId(current.getPlaythroughId());
+        List<JournalEntrySummary> events = new ArrayList<>();
+
+        for (Session past : siblingSessions) {
+            if (past.getId().equals(current.getId())) continue;
+            for (SessionEntry entry : entryRepository.findBySessionId(past.getId())) {
+                if (entry.getType() == EntryType.EVENT) {
+                    events.add(toSummary(entry, past.getName()));
+                }
+            }
+        }
+
+        events.sort(Comparator.comparing(
+                JournalEntrySummary::occurredAt,
+                Comparator.nullsLast(Comparator.naturalOrder())));
+
+        if (events.size() > MAX_PREVIOUS_EVENTS) {
+            return events.subList(events.size() - MAX_PREVIOUS_EVENTS, events.size());
+        }
+        return events;
+    }
+
+    private JournalEntrySummary toSummary(SessionEntry entry, String sourceSessionName) {
+        return new JournalEntrySummary(
+                entry.getType() != null ? entry.getType().name() : "NOTE",
+                entry.getContent(),
+                entry.getOccurredAt(),
+                sourceSessionName);
+    }
+
+    /** Agrégat interne des données Hub à injecter dans le SessionContext. */
+    private record HubStatus(
+            List<QuestSummary> available,
+            List<QuestSummary> inProgress,
+            List<String> lockedTitles,
+            List<String> activeFlags
+    ) {}
+
+    /**
+     * Calcule l'état des quêtes Hub du Playthrough courant :
+     *   - AVAILABLE / IN_PROGRESS → résumé complet
+     *   - LOCKED                  → titre uniquement (anti-spoiler)
+     *   - COMPLETED               → omis (déjà raconté par les EVENTs)
+     */
+    private HubStatus computeHubStatus(String playthroughId) {
+        if (playthroughId == null) {
+            return new HubStatus(List.of(), List.of(), List.of(), List.of());
+        }
+        Optional<Playthrough> maybePlaythrough = playthroughRepository.findById(playthroughId);
+        if (maybePlaythrough.isEmpty()) {
+            return new HubStatus(List.of(), List.of(), List.of(), List.of());
+        }
+        String campaignId = maybePlaythrough.get().getCampaignId();
+
+        Map<String, Boolean> flags = playthroughFlagRepository.findByPlaythroughId(playthroughId);
+        List<String> activeFlags = buildActiveFlags(flags);
+
+        List<Arc> arcs = arcRepository.findByCampaignId(campaignId);
+        Map<String, Arc> arcsById = arcs.stream()
+                .filter(a -> a.getId() != null)
+                .collect(Collectors.toMap(Arc::getId, a -> a));
+
+        boolean anyHub = arcs.stream().anyMatch(a -> a.getType() == ArcType.HUB);
+        if (!anyHub) {
+            return new HubStatus(List.of(), List.of(), List.of(), activeFlags);
+        }
+
+        // Map chapterId -> ProgressionStatus pour ce Playthrough
+        Map<String, ProgressionStatus> progressionByChapter = new HashMap<>();
+        for (QuestProgression qp : questProgressionRepository.findByPlaythroughId(playthroughId)) {
+            progressionByChapter.put(qp.getChapterId(), qp.getStatus());
+        }
+
+        // IDs des chapitres COMPLETED dans la campagne (pour les prérequis QuestCompleted)
+        var completedIds = questProgressionRepository.findCompletedChapterIdsByPlaythroughId(playthroughId);
+
+        int sessionCount = sessionRepository.findByPlaythroughId(playthroughId).size();
+        PrerequisiteEvaluator.EvaluationContext ctx =
+                new PrerequisiteEvaluator.EvaluationContext(completedIds, sessionCount, flags);
+
+        List<QuestSummary> available = new ArrayList<>();
+        List<QuestSummary> inProgress = new ArrayList<>();
+        List<String> lockedTitles = new ArrayList<>();
+
+        for (Arc arc : arcs) {
+            if (arc.getType() != ArcType.HUB) continue;
+            for (Chapter c : chapterRepository.findByArcId(arc.getId())) {
+                ProgressionStatus prog = progressionByChapter.getOrDefault(c.getId(), ProgressionStatus.NOT_STARTED);
+                QuestStatus status = prerequisiteEvaluator.computeStatus(prog, c.getPrerequisites(), ctx);
+                Arc parent = arcsById.get(c.getArcId());
+                String arcName = parent != null ? parent.getName() : null;
+                switch (status) {
+                    case AVAILABLE:
+                        available.add(new QuestSummary(c.getName(), arcName, c.getDescription()));
+                        break;
+                    case IN_PROGRESS:
+                        inProgress.add(new QuestSummary(c.getName(), arcName, c.getDescription()));
+                        break;
+                    case LOCKED:
+                        lockedTitles.add(c.getName());
+                        break;
+                    case COMPLETED:
+                        // Omis (déjà dans le journal des EVENTs).
+                        break;
+                }
+            }
+        }
+
+        return new HubStatus(available, inProgress, lockedTitles, activeFlags);
+    }
+
+    private List<String> buildActiveFlags(Map<String, Boolean> flags) {
+        return flags.entrySet().stream()
+                .filter(Map.Entry::getValue)
+                .map(Map.Entry::getKey)
+                .sorted()
+                .collect(Collectors.toList());
     }
 }

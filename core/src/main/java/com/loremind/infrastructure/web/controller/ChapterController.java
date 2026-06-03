@@ -1,6 +1,7 @@
 package com.loremind.infrastructure.web.controller;
 
 import com.loremind.application.campaigncontext.ChapterService;
+import com.loremind.application.campaigncontext.ChapterStatusEnricher;
 import com.loremind.domain.campaigncontext.Chapter;
 import com.loremind.infrastructure.web.dto.campaigncontext.ChapterDTO;
 import com.loremind.infrastructure.web.mapper.ChapterMapper;
@@ -12,6 +13,8 @@ import java.util.stream.Collectors;
 
 /**
  * REST Controller pour le contexte Chapter.
+ * Si {@code ?playthroughId=} est fourni, les DTOs renvoyés sont enrichis de leur
+ * {@code progressionStatus} et {@code effectiveStatus} relatifs à ce Playthrough.
  */
 @RestController
 @RequestMapping("/api/chapters")
@@ -19,42 +22,58 @@ public class ChapterController {
 
     private final ChapterService chapterService;
     private final ChapterMapper chapterMapper;
+    private final ChapterStatusEnricher statusEnricher;
 
-    public ChapterController(ChapterService chapterService, ChapterMapper chapterMapper) {
+    public ChapterController(ChapterService chapterService,
+                             ChapterMapper chapterMapper,
+                             ChapterStatusEnricher statusEnricher) {
         this.chapterService = chapterService;
         this.chapterMapper = chapterMapper;
+        this.statusEnricher = statusEnricher;
     }
 
     @PostMapping
     public ResponseEntity<ChapterDTO> createChapter(@RequestBody ChapterDTO chapterDTO) {
-        Chapter chapter = chapterMapper.toDomain(chapterDTO);
-        Chapter createdChapter = chapterService.createChapter(chapter.getName(), chapter.getDescription(), chapter.getArcId(), chapter.getOrder(), chapter.getIcon());
-        return ResponseEntity.ok(chapterMapper.toDTO(createdChapter));
+        Chapter created = chapterService.createChapter(chapterMapper.toDomain(chapterDTO));
+        return ResponseEntity.ok(chapterMapper.toDTO(created));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ChapterDTO> getChapterById(@PathVariable String id) {
+    public ResponseEntity<ChapterDTO> getChapterById(
+            @PathVariable String id,
+            @RequestParam(value = "playthroughId", required = false) String playthroughId) {
         return chapterService.getChapterById(id)
-                .map(chapter -> ResponseEntity.ok(chapterMapper.toDTO(chapter)))
+                .map(chapter -> {
+                    ChapterDTO dto = chapterMapper.toDTO(chapter);
+                    if (playthroughId != null && !playthroughId.isBlank()) {
+                        statusEnricher.enrich(List.of(dto), List.of(chapter), playthroughId);
+                    }
+                    return ResponseEntity.ok(dto);
+                })
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping
     public ResponseEntity<List<ChapterDTO>> getAllChapters(
-            @RequestParam(value = "arcId", required = false) String arcId) {
+            @RequestParam(value = "arcId", required = false) String arcId,
+            @RequestParam(value = "playthroughId", required = false) String playthroughId) {
         List<Chapter> chapters = (arcId != null && !arcId.isBlank())
                 ? chapterService.getChaptersByArcId(arcId)
                 : chapterService.getAllChapters();
         List<ChapterDTO> chapterDTOs = chapters.stream()
                 .map(chapterMapper::toDTO)
                 .collect(Collectors.toList());
+
+        if (playthroughId != null && !playthroughId.isBlank()) {
+            statusEnricher.enrich(chapterDTOs, chapters, playthroughId);
+        }
         return ResponseEntity.ok(chapterDTOs);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ChapterDTO> updateChapter(@PathVariable String id, @RequestBody ChapterDTO chapterDTO) {
-        Chapter updatedChapter = chapterService.updateChapter(id, chapterMapper.toDomain(chapterDTO));
-        return ResponseEntity.ok(chapterMapper.toDTO(updatedChapter));
+        Chapter updated = chapterService.updateChapter(id, chapterMapper.toDomain(chapterDTO));
+        return ResponseEntity.ok(chapterMapper.toDTO(updated));
     }
 
     @DeleteMapping("/{id}")

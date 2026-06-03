@@ -1,0 +1,133 @@
+.flags-manager {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.flag-add-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.flag-add-input {
+  flex: 1;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--color-border, #d8d8d8);
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.flags-empty {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-text-muted, #777);
+  font-style: italic;
+}
+
+.flag-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.flag-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--color-border, #e2e2e2);
+  border-radius: 8px;
+  background: var(--color-surface, #fff);
+}
+
+.flag-row.flag-on {
+  border-color: rgba(52, 168, 83, 0.45);
+  background: rgba(52, 168, 83, 0.05);
+}
+
+.flag-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.flag-name {
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.flag-desc {
+  font-size: 0.78rem;
+  color: var(--color-text-muted, #666);
+}
+
+.flag-value {
+  font-size: 0.78rem;
+  color: var(--color-text-muted, #777);
+  min-width: 40px;
+  text-align: right;
+}
+
+.flag-remove {
+  background: transparent;
+  border: none;
+  color: var(--color-danger, #c0392b);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover { background: rgba(192, 57, 43, 0.08); }
+}
+
+// Toggle switch
+.flag-toggle {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+  flex: 0 0 36px;
+
+  input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+
+    &:checked + .flag-toggle-slider {
+      background: var(--color-primary, #34a853);
+    }
+
+    &:checked + .flag-toggle-slider::before {
+      transform: translateX(16px);
+    }
+  }
+}
+
+.flag-toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: #ccc;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 150ms ease;
+
+  &::before {
+    content: '';
+    position: absolute;
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    top: 2px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 150ms ease;
+  }
+}

@@ -12,6 +12,9 @@ import java.util.stream.Collectors;
 
 /**
  * Adaptateur d'infrastructure qui implémente le Port CampaignRepository.
+ * <p>
+ * Depuis l'introduction de Playthrough : ne touche plus aux flags (ils
+ * appartiennent au Playthrough, pas à la Campagne).
  */
 @Repository
 public class PostgresCampaignRepository implements CampaignRepository {

@@ -41,4 +41,7 @@ public class SceneDTO {
 
     /** Branches narratives : sorties possibles vers d'autres scènes du même chapitre. */
     private List<SceneBranchDTO> branches = new ArrayList<>();
+
+    /** Pièces du lieu explorable (donjon, crypte…). Vide = scène classique. */
+    private List<RoomDTO> rooms = new ArrayList<>();
 }

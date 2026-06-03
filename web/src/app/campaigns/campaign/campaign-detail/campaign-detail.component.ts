@@ -13,6 +13,8 @@ import { GameSystem } from '../../../services/game-system.model';
 import { CharacterService } from '../../../services/character.service';
 import { NpcService } from '../../../services/npc.service';
 import { SessionService } from '../../../services/session.service';
+import { PlaythroughService } from '../../../services/playthrough.service';
+import { Playthrough } from '../../../services/campaign.model';
 import { Session } from '../../../services/session.model';
 import { Character } from '../../../services/character.model';
 import { Npc } from '../../../services/npc.model';
@@ -69,6 +71,11 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   /** Indicateur de lancement en cours pour éviter les double-clics. */
   startingSession = false;
 
+  /** Parties (Playthroughs) de cette campagne. */
+  playthroughs: Playthrough[] = [];
+  /** Partie par défaut (1re) — fallback pour les actions session/PJ tant que l'UI Playthrough n'est pas finie. */
+  defaultPlaythroughId: string | null = null;
+
   /** Mode édition inline. */
   editing = false;
   editName = '';
@@ -92,6 +99,7 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
     private characterService: CharacterService,
     private npcService: NpcService,
     private sessionService: SessionService,
+    private playthroughService: PlaythroughService,
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService,
     private confirmDialog: ConfirmDialogService
@@ -109,11 +117,14 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
         allCampaigns: this.campaignService.getAllCampaigns(),
         treeData: loadCampaignTreeData(this.campaignService, id, this.characterService, this.npcService).pipe(
           catchError(() => of({ arcs: [], chaptersByArc: {}, scenesByChapter: {}, characters: [], npcs: [] } as CampaignTreeData))
-        )
+        ),
+        playthroughs: this.playthroughService.listByCampaign(id).pipe(catchError(() => of([] as Playthrough[])))
       }))
-    ).subscribe(({ campaign, allCampaigns, treeData }) => {
+    ).subscribe(({ campaign, allCampaigns, treeData, playthroughs }) => {
       this.campaign = campaign;
       this.editing = false;
+      this.playthroughs = playthroughs;
+      this.defaultPlaythroughId = playthroughs.length > 0 ? playthroughs[0].id! : null;
       this.loadLinkedLore(campaign);
       this.loadLinkedGameSystem(campaign);
       this.loadCharacters(campaign.id!);
@@ -145,10 +156,13 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
       allCampaigns: this.campaignService.getAllCampaigns(),
       treeData: loadCampaignTreeData(this.campaignService, id, this.characterService, this.npcService).pipe(
         catchError(() => of({ arcs: [], chaptersByArc: {}, scenesByChapter: {}, characters: [], npcs: [] } as CampaignTreeData))
-      )
-    }).subscribe(({ campaign, allCampaigns, treeData }) => {
+      ),
+      playthroughs: this.playthroughService.listByCampaign(id).pipe(catchError(() => of([] as Playthrough[])))
+    }).subscribe(({ campaign, allCampaigns, treeData, playthroughs }) => {
       this.campaign = campaign;
       this.editing = false;
+      this.playthroughs = playthroughs;
+      this.defaultPlaythroughId = playthroughs.length > 0 ? playthroughs[0].id! : null;
       this.loadLinkedLore(campaign);
       this.loadLinkedGameSystem(campaign);
       this.loadCharacters(campaign.id!);
@@ -186,9 +200,13 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
     ).subscribe(gs => this.linkedGameSystem = gs);
   }
 
-  /** Charge les fiches de personnages (PJ) de la campagne. */
-  private loadCharacters(campaignId: string): void {
-    this.characterService.getByCampaign(campaignId).pipe(
+  /** Charge les PJ de la Partie par défaut (refonte Playthrough). */
+  private loadCharacters(_campaignId: string): void {
+    if (!this.defaultPlaythroughId) {
+      this.characters = [];
+      return;
+    }
+    this.characterService.getByPlaythrough(this.defaultPlaythroughId).pipe(
       catchError(() => of([] as Character[]))
     ).subscribe(list => this.characters = list);
   }
@@ -200,53 +218,31 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
     ).subscribe(list => this.npcs = list);
   }
 
-  /**
-   * Charge les sessions de cette campagne ET la session active globale.
-   * La session globale conditionne si le bouton "Lancer" est activable
-   * (règle métier : une seule session active simultanément dans l'app).
-   */
-  private loadSessions(campaignId: string): void {
-    this.sessionService.getSessions(campaignId).pipe(
-      catchError(() => of([] as Session[]))
-    ).subscribe(list => this.sessions = list);
+  // Sessions retirées de cette vue (vivent dans Playthrough Detail).
+  private loadSessions(_campaignId: string): void { this.sessions = []; }
 
-    this.sessionService.getActiveSession().pipe(
-      catchError(() => of(null))
-    ).subscribe(active => this.activeSessionGlobal = active);
+  // ─────────────── Playthroughs (Parties) ───────────────
+
+  openPlaythrough(p: Playthrough): void {
+    this.router.navigate(['/campaigns', this.campaign?.id, 'playthroughs', p.id]);
   }
 
-  /** True si une session est active mais sur une AUTRE campagne (lancement bloqué). */
-  get isLaunchBlockedByOtherCampaign(): boolean {
-    return !!this.activeSessionGlobal
-      && !!this.campaign
-      && this.activeSessionGlobal.campaignId !== this.campaign.id;
-  }
-
-  /** Session active sur la campagne courante (le MJ joue déjà ici). */
-  get activeSessionOnCurrentCampaign(): Session | null {
-    if (!this.activeSessionGlobal || !this.campaign) return null;
-    return this.activeSessionGlobal.campaignId === this.campaign.id
-      ? this.activeSessionGlobal
-      : null;
-  }
-
-  startSession(): void {
-    if (!this.campaign || this.startingSession || this.isLaunchBlockedByOtherCampaign) return;
-    this.startingSession = true;
-    this.sessionService.startSession(this.campaign.id!).subscribe({
-      next: session => {
-        this.startingSession = false;
-        this.router.navigate(['/sessions', session.id]);
+  /** Crée une nouvelle Partie avec un nom par défaut, puis y navigue. */
+  newPlaythroughInFlight = false;
+  createPlaythrough(): void {
+    if (!this.campaign || this.newPlaythroughInFlight) return;
+    this.newPlaythroughInFlight = true;
+    const defaultName = `Nouvelle partie ${this.playthroughs.length + 1}`;
+    this.playthroughService.create({
+      campaignId: this.campaign.id!,
+      name: defaultName
+    }).subscribe({
+      next: created => {
+        this.newPlaythroughInFlight = false;
+        this.router.navigate(['/campaigns', this.campaign?.id, 'playthroughs', created.id]);
       },
-      error: () => {
-        this.startingSession = false;
-        console.error('Erreur lors du lancement de la session');
-      }
+      error: () => { this.newPlaythroughInFlight = false; }
     });
-  }
-
-  openSession(session: Session): void {
-    this.router.navigate(['/sessions', session.id]);
   }
 
   createCharacter(): void {
@@ -444,7 +440,7 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
         if (impact.arcs > 0) parts.push(`${impact.arcs} arc${impact.arcs > 1 ? 's' : ''}`);
         if (impact.chapters > 0) parts.push(`${impact.chapters} chapitre${impact.chapters > 1 ? 's' : ''}`);
         if (impact.scenes > 0) parts.push(`${impact.scenes} scène${impact.scenes > 1 ? 's' : ''}`);
-        if (impact.characters > 0) parts.push(`${impact.characters} personnage${impact.characters > 1 ? 's' : ''}`);
+        if (impact.playthroughs > 0) parts.push(`${impact.playthroughs} partie${impact.playthroughs > 1 ? 's' : ''} (avec ses PJ, sessions, faits)`);
 
         const details: string[] = [];
         if (parts.length) details.push(`Sera aussi supprime : ${parts.join(', ')}.`);

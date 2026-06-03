@@ -5,7 +5,7 @@ import { Session } from './session.model';
 
 /**
  * Service HTTP pour le Play Context (gestion des Sessions de jeu).
- * Port de sortie vers le Backend Java (Architecture Hexagonale).
+ * Depuis Playthrough : une Session est rattachée à un Playthrough, pas à une Campagne.
  */
 @Injectable({
   providedIn: 'root'
@@ -15,20 +15,31 @@ export class SessionService {
 
   constructor(private http: HttpClient) {}
 
-  /** Lance une nouvelle session sur la campagne donnée. */
-  startSession(campaignId: string): Observable<Session> {
-    return this.http.post<Session>(this.apiUrl, { campaignId });
+  /** Lance une nouvelle session sur la Partie (Playthrough) donnée. */
+  startSession(playthroughId: string): Observable<Session> {
+    return this.http.post<Session>(this.apiUrl, { playthroughId });
   }
 
-  /** Récupère la session active (204 No Content si aucune). */
+  /**
+   * Récupère UNE session active dans l'app (legacy, multi-actives possibles désormais).
+   * Préférer {@link getActiveByPlaythrough} quand on veut le statut d'une Partie précise.
+   */
   getActiveSession(): Observable<Session | null> {
     return this.http.get<Session | null>(`${this.apiUrl}/active`, { observe: 'body' });
   }
 
-  getSessions(campaignId?: string): Observable<Session[]> {
+  /** Récupère la session active de la Partie donnée (null si aucune). */
+  getActiveByPlaythrough(playthroughId: string): Observable<Session | null> {
+    return this.http.get<Session | null>(`${this.apiUrl}/active`, {
+      params: new HttpParams().set('playthroughId', playthroughId),
+      observe: 'body'
+    });
+  }
+
+  getSessions(playthroughId?: string): Observable<Session[]> {
     let params = new HttpParams();
-    if (campaignId) {
-      params = params.set('campaignId', campaignId);
+    if (playthroughId) {
+      params = params.set('playthroughId', playthroughId);
     }
     return this.http.get<Session[]>(this.apiUrl, { params });
   }

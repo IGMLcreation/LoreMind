@@ -16,6 +16,7 @@ import com.loremind.domain.generationcontext.NarrativeEntityContext;
 import com.loremind.domain.generationcontext.PageContext;
 import com.loremind.domain.generationcontext.SessionContext;
 import com.loremind.domain.generationcontext.SessionContext.JournalEntrySummary;
+import com.loremind.domain.generationcontext.SessionContext.QuestSummary;
 import org.springframework.stereotype.Component;
 
 import java.util.LinkedHashMap;
@@ -76,6 +77,40 @@ public class BrainChatPayloadBuilder {
         map.put("entries", sc.entries() != null
                 ? sc.entries().stream().map(this::journalEntryToMap).collect(Collectors.toList())
                 : List.of());
+        // Évènements des sessions précédentes : omis si vide (campagne sur sa 1re session).
+        if (sc.previousEvents() != null && !sc.previousEvents().isEmpty()) {
+            map.put("previous_events", sc.previousEvents().stream()
+                    .map(this::journalEntryToMap)
+                    .collect(Collectors.toList()));
+        }
+        // État Hub (quêtes / flags). Toutes les listes sont omises si vides pour ne pas
+        // saturer le prompt sur les campagnes sans Hub.
+        if (sc.availableQuests() != null && !sc.availableQuests().isEmpty()) {
+            map.put("available_quests", sc.availableQuests().stream()
+                    .map(this::questSummaryToMap)
+                    .collect(Collectors.toList()));
+        }
+        if (sc.inProgressQuests() != null && !sc.inProgressQuests().isEmpty()) {
+            map.put("in_progress_quests", sc.inProgressQuests().stream()
+                    .map(this::questSummaryToMap)
+                    .collect(Collectors.toList()));
+        }
+        if (sc.lockedQuestTitles() != null && !sc.lockedQuestTitles().isEmpty()) {
+            map.put("locked_quest_titles", sc.lockedQuestTitles());
+        }
+        if (sc.activeFlags() != null && !sc.activeFlags().isEmpty()) {
+            map.put("active_flags", sc.activeFlags());
+        }
+        return map;
+    }
+
+    private Map<String, Object> questSummaryToMap(QuestSummary q) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("name", q.name());
+        map.put("arc_name", q.arcName());
+        if (q.description() != null && !q.description().isBlank()) {
+            map.put("description", q.description());
+        }
         return map;
     }
 
@@ -85,6 +120,9 @@ public class BrainChatPayloadBuilder {
         map.put("content", e.content());
         if (e.occurredAt() != null) {
             map.put("occurred_at", e.occurredAt().toString());
+        }
+        if (e.sourceSessionName() != null && !e.sourceSessionName().isBlank()) {
+            map.put("source_session_name", e.sourceSessionName());
         }
         return map;
     }
@@ -243,6 +281,12 @@ public class BrainChatPayloadBuilder {
                                 .map(this::branchHintToMap)
                                 .collect(Collectors.toList()));
                     }
+                    // Pièces du lieu explorable : omises si scène classique.
+                    if (s.rooms() != null && !s.rooms().isEmpty()) {
+                        map.put("rooms", s.rooms().stream()
+                                .map(this::roomSummaryToMap)
+                                .collect(Collectors.toList()));
+                    }
                 });
     }
 
@@ -252,6 +296,24 @@ public class BrainChatPayloadBuilder {
         map.put("target_scene_name", b.targetSceneName());
         if (b.condition() != null && !b.condition().isBlank()) {
             map.put("condition", b.condition());
+        }
+        return map;
+    }
+
+    private Map<String, Object> roomSummaryToMap(com.loremind.domain.generationcontext.CampaignStructuralContext.RoomSummary r) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("name", r.name());
+        if (r.floor() != null) map.put("floor", r.floor());
+        if (r.description() != null && !r.description().isBlank()) map.put("description", r.description());
+        if (r.enemies() != null && !r.enemies().isBlank()) map.put("enemies", r.enemies());
+        if (r.branches() != null && !r.branches().isEmpty()) {
+            map.put("branches", r.branches().stream().map(b -> {
+                Map<String, Object> bm = new LinkedHashMap<>();
+                bm.put("label", b.label());
+                bm.put("target_room_name", b.targetRoomName());
+                if (b.condition() != null && !b.condition().isBlank()) bm.put("condition", b.condition());
+                return bm;
+            }).collect(Collectors.toList()));
         }
         return map;
     }

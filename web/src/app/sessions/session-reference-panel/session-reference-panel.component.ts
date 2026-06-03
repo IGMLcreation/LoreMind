@@ -42,6 +42,8 @@ export class SessionReferencePanelComponent implements OnChanges {
   readonly Sparkles = Sparkles;
 
   @Input() campaignId!: string;
+  /** Partie active — nécessaire pour charger les PJ (refonte Playthrough). */
+  @Input() playthroughId: string | null = null;
   @Input() sessionId!: string;
   @Input() canAddToJournal = true;
   @Output() rolled = new EventEmitter<DiceRollResult>();
@@ -85,7 +87,11 @@ export class SessionReferencePanelComponent implements OnChanges {
   private ensureCharactersLoaded(): void {
     if (this.charsLoaded || this.loadingChars || !this.campaignId) return;
     this.loadingChars = true;
-    this.characterService.getByCampaign(this.campaignId).pipe(catchError(() => of([] as Character[])))
+    // PJ : propres à la Partie. PNJ : campagne-scope.
+    const chars$ = this.playthroughId
+        ? this.characterService.getByPlaythrough(this.playthroughId)
+        : of([] as Character[]);
+    chars$.pipe(catchError(() => of([] as Character[])))
       .subscribe(list => { this.characters = list; this.tryFinishCharsLoad(); });
     this.npcService.getByCampaign(this.campaignId).pipe(catchError(() => of([] as Npc[])))
       .subscribe(list => { this.npcs = list; this.tryFinishCharsLoad(); });

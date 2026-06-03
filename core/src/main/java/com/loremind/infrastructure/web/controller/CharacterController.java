@@ -35,9 +35,9 @@ public class CharacterController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/campaign/{campaignId}")
-    public ResponseEntity<List<CharacterDTO>> getCharactersByCampaign(@PathVariable String campaignId) {
-        List<CharacterDTO> dtos = characterService.getCharactersByCampaignId(campaignId).stream()
+    @GetMapping("/playthrough/{playthroughId}")
+    public ResponseEntity<List<CharacterDTO>> getCharactersByPlaythrough(@PathVariable String playthroughId) {
+        List<CharacterDTO> dtos = characterService.getCharactersByPlaythroughId(playthroughId).stream()
                 .map(characterMapper::toDTO)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
@@ -63,7 +63,7 @@ public class CharacterController {
                 dto.getValues(),
                 dto.getImageValues(),
                 dto.getKeyValueValues(),
-                dto.getCampaignId(),
+                dto.getPlaythroughId(),
                 order
         );
     }

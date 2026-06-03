@@ -15,7 +15,7 @@ public class SessionMapper {
         SessionDTO dto = new SessionDTO();
         dto.setId(session.getId());
         dto.setName(session.getName());
-        dto.setCampaignId(session.getCampaignId());
+        dto.setPlaythroughId(session.getPlaythroughId());
         dto.setStartedAt(session.getStartedAt());
         dto.setEndedAt(session.getEndedAt());
         dto.setCreatedAt(session.getCreatedAt());

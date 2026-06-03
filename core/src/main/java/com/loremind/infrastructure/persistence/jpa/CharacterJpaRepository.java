@@ -9,5 +9,5 @@ import java.util.List;
 @Repository
 public interface CharacterJpaRepository extends JpaRepository<CharacterJpaEntity, Long> {
 
-    List<CharacterJpaEntity> findByCampaignIdOrderByOrderAsc(Long campaignId);
+    List<CharacterJpaEntity> findByPlaythroughIdOrderByOrderAsc(Long playthroughId);
 }

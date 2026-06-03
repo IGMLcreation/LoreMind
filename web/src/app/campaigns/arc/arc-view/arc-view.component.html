@@ -6,7 +6,9 @@
         <lucide-icon *ngIf="arc.icon" [img]="resolveCampaignIcon(arc.icon)" [size]="22" class="title-icon"></lucide-icon>
         {{ arc.name }}
       </h1>
-      <p class="view-subtitle">Arc narratif</p>
+      <p class="view-subtitle">
+        {{ arc.type === 'HUB' ? 'Arc en hub (quêtes non linéaires)' : 'Arc narratif' }}
+      </p>
     </div>
     <div class="view-actions">
       <button type="button" class="btn-primary" (click)="editMode()">
@@ -29,6 +31,40 @@
   <section class="view-section" *ngIf="(arc.mapImageIds?.length ?? 0) > 0">
     <h2 class="view-section-title"><span class="view-section-icon">🗺️</span> Cartes & plans</h2>
     <app-image-gallery [imageIds]="arc.mapImageIds ?? []" [layout]="'MAPS'"></app-image-gallery>
+  </section>
+
+  <!-- Vue Hub (scénario) : liste les quêtes et leurs conditions, sans statut.
+       Le statut effectif et les actions de jeu vivent dans l'écran d'une Partie. -->
+  <section class="view-section" *ngIf="arc.type === 'HUB'">
+    <h2 class="view-section-title"><span class="view-section-icon">🗺️</span> Quêtes du hub (scénario)</h2>
+
+    <p class="view-section-empty" *ngIf="hubQuests.length === 0">
+      Aucune quête pour ce hub. Créez un chapitre pour ajouter une première quête.
+    </p>
+
+    <div class="hub-quest-grid" *ngIf="hubQuests.length > 0">
+      <button type="button"
+              class="hub-quest-card"
+              *ngFor="let q of hubQuests"
+              (click)="openQuest(q)">
+        <div class="hub-quest-card-head">
+          <span class="hub-quest-card-icon" *ngIf="q.icon">
+            <lucide-icon [img]="resolveCampaignIcon(q.icon)" [size]="18"></lucide-icon>
+          </span>
+          <span class="hub-quest-card-name">{{ q.name }}</span>
+        </div>
+
+        <p class="hub-quest-card-desc" *ngIf="q.description?.trim()">{{ q.description }}</p>
+
+        <div class="hub-quest-card-locked-hint" *ngIf="(q.prerequisites?.length ?? 0) > 0">
+          <lucide-icon [img]="AlertCircle" [size]="13"></lucide-icon>
+          <span>{{ q.prerequisites!.length }} condition(s) de déblocage</span>
+          <ul class="hub-quest-card-prereq-list">
+            <li *ngFor="let p of q.prerequisites">{{ describePrerequisite(p) }}</li>
+          </ul>
+        </div>
+      </button>
+    </div>
   </section>
 
   <section class="view-section">

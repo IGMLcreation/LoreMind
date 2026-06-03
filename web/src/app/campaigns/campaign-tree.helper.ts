@@ -30,9 +30,12 @@ export function loadCampaignTreeData(
   characterService: CharacterService,
   npcService: NpcService
 ): Observable<CampaignTreeData> {
+  // Note refonte Playthrough : les PJ appartiennent désormais à une Partie,
+  // pas à la campagne — on ne les charge plus ici (les vues qui les affichent
+  // doivent passer par PlaythroughService et appeler characterService.getByPlaythrough).
   return forkJoin({
     arcs: service.getArcs(campaignId),
-    characters: characterService.getByCampaign(campaignId),
+    characters: of([] as Character[]),
     npcs: npcService.getByCampaign(campaignId)
   }).pipe(
     switchMap(({ arcs, characters, npcs }) => {

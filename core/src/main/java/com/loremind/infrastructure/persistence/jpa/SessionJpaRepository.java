@@ -13,7 +13,9 @@ import java.util.Optional;
 @Repository
 public interface SessionJpaRepository extends JpaRepository<SessionJpaEntity, Long> {
 
-    List<SessionJpaEntity> findByCampaignIdOrderByStartedAtDesc(String campaignId);
+    List<SessionJpaEntity> findByPlaythroughIdOrderByStartedAtDesc(Long playthroughId);
 
     Optional<SessionJpaEntity> findFirstByEndedAtIsNull();
+
+    Optional<SessionJpaEntity> findFirstByPlaythroughIdAndEndedAtIsNull(Long playthroughId);
 }

@@ -1,0 +1,21 @@
+<div class="flags-manager">
+
+  <p class="flags-empty" *ngIf="!loading && rows.length === 0">
+    Aucun fait référencé. Ajoutez une condition « Quand un fait est vrai » sur
+    au moins une quête pour qu'il apparaisse ici.
+  </p>
+
+  <ul class="flag-list" *ngIf="rows.length > 0">
+    <li class="flag-row" *ngFor="let r of rows" [class.flag-on]="r.value">
+      <label class="flag-toggle">
+        <input type="checkbox" [checked]="r.value" (change)="toggle(r)" />
+        <span class="flag-toggle-slider"></span>
+      </label>
+      <div class="flag-info">
+        <span class="flag-name">{{ r.name }}</span>
+      </div>
+      <span class="flag-value">{{ r.value ? 'vrai' : 'faux' }}</span>
+    </li>
+  </ul>
+
+</div>

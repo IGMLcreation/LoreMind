@@ -11,27 +11,38 @@ import { NpcService } from '../../../services/npc.service';
 import { PageService } from '../../../services/page.service';
 import { LayoutService } from '../../../services/layout.service';
 import { PageTitleService } from '../../../services/page-title.service';
-import { Chapter } from '../../../services/campaign.model';
+import { Chapter, Prerequisite, Arc } from '../../../services/campaign.model';
 import { Page } from '../../../services/page.model';
 import { loadCampaignTreeData, buildCampaignSidebarConfig } from '../../campaign-tree.helper';
 import { LoreLinkPickerComponent } from '../../../shared/lore-link-picker/lore-link-picker.component';
 import { AiChatDrawerComponent } from '../../../shared/ai-chat-drawer/ai-chat-drawer.component';
 import { ImageGalleryComponent } from '../../../shared/image-gallery/image-gallery.component';
 import { IconPickerComponent } from '../../../shared/icon-picker/icon-picker.component';
+import { PrerequisiteEditorComponent } from '../../../shared/prerequisite-editor/prerequisite-editor.component';
+import { CampaignFlagService } from '../../../services/campaign-flag.service';
 import { CAMPAIGN_ICON_OPTIONS } from '../../campaign-icons';
 import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 
 /**
- * Écran de détail/modification d'un Chapitre.
- * Route : /campaigns/:campaignId/arcs/:arcId/chapters/:chapterId
+ * Écran d'édition d'un Chapitre. Donnée de SCÉNARIO uniquement.
  *
- * Inclut le picker de pages Lore (B2 cross-context) si la campagne parente
- * est associée à un Lore.
+ * Depuis Playthrough : la progression et le toggle des flags se font dans le
+ * contexte d'une Partie (voir Playthrough Detail). On garde ici uniquement les
+ * prérequis (conditions de déblocage), qui font partie du scénario.
  */
 @Component({
   selector: 'app-chapter-edit',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, LoreLinkPickerComponent, AiChatDrawerComponent, ImageGalleryComponent, IconPickerComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    LucideAngularModule,
+    LoreLinkPickerComponent,
+    AiChatDrawerComponent,
+    ImageGalleryComponent,
+    IconPickerComponent,
+    PrerequisiteEditorComponent
+  ],
   templateUrl: './chapter-edit.component.html',
   styleUrls: ['./chapter-edit.component.scss']
 })
@@ -41,7 +52,6 @@ export class ChapterEditComponent implements OnInit, OnDestroy {
   readonly campaignIconOptions = CAMPAIGN_ICON_OPTIONS;
   selectedIcon: string | null = null;
 
-  /** État drawer chat IA (b5.7 — intégration Campagne). */
   chatOpen = false;
   readonly chatQuickSuggestions = [
     'Propose des objectifs clairs pour les joueurs dans ce chapitre',
@@ -63,6 +73,18 @@ export class ChapterEditComponent implements OnInit, OnDestroy {
   illustrationImageIds: string[] = [];
   mapImageIds: string[] = [];
 
+  /** Prérequis (donnée de scénario). */
+  prerequisites: Prerequisite[] = [];
+
+  /** Quêtes candidates pour QUEST_COMPLETED (chapitres de la campagne, sauf celui-ci). */
+  availableQuests: Chapter[] = [];
+
+  /** Faits déclarés au niveau Campagne (autocomplete FLAG_SET). */
+  availableFlagNames: string[] = [];
+
+  /** L'arc parent — pour conditionner la section Hub (prérequis pertinents). */
+  parentArc: Arc | null = null;
+
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
@@ -73,7 +95,8 @@ export class ChapterEditComponent implements OnInit, OnDestroy {
     private pageService: PageService,
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private campaignFlagService: CampaignFlagService
   ) {
     this.form = this.fb.group({
       name:             ['', Validators.required],
@@ -85,9 +108,6 @@ export class ChapterEditComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // On s'abonne à paramMap plutôt que de lire snapshot une fois : Angular
-    // réutilise le composant quand on navigue entre chapitres frères via
-    // l'arbre (même route pattern), et ngOnInit ne se relance pas.
     this.route.paramMap.subscribe(pm => {
       const newCampaignId = pm.get('campaignId')!;
       const newArcId = pm.get('arcId')!;
@@ -124,6 +144,21 @@ export class ChapterEditComponent implements OnInit, OnDestroy {
       this.selectedIcon = chapter.icon ?? null;
       this.illustrationImageIds = [...(chapter.illustrationImageIds ?? [])];
       this.mapImageIds = [...(chapter.mapImageIds ?? [])];
+
+      this.prerequisites = [...(chapter.prerequisites ?? [])];
+
+      const allChapters: Chapter[] = [];
+      Object.values(treeData.chaptersByArc).forEach(list => allChapters.push(...list));
+      this.availableQuests = allChapters.filter(c => c.id !== this.chapterId);
+
+      this.parentArc = treeData.arcs.find(a => a.id === this.arcId) ?? null;
+
+      // Autocomplete des FLAG_SET : les noms de faits déjà référencés ailleurs
+      // dans la campagne (déduit des autres quêtes).
+      this.campaignFlagService.listReferenced(this.campaignId).subscribe({
+        next: names => { this.availableFlagNames = names; }
+      });
+
       this.form.patchValue({
         name:             chapter.name,
         description:      chapter.description ?? '',
@@ -136,6 +171,10 @@ export class ChapterEditComponent implements OnInit, OnDestroy {
     });
   }
 
+  onPrerequisitesChange(next: Prerequisite[]): void {
+    this.prerequisites = next;
+  }
+
   submit(): void {
     if (this.form.invalid || !this.chapter) return;
     this.campaignService.updateChapter(this.chapterId, {
@@ -146,6 +185,7 @@ export class ChapterEditComponent implements OnInit, OnDestroy {
       gmNotes:          this.form.value.gmNotes,
       playerObjectives: this.form.value.playerObjectives,
       narrativeStakes:  this.form.value.narrativeStakes,
+      prerequisites:    this.prerequisites,
       relatedPageIds:   this.relatedPageIds,
       illustrationImageIds: this.illustrationImageIds,
       mapImageIds:      this.mapImageIds,
@@ -176,10 +216,5 @@ export class ChapterEditComponent implements OnInit, OnDestroy {
     this.router.navigate(['/campaigns', this.campaignId, 'arcs', this.arcId, 'chapters', this.chapterId]);
   }
 
-  ngOnDestroy(): void {
-    // Volontairement vide : la sidebar reste prise en charge par le composant
-    // suivant (autre sous-route ou le composant detail parent) qui appellera
-    // show(). Eviter d'appeler hide() ici previent le clignotement / la
-    // disparition de la sidebar lors des navigations internes a la section.
-  }
+  ngOnDestroy(): void {}
 }

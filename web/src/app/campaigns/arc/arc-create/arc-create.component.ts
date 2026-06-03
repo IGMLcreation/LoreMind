@@ -44,7 +44,9 @@ export class ArcCreateComponent implements OnInit, OnDestroy {
   ) {
     this.form = this.fb.group({
       name:        ['', Validators.required],
-      description: ['']
+      description: [''],
+      // Type structurel : LINEAR (séquentiel) par défaut, HUB (sandbox/quêtes parallèles).
+      type:        ['LINEAR', Validators.required]
     });
   }
 
@@ -72,6 +74,7 @@ export class ArcCreateComponent implements OnInit, OnDestroy {
       description: this.form.value.description,
       campaignId: this.campaignId,
       order: this.existingArcCount + 1,
+      type: this.form.value.type,
       icon: this.selectedIcon
     }).subscribe({
       next: (created) => this.router.navigate(['/campaigns', this.campaignId, 'arcs', created.id]),

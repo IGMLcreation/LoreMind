@@ -12,8 +12,8 @@ export class CharacterService {
 
   constructor(private http: HttpClient) {}
 
-  getByCampaign(campaignId: string): Observable<Character[]> {
-    return this.http.get<Character[]>(`${this.apiUrl}/campaign/${campaignId}`);
+  getByPlaythrough(playthroughId: string): Observable<Character[]> {
+    return this.http.get<Character[]>(`${this.apiUrl}/playthrough/${playthroughId}`);
   }
 
   getById(id: string): Observable<Character> {

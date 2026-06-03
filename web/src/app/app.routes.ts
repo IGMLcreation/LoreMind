@@ -16,6 +16,8 @@ export const routes: Routes = [
   { path: 'lore/:loreId/pages/:pageId/edit', loadComponent: () => import('./lore/page-edit/page-edit.component').then(m => m.PageEditComponent) },
   { path: 'campaigns', loadComponent: () => import('./campaigns/campaigns.component').then(m => m.CampaignsComponent) },
   { path: 'campaigns/:id', loadComponent: () => import('./campaigns/campaign/campaign-detail/campaign-detail.component').then(m => m.CampaignDetailComponent) },
+  { path: 'campaigns/:campaignId/playthroughs/:playthroughId', loadComponent: () => import('./campaigns/playthrough/playthrough-detail/playthrough-detail.component').then(m => m.PlaythroughDetailComponent) },
+  { path: 'campaigns/:campaignId/playthroughs/:playthroughId/flags', loadComponent: () => import('./campaigns/playthrough/playthrough-flags-page/playthrough-flags-page.component').then(m => m.PlaythroughFlagsPageComponent) },
   { path: 'campaigns/:campaignId/characters/create', loadComponent: () => import('./campaigns/character/character-edit/character-edit.component').then(m => m.CharacterEditComponent) },
   { path: 'campaigns/:campaignId/characters/:characterId/edit', loadComponent: () => import('./campaigns/character/character-edit/character-edit.component').then(m => m.CharacterEditComponent) },
   { path: 'campaigns/:campaignId/characters/:characterId', loadComponent: () => import('./campaigns/character/character-view/character-view.component').then(m => m.CharacterViewComponent) },

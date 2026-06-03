@@ -99,6 +99,11 @@ export class SceneViewComponent implements OnInit, OnDestroy {
     return this.availablePages.find(p => p.id === pageId)?.title ?? '(page supprimée)';
   }
 
+  /** Résout le nom d'une pièce cible (pour afficher les sorties inter-pièces). */
+  roomNameById(scene: Scene | null, roomId: string): string {
+    return scene?.rooms?.find(r => r.id === roomId)?.name ?? '(pièce supprimée)';
+  }
+
   editMode(): void {
     this.router.navigate([
       '/campaigns', this.campaignId, 'arcs', this.arcId,

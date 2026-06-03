@@ -5,7 +5,7 @@
 export interface Session {
   id: string;
   name: string;
-  campaignId: string;
+  playthroughId: string;
   startedAt: string;
   /** Null/undefined = session en cours. */
   endedAt: string | null;

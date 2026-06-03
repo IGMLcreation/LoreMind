@@ -33,8 +33,8 @@ public class PostgresCharacterRepository implements CharacterRepository {
     }
 
     @Override
-    public List<Character> findByCampaignId(String campaignId) {
-        return jpaRepository.findByCampaignIdOrderByOrderAsc(Long.parseLong(campaignId)).stream()
+    public List<Character> findByPlaythroughId(String playthroughId) {
+        return jpaRepository.findByPlaythroughIdOrderByOrderAsc(Long.parseLong(playthroughId)).stream()
                 .map(this::toDomainEntity)
                 .collect(Collectors.toList());
     }
@@ -58,7 +58,7 @@ public class PostgresCharacterRepository implements CharacterRepository {
                 .values(e.getValues() != null ? new HashMap<>(e.getValues()) : new HashMap<>())
                 .imageValues(e.getImageValues() != null ? new HashMap<>(e.getImageValues()) : new HashMap<>())
                 .keyValueValues(e.getKeyValueValues() != null ? new HashMap<>(e.getKeyValueValues()) : new HashMap<>())
-                .campaignId(e.getCampaignId().toString())
+                .playthroughId(e.getPlaythroughId() != null ? e.getPlaythroughId().toString() : null)
                 .order(e.getOrder())
                 .createdAt(e.getCreatedAt())
                 .updatedAt(e.getUpdatedAt())
@@ -75,7 +75,7 @@ public class PostgresCharacterRepository implements CharacterRepository {
                 .values(c.getValues() != null ? new HashMap<>(c.getValues()) : new HashMap<>())
                 .imageValues(c.getImageValues() != null ? new HashMap<>(c.getImageValues()) : new HashMap<>())
                 .keyValueValues(c.getKeyValueValues() != null ? new HashMap<>(c.getKeyValueValues()) : new HashMap<>())
-                .campaignId(Long.parseLong(c.getCampaignId()))
+                .playthroughId(c.getPlaythroughId() != null ? Long.parseLong(c.getPlaythroughId()) : null)
                 .order(c.getOrder())
                 .createdAt(c.getCreatedAt())
                 .updatedAt(c.getUpdatedAt())

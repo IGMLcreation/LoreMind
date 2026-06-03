@@ -21,6 +21,14 @@ public class Arc {
     private String campaignId;       // Référence vers la Campaign parente
     private int order;               // Ordre de l'arc dans la campagne
 
+    /**
+     * Type structurel de l'arc. Détermine son rendu UI et la sémantique de ses chapitres
+     * (séquence narrative LINEAR vs. quêtes parallèles d'un HUB).
+     * Défaut LINEAR pour rétro-compatibilité avec les arcs existants.
+     */
+    @Builder.Default
+    private ArcType type = ArcType.LINEAR;
+
     /** Cle d'icone choisie par l'utilisateur (cf. CAMPAIGN_ICON_OPTIONS cote front). */
     private String icon;
 

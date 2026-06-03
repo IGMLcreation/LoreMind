@@ -11,7 +11,7 @@ import { NpcService } from '../../../services/npc.service';
 import { PageService } from '../../../services/page.service';
 import { LayoutService } from '../../../services/layout.service';
 import { PageTitleService } from '../../../services/page-title.service';
-import { Scene, SceneBranch } from '../../../services/campaign.model';
+import { Scene, SceneBranch, Room } from '../../../services/campaign.model';
 import { Page } from '../../../services/page.model';
 import { loadCampaignTreeData, buildCampaignSidebarConfig } from '../../campaign-tree.helper';
 import { ExpandableSectionComponent } from '../../../shared/expandable-section/expandable-section.component';
@@ -19,6 +19,7 @@ import { LoreLinkPickerComponent } from '../../../shared/lore-link-picker/lore-l
 import { AiChatDrawerComponent } from '../../../shared/ai-chat-drawer/ai-chat-drawer.component';
 import { ImageGalleryComponent } from '../../../shared/image-gallery/image-gallery.component';
 import { IconPickerComponent } from '../../../shared/icon-picker/icon-picker.component';
+import { RoomsEditorComponent } from '../../../shared/rooms-editor/rooms-editor.component';
 import { CAMPAIGN_ICON_OPTIONS } from '../../campaign-icons';
 import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 
@@ -29,7 +30,7 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
 @Component({
   selector: 'app-scene-edit',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, ExpandableSectionComponent, LoreLinkPickerComponent, AiChatDrawerComponent, ImageGalleryComponent, IconPickerComponent],
+  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, ExpandableSectionComponent, LoreLinkPickerComponent, AiChatDrawerComponent, ImageGalleryComponent, IconPickerComponent, RoomsEditorComponent],
   templateUrl: './scene-edit.component.html',
   styleUrls: ['./scene-edit.component.scss']
 })
@@ -66,6 +67,11 @@ export class SceneEditComponent implements OnInit, OnDestroy {
   siblingScenes: Scene[] = [];
   /** Branches narratives (état local mutable, persisté au submit). */
   branches: SceneBranch[] = [];
+
+  /** Pièces du lieu explorable (état local, persisté au submit). */
+  rooms: Room[] = [];
+
+  onRoomsChange(next: Room[]): void { this.rooms = next; }
 
   constructor(
     private fb: FormBuilder,
@@ -144,6 +150,7 @@ export class SceneEditComponent implements OnInit, OnDestroy {
       this.mapImageIds = [...(scene.mapImageIds ?? [])];
       this.siblingScenes = chapterScenes.filter(s => s.id !== this.sceneId);
       this.branches = (scene.branches ?? []).map(b => ({ ...b }));
+      this.rooms = (scene.rooms ?? []).map(r => ({ ...r, branches: [...(r.branches ?? [])] }));
       this.form.patchValue({
         name:                 scene.name,
         description:          scene.description ?? '',
@@ -180,6 +187,7 @@ export class SceneEditComponent implements OnInit, OnDestroy {
       illustrationImageIds: this.illustrationImageIds,
       mapImageIds:          this.mapImageIds,
       branches:             this.branches,
+      rooms:                this.rooms,
       icon:                 this.selectedIcon
     }).subscribe({
       next: () => this.router.navigate(['/campaigns', this.campaignId, 'arcs', this.arcId, 'chapters', this.chapterId, 'scenes', this.sceneId]),

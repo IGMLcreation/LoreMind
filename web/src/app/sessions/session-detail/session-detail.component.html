@@ -1,6 +1,6 @@
 <div class="session-detail" *ngIf="session">
 
-  <a class="back-link" [routerLink]="['/campaigns', session.campaignId]">
+  <a class="back-link" [routerLink]="campaignId ? ['/campaigns', campaignId] : ['/campaigns']">
     <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon>
     Retour à la campagne
   </a>
@@ -175,7 +175,8 @@
     <!-- Colonne droite : panneau référence (Dés / Personnages / Scènes) -->
     <aside class="play-aside">
       <app-session-reference-panel
-        [campaignId]="session.campaignId"
+        [campaignId]="campaignId ?? ''"
+        [playthroughId]="session.playthroughId"
         [sessionId]="session.id"
         [canAddToJournal]="session.active"
         (rolled)="onDiceRolled($event)"

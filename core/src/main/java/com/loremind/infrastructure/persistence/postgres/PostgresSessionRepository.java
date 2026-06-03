@@ -11,8 +11,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
- * Adaptateur d'infrastructure qui implémente le Port SessionRepository.
- * Convertit Session (domaine pur) ↔ SessionJpaEntity (persistance).
+ * Adaptateur d'infrastructure : implémente le port SessionRepository en utilisant
+ * playthrough_id comme parent (depuis la refonte Playthrough).
  */
 @Repository
 public class PostgresSessionRepository implements SessionRepository {
@@ -42,8 +42,8 @@ public class PostgresSessionRepository implements SessionRepository {
     }
 
     @Override
-    public List<Session> findByCampaignId(String campaignId) {
-        return jpaRepository.findByCampaignIdOrderByStartedAtDesc(campaignId).stream()
+    public List<Session> findByPlaythroughId(String playthroughId) {
+        return jpaRepository.findByPlaythroughIdOrderByStartedAtDesc(Long.parseLong(playthroughId)).stream()
                 .map(this::toDomain)
                 .collect(Collectors.toList());
     }
@@ -51,6 +51,12 @@ public class PostgresSessionRepository implements SessionRepository {
     @Override
     public Optional<Session> findActive() {
         return jpaRepository.findFirstByEndedAtIsNull().map(this::toDomain);
+    }
+
+    @Override
+    public Optional<Session> findActiveByPlaythroughId(String playthroughId) {
+        return jpaRepository.findFirstByPlaythroughIdAndEndedAtIsNull(Long.parseLong(playthroughId))
+                .map(this::toDomain);
     }
 
     @Override
@@ -67,7 +73,7 @@ public class PostgresSessionRepository implements SessionRepository {
         return Session.builder()
                 .id(jpa.getId().toString())
                 .name(jpa.getName())
-                .campaignId(jpa.getCampaignId())
+                .playthroughId(jpa.getPlaythroughId() != null ? jpa.getPlaythroughId().toString() : null)
                 .startedAt(jpa.getStartedAt())
                 .endedAt(jpa.getEndedAt())
                 .createdAt(jpa.getCreatedAt())
@@ -80,7 +86,7 @@ public class PostgresSessionRepository implements SessionRepository {
         return SessionJpaEntity.builder()
                 .id(id)
                 .name(session.getName())
-                .campaignId(session.getCampaignId())
+                .playthroughId(session.getPlaythroughId() != null ? Long.parseLong(session.getPlaythroughId()) : null)
                 .startedAt(session.getStartedAt())
                 .endedAt(session.getEndedAt())
                 .createdAt(session.getCreatedAt())

@@ -231,6 +231,18 @@
       </small>
     </div>
 
+    <!-- Lieu explorable : pièces / donjon -->
+    <app-expandable-section title="Lieu explorable (donjon, crypte…)" icon="🏰" [initiallyOpen]="rooms.length > 0">
+      <small class="field-hint">
+        Si cette scène représente un lieu à parcourir pièce par pièce, ajoutez-les ici.
+        La scène bascule alors en mode « donjon » côté affichage.
+      </small>
+      <app-rooms-editor
+        [rooms]="rooms"
+        (roomsChange)="onRoomsChange($event)">
+      </app-rooms-editor>
+    </app-expandable-section>
+
   </form>
 
 </div>

@@ -27,8 +27,8 @@ public class ArcController {
 
     @PostMapping
     public ResponseEntity<ArcDTO> createArc(@RequestBody ArcDTO arcDTO) {
-        Arc arc = arcMapper.toDomain(arcDTO);
-        Arc createdArc = arcService.createArc(arc.getName(), arc.getDescription(), arc.getCampaignId(), arc.getOrder(), arc.getIcon());
+        // Surcharge "Arc complet" pour propager le champ type (LINEAR/HUB) à la création.
+        Arc createdArc = arcService.createArc(arcMapper.toDomain(arcDTO));
         return ResponseEntity.ok(arcMapper.toDTO(createdArc));
     }
 

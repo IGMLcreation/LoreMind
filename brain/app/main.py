@@ -32,6 +32,9 @@ from app.domain.models import (
     PageContext,
     PageGenerationContext,
     PageSummary,
+    QuestSummary,
+    RoomBranchHint,
+    RoomSummary,
     SceneBranchHint,
     SceneSummary,
     SessionContext,
@@ -43,7 +46,7 @@ from app.infrastructure.onemin_adapter import OneMinAiLLMProvider
 app = FastAPI(
     title="LoreMind Brain",
     description="Backend IA pour la génération de contenu narratif.",
-    version="0.9.0-beta",
+    version="0.9.1-beta",
 )
 
 
@@ -171,6 +174,24 @@ class SceneBranchHintDTO(BaseModel):
     condition: str | None = None
 
 
+class RoomBranchHintDTO(BaseModel):
+    """Sortie d'une pièce vers une autre pièce du même lieu (donjon)."""
+
+    label: str
+    target_room_name: str
+    condition: str | None = None
+
+
+class RoomSummaryDTO(BaseModel):
+    """Pièce d'un lieu explorable. Omise par le Core si la scène est classique."""
+
+    name: str
+    floor: int | None = None
+    description: str | None = None
+    enemies: str | None = None
+    branches: list[RoomBranchHintDTO] = Field(default_factory=list)
+
+
 class SceneSummaryDTO(BaseModel):
     """Résumé d'une scène : nom + description courte (synopsis)."""
 
@@ -181,6 +202,8 @@ class SceneSummaryDTO(BaseModel):
     illustration_count: int = 0
     # Branches narratives sortantes, omises cote Core si vides.
     branches: list[SceneBranchHintDTO] = Field(default_factory=list)
+    # Pièces du lieu explorable, omises par Core si scène classique.
+    rooms: list[RoomSummaryDTO] = Field(default_factory=list)
 
 
 class ChapterSummaryDTO(BaseModel):
@@ -246,24 +269,44 @@ class GameSystemContextDTO(BaseModel):
 
 
 class JournalEntrySummaryDTO(BaseModel):
-    """Une entrée du journal de session — type + contenu + horodatage."""
+    """Une entrée du journal de session.
+
+    `source_session_name` est présent uniquement pour les évènements issus
+    des sessions précédentes — sert à ancrer temporellement dans le prompt.
+    """
 
     type: str
     content: str
     occurred_at: str | None = None
+    source_session_name: str | None = None
+
+
+class QuestSummaryDTO(BaseModel):
+    """Résumé d'une quête (Chapter dans un Arc HUB). Voir QuestSummary côté domaine."""
+
+    name: str
+    arc_name: str
+    description: str | None = None
 
 
 class SessionContextDTO(BaseModel):
     """Contexte d'une Session de jeu en cours (Play Context).
 
-    Injecté par le Core quand le chat est ancré sur une Session.
-    Contient le journal chronologique (déjà plafonné côté Core).
+    Combine le journal complet (`entries`), les EVENTs des sessions précédentes
+    (`previous_events`), et — depuis l'ajout du mode Hub — l'état des quêtes
+    Hub de la campagne (disponibles / en cours / verrouillées) plus les flags
+    narratifs actuellement actifs.
     """
 
     session_name: str
     active: bool
     started_at: str | None = None
     entries: list[JournalEntrySummaryDTO] = Field(default_factory=list)
+    previous_events: list[JournalEntrySummaryDTO] = Field(default_factory=list)
+    available_quests: list[QuestSummaryDTO] = Field(default_factory=list)
+    in_progress_quests: list[QuestSummaryDTO] = Field(default_factory=list)
+    locked_quest_titles: list[str] = Field(default_factory=list)
+    active_flags: list[str] = Field(default_factory=list)
 
 
 class ChatStreamRequestDTO(BaseModel):
@@ -579,6 +622,23 @@ def _to_campaign_context(dto: CampaignContextDTO | None) -> CampaignStructuralCo
                                     condition=br.condition,
                                 )
                                 for br in sc.branches
+                            ],
+                            rooms=[
+                                RoomSummary(
+                                    name=room.name,
+                                    floor=room.floor,
+                                    description=room.description,
+                                    enemies=room.enemies,
+                                    branches=[
+                                        RoomBranchHint(
+                                            label=rb.label,
+                                            target_room_name=rb.target_room_name,
+                                            condition=rb.condition,
+                                        )
+                                        for rb in room.branches
+                                    ],
+                                )
+                                for room in sc.rooms
                             ],
                         )
                         for sc in ch.scenes
@@ -903,17 +963,31 @@ def _to_game_system_context(dto: GameSystemContextDTO | None) -> GameSystemConte
 def _to_session_context(dto: SessionContextDTO | None) -> SessionContext | None:
     if dto is None:
         return None
-    entries = [
-        JournalEntrySummary(
-            type=e.type,
-            content=e.content,
-            occurred_at=e.occurred_at,
-        )
-        for e in dto.entries
-    ]
     return SessionContext(
         session_name=dto.session_name,
         active=dto.active,
         started_at=dto.started_at,
-        entries=entries,
+        entries=[_to_journal_entry(e) for e in dto.entries],
+        previous_events=[_to_journal_entry(e) for e in dto.previous_events],
+        available_quests=[_to_quest_summary(q) for q in dto.available_quests],
+        in_progress_quests=[_to_quest_summary(q) for q in dto.in_progress_quests],
+        locked_quest_titles=list(dto.locked_quest_titles),
+        active_flags=list(dto.active_flags),
+    )
+
+
+def _to_quest_summary(dto: QuestSummaryDTO) -> QuestSummary:
+    return QuestSummary(
+        name=dto.name,
+        arc_name=dto.arc_name,
+        description=dto.description,
+    )
+
+
+def _to_journal_entry(dto: JournalEntrySummaryDTO) -> JournalEntrySummary:
+    return JournalEntrySummary(
+        type=dto.type,
+        content=dto.content,
+        occurred_at=dto.occurred_at,
+        source_session_name=dto.source_session_name,
     )

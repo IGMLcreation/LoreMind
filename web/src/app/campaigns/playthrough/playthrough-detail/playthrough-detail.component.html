@@ -1,0 +1,66 @@
+<div class="playthrough-page" *ngIf="playthrough">
+
+  <header class="page-header">
+    <button type="button" class="btn-secondary" (click)="back()">
+      <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon>
+      Retour
+    </button>
+    <div class="header-info">
+      <h1>{{ playthrough.name }}</h1>
+      <p class="subtitle" *ngIf="playthrough.description">{{ playthrough.description }}</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn-danger" (click)="delete()">
+        <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+        Supprimer
+      </button>
+    </div>
+  </header>
+
+  <!-- Bloc action principal : démarrer ou reprendre la session -->
+  <section class="play-action">
+    <button type="button" class="btn-primary big"
+            *ngIf="!activeOnThis"
+            [disabled]="startingSession"
+            (click)="startSession()">
+      <lucide-icon [img]="Play" [size]="16"></lucide-icon>
+      Lancer une session
+    </button>
+
+    <button type="button" class="btn-primary big"
+            *ngIf="activeOnThis"
+            (click)="openSession(activeOnThis)">
+      <lucide-icon [img]="Play" [size]="16"></lucide-icon>
+      Reprendre la session en cours
+    </button>
+
+    <button type="button" class="btn-secondary" (click)="openFlags()">
+      <lucide-icon [img]="Flag" [size]="14"></lucide-icon>
+      Faits de la partie
+    </button>
+  </section>
+
+  <!-- PJ -->
+  <section class="block">
+    <h2><lucide-icon [img]="Users" [size]="18"></lucide-icon> Personnages joueurs</h2>
+    <p class="empty" *ngIf="characters.length === 0">Aucun PJ pour cette partie.</p>
+    <ul class="character-list" *ngIf="characters.length > 0">
+      <li *ngFor="let c of characters">
+        <a [routerLink]="['/campaigns', campaignId, 'characters', c.id]">{{ c.name }}</a>
+      </li>
+    </ul>
+  </section>
+
+  <!-- Sessions -->
+  <section class="block">
+    <h2>Sessions</h2>
+    <p class="empty" *ngIf="sessions.length === 0">Aucune session encore. Lancez la première !</p>
+    <ul class="session-list" *ngIf="sessions.length > 0">
+      <li *ngFor="let s of sessions" (click)="openSession(s)">
+        <span class="session-name">{{ s.name }}</span>
+        <span class="session-status" [class.active]="s.active">{{ s.active ? 'En cours' : 'Terminée' }}</span>
+      </li>
+    </ul>
+  </section>
+
+</div>

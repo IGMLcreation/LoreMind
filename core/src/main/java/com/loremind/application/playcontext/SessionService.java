@@ -1,7 +1,7 @@
 package com.loremind.application.playcontext;
 
-import com.loremind.domain.campaigncontext.ports.CampaignRepository;
 import com.loremind.domain.playcontext.Session;
+import com.loremind.domain.playcontext.ports.PlaythroughRepository;
 import com.loremind.domain.playcontext.ports.SessionEntryRepository;
 import com.loremind.domain.playcontext.ports.SessionRepository;
 import org.springframework.stereotype.Service;
@@ -15,10 +15,9 @@ import java.util.Optional;
 /**
  * Service d'application pour le Play Context.
  * Orchestre le cycle de vie d'une Session (lancement, fin, renommage).
- * Fait partie de la couche Application de l'Architecture Hexagonale.
  *
- * <p>Règle métier : une seule Session peut être active (endedAt null) à la fois
- * dans l'application.</p>
+ * <p>Règle métier : une seule Session peut être active (endedAt null) à la fois.</p>
+ * <p>Depuis Playthrough : une Session appartient à un Playthrough (pas directement à une Campaign).</p>
  */
 @Service
 public class SessionService {
@@ -27,41 +26,43 @@ public class SessionService {
 
     private final SessionRepository sessionRepository;
     private final SessionEntryRepository entryRepository;
-    private final CampaignRepository campaignRepository;
+    private final PlaythroughRepository playthroughRepository;
 
     public SessionService(SessionRepository sessionRepository,
                           SessionEntryRepository entryRepository,
-                          CampaignRepository campaignRepository) {
+                          PlaythroughRepository playthroughRepository) {
         this.sessionRepository = sessionRepository;
         this.entryRepository = entryRepository;
-        this.campaignRepository = campaignRepository;
+        this.playthroughRepository = playthroughRepository;
     }
 
     /**
-     * Lance une nouvelle session sur la campagne donnée.
-     * Échoue si une session est déjà active ou si la campagne n'existe pas.
+     * Lance une nouvelle session sur le Playthrough donné.
+     * Échoue si une session est déjà active ou si le Playthrough n'existe pas.
      */
-    public Session startSession(String campaignId) {
-        if (campaignId == null || campaignId.isBlank()) {
-            throw new IllegalArgumentException("campaignId est requis pour démarrer une session.");
+    public Session startSession(String playthroughId) {
+        if (playthroughId == null || playthroughId.isBlank()) {
+            throw new IllegalArgumentException("playthroughId est requis pour démarrer une session.");
         }
-        if (!campaignRepository.existsById(campaignId)) {
-            throw new IllegalArgumentException("Campagne introuvable : " + campaignId);
+        if (!playthroughRepository.existsById(playthroughId)) {
+            throw new IllegalArgumentException("Partie introuvable : " + playthroughId);
         }
-        sessionRepository.findActive().ifPresent(s -> {
-            throw new IllegalStateException("Une session est déjà en cours (id=" + s.getId() + "). Termine-la avant d'en lancer une nouvelle.");
+        // Règle métier : une seule session active par Partie (pas de verrou global cross-Partie).
+        sessionRepository.findActiveByPlaythroughId(playthroughId).ifPresent(s -> {
+            throw new IllegalStateException(
+                    "Une session est déjà en cours pour cette Partie (id=" + s.getId() +
+                    "). Termine-la avant d'en lancer une nouvelle.");
         });
 
         LocalDateTime now = LocalDateTime.now();
         Session session = Session.builder()
                 .name(generateDefaultName(now))
-                .campaignId(campaignId)
+                .playthroughId(playthroughId)
                 .startedAt(now)
                 .build();
         return sessionRepository.save(session);
     }
 
-    /** Termine la session active si elle correspond à l'id donné. */
     public Session endSession(String id) {
         Session session = sessionRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Session introuvable : " + id));
@@ -90,18 +91,18 @@ public class SessionService {
         return sessionRepository.findActive();
     }
 
+    public Optional<Session> getActiveByPlaythrough(String playthroughId) {
+        return sessionRepository.findActiveByPlaythroughId(playthroughId);
+    }
+
     public List<Session> getAll() {
         return sessionRepository.findAll();
     }
 
-    public List<Session> getByCampaignId(String campaignId) {
-        return sessionRepository.findByCampaignId(campaignId);
+    public List<Session> getByPlaythroughId(String playthroughId) {
+        return sessionRepository.findByPlaythroughId(playthroughId);
     }
 
-    /**
-     * Supprime une session et toutes ses entrées de journal en cascade.
-     * Transactionnel : soit tout disparaît, soit rien.
-     */
     @Transactional
     public void deleteSession(String id) {
         if (!sessionRepository.existsById(id)) {

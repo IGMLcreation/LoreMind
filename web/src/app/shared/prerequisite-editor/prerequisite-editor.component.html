@@ -1,0 +1,79 @@
+<div class="prereq-editor">
+
+  <p class="prereq-editor-empty" *ngIf="prerequisites.length === 0">
+    Aucune condition — la quête est immédiatement disponible.
+  </p>
+
+  <ul class="prereq-list" *ngIf="prerequisites.length > 0">
+    <li class="prereq-row" *ngFor="let p of prerequisites; let i = index; trackBy: trackByIndex">
+
+      <ng-container [ngSwitch]="p.kind">
+
+        <!-- QUEST_COMPLETED -->
+        <ng-container *ngSwitchCase="'QUEST_COMPLETED'">
+          <span class="prereq-row-label">Quête terminée :</span>
+          <select class="prereq-input"
+                  [ngModel]="asQuestCompleted(p).questId"
+                  (ngModelChange)="onQuestIdChange(i, $event)"
+                  [ngModelOptions]="{ standalone: true }"
+                  [disabled]="availableQuests.length === 0">
+            <option *ngIf="availableQuests.length === 0" value="">(aucune autre quête)</option>
+            <option *ngFor="let q of availableQuests" [value]="q.id">{{ q.name }}</option>
+          </select>
+        </ng-container>
+
+        <!-- SESSION_REACHED -->
+        <ng-container *ngSwitchCase="'SESSION_REACHED'">
+          <span class="prereq-row-label">À partir de la session :</span>
+          <input type="number"
+                 class="prereq-input prereq-input-number"
+                 min="1"
+                 [ngModel]="asSessionReached(p).minSessionNumber"
+                 (ngModelChange)="onMinSessionChange(i, $event)"
+                 [ngModelOptions]="{ standalone: true }" />
+        </ng-container>
+
+        <!-- FLAG_SET -->
+        <ng-container *ngSwitchCase="'FLAG_SET'">
+          <span class="prereq-row-label">Quand le fait est vrai :</span>
+          <input type="text"
+                 class="prereq-input"
+                 placeholder="nom_du_fait"
+                 [attr.list]="'prereq-flag-list-' + i"
+                 [ngModel]="asFlagSet(p).flagName"
+                 (ngModelChange)="onFlagNameChange(i, $event)"
+                 [ngModelOptions]="{ standalone: true }" />
+          <datalist [attr.id]="'prereq-flag-list-' + i">
+            <option *ngFor="let f of availableFlags" [value]="f"></option>
+          </datalist>
+        </ng-container>
+
+      </ng-container>
+
+      <button type="button" class="prereq-remove" (click)="removeAt(i)" title="Retirer ce prérequis">
+        <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+      </button>
+    </li>
+  </ul>
+
+  <div class="prereq-add">
+    <button type="button" class="btn-secondary prereq-add-btn" (click)="toggleAddMenu()">
+      <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
+      Ajouter une condition
+      <lucide-icon [img]="ChevronDown" [size]="14"></lucide-icon>
+    </button>
+
+    <div class="prereq-add-menu" *ngIf="addMenuOpen">
+      <button type="button" (click)="addPrerequisite('QUEST_COMPLETED')">
+        Après une autre quête
+      </button>
+      <button type="button" (click)="addPrerequisite('SESSION_REACHED')">
+        À partir d'une session
+      </button>
+      <button type="button" (click)="addPrerequisite('FLAG_SET')">
+        Quand un fait est vrai
+      </button>
+    </div>
+  </div>
+
+</div>

@@ -23,10 +23,12 @@ from app.domain.models import (
     CharacterSummary,
     NpcSummary,
     GameSystemContext,
+    JournalEntrySummary,
     LoreStructuralContext,
     NarrativeEntityContext,
     PageContext,
     PageSummary,
+    QuestSummary,
     SessionContext,
 )
 from app.domain.ports import LLMChatProvider
@@ -294,7 +296,8 @@ class ChatUseCase:
         else:
             for scene in chapter.scenes:
                 sc_hint = ChatUseCase._illustration_hint(scene.illustration_count)
-                block.append(f"        - {scene.name} (scène){sc_hint}")
+                scene_kind = " (lieu explorable)" if scene.rooms else " (scène)"
+                block.append(f"        - {scene.name}{scene_kind}{sc_hint}")
                 if scene.description:
                     block.append(f"          Description : {scene.description}")
                 for br in scene.branches:
@@ -302,6 +305,19 @@ class ChatUseCase:
                     block.append(
                         f'          → "{br.label}" vers {br.target_scene_name}{cond}'
                     )
+                # Pièces du lieu explorable (mode donjon)
+                for room in scene.rooms:
+                    floor = f" [étage {room.floor}]" if room.floor is not None else ""
+                    block.append(f"          ◆ {room.name}{floor}")
+                    if room.description:
+                        block.append(f"            {room.description}")
+                    if room.enemies:
+                        block.append(f"            Ennemis : {room.enemies}")
+                    for rb in room.branches:
+                        cond = f" (si : {rb.condition})" if rb.condition else ""
+                        block.append(
+                            f'            ↳ "{rb.label}" vers {rb.target_room_name}{cond}'
+                        )
         return block
 
     @staticmethod
@@ -359,41 +375,129 @@ class ChatUseCase:
 
     @staticmethod
     def _format_session(sc: SessionContext) -> str:
-        """Bloc journal de la session en cours.
+        """Bloc journal de la session en cours + résumé des sessions précédentes.
 
         Fournit à l'IA le contexte temporel : ce qui s'est passé jusqu'ici,
         dans l'ordre chronologique. Permet de référencer un PNJ rencontré,
         rappeler un évènement antérieur, ou rebondir sur une action joueur.
+
+        Pour les sessions PRÉCÉDENTES de la même campagne, on ne remonte que
+        les EVENTs (les moments marquants) pour préserver le contexte LLM.
         """
         status = "EN COURS" if sc.active else "TERMINÉE"
         started = f" — démarrée {sc.started_at}" if sc.started_at else ""
 
+        previous_block = ChatUseCase._format_previous_events(sc.previous_events)
+        hub_block = ChatUseCase._format_hub_status(sc)
+
         if not sc.entries:
-            entries_block = "(Aucune entrée dans le journal pour l'instant — la session vient de commencer.)"
+            current_block = "(Aucune entrée dans le journal pour l'instant — la session vient de commencer.)"
         else:
             lines: list[str] = []
             for e in sc.entries:
                 label = ChatUseCase._ENTRY_TYPE_LABELS.get(e.type, e.type)
                 ts = f" [{e.occurred_at}]" if e.occurred_at else ""
-                # Indentation sur les contenus multi-lignes pour préserver la lisibilité
                 content = e.content.replace("\n", "\n    ")
                 lines.append(f"- {label}{ts} : {content}")
-            entries_block = "\n".join(lines)
+            current_block = "\n".join(lines)
 
         return (
             "--- SESSION DE JEU EN COURS ---\n"
             f"Nom : {sc.session_name}\n"
-            f"Statut : {status}{started}\n\n"
-            "Journal chronologique (du plus ancien au plus récent) :\n"
-            f"{entries_block}\n\n"
+            f"Statut : {status}{started}\n"
+            f"{hub_block}"
+            f"{previous_block}"
+            "\nJournal chronologique de la session courante (du plus ancien au plus récent) :\n"
+            f"{current_block}\n\n"
             "IMPORTANT : tu es l'assistant du MJ PENDANT la partie. Tes réponses doivent :\n"
-            "- Tenir compte des évènements déjà capturés dans le journal ci-dessus.\n"
+            "- Tenir compte des évènements déjà capturés (sessions précédentes + journal courant).\n"
             "- Être concrètes et utiles en temps réel : descriptions sensorielles, "
             "réactions de PNJ cohérentes avec leur fiche, suggestions de complications "
             "qui s'enchaînent à ce qui vient de se passer.\n"
             "- Éviter les longs développements : le MJ est en train d'animer une partie, "
             "il a besoin d'idées immédiatement actionnables."
         )
+
+    @staticmethod
+    def _format_hub_status(sc: SessionContext) -> str:
+        """Bloc Hub : quêtes ouvertes + flags actifs.
+
+        Vide si la campagne n'a aucun Arc HUB (toutes les listes vides côté Core).
+        Les quêtes LOCKED apparaissent par leur TITRE uniquement : l'IA sait
+        qu'elles existent (utile pour les teasers, les rumeurs en jeu) mais ne
+        peut pas spoiler leurs détails.
+        """
+        if (not sc.available_quests
+                and not sc.in_progress_quests
+                and not sc.locked_quest_titles
+                and not sc.active_flags):
+            return ""
+
+        lines = ["", "État du Hub (quêtes parallèles et faits narratifs) :"]
+
+        if sc.in_progress_quests:
+            lines.append("  Quêtes en cours :")
+            lines.extend(ChatUseCase._format_quest_lines(sc.in_progress_quests))
+
+        if sc.available_quests:
+            lines.append("  Quêtes disponibles (non démarrées, prêtes à être lancées) :")
+            lines.extend(ChatUseCase._format_quest_lines(sc.available_quests))
+
+        if sc.locked_quest_titles:
+            titles = ", ".join(f'"{t}"' for t in sc.locked_quest_titles)
+            lines.append(
+                "  Quêtes encore verrouillées (existent mais non accessibles — "
+                f"tu peux y faire allusion sous forme de rumeurs sans spoiler leur contenu) : {titles}"
+            )
+
+        if sc.active_flags:
+            lines.append(
+                "  Faits actifs : " + ", ".join(f"`{f}`" for f in sc.active_flags)
+            )
+
+        lines.append(
+            "  Conseille des actions cohérentes avec ces quêtes ouvertes. Ne fais "
+            "PAS comme si une quête verrouillée était déjà accessible aux PJ."
+        )
+        lines.append("")  # séparateur visuel avant le récap des sessions précédentes
+        return "\n".join(lines)
+
+    @staticmethod
+    def _format_quest_lines(quests: list[QuestSummary]) -> list[str]:
+        """Sérialise une liste de QuestSummary en lignes indentées."""
+        out: list[str] = []
+        for q in quests:
+            arc = f" [arc : {q.arc_name}]" if q.arc_name else ""
+            out.append(f"    - {q.name}{arc}")
+            if q.description:
+                out.append(f"      Synopsis : {q.description}")
+        return out
+
+    @staticmethod
+    def _format_previous_events(events: list[JournalEntrySummary]) -> str:
+        """Bloc "Story so far" : EVENTs marquants des sessions antérieures.
+
+        Vide si la campagne en est à sa première session. On groupe par
+        session source pour aider l'IA à situer chaque évènement temporellement.
+        """
+        if not events:
+            return ""
+
+        # Groupement par session source en préservant l'ordre d'apparition.
+        grouped: dict[str, list[JournalEntrySummary]] = {}
+        for e in events:
+            key = e.source_session_name or "(session inconnue)"
+            grouped.setdefault(key, []).append(e)
+
+        lines = ["\nRécapitulatif des sessions précédentes (évènements marquants uniquement) :"]
+        for session_name, items in grouped.items():
+            lines.append(f"  • {session_name} :")
+            for e in items:
+                ts = f" [{e.occurred_at}]" if e.occurred_at else ""
+                content = e.content.replace("\n", "\n        ")
+                lines.append(f"    - {content}{ts}")
+        lines.append("")  # ligne vide avant le bloc journal courant
+        return "\n".join(lines) + "\n"
 
     @staticmethod
     def _format_narrative_entity(ne: NarrativeEntityContext) -> str:

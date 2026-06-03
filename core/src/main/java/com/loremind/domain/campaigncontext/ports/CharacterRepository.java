@@ -14,7 +14,7 @@ public interface CharacterRepository {
 
     Optional<Character> findById(String id);
 
-    List<Character> findByCampaignId(String campaignId);
+    List<Character> findByPlaythroughId(String playthroughId);
 
     void deleteById(String id);
 

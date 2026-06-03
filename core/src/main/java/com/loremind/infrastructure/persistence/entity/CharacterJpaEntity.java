@@ -59,8 +59,16 @@ public class CharacterJpaEntity {
     @Column(name = "key_value_values", columnDefinition = "TEXT")
     private Map<String, Map<String, String>> keyValueValues;
 
-    @Column(name = "campaign_id", nullable = false)
+    /**
+     * Ancienne référence directe vers la Campaign. Conservée nullable pour la
+     * migration ; le code utilise playthrough_id désormais.
+     */
+    @Column(name = "campaign_id")
     private Long campaignId;
+
+    /** ID du Playthrough (partie) auquel ce PJ appartient. Weak ref cross-context. */
+    @Column(name = "playthrough_id")
+    private Long playthroughId;
 
     @Column(name = "\"order\"", nullable = false)
     private int order;

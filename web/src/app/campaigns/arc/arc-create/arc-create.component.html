@@ -18,6 +18,22 @@
     </div>
 
     <div class="field">
+      <label>Structure de l'arc</label>
+      <div class="arc-type-choice">
+        <label class="arc-type-option" [class.selected]="form.get('type')?.value === 'LINEAR'">
+          <input type="radio" formControlName="type" value="LINEAR" />
+          <span class="arc-type-title">Linéaire</span>
+          <span class="arc-type-desc">Chapitres joués dans l'ordre — narration séquentielle classique.</span>
+        </label>
+        <label class="arc-type-option" [class.selected]="form.get('type')?.value === 'HUB'">
+          <input type="radio" formControlName="type" value="HUB" />
+          <span class="arc-type-title">Hub</span>
+          <span class="arc-type-desc">Quêtes parallèles débloquées par des conditions — type sandbox (ex : Phandalin / Icespire Peak).</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="field">
       <label for="arc-create-description">Description</label>
       <textarea
         id="arc-create-description"

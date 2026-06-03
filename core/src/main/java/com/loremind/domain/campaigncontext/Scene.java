@@ -72,6 +72,15 @@ public class Scene {
     @Builder.Default
     private List<SceneBranch> branches = new ArrayList<>();
 
+    /**
+     * Pièces du lieu explorable représenté par cette scène (donjon, crypte, manoir…).
+     * Vide => scène classique « beat narratif » (comportement inchangé).
+     * Non vide => la scène devient explorable, l'UI affiche un layout dédié pièce-par-pièce.
+     * Sérialisé en JSONB.
+     */
+    @Builder.Default
+    private List<Room> rooms = new ArrayList<>();
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

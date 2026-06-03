@@ -1,5 +1,6 @@
 package com.loremind.infrastructure.persistence.entity;
 
+import com.loremind.domain.campaigncontext.ArcType;
 import com.loremind.infrastructure.persistence.converter.StringListJsonConverter;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -36,6 +37,15 @@ public class ArcJpaEntity {
 
     @Column(name = "\"order\"", nullable = false)
     private int order;
+
+    /**
+     * Type structurel de l'arc (LINEAR par défaut).
+     * Stocké en STRING pour rester lisible en DB et résistant aux refactos d'ordre.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, columnDefinition = "VARCHAR(16) DEFAULT 'LINEAR'")
+    @Builder.Default
+    private ArcType type = ArcType.LINEAR;
 
     @Column
     private String icon;

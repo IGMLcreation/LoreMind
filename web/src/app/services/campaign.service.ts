@@ -8,7 +8,7 @@ export interface CampaignDeletionImpact {
   arcs: number;
   chapters: number;
   scenes: number;
-  characters: number;
+  playthroughs: number;
 }
 
 /** Compte des entités qui seront supprimées en cascade avec un arc. */
@@ -85,13 +85,20 @@ export class CampaignService {
   }
 
   // ========== CHAPTER ==========
-  getChapters(arcId: string): Observable<Chapter[]> {
-    const params = new HttpParams().set('arcId', arcId);
+  /**
+   * Liste les chapitres d'un arc. Si {@code playthroughId} est fourni, le backend
+   * enrichit les DTOs avec progressionStatus + effectiveStatus relatifs à la Partie.
+   */
+  getChapters(arcId: string, playthroughId?: string): Observable<Chapter[]> {
+    let params = new HttpParams().set('arcId', arcId);
+    if (playthroughId) params = params.set('playthroughId', playthroughId);
     return this.http.get<Chapter[]>('/api/chapters', { params });
   }
 
-  getChapterById(id: string): Observable<Chapter> {
-    return this.http.get<Chapter>(`/api/chapters/${id}`);
+  getChapterById(id: string, playthroughId?: string): Observable<Chapter> {
+    let params = new HttpParams();
+    if (playthroughId) params = params.set('playthroughId', playthroughId);
+    return this.http.get<Chapter>(`/api/chapters/${id}`, { params });
   }
 
   createChapter(payload: ChapterCreate): Observable<Chapter> {

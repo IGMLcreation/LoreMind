@@ -92,6 +92,9 @@ public class PostgresSceneRepository implements SceneRepository {
                 .branches(jpaEntity.getBranches() != null
                         ? new ArrayList<>(jpaEntity.getBranches())
                         : new ArrayList<>())
+                .rooms(jpaEntity.getRooms() != null
+                        ? new ArrayList<>(jpaEntity.getRooms())
+                        : new ArrayList<>())
                 .createdAt(jpaEntity.getCreatedAt())
                 .updatedAt(jpaEntity.getUpdatedAt())
                 .build();
@@ -125,6 +128,9 @@ public class PostgresSceneRepository implements SceneRepository {
                         : new ArrayList<>())
                 .branches(scene.getBranches() != null
                         ? new ArrayList<>(scene.getBranches())
+                        : new ArrayList<>())
+                .rooms(scene.getRooms() != null
+                        ? new ArrayList<>(scene.getRooms())
                         : new ArrayList<>())
                 .createdAt(scene.getCreatedAt())
                 .updatedAt(scene.getUpdatedAt())

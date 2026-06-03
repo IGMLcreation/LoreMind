@@ -12,7 +12,9 @@ import com.loremind.domain.generationcontext.GameSystemContext;
 import com.loremind.domain.generationcontext.LoreStructuralContext;
 import com.loremind.domain.generationcontext.SessionContext;
 import com.loremind.domain.generationcontext.ports.AiChatProvider;
+import com.loremind.domain.playcontext.Playthrough;
 import com.loremind.domain.playcontext.Session;
+import com.loremind.domain.playcontext.ports.PlaythroughRepository;
 import com.loremind.domain.playcontext.ports.SessionRepository;
 import org.springframework.stereotype.Service;
 
@@ -39,6 +41,7 @@ import java.util.function.Consumer;
 public class StreamChatForSessionUseCase {
 
     private final SessionRepository sessionRepository;
+    private final PlaythroughRepository playthroughRepository;
     private final CampaignRepository campaignRepository;
     private final CampaignStructuralContextBuilder campaignContextBuilder;
     private final LoreStructuralContextBuilder loreContextBuilder;
@@ -48,6 +51,7 @@ public class StreamChatForSessionUseCase {
 
     public StreamChatForSessionUseCase(
             SessionRepository sessionRepository,
+            PlaythroughRepository playthroughRepository,
             CampaignRepository campaignRepository,
             CampaignStructuralContextBuilder campaignContextBuilder,
             LoreStructuralContextBuilder loreContextBuilder,
@@ -55,6 +59,7 @@ public class StreamChatForSessionUseCase {
             SessionStructuralContextBuilder sessionContextBuilder,
             AiChatProvider aiChatProvider) {
         this.sessionRepository = sessionRepository;
+        this.playthroughRepository = playthroughRepository;
         this.campaignRepository = campaignRepository;
         this.campaignContextBuilder = campaignContextBuilder;
         this.loreContextBuilder = loreContextBuilder;
@@ -74,11 +79,17 @@ public class StreamChatForSessionUseCase {
         Session session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new IllegalArgumentException("Session introuvable : " + sessionId));
 
-        Campaign campaign = campaignRepository.findById(session.getCampaignId())
+        // Chaîne de résolution : Session → Playthrough → Campaign.
+        Playthrough playthrough = playthroughRepository.findById(session.getPlaythroughId())
                 .orElseThrow(() -> new IllegalArgumentException(
-                        "Campagne associée à la session introuvable : " + session.getCampaignId()));
+                        "Partie associée à la session introuvable : " + session.getPlaythroughId()));
 
-        CampaignStructuralContext campaignContext = campaignContextBuilder.build(campaign.getId());
+        Campaign campaign = campaignRepository.findById(playthrough.getCampaignId())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Campagne associée à la partie introuvable : " + playthrough.getCampaignId()));
+
+        // Le campaign context inclut les PJ de CE Playthrough (les PJ sont par-table).
+        CampaignStructuralContext campaignContext = campaignContextBuilder.build(campaign.getId(), playthrough.getId());
         LoreStructuralContext loreContext = loadLoreContextOrNull(campaign);
         GameSystemContext gameSystemContext = loadGameSystemContextOrNull(campaign);
         SessionContext sessionContext = sessionContextBuilder.build(sessionId);

@@ -11,6 +11,7 @@ import { catchError, switchMap, filter, map } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { SessionService } from '../../services/session.service';
 import { Session } from '../../services/session.model';
+import { PlaythroughService } from '../../services/playthrough.service';
 import {
   SessionEntry, SessionEntryInput, EntryType, ENTRY_TYPE_META
 } from '../../services/session-entry.model';
@@ -54,6 +55,8 @@ export class SessionDetailComponent implements OnInit, OnDestroy {
   readonly entryTypeMeta = ENTRY_TYPE_META;
 
   session: Session | null = null;
+  /** Résolu via Playthrough.campaignId (Session → Playthrough → Campaign). */
+  campaignId: string | null = null;
   /** Timeline triée du plus récent au plus ancien (DESC) pour l'UX en partie. */
   entries: SessionEntry[] = [];
 
@@ -74,6 +77,7 @@ export class SessionDetailComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private sessionService: SessionService,
+    private playthroughService: PlaythroughService,
     private entryService: SessionEntryService,
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService,
@@ -93,6 +97,11 @@ export class SessionDetailComponent implements OnInit, OnDestroy {
       if (session) {
         this.pageTitleService.set(session.name);
         this.loadEntries(session.id);
+        if (session.playthroughId) {
+          this.playthroughService.getById(session.playthroughId).pipe(
+            catchError(() => of(null))
+          ).subscribe(pt => { this.campaignId = pt ? pt.campaignId : null; });
+        }
       }
     });
   }
@@ -168,9 +177,12 @@ export class SessionDetailComponent implements OnInit, OnDestroy {
       variant: 'danger'
     }).then(ok => {
       if (!ok) return;
-      const campaignId = session.campaignId;
+      const cid = this.campaignId;
       this.sessionService.deleteSession(session.id).subscribe({
-        next: () => this.router.navigate(['/campaigns', campaignId]),
+        next: () => {
+          if (cid) this.router.navigate(['/campaigns', cid]);
+          else this.router.navigate(['/campaigns']);
+        },
         error: () => console.error('Erreur lors de la suppression de la session')
       });
     });

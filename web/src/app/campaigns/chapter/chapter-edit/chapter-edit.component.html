@@ -26,6 +26,22 @@
 
   <form [formGroup]="form" (ngSubmit)="submit()" class="edit-form">
 
+    <!-- Section Hub : conditions de déblocage (scénario). Visible si l'arc parent est HUB. -->
+    <div class="hub-section" *ngIf="parentArc?.type === 'HUB'">
+      <h2 class="hub-section-title">🗺️ Conditions de déblocage de la quête</h2>
+      <small class="field-hint">
+        Définition du scénario : toutes les conditions doivent être remplies (ET) pour
+        que la quête soit débloquée dans une Partie. La progression en cours et l'état
+        des faits se gèrent dans l'écran de la Partie, pas ici.
+      </small>
+      <app-prerequisite-editor
+        [prerequisites]="prerequisites"
+        [availableQuests]="availableQuests"
+        [availableFlags]="availableFlagNames"
+        (prerequisitesChange)="onPrerequisitesChange($event)">
+      </app-prerequisite-editor>
+    </div>
+
     <!-- Illustrations (galerie editable, rendu editorial) -->
     <div class="field">
       <label>Illustrations</label>

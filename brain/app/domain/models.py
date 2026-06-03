@@ -123,8 +123,28 @@ class SceneBranchHint:
 
 
 @dataclass(frozen=True)
+class RoomBranchHint:
+    """Indice d'une sortie entre pièces (donjon). target_room_name déjà résolu côté Core."""
+
+    label: str
+    target_room_name: str
+    condition: str | None = None
+
+
+@dataclass(frozen=True)
+class RoomSummary:
+    """Pièce d'un lieu explorable. Projection plate pour le prompt IA (pas de notes MJ)."""
+
+    name: str
+    floor: int | None = None
+    description: str | None = None
+    enemies: str | None = None
+    branches: list[RoomBranchHint] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
 class SceneSummary:
-    """Résumé d'une scène : nom + description courte + illustrations + branches."""
+    """Résumé d'une scène : nom + description courte + illustrations + branches + pièces."""
 
     name: str
     description: str | None
@@ -133,6 +153,8 @@ class SceneSummary:
     illustration_count: int = 0
     # Connexions narratives sortantes (livre dont vous etes le heros).
     branches: list[SceneBranchHint] = field(default_factory=list)
+    # Pièces du lieu explorable (vide = scène classique).
+    rooms: list[RoomSummary] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -233,26 +255,49 @@ class GameSystemContext:
 
 @dataclass(frozen=True)
 class JournalEntrySummary:
-    """Une entrée du journal d'une Session : type + contenu + horodatage."""
+    """Une entrée du journal d'une Session.
+
+    `source_session_name` n'est renseigné que pour les entrées issues de
+    sessions précédentes (option 3 : continuité narrative entre séances).
+    """
 
     type: str
     content: str
     occurred_at: str | None
+    source_session_name: str | None = None
+
+
+@dataclass(frozen=True)
+class QuestSummary:
+    """Résumé d'une quête (Chapter dans un Arc HUB) pour le system prompt.
+
+    Volontairement sans notes MJ ni statut texte : c'est déjà classé côté Core
+    dans available_quests / in_progress_quests / locked_quest_titles.
+    """
+
+    name: str
+    arc_name: str
+    description: str | None = None
 
 
 @dataclass(frozen=True)
 class SessionContext:
     """Contexte d'une Session de jeu en cours (Play Context).
 
-    Injecté dans le system prompt pendant qu'une partie est jouée pour que
-    l'IA voit le nom de la session, son statut, et un historique chronologique
-    des évènements/notes/jets capturés par le MJ.
-
-    Le journal a déjà été tronqué côté Core (cap à ~80 entrées récentes)
-    pour ne pas saturer le contexte LLM sur les sessions très longues.
+    Combine plusieurs niveaux :
+    - `entries` : journal COMPLET de la session courante (cappé ~80 entrées)
+    - `previous_events` : EVENTs marquants des sessions précédentes (continuité)
+    - `available_quests` / `in_progress_quests` : quêtes du Hub ouvertes
+    - `locked_quest_titles` : titres seuls des quêtes verrouillées (anti-spoiler)
+    - `active_flags` : noms des flags de campagne actuellement à true
     """
 
     session_name: str
     active: bool
     started_at: str | None
     entries: list[JournalEntrySummary]
+    previous_events: list[JournalEntrySummary]
+    available_quests: list[QuestSummary] = field(default_factory=list)
+    in_progress_quests: list[QuestSummary] = field(default_factory=list)
+    locked_quest_titles: list[str] = field(default_factory=list)
+    active_flags: list[str] = field(default_factory=list)

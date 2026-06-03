@@ -6,8 +6,12 @@ import java.time.LocalDateTime;
 
 /**
  * Entité de domaine représentant une Campaign.
- * Conteneur global pour organiser la narration d'une campagne.
- * Entité pure du domaine, sans dépendance technique.
+ * Conteneur du SCÉNARIO (générique, ré-utilisable par plusieurs tables).
+ *
+ * <p>Toute donnée dynamique propre à une table jouée (progression des quêtes,
+ * flags narratifs, sessions, PJ) vit dans un {@link com.loremind.domain.playcontext.Playthrough}.</p>
+ *
+ * <p>Entité pure du domaine, sans dépendance technique.</p>
  */
 @Data
 @Builder
@@ -21,17 +25,13 @@ public class Campaign {
     private int arcsCount;
 
     /**
-     * Référence faible (weak reference) vers un Lore.
-     * Nullable : une campagne peut exister sans univers associé (one-shot, test, pitch libre).
-     * Ce n'est qu'un ID : le Campaign Context ne dépend PAS du Lore Context
-     * (respect des Bounded Contexts en DDD).
+     * Référence faible vers un Lore. Nullable.
+     * Ce n'est qu'un ID : le Campaign Context ne dépend PAS du Lore Context.
      */
     private String loreId;
 
     /**
-     * Référence faible (weak reference) vers un GameSystem.
-     * Nullable : une campagne peut être "générique" (pas de système de JDR déclaré).
-     * Weak reference pour respecter la séparation des Bounded Contexts.
+     * Référence faible vers un GameSystem. Nullable.
      */
     private String gameSystemId;
 

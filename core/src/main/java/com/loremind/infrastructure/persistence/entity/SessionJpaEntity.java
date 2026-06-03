@@ -28,11 +28,19 @@ public class SessionJpaEntity {
     private String name;
 
     /**
-     * ID de la Campaign associée. Pas de @ManyToOne / pas de FK : c'est une
-     * weak reference inter-contexte (Play Context ↔ Campaign Context).
+     * Ancienne référence directe vers la Campaign. Conservée (nullable) pour la
+     * rétrocompatibilité de la migration, mais plus utilisée par le code.
+     * À supprimer manuellement quand toutes les sessions auront leur playthrough_id.
      */
-    @Column(name = "campaign_id", nullable = false)
+    @Column(name = "campaign_id")
     private String campaignId;
+
+    /**
+     * ID du Playthrough (partie) auquel cette session appartient.
+     * Weak reference inter-contexte.
+     */
+    @Column(name = "playthrough_id")
+    private Long playthroughId;
 
     @Column(name = "started_at", nullable = false)
     private LocalDateTime startedAt;

@@ -6,14 +6,12 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * Entité de domaine représentant une Session de jeu en cours ou passée.
+ * Entité de domaine représentant une Session de jeu (une soirée).
  *
- * <p>Une Session est une instance jouée d'une Campaign. La Campaign reste
- * un scénario générique réutilisable ; la Session capture une partie réelle
- * (date, journal, etc.) sans polluer le scénario d'origine.</p>
- *
- * <p>Fait partie du Play Context. Référence la Campaign par weak reference
- * (campaignId) pour respecter la séparation des Bounded Contexts.</p>
+ * <p>Une Session appartient à un {@link Playthrough} (une instance jouée d'une
+ * campagne par une table). Un Playthrough a typiquement plusieurs sessions
+ * dans le temps ; la progression et les flags persistent entre elles via le
+ * Playthrough parent.</p>
  *
  * <p>{@code endedAt == null} signifie que la session est en cours.
  * Une seule session peut être en cours dans l'application à la fois.</p>
@@ -25,8 +23,8 @@ public class Session {
     private String id;
     private String name;
 
-    /** Weak reference vers Campaign — pas de dépendance directe inter-contexte. */
-    private String campaignId;
+    /** Weak reference vers le Playthrough parent. */
+    private String playthroughId;
 
     private LocalDateTime startedAt;
 

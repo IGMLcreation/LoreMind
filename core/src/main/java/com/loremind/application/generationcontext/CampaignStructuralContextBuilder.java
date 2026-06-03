@@ -18,6 +18,8 @@ import com.loremind.domain.generationcontext.CampaignStructuralContext.BranchHin
 import com.loremind.domain.generationcontext.CampaignStructuralContext.ChapterSummary;
 import com.loremind.domain.generationcontext.CampaignStructuralContext.CharacterSummary;
 import com.loremind.domain.generationcontext.CampaignStructuralContext.NpcSummary;
+import com.loremind.domain.generationcontext.CampaignStructuralContext.RoomBranchHint;
+import com.loremind.domain.generationcontext.CampaignStructuralContext.RoomSummary;
 import com.loremind.domain.generationcontext.CampaignStructuralContext.SceneSummary;
 import org.springframework.stereotype.Component;
 
@@ -66,11 +68,18 @@ public class CampaignStructuralContextBuilder {
     private static final int CHARACTER_SNIPPET_MAX_LEN = 160;
 
     /**
-     * Construit la carte narrative d'une Campagne (arcs → chapitres → scènes,
-     * nom + description courte à chaque niveau).
-     * @throws IllegalArgumentException si la Campagne est introuvable
+     * Construit la carte narrative d'une Campagne. Sans playthroughId, les PJ
+     * sont omis (ils sont propres à une Partie).
      */
     public CampaignStructuralContext build(String campaignId) {
+        return build(campaignId, null);
+    }
+
+    /**
+     * Variante avec playthroughId : injecte les PJ de la Partie indiquée.
+     * Les PNJ restent campagne-scope (donnée de scénario).
+     */
+    public CampaignStructuralContext build(String campaignId, String playthroughId) {
         Campaign campaign = campaignRepository.findById(campaignId)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Campagne non trouvée avec l'ID: " + campaignId));
@@ -80,10 +89,12 @@ public class CampaignStructuralContextBuilder {
                 .map(this::toArcSummary)
                 .collect(Collectors.toList());
 
-        List<CharacterSummary> characters = characterRepository.findByCampaignId(campaignId).stream()
-                .sorted(Comparator.comparingInt(Character::getOrder))
-                .map(this::toCharacterSummary)
-                .collect(Collectors.toList());
+        List<CharacterSummary> characters = (playthroughId == null || playthroughId.isBlank())
+                ? List.of()
+                : characterRepository.findByPlaythroughId(playthroughId).stream()
+                        .sorted(Comparator.comparingInt(Character::getOrder))
+                        .map(this::toCharacterSummary)
+                        .collect(Collectors.toList());
 
         List<NpcSummary> npcs = npcRepository.findByCampaignId(campaignId).stream()
                 .sorted(Comparator.comparingInt(Npc::getOrder))
@@ -175,11 +186,42 @@ public class CampaignStructuralContextBuilder {
                             b.condition()))
                     .collect(Collectors.toList());
 
+        List<RoomSummary> rooms = toRoomSummaries(scene);
+
         return new SceneSummary(
                 scene.getName(),
                 scene.getDescription(),
                 countImages(scene.getIllustrationImageIds()),
-                hints);
+                hints,
+                rooms);
+    }
+
+    /**
+     * Projette les pièces d'une scène en RoomSummary pour le contexte IA.
+     * Pas de notes MJ, pas de loot ni pièges : le prompt reste lisible. L'IA
+     * connaît la structure du lieu (nom des pièces, ennemis, sorties) — c'est
+     * suffisant pour proposer de la narration ou anticiper les choix.
+     */
+    private List<RoomSummary> toRoomSummaries(Scene scene) {
+        if (scene.getRooms() == null || scene.getRooms().isEmpty()) return List.of();
+        Map<String, String> nameById = scene.getRooms().stream()
+                .collect(Collectors.toMap(
+                        com.loremind.domain.campaigncontext.Room::getId,
+                        com.loremind.domain.campaigncontext.Room::getName,
+                        (a, b) -> a));
+        return scene.getRooms().stream()
+                .map(r -> {
+                    List<RoomBranchHint> hints = r.getBranches() == null
+                            ? List.of()
+                            : r.getBranches().stream()
+                                .map(b -> new RoomBranchHint(
+                                        b.label(),
+                                        nameById.getOrDefault(b.targetRoomId(), "(pièce inconnue)"),
+                                        b.condition()))
+                                .collect(Collectors.toList());
+                    return new RoomSummary(r.getName(), r.getFloor(), r.getDescription(), r.getEnemies(), hints);
+                })
+                .collect(Collectors.toList());
     }
 
     /** Helper defensif : compte les illustrations attachees (null-safe). */

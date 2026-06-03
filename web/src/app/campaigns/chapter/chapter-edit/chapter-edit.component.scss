@@ -3,6 +3,57 @@
   max-width: 640px;
 }
 
+// === Section Hub : prérequis + progression ===
+.hub-section {
+  border: 1px solid rgba(66, 133, 244, 0.25);
+  background: rgba(66, 133, 244, 0.03);
+  border-radius: 12px;
+  padding: 1rem 1.1rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.hub-section-title {
+  margin: 0 0 0.85rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-primary, #2c6cd6);
+}
+
+.progression-choice {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.progression-option {
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--color-border, #e2e2e2);
+  border-radius: 8px;
+  text-align: center;
+  font-size: 0.88rem;
+  cursor: pointer;
+  background: var(--color-surface, #fff);
+  transition: border-color 120ms ease, background 120ms ease;
+
+  &:hover { border-color: var(--color-primary, #2c6cd6); }
+
+  &.selected {
+    border-color: var(--color-primary, #2c6cd6);
+    background: rgba(66, 133, 244, 0.08);
+    font-weight: 600;
+  }
+
+  input[type="radio"] { display: none; }
+}
+
+.hub-flags-panel {
+  margin-top: 0.75rem;
+  padding: 0.85rem;
+  border: 1px dashed var(--color-border, #d8d8d8);
+  border-radius: 8px;
+  background: var(--color-surface, #fff);
+}
+
 // Header local : titre à gauche, actions (Assistant IA) à droite.
 .page-header {
   display: flex;

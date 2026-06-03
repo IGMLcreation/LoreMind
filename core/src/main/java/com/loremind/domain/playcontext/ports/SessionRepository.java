@@ -7,7 +7,6 @@ import java.util.Optional;
 
 /**
  * Port de sortie pour la persistance des Sessions.
- * Interface définie dans le domaine, implémentée par l'infrastructure.
  */
 public interface SessionRepository {
 
@@ -17,10 +16,13 @@ public interface SessionRepository {
 
     List<Session> findAll();
 
-    List<Session> findByCampaignId(String campaignId);
+    List<Session> findByPlaythroughId(String playthroughId);
 
-    /** Retourne la session en cours (endedAt null) s'il y en a une. */
+    /** Retourne UNE session active dans l'app (sémantique « legacy » — multi-actives possibles). */
     Optional<Session> findActive();
+
+    /** Retourne la session active du Playthrough donné, s'il y en a une. */
+    Optional<Session> findActiveByPlaythroughId(String playthroughId);
 
     void deleteById(String id);
 

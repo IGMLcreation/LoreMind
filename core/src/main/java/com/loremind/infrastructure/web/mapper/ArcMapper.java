@@ -1,6 +1,7 @@
 package com.loremind.infrastructure.web.mapper;
 
 import com.loremind.domain.campaigncontext.Arc;
+import com.loremind.domain.campaigncontext.ArcType;
 import com.loremind.infrastructure.web.dto.campaigncontext.ArcDTO;
 import org.springframework.stereotype.Component;
 
@@ -24,6 +25,7 @@ public class ArcMapper {
         dto.setDescription(arc.getDescription());
         dto.setCampaignId(arc.getCampaignId());
         dto.setOrder(arc.getOrder());
+        dto.setType(arc.getType() != null ? arc.getType().name() : ArcType.LINEAR.name());
         dto.setIcon(arc.getIcon());
         dto.setThemes(arc.getThemes());
         dto.setStakes(arc.getStakes());
@@ -47,6 +49,7 @@ public class ArcMapper {
                 .description(dto.getDescription())
                 .campaignId(dto.getCampaignId())
                 .order(dto.getOrder())
+                .type(parseType(dto.getType()))
                 .icon(dto.getIcon())
                 .themes(dto.getThemes())
                 .stakes(dto.getStakes())
@@ -65,5 +68,15 @@ public class ArcMapper {
      */
     private <T> ArrayList<T> copyList(List<T> source) {
         return source != null ? new ArrayList<>(source) : new ArrayList<>();
+    }
+
+    /** Parse tolérant : null/blank/inconnu => LINEAR (rétro-compatibilité). */
+    private ArcType parseType(String raw) {
+        if (raw == null || raw.isBlank()) return ArcType.LINEAR;
+        try {
+            return ArcType.valueOf(raw);
+        } catch (IllegalArgumentException ex) {
+            return ArcType.LINEAR;
+        }
     }
 }

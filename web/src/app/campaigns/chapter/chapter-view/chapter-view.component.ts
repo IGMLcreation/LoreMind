@@ -11,7 +11,7 @@ import { NpcService } from '../../../services/npc.service';
 import { PageService } from '../../../services/page.service';
 import { LayoutService } from '../../../services/layout.service';
 import { PageTitleService } from '../../../services/page-title.service';
-import { Chapter } from '../../../services/campaign.model';
+import { Chapter, Prerequisite, Arc } from '../../../services/campaign.model';
 import { Page } from '../../../services/page.model';
 import { loadCampaignTreeData, buildCampaignSidebarConfig } from '../../campaign-tree.helper';
 import { ImageGalleryComponent } from '../../../shared/image-gallery/image-gallery.component';
@@ -38,9 +38,11 @@ export class ChapterViewComponent implements OnInit, OnDestroy {
   arcId = '';
   chapterId = '';
   chapter: Chapter | null = null;
+  parentArc: Arc | null = null;
 
   loreId: string | null = null;
   availablePages: Page[] = [];
+  private allChaptersById: Record<string, Chapter> = {};
 
   constructor(
     private route: ActivatedRoute,
@@ -88,8 +90,26 @@ export class ChapterViewComponent implements OnInit, OnDestroy {
       this.availablePages = pages;
       this.pageTitleService.set(chapter.name);
 
+      // Arc parent (pour conditionner les sections Hub) + index des quêtes par id.
+      this.parentArc = treeData.arcs.find(a => a.id === this.arcId) ?? null;
+      this.allChaptersById = {};
+      Object.values(treeData.chaptersByArc).forEach(list =>
+          list.forEach(c => { if (c.id) this.allChaptersById[c.id] = c; })
+      );
+
       this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId));
     });
+  }
+
+  describePrerequisite(p: Prerequisite): string {
+    switch (p.kind) {
+      case 'QUEST_COMPLETED':
+        return `Quête « ${this.allChaptersById[p.questId]?.name ?? '?'} » terminée`;
+      case 'SESSION_REACHED':
+        return `Session ${p.minSessionNumber} atteinte`;
+      case 'FLAG_SET':
+        return `Fait : ${p.flagName}`;
+    }
   }
 
   titleOfRelated(pageId: string): string {
