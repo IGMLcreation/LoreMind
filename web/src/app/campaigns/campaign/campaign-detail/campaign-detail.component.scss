@@ -268,6 +268,12 @@
   h2 { color: #d1d5db; font-size: 1rem; font-weight: 600; }
 }
 
+.section-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .btn-add {
   display: flex;
   align-items: center;
@@ -283,6 +289,14 @@
   transition: background 0.2s;
 
   &:hover { background: #5b52e0; }
+
+  // Variante secondaire (ex: "Importer un PDF") : discrète à côté de l'action primaire.
+  &--secondary {
+    background: #1f2937;
+    color: #e5e7eb;
+    border: 1px solid #374151;
+    &:hover { background: #273244; border-color: #6c63ff; }
+  }
 }
 
 .arcs-grid {

@@ -18,6 +18,28 @@ export interface GameSystem {
   isPublic?: boolean;
 }
 
+/**
+ * Réponse de l'import d'un PDF de règles : proposition de sections à réviser.
+ * `sections` = {titre → contenu markdown}. `ocrPageCount` > 0 ⇒ le PDF était
+ * (au moins partiellement) un scan passé à l'OCR.
+ */
+export interface RulesImportResponse {
+  sections: Record<string, string>;
+  pageCount: number;
+  ocrPageCount: number;
+}
+
+/**
+ * Évènements du flux SSE d'import streamé.
+ * - progress : avancement (total=0 ⇒ phase d'extraction en cours).
+ * - done     : résultat final (sections proposées).
+ * - error    : message d'erreur côté serveur.
+ */
+export type RulesImportStreamEvent =
+  | { type: 'progress'; current: number; total: number; pageCount: number; ocrPageCount: number; newSectionTitles: string[] }
+  | { type: 'done'; sections: Record<string, string>; pageCount: number; ocrPageCount: number }
+  | { type: 'error'; message: string };
+
 /** Payload de creation/mise a jour (sans id). */
 export interface GameSystemCreate {
   name: string;

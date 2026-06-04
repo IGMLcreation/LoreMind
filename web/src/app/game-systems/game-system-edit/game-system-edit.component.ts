@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { LucideAngularModule, Save, ArrowLeft, Dices, Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-angular';
+import { LucideAngularModule, Save, ArrowLeft, Dices, Plus, Trash2, ChevronDown, ChevronRight, Upload } from 'lucide-angular';
 import { GameSystemService } from '../../services/game-system.service';
 import { TemplateField } from '../../services/template.model';
 import { TemplateFieldsEditorComponent } from '../../shared/template-fields-editor/template-fields-editor.component';
@@ -54,8 +54,22 @@ export class GameSystemEditComponent implements OnInit {
   readonly Trash2 = Trash2;
   readonly ChevronDown = ChevronDown;
   readonly ChevronRight = ChevronRight;
+  readonly Upload = Upload;
 
   id: string | null = null;
+
+  /** Import PDF en cours (appel LLM long) → désactive le bouton + spinner. */
+  importing = false;
+  /** Message de succès post-import (sections ajoutées, pages, OCR). */
+  importNote: string | null = null;
+  /** Message d'erreur d'import (Brain injoignable, PDF illisible…). */
+  importError: string | null = null;
+  /** Libellé de l'étape courante (« Extraction… », « Analyse… (3/12) »). */
+  importPhase = '';
+  /** Avancement de la structuration ; null pendant l'extraction (total inconnu). */
+  importProgress: { current: number; total: number } | null = null;
+  /** Titres de sections trouvés au fil de l'eau (affichage live). */
+  importFound: string[] = [];
 
   name = '';
   description = '';
@@ -106,6 +120,96 @@ export class GameSystemEditComponent implements OnInit {
   /** Ajoute une section vierge (titre à remplir). */
   addBlank(): void {
     this.sections.push({ title: '', content: '', collapsed: false });
+  }
+
+  // --- Import d'un PDF de règles -------------------------------------------
+
+  /** Déclenché par le <input file> caché : lance l'import du PDF choisi. */
+  onPdfSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    // Reset de la valeur : re-sélectionner le même fichier doit re-déclencher.
+    input.value = '';
+    if (file) this.importPdf(file);
+  }
+
+  private importPdf(file: File): void {
+    this.importing = true;
+    this.importNote = null;
+    this.importError = null;
+    this.importPhase = 'Extraction du texte…';
+    this.importProgress = null;
+    this.importFound = [];
+
+    this.service.importRulesStream(file).subscribe({
+      next: (ev) => {
+        if (ev.type === 'progress') {
+          if (ev.total === 0) {
+            // Phase d'extraction (total encore inconnu).
+            this.importPhase = 'Extraction du texte…';
+            this.importProgress = null;
+          } else {
+            this.importPhase = `Analyse des règles… (${ev.current}/${ev.total})`;
+            this.importProgress = { current: ev.current, total: ev.total };
+            for (const t of ev.newSectionTitles) {
+              if (!this.importFound.includes(t)) this.importFound.push(t);
+            }
+          }
+        } else if (ev.type === 'done') {
+          this.finishImport(ev.sections, ev.pageCount, ev.ocrPageCount);
+        }
+      },
+      error: (err: Error) => {
+        this.resetImportProgress();
+        this.importError = err?.message
+          ? `Échec de l'import : ${err.message}`
+          : "Échec de l'import du PDF.";
+      }
+    });
+  }
+
+  private finishImport(sections: Record<string, string>, pageCount: number, ocrPageCount: number): void {
+    this.resetImportProgress();
+    const added = this.mergeImportedSections(sections);
+    if (added === 0) {
+      this.importError = "Aucune règle exploitable n'a été extraite de ce PDF "
+        + "(scan sans OCR, ou contenu non reconnu).";
+      return;
+    }
+    const ocr = ocrPageCount > 0 ? ` (dont ${ocrPageCount} page(s) via OCR)` : '';
+    this.importNote = `${added} section(s) proposée(s) depuis ${pageCount} page(s)${ocr}. `
+      + `Relisez et ajustez ci-dessous avant d'enregistrer.`;
+  }
+
+  private resetImportProgress(): void {
+    this.importing = false;
+    this.importPhase = '';
+    this.importProgress = null;
+  }
+
+  /**
+   * Fusionne les sections proposées dans l'éditeur. Section de même titre
+   * (insensible à la casse) → contenu ajouté à la suite ; sinon nouvelle carte.
+   * Retourne le nombre de sections effectivement intégrées.
+   */
+  private mergeImportedSections(sections: Record<string, string>): number {
+    let count = 0;
+    for (const [rawTitle, rawContent] of Object.entries(sections ?? {})) {
+      const title = (rawTitle ?? '').trim();
+      const content = (rawContent ?? '').trim();
+      if (!title || !content) continue;
+      const existing = this.sections.find(
+        s => s.title.trim().toLowerCase() === title.toLowerCase()
+      );
+      if (existing) {
+        existing.content = `${existing.content.trim()}\n\n${content}`.trim();
+        existing.collapsed = false;
+      } else {
+        this.sections.push({ title, content, collapsed: false });
+      }
+      count++;
+    }
+    return count;
   }
 
   removeSection(index: number): void {

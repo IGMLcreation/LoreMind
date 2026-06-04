@@ -42,11 +42,17 @@
 
   <!-- PJ -->
   <section class="block">
-    <h2><lucide-icon [img]="Users" [size]="18"></lucide-icon> Personnages joueurs</h2>
+    <div class="block-header">
+      <h2><lucide-icon [img]="Users" [size]="18"></lucide-icon> Personnages joueurs</h2>
+      <button type="button" class="btn-add" (click)="createCharacter()">
+        <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
+        Nouveau PJ
+      </button>
+    </div>
     <p class="empty" *ngIf="characters.length === 0">Aucun PJ pour cette partie.</p>
     <ul class="character-list" *ngIf="characters.length > 0">
       <li *ngFor="let c of characters">
-        <a [routerLink]="['/campaigns', campaignId, 'characters', c.id]">{{ c.name }}</a>
+        <a [routerLink]="['/campaigns', campaignId, 'playthroughs', playthroughId, 'characters', c.id]">{{ c.name }}</a>
       </li>
     </ul>
   </section>

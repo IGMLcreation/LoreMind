@@ -2,6 +2,8 @@ fastapi==0.115.*
 uvicorn[standard]==0.32.*
 httpx==0.27.*
 pydantic-settings==2.6.*
+# Requis par FastAPI pour les uploads multipart (UploadFile) — import de PDF.
+python-multipart==0.0.*
 
 pydantic
 
@@ -10,3 +12,12 @@ pydantic
 # la plupart des modeles Llama/Gemma/Mistral (~5-10% d'ecart) — suffisant
 # pour une jauge visuelle.
 tiktoken==0.8.*
+
+# Import de PDF de regles (-> GameSystem). Extraction de la couche texte
+# (born-digital) avec repli OCR par page pour les scans.
+#   - pymupdf  : extraction texte + rasterisation des pages (pas besoin de poppler)
+#   - pytesseract + Pillow : OCR Tesseract sur les pages sans couche texte
+#     (le binaire tesseract-ocr est installe dans le Dockerfile, langues fra+eng)
+pymupdf==1.24.*
+pytesseract==0.3.*
+Pillow==11.*

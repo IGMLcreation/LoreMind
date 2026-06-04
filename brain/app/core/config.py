@@ -30,7 +30,10 @@ class Settings(BaseSettings):
 
     ollama_base_url: str = "http://localhost:11434"
     llm_model: str = "gemma4:26b"
-    llm_timeout_seconds: int = 120
+    # Timeout HTTP des appels au LLM. Les imports/adaptations PDF génèrent de gros
+    # blocs (surtout avec l'extraction riche) → 120s était trop court. Surchargeable
+    # depuis l'UI (Paramètres) si un import lourd dépasse encore.
+    llm_timeout_seconds: int = 300
 
     # Fenêtre de contexte (num_ctx Ollama). Défaut Ollama = 2048, trop étroit
     # dès que le Structural Context du Lore dépasse ~10 pages (b9). On monte
@@ -43,6 +46,13 @@ class Settings(BaseSettings):
     # (modifiables depuis l'UI). Les defauts ici sont juste des placeholders.
     onemin_api_key: str = ""
     onemin_model: str = "gpt-4o-mini"
+
+    # Taille cible d'un morceau (en tokens) pour l'import de PDF (regles/campagne).
+    # Plus c'est gros, moins il y a de morceaux => moins de fragmentation et un
+    # import plus rapide, MAIS il faut que ca tienne dans la fenetre du modele.
+    # Defaut prudent (compatible Ollama num_ctx 16384). Sur un modele a grand
+    # contexte (ex: GPT-5 mini, 400k), monter a ~100000 traite un livre en 1 passe.
+    import_chunk_tokens: int = 10000
 
     # Secret partage entre le Core Spring et le Brain. Le Brain n'accepte une
     # requete que si l'entete X-Internal-Secret correspond. Volontairement

@@ -10,12 +10,15 @@ from typing import Annotated, AsyncIterator, Literal
 import hmac
 import httpx
 import tiktoken
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
+from app.application.adapt_campaign import AdaptCampaignUseCase
 from app.application.chat import ChatUseCase
 from app.application.generate_page import GeneratePageUseCase
+from app.application.import_campaign import ImportCampaignUseCase
+from app.application.import_rules import ImportRulesUseCase
 from app.core.config import Settings, get_settings
 from app.core.settings_store import save_overrides
 from app.domain.models import (
@@ -39,14 +42,15 @@ from app.domain.models import (
     SceneSummary,
     SessionContext,
 )
-from app.domain.ports import LLMProvider, LLMProviderError
+from app.domain.ports import LLMProvider, LLMProviderError, PdfExtractionError
 from app.infrastructure.ollama_adapter import OllamaLLMProvider
 from app.infrastructure.onemin_adapter import OneMinAiLLMProvider
+from app.infrastructure.pdf_extractor import PyMuPdfTextExtractor
 
 app = FastAPI(
     title="LoreMind Brain",
     description="Backend IA pour la génération de contenu narratif.",
-    version="0.9.2-beta",
+    version="0.10.0-beta",
 )
 
 
@@ -375,6 +379,40 @@ def get_chat_use_case(
     return ChatUseCase(llm=llm)  # type: ignore[arg-type]
 
 
+# Extracteur PDF partagé : la détection OCR (version Tesseract) a un coût
+# (subprocess) qu'on ne veut pas payer à chaque requête → singleton module.
+_PDF_EXTRACTOR = PyMuPdfTextExtractor()
+
+
+def get_import_rules_use_case(
+    llm: Annotated[LLMProvider, Depends(get_llm_provider)],
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> ImportRulesUseCase:
+    """Factory du use case d'import de règles PDF (extraction + structuration)."""
+    return ImportRulesUseCase(
+        llm=llm, extractor=_PDF_EXTRACTOR, chunk_target_tokens=settings.import_chunk_tokens)
+
+
+def get_import_campaign_use_case(
+    llm: Annotated[LLMProvider, Depends(get_llm_provider)],
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> ImportCampaignUseCase:
+    """Factory du use case d'import de campagne PDF (extraction + arborescence)."""
+    return ImportCampaignUseCase(
+        llm=llm, extractor=_PDF_EXTRACTOR, chunk_target_tokens=settings.import_chunk_tokens)
+
+
+def get_adapt_campaign_use_case(
+    llm: Annotated[LLMProvider, Depends(get_llm_provider)],
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> AdaptCampaignUseCase:
+    """Factory du use case d'adaptation d'un PDF à une campagne (conseils streamés)."""
+    # L'adapter satisfait aussi LLMChatProvider (stream_chat) par duck typing.
+    # Budget d'entrée = taille de morceau configurée (qui passe déjà côté provider).
+    return AdaptCampaignUseCase(  # type: ignore[arg-type]
+        llm=llm, extractor=_PDF_EXTRACTOR, max_input_tokens=settings.import_chunk_tokens)
+
+
 # --- Endpoints ---
 
 
@@ -426,6 +464,177 @@ async def generate_page(
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
     return GeneratePageResponseDTO(values=result.values)
+
+
+class RulesImportResponseDTO(BaseModel):
+    """Proposition de sections de règles extraites d'un PDF.
+
+    `sections` = {titre → contenu markdown}. C'est une PROPOSITION : le Core
+    et l'UI laissent l'utilisateur réviser/éditer avant toute persistance.
+    `ocr_page_count` permet d'indiquer si le PDF était un scan (OCR utilisé).
+    """
+
+    sections: dict[str, str]
+    page_count: int
+    ocr_page_count: int
+
+
+# Garde-fou taille : un livre de règles dépasse rarement quelques dizaines de Mo.
+# Au-delà, on refuse (probable erreur d'upload) plutôt que d'OOM le conteneur.
+_MAX_PDF_BYTES = 60 * 1024 * 1024  # 60 Mo
+
+
+@app.post("/import/rules", response_model=RulesImportResponseDTO)
+async def import_rules(
+    use_case: Annotated[ImportRulesUseCase, Depends(get_import_rules_use_case)],
+    file: UploadFile = File(...),
+) -> RulesImportResponseDTO:
+    """Import d'un PDF de règles → sections markdown structurées (proposition).
+
+    Extrait le texte (couche texte + repli OCR par page pour les scans), découpe,
+    et demande au LLM de répartir les règles en sections thématiques. Ne persiste
+    rien : renvoie la proposition au Core, qui la présente pour révision.
+    """
+    content = await file.read()
+    if not content:
+        raise HTTPException(status_code=422, detail="Fichier PDF vide.")
+    if len(content) > _MAX_PDF_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"PDF trop volumineux (> {_MAX_PDF_BYTES // (1024 * 1024)} Mo).",
+        )
+
+    try:
+        result = await use_case.execute(content)
+    except PdfExtractionError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except LLMProviderError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    return RulesImportResponseDTO(
+        sections=result.sections,
+        page_count=result.page_count,
+        ocr_page_count=result.ocr_page_count,
+    )
+
+
+@app.post("/import/rules/stream")
+async def import_rules_stream(
+    use_case: Annotated[ImportRulesUseCase, Depends(get_import_rules_use_case)],
+    file: UploadFile = File(...),
+) -> StreamingResponse:
+    """Import streamé : émet l'avancement (SSE) puis le résultat final.
+
+    Évènements SSE :
+      - `event: extracting`  → data: {}                    (extraction en cours)
+      - `event: start`       → data: {page_count, ocr_page_count, total}
+      - `event: progress`    → data: {current, total, new_sections:[...]}
+      - `event: done`        → data: {sections, page_count, ocr_page_count}
+      - `event: error`       → data: {message}
+    """
+    content = await file.read()
+
+    def _sse(event: str, data: dict) -> str:
+        return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+    async def event_stream() -> AsyncIterator[str]:
+        if not content:
+            yield _sse("error", {"message": "Fichier PDF vide."})
+            return
+        if len(content) > _MAX_PDF_BYTES:
+            yield _sse("error", {"message": f"PDF trop volumineux (> {_MAX_PDF_BYTES // (1024 * 1024)} Mo)."})
+            return
+        try:
+            async for ev in use_case.stream(content):
+                event_type = ev.pop("type")
+                yield _sse(event_type, ev)
+        except PdfExtractionError as exc:
+            yield _sse("error", {"message": str(exc)})
+        except LLMProviderError as exc:
+            yield _sse("error", {"message": str(exc)})
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
+
+
+@app.post("/import/campaign/stream")
+async def import_campaign_stream(
+    use_case: Annotated[ImportCampaignUseCase, Depends(get_import_campaign_use_case)],
+    file: UploadFile = File(...),
+) -> StreamingResponse:
+    """Import streamé d'un PDF de campagne → arbre arc→chapitre→scène (SSE).
+
+    Évènements : `extracting`, `start` {page_count, ocr_page_count, total},
+    `progress` {current, total, arc_count, chapter_count, scene_count},
+    `done` {arcs:[...], page_count, ocr_page_count}, `error` {message}.
+    """
+    content = await file.read()
+
+    def _sse(event: str, data: dict) -> str:
+        return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+    async def event_stream() -> AsyncIterator[str]:
+        if not content:
+            yield _sse("error", {"message": "Fichier PDF vide."})
+            return
+        if len(content) > _MAX_PDF_BYTES:
+            yield _sse("error", {"message": f"PDF trop volumineux (> {_MAX_PDF_BYTES // (1024 * 1024)} Mo)."})
+            return
+        try:
+            async for ev in use_case.stream(content):
+                event_type = ev.pop("type")
+                yield _sse(event_type, ev)
+        except PdfExtractionError as exc:
+            yield _sse("error", {"message": str(exc)})
+        except LLMProviderError as exc:
+            yield _sse("error", {"message": str(exc)})
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
+
+
+@app.post("/adapt/campaign/stream")
+async def adapt_campaign_stream(
+    use_case: Annotated[AdaptCampaignUseCase, Depends(get_adapt_campaign_use_case)],
+    file: UploadFile = File(...),
+    brief: str = Form(""),
+    messages: str = Form("[]"),
+) -> StreamingResponse:
+    """Adaptation CONVERSATIONNELLE d'un PDF à une campagne (SSE markdown).
+
+    `brief` = description de la campagne (Core). `messages` = JSON de l'échange
+    ([{role, content}, …]) ; vide au 1er tour. Évènements : `token`, `done`, `error`.
+    """
+    content = await file.read()
+
+    try:
+        raw_messages = json.loads(messages) if messages else []
+    except json.JSONDecodeError:
+        raw_messages = []
+    convo = [
+        ChatMessage(role=str(m.get("role", "user")), content=str(m.get("content", "")))
+        for m in raw_messages
+        if isinstance(m, dict) and str(m.get("content", "")).strip()
+    ]
+
+    def _sse(event: str, data: dict) -> str:
+        return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+    async def event_stream() -> AsyncIterator[str]:
+        if not content:
+            yield _sse("error", {"message": "Fichier PDF vide."})
+            return
+        if len(content) > _MAX_PDF_BYTES:
+            yield _sse("error", {"message": f"PDF trop volumineux (> {_MAX_PDF_BYTES // (1024 * 1024)} Mo)."})
+            return
+        try:
+            async for token in use_case.stream(content, brief, convo):
+                yield _sse("token", {"token": token})
+            yield _sse("done", {})
+        except PdfExtractionError as exc:
+            yield _sse("error", {"message": str(exc)})
+        except LLMProviderError as exc:
+            yield _sse("error", {"message": str(exc)})
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
 
 
 @app.post("/chat/stream")
@@ -685,6 +894,10 @@ class SettingsDTO(BaseModel):
     # Fenetre de contexte effective passee au modele (num_ctx Ollama) — sert
     # aussi de plafond a la jauge de contexte UI.
     llm_num_ctx: int
+    # Taille cible d'un morceau (tokens) pour l'import de PDF (regles/campagne).
+    import_chunk_tokens: int
+    # Timeout HTTP des appels LLM (s). A monter si les imports lourds expirent.
+    llm_timeout_seconds: int
 
 
 class SettingsUpdateDTO(BaseModel):
@@ -697,6 +910,8 @@ class SettingsUpdateDTO(BaseModel):
     # Chaine vide => on efface la cle. None => pas de changement.
     onemin_api_key: str | None = None
     llm_num_ctx: int | None = None
+    import_chunk_tokens: int | None = None
+    llm_timeout_seconds: int | None = None
 
 
 def _to_settings_dto(s: Settings) -> SettingsDTO:
@@ -707,6 +922,8 @@ def _to_settings_dto(s: Settings) -> SettingsDTO:
         onemin_model=s.onemin_model,
         onemin_api_key_set=bool(s.onemin_api_key),
         llm_num_ctx=s.llm_num_ctx,
+        import_chunk_tokens=s.import_chunk_tokens,
+        llm_timeout_seconds=s.llm_timeout_seconds,
     )
 
 

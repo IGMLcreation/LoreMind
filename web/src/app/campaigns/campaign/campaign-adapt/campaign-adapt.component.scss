@@ -1,0 +1,184 @@
+.adapt-page {
+  padding: 2rem 2.5rem;
+  max-width: 900px;
+}
+
+.page-header {
+  margin-bottom: 1.25rem;
+
+  h1 { margin: 0.6rem 0 0.3rem; font-size: 1.5rem; color: #f3f4f6; }
+}
+
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0;
+
+  &:hover { color: #c4b5fd; }
+}
+
+.subtitle { margin: 0; color: #9ca3af; font-size: 0.9rem; strong { color: #d1d5db; } }
+
+// --- Barre PDF --------------------------------------------------------------
+.upload-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.6rem 1.1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  background: #6c63ff;
+  color: white;
+
+  &:hover:not(:disabled) { background: #5b52e0; }
+  &:disabled { opacity: 0.6; cursor: progress; }
+}
+
+.file-name { color: #9ca3af; font-size: 0.82rem; }
+
+.adapt-error {
+  margin: 0 0 1rem;
+  padding: 0.55rem 0.8rem;
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  border-radius: 8px;
+  color: #fca5a5;
+  font-size: 0.85rem;
+}
+
+// --- Conversation -----------------------------------------------------------
+.chat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.msg {
+  border-radius: 12px;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid #1f2937;
+
+  &--user {
+    background: rgba(108, 99, 255, 0.1);
+    border-color: rgba(108, 99, 255, 0.3);
+    align-self: flex-end;
+    max-width: 85%;
+  }
+
+  &--assistant {
+    background: #0b1220;
+  }
+}
+
+.msg-role {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #9ca3af;
+  margin-bottom: 0.35rem;
+}
+
+.msg-body {
+  color: #d1d5db;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+
+  &.markdown-body { white-space: normal; }
+
+  ::ng-deep {
+    h1, h2, h3 { color: #f3f4f6; margin: 0.9rem 0 0.4rem; }
+    h2 { font-size: 1.08rem; }
+    h3 { font-size: 1rem; }
+    ul, ol { padding-left: 1.3rem; }
+    li { margin: 0.2rem 0; }
+    strong { color: #fff; }
+    code { background: #1f2937; padding: 0.1rem 0.3rem; border-radius: 4px; font-size: 0.85em; }
+    a { color: #a78bfa; }
+    p { margin: 0.4rem 0; }
+  }
+}
+
+.msg-actions { margin-top: 0.5rem; }
+
+.btn-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: transparent;
+  border: 1px solid #374151;
+  border-radius: 6px;
+  color: #9ca3af;
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+
+  &:hover { color: #c4b5fd; border-color: #6c63ff; }
+}
+
+.streaming-cursor {
+  display: inline-block;
+  color: #6c63ff;
+  animation: blink 1s step-start infinite;
+}
+
+@keyframes blink { 50% { opacity: 0; } }
+
+// --- Composer ---------------------------------------------------------------
+.composer {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+  position: sticky;
+  bottom: 0;
+  padding-top: 0.5rem;
+  background: linear-gradient(to top, var(--color-bg, #0a0f1a) 70%, transparent);
+
+  textarea {
+    flex: 1;
+    background: #0b1220;
+    border: 1px solid #1f2937;
+    border-radius: 8px;
+    color: #f3f4f6;
+    padding: 0.55rem 0.7rem;
+    font-size: 0.9rem;
+    font-family: inherit;
+    resize: vertical;
+    &:focus { outline: none; border-color: #6c63ff; }
+    &:disabled { opacity: 0.6; }
+  }
+}
+
+.btn-send {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  border: none;
+  background: #6c63ff;
+  color: white;
+  cursor: pointer;
+
+  &:hover:not(:disabled) { background: #5b52e0; }
+  &:disabled { opacity: 0.5; cursor: default; }
+}

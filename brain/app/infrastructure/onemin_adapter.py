@@ -14,6 +14,7 @@ avec des marqueurs de role lisibles pour le modele.
 from __future__ import annotations
 
 import json
+import logging
 from typing import AsyncIterator
 
 import httpx
@@ -21,6 +22,8 @@ import httpx
 from app.core.config import Settings
 from app.domain.models import ChatMessage
 from app.domain.ports import LLMProviderError
+
+logger = logging.getLogger(__name__)
 
 _API_BASE = "https://api.1min.ai/api/chat-with-ai"
 _PAYLOAD_TYPE = "UNIFY_CHAT_WITH_AI"
@@ -48,6 +51,18 @@ class OneMinAiLLMProvider:
             "promptObject": {"prompt": prompt},
         }
 
+    def _format_http_error(self, exc: httpx.HTTPError) -> str:
+        """Message d'erreur lisible. Un timeout httpx a un str() vide → on le nomme."""
+        if isinstance(exc, httpx.TimeoutException):
+            return (
+                f"Erreur 1min.ai : délai dépassé (timeout {self._timeout}s). Le modèle a mis "
+                "trop de temps à répondre — typique d'un morceau d'import trop gros. "
+                "Réduisez « Taille des morceaux à l'import » (Paramètres → Import de PDF) "
+                "ou augmentez le timeout LLM."
+            )
+        detail = str(exc) or exc.__class__.__name__
+        return f"Erreur 1min.ai ({exc.__class__.__name__}) : {detail}"
+
     async def generate(
         self,
         prompt: str,
@@ -55,18 +70,18 @@ class OneMinAiLLMProvider:
         output_format: str | None = None,  # 1min.ai ne supporte pas format=json
         temperature: float | None = None,  # idem, pas d'hyperparam expose ici
     ) -> str:
-        """Appel one-shot : retourne la reponse complete sous forme de string."""
-        async with httpx.AsyncClient(timeout=self._timeout) as client:
-            try:
-                response = await client.post(
-                    _API_BASE, headers=self._headers(), json=self._payload(prompt)
-                )
-                response.raise_for_status()
-                data = response.json()
-            except httpx.HTTPError as exc:
-                raise LLMProviderError(f"Erreur 1min.ai : {exc}") from exc
+        """One-shot, mais via l'endpoint STREAMING (puis recollage).
 
-        return self._extract_result(data)
+        On NE passe PAS par l'endpoint non-streame `chat-with-ai` : sur les longues
+        generations (gros imports), la passerelle Cloudflare de 1min.ai coupe la
+        connexion au bout de ~100s et renvoie un HTTP 524. En streaming, des octets
+        circulent en continu => pas de 524, quelle que soit la duree. On accumule
+        tous les fragments pour reconstituer la reponse complete.
+        """
+        chunks: list[str] = []
+        async for token in self._stream_prompt(prompt):
+            chunks.append(token)
+        return "".join(chunks)
 
     async def stream_chat(
         self,
@@ -75,17 +90,18 @@ class OneMinAiLLMProvider:
         system_prompt: str | None = None,
         temperature: float | None = None,
     ) -> AsyncIterator[str]:
-        """Streame via SSE.
-
-        1min.ai expose deux evenements utiles :
-          - `event: content`  → `data: {"content": "..."}`
-          - `event: done`     → fin du stream
-          - `event: error`    → erreur serveur
-        On yield le champ `content` au fil de l'arrivee.
-        """
+        """Streame une conversation : aplatit les messages puis delegue au coeur SSE."""
         prompt = self._flatten_messages(messages, system_prompt)
-        url = f"{_API_BASE}?isStreaming=true"
+        async for token in self._stream_prompt(prompt):
+            yield token
 
+    async def _stream_prompt(self, prompt: str) -> AsyncIterator[str]:
+        """Coeur du streaming SSE 1min.ai (`?isStreaming=true`) pour un prompt brut.
+
+        1min.ai expose : `event: content` → `data: {"content": "..."}`, `event: done`,
+        `event: error`. On yield le champ `content` au fil de l'arrivee.
+        """
+        url = f"{_API_BASE}?isStreaming=true"
         async with httpx.AsyncClient(timeout=self._timeout) as client:
             try:
                 async with client.stream(
@@ -95,9 +111,7 @@ class OneMinAiLLMProvider:
                     async for token in self._parse_sse(response):
                         yield token
             except httpx.HTTPError as exc:
-                raise LLMProviderError(
-                    f"Erreur lors du streaming 1min.ai : {exc}"
-                ) from exc
+                raise LLMProviderError(self._format_http_error(exc)) from exc
 
     # --- Helpers ------------------------------------------------------------
 
@@ -146,12 +160,21 @@ class OneMinAiLLMProvider:
         """
         record = payload.get("aiRecord") or {}
         detail = record.get("aiRecordDetail") or {}
-        result = detail.get("resultObject") or []
-        if isinstance(result, list):
+        result = detail.get("resultObject")
+        if isinstance(result, list) and result:
             return "".join(str(x) for x in result)
-        if isinstance(result, str):
+        if isinstance(result, str) and result:
             return result
-        raise LLMProviderError("Reponse 1min.ai inattendue : resultObject absent.")
+
+        # Schema inattendu : on remonte un EXTRAIT du vrai payload pour diagnostiquer.
+        # Causes frequentes : credits/quota 1min.ai epuises, moderation, modele
+        # indisponible, ou reponse asynchrone (record cree mais resultat pas encore
+        # pret). Sans ce detail, l'erreur "resultObject absent" est aveugle.
+        snippet = json.dumps(payload, ensure_ascii=False)
+        if len(snippet) > 800:
+            snippet = snippet[:800] + "…"
+        logger.warning("Reponse 1min.ai inattendue (resultObject absent) : %s", snippet)
+        raise LLMProviderError(f"Reponse 1min.ai inattendue (resultObject absent) : {snippet}")
 
     @staticmethod
     def _flatten_messages(

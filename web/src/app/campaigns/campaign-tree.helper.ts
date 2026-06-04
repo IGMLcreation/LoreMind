@@ -82,30 +82,9 @@ export function buildCampaignTree(campaignId: string, data: CampaignTreeData): T
   // IDs préfixés par type pour éviter les collisions dans LayoutService.expanded
   // (chaque entité a sa propre séquence IDENTITY en base → arc.id=1 et chapter.id=1
   // peuvent coexister et se marchaient sur les pieds dans le Set<string> global).
-  const sortedCharacters = [...data.characters].sort(byName);
-  const characterItems: TreeItem[] = sortedCharacters.map(ch => ({
-    id: `character-${ch.id}`,
-    label: ch.name,
-    route: `/campaigns/${campaignId}/characters/${ch.id}`
-  }));
-
-  const charactersNode: TreeItem = {
-    id: 'characters-root',
-    label: 'PJ',
-    iconKey: 'users',
-    children: characterItems,
-    meta: characterItems.length ? String(characterItems.length) : undefined,
-    sectionHeaderBefore: 'Personnages',
-    // Note : le section header "Personnages" est porté par le premier nœud (PJ).
-    // Le filet au-dessus est masqué par CSS si c'est le tout premier item de la sidebar.
-    createActions: [{
-      id: 'new-character',
-      label: 'Nouveau PJ',
-      route: `/campaigns/${campaignId}/characters/create`,
-      actionIcon: 'plus'
-    }]
-  };
-
+  // Note refonte Playthrough : les PJ ne sont plus rattachés à la campagne mais
+  // à une Partie (Playthrough). On ne les affiche donc plus dans la sidebar de
+  // campagne — seuls les PNJ (donnée de scénario) restent sous "Personnages".
   const sortedNpcs = [...data.npcs].sort(byName);
   const npcItems: TreeItem[] = sortedNpcs.map(n => ({
     id: `npc-${n.id}`,
@@ -119,7 +98,9 @@ export function buildCampaignTree(campaignId: string, data: CampaignTreeData): T
     iconKey: 'c-drama',
     children: npcItems,
     meta: npcItems.length ? String(npcItems.length) : undefined,
-    // Pas de sectionHeaderBefore : on reste sous le header "Personnages" du nœud PJ.
+    // Porte le header de section "Personnages" (les PJ ayant migré vers la Partie).
+    // Le filet au-dessus est masqué par CSS si c'est le tout premier item de la sidebar.
+    sectionHeaderBefore: 'Personnages',
     createActions: [{
       id: 'new-npc',
       label: 'Nouveau PNJ',
@@ -166,14 +147,15 @@ export function buildCampaignTree(campaignId: string, data: CampaignTreeData): T
 
       createActions: [{
         id: `new-chapter-${arc.id}`,
-        label: 'Nouveau chapitre',
+        // Dans un arc hub, un "chapitre" est présenté comme une "quête".
+        label: arc.type === 'HUB' ? 'Nouvelle quête' : 'Nouveau chapitre',
         route: `/campaigns/${campaignId}/arcs/${arc.id}/chapters/create`,
         actionIcon: 'plus'
       }]
     };
   });
 
-  return [...arcNodes, charactersNode, npcsNode];
+  return [...arcNodes, npcsNode];
 }
 
 /**
@@ -197,6 +179,8 @@ export function buildCampaignSidebarConfig(
   }));
   return {
     title: campaign.name,
+    // Titre cliquable → accueil de la campagne (raccourci depuis n'importe quelle sous-page).
+    titleRoute: `/campaigns/${campaignId}`,
     items: buildCampaignTree(campaignId, treeData),
     footerLabel: 'Toutes les campagnes',
     createActions: [

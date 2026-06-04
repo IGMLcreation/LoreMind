@@ -5,7 +5,6 @@ import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, Save, ArrowLeft, User, Trash2, Sparkles } from 'lucide-angular';
 import { CharacterService } from '../../../services/character.service';
 import { CampaignService } from '../../../services/campaign.service';
-import { PlaythroughService } from '../../../services/playthrough.service';
 import { GameSystemService } from '../../../services/game-system.service';
 import { CampaignSidebarService } from '../../../services/campaign-sidebar.service';
 import { TemplateField } from '../../../services/template.model';
@@ -49,7 +48,7 @@ export class CharacterEditComponent implements OnInit {
   toggleChat(): void { this.chatOpen = !this.chatOpen; }
 
   campaignId: string | null = null;
-  /** Partie cible — déduite du 1er Playthrough de la campagne. */
+  /** Partie propriétaire du PJ — lue depuis la route (les PJ sont scoping Playthrough). */
   playthroughId: string | null = null;
   characterId: string | null = null;
 
@@ -67,7 +66,6 @@ export class CharacterEditComponent implements OnInit {
     private router: Router,
     private service: CharacterService,
     private campaignService: CampaignService,
-    private playthroughService: PlaythroughService,
     private gameSystemService: GameSystemService,
     private campaignSidebar: CampaignSidebarService,
     private confirmDialog: ConfirmDialogService
@@ -76,15 +74,12 @@ export class CharacterEditComponent implements OnInit {
   ngOnInit(): void {
     const params = this.route.snapshot.paramMap;
     this.campaignId = params.get('campaignId');
+    this.playthroughId = params.get('playthroughId');
     this.characterId = params.get('characterId');
 
     if (this.campaignId) {
       this.loadTemplateForCampaign(this.campaignId);
       this.campaignSidebar.show(this.campaignId);
-      // Résolution Partie par défaut (1er Playthrough) — nécessaire pour create/update.
-      this.playthroughService.listByCampaign(this.campaignId).subscribe({
-        next: list => { this.playthroughId = list.length > 0 ? list[0].id! : null; }
-      });
     }
 
     if (this.characterId) {
@@ -138,7 +133,7 @@ export class CharacterEditComponent implements OnInit {
     req.subscribe({
       next: (saved) => {
         if (isCreation && saved.id) {
-          this.router.navigate(['/campaigns', this.campaignId, 'characters', saved.id]);
+          this.router.navigate(['/campaigns', this.campaignId, 'playthroughs', this.playthroughId, 'characters', saved.id]);
         } else {
           this.back();
         }
@@ -165,7 +160,9 @@ export class CharacterEditComponent implements OnInit {
   }
 
   back(): void {
-    if (this.campaignId) {
+    if (this.campaignId && this.playthroughId) {
+      this.router.navigate(['/campaigns', this.campaignId, 'playthroughs', this.playthroughId]);
+    } else if (this.campaignId) {
       this.router.navigate(['/campaigns', this.campaignId]);
     } else {
       this.router.navigate(['/campaigns']);

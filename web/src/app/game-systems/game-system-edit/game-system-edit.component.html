@@ -36,6 +36,33 @@
         selon ce qu'elle génère (combat → Combat/Monstres, PNJ → Classes, arc → Lore/Factions).
       </p>
 
+      <!-- Import d'un PDF de règles : l'IA propose un découpage en sections,
+           que l'utilisateur révise ci-dessous avant d'enregistrer. -->
+      <div class="import-row">
+        <input #pdfInput type="file" accept="application/pdf,.pdf" hidden (change)="onPdfSelected($event)" />
+        <button type="button" class="btn-import" [disabled]="importing" (click)="pdfInput.click()">
+          <lucide-icon [img]="Upload" [size]="14"></lucide-icon>
+          {{ importing ? 'Import en cours…' : 'Importer un PDF de règles' }}
+        </button>
+        <span class="import-hint" *ngIf="!importing">L'IA propose un découpage en sections — vous révisez avant d'enregistrer.</span>
+      </div>
+
+      <!-- Progression live de l'import (étape + barre + sections trouvées). -->
+      <div class="import-progress" *ngIf="importing">
+        <p class="import-phase">{{ importPhase }}</p>
+        <div class="progress-bar" *ngIf="importProgress">
+          <div class="progress-fill"
+               [style.width.%]="importProgress.total ? (importProgress.current / importProgress.total) * 100 : 0">
+          </div>
+        </div>
+        <p class="import-found" *ngIf="importFound.length">
+          Sections trouvées : {{ importFound.join(' · ') }}
+        </p>
+      </div>
+
+      <p class="import-note" *ngIf="importNote">{{ importNote }}</p>
+      <p class="import-error" *ngIf="importError">{{ importError }}</p>
+
       <div class="section-list">
         <div class="section-card" *ngFor="let section of sections; let i = index" [class.collapsed]="section.collapsed">
 

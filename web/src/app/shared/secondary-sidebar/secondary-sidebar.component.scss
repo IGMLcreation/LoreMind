@@ -77,6 +77,35 @@
   text-overflow: ellipsis;
 }
 
+// Variante cliquable : le titre devient un bouton "retour à l'accueil".
+.sidebar-title--link {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 0.3rem 0.5rem;
+  transition: background 0.15s;
+
+  .sidebar-title-icon {
+    flex-shrink: 0;
+    color: #a78bfa;
+  }
+
+  .sidebar-title-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &:hover { background: rgba(255, 255, 255, 0.07); }
+  &.active { background: rgba(108, 99, 255, 0.18); }
+}
+
 .actions-row {
   display: flex;
   gap: 0.4rem;

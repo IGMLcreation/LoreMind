@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { LucideAngularModule, ArrowLeft, Play, Flag, Users, Trash2, Pencil } from 'lucide-angular';
+import { LucideAngularModule, ArrowLeft, Play, Flag, Users, Trash2, Pencil, Plus } from 'lucide-angular';
 import { CampaignService } from '../../../services/campaign.service';
 import { CharacterService } from '../../../services/character.service';
 import { NpcService } from '../../../services/npc.service';
@@ -36,6 +36,7 @@ export class PlaythroughDetailComponent implements OnInit, OnDestroy {
   readonly Users = Users;
   readonly Trash2 = Trash2;
   readonly Pencil = Pencil;
+  readonly Plus = Plus;
 
   campaignId = '';
   playthroughId = '';
@@ -103,6 +104,11 @@ export class PlaythroughDetailComponent implements OnInit, OnDestroy {
 
   openSession(s: Session): void {
     this.router.navigate(['/sessions', s.id]);
+  }
+
+  /** Crée un PJ rattaché à CETTE Partie (route scoping Playthrough). */
+  createCharacter(): void {
+    this.router.navigate(['/campaigns', this.campaignId, 'playthroughs', this.playthroughId, 'characters', 'create']);
   }
 
   openFlags(): void {

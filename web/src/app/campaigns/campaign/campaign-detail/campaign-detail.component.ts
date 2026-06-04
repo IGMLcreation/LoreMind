@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { LucideAngularModule, Swords, Plus, Globe, Pencil, Trash2, User, Dices, Drama, Check, Play } from 'lucide-angular';
+import { LucideAngularModule, Swords, Plus, Globe, Pencil, Trash2, Dices, Drama, Check, Play, Upload, Sparkles } from 'lucide-angular';
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError, switchMap, filter, map } from 'rxjs/operators';
@@ -16,7 +16,6 @@ import { SessionService } from '../../../services/session.service';
 import { PlaythroughService } from '../../../services/playthrough.service';
 import { Playthrough } from '../../../services/campaign.model';
 import { Session } from '../../../services/session.model';
-import { Character } from '../../../services/character.model';
 import { Npc } from '../../../services/npc.model';
 import { LayoutService } from '../../../services/layout.service';
 import { PageTitleService } from '../../../services/page-title.service';
@@ -38,11 +37,12 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   readonly Globe = Globe;
   readonly Pencil = Pencil;
   readonly Trash2 = Trash2;
-  readonly User = User;
   readonly Dices = Dices;
   readonly Drama = Drama;
   readonly Check = Check;
   readonly Play = Play;
+  readonly Upload = Upload;
+  readonly Sparkles = Sparkles;
 
   campaign: Campaign | null = null;
   arcs: Arc[] = [];
@@ -56,8 +56,6 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   availableGameSystems: GameSystem[] = [];
   /** GameSystem associé si `campaign.gameSystemId` est renseigné ; sinon null. */
   linkedGameSystem: GameSystem | null = null;
-  /** Fiches de personnages (PJ) de la campagne. */
-  characters: Character[] = [];
   /** Fiches de personnages non-joueurs (PNJ) de la campagne. */
   npcs: Npc[] = [];
   /** Sessions de jeu (passées et en cours) liées à cette campagne. */
@@ -73,8 +71,6 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
 
   /** Parties (Playthroughs) de cette campagne. */
   playthroughs: Playthrough[] = [];
-  /** Partie par défaut (1re) — fallback pour les actions session/PJ tant que l'UI Playthrough n'est pas finie. */
-  defaultPlaythroughId: string | null = null;
 
   /** Mode édition inline. */
   editing = false;
@@ -124,10 +120,8 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
       this.campaign = campaign;
       this.editing = false;
       this.playthroughs = playthroughs;
-      this.defaultPlaythroughId = playthroughs.length > 0 ? playthroughs[0].id! : null;
       this.loadLinkedLore(campaign);
       this.loadLinkedGameSystem(campaign);
-      this.loadCharacters(campaign.id!);
       this.loadNpcs(campaign.id!);
       this.loadSessions(campaign.id!);
       this.arcs = treeData.arcs;
@@ -162,10 +156,8 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
       this.campaign = campaign;
       this.editing = false;
       this.playthroughs = playthroughs;
-      this.defaultPlaythroughId = playthroughs.length > 0 ? playthroughs[0].id! : null;
       this.loadLinkedLore(campaign);
       this.loadLinkedGameSystem(campaign);
-      this.loadCharacters(campaign.id!);
       this.loadNpcs(campaign.id!);
       this.loadSessions(campaign.id!);
       this.arcs = treeData.arcs;
@@ -200,18 +192,7 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
     ).subscribe(gs => this.linkedGameSystem = gs);
   }
 
-  /** Charge les PJ de la Partie par défaut (refonte Playthrough). */
-  private loadCharacters(_campaignId: string): void {
-    if (!this.defaultPlaythroughId) {
-      this.characters = [];
-      return;
-    }
-    this.characterService.getByPlaythrough(this.defaultPlaythroughId).pipe(
-      catchError(() => of([] as Character[]))
-    ).subscribe(list => this.characters = list);
-  }
-
-  /** Symétrique pour les PNJ. */
+  /** Charge les PNJ de la campagne (les PJ vivent désormais dans une Partie). */
   private loadNpcs(campaignId: string): void {
     this.npcService.getByCampaign(campaignId).pipe(
       catchError(() => of([] as Npc[]))
@@ -245,11 +226,6 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
     });
   }
 
-  createCharacter(): void {
-    if (!this.campaign) return;
-    this.router.navigate(['/campaigns', this.campaign.id, 'characters', 'create']);
-  }
-
   createNpc(): void {
     if (!this.campaign) return;
     this.router.navigate(['/campaigns', this.campaign.id, 'npcs', 'create']);
@@ -260,17 +236,6 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
     this.router.navigate(['/campaigns', this.campaign.id, 'npcs', npc.id, 'edit']);
   }
 
-  editCharacter(character: Character): void {
-    if (!this.campaign || !character.id) return;
-    this.router.navigate(['/campaigns', this.campaign.id, 'characters', character.id, 'edit']);
-  }
-
-  /** Ouvre la vue lecture seule (style WorldAnvil) — clic sur la carte. */
-  viewCharacter(character: Character): void {
-    if (!this.campaign || !character.id) return;
-    this.router.navigate(['/campaigns', this.campaign.id, 'characters', character.id]);
-  }
-
   viewNpc(npc: Npc): void {
     if (!this.campaign || !npc.id) return;
     this.router.navigate(['/campaigns', this.campaign.id, 'npcs', npc.id]);
@@ -279,6 +244,18 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   createArc(): void {
     if (!this.campaign) return;
     this.router.navigate(['/campaigns', this.campaign.id, 'arcs', 'create']);
+  }
+
+  /** Ouvre la page d'import d'un PDF de campagne (proposition d'arbre à réviser). */
+  importCampaign(): void {
+    if (!this.campaign) return;
+    this.router.navigate(['/campaigns', this.campaign.id, 'import']);
+  }
+
+  /** Ouvre la page de conseils d'adaptation d'un PDF à cette campagne. */
+  adaptCampaign(): void {
+    if (!this.campaign) return;
+    this.router.navigate(['/campaigns', this.campaign.id, 'adapt']);
   }
 
   openArc(arc: Arc): void {
@@ -304,11 +281,6 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
         : firstMeaningful;
     }
     return '(Fiche vide)';
-  }
-
-  /** Alias gardé pour compatibilité avec les anciens templates. */
-  characterSnippet(c: Character): string {
-    return this.personaSnippet(c);
   }
 
   private showLayout(allCampaigns: Campaign[], data: CampaignTreeData): void {
@@ -385,9 +357,9 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
     const newGameSystemId = this.editGameSystemId ? this.editGameSystemId : null;
     const currentGameSystemId = this.campaign.gameSystemId ?? null;
     const gameSystemChanged = newGameSystemId !== currentGameSystemId;
-    const hasSheets = this.characters.length > 0 || this.npcs.length > 0;
+    const hasSheets = this.npcs.length > 0;
     if (gameSystemChanged && hasSheets) {
-      const count = this.characters.length + this.npcs.length;
+      const count = this.npcs.length;
       this.confirmDialog.confirm({
         title: 'Changer le systeme de jeu ?',
         message:

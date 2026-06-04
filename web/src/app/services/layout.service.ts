@@ -73,6 +73,12 @@ export interface BottomPanel {
 
 export interface SecondarySidebarConfig {
   title: string;
+  /**
+   * Si défini, le titre devient cliquable et navigue vers cette route
+   * (ex: accueil de la campagne depuis n'importe quelle sous-page). Absent =
+   * titre statique (cas du Lore).
+   */
+  titleRoute?: string;
   items: TreeItem[];
   createActions: SidebarAction[];
   globalItems: GlobalItem[];

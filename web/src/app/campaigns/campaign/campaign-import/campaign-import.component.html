@@ -1,0 +1,183 @@
+<div class="import-page">
+
+  <div class="page-header">
+    <button type="button" class="btn-back" (click)="cancel()">
+      <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon>
+      Retour à la campagne
+    </button>
+    <h1>Importer un PDF de campagne</h1>
+    <p class="subtitle">
+      L'IA propose une arborescence arc → chapitre → scène. Vous la révisez et l'ajustez
+      avant de créer quoi que ce soit.
+    </p>
+  </div>
+
+  <!-- Étape 1 : upload (masqué une fois en revue) -->
+  <section class="upload-area" *ngIf="!reviewing">
+    <input #pdfInput type="file" accept="application/pdf,.pdf" hidden (change)="onPdfSelected($event)" />
+    <button type="button" class="btn-primary big" [disabled]="importing" (click)="pdfInput.click()">
+      <lucide-icon [img]="Upload" [size]="16"></lucide-icon>
+      {{ importing ? 'Import en cours…' : 'Choisir un PDF de campagne' }}
+    </button>
+
+    <!-- Progression live -->
+    <div class="import-progress" *ngIf="importing">
+      <p class="import-phase">{{ importPhase }}</p>
+      <div class="progress-bar" *ngIf="importProgress">
+        <div class="progress-fill"
+             [style.width.%]="importProgress.total ? (importProgress.current / importProgress.total) * 100 : 0">
+        </div>
+      </div>
+      <p class="import-counts" *ngIf="importCounts">
+        Trouvé jusqu'ici : {{ importCounts.arcs }} arc(s) · {{ importCounts.chapters }} chapitre(s) · {{ importCounts.scenes }} scène(s)
+      </p>
+    </div>
+
+    <p class="import-error" *ngIf="importError">{{ importError }}</p>
+  </section>
+
+  <!-- Étape 2 : revue de l'arbre éditable -->
+  <section class="review-area" *ngIf="reviewing">
+    <div class="review-header">
+      <p class="review-summary">
+        À créer : <strong>{{ arcCount }}</strong> nouvel(s) arc(s),
+        <strong>{{ chapterCount }}</strong> chapitre(s),
+        <strong>{{ sceneCount }}</strong> scène(s).
+        Les éléments <em>« déjà présent »</em> (grisés) sont affichés pour situer les ajouts ;
+        ils ne seront pas recréés. Modifiez les nouveaux, puis créez.
+      </p>
+    </div>
+
+    <div class="tree">
+      <!-- Arc -->
+      <div class="arc-card" *ngFor="let arc of tree; let ai = index">
+        <div class="node-head arc-head" [class.existing-node]="arc.existing">
+          <button type="button" class="btn-collapse" (click)="toggleArc(arc)">
+            <lucide-icon [img]="arc.collapsed ? ChevronRight : ChevronDown" [size]="16"></lucide-icon>
+          </button>
+          <lucide-icon [img]="Swords" [size]="16" class="node-icon"></lucide-icon>
+          <input type="text" class="node-name" [(ngModel)]="arc.name" [name]="'arc-' + ai"
+                 [readonly]="arc.existing" placeholder="Nom de l'arc" />
+          <span class="badge-existing" *ngIf="arc.existing">déjà présent</span>
+          <button type="button" class="btn-remove" *ngIf="!arc.existing" (click)="removeArc(ai)" title="Supprimer l'arc">
+            <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+          </button>
+        </div>
+
+        <div class="node-body" *ngIf="!arc.collapsed">
+          <div class="arc-type-toggle" *ngIf="!arc.existing">
+            <span class="toggle-label">Type :</span>
+            <button type="button" class="type-btn" [class.active]="arc.type === 'LINEAR'"
+                    (click)="setArcType(arc, 'LINEAR')">Linéaire</button>
+            <button type="button" class="type-btn" [class.active]="arc.type === 'HUB'"
+                    (click)="setArcType(arc, 'HUB')">Hub (quêtes)</button>
+          </div>
+
+          <textarea class="node-desc" *ngIf="!arc.existing" [(ngModel)]="arc.description" [name]="'arc-desc-' + ai"
+                    rows="2" placeholder="Synopsis de l'arc (optionnel)"></textarea>
+
+          <!-- Chapitres -->
+          <div class="chapter-card" *ngFor="let chapter of arc.chapters; let ci = index">
+            <div class="node-head chapter-head" [class.existing-node]="chapter.existing">
+              <button type="button" class="btn-collapse" (click)="toggleChapter(chapter)">
+                <lucide-icon [img]="chapter.collapsed ? ChevronRight : ChevronDown" [size]="14"></lucide-icon>
+              </button>
+              <lucide-icon [img]="BookOpen" [size]="14" class="node-icon"></lucide-icon>
+              <input type="text" class="node-name" [(ngModel)]="chapter.name" [name]="'chap-' + ai + '-' + ci"
+                     [readonly]="chapter.existing" placeholder="Nom du chapitre" />
+              <span class="badge-existing" *ngIf="chapter.existing">déjà présent</span>
+              <button type="button" class="btn-remove" *ngIf="!chapter.existing" (click)="removeChapter(arc, ci)" title="Supprimer le chapitre">
+                <lucide-icon [img]="Trash2" [size]="13"></lucide-icon>
+              </button>
+            </div>
+
+            <div class="node-body" *ngIf="!chapter.collapsed">
+              <textarea class="node-desc" *ngIf="!chapter.existing" [(ngModel)]="chapter.description" [name]="'chap-desc-' + ai + '-' + ci"
+                        rows="2" placeholder="Synopsis du chapitre (optionnel)"></textarea>
+
+              <!-- Scènes -->
+              <div class="scene-card" *ngFor="let scene of chapter.scenes; let si = index"
+                   [class.existing-node]="scene.existing">
+                <div class="scene-row">
+                  <lucide-icon [img]="MapPin" [size]="13" class="node-icon scene-icon"></lucide-icon>
+                  <div class="scene-fields">
+                    <input type="text" class="node-name" [(ngModel)]="scene.name"
+                           [name]="'scene-' + ai + '-' + ci + '-' + si" [readonly]="scene.existing"
+                           placeholder="Nom de la scène" />
+                    <input type="text" class="node-desc-inline" *ngIf="!scene.existing" [(ngModel)]="scene.description"
+                           [name]="'scene-desc-' + ai + '-' + ci + '-' + si" placeholder="Synopsis (optionnel)" />
+                  </div>
+                  <span class="badge-existing" *ngIf="scene.existing">déjà présent</span>
+                  <button type="button" class="btn-details" *ngIf="!scene.existing" (click)="toggleDetails(scene)"
+                          title="Narration joueurs, notes MJ, pièces">
+                    <lucide-icon [img]="scene.detailsOpen ? ChevronDown : ChevronRight" [size]="12"></lucide-icon>
+                    Détails<span *ngIf="scene.rooms.length"> · {{ scene.rooms.length }} pièce(s)</span>
+                  </button>
+                  <button type="button" class="btn-remove" *ngIf="!scene.existing" (click)="removeScene(chapter, si)" title="Supprimer la scène">
+                    <lucide-icon [img]="Trash2" [size]="13"></lucide-icon>
+                  </button>
+                </div>
+
+                <div class="scene-details" *ngIf="scene.detailsOpen && !scene.existing">
+                  <label class="field-label">À lire aux joueurs</label>
+                  <textarea class="node-desc" [(ngModel)]="scene.playerNarration"
+                            [name]="'scene-pn-' + ai + '-' + ci + '-' + si" rows="3"
+                            placeholder="Texte d'encadré lu aux joueurs (optionnel)"></textarea>
+
+                  <label class="field-label">Notes MJ</label>
+                  <textarea class="node-desc" [(ngModel)]="scene.gmNotes"
+                            [name]="'scene-gm-' + ai + '-' + ci + '-' + si" rows="3"
+                            placeholder="Secrets, développement, conséquences (optionnel)"></textarea>
+
+                  <!-- Pièces (donjon) : vide = scène narrative classique -->
+                  <span class="field-label">Pièces (lieu explorable)</span>
+                  <div class="rooms">
+                    <div class="room-row" *ngFor="let room of scene.rooms; let ri = index">
+                      <input type="text" class="room-name" [(ngModel)]="room.name"
+                             [name]="'room-' + ai + '-' + ci + '-' + si + '-' + ri" placeholder="Pièce" />
+                      <input type="text" class="room-field" [(ngModel)]="room.description"
+                             [name]="'room-desc-' + ai + '-' + ci + '-' + si + '-' + ri" placeholder="Description" />
+                      <input type="text" class="room-field" [(ngModel)]="room.enemies"
+                             [name]="'room-en-' + ai + '-' + ci + '-' + si + '-' + ri" placeholder="Ennemis" />
+                      <input type="text" class="room-field" [(ngModel)]="room.loot"
+                             [name]="'room-loot-' + ai + '-' + ci + '-' + si + '-' + ri" placeholder="Trésor" />
+                      <button type="button" class="btn-remove" (click)="removeRoom(scene, ri)" title="Supprimer la pièce">
+                        <lucide-icon [img]="Trash2" [size]="12"></lucide-icon>
+                      </button>
+                    </div>
+                    <button type="button" class="btn-add-inline" (click)="addRoom(scene)">
+                      <lucide-icon [img]="Plus" [size]="12"></lucide-icon> Pièce
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <button type="button" class="btn-add-inline" (click)="addScene(chapter)">
+                <lucide-icon [img]="Plus" [size]="12"></lucide-icon> Scène
+              </button>
+            </div>
+          </div>
+
+          <button type="button" class="btn-add-inline" (click)="addChapter(arc)">
+            <lucide-icon [img]="Plus" [size]="12"></lucide-icon> Chapitre
+          </button>
+        </div>
+      </div>
+
+      <button type="button" class="btn-add" (click)="addArc()">
+        <lucide-icon [img]="Plus" [size]="14"></lucide-icon> Ajouter un arc
+      </button>
+    </div>
+
+    <p class="apply-error" *ngIf="applyError">{{ applyError }}</p>
+
+    <div class="review-actions">
+      <button type="button" class="btn-primary" [disabled]="applying || !hasNewContent" (click)="apply()">
+        <lucide-icon [img]="Check" [size]="16"></lucide-icon>
+        {{ applying ? 'Création…' : 'Créer dans la campagne' }}
+      </button>
+      <button type="button" class="btn-secondary" (click)="cancel()">Annuler</button>
+    </div>
+  </section>
+
+</div>

@@ -13,6 +13,10 @@ export interface AppSettings {
   onemin_model: string;
   onemin_api_key_set: boolean;
   llm_num_ctx: number;
+  /** Taille cible d'un morceau (tokens) pour l'import de PDF (règles/campagne). */
+  import_chunk_tokens: number;
+  /** Timeout HTTP des appels LLM (secondes). */
+  llm_timeout_seconds: number;
 }
 
 /**
@@ -26,6 +30,8 @@ export interface AppSettingsUpdate {
   onemin_model?: string;
   onemin_api_key?: string;
   llm_num_ctx?: number;
+  import_chunk_tokens?: number;
+  llm_timeout_seconds?: number;
 }
 
 /** Metadonnees d'un modele Ollama (issues de /api/show). */

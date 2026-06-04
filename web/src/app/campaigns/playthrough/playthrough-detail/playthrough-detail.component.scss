@@ -46,6 +46,32 @@
   }
 }
 
+.block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.7rem;
+
+  h2 { margin: 0; }
+}
+
+.btn-add {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  background: #6c63ff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover { background: #5b52e0; }
+}
+
 .empty {
   font-size: 0.88rem;
   color: var(--color-text-muted, #777);

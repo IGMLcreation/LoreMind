@@ -518,7 +518,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
       ollama_base_url: this.settings.ollama_base_url,
       llm_model: this.settings.llm_model,
       onemin_model: this.settings.onemin_model,
-      llm_num_ctx: this.settings.llm_num_ctx
+      llm_num_ctx: this.settings.llm_num_ctx,
+      import_chunk_tokens: this.settings.import_chunk_tokens,
+      llm_timeout_seconds: this.settings.llm_timeout_seconds
     };
     if (this.clearApiKey) {
       patch.onemin_api_key = '';

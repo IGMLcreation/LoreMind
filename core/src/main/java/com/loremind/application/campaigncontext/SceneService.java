@@ -6,6 +6,7 @@ import com.loremind.domain.campaigncontext.ports.SceneRepository;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -38,6 +39,19 @@ public class SceneService {
                 .icon(icon)
                 .build();
         return sceneRepository.save(scene);
+    }
+
+    /**
+     * Crée une scène à partir d'un objet Scene complet (tous les champs : narration
+     * joueurs, notes MJ, pièces…). Utilisé par l'import de campagne. L'ID est forcé
+     * à null pour laisser le repo en générer un nouveau.
+     */
+    public Scene createScene(Scene input) {
+        input.setId(null);
+        if (input.getRooms() == null) {
+            input.setRooms(new ArrayList<>());
+        }
+        return sceneRepository.save(input);
     }
 
     public Optional<Scene> getSceneById(String id) {

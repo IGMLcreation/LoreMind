@@ -8,7 +8,19 @@
 
   <ng-container *ngIf="!isCollapsed">
 
-    <h2 class="sidebar-title">{{ title }}</h2>
+    <button
+      *ngIf="titleRoute; else staticTitle"
+      type="button"
+      class="sidebar-title sidebar-title--link"
+      [class.active]="isTitleActive()"
+      title="Retour à l'accueil de la campagne"
+      (click)="clickTitle()">
+      <lucide-icon [img]="Home" [size]="14" class="sidebar-title-icon"></lucide-icon>
+      <span class="sidebar-title-text">{{ title }}</span>
+    </button>
+    <ng-template #staticTitle>
+      <h2 class="sidebar-title">{{ title }}</h2>
+    </ng-template>
 
     <div class="actions-row" *ngIf="createActions.length">
       <button

@@ -221,6 +221,45 @@
     </div>
   </section>
 
+  <!-- Bloc Import de PDF -->
+  <section class="card" *ngIf="settings">
+    <h2>Import de PDF</h2>
+    <div class="form-row">
+      <label for="import-chunk-tokens">Taille des morceaux a l'import (tokens)</label>
+      <input
+        id="import-chunk-tokens"
+        type="number"
+        min="2000"
+        step="1000"
+        [(ngModel)]="settings.import_chunk_tokens">
+      <p class="hint">
+        Lors de l'import d'un PDF (regles ou campagne), le texte est decoupe en morceaux
+        de cette taille avant d'etre analyse par l'IA. <strong>Plus gros = moins de morceaux</strong>,
+        donc plus rapide et moins de fragmentation/doublons — mais le morceau doit tenir dans
+        la fenetre du modele.
+        <br />
+        Repere : ~10 000 pour Ollama (16k de contexte) ; jusqu'a ~100 000 pour un modele a
+        grand contexte (ex : GPT-5 mini, 400k) afin de traiter un livre entier en une seule passe.
+        Attention : un gros morceau = generation plus longue (voir le timeout ci-dessous).
+      </p>
+    </div>
+
+    <div class="form-row">
+      <label for="llm-timeout">Timeout des appels IA (secondes)</label>
+      <input
+        id="llm-timeout"
+        type="number"
+        min="30"
+        step="30"
+        [(ngModel)]="settings.llm_timeout_seconds">
+      <p class="hint">
+        Delai max d'attente d'une reponse du modele. Si un import lourd echoue avec
+        « delai depasse » (timeout), <strong>augmentez cette valeur</strong> (ex : 600)
+        ou reduisez la taille des morceaux ci-dessus. Defaut : 300 s.
+      </p>
+    </div>
+  </section>
+
   <!-- Bloc Mises a jour (canal stable + canal beta Patreon fusionnes) -->
   <section class="card" *ngIf="config.updateCheckEnabled || licenseStatus?.enabled">
     <h2>Mises a jour</h2>

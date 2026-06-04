@@ -6,6 +6,7 @@
   <ng-container *ngIf="sidebarConfig$ | async as config">
     <app-secondary-sidebar
       [title]="config.title"
+      [titleRoute]="config.titleRoute || null"
       [items]="config.items"
       [createActions]="config.createActions"
       [bottomPanel]="config.bottomPanel || null">

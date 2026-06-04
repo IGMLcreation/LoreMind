@@ -61,7 +61,7 @@
           <button *ngFor="let c of characters"
                   type="button"
                   class="ref-item"
-                  (click)="openInNewTab(['campaigns', campaignId, 'characters', c.id!])">
+                  (click)="openInNewTab(['campaigns', campaignId, 'playthroughs', playthroughId!, 'characters', c.id!])">
             <span class="ref-item-name">{{ c.name }}</span>
             <lucide-icon [img]="ExternalLink" [size]="12" class="ref-item-icon"></lucide-icon>
           </button>

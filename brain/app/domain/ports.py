@@ -7,7 +7,10 @@ En Python moderne on privilégie Protocol (PEP 544) sur ABC pour bénéficier
 du duck typing structurel : toute classe qui possède les bonnes méthodes
 satisfait le contrat, sans héritage explicite.
 """
-from typing import AsyncIterator, Protocol
+from typing import TYPE_CHECKING, AsyncIterator, Protocol
+
+if TYPE_CHECKING:
+    from app.domain.models import ExtractedDocument
 
 
 class LLMProvider(Protocol):
@@ -76,6 +79,32 @@ class LLMChatProvider(Protocol):
             LLMProviderError: si le fournisseur sous-jacent a échoué.
         """
         ...
+
+
+class PdfTextExtractor(Protocol):
+    """Port sortant — extrait le texte d'un PDF (born-digital ou scan).
+
+    L'implémentation décide de sa stratégie (couche texte directe, repli OCR
+    page par page…). Le domaine ne connaît ni PyMuPDF ni Tesseract.
+    """
+
+    def extract(self, pdf_bytes: bytes) -> "ExtractedDocument":
+        """Extrait le texte du PDF fourni sous forme d'octets.
+
+        Args:
+            pdf_bytes: contenu binaire du fichier PDF.
+
+        Returns:
+            ExtractedDocument : une entrée par page (texte + flag OCR).
+
+        Raises:
+            PdfExtractionError: si le PDF est illisible/corrompu.
+        """
+        ...
+
+
+class PdfExtractionError(Exception):
+    """Erreur du domaine : un PDF n'a pas pu être lu/extrait."""
 
 
 class LLMProviderError(Exception):

@@ -301,3 +301,128 @@ class SessionContext:
     in_progress_quests: list[QuestSummary] = field(default_factory=list)
     locked_quest_titles: list[str] = field(default_factory=list)
     active_flags: list[str] = field(default_factory=list)
+
+
+# ─────────────────────── Import de PDF (règles → GameSystem) ───────────────────────
+
+
+@dataclass(frozen=True)
+class ExtractedPage:
+    """Texte extrait d'UNE page de PDF, avec la trace de la méthode utilisée.
+
+    `used_ocr=True` signale que la page n'avait pas de couche texte exploitable
+    (born-digital absent) et a donc été rasterisée puis passée à l'OCR. Permet
+    au CLI/diagnostic de dire à l'utilisateur si son PDF est "texte" ou "scan".
+    """
+
+    index: int  # 0-based
+    text: str
+    used_ocr: bool
+
+
+@dataclass(frozen=True)
+class ExtractedDocument:
+    """Résultat brut de l'extraction d'un PDF : une entrée par page."""
+
+    pages: list[ExtractedPage]
+
+    @property
+    def page_count(self) -> int:
+        return len(self.pages)
+
+    @property
+    def ocr_page_count(self) -> int:
+        return sum(1 for p in self.pages if p.used_ocr)
+
+    @property
+    def full_text(self) -> str:
+        """Concatène le texte de toutes les pages, séparées par un saut double."""
+        return "\n\n".join(p.text for p in self.pages if p.text.strip())
+
+
+@dataclass(frozen=True)
+class RulesImportResult:
+    """Proposition structurée de règles : sections markdown indexées par titre.
+
+    `sections` = {titre H2 → contenu markdown}. C'est une PROPOSITION : rien
+    n'est persisté côté Core tant que l'utilisateur n'a pas validé/édité.
+    `page_count` / `ocr_page_count` remontent au diagnostic d'extraction.
+    """
+
+    sections: dict[str, str]
+    page_count: int
+    ocr_page_count: int
+
+    def to_markdown(self) -> str:
+        """Assemble les sections en un markdown monolithique (## titre + contenu).
+
+        Format aligné sur `GameSystem.rulesMarkdown` côté Core (découpé par H2).
+        """
+        blocks = [f"## {title}\n\n{content.strip()}" for title, content in self.sections.items()]
+        return "\n\n".join(blocks).strip() + "\n"
+
+
+# ─────────────────────── Import de PDF de campagne (arbre arc→chapitre→scène) ──────────────
+
+
+@dataclass(frozen=True)
+class RoomProposal:
+    """Pièce d'un lieu explorable (donjon) proposée pour une scène."""
+
+    name: str
+    description: str
+    enemies: str = ""
+    loot: str = ""
+
+
+@dataclass(frozen=True)
+class SceneProposal:
+    """Scène proposée. `rooms` non vide => donjon/lieu explorable.
+
+    On capture aussi, quand le livre les fournit, le texte d'encadré « à lire aux
+    joueurs » (`player_narration`) et les secrets/développement MJ (`gm_notes`).
+    """
+
+    name: str
+    description: str
+    player_narration: str = ""
+    gm_notes: str = ""
+    rooms: list[RoomProposal] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class ChapterProposal:
+    """Chapitre proposé : nom + synopsis + ses scènes."""
+
+    name: str
+    description: str
+    scenes: list[SceneProposal] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class ArcProposal:
+    """Arc proposé : nom + synopsis + type (LINEAR/HUB) + ses chapitres."""
+
+    name: str
+    description: str
+    arc_type: str = "LINEAR"
+    chapters: list[ChapterProposal] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class CampaignImportResult:
+    """Proposition d'arborescence narrative extraite d'un PDF de campagne.
+
+    PROPOSITION non persistée : l'UI laisse l'utilisateur réviser/éditer l'arbre
+    avant la création effective des arcs/chapitres/scènes côté Core.
+    """
+
+    arcs: list[ArcProposal]
+    page_count: int
+    ocr_page_count: int
+
+    def counts(self) -> tuple[int, int, int]:
+        """(nb arcs, nb chapitres, nb scènes) — pour le diagnostic / la progression."""
+        chapters = sum(len(a.chapters) for a in self.arcs)
+        scenes = sum(len(c.scenes) for a in self.arcs for c in a.chapters)
+        return len(self.arcs), chapters, scenes
