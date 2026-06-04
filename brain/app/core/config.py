@@ -25,8 +25,8 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # Provider LLM actif. "ollama" = local ; "onemin" = 1min.ai (etage 2).
-    llm_provider: Literal["ollama", "onemin"] = "ollama"
+    # Provider LLM actif. "ollama" = local ; "onemin" = 1min.ai ; "openrouter" = OpenRouter.
+    llm_provider: Literal["ollama", "onemin", "openrouter"] = "ollama"
 
     ollama_base_url: str = "http://localhost:11434"
     llm_model: str = "gemma4:26b"
@@ -46,6 +46,12 @@ class Settings(BaseSettings):
     # (modifiables depuis l'UI). Les defauts ici sont juste des placeholders.
     onemin_api_key: str = ""
     onemin_model: str = "gpt-4o-mini"
+
+    # OpenRouter (OpenAI-compatible). Cle + modele modifiables depuis l'UI.
+    # Defaut = routeur `openrouter/free` : choisit un modele GRATUIT (0 credit).
+    # Pour un modele precis gratuit : id finissant par `:free`.
+    openrouter_api_key: str = ""
+    openrouter_model: str = "openrouter/free"
 
     # Taille cible d'un morceau (en tokens) pour l'import de PDF (regles/campagne).
     # Plus c'est gros, moins il y a de morceaux => moins de fragmentation et un

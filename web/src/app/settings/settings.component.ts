@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LucideAngularModule, ArrowLeft, RefreshCw, Save, Check, AlertCircle, Download, Trash2, Plus, X, Heart, Link2, Unlink } from 'lucide-angular';
-import { SettingsService, AppSettings, AppSettingsUpdate, OneMinModelGroup, OllamaPullEvent } from '../services/settings.service';
+import { SettingsService, AppSettings, AppSettingsUpdate, OneMinModelGroup, OpenRouterModel, OllamaPullEvent } from '../services/settings.service';
 import { UpdatesService, UpdateStatus } from '../services/updates.service';
 import { ConfigService } from '../services/config.service';
 import { LayoutService } from '../services/layout.service';
@@ -103,6 +103,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
   settings: AppSettings | null = null;
   ollamaModels: string[] = [];
   oneminGroups: OneMinModelGroup[] = [];
+
+  /** Catalogue OpenRouter (chargé dynamiquement) + filtre "gratuits seulement". */
+  openrouterModels: OpenRouterModel[] = [];
+  openrouterFreeOnly = true;
   /** Fournisseur 1min.ai actuellement selectionne (filtre la liste des modeles). */
   oneminProvider: string = '';
 
@@ -127,6 +131,11 @@ export class SettingsComponent implements OnInit, OnDestroy {
   oneminApiKeyInput = '';
   /** True si l'utilisateur a coche "effacer la cle". */
   clearApiKey = false;
+
+  /** Cle OpenRouter saisie — vide = on ne touche pas a la cle persistee. */
+  openrouterApiKeyInput = '';
+  /** True si l'utilisateur a coche "effacer la cle OpenRouter". */
+  clearOpenrouterKey = false;
 
   constructor(
     private settingsService: SettingsService,
@@ -457,6 +466,35 @@ export class SettingsComponent implements OnInit, OnDestroy {
       },
       error: () => this.oneminGroups = []
     });
+
+    this.settingsService.listOpenRouterModels().subscribe({
+      next: (r) => this.openrouterModels = r.models,
+      error: () => this.openrouterModels = []
+    });
+  }
+
+  /** Modeles OpenRouter, filtres (gratuits seulement par defaut). */
+  get filteredOpenrouterModels(): OpenRouterModel[] {
+    return this.openrouterFreeOnly
+      ? this.openrouterModels.filter(m => m.free)
+      : this.openrouterModels;
+  }
+
+  /** Options du select OpenRouter : routeur auto + liste filtree + valeur courante. */
+  get openrouterSelectOptions(): { id: string; label: string }[] {
+    const options: { id: string; label: string }[] = [
+      { id: 'openrouter/free', label: 'openrouter/free — routeur auto (gratuit)' }
+    ];
+    for (const m of this.filteredOpenrouterModels) {
+      const ctx = m.context_length ? ` — ${m.context_length.toLocaleString()} ctx` : '';
+      options.push({ id: m.id, label: `${m.id}${ctx}${m.free ? ' · gratuit' : ''}` });
+    }
+    // Garantit que le modele actuellement configure reste selectionnable.
+    const cur = this.settings?.openrouter_model;
+    if (cur && !options.some(o => o.id === cur)) {
+      options.splice(1, 0, { id: cur, label: `${cur} (actuel)` });
+    }
+    return options;
   }
 
   /** Deduit le fournisseur a partir du modele actuellement configure. */
@@ -518,6 +556,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
       ollama_base_url: this.settings.ollama_base_url,
       llm_model: this.settings.llm_model,
       onemin_model: this.settings.onemin_model,
+      openrouter_model: this.settings.openrouter_model,
       llm_num_ctx: this.settings.llm_num_ctx,
       import_chunk_tokens: this.settings.import_chunk_tokens,
       llm_timeout_seconds: this.settings.llm_timeout_seconds
@@ -527,12 +566,19 @@ export class SettingsComponent implements OnInit, OnDestroy {
     } else if (this.oneminApiKeyInput.trim()) {
       patch.onemin_api_key = this.oneminApiKeyInput.trim();
     }
+    if (this.clearOpenrouterKey) {
+      patch.openrouter_api_key = '';
+    } else if (this.openrouterApiKeyInput.trim()) {
+      patch.openrouter_api_key = this.openrouterApiKeyInput.trim();
+    }
 
     this.settingsService.updateSettings(patch).subscribe({
       next: (s) => {
         this.settings = { ...s };
         this.oneminApiKeyInput = '';
         this.clearApiKey = false;
+        this.openrouterApiKeyInput = '';
+        this.clearOpenrouterKey = false;
         this.successMessage = 'Parametres sauvegardes.';
         this.saving = false;
       },

@@ -29,6 +29,8 @@ _ALLOWED_KEYS = frozenset({
     "llm_num_ctx",
     "onemin_api_key",
     "onemin_model",
+    "openrouter_api_key",
+    "openrouter_model",
     "import_chunk_tokens",
 })
 

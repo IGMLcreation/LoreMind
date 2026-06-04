@@ -45,12 +45,13 @@ from app.domain.models import (
 from app.domain.ports import LLMProvider, LLMProviderError, PdfExtractionError
 from app.infrastructure.ollama_adapter import OllamaLLMProvider
 from app.infrastructure.onemin_adapter import OneMinAiLLMProvider
+from app.infrastructure.openrouter_adapter import OpenRouterLLMProvider
 from app.infrastructure.pdf_extractor import PyMuPdfTextExtractor
 
 app = FastAPI(
     title="LoreMind Brain",
     description="Backend IA pour la génération de contenu narratif.",
-    version="0.10.1-beta",
+    version="0.10.2-beta",
 )
 
 
@@ -354,6 +355,8 @@ def get_llm_provider(
     try:
         if settings.llm_provider == "onemin":
             return OneMinAiLLMProvider(settings)
+        if settings.llm_provider == "openrouter":
+            return OpenRouterLLMProvider(settings)
         return OllamaLLMProvider(settings)
     except LLMProviderError as exc:
         # Ex : cle 1min.ai manquante. On renvoie du 400 plutot que du 500
@@ -688,7 +691,9 @@ async def chat_stream(
         "system": _count_tokens(system_prompt_preview),
         "history": sum(_count_tokens(m.content) for m in history_msgs),
         "current": _count_tokens(current_msg.content) if current_msg else 0,
-        "max": settings.llm_num_ctx,
+        # Plafond connu seulement pour Ollama (num_ctx). Pour le cloud (1min/OpenRouter)
+        # on ne connaît pas la fenêtre réelle → 0 = "pas de max" (jauge sans dénominateur).
+        "max": settings.llm_num_ctx if settings.llm_provider == "ollama" else 0,
     }
 
     async def event_stream() -> AsyncIterator[str]:
@@ -885,12 +890,15 @@ class SettingsDTO(BaseModel):
     Les secrets (onemin_api_key) sont masques en lecture.
     """
 
-    llm_provider: Literal["ollama", "onemin"]
+    llm_provider: Literal["ollama", "onemin", "openrouter"]
     ollama_base_url: str
     llm_model: str
     onemin_model: str
     # True si une cle 1min.ai est deja configuree — pas de leak de la cle elle-meme.
     onemin_api_key_set: bool
+    openrouter_model: str
+    # True si une cle OpenRouter est deja configuree (cle elle-meme jamais renvoyee).
+    openrouter_api_key_set: bool
     # Fenetre de contexte effective passee au modele (num_ctx Ollama) — sert
     # aussi de plafond a la jauge de contexte UI.
     llm_num_ctx: int
@@ -903,12 +911,14 @@ class SettingsDTO(BaseModel):
 class SettingsUpdateDTO(BaseModel):
     """Patch partiel des settings. Tous les champs sont optionnels."""
 
-    llm_provider: Literal["ollama", "onemin"] | None = None
+    llm_provider: Literal["ollama", "onemin", "openrouter"] | None = None
     ollama_base_url: str | None = None
     llm_model: str | None = None
     onemin_model: str | None = None
     # Chaine vide => on efface la cle. None => pas de changement.
     onemin_api_key: str | None = None
+    openrouter_model: str | None = None
+    openrouter_api_key: str | None = None
     llm_num_ctx: int | None = None
     import_chunk_tokens: int | None = None
     llm_timeout_seconds: int | None = None
@@ -921,6 +931,8 @@ def _to_settings_dto(s: Settings) -> SettingsDTO:
         llm_model=s.llm_model,
         onemin_model=s.onemin_model,
         onemin_api_key_set=bool(s.onemin_api_key),
+        openrouter_model=s.openrouter_model,
+        openrouter_api_key_set=bool(s.openrouter_api_key),
         llm_num_ctx=s.llm_num_ctx,
         import_chunk_tokens=s.import_chunk_tokens,
         llm_timeout_seconds=s.llm_timeout_seconds,
@@ -1079,6 +1091,51 @@ async def delete_ollama_model(
     except httpx.HTTPError as e:
         raise HTTPException(status_code=502, detail=f"Ollama injoignable : {e}")
     return {"status": "deleted", "name": name}
+
+
+@app.get("/models/openrouter")
+async def list_openrouter_models() -> dict[str, list[dict[str, object]]]:
+    """Catalogue DYNAMIQUE des modeles OpenRouter (API publique, sans cle).
+
+    Renvoie {models: [{id, name, context_length, free}]}, trie gratuits d'abord
+    puis contexte decroissant. `free` = id finissant par ':free' OU prix nul.
+    """
+    try:
+        async with httpx.AsyncClient(timeout=20) as client:
+            response = await client.get("https://openrouter.ai/api/v1/models")
+            response.raise_for_status()
+            data = response.json()
+    except httpx.HTTPError as exc:
+        raise HTTPException(status_code=502, detail=f"OpenRouter injoignable : {exc}")
+
+    def _is_zero(value: object) -> bool:
+        try:
+            return float(value) == 0.0  # type: ignore[arg-type]
+        except (TypeError, ValueError):
+            return False
+
+    models: list[dict[str, object]] = []
+    for m in data.get("data", []) or []:
+        mid = str(m.get("id") or "")
+        if not mid:
+            continue
+        pricing = m.get("pricing") or {}
+        is_free = mid.endswith(":free") or (
+            _is_zero(pricing.get("prompt")) and _is_zero(pricing.get("completion"))
+        )
+        try:
+            ctx = int(m.get("context_length") or 0)
+        except (TypeError, ValueError):
+            ctx = 0
+        models.append({
+            "id": mid,
+            "name": str(m.get("name") or mid),
+            "context_length": ctx,
+            "free": is_free,
+        })
+
+    models.sort(key=lambda x: (not x["free"], -int(x["context_length"])))  # type: ignore[index]
+    return {"models": models}
 
 
 @app.get("/models/onemin")

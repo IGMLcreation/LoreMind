@@ -140,6 +140,11 @@ public class SettingsController {
         return forward(HttpMethod.GET, "/models/onemin", null);
     }
 
+    @GetMapping("/models/openrouter")
+    public ResponseEntity<Map<String, Object>> listOpenRouterModels() {
+        return forward(HttpMethod.GET, "/models/openrouter", null);
+    }
+
     /**
      * Serialiseur JSON minimal pour eviter d'instancier ObjectMapper a chaque
      * appel. Suffisant pour notre cas d'usage : Map<String,Object> avec des

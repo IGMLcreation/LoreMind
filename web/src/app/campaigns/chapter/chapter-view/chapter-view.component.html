@@ -6,7 +6,14 @@
         <lucide-icon *ngIf="chapter.icon" [img]="resolveCampaignIcon(chapter.icon)" [size]="22" class="title-icon"></lucide-icon>
         {{ chapter.name }}
       </h1>
-      <p class="view-subtitle">{{ parentArc?.type === 'HUB' ? 'Quête (Hub)' : 'Chapitre' }}</p>
+      <p class="view-subtitle">
+        {{ parentArc?.type === 'HUB' ? 'Quête (Hub)' : 'Chapitre' }}
+        <span class="cond-badge" *ngIf="(chapter.prerequisites?.length ?? 0) > 0"
+              title="Ce chapitre a des conditions de déblocage : il se débloque en Partie quand elles sont remplies.">
+          <lucide-icon [img]="Lock" [size]="12"></lucide-icon>
+          Conditionnel
+        </span>
+      </p>
     </div>
     <div class="view-actions">
       <button type="button" class="btn-secondary" (click)="openGraph()"
@@ -25,8 +32,9 @@
     </div>
   </header>
 
-  <!-- Conditions de déblocage (donnée de scénario, read-only). Toujours visible si Arc HUB. -->
-  <section class="view-section" *ngIf="parentArc?.type === 'HUB'">
+  <!-- Conditions de déblocage (scénario, read-only). Visible pour un arc HUB (quête)
+       OU dès qu'un chapitre linéaire porte des conditions. -->
+  <section class="view-section" *ngIf="parentArc?.type === 'HUB' || (chapter.prerequisites?.length ?? 0) > 0">
     <h2 class="view-section-title"><span class="view-section-icon">🔒</span> Conditions de déblocage</h2>
 
     <ng-container *ngIf="(chapter.prerequisites?.length ?? 0) > 0; else noPrereqs">
@@ -34,8 +42,9 @@
         <li *ngFor="let p of chapter.prerequisites">{{ describePrerequisite(p) }}</li>
       </ul>
       <small class="view-section-empty">
-        Pendant une partie, la quête se débloque dès que toutes ces conditions sont remplies.
-        Le toggle des faits se fait dans l'écran « Faits » de la Partie.
+        Pendant une partie, {{ parentArc?.type === 'HUB' ? 'la quête' : 'ce chapitre' }} se débloque
+        dès que toutes ces conditions sont remplies. Le toggle des faits se fait dans l'écran
+        « Faits » de la Partie.
       </small>
     </ng-container>
 

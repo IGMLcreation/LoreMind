@@ -6,12 +6,16 @@ import { Observable } from 'rxjs';
  * Reflet de SettingsDTO cote Brain / SettingsController cote Core.
  * `onemin_api_key_set` indique si une cle est configuree, sans la reveler.
  */
+export type LlmProvider = 'ollama' | 'onemin' | 'openrouter';
+
 export interface AppSettings {
-  llm_provider: 'ollama' | 'onemin';
+  llm_provider: LlmProvider;
   ollama_base_url: string;
   llm_model: string;
   onemin_model: string;
   onemin_api_key_set: boolean;
+  openrouter_model: string;
+  openrouter_api_key_set: boolean;
   llm_num_ctx: number;
   /** Taille cible d'un morceau (tokens) pour l'import de PDF (règles/campagne). */
   import_chunk_tokens: number;
@@ -24,11 +28,13 @@ export interface AppSettings {
  * `onemin_api_key: ''` efface la cle, `null`/absent ne touche a rien.
  */
 export interface AppSettingsUpdate {
-  llm_provider?: 'ollama' | 'onemin';
+  llm_provider?: LlmProvider;
   ollama_base_url?: string;
   llm_model?: string;
   onemin_model?: string;
   onemin_api_key?: string;
+  openrouter_model?: string;
+  openrouter_api_key?: string;
   llm_num_ctx?: number;
   import_chunk_tokens?: number;
   llm_timeout_seconds?: number;
@@ -70,6 +76,11 @@ export class SettingsService {
 
   listOneMinModels(): Observable<{ groups: OneMinModelGroup[] }> {
     return this.http.get<{ groups: OneMinModelGroup[] }>(`${this.apiUrl}/models/onemin`, this.authOptions);
+  }
+
+  /** Catalogue dynamique des modeles OpenRouter (depuis leur API publique). */
+  listOpenRouterModels(): Observable<{ models: OpenRouterModel[] }> {
+    return this.http.get<{ models: OpenRouterModel[] }>(`${this.apiUrl}/models/openrouter`, this.authOptions);
   }
 
   /**
@@ -183,4 +194,14 @@ export interface OllamaPullEvent {
 export interface OneMinModelGroup {
   provider: string;
   models: string[];
+}
+
+/** Un modele OpenRouter (catalogue dynamique). */
+export interface OpenRouterModel {
+  id: string;
+  name: string;
+  /** Fenetre de contexte du modele (tokens). 0 si inconnue. */
+  context_length: number;
+  /** True si le modele est gratuit (id `:free` ou prix nul). */
+  free: boolean;
 }

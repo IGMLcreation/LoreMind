@@ -32,6 +32,10 @@
           <input type="radio" name="provider" value="onemin" [(ngModel)]="settings.llm_provider">
           <span>1min.ai (cloud)</span>
         </label>
+        <label class="radio">
+          <input type="radio" name="provider" value="openrouter" [(ngModel)]="settings.llm_provider">
+          <span>OpenRouter (cloud)</span>
+        </label>
       </div>
     </div>
   </section>
@@ -173,8 +177,45 @@
     </div>
   </section>
 
-  <!-- Bloc Fenetre de contexte -->
-  <section class="card" *ngIf="settings">
+  <!-- Bloc OpenRouter -->
+  <section class="card" *ngIf="settings && settings.llm_provider === 'openrouter'">
+    <h2>Configuration OpenRouter</h2>
+
+    <div class="form-row">
+      <label for="openrouter-key">Cle API</label>
+      <input
+        id="openrouter-key"
+        type="password"
+        [(ngModel)]="openrouterApiKeyInput"
+        [placeholder]="settings.openrouter_api_key_set ? 'Cle configuree (laisser vide pour ne pas changer)' : 'Saisir votre cle API (sk-or-...)'">
+      <label class="checkbox" *ngIf="settings.openrouter_api_key_set">
+        <input type="checkbox" [(ngModel)]="clearOpenrouterKey">
+        <span>Effacer la cle enregistree</span>
+      </label>
+    </div>
+
+    <div class="form-row">
+      <label for="openrouter-model">Modele</label>
+      <label class="checkbox">
+        <input type="checkbox" [(ngModel)]="openrouterFreeOnly">
+        <span>Gratuits seulement</span>
+      </label>
+      <select id="openrouter-model" [(ngModel)]="settings.openrouter_model">
+        <option *ngFor="let o of openrouterSelectOptions" [value]="o.id">{{ o.label }}</option>
+      </select>
+      <p class="hint">
+        Liste chargee automatiquement depuis OpenRouter. Pour rester <strong>gratuit</strong> :
+        un modele marque <code>· gratuit</code> ou le routeur <code>openrouter/free</code>
+        (choisit un modele gratuit tout seul). Pour les imports, prefere un gratuit a
+        <strong>grand contexte</strong> (valeur « ctx »).
+      </p>
+    </div>
+  </section>
+
+  <!-- Bloc Fenetre de contexte : seulement pour Ollama (num_ctx est un vrai
+       parametre du modele local). Pour le cloud (1min/OpenRouter), on ne fixe rien :
+       on utilise ce que le modele accepte, et la jauge du chat s'affiche sans max. -->
+  <section class="card" *ngIf="settings && settings.llm_provider === 'ollama'">
     <h2>Fenetre de contexte</h2>
 
     <!-- Ollama : slider borne par le max du modele -->
@@ -205,20 +246,6 @@
       </p>
     </div>
 
-    <!-- 1min.ai : saisie libre (pas d'introspection possible) -->
-    <div class="form-row" *ngIf="settings.llm_provider === 'onemin'">
-      <label for="llm-num-ctx-onemin">Fenetre de contexte (tokens)</label>
-      <input
-        id="llm-num-ctx-onemin"
-        type="number"
-        min="2048"
-        step="1024"
-        [(ngModel)]="settings.llm_num_ctx">
-      <p class="hint">
-        A regler selon la capacite du modele 1min.ai choisi (ex: 128 000 pour gpt-4o,
-        200 000 pour claude-sonnet). Sert de plafond a la jauge de contexte du chat.
-      </p>
-    </div>
   </section>
 
   <!-- Bloc Import de PDF -->

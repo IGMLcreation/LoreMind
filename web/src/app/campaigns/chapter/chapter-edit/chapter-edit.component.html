@@ -26,13 +26,17 @@
 
   <form [formGroup]="form" (ngSubmit)="submit()" class="edit-form">
 
-    <!-- Section Hub : conditions de déblocage (scénario). Visible si l'arc parent est HUB. -->
-    <div class="hub-section" *ngIf="parentArc?.type === 'HUB'">
-      <h2 class="hub-section-title">🗺️ Conditions de déblocage de la quête</h2>
+    <!-- Conditions de déblocage (scénario) — pour TOUT chapitre : arc HUB (= quête)
+         comme arc linéaire (= chapitre conditionnel). Vide = disponible d'emblée. -->
+    <div class="hub-section">
+      <h2 class="hub-section-title">
+        {{ parentArc?.type === 'HUB' ? '🗺️ Conditions de déblocage de la quête' : '🔒 Conditions de déblocage du chapitre' }}
+      </h2>
       <small class="field-hint">
-        Définition du scénario : toutes les conditions doivent être remplies (ET) pour
-        que la quête soit débloquée dans une Partie. La progression en cours et l'état
-        des faits se gèrent dans l'écran de la Partie, pas ici.
+        Définition du scénario : toutes les conditions doivent être remplies (ET) pour que
+        {{ parentArc?.type === 'HUB' ? 'la quête' : 'ce chapitre' }} soit débloqué(e) dans une Partie.
+        Laissez vide pour qu'il soit disponible dès le départ. La progression et l'état des
+        faits se gèrent dans l'écran de la Partie, pas ici.
       </small>
       <app-prerequisite-editor
         [prerequisites]="prerequisites"

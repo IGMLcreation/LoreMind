@@ -129,6 +129,10 @@ export class AiChatDrawerComponent implements OnInit, OnChanges, OnDestroy {
     if (!this.usage) return 0;
     return this.usage.system + this.usage.history + this.usage.current;
   }
+  /** Vrai si on connaît la fenêtre max (Ollama) → affiche dénominateur + barre. */
+  get usageHasMax(): boolean {
+    return !!this.usage && this.usage.max > 0;
+  }
   get usageRatio(): number {
     if (!this.usage || this.usage.max <= 0) return 0;
     return Math.min(1, this.usageTotal / this.usage.max);

@@ -127,6 +127,8 @@ export function buildCampaignTree(campaignId: string, data: CampaignTreeData): T
         id: `chapter-${ch.id}`,
         label: ch.name,
         iconKey: ch.icon ?? undefined,
+        // Cadenas si le chapitre porte des conditions de déblocage (hub ou linéaire).
+        meta: (ch.prerequisites?.length ?? 0) > 0 ? '🔒' : undefined,
         children: sceneItems,
         route: `/campaigns/${campaignId}/arcs/${arc.id}/chapters/${ch.id}`,
         createActions: [{

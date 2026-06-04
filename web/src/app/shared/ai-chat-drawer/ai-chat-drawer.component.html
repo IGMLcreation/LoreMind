@@ -97,13 +97,14 @@
     </header>
 
     <div class="context-gauge" *ngIf="usage" [attr.data-level]="usageLevel"
-         [attr.title]="'System: ' + usage.system + ' · Historique: ' + usage.history + ' · Courant: ' + usage.current + ' / ' + usage.max + ' tokens'">
-      <div class="gauge-bar">
+         [attr.title]="'System: ' + usage.system + ' · Historique: ' + usage.history + ' · Courant: ' + usage.current + (usageHasMax ? ' / ' + usage.max : '') + ' tokens'">
+      <!-- Barre seulement si on connaît le plafond (Ollama). Cloud : compteur seul. -->
+      <div class="gauge-bar" *ngIf="usageHasMax">
         <div class="gauge-fill" [style.width.%]="usagePercent"></div>
       </div>
       <div class="gauge-label">
-        <span class="gauge-text">Contexte : {{ usageTotal }} / {{ usage.max }} tokens</span>
-        <span class="gauge-percent">{{ usagePercent }}%</span>
+        <span class="gauge-text">Contexte : {{ usageTotal }}<ng-container *ngIf="usageHasMax"> / {{ usage.max }}</ng-container> tokens</span>
+        <span class="gauge-percent" *ngIf="usageHasMax">{{ usagePercent }}%</span>
       </div>
     </div>
 

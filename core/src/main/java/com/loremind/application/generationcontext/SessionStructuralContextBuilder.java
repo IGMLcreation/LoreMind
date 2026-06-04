@@ -174,10 +174,9 @@ public class SessionStructuralContextBuilder {
                 .filter(a -> a.getId() != null)
                 .collect(Collectors.toMap(Arc::getId, a -> a));
 
-        boolean anyHub = arcs.stream().anyMatch(a -> a.getType() == ArcType.HUB);
-        if (!anyHub) {
-            return new HubStatus(List.of(), List.of(), List.of(), activeFlags);
-        }
+        // On suit comme "quêtes" les chapitres CONDITIONNELS : ceux d'un arc HUB, ET
+        // ceux d'un arc linéaire qui portent des prérequis. Un chapitre linéaire sans
+        // condition reste hors du tableau (sinon tous les chapitres deviendraient des quêtes).
 
         // Map chapterId -> ProgressionStatus pour ce Playthrough
         Map<String, ProgressionStatus> progressionByChapter = new HashMap<>();
@@ -197,8 +196,10 @@ public class SessionStructuralContextBuilder {
         List<String> lockedTitles = new ArrayList<>();
 
         for (Arc arc : arcs) {
-            if (arc.getType() != ArcType.HUB) continue;
+            boolean isHub = arc.getType() == ArcType.HUB;
             for (Chapter c : chapterRepository.findByArcId(arc.getId())) {
+                boolean hasPrereqs = c.getPrerequisites() != null && !c.getPrerequisites().isEmpty();
+                if (!isHub && !hasPrereqs) continue;  // chapitre linéaire sans condition : ignoré
                 ProgressionStatus prog = progressionByChapter.getOrDefault(c.getId(), ProgressionStatus.NOT_STARTED);
                 QuestStatus status = prerequisiteEvaluator.computeStatus(prog, c.getPrerequisites(), ctx);
                 Arc parent = arcsById.get(c.getArcId());
