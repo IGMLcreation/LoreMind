@@ -92,7 +92,16 @@ class OpenRouterLLMProvider:
                 async with client.stream(
                     "POST", _API_URL, headers=self._headers(), json=body
                 ) as response:
-                    response.raise_for_status()
+                    if response.status_code >= 400:
+                        # En streaming, le corps n'est pas lu automatiquement : on le
+                        # lit pour exposer le détail d'OpenRouter (ex. le 429 précise
+                        # "free-models-per-day" vs "per-minute"), sinon on n'a que le
+                        # code HTTP nu et le diagnostic est impossible.
+                        detail = (await response.aread()).decode("utf-8", "replace").strip()
+                        raise LLMProviderError(
+                            f"Erreur OpenRouter (HTTP {response.status_code})"
+                            + (f" : {detail[:500]}" if detail else "")
+                        )
                     async for token in self._parse_sse(response):
                         yield token
             except httpx.HTTPError as exc:

@@ -23,7 +23,9 @@ from app.domain.ports import LLMProvider, LLMProviderError, PdfTextExtractor
 logger = logging.getLogger(__name__)
 
 # Température basse : tâche de tri/réécriture fidèle, pas de créativité.
-_TEMPERATURE = 0.2
+# Très basse : structuration = recopie/réorganisation fidèle, pas de créativité.
+# Plus la valeur est haute, plus le modèle "brode" (invente du contenu absent).
+_TEMPERATURE = 0.1
 
 # Taxonomie canonique suggérée au modèle pour homogénéiser les titres entre
 # morceaux (sinon "Combat" / "Le combat" / "Règles de combat" se dispersent).

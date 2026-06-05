@@ -26,7 +26,9 @@ from app.domain.ports import LLMProvider, PdfTextExtractor
 
 logger = logging.getLogger(__name__)
 
-_TEMPERATURE = 0.2
+# Très basse : structuration = recopie/réorganisation fidèle, pas de créativité.
+# Plus la valeur est haute, plus le modèle "brode" (invente du contenu absent).
+_TEMPERATURE = 0.1
 
 # Nom de l'arc unique quand le livre n'est pas découpé en actes/parties.
 _DEFAULT_ARC_NAME = "Aventure principale"
