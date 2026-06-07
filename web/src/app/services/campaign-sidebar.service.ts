@@ -3,6 +3,7 @@ import { forkJoin, Subscription } from 'rxjs';
 import { CampaignService } from './campaign.service';
 import { CharacterService } from './character.service';
 import { NpcService } from './npc.service';
+import { RandomTableService } from './random-table.service';
 import { LayoutService } from './layout.service';
 import { loadCampaignTreeData, buildCampaignSidebarConfig } from '../campaigns/campaign-tree.helper';
 
@@ -26,6 +27,7 @@ export class CampaignSidebarService {
     private campaignService: CampaignService,
     private characterService: CharacterService,
     private npcService: NpcService,
+    private randomTableService: RandomTableService,
     private layoutService: LayoutService
   ) {}
 
@@ -42,7 +44,8 @@ export class CampaignSidebarService {
         this.campaignService,
         campaignId,
         this.characterService,
-        this.npcService
+        this.npcService,
+        this.randomTableService
       )
     }).subscribe(({ campaign, allCampaigns, treeData }) => {
       this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, campaignId));

@@ -13,6 +13,16 @@ et tout ce qui suit. Renvoie None si aucun objet complet n'est trouvé
 from __future__ import annotations
 
 import json
+import re
+
+# Blocs de "réflexion" des modèles raisonneurs (Nemotron, DeepSeek-R1, QwQ…).
+# Leur contenu est de la prose truffée d'accolades qui piège le détecteur de JSON
+# (et n'est jamais la réponse) → on le retire avant toute analyse.
+_REASONING_RE = re.compile(r"<think(?:ing)?>.*?</think(?:ing)?>", re.DOTALL | re.IGNORECASE)
+
+
+def _strip_reasoning(raw: str) -> str:
+    return _REASONING_RE.sub("", raw)
 
 
 def load_json_object(raw: str) -> tuple[object | None, bool]:
@@ -24,6 +34,7 @@ def load_json_object(raw: str) -> tuple[object | None, bool]:
         auquel cas le second élément vaut True.
     (None, False) si rien d'exploitable.
     """
+    raw = _strip_reasoning(raw)
     obj = extract_json_object(raw)
     if obj is not None:
         try:
@@ -37,6 +48,18 @@ def load_json_object(raw: str) -> tuple[object | None, bool]:
         except json.JSONDecodeError:
             pass
     return None, False
+
+
+def looks_like_truncated_json(raw: str) -> bool:
+    """La sortie ressemble-t-elle à un JSON COUPÉ (accolades/crochets non refermés)
+    plutôt qu'à de la prose ? Sert à déclencher un re-découpage même quand RIEN n'a
+    pu être récupéré (cas où le 1er contenu est si long qu'il est coupé avant toute
+    sous-structure complète). On exige un contenu substantiel pour éviter les
+    faux positifs sur une courte réponse non-JSON."""
+    s = (raw or "").strip()
+    if "{" not in s or len(s) < 100:
+        return False
+    return s.count("{") > s.count("}") or s.count("[") > s.count("]")
 
 
 def extract_json_object(raw: str) -> str | None:

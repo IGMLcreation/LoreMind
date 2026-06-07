@@ -7,6 +7,7 @@ import { LucideAngularModule, BookOpen } from 'lucide-angular';
 import { CampaignService } from '../../../services/campaign.service';
 import { CharacterService } from '../../../services/character.service';
 import { NpcService } from '../../../services/npc.service';
+import { RandomTableService } from '../../../services/random-table.service';
 import { LayoutService } from '../../../services/layout.service';
 import { loadCampaignTreeData, buildCampaignSidebarConfig } from '../../campaign-tree.helper';
 import { IconPickerComponent } from '../../../shared/icon-picker/icon-picker.component';
@@ -40,6 +41,7 @@ export class ArcCreateComponent implements OnInit, OnDestroy {
     private campaignService: CampaignService,
     private characterService: CharacterService,
     private npcService: NpcService,
+    private randomTableService: RandomTableService,
     private layoutService: LayoutService
   ) {
     this.form = this.fb.group({
@@ -59,7 +61,7 @@ export class ArcCreateComponent implements OnInit, OnDestroy {
     forkJoin({
       campaign: this.campaignService.getCampaignById(this.campaignId),
       allCampaigns: this.campaignService.getAllCampaigns(),
-      treeData: loadCampaignTreeData(this.campaignService, this.campaignId, this.characterService, this.npcService)
+      treeData: loadCampaignTreeData(this.campaignService, this.campaignId, this.characterService, this.npcService, this.randomTableService)
     }).subscribe(({ campaign, allCampaigns, treeData }) => {
       this.existingArcCount = treeData.arcs.length;
 

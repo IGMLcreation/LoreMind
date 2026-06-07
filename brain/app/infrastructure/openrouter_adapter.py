@@ -11,16 +11,25 @@ qui choisit automatiquement un modèle gratuit — aucun crédit consommé.
 """
 from __future__ import annotations
 
+import asyncio
 import json
+import logging
 from typing import AsyncIterator
 
 import httpx
 
 from app.core.config import Settings
 from app.domain.models import ChatMessage
+
+logger = logging.getLogger(__name__)
 from app.domain.ports import LLMProviderError
 
 _API_URL = "https://openrouter.ai/api/v1/chat/completions"
+
+# Délai max pour le PREMIER token de contenu. Un modèle gratuit "en file d'attente"
+# n'envoie que des keep-alive (aucun contenu) → on échoue vite et clairement au lieu
+# de pendre. Généreux (2 min) car la file d'attente d'un tier gratuit peut être longue.
+_FIRST_TOKEN_TIMEOUT_SECONDS = 120.0
 
 
 class OpenRouterLLMProvider:
@@ -51,11 +60,63 @@ class OpenRouterLLMProvider:
         output_format: str | None = None,
         temperature: float | None = None,
     ) -> str:
-        """One-shot via streaming (puis recollage) pour robustesse sur longues sorties."""
-        chunks: list[str] = []
-        async for token in self._stream([ChatMessage(role="user", content=prompt)], None, temperature):
-            chunks.append(token)
-        return "".join(chunks)
+        """One-shot via streaming (puis recollage) pour robustesse sur longues sorties.
+
+        Timeout au TEMPS ÉCOULÉ (asyncio) en plus du timeout réseau d'httpx : un
+        modèle gratuit saturé/en file d'attente envoie des keep-alive (`: OPENROUTER
+        PROCESSING`) mais AUCUN contenu → httpx ne déclenche jamais son read-timeout
+        (des octets arrivent) et l'appel pendrait à l'infini. Ici on coupe net après
+        `self._timeout` secondes, quoi qu'il arrive.
+        """
+        return await self._collect_with_timeouts(
+            [ChatMessage(role="user", content=prompt)], temperature, output_format, "OpenRouter"
+        )
+
+    async def _collect_with_timeouts(
+        self,
+        messages: list[ChatMessage],
+        temperature: float | None,
+        output_format: str | None,
+        provider: str,
+    ) -> str:
+        """Collecte le stream avec DEUX garde-fous au temps écoulé :
+        - 1er token borné (`_FIRST_TOKEN_TIMEOUT_SECONDS`) : détecte un modèle bloqué
+          en file d'attente (que des keep-alive, aucun contenu) → échec rapide ;
+        - ceiling global (`self._timeout`) : génération qui ne se termine jamais.
+        Le timeout réseau d'httpx ne suffit pas : des keep-alive font 'arriver des
+        octets' et empêchent son read-timeout de se déclencher.
+        """
+        async def _collect() -> str:
+            chunks: list[str] = []
+            agen = self._stream(messages, None, temperature, output_format)
+            try:
+                while True:
+                    # Borne SEULEMENT l'attente du 1er token (file d'attente) ; ensuite
+                    # on laisse générer (le ceiling global couvre le reste).
+                    first = _FIRST_TOKEN_TIMEOUT_SECONDS if not chunks else None
+                    try:
+                        token = await asyncio.wait_for(agen.__anext__(), timeout=first)
+                    except StopAsyncIteration:
+                        break
+                    except asyncio.TimeoutError:
+                        raise LLMProviderError(
+                            f"Erreur {provider} : aucun contenu produit en "
+                            f"{int(_FIRST_TOKEN_TIMEOUT_SECONDS)}s — le modèle gratuit est "
+                            "probablement en file d'attente / saturé. Réessayez plus tard ou "
+                            "choisissez un autre modèle (1min.ai, ou payant)."
+                        )
+                    chunks.append(token)
+            finally:
+                await agen.aclose()
+            return "".join(chunks)
+
+        try:
+            return await asyncio.wait_for(_collect(), timeout=self._timeout)
+        except asyncio.TimeoutError as exc:
+            raise LLMProviderError(
+                f"Erreur {provider} : génération non terminée en {self._timeout}s. Réduisez la "
+                "taille des morceaux d'import, augmentez le timeout, ou changez de modèle."
+            ) from exc
 
     async def stream_chat(
         self,
@@ -72,6 +133,7 @@ class OpenRouterLLMProvider:
         messages: list[ChatMessage],
         system_prompt: str | None,
         temperature: float | None,
+        output_format: str | None = None,
     ) -> AsyncIterator[str]:
         payload_messages: list[dict[str, str]] = []
         if system_prompt:
@@ -86,6 +148,10 @@ class OpenRouterLLMProvider:
         }
         if temperature is not None:
             body["temperature"] = temperature
+        # NB : on n'impose PAS `response_format=json_object`. Beaucoup de modèles/
+        # providers GRATUITS ne le supportent pas et renvoient une réponse VIDE.
+        # On laisse le modèle répondre librement ; l'extraction JSON en aval
+        # (load_json_object + nettoyage du raisonnement) récupère le JSON dans la prose.
 
         async with httpx.AsyncClient(timeout=self._timeout) as client:
             try:

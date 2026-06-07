@@ -8,6 +8,7 @@ import { LucideAngularModule, Trash2, Sparkles } from 'lucide-angular';
 import { CampaignService } from '../../../services/campaign.service';
 import { CharacterService } from '../../../services/character.service';
 import { NpcService } from '../../../services/npc.service';
+import { RandomTableService } from '../../../services/random-table.service';
 import { PageService } from '../../../services/page.service';
 import { LayoutService } from '../../../services/layout.service';
 import { PageTitleService } from '../../../services/page-title.service';
@@ -77,6 +78,7 @@ export class ArcEditComponent implements OnInit, OnDestroy {
     private campaignService: CampaignService,
     private characterService: CharacterService,
     private npcService: NpcService,
+    private randomTableService: RandomTableService,
     private pageService: PageService,
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService,
@@ -116,7 +118,7 @@ export class ArcEditComponent implements OnInit, OnDestroy {
       campaign: this.campaignService.getCampaignById(this.campaignId),
       allCampaigns: this.campaignService.getAllCampaigns(),
       arc: this.campaignService.getArcById(this.arcId),
-      treeData: loadCampaignTreeData(this.campaignService, this.campaignId, this.characterService, this.npcService)
+      treeData: loadCampaignTreeData(this.campaignService, this.campaignId, this.characterService, this.npcService, this.randomTableService)
     }).pipe(
       switchMap(data => {
         const lid = data.campaign.loreId ?? null;

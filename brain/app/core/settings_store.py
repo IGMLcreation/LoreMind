@@ -31,6 +31,15 @@ _ALLOWED_KEYS = frozenset({
     "onemin_model",
     "openrouter_api_key",
     "openrouter_model",
+    "mistral_api_key",
+    "mistral_model",
+    "gemini_api_key",
+    "gemini_model",
+    "embedding_provider",
+    "ollama_embedding_model",
+    "mistral_embedding_model",
+    "auto_pull_embedding_model",
+    "rag_top_k",
     "import_chunk_tokens",
 })
 

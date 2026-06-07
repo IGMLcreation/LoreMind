@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { LucideAngularModule, User, Drama, Swords, Dices, ExternalLink, Sparkles } from 'lucide-angular';
+import { LucideAngularModule, User, Drama, Swords, Dices, ExternalLink, Sparkles, Table2 } from 'lucide-angular';
 import { catchError, of } from 'rxjs';
 import { CampaignService } from '../../services/campaign.service';
 import { CharacterService } from '../../services/character.service';
@@ -13,8 +13,9 @@ import {
   SessionDicePanelComponent, DiceRollResult
 } from '../session-dice-panel/session-dice-panel.component';
 import { SessionAiChatPanelComponent } from '../session-ai-chat-panel/session-ai-chat-panel.component';
+import { SessionRandomTablesPanelComponent } from '../session-random-tables-panel/session-random-tables-panel.component';
 
-type TabId = 'dice' | 'characters' | 'scenes' | 'ai';
+type TabId = 'dice' | 'tables' | 'characters' | 'scenes' | 'ai';
 
 /**
  * Panneau latéral du mode jeu : référence rapide en lecture seule.
@@ -29,7 +30,7 @@ type TabId = 'dice' | 'characters' | 'scenes' | 'ai';
 @Component({
   selector: 'app-session-reference-panel',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, SessionDicePanelComponent, SessionAiChatPanelComponent],
+  imports: [CommonModule, LucideAngularModule, SessionDicePanelComponent, SessionAiChatPanelComponent, SessionRandomTablesPanelComponent],
   templateUrl: './session-reference-panel.component.html',
   styleUrls: ['./session-reference-panel.component.scss']
 })
@@ -40,6 +41,7 @@ export class SessionReferencePanelComponent implements OnChanges {
   readonly Dices = Dices;
   readonly ExternalLink = ExternalLink;
   readonly Sparkles = Sparkles;
+  readonly Table2 = Table2;
 
   @Input() campaignId!: string;
   /** Partie active — nécessaire pour charger les PJ (refonte Playthrough). */
@@ -109,7 +111,7 @@ export class SessionReferencePanelComponent implements OnChanges {
     if (this.treeLoaded || this.loadingTree || !this.campaignId) return;
     this.loadingTree = true;
     loadCampaignTreeData(this.campaignService, this.campaignId, this.characterService, this.npcService).pipe(
-      catchError(() => of({ arcs: [], chaptersByArc: {}, scenesByChapter: {}, characters: [], npcs: [] } as CampaignTreeData))
+      catchError(() => of({ arcs: [], chaptersByArc: {}, scenesByChapter: {}, characters: [], npcs: [], randomTables: [] } as CampaignTreeData))
     ).subscribe(data => {
       this.treeData = data;
       this.loadingTree = false;

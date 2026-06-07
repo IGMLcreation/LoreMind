@@ -90,8 +90,12 @@ public class BrainCampaignImportClient implements CampaignPdfImporter {
             }
         } catch (Exception e) {
             if (!terminated[0]) {
+                // On EXPOSE la cause réelle (type + message) : sans ça, le diagnostic
+                // est impossible (timeout WebClient, connexion coupée, réponse non-2xx…).
+                String cause = e.getClass().getSimpleName()
+                        + (e.getMessage() != null ? " — " + e.getMessage() : "");
                 onError.accept(new CampaignImportException(
-                        "Erreur lors du streaming d'import depuis le Brain.", e));
+                        "Erreur lors du streaming d'import depuis le Brain : " + cause, e));
             }
         }
     }

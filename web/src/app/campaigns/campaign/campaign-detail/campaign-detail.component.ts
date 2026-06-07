@@ -12,6 +12,7 @@ import { GameSystemService } from '../../../services/game-system.service';
 import { GameSystem } from '../../../services/game-system.model';
 import { CharacterService } from '../../../services/character.service';
 import { NpcService } from '../../../services/npc.service';
+import { RandomTableService } from '../../../services/random-table.service';
 import { SessionService } from '../../../services/session.service';
 import { PlaythroughService } from '../../../services/playthrough.service';
 import { Playthrough } from '../../../services/campaign.model';
@@ -94,6 +95,7 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
     private gameSystemService: GameSystemService,
     private characterService: CharacterService,
     private npcService: NpcService,
+    private randomTableService: RandomTableService,
     private sessionService: SessionService,
     private playthroughService: PlaythroughService,
     private layoutService: LayoutService,
@@ -111,8 +113,8 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
       switchMap(id => forkJoin({
         campaign: this.campaignService.getCampaignById(id),
         allCampaigns: this.campaignService.getAllCampaigns(),
-        treeData: loadCampaignTreeData(this.campaignService, id, this.characterService, this.npcService).pipe(
-          catchError(() => of({ arcs: [], chaptersByArc: {}, scenesByChapter: {}, characters: [], npcs: [] } as CampaignTreeData))
+        treeData: loadCampaignTreeData(this.campaignService, id, this.characterService, this.npcService, this.randomTableService).pipe(
+          catchError(() => of({ arcs: [], chaptersByArc: {}, scenesByChapter: {}, characters: [], npcs: [], randomTables: [] } as CampaignTreeData))
         ),
         playthroughs: this.playthroughService.listByCampaign(id).pipe(catchError(() => of([] as Playthrough[])))
       }))
@@ -148,8 +150,8 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
     forkJoin({
       campaign: this.campaignService.getCampaignById(id),
       allCampaigns: this.campaignService.getAllCampaigns(),
-      treeData: loadCampaignTreeData(this.campaignService, id, this.characterService, this.npcService).pipe(
-        catchError(() => of({ arcs: [], chaptersByArc: {}, scenesByChapter: {}, characters: [], npcs: [] } as CampaignTreeData))
+      treeData: loadCampaignTreeData(this.campaignService, id, this.characterService, this.npcService, this.randomTableService).pipe(
+        catchError(() => of({ arcs: [], chaptersByArc: {}, scenesByChapter: {}, characters: [], npcs: [], randomTables: [] } as CampaignTreeData))
       ),
       playthroughs: this.playthroughService.listByCampaign(id).pipe(catchError(() => of([] as Playthrough[])))
     }).subscribe(({ campaign, allCampaigns, treeData, playthroughs }) => {
@@ -244,18 +246,6 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   createArc(): void {
     if (!this.campaign) return;
     this.router.navigate(['/campaigns', this.campaign.id, 'arcs', 'create']);
-  }
-
-  /** Ouvre la page d'import d'un PDF de campagne (proposition d'arbre à réviser). */
-  importCampaign(): void {
-    if (!this.campaign) return;
-    this.router.navigate(['/campaigns', this.campaign.id, 'import']);
-  }
-
-  /** Ouvre la page de conseils d'adaptation d'un PDF à cette campagne. */
-  adaptCampaign(): void {
-    if (!this.campaign) return;
-    this.router.navigate(['/campaigns', this.campaign.id, 'adapt']);
   }
 
   openArc(arc: Arc): void {

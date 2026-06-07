@@ -53,3 +53,27 @@ def _split_oversized(paragraph: str, enc, target_tokens: int) -> list[str]:
     for i in range(0, len(tokens), target_tokens):
         out.append(enc.decode(tokens[i : i + target_tokens]))
     return out
+
+
+def split_in_half(text: str) -> tuple[str, str]:
+    """Coupe `text` en deux moitiés ~égales, de préférence sur un saut de ligne
+    proche du milieu (pour ne pas trancher en plein mot/phrase).
+
+    Sert au repli anti-troncature des imports : quand la SORTIE d'un morceau est
+    coupée (le modèle ne peut pas tout réécrire en une réponse), on retraite ce
+    morceau en deux moitiés. Renvoie ('', '') si le texte est trop court pour
+    être découpé utilement (garde-fou anti-récursion infinie).
+    """
+    text = text.strip()
+    if len(text) < 400:
+        return "", ""
+    mid = len(text) // 2
+    # Cherche un saut de ligne juste avant le milieu, sinon juste après.
+    cut = text.rfind("\n", 0, mid)
+    if cut < len(text) // 4:
+        nxt = text.find("\n", mid)
+        cut = nxt if nxt != -1 else mid
+    left, right = text[:cut].strip(), text[cut:].strip()
+    if not left or not right:
+        return "", ""
+    return left, right

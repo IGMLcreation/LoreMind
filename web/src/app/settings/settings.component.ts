@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LucideAngularModule, ArrowLeft, RefreshCw, Save, Check, AlertCircle, Download, Trash2, Plus, X, Heart, Link2, Unlink } from 'lucide-angular';
-import { SettingsService, AppSettings, AppSettingsUpdate, OneMinModelGroup, OpenRouterModel, OllamaPullEvent } from '../services/settings.service';
+import { SettingsService, AppSettings, AppSettingsUpdate, OneMinModelGroup, OpenRouterModel, MistralModel, GeminiModel, OllamaPullEvent } from '../services/settings.service';
 import { UpdatesService, UpdateStatus } from '../services/updates.service';
 import { ConfigService } from '../services/config.service';
 import { LayoutService } from '../services/layout.service';
@@ -107,6 +107,12 @@ export class SettingsComponent implements OnInit, OnDestroy {
   /** Catalogue OpenRouter (chargé dynamiquement) + filtre "gratuits seulement". */
   openrouterModels: OpenRouterModel[] = [];
   openrouterFreeOnly = true;
+
+  /** Catalogue Mistral (dynamique si cle configuree, repli statique sinon). */
+  mistralModels: MistralModel[] = [];
+
+  /** Catalogue Gemini (dynamique si cle configuree, repli statique sinon). */
+  geminiModels: GeminiModel[] = [];
   /** Fournisseur 1min.ai actuellement selectionne (filtre la liste des modeles). */
   oneminProvider: string = '';
 
@@ -136,6 +142,16 @@ export class SettingsComponent implements OnInit, OnDestroy {
   openrouterApiKeyInput = '';
   /** True si l'utilisateur a coche "effacer la cle OpenRouter". */
   clearOpenrouterKey = false;
+
+  /** Cle Mistral saisie — vide = on ne touche pas a la cle persistee. */
+  mistralApiKeyInput = '';
+  /** True si l'utilisateur a coche "effacer la cle Mistral". */
+  clearMistralKey = false;
+
+  /** Cle Gemini saisie — vide = on ne touche pas a la cle persistee. */
+  geminiApiKeyInput = '';
+  /** True si l'utilisateur a coche "effacer la cle Gemini". */
+  clearGeminiKey = false;
 
   constructor(
     private settingsService: SettingsService,
@@ -471,6 +487,38 @@ export class SettingsComponent implements OnInit, OnDestroy {
       next: (r) => this.openrouterModels = r.models,
       error: () => this.openrouterModels = []
     });
+
+    this.settingsService.listMistralModels().subscribe({
+      next: (r) => this.mistralModels = r.models,
+      error: () => this.mistralModels = []
+    });
+
+    this.settingsService.listGeminiModels().subscribe({
+      next: (r) => this.geminiModels = r.models,
+      error: () => this.geminiModels = []
+    });
+  }
+
+  /** Options du select Mistral : liste + valeur courante garantie selectionnable. */
+  get mistralSelectOptions(): { id: string; label: string }[] {
+    const options: { id: string; label: string }[] =
+      this.mistralModels.map(m => ({ id: m.id, label: m.id }));
+    const cur = this.settings?.mistral_model;
+    if (cur && !options.some(o => o.id === cur)) {
+      options.unshift({ id: cur, label: `${cur} (actuel)` });
+    }
+    return options;
+  }
+
+  /** Options du select Gemini : liste + valeur courante garantie selectionnable. */
+  get geminiSelectOptions(): { id: string; label: string }[] {
+    const options: { id: string; label: string }[] =
+      this.geminiModels.map(m => ({ id: m.id, label: m.id }));
+    const cur = this.settings?.gemini_model;
+    if (cur && !options.some(o => o.id === cur)) {
+      options.unshift({ id: cur, label: `${cur} (actuel)` });
+    }
+    return options;
   }
 
   /** Modeles OpenRouter, filtres (gratuits seulement par defaut). */
@@ -557,6 +605,13 @@ export class SettingsComponent implements OnInit, OnDestroy {
       llm_model: this.settings.llm_model,
       onemin_model: this.settings.onemin_model,
       openrouter_model: this.settings.openrouter_model,
+      mistral_model: this.settings.mistral_model,
+      gemini_model: this.settings.gemini_model,
+      embedding_provider: this.settings.embedding_provider,
+      ollama_embedding_model: this.settings.ollama_embedding_model,
+      mistral_embedding_model: this.settings.mistral_embedding_model,
+      auto_pull_embedding_model: this.settings.auto_pull_embedding_model,
+      rag_top_k: this.settings.rag_top_k,
       llm_num_ctx: this.settings.llm_num_ctx,
       import_chunk_tokens: this.settings.import_chunk_tokens,
       llm_timeout_seconds: this.settings.llm_timeout_seconds
@@ -571,6 +626,16 @@ export class SettingsComponent implements OnInit, OnDestroy {
     } else if (this.openrouterApiKeyInput.trim()) {
       patch.openrouter_api_key = this.openrouterApiKeyInput.trim();
     }
+    if (this.clearMistralKey) {
+      patch.mistral_api_key = '';
+    } else if (this.mistralApiKeyInput.trim()) {
+      patch.mistral_api_key = this.mistralApiKeyInput.trim();
+    }
+    if (this.clearGeminiKey) {
+      patch.gemini_api_key = '';
+    } else if (this.geminiApiKeyInput.trim()) {
+      patch.gemini_api_key = this.geminiApiKeyInput.trim();
+    }
 
     this.settingsService.updateSettings(patch).subscribe({
       next: (s) => {
@@ -579,6 +644,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.clearApiKey = false;
         this.openrouterApiKeyInput = '';
         this.clearOpenrouterKey = false;
+        this.mistralApiKeyInput = '';
+        this.clearMistralKey = false;
+        this.geminiApiKeyInput = '';
+        this.clearGeminiKey = false;
         this.successMessage = 'Parametres sauvegardes.';
         this.saving = false;
       },

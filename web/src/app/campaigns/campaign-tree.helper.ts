@@ -3,10 +3,13 @@ import { switchMap, map } from 'rxjs/operators';
 import { CampaignService } from '../services/campaign.service';
 import { CharacterService } from '../services/character.service';
 import { NpcService } from '../services/npc.service';
+import { RandomTableService } from '../services/random-table.service';
 import { TreeItem, SecondarySidebarConfig, GlobalItem } from '../services/layout.service';
 import { Arc, Chapter, Scene, Campaign } from '../services/campaign.model';
 import { Character } from '../services/character.model';
 import { Npc } from '../services/npc.model';
+import { RandomTable } from '../services/random-table.model';
+import { catchError } from 'rxjs/operators';
 
 /**
  * Helper — charge l'arborescence complète d'une campagne (arcs -> chapitres -> scènes)
@@ -22,13 +25,17 @@ export interface CampaignTreeData {
   scenesByChapter: Record<string, Scene[]>;
   characters: Character[];
   npcs: Npc[];
+  randomTables: RandomTable[];
 }
 
 export function loadCampaignTreeData(
   service: CampaignService,
   campaignId: string,
   characterService: CharacterService,
-  npcService: NpcService
+  npcService: NpcService,
+  // Optionnel pour ne pas casser les ~15 appelants existants : si fourni, les
+  // tables aléatoires sont chargées et apparaissent dans la sidebar.
+  randomTableService?: RandomTableService
 ): Observable<CampaignTreeData> {
   // Note refonte Playthrough : les PJ appartiennent désormais à une Partie,
   // pas à la campagne — on ne les charge plus ici (les vues qui les affichent
@@ -36,11 +43,14 @@ export function loadCampaignTreeData(
   return forkJoin({
     arcs: service.getArcs(campaignId),
     characters: of([] as Character[]),
-    npcs: npcService.getByCampaign(campaignId)
+    npcs: npcService.getByCampaign(campaignId),
+    randomTables: randomTableService
+      ? randomTableService.getByCampaign(campaignId).pipe(catchError(() => of([] as RandomTable[])))
+      : of([] as RandomTable[])
   }).pipe(
-    switchMap(({ arcs, characters, npcs }) => {
+    switchMap(({ arcs, characters, npcs, randomTables }) => {
       if (arcs.length === 0) {
-        return of({ arcs, chaptersByArc: {}, scenesByChapter: {}, characters, npcs });
+        return of({ arcs, chaptersByArc: {}, scenesByChapter: {}, characters, npcs, randomTables });
       }
       const chapterCalls = arcs.map(a =>
         service.getChapters(a.id!).pipe(map(chapters => ({ arcId: a.id!, chapters })))
@@ -55,7 +65,7 @@ export function loadCampaignTreeData(
           });
 
           if (allChapters.length === 0) {
-            return of({ arcs, chaptersByArc, scenesByChapter: {}, characters, npcs });
+            return of({ arcs, chaptersByArc, scenesByChapter: {}, characters, npcs, randomTables });
           }
           const sceneCalls = allChapters.map(c =>
             service.getScenes(c.id!).pipe(map(scenes => ({ chapterId: c.id!, scenes })))
@@ -64,7 +74,7 @@ export function loadCampaignTreeData(
             map(sceneResults => {
               const scenesByChapter: Record<string, Scene[]> = {};
               sceneResults.forEach(r => { scenesByChapter[r.chapterId] = r.scenes; });
-              return { arcs, chaptersByArc, scenesByChapter, characters, npcs };
+              return { arcs, chaptersByArc, scenesByChapter, characters, npcs, randomTables };
             })
           );
         })
@@ -157,7 +167,46 @@ export function buildCampaignTree(campaignId: string, data: CampaignTreeData): T
     };
   });
 
-  return [...arcNodes, npcsNode];
+  const sortedTables = [...(data.randomTables ?? [])].sort(byName);
+  const tableItems: TreeItem[] = sortedTables.map(t => ({
+    id: `random-table-${t.id}`,
+    label: t.name,
+    iconKey: t.icon ?? 'dice',
+    route: `/campaigns/${campaignId}/random-tables/${t.id}`
+  }));
+
+  const tablesNode: TreeItem = {
+    id: 'random-tables-root',
+    label: 'Tables aléatoires',
+    iconKey: 'dice',
+    children: tableItems,
+    meta: tableItems.length ? String(tableItems.length) : undefined,
+    sectionHeaderBefore: 'Outils',
+    createActions: [{
+      id: 'new-random-table',
+      label: 'Nouvelle table',
+      route: `/campaigns/${campaignId}/random-tables/create`,
+      actionIcon: 'plus'
+    }]
+  };
+
+  // Lien simple vers les ateliers (la liste se charge sur sa page — pas de fetch ici).
+  const notebooksNode: TreeItem = {
+    id: 'notebooks-root',
+    label: 'Ateliers (IA + PDF)',
+    iconKey: 'book-open',
+    route: `/campaigns/${campaignId}/notebooks`
+  };
+
+  // Importer un PDF de campagne → arborescence (outil, comme tables & ateliers).
+  const importNode: TreeItem = {
+    id: 'import-pdf-root',
+    label: 'Importer un PDF',
+    iconKey: 'file-up',
+    route: `/campaigns/${campaignId}/import`
+  };
+
+  return [...arcNodes, npcsNode, tablesNode, notebooksNode, importNode];
 }
 
 /**

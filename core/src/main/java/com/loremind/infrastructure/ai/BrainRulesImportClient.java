@@ -148,8 +148,13 @@ public class BrainRulesImportClient implements RulesPdfImporter {
             }
         } catch (Exception e) {
             if (!terminated[0]) {
+                // On EXPOSE la cause réelle (type + message) : sans ça, l'UI n'a qu'un
+                // message générique et le diagnostic est impossible (timeout WebClient,
+                // connexion coupée, réponse non-2xx du Brain, etc.).
+                String cause = e.getClass().getSimpleName()
+                        + (e.getMessage() != null ? " — " + e.getMessage() : "");
                 onError.accept(new RulesImportException(
-                        "Erreur lors du streaming d'import depuis le Brain.", e));
+                        "Erreur lors du streaming d'import depuis le Brain : " + cause, e));
             }
         }
     }

@@ -1,0 +1,57 @@
+<div class="rt-page" *ngIf="table">
+  <div class="rt-toolbar">
+    <button class="btn-back" (click)="back()">
+      <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon>
+      Retour
+    </button>
+    <span class="spacer"></span>
+    <button class="btn-edit" (click)="edit()">
+      <lucide-icon [img]="Edit3" [size]="14"></lucide-icon>
+      Éditer
+    </button>
+  </div>
+
+  <header class="rt-header">
+    <h1><lucide-icon [img]="Dices" [size]="22"></lucide-icon> {{ table.name }}</h1>
+    <p class="rt-desc" *ngIf="table.description">{{ table.description }}</p>
+    <span class="rt-formula">Dé : <code>{{ table.diceFormula }}</code></span>
+  </header>
+
+  <!-- Zone de jet -->
+  <section class="rt-roll">
+    <button class="btn-roll" (click)="roll()">
+      <lucide-icon [img]="Dices" [size]="18"></lucide-icon>
+      Lancer {{ table.diceFormula }}
+    </button>
+    <div class="rt-result" *ngIf="lastRoll">
+      <span class="rt-total">{{ lastRoll.total }}</span>
+      <span class="rt-rolls" *ngIf="lastRoll.rolls.length > 1">({{ lastRoll.rolls.join(' + ') }})</span>
+      <span class="rt-arrow">→</span>
+      <span class="rt-matched" *ngIf="matched">{{ matched.label }}</span>
+      <span class="rt-nomatch" *ngIf="!matched">Aucune entrée pour ce résultat</span>
+    </div>
+  </section>
+
+  <div class="rt-detail" *ngIf="matched?.detail">{{ matched?.detail }}</div>
+
+  <!-- Liste des entrées -->
+  <section class="rt-entries">
+    <div class="rt-empty" *ngIf="table.entries.length === 0">
+      Aucune entrée — édite la table pour en ajouter.
+    </div>
+    <table *ngIf="table.entries.length > 0">
+      <thead>
+        <tr><th class="col-range">Jet</th><th>Résultat</th></tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let e of table.entries" [class.matched]="isMatched(e)">
+          <td class="col-range">{{ rangeLabel(e) }}</td>
+          <td>
+            <div class="entry-label">{{ e.label }}</div>
+            <div class="entry-detail" *ngIf="e.detail">{{ e.detail }}</div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</div>

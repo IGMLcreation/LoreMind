@@ -18,7 +18,10 @@ from app.domain.ports import LLMProvider, LLMProviderError
 
 logger = logging.getLogger(__name__)
 
-_ATTEMPTS = 4
+# 3 tentatives : assez pour absorber un hoquet transitoire, sans s'acharner des
+# minutes sur un modèle durablement lent/saturé (les heartbeats gardent le flux
+# vivant, mais inutile de faire patienter l'utilisateur 15 min pour rien).
+_ATTEMPTS = 3
 _BASE_DELAY_SECONDS = 3.0
 # Un rate limit (429) "par minute" ne se libère pas en 2-3s : on attend plus
 # longtemps pour ces erreurs-là (le free tier OpenRouter plafonne ~20 req/min).

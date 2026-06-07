@@ -17,6 +17,13 @@
     </button>
     <button type="button"
             class="ref-tab"
+            [class.ref-tab--active]="activeTab === 'tables'"
+            (click)="selectTab('tables')">
+      <lucide-icon [img]="Table2" [size]="14"></lucide-icon>
+      Tables
+    </button>
+    <button type="button"
+            class="ref-tab"
             [class.ref-tab--active]="activeTab === 'characters'"
             (click)="selectTab('characters')">
       <lucide-icon [img]="User" [size]="14"></lucide-icon>
@@ -47,6 +54,15 @@
       [canAddToJournal]="canAddToJournal"
       (rolled)="onDiceRolled($event)">
     </app-session-dice-panel>
+
+    <!-- ====== Tables aléatoires ====== -->
+    <app-session-random-tables-panel
+      *ngIf="activeTab === 'tables'"
+      [campaignId]="campaignId"
+      [canAddToJournal]="canAddToJournal"
+      (rolled)="onDiceRolled($event)"
+      (aiReplyToJournal)="onAiSaveToJournal($event)">
+    </app-session-random-tables-panel>
 
     <!-- ====== Personnages (PJ + PNJ) ====== -->
     <div *ngIf="activeTab === 'characters'" class="ref-list">

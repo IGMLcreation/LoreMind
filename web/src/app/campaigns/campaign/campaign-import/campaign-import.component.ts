@@ -10,6 +10,7 @@ import { CampaignImportService } from '../../../services/campaign-import.service
 import { CampaignService } from '../../../services/campaign.service';
 import { CharacterService } from '../../../services/character.service';
 import { NpcService } from '../../../services/npc.service';
+import { RandomTableService } from '../../../services/random-table.service';
 import { CampaignSidebarService } from '../../../services/campaign-sidebar.service';
 import { PageTitleService } from '../../../services/page-title.service';
 import { ArcKind, ArcProposal, ChapterProposal, SceneProposal } from '../../../services/campaign-import.model';
@@ -91,6 +92,7 @@ export class CampaignImportComponent implements OnInit {
     private campaignService: CampaignService,
     private characterService: CharacterService,
     private npcService: NpcService,
+    private randomTableService: RandomTableService,
     private campaignSidebar: CampaignSidebarService,
     private pageTitle: PageTitleService
   ) {}
@@ -102,7 +104,7 @@ export class CampaignImportComponent implements OnInit {
 
     // Pré-chargement de l'arborescence existante (pour fusionner à la revue).
     // En cas d'échec on dégrade : tout sera considéré comme nouveau.
-    loadCampaignTreeData(this.campaignService, this.campaignId, this.characterService, this.npcService)
+    loadCampaignTreeData(this.campaignService, this.campaignId, this.characterService, this.npcService, this.randomTableService)
       .pipe(catchError(() => of(null)))
       .subscribe(data => this.existingData = data);
   }

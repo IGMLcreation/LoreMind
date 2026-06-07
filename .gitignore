@@ -108,3 +108,4 @@ docker-compose.override.yml
 # ============================================================================
 relay/
 scripts/bump-version.mjs
+brain/data/notebooks/5.json

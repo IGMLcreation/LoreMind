@@ -1,0 +1,52 @@
+.nac {
+  margin-top: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 9px;
+  border: 1px solid rgba(168, 130, 255, 0.3);
+  background: rgba(168, 130, 255, 0.08);
+
+  &.created { border-color: rgba(107, 208, 138, 0.4); background: rgba(107, 208, 138, 0.08); }
+}
+
+.nac-head {
+  display: flex; align-items: center; gap: 0.4rem;
+  color: #c4a8ff;
+  .nac-type {
+    font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em;
+    padding: 0.05rem 0.4rem; border-radius: 4px; background: rgba(168,130,255,0.18);
+  }
+  .nac-name { font-weight: 600; color: inherit; }
+}
+
+.nac-desc {
+  margin: 0.4rem 0 0; font-size: 0.85rem; color: var(--color-text-muted, #cfd3da);
+  white-space: pre-wrap;
+}
+
+.nac-targets {
+  display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.5rem;
+  label { display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.72rem; color: var(--color-text-muted, #9aa0aa); }
+  select {
+    padding: 0.3rem 0.45rem; border-radius: 6px; font: inherit;
+    border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.04); color: inherit;
+  }
+}
+
+.nac-warn { margin: 0.4rem 0 0; font-size: 0.78rem; color: #e0a458; }
+
+.nac-foot { display: flex; align-items: center; gap: 0.6rem; margin-top: 0.55rem; }
+
+.nac-create, .nac-open {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.35rem 0.7rem; border-radius: 7px; cursor: pointer; font-size: 0.82rem; font-weight: 600;
+  border: none;
+}
+.nac-create {
+  background: #8a6dff; color: #fff;
+  &:hover:not(:disabled) { background: #7a5cf0; }
+  &:disabled { opacity: 0.5; cursor: default; }
+}
+.nac-open { background: rgba(107,208,138,0.2); color: #6bd08a; }
+.nac-open:hover { background: rgba(107,208,138,0.3); }
+
+.nac-error { color: #e88; font-size: 0.8rem; }

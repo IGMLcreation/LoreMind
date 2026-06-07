@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
  * Reflet de SettingsDTO cote Brain / SettingsController cote Core.
  * `onemin_api_key_set` indique si une cle est configuree, sans la reveler.
  */
-export type LlmProvider = 'ollama' | 'onemin' | 'openrouter';
+export type LlmProvider = 'ollama' | 'onemin' | 'openrouter' | 'mistral' | 'gemini';
 
 export interface AppSettings {
   llm_provider: LlmProvider;
@@ -16,6 +16,17 @@ export interface AppSettings {
   onemin_api_key_set: boolean;
   openrouter_model: string;
   openrouter_api_key_set: boolean;
+  mistral_model: string;
+  mistral_api_key_set: boolean;
+  gemini_model: string;
+  gemini_api_key_set: boolean;
+  /** Embeddings (RAG des ateliers). */
+  embedding_provider: 'ollama' | 'mistral';
+  ollama_embedding_model: string;
+  mistral_embedding_model: string;
+  auto_pull_embedding_model: boolean;
+  /** Nombre d'extraits récupérés par question (RAG). */
+  rag_top_k: number;
   llm_num_ctx: number;
   /** Taille cible d'un morceau (tokens) pour l'import de PDF (règles/campagne). */
   import_chunk_tokens: number;
@@ -35,6 +46,15 @@ export interface AppSettingsUpdate {
   onemin_api_key?: string;
   openrouter_model?: string;
   openrouter_api_key?: string;
+  mistral_model?: string;
+  mistral_api_key?: string;
+  gemini_model?: string;
+  gemini_api_key?: string;
+  embedding_provider?: 'ollama' | 'mistral';
+  ollama_embedding_model?: string;
+  mistral_embedding_model?: string;
+  auto_pull_embedding_model?: boolean;
+  rag_top_k?: number;
   llm_num_ctx?: number;
   import_chunk_tokens?: number;
   llm_timeout_seconds?: number;
@@ -81,6 +101,16 @@ export class SettingsService {
   /** Catalogue dynamique des modeles OpenRouter (depuis leur API publique). */
   listOpenRouterModels(): Observable<{ models: OpenRouterModel[] }> {
     return this.http.get<{ models: OpenRouterModel[] }>(`${this.apiUrl}/models/openrouter`, this.authOptions);
+  }
+
+  /** Catalogue des modeles Mistral (dynamique si cle configuree, repli statique sinon). */
+  listMistralModels(): Observable<{ models: MistralModel[] }> {
+    return this.http.get<{ models: MistralModel[] }>(`${this.apiUrl}/models/mistral`, this.authOptions);
+  }
+
+  /** Catalogue des modeles Gemini (dynamique si cle configuree, repli statique sinon). */
+  listGeminiModels(): Observable<{ models: GeminiModel[] }> {
+    return this.http.get<{ models: GeminiModel[] }>(`${this.apiUrl}/models/gemini`, this.authOptions);
   }
 
   /**
@@ -204,4 +234,14 @@ export interface OpenRouterModel {
   context_length: number;
   /** True si le modele est gratuit (id `:free` ou prix nul). */
   free: boolean;
+}
+
+/** Un modele Mistral (catalogue dynamique ou repli statique). */
+export interface MistralModel {
+  id: string;
+}
+
+/** Un modele Gemini (catalogue dynamique ou repli statique). */
+export interface GeminiModel {
+  id: string;
 }

@@ -1,0 +1,98 @@
+<div class="nbd-page" *ngIf="detail">
+  <div class="nbd-toolbar">
+    <button class="btn-back" (click)="back()">
+      <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon> Ateliers
+    </button>
+    <input class="nbd-title" [(ngModel)]="detail.name" (blur)="rename()" (keyup.enter)="rename()">
+  </div>
+
+  <div class="nbd-grid">
+    <!-- Sources -->
+    <aside class="nbd-sources">
+      <div class="nbd-sources-head">
+        <h3><lucide-icon [img]="FileText" [size]="15"></lucide-icon> Sources</h3>
+        <label class="btn-upload" [class.disabled]="uploading">
+          <lucide-icon [img]="Upload" [size]="13"></lucide-icon>
+          {{ uploading ? 'Indexation…' : 'Ajouter un PDF' }}
+          <input type="file" accept="application/pdf" hidden (change)="onFile($event)" [disabled]="uploading">
+        </label>
+      </div>
+
+      <p class="nbd-upload-error" *ngIf="uploadError">{{ uploadError }}</p>
+
+      <div class="nbd-source" *ngFor="let s of sources">
+        <lucide-icon
+          [img]="s.status === 'READY' ? CheckCircle2 : (s.status === 'FAILED' ? AlertCircle : Loader)"
+          [size]="14"
+          [class.ok]="s.status === 'READY'" [class.fail]="s.status === 'FAILED'" [class.busy]="s.status === 'INDEXING'">
+        </lucide-icon>
+        <div class="nbd-source-info">
+          <div class="nbd-source-name">{{ s.filename }}</div>
+          <div class="nbd-source-meta">
+            <span *ngIf="s.status === 'READY'">{{ s.pageCount }} p. · {{ s.chunkCount }} extraits</span>
+            <span *ngIf="s.status === 'INDEXING'">indexation en cours…</span>
+            <span *ngIf="s.status === 'FAILED'">échec de l'indexation</span>
+          </div>
+        </div>
+        <button class="nbd-source-del" (click)="removeSource(s)" title="Supprimer">
+          <lucide-icon [img]="Trash2" [size]="13"></lucide-icon>
+        </button>
+      </div>
+
+      <p class="nbd-empty" *ngIf="sources.length === 0 && !uploading">
+        Ajoute un PDF source pour commencer à discuter avec.
+      </p>
+    </aside>
+
+    <!-- Chat -->
+    <section class="nbd-chat">
+      <div class="nbd-messages">
+        <p class="nbd-empty" *ngIf="messages.length === 0">
+          Pose une question sur ta source, ou demande une adaptation pour ta campagne.
+          <span *ngIf="!hasReadySource()"><br>(Ajoute d'abord une source indexée pour des réponses ancrées.)</span>
+        </p>
+        <div class="nbd-msg" *ngFor="let m of messages" [class.user]="m.role === 'user'" [class.assistant]="m.role === 'assistant'">
+          <div class="nbd-msg-role">
+            <lucide-icon *ngIf="m.role === 'assistant'" [img]="Sparkles" [size]="12"></lucide-icon>
+            {{ m.role === 'user' ? 'Vous' : 'IA' }}
+          </div>
+
+          <ng-container *ngIf="m.role === 'assistant'; else userContent">
+            <ng-container *ngIf="parsedOf(m) as p">
+              <div class="nbd-deep-progress" *ngIf="sending && deepProgress && !p.text">
+                <lucide-icon [img]="Layers" [size]="13"></lucide-icon>
+                Analyse approfondie du document… {{ deepProgress.current }}/{{ deepProgress.total }}
+              </div>
+              <div class="nbd-msg-content">{{ p.text }}<span class="cursor" *ngIf="sending && !p.text && !p.actions.length && !deepProgress">▌</span></div>
+              <app-notebook-action-card
+                *ngFor="let a of p.actions; trackBy: trackAction"
+                [action]="a"
+                [campaignId]="campaignId"
+                [arcs]="arcs"
+                [chaptersByArc]="chaptersByArc"
+                (created)="onActionCreated()">
+              </app-notebook-action-card>
+            </ng-container>
+          </ng-container>
+          <ng-template #userContent>
+            <div class="nbd-msg-content">{{ m.content }}</div>
+          </ng-template>
+        </div>
+      </div>
+
+      <div class="nbd-input">
+        <textarea [(ngModel)]="draft" rows="2"
+                  placeholder="Demande une adaptation, un résumé, un PNJ inspiré de la source…"
+                  (keydown.enter)="$event.preventDefault(); send()"></textarea>
+        <button class="btn-deep" (click)="send(true)" [disabled]="sending || !draft.trim()"
+                title="Analyse approfondie : lit TOUT le document (plus lent, exhaustif). Idéal pour « liste tous les… »">
+          <lucide-icon [img]="Layers" [size]="15"></lucide-icon>
+        </button>
+        <button class="btn-send" (click)="send()" [disabled]="sending || !draft.trim()"
+                title="Réponse rapide (recherche ciblée dans le document)">
+          <lucide-icon [img]="Send" [size]="15"></lucide-icon>
+        </button>
+      </div>
+    </section>
+  </div>
+</div>

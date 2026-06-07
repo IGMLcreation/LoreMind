@@ -6,6 +6,7 @@ import { LucideAngularModule, ArrowLeft } from 'lucide-angular';
 import { CampaignService } from '../../../services/campaign.service';
 import { CharacterService } from '../../../services/character.service';
 import { NpcService } from '../../../services/npc.service';
+import { RandomTableService } from '../../../services/random-table.service';
 import { PlaythroughService } from '../../../services/playthrough.service';
 import { LayoutService } from '../../../services/layout.service';
 import { PageTitleService } from '../../../services/page-title.service';
@@ -37,6 +38,7 @@ export class PlaythroughFlagsPageComponent implements OnInit, OnDestroy {
     private campaignService: CampaignService,
     private characterService: CharacterService,
     private npcService: NpcService,
+    private randomTableService: RandomTableService,
     private playthroughService: PlaythroughService,
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService
@@ -58,7 +60,7 @@ export class PlaythroughFlagsPageComponent implements OnInit, OnDestroy {
     forkJoin({
       campaign: this.campaignService.getCampaignById(this.campaignId),
       allCampaigns: this.campaignService.getAllCampaigns(),
-      treeData: loadCampaignTreeData(this.campaignService, this.campaignId, this.characterService, this.npcService),
+      treeData: loadCampaignTreeData(this.campaignService, this.campaignId, this.characterService, this.npcService, this.randomTableService),
       playthrough: this.playthroughService.getById(this.playthroughId)
     }).subscribe(({ campaign, allCampaigns, treeData, playthrough }) => {
       this.playthrough = playthrough;

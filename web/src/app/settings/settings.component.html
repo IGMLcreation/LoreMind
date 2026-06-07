@@ -36,6 +36,14 @@
           <input type="radio" name="provider" value="openrouter" [(ngModel)]="settings.llm_provider">
           <span>OpenRouter (cloud)</span>
         </label>
+        <label class="radio">
+          <input type="radio" name="provider" value="mistral" [(ngModel)]="settings.llm_provider">
+          <span>Mistral (cloud)</span>
+        </label>
+        <label class="radio">
+          <input type="radio" name="provider" value="gemini" [(ngModel)]="settings.llm_provider">
+          <span>Gemini (cloud)</span>
+        </label>
       </div>
     </div>
   </section>
@@ -209,6 +217,145 @@
         (choisit un modele gratuit tout seul). Pour les imports, prefere un gratuit a
         <strong>grand contexte</strong> (valeur « ctx »).
       </p>
+    </div>
+  </section>
+
+  <!-- Bloc Mistral -->
+  <section class="card" *ngIf="settings && settings.llm_provider === 'mistral'">
+    <h2>Configuration Mistral</h2>
+
+    <div class="form-row">
+      <label for="mistral-key">Cle API</label>
+      <input
+        id="mistral-key"
+        type="password"
+        [(ngModel)]="mistralApiKeyInput"
+        [placeholder]="settings.mistral_api_key_set ? 'Cle configuree (laisser vide pour ne pas changer)' : 'Saisir votre cle API Mistral'">
+      <label class="checkbox" *ngIf="settings.mistral_api_key_set">
+        <input type="checkbox" [(ngModel)]="clearMistralKey">
+        <span>Effacer la cle enregistree</span>
+      </label>
+    </div>
+
+    <div class="form-row">
+      <label for="mistral-model">Modele</label>
+      <select id="mistral-model" [(ngModel)]="settings.mistral_model">
+        <option *ngFor="let o of mistralSelectOptions" [value]="o.id">{{ o.label }}</option>
+      </select>
+      <p class="hint">
+        Cle gratuite sur <code>console.mistral.ai</code> (tier « Experiment », sans CB).
+        Pour les imports, prefere <code>mistral-large-latest</code> (128k contexte, fidele
+        et bon en francais) ou <code>mistral-small-latest</code> (plus rapide).
+      </p>
+    </div>
+  </section>
+
+  <!-- Bloc Gemini -->
+  <section class="card" *ngIf="settings && settings.llm_provider === 'gemini'">
+    <h2>Configuration Gemini</h2>
+
+    <div class="form-row">
+      <label for="gemini-key">Cle API</label>
+      <input
+        id="gemini-key"
+        type="password"
+        [(ngModel)]="geminiApiKeyInput"
+        [placeholder]="settings.gemini_api_key_set ? 'Cle configuree (laisser vide pour ne pas changer)' : 'Saisir votre cle API Gemini'">
+      <label class="checkbox" *ngIf="settings.gemini_api_key_set">
+        <input type="checkbox" [(ngModel)]="clearGeminiKey">
+        <span>Effacer la cle enregistree</span>
+      </label>
+    </div>
+
+    <div class="form-row">
+      <label for="gemini-model">Modele</label>
+      <select id="gemini-model" [(ngModel)]="settings.gemini_model">
+        <option *ngFor="let o of geminiSelectOptions" [value]="o.id">{{ o.label }}</option>
+      </select>
+      <p class="hint">
+        Cle gratuite sur <code>aistudio.google.com</code> (sans CB). Ideal pour les imports :
+        <code>gemini-2.0-flash</code> a un <strong>contexte ~1M</strong> → un livre entier tient
+        en 1-2 appels (plus de morceaux perdus). Pense a monter la <strong>taille des morceaux</strong>
+        d'import pour en profiter.
+      </p>
+    </div>
+  </section>
+
+  <!-- Bloc Embeddings (Atelier RAG) : indépendant du modèle de CHAT ci-dessus. -->
+  <section class="card" *ngIf="settings">
+    <h2>Embeddings (Atelier RAG)</h2>
+    <p class="hint">
+      Modèle utilisé pour <strong>indexer les sources PDF</strong> des ateliers et y faire
+      de la recherche. C'est un modèle <strong>séparé</strong> du modèle de chat ci-dessus.
+    </p>
+
+    <div class="form-row">
+      <label>Fournisseur d'embeddings</label>
+      <div class="radio-group">
+        <label class="radio">
+          <input type="radio" name="embprovider" value="ollama" [(ngModel)]="settings.embedding_provider">
+          <span>Ollama (local, gratuit)</span>
+        </label>
+        <label class="radio">
+          <input type="radio" name="embprovider" value="mistral" [(ngModel)]="settings.embedding_provider">
+          <span>Mistral (cloud, EU)</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Ollama embeddings -->
+    <div *ngIf="settings.embedding_provider === 'ollama'">
+      <div class="form-row">
+        <label for="emb-ollama-model">Modèle d'embedding Ollama</label>
+        <input id="emb-ollama-model" type="text" [(ngModel)]="settings.ollama_embedding_model"
+               placeholder="nomic-embed-text">
+        <p class="hint">
+          Recommandé : <code>nomic-embed-text</code> (léger). Gratuit et illimité (local).
+        </p>
+      </div>
+      <div class="form-row">
+        <label class="checkbox">
+          <input type="checkbox" [(ngModel)]="settings.auto_pull_embedding_model">
+          <span>Installer automatiquement le modèle au démarrage s'il manque</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <label for="rag-topk">Extraits récupérés par question (couverture RAG)</label>
+      <input id="rag-topk" type="number" min="3" max="200" [(ngModel)]="settings.rag_top_k">
+      <p class="hint">
+        Plus haut = l'IA voit plus de passages par question (mieux pour les questions
+        larges « liste les… »), mais prompt plus long. Défaut 8. Avec un modèle
+        <strong>gros-contexte</strong> (Gemini), tu peux monter à <strong>50-150</strong> pour
+        une couverture quasi « document entier ». Pour les questions exhaustives, préfère
+        le bouton <strong>« Analyse approfondie »</strong> de l'atelier.
+      </p>
+    </div>
+
+    <!-- Mistral embeddings -->
+    <div *ngIf="settings.embedding_provider === 'mistral'">
+      <div class="form-row">
+        <label for="emb-mistral-key">
+          Clé API Mistral
+          <span class="key-state" *ngIf="settings.mistral_api_key_set">✓ configurée</span>
+        </label>
+        <input id="emb-mistral-key" type="password" [(ngModel)]="mistralApiKeyInput"
+               [placeholder]="settings.mistral_api_key_set ? 'Clé configurée (laisser vide pour ne pas changer)' : 'Saisir votre clé API Mistral'">
+        <label class="checkbox" *ngIf="settings.mistral_api_key_set">
+          <input type="checkbox" [(ngModel)]="clearMistralKey">
+          <span>Effacer la clé enregistrée</span>
+        </label>
+        <p class="hint">
+          C'est la <strong>même clé</strong> que pour le chat Mistral (une seule clé partagée).
+          Soumis au rate limit du tier gratuit.
+        </p>
+      </div>
+      <div class="form-row">
+        <label for="emb-mistral-model">Modèle d'embedding Mistral</label>
+        <input id="emb-mistral-model" type="text" [(ngModel)]="settings.mistral_embedding_model"
+               placeholder="mistral-embed">
+      </div>
     </div>
   </section>
 

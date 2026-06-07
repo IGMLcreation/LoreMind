@@ -12,9 +12,14 @@ from __future__ import annotations
 
 import logging
 
-from app.application.chunking import chunk_text
-from app.application.llm_json import load_json_object
+from app.application.chunking import chunk_text, split_in_half
+from app.application.llm_json import load_json_object, looks_like_truncated_json
 from app.application.llm_retry import generate_with_retry
+from app.application.streaming import with_heartbeat
+
+# Repli anti-troncature : si la sortie d'un morceau est coupée, on le retraite en
+# 2 moitiés. Borné en profondeur (3 niveaux => jusqu'à 8 sous-blocs).
+_MAX_SPLIT_DEPTH = 3
 from app.domain.models import (
     ArcProposal,
     CampaignImportResult,
@@ -22,7 +27,7 @@ from app.domain.models import (
     RoomProposal,
     SceneProposal,
 )
-from app.domain.ports import LLMProvider, PdfTextExtractor
+from app.domain.ports import LLMProvider, LLMProviderError, PdfTextExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -229,8 +234,30 @@ class ImportCampaignUseCase:
         }
 
         merger = _TreeMerger()
+        skipped = 0
+        last_error: str | None = None
         for i, chunk in enumerate(chunks):
-            merger.add(await self._map_chunk(chunk, index=i, total=total))
+            # RÉSILIENCE : un morceau qui échoue (provider saturé, quota, etc.) est
+            # SAUTÉ — on ne perd pas tout l'import pour autant. On n'abandonne que
+            # si AUCUN morceau ne passe (cf. après la boucle).
+            # HEARTBEAT : keep-alive pendant l'appel LLM pour ne jamais laisser le
+            # flux SSE silencieux (sinon le Core coupe sur timeout d'inactivité).
+            try:
+                arcs_payload: list[dict] | None = None
+                async for kind, payload in with_heartbeat(
+                    self._map_chunk(chunk, index=i, total=total)
+                ):
+                    if kind == "heartbeat":
+                        yield {"type": "heartbeat", "current": i + 1, "total": total}
+                    else:
+                        arcs_payload = payload
+                merger.add(arcs_payload or [])
+            except LLMProviderError as exc:
+                skipped += 1
+                last_error = str(exc)
+                logger.warning("Morceau %s/%s ignoré (échec LLM) : %s", i + 1, total, exc)
+                yield {"type": "chunk_failed", "current": i + 1, "total": total,
+                       "message": str(exc)[:300]}
             arcs, chapters, scenes = merger.counts()
             yield {
                 "type": "progress",
@@ -239,42 +266,74 @@ class ImportCampaignUseCase:
                 "arc_count": arcs,
                 "chapter_count": chapters,
                 "scene_count": scenes,
+                "skipped": skipped,
             }
+
+        if total > 0 and skipped == total:
+            # Tout a échoué : "done" vide serait trompeur → erreur explicite.
+            yield {"type": "error",
+                   "message": "Tous les morceaux ont échoué auprès du fournisseur IA. "
+                              f"Dernier message : {last_error or 'inconnu'}"}
+            return
 
         yield {
             "type": "done",
             "arcs": _serialize_arcs(merger.result()),
             "page_count": doc.page_count,
             "ocr_page_count": doc.ocr_page_count,
+            "skipped": skipped,
         }
 
     # --- MAP : un morceau → sous-arbre ---------------------------------------
 
     async def _map_chunk(self, chunk: str, *, index: int, total: int) -> list[dict]:
+        return await self._extract_arcs(chunk, index=index, total=total, depth=0)
+
+    async def _extract_arcs(
+        self, text: str, *, index: int, total: int, depth: int
+    ) -> list[dict]:
+        """Extrait l'arborescence d'un texte. Si la SORTIE est tronquée, retraite le
+        texte en DEUX moitiés et concatène — le `_TreeMerger` final dédoublonne par
+        nom (un arc/chapitre coupé entre les moitiés est recollé)."""
         prompt = (
             _MAP_SYSTEM.format(default_arc=_DEFAULT_ARC_NAME)
-            + f"\n\n--- EXTRAIT {index + 1}/{total} ---\n{chunk}\n\n"
+            + f"\n\n--- EXTRAIT {index + 1}/{total} ---\n{text}\n\n"
             "Renvoie maintenant le JSON de l'arborescence."
         )
         raw = await generate_with_retry(
             self._llm, prompt, output_format="json", temperature=_TEMPERATURE)
-        return self._parse_arcs(raw, index=index)
+        arcs, truncated = self._parse_arcs(raw, index=index)
+
+        if truncated and depth < _MAX_SPLIT_DEPTH:
+            left, right = split_in_half(text)
+            if left and right:
+                logger.info(
+                    "Morceau %s : sortie tronquée → re-découpage en 2 moitiés (niveau %s).",
+                    index, depth + 1)
+                a = await self._extract_arcs(left, index=index, total=total, depth=depth + 1)
+                b = await self._extract_arcs(right, index=index, total=total, depth=depth + 1)
+                return a + b
+        if truncated:
+            logger.warning(
+                "Morceau %s : sortie tronquée, profondeur max atteinte — partiel conservé.", index)
+        return arcs
 
     @staticmethod
-    def _parse_arcs(raw: str, *, index: int) -> list[dict]:
-        """Parse robuste : objet JSON équilibré, ou récupération partielle si tronqué."""
+    def _parse_arcs(raw: str, *, index: int) -> tuple[list[dict], bool]:
+        """Parse robuste → (arcs, tronqué). `tronqué`=True si récupération partielle."""
         parsed, recovered = load_json_object(raw)
         if parsed is None:
-            logger.warning("Morceau %s : aucun objet JSON exploitable, ignoré.", index)
-            return []
-        if recovered:
-            logger.warning(
-                "Morceau %s : sortie tronquée — récupération des éléments complets "
-                "(envisagez des morceaux plus petits).", index)
+            truncated = looks_like_truncated_json(raw)
+            if not truncated:
+                logger.warning(
+                    "Morceau %s : aucun objet JSON exploitable, ignoré. "
+                    "Début de la réponse du modèle : %r",
+                    index, (raw or "").strip()[:300] or "(réponse VIDE)")
+            return [], truncated
         if isinstance(parsed, dict):
             arcs = parsed.get("arcs", [])
-            return arcs if isinstance(arcs, list) else []
-        return []
+            return (arcs if isinstance(arcs, list) else []), recovered
+        return [], recovered
 
 
 def _serialize_arcs(arcs: list[ArcProposal]) -> list[dict]:

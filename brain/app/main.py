@@ -4,7 +4,9 @@ Controller volontairement FIN : il valide l'entrée (DTOs Pydantic), délègue
 au domaine via injection de dépendance (ports + use cases), et transforme les
 erreurs du domaine en réponses HTTP. Aucune connaissance d'Ollama ici.
 """
+import asyncio
 import json
+import logging
 from typing import Annotated, AsyncIterator, Literal
 
 import hmac
@@ -14,11 +16,22 @@ from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, Upload
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
+import re
+
 from app.application.adapt_campaign import AdaptCampaignUseCase
 from app.application.chat import ChatUseCase
 from app.application.generate_page import GeneratePageUseCase
 from app.application.import_campaign import ImportCampaignUseCase
 from app.application.import_rules import ImportRulesUseCase
+from app.application.llm_json import load_json_object
+from app.application.llm_retry import generate_with_retry
+from app.application.notebook_rag import NotebookRagUseCase
+from app.application.notebook_chat import NotebookChatUseCase
+from app.application.notebook_deep import NotebookDeepUseCase
+from app.application.embeddings import EmbeddingError
+from app.infrastructure import vector_store
+from app.infrastructure.ollama_embedding_adapter import OllamaEmbeddingProvider
+from app.infrastructure.mistral_embedding_adapter import MistralEmbeddingProvider
 from app.core.config import Settings, get_settings
 from app.core.settings_store import save_overrides
 from app.domain.models import (
@@ -46,13 +59,17 @@ from app.domain.ports import LLMProvider, LLMProviderError, PdfExtractionError
 from app.infrastructure.ollama_adapter import OllamaLLMProvider
 from app.infrastructure.onemin_adapter import OneMinAiLLMProvider
 from app.infrastructure.openrouter_adapter import OpenRouterLLMProvider
+from app.infrastructure.mistral_adapter import MistralLLMProvider
+from app.infrastructure.gemini_adapter import GeminiLLMProvider
 from app.infrastructure.pdf_extractor import PyMuPdfTextExtractor
 
 app = FastAPI(
     title="LoreMind Brain",
     description="Backend IA pour la génération de contenu narratif.",
-    version="0.10.3-beta",
+    version="0.11.0-beta",
 )
+
+logger = logging.getLogger(__name__)
 
 
 # Encodeur tiktoken partagé — chargé une fois pour éviter le coût de lookup
@@ -357,6 +374,10 @@ def get_llm_provider(
             return OneMinAiLLMProvider(settings)
         if settings.llm_provider == "openrouter":
             return OpenRouterLLMProvider(settings)
+        if settings.llm_provider == "mistral":
+            return MistralLLMProvider(settings)
+        if settings.llm_provider == "gemini":
+            return GeminiLLMProvider(settings)
         return OllamaLLMProvider(settings)
     except LLMProviderError as exc:
         # Ex : cle 1min.ai manquante. On renvoie du 400 plutot que du 500
@@ -416,6 +437,38 @@ def get_adapt_campaign_use_case(
         llm=llm, extractor=_PDF_EXTRACTOR, max_input_tokens=settings.import_chunk_tokens)
 
 
+def get_embedding_provider(
+    settings: Annotated[Settings, Depends(get_settings)],
+):
+    """Factory de l'adapter d'embeddings (RAG) selon `embedding_provider`."""
+    try:
+        if settings.embedding_provider == "mistral":
+            return MistralEmbeddingProvider(settings)
+        return OllamaEmbeddingProvider(settings)
+    except EmbeddingError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+def get_notebook_rag_use_case(
+    embedder: Annotated[object, Depends(get_embedding_provider)],
+) -> NotebookRagUseCase:
+    return NotebookRagUseCase(extractor=_PDF_EXTRACTOR, embedder=embedder)  # type: ignore[arg-type]
+
+
+def get_notebook_chat_use_case(
+    llm: Annotated[LLMProvider, Depends(get_llm_provider)],
+    rag: Annotated[NotebookRagUseCase, Depends(get_notebook_rag_use_case)],
+) -> NotebookChatUseCase:
+    return NotebookChatUseCase(rag=rag, llm=llm)  # type: ignore[arg-type]
+
+
+def get_notebook_deep_use_case(
+    llm: Annotated[LLMProvider, Depends(get_llm_provider)],
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> NotebookDeepUseCase:
+    return NotebookDeepUseCase(llm=llm, batch_tokens=settings.import_chunk_tokens)
+
+
 # --- Endpoints ---
 
 
@@ -423,6 +476,54 @@ def get_adapt_campaign_use_case(
 def health() -> dict[str, str]:
     """Sonde de santé — permet au Core Java de vérifier que le Brain répond."""
     return {"status": "ok", "service": "brain"}
+
+
+@app.on_event("startup")
+async def _auto_install_embedding_model() -> None:
+    """Au démarrage : si le provider d'embeddings est Ollama et que le modèle n'est
+    pas installé, on le télécharge EN ARRIÈRE-PLAN → le RAG marche d'emblée pour un
+    nouvel utilisateur, sans bloquer le démarrage du Brain. Best-effort (Ollama peut
+    être absent / la connexion limitée) ; désactivable via `auto_pull_embedding_model`.
+    """
+    settings = get_settings()
+    if not settings.auto_pull_embedding_model or settings.embedding_provider != "ollama":
+        return
+    asyncio.create_task(_ensure_ollama_embedding_model(settings.ollama_base_url, settings.ollama_embedding_model))
+
+
+async def _ensure_ollama_embedding_model(base_url: str, model: str) -> None:
+    # Attend qu'Ollama soit joignable (ordre de démarrage des conteneurs), puis
+    # vérifie la présence du modèle avant de le tirer.
+    for attempt in range(10):
+        try:
+            async with httpx.AsyncClient(timeout=10) as client:
+                tags = await client.get(f"{base_url}/api/tags")
+                tags.raise_for_status()
+                names = [m.get("name", "") for m in tags.json().get("models", [])]
+            if any(n == model or n.startswith(model + ":") for n in names):
+                logger.info("Modèle d'embedding '%s' déjà présent.", model)
+                return
+            break  # Ollama joignable, modèle absent → on tire (ci-dessous)
+        except httpx.HTTPError:
+            await asyncio.sleep(min(5 * (attempt + 1), 30))
+    else:
+        logger.warning(
+            "Ollama injoignable au démarrage — modèle d'embedding '%s' non auto-installé "
+            "(il sera tirable manuellement : ollama pull %s).", model, model)
+        return
+
+    logger.info("Téléchargement automatique du modèle d'embedding '%s'…", model)
+    try:
+        async with httpx.AsyncClient(timeout=None) as client:
+            async with client.stream("POST", f"{base_url}/api/pull", json={"name": model}) as resp:
+                resp.raise_for_status()
+                async for _line in resp.aiter_lines():
+                    pass  # on draine la progression NDJSON jusqu'à la fin
+        logger.info("Modèle d'embedding '%s' prêt.", model)
+    except httpx.HTTPError as exc:
+        logger.warning(
+            "Auto-installation du modèle d'embedding '%s' échouée : %s "
+            "(tirage manuel possible : ollama pull %s).", model, exc, model)
 
 
 @app.post("/generate", response_model=GenerateResponse)
@@ -555,6 +656,11 @@ async def import_rules_stream(
             yield _sse("error", {"message": str(exc)})
         except LLMProviderError as exc:
             yield _sse("error", {"message": str(exc)})
+        except Exception as exc:  # noqa: BLE001 — filet : une erreur inattendue ne doit
+            # PAS casser le flux SSE brutalement (sinon le Core n'a qu'un message générique
+            # sans détail). On la transforme en évènement `error` propre + log avec trace.
+            logger.exception("Import règles : erreur inattendue dans le flux.")
+            yield _sse("error", {"message": f"Erreur inattendue du Brain : {type(exc).__name__} : {exc}"})
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
 
@@ -590,6 +696,10 @@ async def import_campaign_stream(
             yield _sse("error", {"message": str(exc)})
         except LLMProviderError as exc:
             yield _sse("error", {"message": str(exc)})
+        except Exception as exc:  # noqa: BLE001 — voir import règles : on ne laisse pas
+            # une erreur inattendue casser le flux sans détail.
+            logger.exception("Import campagne : erreur inattendue dans le flux.")
+            yield _sse("error", {"message": f"Erreur inattendue du Brain : {type(exc).__name__} : {exc}"})
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
 
@@ -773,6 +883,245 @@ async def summarize_conversation_title(
     return SummarizeTitleResponseDTO(title=title)
 
 
+# --- Tables aléatoires : génération IA + improvisation -----------------------
+
+_DICE_FORMULA_RE = re.compile(r"^\s*(\d*)\s*[dD]\s*(\d+)\s*$")
+
+
+def _dice_total_range(formula: str) -> tuple[int, int] | None:
+    """(min, max) des totaux possibles d'une formule NdM, ou None si invalide."""
+    match = _DICE_FORMULA_RE.match(formula or "")
+    if not match:
+        return None
+    count = int(match.group(1)) if match.group(1) else 1
+    faces = int(match.group(2))
+    if count < 1 or count > 100 or faces < 2 or faces > 10000:
+        return None
+    return count, count * faces
+
+
+class GenerateTableRequestDTO(BaseModel):
+    description: str
+    dice_formula: str = Field(default="1d20")
+    # Contexte libre assemblé par le Core (nom de campagne, système, ambiance…).
+    context: str = Field(default="")
+
+
+class GeneratedTableEntryDTO(BaseModel):
+    min_roll: int
+    max_roll: int
+    label: str
+    detail: str = ""
+
+
+class GenerateTableResponseDTO(BaseModel):
+    name: str
+    description: str = ""
+    entries: list[GeneratedTableEntryDTO]
+
+
+@app.post("/generate/random-table", response_model=GenerateTableResponseDTO)
+async def generate_random_table(
+    body: GenerateTableRequestDTO,
+    llm: Annotated[LLMProvider, Depends(get_llm_provider)],
+) -> GenerateTableResponseDTO:
+    """Génère une table aléatoire (entrées par plage) couvrant la formule de dé."""
+    rng = _dice_total_range(body.dice_formula)
+    if rng is None:
+        raise HTTPException(status_code=422, detail="Formule de dé invalide (ex. 1d20, 2d6, d100).")
+    lo, hi = rng
+    context_block = f"\nContexte de la campagne :\n{body.context.strip()}\n" if body.context.strip() else ""
+    prompt = (
+        "Tu es un assistant de jeu de rôle. Génère une TABLE ALÉATOIRE évocatrice.\n"
+        f"Dé : {body.dice_formula} (résultats possibles de {lo} à {hi}).\n"
+        f"Sujet : {body.description.strip()}\n"
+        f"{context_block}\n"
+        "Règles IMPÉRATIVES :\n"
+        "- Réponds UNIQUEMENT par un objet JSON valide, sans texte autour.\n"
+        '- Format : {"name": "...", "description": "...", "entries": '
+        '[{"min_roll": N, "max_roll": M, "label": "résultat court", "detail": "1-2 phrases"}]}\n'
+        f"- Les plages (min_roll..max_roll) doivent COUVRIR EXACTEMENT {lo}..{hi}, "
+        "sans trou ni chevauchement, dans l'ordre croissant.\n"
+        "- Des résultats variés, cohérents avec le sujet (et le contexte s'il est fourni).\n"
+        "- En français. 'label' = résultat bref ; 'detail' = description/effet concret.\n"
+        "Renvoie maintenant le JSON."
+    )
+    try:
+        raw = await generate_with_retry(llm, prompt, output_format="json", temperature=0.7)
+    except LLMProviderError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    parsed, _ = load_json_object(raw)
+    if not isinstance(parsed, dict):
+        raise HTTPException(status_code=502, detail="Le modèle n'a pas renvoyé de table exploitable.")
+
+    entries: list[GeneratedTableEntryDTO] = []
+    for e in parsed.get("entries", []) or []:
+        if not isinstance(e, dict):
+            continue
+        try:
+            mn = int(e["min_roll"])
+            mx = int(e["max_roll"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        label = str(e.get("label") or "").strip()
+        if not label:
+            continue
+        entries.append(GeneratedTableEntryDTO(
+            min_roll=mn, max_roll=max(mn, mx), label=label[:200],
+            detail=str(e.get("detail") or "").strip(),
+        ))
+    if not entries:
+        raise HTTPException(status_code=502, detail="Aucune entrée générée — réessaie ou reformule.")
+
+    name = str(parsed.get("name") or body.description).strip()[:120] or "Table générée"
+    return GenerateTableResponseDTO(
+        name=name,
+        description=str(parsed.get("description") or "").strip(),
+        entries=entries,
+    )
+
+
+class ImproviseRollRequestDTO(BaseModel):
+    table_name: str
+    result_label: str
+    result_detail: str = Field(default="")
+    context: str = Field(default="")
+
+
+class ImproviseRollResponseDTO(BaseModel):
+    narration: str
+
+
+@app.post("/improvise/table-roll", response_model=ImproviseRollResponseDTO)
+async def improvise_table_roll(
+    body: ImproviseRollRequestDTO,
+    llm: Annotated[LLMProvider, Depends(get_llm_provider)],
+) -> ImproviseRollResponseDTO:
+    """Brode un court récit (2-3 phrases) sur un résultat tiré, pour lancer la scène."""
+    detail = f" ({body.result_detail.strip()})" if body.result_detail.strip() else ""
+    context_block = f"\nContexte : {body.context.strip()}" if body.context.strip() else ""
+    prompt = (
+        "Tu es le Maître du Jeu. Les joueurs viennent de tirer sur la table "
+        f"« {body.table_name.strip()} » et ont obtenu : « {body.result_label.strip()} »{detail}."
+        f"{context_block}\n\n"
+        "Décris en 2-3 phrases vivantes et immédiates ce qui se passe, pour lancer la scène. "
+        "Pas de méta, pas d'options : juste la narration, en français."
+    )
+    try:
+        raw = await llm.generate(prompt, temperature=0.8)
+    except LLMProviderError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    return ImproviseRollResponseDTO(narration=raw.strip())
+
+
+# --- Notebooks (atelier RAG) : indexation des sources + chat ancré ----------
+
+
+class IndexSourceResponseDTO(BaseModel):
+    chunks: int
+    page_count: int
+    ocr_page_count: int
+
+
+@app.post("/index/notebook-source", response_model=IndexSourceResponseDTO)
+async def index_notebook_source(
+    rag: Annotated[NotebookRagUseCase, Depends(get_notebook_rag_use_case)],
+    source_id: str = Form(...),
+    file: UploadFile = File(...),
+) -> IndexSourceResponseDTO:
+    """Indexe une source PDF (extraction + embeddings + stockage vectoriel)."""
+    content = await file.read()
+    if not content:
+        raise HTTPException(status_code=422, detail="Fichier PDF vide.")
+    if len(content) > _MAX_PDF_BYTES:
+        raise HTTPException(
+            status_code=413, detail=f"PDF trop volumineux (> {_MAX_PDF_BYTES // (1024 * 1024)} Mo).")
+    try:
+        recap = await rag.index_source(source_id, content)
+    except PdfExtractionError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except EmbeddingError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    return IndexSourceResponseDTO(**recap)
+
+
+@app.delete("/index/notebook-source/{source_id}")
+def delete_notebook_source(source_id: str) -> dict[str, str]:
+    """Supprime les vecteurs d'une source (au DELETE d'une source/notebook)."""
+    vector_store.delete(source_id)
+    return {"status": "deleted", "source_id": source_id}
+
+
+class NotebookChatMessageDTO(BaseModel):
+    role: str
+    content: str
+
+
+class NotebookChatRequestDTO(BaseModel):
+    source_ids: list[str] = Field(default_factory=list)
+    messages: list[NotebookChatMessageDTO] = Field(default_factory=list)
+    context: str = Field(default="")
+
+
+@app.post("/chat/notebook/stream")
+async def chat_notebook_stream(
+    body: NotebookChatRequestDTO,
+    use_case: Annotated[NotebookChatUseCase, Depends(get_notebook_chat_use_case)],
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> StreamingResponse:
+    """Chat ANCRÉ sur les sources (RAG) : récupère les passages pertinents puis
+    streame la réponse. Évènements SSE : `token` {token}, `done` {}, `error` {message}."""
+    messages = [ChatMessage(role=m.role, content=m.content) for m in body.messages]
+    top_k = max(1, min(settings.rag_top_k, 200))
+
+    def _sse(event: str, data: dict) -> str:
+        return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+    async def event_stream() -> AsyncIterator[str]:
+        try:
+            async for token in use_case.stream(body.source_ids, messages, context=body.context, top_k=top_k):
+                if token:
+                    yield _sse("token", {"token": token})
+            yield _sse("done", {})
+        except (LLMProviderError, EmbeddingError) as exc:
+            yield _sse("error", {"message": str(exc)})
+        except Exception as exc:  # noqa: BLE001 — filet : pas de coupure brutale du flux.
+            logger.exception("Chat notebook : erreur inattendue.")
+            yield _sse("error", {"message": f"Erreur inattendue du Brain : {type(exc).__name__} : {exc}"})
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
+
+
+@app.post("/chat/notebook/deep/stream")
+async def chat_notebook_deep_stream(
+    body: NotebookChatRequestDTO,
+    use_case: Annotated[NotebookDeepUseCase, Depends(get_notebook_deep_use_case)],
+) -> StreamingResponse:
+    """Analyse APPROFONDIE (map-reduce sur tout le document). Évènements SSE :
+    `progress` {current,total} pendant la lecture, puis `token` {token}, puis `done`."""
+    question = next((m.content for m in reversed(body.messages) if m.role == "user"), "")
+
+    def _sse(event: str, data: dict) -> str:
+        return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+    async def event_stream() -> AsyncIterator[str]:
+        if not question.strip():
+            yield _sse("error", {"message": "Question vide."})
+            return
+        try:
+            async for ev in use_case.stream(body.source_ids, question, context=body.context):
+                ev_type = ev.pop("type")
+                yield _sse(ev_type, ev)
+        except (LLMProviderError, EmbeddingError) as exc:
+            yield _sse("error", {"message": str(exc)})
+        except Exception as exc:  # noqa: BLE001 — filet : pas de coupure brutale.
+            logger.exception("Analyse approfondie : erreur inattendue.")
+            yield _sse("error", {"message": f"Erreur inattendue du Brain : {type(exc).__name__} : {exc}"})
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
+
+
 # --- Mapping DTO → domaine (frontière HTTP) ---------------------------------
 
 
@@ -890,7 +1239,7 @@ class SettingsDTO(BaseModel):
     Les secrets (onemin_api_key) sont masques en lecture.
     """
 
-    llm_provider: Literal["ollama", "onemin", "openrouter"]
+    llm_provider: Literal["ollama", "onemin", "openrouter", "mistral", "gemini"]
     ollama_base_url: str
     llm_model: str
     onemin_model: str
@@ -899,6 +1248,18 @@ class SettingsDTO(BaseModel):
     openrouter_model: str
     # True si une cle OpenRouter est deja configuree (cle elle-meme jamais renvoyee).
     openrouter_api_key_set: bool
+    mistral_model: str
+    # True si une cle Mistral est deja configuree (cle elle-meme jamais renvoyee).
+    mistral_api_key_set: bool
+    gemini_model: str
+    # True si une cle Gemini est deja configuree (cle elle-meme jamais renvoyee).
+    gemini_api_key_set: bool
+    # Embeddings (RAG des ateliers) : provider + modeles + auto-pull Ollama.
+    embedding_provider: Literal["ollama", "mistral"]
+    ollama_embedding_model: str
+    mistral_embedding_model: str
+    auto_pull_embedding_model: bool
+    rag_top_k: int
     # Fenetre de contexte effective passee au modele (num_ctx Ollama) — sert
     # aussi de plafond a la jauge de contexte UI.
     llm_num_ctx: int
@@ -911,7 +1272,7 @@ class SettingsDTO(BaseModel):
 class SettingsUpdateDTO(BaseModel):
     """Patch partiel des settings. Tous les champs sont optionnels."""
 
-    llm_provider: Literal["ollama", "onemin", "openrouter"] | None = None
+    llm_provider: Literal["ollama", "onemin", "openrouter", "mistral", "gemini"] | None = None
     ollama_base_url: str | None = None
     llm_model: str | None = None
     onemin_model: str | None = None
@@ -919,6 +1280,15 @@ class SettingsUpdateDTO(BaseModel):
     onemin_api_key: str | None = None
     openrouter_model: str | None = None
     openrouter_api_key: str | None = None
+    mistral_model: str | None = None
+    mistral_api_key: str | None = None
+    gemini_model: str | None = None
+    gemini_api_key: str | None = None
+    embedding_provider: Literal["ollama", "mistral"] | None = None
+    ollama_embedding_model: str | None = None
+    mistral_embedding_model: str | None = None
+    auto_pull_embedding_model: bool | None = None
+    rag_top_k: int | None = None
     llm_num_ctx: int | None = None
     import_chunk_tokens: int | None = None
     llm_timeout_seconds: int | None = None
@@ -933,6 +1303,15 @@ def _to_settings_dto(s: Settings) -> SettingsDTO:
         onemin_api_key_set=bool(s.onemin_api_key),
         openrouter_model=s.openrouter_model,
         openrouter_api_key_set=bool(s.openrouter_api_key),
+        mistral_model=s.mistral_model,
+        mistral_api_key_set=bool(s.mistral_api_key),
+        gemini_model=s.gemini_model,
+        gemini_api_key_set=bool(s.gemini_api_key),
+        embedding_provider=s.embedding_provider,
+        ollama_embedding_model=s.ollama_embedding_model,
+        mistral_embedding_model=s.mistral_embedding_model,
+        auto_pull_embedding_model=s.auto_pull_embedding_model,
+        rag_top_k=s.rag_top_k,
         llm_num_ctx=s.llm_num_ctx,
         import_chunk_tokens=s.import_chunk_tokens,
         llm_timeout_seconds=s.llm_timeout_seconds,
@@ -1136,6 +1515,99 @@ async def list_openrouter_models() -> dict[str, list[dict[str, object]]]:
 
     models.sort(key=lambda x: (not x["free"], -int(x["context_length"])))  # type: ignore[index]
     return {"models": models}
+
+
+# Repli statique si la cle Mistral n'est pas (encore) configuree ou si l'API est
+# injoignable — l'utilisateur peut quand meme choisir un modele. Liste curee
+# (juin 2026) ; pour l'extraction de PDF, prefere `large` (fidele, 128k) ou `small`.
+_MISTRAL_FALLBACK_MODELS = [
+    "mistral-large-latest",
+    "mistral-medium-latest",
+    "mistral-small-latest",
+    "open-mistral-nemo",
+    "ministral-8b-latest",
+    "ministral-3b-latest",
+    "magistral-medium-latest",
+    "magistral-small-latest",
+    "pixtral-large-latest",
+    "codestral-latest",
+]
+
+
+@app.get("/models/mistral")
+async def list_mistral_models(
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> dict[str, list[dict[str, object]]]:
+    """Catalogue des modeles Mistral. Dynamique si une cle est configuree
+    (GET /v1/models, qui requiert l'auth), sinon repli statique.
+
+    Renvoie {models: [{id}]} (tous accessibles sur le tier gratuit Experiment)."""
+    key = settings.mistral_api_key
+    if not key:
+        return {"models": [{"id": m} for m in _MISTRAL_FALLBACK_MODELS]}
+    try:
+        async with httpx.AsyncClient(timeout=20) as client:
+            response = await client.get(
+                "https://api.mistral.ai/v1/models",
+                headers={"Authorization": f"Bearer {key}"},
+            )
+            response.raise_for_status()
+            data = response.json()
+    except httpx.HTTPError:
+        # Cle invalide / API down : on ne casse pas l'UI, on propose le repli.
+        return {"models": [{"id": m} for m in _MISTRAL_FALLBACK_MODELS]}
+
+    ids = sorted({str(m.get("id")) for m in data.get("data", []) or [] if m.get("id")})
+    if not ids:
+        ids = _MISTRAL_FALLBACK_MODELS
+    return {"models": [{"id": i} for i in ids]}
+
+
+# Repli statique Gemini (juin 2026). Pour l'extraction, prefere un Flash a grand
+# contexte ; `gemini-2.0-flash` a le quota gratuit le plus genereux.
+_GEMINI_FALLBACK_MODELS = [
+    "gemini-2.0-flash",
+    "gemini-2.0-flash-lite",
+    "gemini-2.5-flash",
+    "gemini-2.5-flash-lite",
+    "gemini-2.5-pro",
+    "gemini-1.5-flash",
+    "gemini-1.5-pro",
+]
+
+
+@app.get("/models/gemini")
+async def list_gemini_models(
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> dict[str, list[dict[str, object]]]:
+    """Catalogue des modeles Gemini. Dynamique si une cle est configuree (endpoint
+    OpenAI-compatible /openai/models), sinon repli statique. Renvoie {models:[{id}]}."""
+    key = settings.gemini_api_key
+    if not key:
+        return {"models": [{"id": m} for m in _GEMINI_FALLBACK_MODELS]}
+    try:
+        async with httpx.AsyncClient(timeout=20) as client:
+            response = await client.get(
+                "https://generativelanguage.googleapis.com/v1beta/openai/models",
+                headers={"Authorization": f"Bearer {key}"},
+            )
+            response.raise_for_status()
+            data = response.json()
+    except httpx.HTTPError:
+        return {"models": [{"id": m} for m in _GEMINI_FALLBACK_MODELS]}
+
+    # Les ids peuvent arriver prefixes "models/" → on nettoie pour que la valeur
+    # selectionnee soit directement utilisable dans l'appel chat. On garde les
+    # modeles "gemini-*" (hors embeddings/aqa) pour ne pas noyer la liste.
+    ids: set[str] = set()
+    for m in data.get("data", []) or []:
+        mid = str(m.get("id") or "")
+        if mid.startswith("models/"):
+            mid = mid[len("models/"):]
+        if mid.startswith("gemini-"):
+            ids.add(mid)
+    clean = sorted(ids) if ids else _GEMINI_FALLBACK_MODELS
+    return {"models": [{"id": i} for i in clean]}
 
 
 @app.get("/models/onemin")
