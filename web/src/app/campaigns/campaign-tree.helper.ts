@@ -225,6 +225,14 @@ export function buildCampaignTree(campaignId: string, data: CampaignTreeData): T
     route: `/campaigns/${campaignId}/notebooks`
   };
 
+  // Catalogues d'objets (boutiques, butins…) → page de liste (outil).
+  const catalogsNode: TreeItem = {
+    id: 'item-catalogs-root',
+    label: 'Catalogues d\'objets',
+    iconKey: 'package',
+    route: `/campaigns/${campaignId}/item-catalogs`
+  };
+
   // Importer un PDF de campagne → arborescence (outil, comme tables & ateliers).
   const importNode: TreeItem = {
     id: 'import-pdf-root',
@@ -233,7 +241,7 @@ export function buildCampaignTree(campaignId: string, data: CampaignTreeData): T
     route: `/campaigns/${campaignId}/import`
   };
 
-  return [...arcNodes, npcsNode, tablesNode, notebooksNode, importNode];
+  return [...arcNodes, npcsNode, tablesNode, notebooksNode, catalogsNode, importNode];
 }
 
 /**

@@ -265,6 +265,22 @@ export class SessionDetailComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Réception d'un objet de catalogue à consigner dans le journal.
+   * Le panneau fournit déjà une chaîne formatée (🛒 …) : on la sauvegarde
+   * telle quelle comme entrée NOTE.
+   */
+  onItemNoteToJournal(content: string): void {
+    if (!this.session || !this.session.active) return;
+    const trimmed = content.trim();
+    if (!trimmed) return;
+    const input: SessionEntryInput = { type: 'NOTE', content: trimmed };
+    this.entryService.createEntry(this.session.id, input).subscribe({
+      next: created => this.entries = [created, ...this.entries],
+      error: () => console.error('Erreur lors de l\'ajout de l\'objet au journal')
+    });
+  }
+
   deleteEntry(entry: SessionEntry): void {
     if (!this.session) return;
     const session = this.session;

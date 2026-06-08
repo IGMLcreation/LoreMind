@@ -41,11 +41,17 @@ QUESTION : {question}
 
 Informations pertinentes (ou « {no_match} ») :"""
 
-_REDUCE_SYSTEM = """Tu réponds à la question d'un MJ à partir de NOTES extraites de
-l'ENSEMBLE d'un document source (donc tu as une vue COMPLÈTE, pas un simple extrait).
-Synthétise ces notes en une réponse claire et structurée, cite les pages (« p. X »),
-et n'invente rien qui n'y figure pas. Si une CAMPAGNE est fournie ci-dessous, relie ta
-réponse à sa structure / ses PNJ pour des adaptations cohérentes.
+_REDUCE_SYSTEM = """Tu es l'assistant-MJ d'un jeu de rôle. Tu réponds à la demande du MJ en
+t'appuyant sur TROIS sources : (1) des NOTES extraites de l'ENSEMBLE du document source (vue
+complète — mais POSSIBLEMENT VIDE si rien d'utile n'y figure), (2) le contexte de sa CAMPAGNE,
+(3) la conversation ci-dessous.
+
+- Si les notes contiennent des éléments utiles : exploite-les et CITE les pages (« p. X »).
+- Si les notes sont VIDES ou pauvres (cas fréquent d'une demande CRÉATIVE portant sur des
+  éléments INVENTÉS par le MJ) : ne te bloque surtout PAS. Aide-le quand même en t'appuyant
+  sur sa CAMPAGNE, la CONVERSATION et ta connaissance du genre — propose des adaptations
+  concrètes (arcs, chapitres, scènes, PNJ), structurées et jouables.
+- Sois concret et utile. N'affirme rien de FAUX sur le contenu du document.
 
 {context_block}
 --- NOTES EXTRAITES DE TOUT LE DOCUMENT ---
@@ -113,8 +119,21 @@ class NotebookDeepUseCase:
         # dernier message est bien la question courante.
         reduce_messages = messages[-history_limit:] if messages else [ChatMessage(role="user", content=question)]
         llm_chat: LLMChatProvider = self._llm  # type: ignore[assignment]
+        produced = False
         async for token in llm_chat.stream_chat(reduce_messages, system_prompt=system_prompt):
-            yield {"type": "token", "token": token}
+            if token:
+                produced = True
+                yield {"type": "token", "token": token}
+        if not produced:
+            # Jamais de bulle vide : message de repli + orientation vers le mode rapide,
+            # mieux adapté aux demandes créatives (et qui propose des cartes d'action).
+            yield {"type": "token", "token": (
+                "Je n'ai pas trouvé d'éléments pertinents dans le document pour cette demande "
+                "(elle porte sans doute sur des éléments que tu as inventés). Pour une "
+                "**adaptation créative** — proposer des arcs, chapitres, scènes ou PNJ — "
+                "utilise plutôt le bouton **« Envoyer »** (mode rapide) : il est conversationnel, "
+                "voit ta campagne, et te propose des cartes « Créer dans la campagne »."
+            )}
         yield {"type": "done"}
 
     def _group(self, chunks: list[dict]) -> list[list[dict]]:

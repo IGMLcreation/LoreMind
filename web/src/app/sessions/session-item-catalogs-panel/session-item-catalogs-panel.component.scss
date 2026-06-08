@@ -1,0 +1,48 @@
+.sic-panel { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.25rem; }
+
+.loading-hint, .empty-hint {
+  color: var(--color-text-muted, #9aa0aa); font-size: 0.85rem; font-style: italic; padding: 0.5rem 0;
+}
+
+.sic-list { display: flex; flex-direction: column; gap: 0.3rem; }
+.sic-item {
+  display: flex; align-items: center; gap: 0.45rem; width: 100%;
+  padding: 0.45rem 0.6rem; border-radius: 7px;
+  border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03);
+  color: inherit; cursor: pointer; text-align: left;
+  &:hover { background: rgba(255,255,255,0.08); }
+  .sic-item-name { flex: 1; }
+  .sic-item-count {
+    font-size: 0.72rem; color: var(--color-text-muted, #9aa0aa);
+    background: rgba(255,255,255,0.06); padding: 0.05rem 0.35rem; border-radius: 4px;
+  }
+}
+
+.sic-detail { display: flex; flex-direction: column; gap: 0.5rem; }
+.sic-back {
+  display: inline-flex; align-items: center; gap: 0.25rem; align-self: flex-start;
+  padding: 0.2rem 0.4rem; border: none; background: none;
+  color: var(--color-text-muted, #9aa0aa); cursor: pointer; font-size: 0.8rem;
+  &:hover { color: inherit; }
+}
+h4 { margin: 0; font-size: 0.95rem; }
+
+.sic-group-title {
+  font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em;
+  color: #c4a8ff; margin: 0.5rem 0 0.2rem;
+}
+
+.sic-obj {
+  padding: 0.4rem 0.5rem; border-radius: 7px; background: rgba(255,255,255,0.03); margin-bottom: 0.3rem;
+  .sic-obj-main { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
+  .sic-obj-name { font-weight: 500; }
+  .sic-obj-price { color: #e0c074; font-size: 0.82rem; white-space: nowrap; }
+  .sic-obj-desc { font-size: 0.82rem; color: var(--color-text-muted, #cfd3da); margin-top: 0.15rem; }
+  .sic-note {
+    display: inline-flex; align-items: center; gap: 0.25rem; margin-top: 0.35rem;
+    padding: 0.2rem 0.45rem; border-radius: 5px; font-size: 0.74rem;
+    border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.05); color: inherit; cursor: pointer;
+    &:hover:not(:disabled) { background: rgba(255,255,255,0.1); }
+    &:disabled { opacity: 0.5; cursor: default; }
+  }
+}

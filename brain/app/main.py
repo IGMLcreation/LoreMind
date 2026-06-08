@@ -1015,6 +1015,80 @@ async def improvise_table_roll(
     return ImproviseRollResponseDTO(narration=raw.strip())
 
 
+# --- Catalogues d'objets (boutiques) : génération IA -------------------------
+
+
+class GenerateCatalogRequestDTO(BaseModel):
+    description: str
+    context: str = Field(default="")
+
+
+class GeneratedCatalogItemDTO(BaseModel):
+    name: str
+    price: str = ""
+    category: str = ""
+    description: str = ""
+
+
+class GenerateCatalogResponseDTO(BaseModel):
+    name: str
+    description: str = ""
+    items: list[GeneratedCatalogItemDTO]
+
+
+@app.post("/generate/item-catalog", response_model=GenerateCatalogResponseDTO)
+async def generate_item_catalog(
+    body: GenerateCatalogRequestDTO,
+    llm: Annotated[LLMProvider, Depends(get_llm_provider)],
+) -> GenerateCatalogResponseDTO:
+    """Génère un catalogue d'objets (boutique, butin…) — nom, prix, catégorie, description."""
+    context_block = f"\nContexte de la campagne :\n{body.context.strip()}\n" if body.context.strip() else ""
+    prompt = (
+        "Tu es un assistant de jeu de rôle. Génère un CATALOGUE D'OBJETS (boutique, butin, trésor…).\n"
+        f"Sujet : {body.description.strip()}\n"
+        f"{context_block}\n"
+        "Règles IMPÉRATIVES :\n"
+        "- Réponds UNIQUEMENT par un objet JSON valide, sans texte autour.\n"
+        '- Format : {"name": "...", "description": "...", "items": '
+        '[{"name": "Objet", "price": "ex. 50 po", "category": "ex. Armes", "description": "effet/détails"}]}\n'
+        "- Des objets variés et cohérents avec le sujet (et le contexte s'il est fourni).\n"
+        "- 'price' = prix court dans la monnaie du jeu ; 'category' = regroupement (Armes, Potions…) ; "
+        "'description' = effet/détails en une phrase. En français.\n"
+        "Renvoie maintenant le JSON."
+    )
+    try:
+        raw = await generate_with_retry(llm, prompt, output_format="json", temperature=0.7)
+    except LLMProviderError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    parsed, _ = load_json_object(raw)
+    if not isinstance(parsed, dict):
+        raise HTTPException(status_code=502, detail="Le modèle n'a pas renvoyé de catalogue exploitable.")
+
+    items: list[GeneratedCatalogItemDTO] = []
+    for it in parsed.get("items", []) or []:
+        if not isinstance(it, dict):
+            continue
+        name = str(it.get("name") or "").strip()
+        if not name:
+            continue
+        items.append(GeneratedCatalogItemDTO(
+            name=name[:200],
+            price=str(it.get("price") or "").strip(),
+            category=str(it.get("category") or "").strip(),
+            description=str(it.get("description") or "").strip(),
+        ))
+    if not items:
+        raise HTTPException(status_code=502, detail="Aucun objet généré — réessaie ou reformule.")
+
+    name = str(parsed.get("name") or body.description).strip()[:120] or "Catalogue généré"
+    return GenerateCatalogResponseDTO(
+        name=name,
+        description=str(parsed.get("description") or "").strip(),
+        items=items,
+    )
+
+
 # --- Notebooks (atelier RAG) : indexation des sources + chat ancré ----------
 
 

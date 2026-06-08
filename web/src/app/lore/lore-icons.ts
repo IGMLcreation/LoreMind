@@ -2,7 +2,7 @@ import {
   Folder,
   Users, Swords, MapPin, Shield, Crown, Skull, Gem,
   BookOpen, Scroll, Wand2, Sparkles, TreePine, Mountain,
-  Ship, Flame, Star, Moon, Key, Globe, Compass, Dices, FileUp, LucideIconData
+  Ship, Flame, Star, Moon, Key, Globe, Compass, Dices, FileUp, Package, LucideIconData
 } from 'lucide-angular';
 import { CAMPAIGN_ICON_OPTIONS } from '../campaigns/campaign-icons';
 
@@ -44,6 +44,7 @@ export const LORE_ICON_OPTIONS: IconOption[] = [
   { key: 'compass',   icon: Compass },
   { key: 'dice',      icon: Dices },
   { key: 'file-up',   icon: FileUp },
+  { key: 'package',   icon: Package },
 ];
 
 /** Icône par défaut pour un dossier sans icône. */

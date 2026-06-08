@@ -1,0 +1,36 @@
+.icl-page { max-width: 760px; margin: 0 auto; padding: 1rem 1.5rem 3rem; }
+
+.icl-toolbar {
+  display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;
+  .spacer { flex: 1; }
+  button {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.4rem 0.8rem; border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04);
+    color: inherit; cursor: pointer; font-size: 0.85rem;
+    &:hover { background: rgba(255,255,255,0.09); }
+  }
+  .btn-create { background: #667eea; border-color: #667eea; color: #fff; }
+  .btn-create:hover { background: #5568d3; }
+}
+
+.icl-header {
+  margin-bottom: 1.25rem;
+  h1 { display: flex; align-items: center; gap: 0.5rem; margin: 0 0 0.35rem; font-size: 1.5rem; }
+  .icl-hint { margin: 0; color: var(--color-text-muted, #9aa0aa); font-size: 0.9rem; }
+}
+
+.icl-list { display: flex; flex-direction: column; gap: 0.4rem; }
+.empty { color: var(--color-text-muted, #9aa0aa); font-style: italic; }
+
+.icl-item {
+  display: flex; align-items: center; gap: 0.55rem;
+  padding: 0.7rem 0.85rem; border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03);
+  color: inherit; cursor: pointer; text-align: left;
+  &:hover { background: rgba(255,255,255,0.07); }
+  .icl-item-name { flex: 1; font-weight: 500; }
+  .icl-item-count { font-size: 0.78rem; color: var(--color-text-muted, #9aa0aa); }
+  .icl-del { display: inline-flex; padding: 0.25rem; border-radius: 5px; color: #e88;
+    &:hover { background: rgba(224,90,90,0.15); } }
+}

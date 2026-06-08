@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { LucideAngularModule, User, Drama, Swords, Dices, ExternalLink, Sparkles, Table2 } from 'lucide-angular';
+import { LucideAngularModule, User, Drama, Swords, Dices, ExternalLink, Sparkles, Table2, Package } from 'lucide-angular';
 import { catchError, of } from 'rxjs';
 import { CampaignService } from '../../services/campaign.service';
 import { CharacterService } from '../../services/character.service';
@@ -14,8 +14,9 @@ import {
 } from '../session-dice-panel/session-dice-panel.component';
 import { SessionAiChatPanelComponent } from '../session-ai-chat-panel/session-ai-chat-panel.component';
 import { SessionRandomTablesPanelComponent } from '../session-random-tables-panel/session-random-tables-panel.component';
+import { SessionItemCatalogsPanelComponent } from '../session-item-catalogs-panel/session-item-catalogs-panel.component';
 
-type TabId = 'dice' | 'tables' | 'characters' | 'scenes' | 'ai';
+type TabId = 'dice' | 'tables' | 'objects' | 'characters' | 'scenes' | 'ai';
 
 /**
  * Panneau latéral du mode jeu : référence rapide en lecture seule.
@@ -30,7 +31,7 @@ type TabId = 'dice' | 'tables' | 'characters' | 'scenes' | 'ai';
 @Component({
   selector: 'app-session-reference-panel',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, SessionDicePanelComponent, SessionAiChatPanelComponent, SessionRandomTablesPanelComponent],
+  imports: [CommonModule, LucideAngularModule, SessionDicePanelComponent, SessionAiChatPanelComponent, SessionRandomTablesPanelComponent, SessionItemCatalogsPanelComponent],
   templateUrl: './session-reference-panel.component.html',
   styleUrls: ['./session-reference-panel.component.scss']
 })
@@ -42,6 +43,7 @@ export class SessionReferencePanelComponent implements OnChanges {
   readonly ExternalLink = ExternalLink;
   readonly Sparkles = Sparkles;
   readonly Table2 = Table2;
+  readonly Package = Package;
 
   @Input() campaignId!: string;
   /** Partie active — nécessaire pour charger les PJ (refonte Playthrough). */
@@ -51,6 +53,8 @@ export class SessionReferencePanelComponent implements OnChanges {
   @Output() rolled = new EventEmitter<DiceRollResult>();
   /** Émis quand l'IA répond et que le MJ veut sauvegarder la réponse comme entrée. */
   @Output() aiReplyToJournal = new EventEmitter<string>();
+  /** Émis pour consigner un objet de catalogue au journal (entrée NOTE). */
+  @Output() noteToJournal = new EventEmitter<string>();
 
   activeTab: TabId = 'dice';
 
@@ -142,5 +146,9 @@ export class SessionReferencePanelComponent implements OnChanges {
 
   onAiSaveToJournal(content: string): void {
     this.aiReplyToJournal.emit(content);
+  }
+
+  onItemNote(content: string): void {
+    this.noteToJournal.emit(content);
   }
 }

@@ -180,7 +180,8 @@
         [sessionId]="session.id"
         [canAddToJournal]="session.active"
         (rolled)="onDiceRolled($event)"
-        (aiReplyToJournal)="onAiReplyToJournal($event)">
+        (aiReplyToJournal)="onAiReplyToJournal($event)"
+        (noteToJournal)="onItemNoteToJournal($event)">
       </app-session-reference-panel>
     </aside>
 
