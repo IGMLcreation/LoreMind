@@ -28,7 +28,10 @@ import java.util.Map;
 @RequestMapping("/api/notebooks")
 public class NotebookController {
 
-    private static final long SSE_TIMEOUT_MS = 10 * 60 * 1000L;
+    // L'analyse approfondie (map-reduce sur tout le doc) peut être longue sur un gros
+    // livre / un modèle lent → 30 min. Pour aller plus vite : modèle gros-contexte
+    // (moins de lots). Au-delà, l'expiration est gérée proprement (pas de crash).
+    private static final long SSE_TIMEOUT_MS = 30 * 60 * 1000L;
 
     private final NotebookService service;
     private final NotebookChatStreamer chatStreamer;
@@ -143,13 +146,18 @@ public class NotebookController {
         return emitter;
     }
 
-    // --- Helpers SSE (mêmes conventions que AiChatController) ---
+    // --- Helpers SSE ---
+    // IMPORTANT : on attrape AUSSI IllegalStateException. Si le flux a déjà été fermé
+    // (timeout async, client déconnecté), `emitter.send/complete` la lève — et comme
+    // ces helpers tournent dans un thread d'exécuteur, une exception non gérée y
+    // remontait jusqu'au pool ("Exception in thread task-1: ResponseBodyEmitter has
+    // already completed"). On l'ignore silencieusement : il n'y a plus rien à envoyer.
 
     private void sendToken(SseEmitter emitter, String token) {
         try {
             emitter.send(SseEmitter.event().name("token").data("{\"token\":" + jsonEscape(token) + "}"));
-        } catch (IOException e) {
-            emitter.completeWithError(e);
+        } catch (IOException | IllegalStateException e) {
+            // flux fermé/expiré : on cesse d'écrire
         }
     }
 
@@ -157,8 +165,8 @@ public class NotebookController {
         try {
             emitter.send(SseEmitter.event().name("progress")
                     .data("{\"current\":" + p.current() + ",\"total\":" + p.total() + "}"));
-        } catch (IOException e) {
-            emitter.completeWithError(e);
+        } catch (IOException | IllegalStateException e) {
+            // flux fermé/expiré : on cesse d'écrire
         }
     }
 
@@ -166,8 +174,8 @@ public class NotebookController {
         try {
             emitter.send(SseEmitter.event().name("done").data("{}"));
             emitter.complete();
-        } catch (IOException e) {
-            emitter.completeWithError(e);
+        } catch (IOException | IllegalStateException e) {
+            // flux déjà fermé/expiré : rien à compléter
         }
     }
 
@@ -176,8 +184,8 @@ public class NotebookController {
             String message = error.getMessage() != null ? error.getMessage() : error.getClass().getSimpleName();
             emitter.send(SseEmitter.event().name("error").data("{\"message\":" + jsonEscape(message) + "}"));
             emitter.complete();
-        } catch (IOException ioe) {
-            emitter.completeWithError(ioe);
+        } catch (IOException | IllegalStateException e) {
+            // flux déjà fermé/expiré : rien à envoyer
         }
     }
 

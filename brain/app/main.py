@@ -66,7 +66,7 @@ from app.infrastructure.pdf_extractor import PyMuPdfTextExtractor
 app = FastAPI(
     title="LoreMind Brain",
     description="Backend IA pour la génération de contenu narratif.",
-    version="0.11.1-beta",
+    version="0.11.2-beta",
 )
 
 logger = logging.getLogger(__name__)
