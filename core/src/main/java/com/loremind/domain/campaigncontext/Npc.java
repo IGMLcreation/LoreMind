@@ -46,6 +46,9 @@ public class Npc {
     /** Référence vers la Campaign parente (cross-aggregate via ID). */
     private String campaignId;
 
+    /** Dossier de classement (texte libre, ex. « Bard's Gate »). Nullable = non classé. */
+    private String folder;
+
     /** Ordre d'affichage dans la liste des PNJ de la campagne. */
     private int order;
 

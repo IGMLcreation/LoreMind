@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { LucideAngularModule, ArrowLeft, Edit3, Sparkles } from 'lucide-angular';
 import { NpcService } from '../../../services/npc.service';
 import { CampaignService } from '../../../services/campaign.service';
@@ -22,7 +23,7 @@ import { AiChatDrawerComponent } from '../../../shared/ai-chat-drawer/ai-chat-dr
   templateUrl: './npc-view.component.html',
   styleUrls: ['./npc-view.component.scss']
 })
-export class NpcViewComponent implements OnInit {
+export class NpcViewComponent implements OnInit, OnDestroy {
   readonly ArrowLeft = ArrowLeft;
   readonly Edit3 = Edit3;
   readonly Sparkles = Sparkles;
@@ -36,6 +37,8 @@ export class NpcViewComponent implements OnInit {
   chatOpen = false;
   toggleChat(): void { this.chatOpen = !this.chatOpen; }
 
+  private paramsSub?: Subscription;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -46,25 +49,42 @@ export class NpcViewComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    const params = this.route.snapshot.paramMap;
-    this.campaignId = params.get('campaignId');
-    this.npcId = params.get('npcId');
-    if (this.npcId) {
-      this.service.getById(this.npcId).subscribe({
-        next: n => { this.npc = n; },
-        error: () => this.back()
-      });
-    }
-    if (this.campaignId) {
-      this.campaignSidebar.show(this.campaignId);
-      this.campaignService.getCampaignById(this.campaignId).subscribe(camp => {
-        if (camp.gameSystemId) {
-          this.gameSystemService.getById(camp.gameSystemId).subscribe(gs => {
-            this.templateFields = gs.npcTemplate ?? [];
-          });
-        }
-      });
-    }
+    // S'abonner aux paramMap (pas le snapshot) : quand on passe d'un PNJ à un autre,
+    // Angular RÉUTILISE le composant (même route) → ngOnInit ne re-tourne pas. Sans ce
+    // subscribe, la fiche du centre resterait figée sur l'ancien PNJ.
+    this.paramsSub = this.route.paramMap.subscribe(params => {
+      const newCampaignId = params.get('campaignId');
+      this.npcId = params.get('npcId');
+
+      // Recharge la fiche à CHAQUE changement de PNJ.
+      this.chatOpen = false;
+      if (this.npcId) {
+        this.service.getById(this.npcId).subscribe({
+          next: n => { this.npc = n; },
+          error: () => this.back()
+        });
+      }
+
+      // Sidebar + template du système : seulement quand la campagne change (inutile
+      // de les recharger à chaque switch de PNJ d'une même campagne).
+      if (newCampaignId && newCampaignId !== this.campaignId) {
+        this.campaignId = newCampaignId;
+        this.campaignSidebar.show(this.campaignId);
+        this.campaignService.getCampaignById(this.campaignId).subscribe(camp => {
+          if (camp.gameSystemId) {
+            this.gameSystemService.getById(camp.gameSystemId).subscribe(gs => {
+              this.templateFields = gs.npcTemplate ?? [];
+            });
+          }
+        });
+      } else if (newCampaignId) {
+        this.campaignId = newCampaignId;
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.paramsSub?.unsubscribe();
   }
 
   edit(): void {

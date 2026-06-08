@@ -54,6 +54,9 @@ public class NpcJpaEntity {
     @Column(name = "campaign_id", nullable = false)
     private Long campaignId;
 
+    @Column(name = "folder")
+    private String folder;
+
     @Column(name = "\"order\"", nullable = false)
     private int order;
 

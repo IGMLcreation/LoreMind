@@ -63,11 +63,18 @@ class NotebookDeepUseCase:
     async def stream(
         self,
         source_ids: list[str],
-        question: str,
+        messages: list[ChatMessage],
         context: str = "",
+        history_limit: int = 8,
     ) -> AsyncIterator[dict]:
         """Yield des évènements : {type:'progress',current,total}, {type:'token',token},
-        {type:'done'}. (Les erreurs LLM des lots sont tolérées : lot ignoré.)"""
+        {type:'done'}. (Les erreurs LLM des lots sont tolérées : lot ignoré.)
+
+        La dernière question utilisateur sert à la LECTURE du document (map) ; la
+        SYNTHÈSE (reduce) reçoit les `history_limit` derniers messages → les relances
+        conversationnelles (« et pour les autres ? ») fonctionnent aussi en approfondi.
+        """
+        question = next((m.content for m in reversed(messages) if m.role == "user"), "")
         chunks: list[dict] = []
         for sid in source_ids:
             chunks.extend(vector_store.all_chunks(sid))
@@ -102,10 +109,11 @@ class NotebookDeepUseCase:
             if context.strip() else ""
         )
         system_prompt = _REDUCE_SYSTEM.format(context_block=context_block, notes_block=notes_block)
+        # Historique récent pour la cohérence des relances ; on garantit que le
+        # dernier message est bien la question courante.
+        reduce_messages = messages[-history_limit:] if messages else [ChatMessage(role="user", content=question)]
         llm_chat: LLMChatProvider = self._llm  # type: ignore[assignment]
-        async for token in llm_chat.stream_chat(
-            [ChatMessage(role="user", content=question)], system_prompt=system_prompt
-        ):
+        async for token in llm_chat.stream_chat(reduce_messages, system_prompt=system_prompt):
             yield {"type": "token", "token": token}
         yield {"type": "done"}
 

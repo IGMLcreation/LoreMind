@@ -1100,7 +1100,8 @@ async def chat_notebook_deep_stream(
 ) -> StreamingResponse:
     """Analyse APPROFONDIE (map-reduce sur tout le document). Évènements SSE :
     `progress` {current,total} pendant la lecture, puis `token` {token}, puis `done`."""
-    question = next((m.content for m in reversed(body.messages) if m.role == "user"), "")
+    messages = [ChatMessage(role=m.role, content=m.content) for m in body.messages]
+    question = next((m.content for m in reversed(messages) if m.role == "user"), "")
 
     def _sse(event: str, data: dict) -> str:
         return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
@@ -1110,7 +1111,7 @@ async def chat_notebook_deep_stream(
             yield _sse("error", {"message": "Question vide."})
             return
         try:
-            async for ev in use_case.stream(body.source_ids, question, context=body.context):
+            async for ev in use_case.stream(body.source_ids, messages, context=body.context):
                 ev_type = ev.pop("type")
                 yield _sse(ev_type, ev)
         except (LLMProviderError, EmbeddingError) as exc:

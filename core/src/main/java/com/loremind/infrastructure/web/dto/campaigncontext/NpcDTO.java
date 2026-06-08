@@ -20,5 +20,6 @@ public class NpcDTO {
     private Map<String, List<String>> imageValues = new HashMap<>();
     private Map<String, Map<String, String>> keyValueValues = new HashMap<>();
     private String campaignId;
+    private String folder;
     private int order;
 }

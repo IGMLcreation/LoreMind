@@ -96,18 +96,45 @@ export function buildCampaignTree(campaignId: string, data: CampaignTreeData): T
   // à une Partie (Playthrough). On ne les affiche donc plus dans la sidebar de
   // campagne — seuls les PNJ (donnée de scénario) restent sous "Personnages".
   const sortedNpcs = [...data.npcs].sort(byName);
-  const npcItems: TreeItem[] = sortedNpcs.map(n => ({
+  const npcItem = (n: Npc): TreeItem => ({
     id: `npc-${n.id}`,
     label: n.name,
     route: `/campaigns/${campaignId}/npcs/${n.id}`
-  }));
+  });
+
+  // Regroupement par DOSSIER : un sous-nœud (dépliable) par dossier, puis les PNJ
+  // non classés directement sous « PNJ ».
+  const npcsByFolder = new Map<string, Npc[]>();
+  const ungroupedNpcs: Npc[] = [];
+  for (const n of sortedNpcs) {
+    const f = (n.folder ?? '').trim();
+    if (f) {
+      if (!npcsByFolder.has(f)) npcsByFolder.set(f, []);
+      npcsByFolder.get(f)!.push(n);
+    } else {
+      ungroupedNpcs.push(n);
+    }
+  }
+  const npcFolderNodes: TreeItem[] = [...npcsByFolder.keys()]
+    .sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }))
+    .map(folder => {
+      const items = npcsByFolder.get(folder)!.map(npcItem);
+      return {
+        id: `npc-folder-${folder}`,
+        label: folder,
+        iconKey: 'folder',
+        children: items,
+        meta: String(items.length)
+      };
+    });
+  const npcChildren: TreeItem[] = [...npcFolderNodes, ...ungroupedNpcs.map(npcItem)];
 
   const npcsNode: TreeItem = {
     id: 'npcs-root',
     label: 'PNJ',
     iconKey: 'c-drama',
-    children: npcItems,
-    meta: npcItems.length ? String(npcItems.length) : undefined,
+    children: npcChildren,
+    meta: sortedNpcs.length ? String(sortedNpcs.length) : undefined,
     // Porte le header de section "Personnages" (les PJ ayant migré vers la Partie).
     // Le filet au-dessus est masqué par CSS si c'est le tout premier item de la sidebar.
     sectionHeaderBefore: 'Personnages',

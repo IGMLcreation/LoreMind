@@ -46,6 +46,9 @@ export class NpcEditComponent implements OnInit {
   npcId: string | null = null;
 
   name = '';
+  folder = '';
+  /** Dossiers déjà utilisés dans la campagne (datalist d'auto-complétion). */
+  existingFolders: string[] = [];
   portraitImageId: string | null = null;
   headerImageId: string | null = null;
   values: Record<string, string> = {};
@@ -72,12 +75,14 @@ export class NpcEditComponent implements OnInit {
     if (this.campaignId) {
       this.loadTemplateForCampaign(this.campaignId);
       this.campaignSidebar.show(this.campaignId);
+      this.loadExistingFolders(this.campaignId);
     }
 
     if (this.npcId) {
       this.service.getById(this.npcId).subscribe({
         next: (n) => {
           this.name = n.name;
+          this.folder = n.folder ?? '';
           this.portraitImageId = n.portraitImageId ?? null;
           this.headerImageId = n.headerImageId ?? null;
           this.values = n.values ?? {};
@@ -88,6 +93,17 @@ export class NpcEditComponent implements OnInit {
         error: () => this.back()
       });
     }
+  }
+
+  private loadExistingFolders(campaignId: string): void {
+    this.service.getByCampaign(campaignId).subscribe({
+      next: (list) => {
+        this.existingFolders = [...new Set(
+          list.map(n => (n.folder ?? '').trim()).filter(f => f.length > 0)
+        )].sort((a, b) => a.localeCompare(b, 'fr'));
+      },
+      error: () => { this.existingFolders = []; }
+    });
   }
 
   private loadTemplateForCampaign(campaignId: string): void {
@@ -111,6 +127,7 @@ export class NpcEditComponent implements OnInit {
     if (!this.name.trim() || !this.campaignId) return;
     const payload = {
       name: this.name.trim(),
+      folder: this.folder.trim() || null,
       portraitImageId: this.portraitImageId,
       headerImageId: this.headerImageId,
       values: this.values,

@@ -29,6 +29,7 @@ public class NpcService {
             Map<String, List<String>> imageValues,
             Map<String, Map<String, String>> keyValueValues,
             String campaignId,
+            String folder,
             Integer order
     ) {}
 
@@ -44,6 +45,7 @@ public class NpcService {
                 .imageValues(data.imageValues() != null ? new HashMap<>(data.imageValues()) : new HashMap<>())
                 .keyValueValues(data.keyValueValues() != null ? new HashMap<>(data.keyValueValues()) : new HashMap<>())
                 .campaignId(data.campaignId())
+                .folder(normalizeFolder(data.folder()))
                 .order(order)
                 .build();
         return npcRepository.save(npc);
@@ -66,6 +68,7 @@ public class NpcService {
         existing.setValues(data.values() != null ? new HashMap<>(data.values()) : new HashMap<>());
         existing.setImageValues(data.imageValues() != null ? new HashMap<>(data.imageValues()) : new HashMap<>());
         existing.setKeyValueValues(data.keyValueValues() != null ? new HashMap<>(data.keyValueValues()) : new HashMap<>());
+        existing.setFolder(normalizeFolder(data.folder()));
         if (data.order() != null) {
             existing.setOrder(data.order());
         }
@@ -74,6 +77,13 @@ public class NpcService {
 
     public void deleteNpc(String id) {
         npcRepository.deleteById(id);
+    }
+
+    /** Trim le dossier ; chaîne vide → null (= non classé). */
+    private static String normalizeFolder(String folder) {
+        if (folder == null) return null;
+        String trimmed = folder.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     private int nextOrderFor(String campaignId) {

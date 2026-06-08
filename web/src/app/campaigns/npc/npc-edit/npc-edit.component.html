@@ -36,6 +36,21 @@
       />
     </div>
 
+    <div class="field">
+      <label for="npc-folder">Dossier</label>
+      <input
+        id="npc-folder"
+        type="text"
+        [(ngModel)]="folder"
+        name="folder"
+        list="npc-folders"
+        placeholder="Ex: Bard's Gate, Faction des Pipers… (laisser vide = non classé)"
+      />
+      <datalist id="npc-folders">
+        <option *ngFor="let f of existingFolders" [value]="f"></option>
+      </datalist>
+    </div>
+
     <div class="field-row image-row">
       <div class="field portrait-field">
         <label>Portrait</label>
