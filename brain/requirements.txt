@@ -1,4 +1,8 @@
-fastapi==0.115.*
+fastapi==0.136.*
+# Pin EXPLICITE : fastapi n'exige que starlette>=0.46.0 — sans ce pin, un
+# environnement existant peut garder une starlette vulnérable.
+# >= 0.49.1 : corrige CVE-2025-54121 et CVE-2025-62727.
+starlette>=0.49.1,<1.0
 uvicorn[standard]==0.32.*
 httpx==0.27.*
 pydantic-settings==2.6.*
@@ -20,4 +24,6 @@ tiktoken==0.8.*
 #     (le binaire tesseract-ocr est installe dans le Dockerfile, langues fra+eng)
 pymupdf==1.24.*
 pytesseract==0.3.*
-Pillow==11.*
+# 12.2+ : corrige 6 CVE de parsing d'images (surface critique : pages de PDF
+# uploadés par l'utilisateur rasterisées puis passées à l'OCR).
+Pillow==12.2.*
