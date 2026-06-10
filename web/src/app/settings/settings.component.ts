@@ -1,22 +1,22 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { interval, switchMap, Subscription } from 'rxjs';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { LucideAngularModule, ArrowLeft, RefreshCw, Save, Check, AlertCircle, Download, Trash2, Plus, X, Heart, Link2, Unlink } from 'lucide-angular';
-import { SettingsService, AppSettings, AppSettingsUpdate, OneMinModelGroup, OpenRouterModel, MistralModel, GeminiModel, OllamaPullEvent } from '../services/settings.service';
-import { UpdatesService, UpdateStatus } from '../services/updates.service';
-import { ConfigService } from '../services/config.service';
+import { LucideAngularModule, ArrowLeft, RefreshCw, Save, Check, AlertCircle, Plus } from 'lucide-angular';
+import { SettingsService, AppSettings, AppSettingsUpdate, OneMinModelGroup, OpenRouterModel, MistralModel, GeminiModel } from '../services/settings.service';
 import { LayoutService } from '../services/layout.service';
-import { LicenseService, LicenseStatusDTO, BetaStatusDTO, ChannelStatusDTO, ChannelName } from '../services/license.service';
-import { ConfirmDialogService } from '../shared/confirm-dialog/confirm-dialog.service';
+import { UpdatesSectionComponent } from './updates-section/updates-section.component';
+import { OllamaModelManagerComponent } from './ollama-model-manager/ollama-model-manager.component';
 
 /**
  * Ecran de parametrage du LLM utilise par le Brain.
  *
- * Deux providers au choix :
- *  - Ollama (local) : on liste dynamiquement les modeles installes.
- *  - 1min.ai (cloud) : on fournit une cle API + on choisit dans un catalogue fixe.
+ * Responsabilite : le FORMULAIRE de configuration (fournisseur LLM, modeles,
+ * cles API, embeddings RAG, fenetre de contexte, import PDF) + sa sauvegarde.
+ *
+ * Les responsabilites voisines sont des sous-composants standalone :
+ *  - UpdatesSectionComponent : mises a jour conteneurs + licence Patreon + canal beta ;
+ *  - OllamaModelManagerComponent : pull/suppression des modeles Ollama.
  *
  * Les modifications sont persistees cote Brain dans data/settings.json
  * (fichier local, usage mono-utilisateur) et appliquees a la prochaine
@@ -25,80 +25,18 @@ import { ConfirmDialogService } from '../shared/confirm-dialog/confirm-dialog.se
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule],
+  imports: [CommonModule, FormsModule, LucideAngularModule, UpdatesSectionComponent, OllamaModelManagerComponent],
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.scss']
 })
-export class SettingsComponent implements OnInit, OnDestroy {
+export class SettingsComponent implements OnInit {
 
   readonly ArrowLeft = ArrowLeft;
   readonly RefreshCw = RefreshCw;
   readonly Save = Save;
   readonly Check = Check;
   readonly AlertCircle = AlertCircle;
-  readonly Download = Download;
-  readonly Trash2 = Trash2;
   readonly Plus = Plus;
-  readonly X = X;
-  readonly Heart = Heart;
-  readonly Link2 = Link2;
-  readonly Unlink = Unlink;
-
-  // --- Licence Patreon (canal beta) ---
-  licenseStatus: LicenseStatusDTO | null = null;
-  licenseLoading = false;
-  licenseError = '';
-  /** Token JWT colle par l'utilisateur apres OAuth. */
-  licenseJwtInput = '';
-  /** Etat du canal beta (digests des images privees). */
-  betaStatus: BetaStatusDTO | null = null;
-  betaChecking = false;
-
-  // --- Bascule de canal stable <-> beta via sidecar switcher ---
-  channelStatus: ChannelStatusDTO | null = null;
-  /** True pendant le polling apres clic. Bloque les boutons. */
-  switchInFlight = false;
-  /** ID de la commande de switch en cours, pour ignorer les vieux resultats. */
-  private switchCommandId: string | null = null;
-  /** Subscription du polling pour pouvoir l'arreter. */
-  private switchPollSub: Subscription | null = null;
-  /** Erreur affichee si le switch a echoue. */
-  switchError = '';
-
-  // --- Pull / delete de modeles Ollama ---
-  /** Dialog d'ajout de modele ouvert/ferme. */
-  pullDialogOpen = false;
-  /** Nom saisi par l'utilisateur dans le dialog. */
-  pullModelName = '';
-  /** Suggestions courantes affichees dans le dialog. */
-  readonly pullSuggestions = [
-    'gemma4:e4b', 'gemma3:4b', 'gemma3:12b',
-    'llama3.2:3b', 'llama3.1:8b',
-    'mistral:7b', 'qwen2.5:3b', 'qwen2.5:7b'
-  ];
-  /** Pull en cours ; null si aucun. */
-  pullInProgress = false;
-  /** Etape courante affichee a l'utilisateur (ex: "downloading", "verifying"). */
-  pullStatus = '';
-  /** Bytes telecharges sur le digest courant. */
-  pullCompleted = 0;
-  /** Bytes totaux du digest courant. */
-  pullTotal = 0;
-  /** Souscription au flux de pull pour pouvoir l'annuler. */
-  private pullSubscription: Subscription | null = null;
-  /** True si on a recu un evenement {status:"success"} d'Ollama. Sans ca,
-   *  une fermeture de stream (timeout proxy, perte reseau) ne doit PAS etre
-   *  interpretee comme une reussite. */
-  private pullSucceeded = false;
-
-  /** Modele en cours de suppression (nom) pour disabler son bouton. */
-  deletingModel: string | null = null;
-
-  // Mises a jour conteneurs
-  updateStatus: UpdateStatus | null = null;
-  updateChecking = false;
-  updateApplying = false;
-  updateMessage = '';
 
   settings: AppSettings | null = null;
   ollamaModels: string[] = [];
@@ -156,10 +94,6 @@ export class SettingsComponent implements OnInit, OnDestroy {
   constructor(
     private settingsService: SettingsService,
     private router: Router,
-    private updatesService: UpdatesService,
-    public config: ConfigService,
-    private licenseService: LicenseService,
-    private confirmDialog: ConfirmDialogService,
     private layoutService: LayoutService
   ) {}
 
@@ -168,290 +102,6 @@ export class SettingsComponent implements OnInit, OnDestroy {
     // section precedente (cf. fix CampaignsComponent / LoreComponent).
     this.layoutService.hide();
     this.loadSettings();
-    if (this.config.updateCheckEnabled) {
-      this.checkUpdates();
-    }
-    this.loadLicense();
-    this.loadChannelStatus();
-  }
-
-  // --- Licence Patreon ---------------------------------------------------
-
-  loadLicense(): void {
-    this.licenseLoading = true;
-    this.licenseService.getStatus().subscribe({
-      next: (s) => {
-        this.licenseStatus = s;
-        this.licenseLoading = false;
-        if (s?.enabled && (s.status === 'VALID' || s.status === 'GRACE') && s.betaChannelEnabled) {
-          this.checkBeta();
-        }
-      },
-      error: () => { this.licenseLoading = false; }
-    });
-  }
-
-  /**
-   * Ouvre la page OAuth Patreon dans une nouvelle fenetre.
-   * L'utilisateur copie ensuite le JWT et le colle dans l'input ci-dessous.
-   */
-  connectPatreon(): void {
-    this.licenseError = '';
-    this.licenseService.getConnectUrl().subscribe({
-      next: (r) => {
-        if (!r?.url) {
-          this.licenseError = 'Impossible de generer l\'URL de connexion. Verifie ta config.';
-          return;
-        }
-        window.open(r.url, '_blank', 'noopener');
-      }
-    });
-  }
-
-  installLicense(): void {
-    const jwt = this.licenseJwtInput.trim();
-    if (!jwt) {
-      this.licenseError = 'Colle d\'abord le token recu apres connexion Patreon.';
-      return;
-    }
-    this.licenseError = '';
-    this.licenseService.install(jwt).subscribe((res) => {
-      if ((res as any)?.error) {
-        this.licenseError = (res as any).error;
-        return;
-      }
-      this.licenseStatus = res as LicenseStatusDTO;
-      this.licenseJwtInput = '';
-      this.successMessage = 'Compte Patreon connecte. L\'acces beta est actif.';
-      if (this.licenseStatus.betaChannelEnabled) {
-        this.checkBeta();
-      }
-    });
-  }
-
-  refreshLicense(): void {
-    this.licenseLoading = true;
-    this.licenseService.refresh().subscribe({
-      next: (s) => {
-        this.licenseStatus = s;
-        this.licenseLoading = false;
-      },
-      error: () => { this.licenseLoading = false; }
-    });
-  }
-
-  disconnectPatreon(): void {
-    this.confirmDialog.confirm({
-      title: 'Deconnecter Patreon',
-      message: 'Deconnecter ton compte Patreon ?',
-      details: ['Tu perdras l\'acces au canal beta.'],
-      confirmLabel: 'Deconnecter',
-      variant: 'warning'
-    }).then(ok => {
-      if (!ok) return;
-      this.licenseService.disconnect().subscribe(() => {
-        this.licenseStatus = null;
-        this.betaStatus = null;
-        this.successMessage = 'Compte Patreon deconnecte.';
-        this.loadLicense();
-      });
-    });
-  }
-
-  toggleBetaChannel(enabled: boolean): void {
-    this.licenseService.setBetaChannel(enabled).subscribe({
-      next: (s) => {
-        if (s) this.licenseStatus = s;
-        if (enabled) this.checkBeta();
-        else this.betaStatus = null;
-      }
-    });
-  }
-
-  checkBeta(): void {
-    this.betaChecking = true;
-    this.licenseService.checkBeta().subscribe({
-      next: (s) => {
-        this.betaStatus = s;
-        this.betaChecking = false;
-      },
-      error: () => { this.betaChecking = false; }
-    });
-  }
-
-  // --- Bascule de canal stable <-> beta --------------------------------------
-
-  loadChannelStatus(): void {
-    this.licenseService.getChannelStatus().subscribe({
-      next: (s) => {
-        this.channelStatus = s;
-        // Si on revient sur l'ecran apres un reload (post-switch reussi),
-        // on affiche le dernier resultat eventuel jusqu'a interaction utilisateur.
-      },
-      error: () => { this.channelStatus = null; }
-    });
-  }
-
-  /**
-   * Declenche un switch de canal. La sequence cote UI :
-   *   1. Confirm modal (action destructrice : recreate des containers)
-   *   2. POST /api/license/channel/switch -> 202 avec l'ID de la commande
-   *   3. Polling /api/license/channel toutes les 2s jusqu'a status != IN_PROGRESS
-   *   4. Si SUCCESS : la page va se rendre injoignable (Core recree). On affiche
-   *      "Recharge la page dans quelques secondes" et on essaie de poll quand
-   *      meme — au retour de Core, on detectera SUCCESS et on rechargera auto.
-   *   5. Si ERROR : on affiche le message d'erreur et on debloque les boutons.
-   */
-  requestChannelSwitch(target: ChannelName): void {
-    const confirmMessage = target === 'beta'
-      ? 'Basculer LoreMind sur le canal beta ? Les containers core/brain/web vont etre recrees avec les images beta. L\'application sera indisponible 10-30 secondes.'
-      : 'Repasser LoreMind sur le canal stable ? Les containers core/brain/web vont etre recrees avec les images stables. L\'application sera indisponible 10-30 secondes.';
-
-    this.confirmDialog.confirm({
-      title: target === 'beta' ? 'Passer en beta ?' : 'Repasser en stable ?',
-      message: confirmMessage,
-      details: [
-        'Les donnees (DB, images) sont preservees.',
-        'Tu pourras refaire le chemin inverse a tout moment depuis cet ecran.'
-      ],
-      confirmLabel: target === 'beta' ? 'Passer en beta' : 'Repasser en stable',
-      variant: 'warning'
-    }).then(ok => {
-      if (!ok) return;
-      this.doChannelSwitch(target);
-    });
-  }
-
-  private doChannelSwitch(target: ChannelName): void {
-    this.switchInFlight = true;
-    this.switchError = '';
-    this.licenseService.switchChannel(target).subscribe((res) => {
-      if ('error' in res) {
-        this.switchError = res.error;
-        this.switchInFlight = false;
-        return;
-      }
-      this.switchCommandId = res.id;
-      this.startSwitchPolling();
-    });
-  }
-
-  /**
-   * Poll /api/license/channel toutes les 2s. S'arrete quand on detecte un
-   * resultat avec un ID >= a celui qu'on a soumis (le sidecar le met a jour
-   * a la fin de son traitement).
-   */
-  private startSwitchPolling(): void {
-    this.stopSwitchPolling();
-    this.switchPollSub = interval(2000).pipe(
-      switchMap(() => this.licenseService.getChannelStatus())
-    ).subscribe((status) => {
-      if (!status) return;
-      this.channelStatus = status;
-      const last = status.lastSwitch;
-      if (!last || last.id !== this.switchCommandId) return;
-      if (last.status === 'SUCCESS') {
-        // La page va se rafraichir auto via l'update-banner qui detecte le
-        // restart de Core. On laisse switchInFlight a true pour bloquer
-        // toute autre action en attendant.
-        this.stopSwitchPolling();
-        this.switchInFlight = false;
-      } else if (last.status === 'ERROR') {
-        this.switchError = last.message || 'Echec du switch';
-        this.stopSwitchPolling();
-        this.switchInFlight = false;
-      }
-      // IN_PROGRESS : on continue a poll.
-    });
-  }
-
-  private stopSwitchPolling(): void {
-    if (this.switchPollSub) {
-      this.switchPollSub.unsubscribe();
-      this.switchPollSub = null;
-    }
-  }
-
-  ngOnDestroy(): void {
-    this.stopSwitchPolling();
-    if (this.pullSubscription) {
-      this.pullSubscription.unsubscribe();
-    }
-  }
-
-  /**
-   * Mapping tier_id Patreon → nom lisible. Les IDs viennent du dashboard
-   * Patreon de LoreMind (Settings -> Tiers). Sans entree dans la map, on
-   * affiche l'ID brut pour rester debuggable.
-   *
-   * Si tu ajoutes un nouveau tier Patreon, complete cette map et redeploie.
-   * (Pas besoin de toucher au backend — c'est juste un libelle d'UI.)
-   */
-  private static readonly TIER_LABELS: Record<string, string> = {
-    '28448887': 'Compagnon',
-    // '0000000': 'Aventurier',
-    // '0000000': 'Heros',
-  };
-
-  /** Libelle lisible d'un tier Patreon, fallback sur l'ID brut. */
-  tierLabel(tierId: string | null | undefined): string {
-    if (!tierId) return '';
-    return SettingsComponent.TIER_LABELS[tierId] ?? tierId;
-  }
-
-  /** Format human-readable des dates renvoyees par le backend. */
-  formatDate(iso: string | null | undefined): string {
-    if (!iso) return '';
-    try { return new Date(iso).toLocaleString(); } catch { return iso; }
-  }
-
-  /** Nombre de jours restants avant expiration JWT (peut etre negatif). */
-  get daysUntilExpiry(): number | null {
-    if (!this.licenseStatus?.expiresAt) return null;
-    const exp = new Date(this.licenseStatus.expiresAt).getTime();
-    const now = Date.now();
-    return Math.ceil((exp - now) / (1000 * 60 * 60 * 24));
-  }
-
-  checkUpdates(): void {
-    this.updateChecking = true;
-    this.updateMessage = '';
-    this.updatesService.checkNow().subscribe({
-      next: (s) => {
-        this.updateStatus = s;
-        this.updateChecking = false;
-      },
-      error: () => {
-        this.updateChecking = false;
-      }
-    });
-  }
-
-  applyUpdate(): void {
-    this.confirmDialog.confirm({
-      title: 'Mettre a jour',
-      message: 'Telecharger et redemarrer les conteneurs maintenant ?',
-      details: ['L\'app sera indisponible quelques secondes.'],
-      confirmLabel: 'Mettre à jour',
-      variant: 'warning'
-    }).then(ok => {
-      if (!ok) return;
-      this.updateApplying = true;
-      this.updateMessage = '';
-      this.updatesService.apply().subscribe({
-        next: (r) => {
-          this.updateApplying = false;
-          // Le redemarrage de core peut couper la connexion avant la reponse —
-          // dans ce cas r vaut null (gere par catchError dans le service).
-          this.updateMessage = r?.message
-            ?? 'Mise a jour declenchee. Rechargez la page dans 30s.';
-        },
-        error: () => {
-          this.updateApplying = false;
-          this.updateMessage = 'Mise a jour declenchee. Rechargez la page dans 30s.';
-        }
-      });
-    });
   }
 
   loadSettings(): void {
@@ -497,6 +147,24 @@ export class SettingsComponent implements OnInit, OnDestroy {
       next: (r) => this.geminiModels = r.models,
       error: () => this.geminiModels = []
     });
+  }
+
+  // --- Evenements du gestionnaire de modeles Ollama (sous-composant) -------
+
+  /** Un modele vient d'etre telecharge : si aucun modele n'etait selectionne, on le prend. */
+  onModelPulled(name: string): void {
+    if (this.settings && !this.settings.llm_model) {
+      this.settings.llm_model = name;
+      this.fetchOllamaModelInfo();
+    }
+  }
+
+  /** Le modele selectionne a ete supprime : on vide la selection. */
+  onModelDeleted(name: string): void {
+    if (this.settings && this.settings.llm_model === name) {
+      this.settings.llm_model = '';
+      this.ollamaModelMaxContext = 0;
+    }
   }
 
   /** Options du select Mistral : liste + valeur courante garantie selectionnable. */
@@ -655,139 +323,6 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.errorMessage = this.extractError(err, 'Echec de la sauvegarde.');
         this.saving = false;
       }
-    });
-  }
-
-  // --- Gestion des modeles Ollama (pull / delete) -------------------------
-
-  openPullDialog(): void {
-    this.pullDialogOpen = true;
-    this.pullModelName = '';
-    this.resetPullState();
-  }
-
-  closePullDialog(): void {
-    if (this.pullInProgress) return; // empêche fermeture pendant un pull
-    this.pullDialogOpen = false;
-  }
-
-  selectSuggestion(name: string): void {
-    this.pullModelName = name;
-  }
-
-  startPull(): void {
-    const name = this.pullModelName.trim();
-    if (!name || this.pullInProgress) return;
-    this.resetPullState();
-    this.pullInProgress = true;
-    this.pullStatus = 'connexion...';
-    this.errorMessage = '';
-
-    this.pullSubscription = this.settingsService.pullOllamaModel(name).subscribe({
-      next: (event: OllamaPullEvent) => {
-        if (event.error) {
-          this.errorMessage = `Echec : ${event.error}`;
-          this.pullInProgress = false;
-          return;
-        }
-        if (event.status) this.pullStatus = event.status;
-        if (event.completed != null) this.pullCompleted = event.completed;
-        if (event.total != null) this.pullTotal = event.total;
-        // Marqueur explicite : Ollama emet "success" en derniere ligne quand
-        // le pull est reellement complet (manifest + layers + verify).
-        if (event.status === 'success') this.pullSucceeded = true;
-      },
-      error: (err) => {
-        this.errorMessage = this.extractError(err, `Echec du telechargement de ${name}.`);
-        this.pullInProgress = false;
-      },
-      complete: () => {
-        this.pullInProgress = false;
-        if (!this.pullSucceeded) {
-          // Stream ferme sans 'success' final = connexion coupee
-          // (timeout proxy, perte reseau, ...). Le modele est probablement
-          // partiellement telecharge ; Ollama gardera les couches deja DL.
-          this.errorMessage = `Telechargement de ${name} interrompu avant la fin. Relancez pour reprendre.`;
-          this.refreshModels();
-          return;
-        }
-        this.successMessage = `Modele ${name} telecharge.`;
-        this.refreshModels();
-        // Si l'utilisateur n'avait aucun modele, on selectionne celui-ci.
-        if (this.settings && !this.settings.llm_model) {
-          this.settings.llm_model = name;
-          this.fetchOllamaModelInfo();
-        }
-        // Petite tempo avant de fermer pour que le user voie "success".
-        setTimeout(() => this.closePullDialog(), 1200);
-      }
-    });
-  }
-
-  cancelPull(): void {
-    if (this.pullSubscription) {
-      this.pullSubscription.unsubscribe();
-      this.pullSubscription = null;
-    }
-    this.pullInProgress = false;
-    this.pullStatus = 'annule';
-  }
-
-  private resetPullState(): void {
-    this.pullStatus = '';
-    this.pullCompleted = 0;
-    this.pullTotal = 0;
-    this.pullSucceeded = false;
-    if (this.pullSubscription) {
-      this.pullSubscription.unsubscribe();
-      this.pullSubscription = null;
-    }
-  }
-
-  /** Pourcentage du digest courant pour la barre de progression. */
-  get pullPercent(): number {
-    if (this.pullTotal <= 0) return 0;
-    return Math.min(100, Math.round((this.pullCompleted / this.pullTotal) * 100));
-  }
-
-  /** Affichage humain des octets ('1.2 GB' / '450 MB'). */
-  formatBytes(b: number): string {
-    if (!b) return '0';
-    const u = ['B', 'KB', 'MB', 'GB', 'TB'];
-    let i = 0;
-    let v = b;
-    while (v >= 1024 && i < u.length - 1) { v /= 1024; i++; }
-    return `${v.toFixed(v < 10 && i > 0 ? 1 : 0)} ${u[i]}`;
-  }
-
-  deleteModel(name: string): void {
-    this.confirmDialog.confirm({
-      title: 'Supprimer le modele',
-      message: `Supprimer le modele '${name}' ?`,
-      details: ['L\'espace disque sera libere.'],
-      confirmLabel: 'Supprimer',
-      variant: 'danger'
-    }).then(ok => {
-      if (!ok) return;
-      this.deletingModel = name;
-      this.errorMessage = '';
-      this.settingsService.deleteOllamaModel(name).subscribe({
-        next: () => {
-          this.deletingModel = null;
-          this.successMessage = `Modele ${name} supprime.`;
-          // Si l'utilisateur supprime le modele actuellement selectionne,
-          // on bascule sur le premier disponible (ou vide).
-          this.refreshModels();
-          if (this.settings && this.settings.llm_model === name) {
-            this.settings.llm_model = '';
-            this.ollamaModelMaxContext = 0;
-          }
-        },
-        error: (err) => {
-          this.deletingModel = null;
-          this.errorMessage = this.extractError(err, `Echec de la suppression de ${name}.`);
-        }
-      });
     });
   }
 
