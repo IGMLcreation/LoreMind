@@ -40,8 +40,16 @@ export interface ArcProposal {
   existingId?: string | null;
 }
 
+/** PNJ/créature notable détecté dans le PDF (PNJ nommés, boss). */
+export interface NpcProposal {
+  name: string;
+  description: string;
+}
+
 export interface CampaignImportProposal {
   arcs: ArcProposal[];
+  /** PNJ cochés à la revue (créés comme Npc de la campagne à l'apply). */
+  npcs?: NpcProposal[];
 }
 
 /** Récapitulatif renvoyé après création effective des entités. */
@@ -49,6 +57,7 @@ export interface CampaignImportApplyResult {
   arcsCreated: number;
   chaptersCreated: number;
   scenesCreated: number;
+  npcsCreated: number;
 }
 
 /**
@@ -67,6 +76,7 @@ export type CampaignImportStreamEvent =
       arcCount: number;
       chapterCount: number;
       sceneCount: number;
+      npcCount: number;
     }
-  | { type: 'done'; arcs: ArcProposal[] }
+  | { type: 'done'; arcs: ArcProposal[]; npcs: NpcProposal[] }
   | { type: 'error'; message: string };

@@ -8,7 +8,7 @@ import java.util.List;
  * PROPOSITION non persistée : l'UI laisse l'utilisateur réviser/éditer l'arbre
  * avant la création effective des arcs/chapitres/scènes. Records purs (domaine).
  */
-public record CampaignImportProposal(List<ArcProposal> arcs) {
+public record CampaignImportProposal(List<ArcProposal> arcs, List<NpcProposal> npcs) {
 
     /**
      * {@code existingId} (nullable) : si présent, le nœud existe DÉJÀ dans la
@@ -37,4 +37,14 @@ public record CampaignImportProposal(List<ArcProposal> arcs) {
 
     public record RoomProposal(String name, String description, String enemies, String loot) {
     }
+
+    /**
+     * PNJ/creature notable detecte dans le PDF (PNJ nommes, boss). Propose a la
+     * revue (coche par defaut) ; cree comme Npc de la campagne a l''apply avec
+     * sa description dans values["Description"] (meme convention que les cartes
+     * d''action des ateliers).
+     */
+    public record NpcProposal(String name, String description) {
+    }
 }
+

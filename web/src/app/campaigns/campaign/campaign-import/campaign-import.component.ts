@@ -13,7 +13,7 @@ import { NpcService } from '../../../services/npc.service';
 import { RandomTableService } from '../../../services/random-table.service';
 import { CampaignSidebarService } from '../../../services/campaign-sidebar.service';
 import { PageTitleService } from '../../../services/page-title.service';
-import { ArcKind, ArcProposal, ChapterProposal, SceneProposal } from '../../../services/campaign-import.model';
+import { ArcKind, ArcProposal, ChapterProposal, NpcProposal, SceneProposal } from '../../../services/campaign-import.model';
 import { CampaignImportProposal } from '../../../services/campaign-import.model';
 import { loadCampaignTreeData, CampaignTreeData } from '../../campaign-tree.helper';
 import { of } from 'rxjs';
@@ -37,6 +37,11 @@ interface ArcNode {
   name: string; description: string; type: ArcKind; chapters: ChapterNode[]; collapsed: boolean;
   existing: boolean; existingId?: string;
 }
+/**
+ * PNJ détecté dans le PDF, à cocher à la revue. `existing` = un PNJ du même nom
+ * existe déjà dans la campagne (décoché et non créable, anti-doublon).
+ */
+interface NpcNode { name: string; description: string; selected: boolean; existing: boolean; }
 
 /**
  * Page d'import d'un PDF de campagne → arbre arc/chapitre/scène.
@@ -69,13 +74,16 @@ export class CampaignImportComponent implements OnInit {
   importing = false;
   importPhase = '';
   importProgress: { current: number; total: number } | null = null;
-  importCounts: { arcs: number; chapters: number; scenes: number } | null = null;
+  importCounts: { arcs: number; chapters: number; scenes: number; npcs: number } | null = null;
   importError: string | null = null;
   /** Vrai une fois la proposition reçue (on affiche l'arbre éditable). */
   reviewing = false;
 
   // --- Arbre éditable ---
   tree: ArcNode[] = [];
+
+  /** PNJ détectés dans le PDF (revue par cases à cocher). */
+  npcs: NpcNode[] = [];
 
   /** Structure actuelle de la campagne (chargée pour la fusion à la revue). */
   private existingData: CampaignTreeData | null = null;
@@ -136,17 +144,21 @@ export class CampaignImportComponent implements OnInit {
           } else {
             this.importPhase = `Analyse de la campagne… (${ev.current}/${ev.total})`;
             this.importProgress = { current: ev.current, total: ev.total };
-            this.importCounts = { arcs: ev.arcCount, chapters: ev.chapterCount, scenes: ev.sceneCount };
+            this.importCounts = {
+              arcs: ev.arcCount, chapters: ev.chapterCount,
+              scenes: ev.sceneCount, npcs: ev.npcCount ?? 0
+            };
           }
         } else if (ev.type === 'done') {
           this.importing = false;
           this.importPhase = '';
           this.importProgress = null;
-          if ((ev.arcs ?? []).length === 0) {
+          if ((ev.arcs ?? []).length === 0 && (ev.npcs ?? []).length === 0) {
             this.importError = "Aucune structure narrative détectée dans ce PDF.";
             this.reviewing = false;
           } else {
-            this.tree = this.buildMergedTree(ev.arcs);
+            this.tree = this.buildMergedTree(ev.arcs ?? []);
+            this.npcs = this.buildNpcNodes(ev.npcs ?? []);
             this.reviewing = true;
           }
         }
@@ -232,6 +244,21 @@ export class CampaignImportComponent implements OnInit {
     return (a ?? '').trim().toLowerCase() === (b ?? '').trim().toLowerCase();
   }
 
+  /**
+   * Construit la liste de revue des PNJ : cochés par défaut, sauf ceux dont le
+   * nom existe déjà dans la campagne (anti-doublon, affichés grisés).
+   */
+  private buildNpcNodes(proposals: NpcProposal[]): NpcNode[] {
+    const existingNames = new Set(
+      (this.existingData?.npcs ?? []).map(n => (n.name ?? '').trim().toLowerCase()));
+    return proposals
+      .filter(p => (p.name ?? '').trim())
+      .map(p => {
+        const existing = existingNames.has(p.name.trim().toLowerCase());
+        return { name: p.name.trim(), description: p.description ?? '', selected: !existing, existing };
+      });
+  }
+
   // --- Mappers proposition → nœud NEUF -------------------------------------
 
   private newArcNode(a: ArcProposal): ArcNode {
@@ -310,9 +337,14 @@ export class CampaignImportComponent implements OnInit {
       n + a.chapters.reduce((m, c) => m + c.scenes.filter(s => !s.existing && s.name.trim()).length, 0), 0);
   }
 
+  /** Nombre de PNJ cochés (= qui seront créés). */
+  get npcCount(): number {
+    return this.npcs.filter(n => n.selected && !n.existing).length;
+  }
+
   /** Vrai s'il y a au moins un nœud nouveau à créer (sinon « Créer » désactivé). */
   get hasNewContent(): boolean {
-    return this.arcCount > 0 || this.chapterCount > 0 || this.sceneCount > 0;
+    return this.arcCount > 0 || this.chapterCount > 0 || this.sceneCount > 0 || this.npcCount > 0;
   }
 
   // --- Application (création) ----------------------------------------------
@@ -357,7 +389,10 @@ export class CampaignImportComponent implements OnInit {
                     }))
                 }))
             }))
-        }))
+        })),
+      npcs: this.npcs
+        .filter(n => n.selected && !n.existing && n.name.trim())
+        .map(n => ({ name: n.name.trim(), description: n.description.trim() }))
     };
 
     this.service.applyStructure(this.campaignId, proposal).subscribe({

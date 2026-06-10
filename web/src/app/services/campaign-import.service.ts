@@ -72,7 +72,7 @@ export class CampaignImportService {
         try {
           const obj = JSON.parse(currentData);
           if (name === 'done') {
-            subscriber.next({ type: 'done', arcs: obj.arcs ?? [] });
+            subscriber.next({ type: 'done', arcs: obj.arcs ?? [], npcs: obj.npcs ?? [] });
             subscriber.complete();
           } else {
             subscriber.next({ type: 'progress', ...obj });

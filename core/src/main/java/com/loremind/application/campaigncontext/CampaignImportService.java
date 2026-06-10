@@ -6,6 +6,7 @@ import com.loremind.domain.campaigncontext.CampaignImportProgress;
 import com.loremind.domain.campaigncontext.CampaignImportProposal;
 import com.loremind.domain.campaigncontext.CampaignImportProposal.ArcProposal;
 import com.loremind.domain.campaigncontext.CampaignImportProposal.ChapterProposal;
+import com.loremind.domain.campaigncontext.CampaignImportProposal.NpcProposal;
 import com.loremind.domain.campaigncontext.CampaignImportProposal.RoomProposal;
 import com.loremind.domain.campaigncontext.CampaignImportProposal.SceneProposal;
 import com.loremind.domain.campaigncontext.Chapter;
@@ -37,22 +38,26 @@ public class CampaignImportService {
     private final ArcService arcService;
     private final ChapterService chapterService;
     private final SceneService sceneService;
+    private final NpcService npcService;
 
     public CampaignImportService(
             CampaignPdfImporter campaignPdfImporter,
             CampaignService campaignService,
             ArcService arcService,
             ChapterService chapterService,
-            SceneService sceneService) {
+            SceneService sceneService,
+            NpcService npcService) {
         this.campaignPdfImporter = campaignPdfImporter;
         this.campaignService = campaignService;
         this.arcService = arcService;
         this.chapterService = chapterService;
         this.sceneService = sceneService;
+        this.npcService = npcService;
     }
 
     /** Résumé de ce qui a été créé par {@link #applyStructure}. */
-    public record ApplyResult(int arcsCreated, int chaptersCreated, int scenesCreated) {}
+    public record ApplyResult(
+            int arcsCreated, int chaptersCreated, int scenesCreated, int npcsCreated) {}
 
     /** Génère la proposition d'arbre (streamée). Ne persiste rien. */
     public void importStructureStreaming(
@@ -130,7 +135,36 @@ public class CampaignImportService {
                 }
             }
         }
-        return new ApplyResult(arcsCreated, chaptersCreated, scenesCreated);
+
+        int npcsCreated = createNpcs(campaignId, proposal.npcs());
+        return new ApplyResult(arcsCreated, chaptersCreated, scenesCreated, npcsCreated);
+    }
+
+    /**
+     * Crée les PNJ proposés (description → values["Description"], même convention
+     * que les cartes d'action des ateliers). Les PNJ portant un nom déjà présent
+     * dans la campagne sont ignorés (ré-import sans doublon).
+     */
+    private int createNpcs(String campaignId, List<NpcProposal> proposals) {
+        if (proposals == null || proposals.isEmpty()) return 0;
+        java.util.Set<String> existingNames = new java.util.HashSet<>();
+        for (var npc : npcService.getNpcsByCampaignId(campaignId)) {
+            existingNames.add(npc.getName().trim().toLowerCase());
+        }
+        int created = 0;
+        for (NpcProposal p : proposals) {
+            if (isBlank(p.name()) || !existingNames.add(p.name().trim().toLowerCase())) {
+                continue;
+            }
+            npcService.createNpc(new NpcService.NpcData(
+                    p.name().trim(), null, null,
+                    isBlank(p.description())
+                            ? java.util.Map.of()
+                            : java.util.Map.of("Description", p.description().trim()),
+                    null, null, campaignId, null, null));
+            created++;
+        }
+        return created;
     }
 
     /** Compte les nœuds déjà présents (existingId non vide) d'une liste. */

@@ -33,7 +33,7 @@
           }
           @if (importCounts) {
             <p class="import-counts">
-              Trouvé jusqu'ici : {{ importCounts.arcs }} arc(s) · {{ importCounts.chapters }} chapitre(s) · {{ importCounts.scenes }} scène(s)
+              Trouvé jusqu'ici : {{ importCounts.arcs }} arc(s) · {{ importCounts.chapters }} chapitre(s) · {{ importCounts.scenes }} scène(s) · {{ importCounts.npcs }} PNJ
             </p>
           }
         </div>
@@ -51,7 +51,8 @@
         <p class="review-summary">
           À créer : <strong>{{ arcCount }}</strong> nouvel(s) arc(s),
           <strong>{{ chapterCount }}</strong> chapitre(s),
-          <strong>{{ sceneCount }}</strong> scène(s).
+          <strong>{{ sceneCount }}</strong> scène(s)@if (npcs.length > 0) {<span>,
+          <strong>{{ npcCount }}</strong> PNJ</span>}.
           Les éléments <em>« déjà présent »</em> (grisés) sont affichés pour situer les ajouts ;
           ils ne seront pas recréés. Modifiez les nouveaux, puis créez.
         </p>
@@ -203,6 +204,34 @@
         <lucide-icon [img]="Plus" [size]="14"></lucide-icon> Ajouter un arc
       </button>
     </div>
+
+    <!-- PNJ détectés dans le PDF : revue par cases à cocher -->
+    @if (npcs.length > 0) {
+      <div class="npc-review">
+        <h3>PNJ et créatures détectés ({{ npcs.length }})</h3>
+        <p class="hint">
+          Cochez ceux à créer dans la campagne (description issue du livre).
+          Ceux déjà présents dans la campagne sont grisés et ne seront pas recréés.
+        </p>
+        <ul class="npc-list">
+          @for (npc of npcs; track npc.name) {
+            <li class="npc-row" [class.npc-existing]="npc.existing">
+              <label class="npc-check">
+                <input type="checkbox" [(ngModel)]="npc.selected" [disabled]="npc.existing">
+                <strong>{{ npc.name }}</strong>
+                @if (npc.existing) {
+                  <em class="npc-tag">déjà présent</em>
+                }
+              </label>
+              @if (npc.description) {
+                <p class="npc-desc">{{ npc.description }}</p>
+              }
+            </li>
+          }
+        </ul>
+      </div>
+    }
+
     @if (applyError) {
       <p class="apply-error">{{ applyError }}</p>
     }

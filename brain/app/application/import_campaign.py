@@ -25,6 +25,7 @@ from app.domain.models import (
     ArcProposal,
     CampaignImportResult,
     ChapterProposal,
+    NpcImportProposal,
     RoomProposal,
     SceneProposal,
 )
@@ -83,6 +84,14 @@ PIÈCES (rooms) — uniquement pour les scènes qui sont des lieux explorables :
 - `enemies` = créatures/boss de la salle (vide si aucune). `loot` = trésor/récompense (vide si aucun).
 - Pour une scène narrative classique (pas un donjon), "rooms" est un tableau vide [].
 
+PNJ ET CRÉATURES NOTABLES ("npcs", tableau au niveau racine) :
+- Recense les PNJ NOMMÉS (alliés, marchands, antagonistes) et les créatures UNIQUES
+  (boss, monstre récurrent) présents dans l'extrait.
+- `description` = courte fiche utile au MJ : rôle dans l'histoire, apparence,
+  motivations, où on le rencontre. 2 à 4 phrases, fidèles au livre.
+- N'inclus PAS les monstres génériques sans nom (« 3 gobelins », « un loup »).
+- Aucun PNJ nommé dans l'extrait → "npcs": [].
+
 Format de réponse :
 - Tu réponds UNIQUEMENT par un objet JSON valide, sans markdown ni commentaire autour.
 - Schéma EXACT :
@@ -91,7 +100,8 @@ Format de réponse :
         {{"name": "...", "description": "...", "player_narration": "...", "gm_notes": "...",
           "rooms": [{{"name": "...", "description": "...", "enemies": "...", "loot": "..."}}]}}
      ]}}]}}
-  ]}}
+  ],
+   "npcs": [{{"name": "...", "description": "..."}}]}}
 - Utilise les VRAIS titres du livre pour les noms (pas de paraphrase).
 - Si le livre n'est PAS découpé en actes/parties, regroupe tout sous un seul arc nommé "{default_arc}".
 - N'invente pas de contenu : tu réorganises et recopies ce qui est présent dans l'extrait.
@@ -157,6 +167,8 @@ class _TreeMerger:
     def __init__(self) -> None:
         # arc_key -> {"name", "description", "chapters": {chap_key -> {...}}}
         self._arcs: dict[str, dict] = {}
+        # npc_key (nom en minuscules) -> {"name", "description"}
+        self._npcs: dict[str, dict] = {}
 
     def add(self, arcs_json: list[dict]) -> None:
         for arc in arcs_json or []:
@@ -201,6 +213,22 @@ class _TreeMerger:
                         self._fill_desc(r, rm)
                         self._fill_field(r, rm, "enemies")
                         self._fill_field(r, rm, "loot")
+
+    def add_npcs(self, npcs_json: list[dict]) -> None:
+        """Accumule les PNJ détectés. Un PNJ revu dans un autre morceau garde la
+        description la plus COMPLÈTE (la plus longue) — un PNJ récurrent est
+        souvent décrit en détail une seule fois."""
+        for npc in npcs_json or []:
+            name = str(npc.get("name", "")).strip()
+            if not name:
+                continue
+            desc = str(npc.get("description") or "").strip()
+            entry = self._npcs.setdefault(name.lower(), {"name": name, "description": ""})
+            if len(desc) > len(entry["description"]):
+                entry["description"] = desc
+
+    def npcs(self) -> list[NpcImportProposal]:
+        return [NpcImportProposal(n["name"], n["description"]) for n in self._npcs.values()]
 
     @staticmethod
     def _fill_desc(node: dict, src: dict) -> None:
@@ -358,13 +386,15 @@ class ImportCampaignUseCase:
                 for i, c in wave
             ))
             for res in results:
-                merger.add(res)
+                merger.add(res["arcs"])
+                merger.add_npcs(res["npcs"])
         if total > 1:
             await self._consolidate(merger)
         return CampaignImportResult(
             arcs=merger.result(),
             page_count=doc.page_count,
             ocr_page_count=doc.ocr_page_count,
+            npcs=merger.npcs(),
         )
 
     async def stream(self, pdf_bytes: bytes):
@@ -429,7 +459,8 @@ class ImportCampaignUseCase:
                 elif isinstance(res, BaseException):
                     raise res  # bug inattendu : ne pas l'avaler en silence
                 else:
-                    merger.add(res or [])
+                    merger.add((res or {}).get("arcs") or [])
+                    merger.add_npcs((res or {}).get("npcs") or [])
                 arcs, chapters, scenes = merger.counts()
                 yield {
                     "type": "progress",
@@ -438,6 +469,7 @@ class ImportCampaignUseCase:
                     "arc_count": arcs,
                     "chapter_count": chapters,
                     "scene_count": scenes,
+                    "npc_count": len(merger.npcs()),
                     "skipped": skipped,
                 }
 
@@ -459,6 +491,7 @@ class ImportCampaignUseCase:
         yield {
             "type": "done",
             "arcs": _serialize_arcs(merger.result()),
+            "npcs": [{"name": n.name, "description": n.description} for n in merger.npcs()],
             "page_count": doc.page_count,
             "ocr_page_count": doc.ocr_page_count,
             "skipped": skipped,
@@ -506,16 +539,17 @@ class ImportCampaignUseCase:
 
     async def _map_chunk(
         self, chunk: str, *, index: int, total: int, toc_block: str = ""
-    ) -> list[dict]:
-        return await self._extract_arcs(
+    ) -> dict:
+        """Phase MAP d'un morceau → {"arcs": [...], "npcs": [...]}."""
+        return await self._extract_payload(
             chunk, index=index, total=total, depth=0, toc_block=toc_block)
 
-    async def _extract_arcs(
+    async def _extract_payload(
         self, text: str, *, index: int, total: int, depth: int, toc_block: str = ""
-    ) -> list[dict]:
-        """Extrait l'arborescence d'un texte. Si la SORTIE est tronquée, retraite le
-        texte en DEUX moitiés et concatène — le `_TreeMerger` final dédoublonne par
-        nom (un arc/chapitre coupé entre les moitiés est recollé)."""
+    ) -> dict:
+        """Extrait l'arborescence + les PNJ d'un texte. Si la SORTIE est tronquée,
+        retraite le texte en DEUX moitiés et concatène — le `_TreeMerger` final
+        dédoublonne par nom (un arc/chapitre coupé entre les moitiés est recollé)."""
         toc_section = _TOC_BLOCK.format(toc=toc_block) if toc_block else ""
         prompt = (
             _MAP_SYSTEM.format(default_arc=_DEFAULT_ARC_NAME)
@@ -525,7 +559,7 @@ class ImportCampaignUseCase:
         )
         raw = await generate_with_retry(
             self._llm, prompt, output_format="json", temperature=_TEMPERATURE)
-        arcs, truncated = self._parse_arcs(raw, index=index)
+        payload, truncated = self._parse_payload(raw, index=index)
 
         if truncated and depth < _MAX_SPLIT_DEPTH:
             left, right = split_in_half(text)
@@ -533,19 +567,20 @@ class ImportCampaignUseCase:
                 logger.info(
                     "Morceau %s : sortie tronquée → re-découpage en 2 moitiés (niveau %s).",
                     index, depth + 1)
-                a = await self._extract_arcs(
+                a = await self._extract_payload(
                     left, index=index, total=total, depth=depth + 1, toc_block=toc_block)
-                b = await self._extract_arcs(
+                b = await self._extract_payload(
                     right, index=index, total=total, depth=depth + 1, toc_block=toc_block)
-                return a + b
+                return {"arcs": a["arcs"] + b["arcs"], "npcs": a["npcs"] + b["npcs"]}
         if truncated:
             logger.warning(
                 "Morceau %s : sortie tronquée, profondeur max atteinte — partiel conservé.", index)
-        return arcs
+        return payload
 
     @staticmethod
-    def _parse_arcs(raw: str, *, index: int) -> tuple[list[dict], bool]:
-        """Parse robuste → (arcs, tronqué). `tronqué`=True si récupération partielle."""
+    def _parse_payload(raw: str, *, index: int) -> tuple[dict, bool]:
+        """Parse robuste → ({"arcs", "npcs"}, tronqué). `tronqué`=True si partiel."""
+        empty = {"arcs": [], "npcs": []}
         parsed, recovered = load_json_object(raw)
         if parsed is None:
             truncated = looks_like_truncated_json(raw)
@@ -554,11 +589,15 @@ class ImportCampaignUseCase:
                     "Morceau %s : aucun objet JSON exploitable, ignoré. "
                     "Début de la réponse du modèle : %r",
                     index, (raw or "").strip()[:300] or "(réponse VIDE)")
-            return [], truncated
+            return empty, truncated
         if isinstance(parsed, dict):
             arcs = parsed.get("arcs", [])
-            return (arcs if isinstance(arcs, list) else []), recovered
-        return [], recovered
+            npcs = parsed.get("npcs", [])
+            return {
+                "arcs": arcs if isinstance(arcs, list) else [],
+                "npcs": npcs if isinstance(npcs, list) else [],
+            }, recovered
+        return empty, recovered
 
 
 def _serialize_arcs(arcs: list[ArcProposal]) -> list[dict]:

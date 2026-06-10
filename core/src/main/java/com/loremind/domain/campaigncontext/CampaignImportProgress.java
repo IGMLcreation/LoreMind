@@ -14,5 +14,6 @@ public record CampaignImportProgress(
         int ocrPageCount,
         int arcCount,
         int chapterCount,
-        int sceneCount) {
+        int sceneCount,
+        int npcCount) {
 }

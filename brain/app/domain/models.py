@@ -425,6 +425,18 @@ class ArcProposal:
 
 
 @dataclass(frozen=True)
+class NpcImportProposal:
+    """PNJ/créature notable détecté à l'import d'un PDF de campagne.
+
+    PNJ NOMMÉS et créatures uniques (boss) — pas les monstres génériques.
+    `description` = courte fiche (rôle, apparence, motivations, où on le croise).
+    """
+
+    name: str
+    description: str = ""
+
+
+@dataclass(frozen=True)
 class CampaignImportResult:
     """Proposition d'arborescence narrative extraite d'un PDF de campagne.
 
@@ -435,6 +447,9 @@ class CampaignImportResult:
     arcs: list[ArcProposal]
     page_count: int
     ocr_page_count: int
+    # PNJ/créatures notables détectés au fil des morceaux (proposition, à cocher
+    # dans l'écran de revue avant création).
+    npcs: list[NpcImportProposal] = field(default_factory=list)
 
     def counts(self) -> tuple[int, int, int]:
         """(nb arcs, nb chapitres, nb scènes) — pour le diagnostic / la progression."""

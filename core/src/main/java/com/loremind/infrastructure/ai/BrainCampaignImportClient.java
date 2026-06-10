@@ -6,6 +6,7 @@ import com.loremind.domain.campaigncontext.CampaignImportProgress;
 import com.loremind.domain.campaigncontext.CampaignImportProposal;
 import com.loremind.domain.campaigncontext.CampaignImportProposal.ArcProposal;
 import com.loremind.domain.campaigncontext.CampaignImportProposal.ChapterProposal;
+import com.loremind.domain.campaigncontext.CampaignImportProposal.NpcProposal;
 import com.loremind.domain.campaigncontext.CampaignImportProposal.RoomProposal;
 import com.loremind.domain.campaigncontext.CampaignImportProposal.SceneProposal;
 import com.loremind.domain.campaigncontext.ports.CampaignImportException;
@@ -119,7 +120,7 @@ public class BrainCampaignImportClient implements CampaignPdfImporter {
             return;
         }
         if ("extracting".equals(event)) {
-            onProgress.accept(new CampaignImportProgress(0, 0, 0, 0, 0, 0, 0));
+            onProgress.accept(new CampaignImportProgress(0, 0, 0, 0, 0, 0, 0, 0));
             return;
         }
 
@@ -130,7 +131,7 @@ public class BrainCampaignImportClient implements CampaignPdfImporter {
             pageCount[0] = node.path("page_count").asInt();
             ocrPageCount[0] = node.path("ocr_page_count").asInt();
             onProgress.accept(new CampaignImportProgress(
-                    0, node.path("total").asInt(), pageCount[0], ocrPageCount[0], 0, 0, 0));
+                    0, node.path("total").asInt(), pageCount[0], ocrPageCount[0], 0, 0, 0, 0));
         } else if ("progress".equals(event)) {
             onProgress.accept(new CampaignImportProgress(
                     node.path("current").asInt(),
@@ -139,10 +140,12 @@ public class BrainCampaignImportClient implements CampaignPdfImporter {
                     ocrPageCount[0],
                     node.path("arc_count").asInt(),
                     node.path("chapter_count").asInt(),
-                    node.path("scene_count").asInt()));
+                    node.path("scene_count").asInt(),
+                    node.path("npc_count").asInt()));
         } else if ("done".equals(event)) {
             terminated[0] = true;
-            onDone.accept(new CampaignImportProposal(toArcs(node.path("arcs"))));
+            onDone.accept(new CampaignImportProposal(
+                    toArcs(node.path("arcs")), toNpcs(node.path("npcs"))));
         }
     }
 
@@ -200,6 +203,16 @@ public class BrainCampaignImportClient implements CampaignPdfImporter {
             }
         }
         return rooms;
+    }
+
+    private List<NpcProposal> toNpcs(JsonNode npcsNode) {
+        List<NpcProposal> npcs = new ArrayList<>();
+        if (npcsNode != null && npcsNode.isArray()) {
+            for (JsonNode n : npcsNode) {
+                npcs.add(new NpcProposal(text(n, "name"), text(n, "description")));
+            }
+        }
+        return npcs;
     }
 
     // --- Helpers -------------------------------------------------------------
