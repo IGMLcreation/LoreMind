@@ -91,6 +91,11 @@
                       (created)="onActionCreated()">
                     </app-notebook-action-card>
                   }
+                  @if (sourcesLabel(m); as label) {
+                    <div class="nbd-msg-sources" title="Pages de la source utilisées pour ancrer cette réponse">
+                      📖 {{ label }}
+                    </div>
+                  }
                 }
               } @else {
                 <div class="nbd-msg-content">{{ m.content }}</div>

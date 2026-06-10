@@ -68,13 +68,25 @@ class NotebookChatUseCase:
         messages: list[ChatMessage],
         context: str = "",
         top_k: int = 6,
-    ) -> AsyncIterator[str]:
+    ) -> AsyncIterator[dict]:
+        """Yield des évènements : {type:'sources', sources:[…]} (une fois, avant la
+        réponse — transparence sur les passages utilisés), puis {type:'token', token}."""
         # Question AUTONOME pour la recherche : sur une relance (« et ses
         # faiblesses ? »), l'embedding du dernier message seul ne contient pas
         # le sujet → on le résout depuis l'historique (best-effort, 1 appel léger,
         # uniquement à partir du 2e tour). La réponse, elle, voit tout l'historique.
         search_query = await standalone_question(self._llm, messages)
         passages = await self._rag.retrieve(source_ids, search_query, top_k=top_k)
+        # Évènement 'sources' AVANT le premier token : l'UI peut afficher les
+        # pages utilisées (« 📖 p. 12, 47 ») dès le début de la réponse.
+        yield {"type": "sources", "sources": [
+            {
+                "source_id": p.get("source_id"),
+                "page": p.get("page"),
+                "score": round(float(p.get("score") or 0.0), 3),
+            }
+            for p in passages
+        ]}
         sources_block = (
             "\n\n".join(self._format_passage(p) for p in passages)
             if passages else "(aucun passage pertinent trouvé dans les sources)"
@@ -86,7 +98,7 @@ class NotebookChatUseCase:
         system_prompt = _SYSTEM_PROMPT.format(
             context_block=context_block, sources_block=sources_block)
         async for token in self._llm.stream_chat(messages, system_prompt=system_prompt):
-            yield token
+            yield {"type": "token", "token": token}
 
     @staticmethod
     def _format_passage(p: dict) -> str:

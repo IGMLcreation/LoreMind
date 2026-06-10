@@ -132,6 +132,7 @@ public class NotebookController {
             StringBuilder assistant = new StringBuilder();
             chatStreamer.stream(
                     sourceIds, history, context, deep,
+                    sourcesJson -> sendSources(emitter, sourcesJson),
                     token -> { assistant.append(token); sendToken(emitter, token); },
                     progress -> sendProgress(emitter, progress),
                     () -> {
@@ -156,6 +157,15 @@ public class NotebookController {
     private void sendToken(SseEmitter emitter, String token) {
         try {
             emitter.send(SseEmitter.event().name("token").data("{\"token\":" + jsonEscape(token) + "}"));
+        } catch (IOException | IllegalStateException e) {
+            // flux fermé/expiré : on cesse d'écrire
+        }
+    }
+
+    private void sendSources(SseEmitter emitter, String sourcesJson) {
+        try {
+            // JSON brut du Brain ({"sources":[{source_id,page,score},…]}), relayé tel quel.
+            emitter.send(SseEmitter.event().name("sources").data(sourcesJson));
         } catch (IOException | IllegalStateException e) {
             // flux fermé/expiré : on cesse d'écrire
         }

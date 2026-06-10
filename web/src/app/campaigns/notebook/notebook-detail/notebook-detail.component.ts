@@ -107,7 +107,29 @@ export class NotebookDetailComponent implements OnInit {
     return cache._parsed;
   }
 
-  /** trackBy stable pour les cartes d'action (évite toute recréation parasite). */
+  /**
+   * Libellé compact des pages utilisées par le RAG pour une réponse
+   * (« p. 12, 47, 103 » — préfixé du nom du fichier si plusieurs sources).
+   */
+  sourcesLabel(m: NotebookMessage): string {
+    const src = m.sources ?? [];
+    if (!src.length) return '';
+    const bySource = new Map<string, number[]>();
+    for (const s of src) {
+      if (s.page == null) continue;
+      const pages = bySource.get(s.sourceId) ?? [];
+      if (!pages.includes(s.page)) pages.push(s.page);
+      bySource.set(s.sourceId, pages);
+    }
+    if (bySource.size === 0) return '';
+    const nameOf = (id: string) => this.sources.find(x => x.id === id)?.filename ?? '';
+    return [...bySource.entries()]
+      .map(([id, pages]) => {
+        const label = `p. ${pages.sort((a, b) => a - b).join(', ')}`;
+        return bySource.size > 1 && nameOf(id) ? `${nameOf(id)} — ${label}` : label;
+      })
+      .join(' · ');
+  }
 
   load(): void {
     this.service.get(this.notebookId).subscribe({
@@ -162,6 +184,7 @@ export class NotebookDetailComponent implements OnInit {
     this.service.streamChat(this.notebookId, text, deep).subscribe({
       next: (ev) => {
         if (ev.type === 'token') { this.deepProgress = null; assistant.content += ev.value; }
+        else if (ev.type === 'sources') assistant.sources = ev.sources;
         else if (ev.type === 'progress') this.deepProgress = { current: ev.current, total: ev.total };
         else if (ev.type === 'error') assistant.content += (assistant.content ? '\n\n' : '') + `⚠️ ${ev.message}`;
       },

@@ -85,9 +85,14 @@ async def chat_notebook_stream(
 
     async def event_stream() -> AsyncIterator[str]:
         try:
-            async for token in use_case.stream(body.source_ids, messages, context=body.context, top_k=top_k):
-                if token:
-                    yield sse_event("token", {"token": token})
+            async for ev in use_case.stream(body.source_ids, messages, context=body.context, top_k=top_k):
+                if ev["type"] == "token":
+                    if ev.get("token"):
+                        yield sse_event("token", {"token": ev["token"]})
+                else:
+                    # 'sources' (et tout futur évènement typé) : relayé tel quel.
+                    ev_type = ev.pop("type")
+                    yield sse_event(ev_type, ev)
             yield sse_event("done", {})
         except (LLMProviderError, EmbeddingError) as exc:
             yield sse_event("error", {"message": str(exc)})

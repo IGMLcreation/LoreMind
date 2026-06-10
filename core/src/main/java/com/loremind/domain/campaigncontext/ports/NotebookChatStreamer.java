@@ -17,9 +17,10 @@ public interface NotebookChatStreamer {
 
     /**
      * Streame la réponse ancrée sur les sources. Les callbacks sont invoqués au fil
-     * de l'eau : {@code onToken} par fragment, {@code onProgress} (mode approfondi
-     * uniquement) pendant la lecture du document, {@code onDone} à la fin,
-     * {@code onError} en cas d'échec.
+     * de l'eau : {@code onSourcesJson} UNE fois avant le premier token (JSON brut des
+     * passages utilisés — transparence UI), {@code onToken} par fragment,
+     * {@code onProgress} (mode approfondi uniquement) pendant la lecture du document,
+     * {@code onDone} à la fin, {@code onError} en cas d'échec.
      *
      * @param deep true = analyse approfondie (map-reduce sur tout le document) ;
      *             false = chat RAG (top-k).
@@ -29,6 +30,7 @@ public interface NotebookChatStreamer {
             List<Msg> messages,
             String context,
             boolean deep,
+            Consumer<String> onSourcesJson,
             Consumer<String> onToken,
             Consumer<Progress> onProgress,
             Runnable onDone,

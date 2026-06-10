@@ -16,12 +16,22 @@ export interface NotebookSource {
   pageCount: number;
 }
 
+/** Passage source utilisé par le RAG pour ancrer une réponse (transparence). */
+export interface NotebookChatSource {
+  sourceId: string;
+  /** Numéro de page 1-based, null si inconnu. */
+  page: number | null;
+  score: number;
+}
+
 export interface NotebookMessage {
   id?: string;
   notebookId?: string;
   /** "user" | "assistant" */
   role: string;
   content: string;
+  /** Passages utilisés (réponses streamées uniquement — non persisté). */
+  sources?: NotebookChatSource[];
 }
 
 export interface NotebookDetail {
@@ -35,6 +45,7 @@ export interface NotebookDetail {
 /** Évènements du chat ancré streamé. */
 export type NotebookChatEvent =
   | { type: 'token'; value: string }
+  | { type: 'sources'; sources: NotebookChatSource[] }
   | { type: 'progress'; current: number; total: number }
   | { type: 'done' }
   | { type: 'error'; message: string };

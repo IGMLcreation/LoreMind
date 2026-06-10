@@ -104,3 +104,10 @@
   display: inline-flex; align-items: center; gap: 0.35rem;
   font-size: 0.82rem; color: #c4a8ff; font-style: italic;
 }
+
+// Pages de la source utilisées par le RAG (transparence de la réponse)
+.nbd-msg-sources {
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  opacity: 0.65;
+}

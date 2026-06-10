@@ -51,6 +51,7 @@ public class BrainNotebookChatClient implements NotebookChatStreamer {
             List<Msg> messages,
             String context,
             boolean deep,
+            Consumer<String> onSourcesJson,
             Consumer<String> onToken,
             Consumer<Progress> onProgress,
             Runnable onDone,
@@ -75,7 +76,8 @@ public class BrainNotebookChatClient implements NotebookChatStreamer {
         try {
             flux
                 .timeout(Duration.ofSeconds(timeoutSeconds))
-                .doOnNext(sse -> handleEvent(sse, terminated, onToken, onProgress, onDone, onError))
+                .doOnNext(sse -> handleEvent(
+                        sse, terminated, onSourcesJson, onToken, onProgress, onDone, onError))
                 .blockLast();
             if (!terminated[0]) {
                 onDone.run();  // flux terminé sans event done explicite
@@ -93,6 +95,7 @@ public class BrainNotebookChatClient implements NotebookChatStreamer {
     private void handleEvent(
             ServerSentEvent<String> sse,
             boolean[] terminated,
+            Consumer<String> onSourcesJson,
             Consumer<String> onToken,
             Consumer<Progress> onProgress,
             Runnable onDone,
@@ -103,6 +106,10 @@ public class BrainNotebookChatClient implements NotebookChatStreamer {
         if ("token".equals(event)) {
             String token = readField(data, "token");
             if (token != null && !token.isEmpty()) onToken.accept(token);
+        } else if ("sources".equals(event)) {
+            // Passages utilisés par le RAG : relayés tels quels (JSON brut) — le
+            // Core n'a pas besoin de les comprendre, seulement de les transmettre.
+            onSourcesJson.accept(data);
         } else if ("progress".equals(event)) {
             onProgress.accept(new Progress(readInt(data, "current"), readInt(data, "total")));
         } else if ("done".equals(event)) {

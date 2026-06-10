@@ -78,6 +78,16 @@ export class NotebookService {
             if (name === 'token') {
               try { emit({ type: 'token', value: (JSON.parse(currentData) as { token?: string }).token ?? '' }); }
               catch { /* ignore */ }
+            } else if (name === 'sources') {
+              try {
+                const o = JSON.parse(currentData) as { sources?: { source_id?: string; page?: number | null; score?: number }[] };
+                emit({
+                  type: 'sources',
+                  sources: (o.sources ?? []).map(s => ({
+                    sourceId: s.source_id ?? '', page: s.page ?? null, score: s.score ?? 0
+                  }))
+                });
+              } catch { /* ignore */ }
             } else if (name === 'progress') {
               try {
                 const o = JSON.parse(currentData) as { current?: number; total?: number };
