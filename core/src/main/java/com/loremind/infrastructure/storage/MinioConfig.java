@@ -32,6 +32,11 @@ public class MinioConfig {
 
     @Bean
     public MinioClient minioClient() {
+        return buildClient();
+    }
+
+    /** Fabrique directe (sans proxy Spring) — voir ensureBucketExists. */
+    private MinioClient buildClient() {
         return MinioClient.builder()
                 .endpoint(endpoint)
                 .credentials(accessKey, secretKey)
@@ -42,11 +47,16 @@ public class MinioConfig {
      * Garantit l'existence du bucket au demarrage. Si MinIO n'est pas joignable,
      * on loggue juste l'erreur sans planter l'application : le developpeur
      * recevra une erreur claire au premier upload plutot qu'au boot.
+     * <p>
+     * NB : on construit un client LOCAL au lieu d'appeler {@code minioClient()} —
+     * depuis Spring 6.2, appeler une methode @Bean proxifiee pendant le
+     * @PostConstruct de sa propre @Configuration leve "Requested bean is
+     * currently in creation" et la verification ne tournait plus jamais.
      */
     @PostConstruct
     public void ensureBucketExists() {
         try {
-            MinioClient client = minioClient();
+            MinioClient client = buildClient();
             boolean exists = client.bucketExists(BucketExistsArgs.builder().bucket(bucket).build());
             if (!exists) {
                 client.makeBucket(MakeBucketArgs.builder().bucket(bucket).build());
