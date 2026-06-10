@@ -142,10 +142,13 @@ def get_notebook_chat_use_case(
 
 def get_notebook_deep_use_case(
     llm: Annotated[LLMProvider, Depends(get_llm_provider)],
+    embedder: Annotated[object, Depends(get_embedding_provider)],
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> NotebookDeepUseCase:
     return NotebookDeepUseCase(
         llm=llm,
         batch_tokens=settings.import_chunk_tokens,
         map_concurrency=settings.llm_map_concurrency,
+        embedder=embedder,
+        summary_filter=settings.deep_summary_filter,
     )

@@ -83,6 +83,12 @@ class Settings(BaseSettings):
     # mais prompt plus long. 8 par défaut (montable jusqu'à ~20 sur grand contexte).
     rag_top_k: int = 8
 
+    # Analyse approfondie : pré-filtrage des lots via un index de résumés
+    # (construit une fois par source, cache disque). Les questions ciblées ne
+    # relisent que les lots plausiblement pertinents (3-5x moins d'appels) ;
+    # False = relire TOUT le document à chaque question (exhaustivité maximale).
+    deep_summary_filter: bool = True
+
     # Cosinus minimal pour qu'un extrait soit injecté dans le prompt du chat
     # atelier : en dessous, l'extrait n'a aucun rapport avec la question → mieux
     # vaut moins d'extraits que du bruit. Défaut conservateur (0.30) : les paires

@@ -80,6 +80,42 @@ def exists(source_id: str) -> bool:
 def delete(source_id: str) -> None:
     _CACHE.pop(source_id, None)
     _path(source_id).unlink(missing_ok=True)
+    _summaries_path(source_id).unlink(missing_ok=True)
+
+
+# --- Index de résumés (analyse approfondie) ----------------------------------
+# Cache disque des résumés PAR LOT d'une source : construit paresseusement à la
+# première analyse approfondie, réutilisé ensuite pour ne relire que les lots
+# pertinents. Invalidé avec la source (delete) et si batch_tokens change.
+
+
+def _summaries_path(source_id: str) -> Path:
+    safe = _SAFE_ID.sub("_", str(source_id))
+    return _STORE_DIR / f"{safe}.summaries.json"
+
+
+def save_summaries(source_id: str, batch_tokens: int, entries: list[dict]) -> None:
+    """Persiste les résumés de lots ({"summary": str, "vector": [...]})."""
+    _STORE_DIR.mkdir(parents=True, exist_ok=True)
+    payload = {"batch_tokens": int(batch_tokens), "entries": entries}
+    _summaries_path(source_id).write_text(
+        json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+
+
+def load_summaries(source_id: str, batch_tokens: int) -> list[dict] | None:
+    """Résumés de lots d'une source, ou None si absents / construits avec une
+    autre taille de lot (le découpage ne correspondrait plus)."""
+    p = _summaries_path(source_id)
+    if not p.exists():
+        return None
+    try:
+        data = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(data, dict) or data.get("batch_tokens") != int(batch_tokens):
+        return None
+    entries = data.get("entries")
+    return entries if isinstance(entries, list) else None
 
 
 def _load(source_id: str) -> list[dict]:
@@ -137,6 +173,11 @@ def _chunk_words(chunk: dict) -> frozenset[str]:
         words = _significant_words(chunk.get("text", ""))
         chunk["_words"] = words
     return words
+
+
+# Alias public du cosinus (réutilisé par l'index de résumés de l'analyse
+# approfondie — même métrique que la recherche).
+cosine_similarity = _cosine
 
 
 def search(
