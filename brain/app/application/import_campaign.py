@@ -163,8 +163,12 @@ class _TreeMerger:
                         {"name": sname, "description": "", "player_narration": "",
                          "gm_notes": "", "rooms": {}})
                     self._fill_desc(s, sc)
-                    self._fill_field(s, sc, "player_narration")
-                    self._fill_field(s, sc, "gm_notes")
+                    # Narration/notes : CONCATÉNATION (pas premier-gagne) — une
+                    # scène coupée entre deux morceaux apporte la suite de son
+                    # contenu dans le morceau suivant ; la jeter perdrait la
+                    # moitié du donjon. Le doublon exact (overlap) est filtré.
+                    self._append_field(s, sc, "player_narration")
+                    self._append_field(s, sc, "gm_notes")
                     for rm in sc.get("rooms", []) or []:
                         rname = str(rm.get("name", "")).strip()
                         if not rname:
@@ -185,6 +189,23 @@ class _TreeMerger:
     def _fill_field(node: dict, src: dict, field_name: str) -> None:
         if not node[field_name]:
             node[field_name] = str(src.get(field_name) or "").strip()
+
+    @staticmethod
+    def _append_field(node: dict, src: dict, field_name: str) -> None:
+        """Accumule la valeur de `src` à la suite de l'existante (scène coupée
+        entre deux morceaux). Ignore le vide et le contenu déjà présent (un
+        morceau redondant — relecture d'overlap — ne duplique rien)."""
+        new = str(src.get(field_name) or "").strip()
+        if not new:
+            return
+        current = node[field_name]
+        if not current:
+            node[field_name] = new
+        elif new not in current and current not in new:
+            node[field_name] = current + "\n\n" + new
+        elif current in new:
+            # Le nouveau contenu ENGLOBE l'ancien (version plus complète) → on le prend.
+            node[field_name] = new
 
     def result(self) -> list[ArcProposal]:
         arcs: list[ArcProposal] = []
