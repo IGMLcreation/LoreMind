@@ -96,6 +96,32 @@ Format de réponse :
 - N'invente pas de contenu : tu réorganises et recopies ce qui est présent dans l'extrait.
 - Si l'extrait ne contient aucune matière narrative, renvoie {{"arcs": []}}."""
 
+# Bloc TOC injecté quand le PDF a des bookmarks : les morceaux étant traités
+# séparément, c'est CE référentiel commun qui garantit que tous nomment les
+# mêmes chapitres à l'identique → la fusion par nom du _TreeMerger recolle
+# les chapitres coupés au lieu de créer des doublons.
+_TOC_BLOCK = """
+
+--- STRUCTURE OFFICIELLE DU LIVRE (table des matières du PDF) ---
+{toc}
+--- FIN DE LA STRUCTURE ---
+IMPORTANT : pour nommer les arcs et chapitres, reprends EXACTEMENT les titres
+de cette structure (caractère pour caractère). Rattache le contenu de l'extrait
+au bon chapitre de la structure, même si son titre n'apparaît pas dans l'extrait."""
+
+# Garde-fou prompt : une TOC de gros livre peut compter des centaines d'entrées
+# (sous-sous-sections). On la limite aux niveaux hauts et à un nombre raisonnable.
+_TOC_MAX_LEVEL = 2
+_TOC_MAX_ENTRIES = 80
+
+
+def _format_toc(toc) -> str:
+    """Formate la TOC du PDF en liste indentée, bornée (niveaux hauts d'abord)."""
+    entries = [e for e in toc if e.level <= _TOC_MAX_LEVEL][:_TOC_MAX_ENTRIES]
+    if not entries:
+        return ""
+    return "\n".join(f"{'  ' * (e.level - 1)}- {e.title} (p. {e.page})" for e in entries)
+
 
 class _TreeMerger:
     """Fusionne les sous-arbres des morceaux en un seul arbre, ordre préservé.
@@ -200,9 +226,11 @@ class ImportCampaignUseCase:
         """Variante non-streamée : traite tout puis renvoie l'arbre complet."""
         doc = self._extractor.extract(pdf_bytes)
         chunks = chunk_text(doc.full_text, self._chunk_target_tokens)
+        toc_block = _format_toc(doc.toc)
         merger = _TreeMerger()
         for i, chunk in enumerate(chunks):
-            merger.add(await self._map_chunk(chunk, index=i, total=len(chunks)))
+            merger.add(await self._map_chunk(
+                chunk, index=i, total=len(chunks), toc_block=toc_block))
         return CampaignImportResult(
             arcs=merger.result(),
             page_count=doc.page_count,
@@ -221,10 +249,12 @@ class ImportCampaignUseCase:
 
         doc = self._extractor.extract(pdf_bytes)
         chunks = chunk_text(doc.full_text, self._chunk_target_tokens)
+        toc_block = _format_toc(doc.toc)
         total = len(chunks)
         logger.info(
-            "Import campagne (stream) : %s page(s) (%s via OCR), %s morceau(x).",
+            "Import campagne (stream) : %s page(s) (%s via OCR), %s morceau(x), TOC %s.",
             doc.page_count, doc.ocr_page_count, total,
+            "présente" if toc_block else "absente",
         )
         yield {
             "type": "start",
@@ -245,7 +275,7 @@ class ImportCampaignUseCase:
             try:
                 arcs_payload: list[dict] | None = None
                 async for kind, payload in with_heartbeat(
-                    self._map_chunk(chunk, index=i, total=total)
+                    self._map_chunk(chunk, index=i, total=total, toc_block=toc_block)
                 ):
                     if kind == "heartbeat":
                         yield {"type": "heartbeat", "current": i + 1, "total": total}
@@ -286,17 +316,22 @@ class ImportCampaignUseCase:
 
     # --- MAP : un morceau → sous-arbre ---------------------------------------
 
-    async def _map_chunk(self, chunk: str, *, index: int, total: int) -> list[dict]:
-        return await self._extract_arcs(chunk, index=index, total=total, depth=0)
+    async def _map_chunk(
+        self, chunk: str, *, index: int, total: int, toc_block: str = ""
+    ) -> list[dict]:
+        return await self._extract_arcs(
+            chunk, index=index, total=total, depth=0, toc_block=toc_block)
 
     async def _extract_arcs(
-        self, text: str, *, index: int, total: int, depth: int
+        self, text: str, *, index: int, total: int, depth: int, toc_block: str = ""
     ) -> list[dict]:
         """Extrait l'arborescence d'un texte. Si la SORTIE est tronquée, retraite le
         texte en DEUX moitiés et concatène — le `_TreeMerger` final dédoublonne par
         nom (un arc/chapitre coupé entre les moitiés est recollé)."""
+        toc_section = _TOC_BLOCK.format(toc=toc_block) if toc_block else ""
         prompt = (
             _MAP_SYSTEM.format(default_arc=_DEFAULT_ARC_NAME)
+            + toc_section
             + f"\n\n--- EXTRAIT {index + 1}/{total} ---\n{text}\n\n"
             "Renvoie maintenant le JSON de l'arborescence."
         )
@@ -310,8 +345,10 @@ class ImportCampaignUseCase:
                 logger.info(
                     "Morceau %s : sortie tronquée → re-découpage en 2 moitiés (niveau %s).",
                     index, depth + 1)
-                a = await self._extract_arcs(left, index=index, total=total, depth=depth + 1)
-                b = await self._extract_arcs(right, index=index, total=total, depth=depth + 1)
+                a = await self._extract_arcs(
+                    left, index=index, total=total, depth=depth + 1, toc_block=toc_block)
+                b = await self._extract_arcs(
+                    right, index=index, total=total, depth=depth + 1, toc_block=toc_block)
                 return a + b
         if truncated:
             logger.warning(

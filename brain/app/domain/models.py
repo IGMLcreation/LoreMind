@@ -321,10 +321,25 @@ class ExtractedPage:
 
 
 @dataclass(frozen=True)
+class TocEntry:
+    """Une entrée de la table des matières (bookmarks/outline) du PDF.
+
+    `level` : profondeur 1-based (1 = chapitre, 2 = section…). `page` : 1-based.
+    """
+
+    level: int
+    title: str
+    page: int
+
+
+@dataclass(frozen=True)
 class ExtractedDocument:
     """Résultat brut de l'extraction d'un PDF : une entrée par page."""
 
     pages: list[ExtractedPage]
+    # Table des matières (bookmarks PDF). Vide si le PDF n'en a pas — fréquent
+    # pour les scans ; les livres born-digital en ont presque toujours une.
+    toc: list[TocEntry] = field(default_factory=list)
 
     @property
     def page_count(self) -> int:

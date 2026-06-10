@@ -22,7 +22,7 @@ import pymupdf as fitz  # PyMuPDF — on importe par le nom canonique `pymupdf`
 # (et NON `import fitz`) pour éviter la collision avec le faux paquet PyPI "fitz"
 # qui échoue sur `from frontend import *`.
 
-from app.domain.models import ExtractedDocument, ExtractedPage
+from app.domain.models import ExtractedDocument, ExtractedPage, TocEntry
 from app.domain.ports import PdfExtractionError
 
 logger = logging.getLogger(__name__)
@@ -72,7 +72,18 @@ class PyMuPdfTextExtractor:
             raise PdfExtractionError(f"PDF illisible ou corrompu : {exc}") from exc
 
         pages: list[ExtractedPage] = []
+        toc: list[TocEntry] = []
         try:
+            # Bookmarks/outline du PDF : structure officielle du livre, gratuite
+            # (pas d'appel LLM). Sert de squelette de référence aux imports.
+            try:
+                for level, title, page_no in doc.get_toc(simple=True) or []:
+                    title = str(title or "").strip()
+                    if title:
+                        toc.append(TocEntry(level=int(level), title=title, page=int(page_no)))
+            except Exception as exc:  # noqa: BLE001 — TOC best-effort, jamais bloquante
+                logger.warning("Lecture de la table des matières impossible : %s", exc)
+
             for index, page in enumerate(doc):
                 text = (page.get_text() or "").strip()
                 used_ocr = False
@@ -85,7 +96,7 @@ class PyMuPdfTextExtractor:
         finally:
             doc.close()
 
-        return ExtractedDocument(pages=pages)
+        return ExtractedDocument(pages=pages, toc=toc)
 
     @staticmethod
     def _ocr_page(page: "fitz.Page") -> str:
