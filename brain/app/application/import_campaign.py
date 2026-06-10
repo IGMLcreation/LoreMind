@@ -116,6 +116,28 @@ _TOC_MAX_LEVEL = 2
 _TOC_MAX_ENTRIES = 80
 
 
+# Consolidation finale : le squelette (noms seuls) est minuscule, donc l'appel
+# est quasi gratuit comparé aux MAP. Température 0 et consigne CONSERVATRICE :
+# ne fusionner que les doublons évidents, jamais des entités distinctes.
+_CONSOLIDATE_PROMPT = """Voici le squelette d'une arborescence arc → chapitre → scène issue d'une
+fusion AUTOMATIQUE de morceaux d'un livre de campagne de jeu de rôle. La fusion par nom exact
+peut avoir laissé des QUASI-DOUBLONS : le même chapitre ou la même scène sous deux libellés
+légèrement différents (ex: "La Crypte" et "Crypte de Karrak", "3. Salle des gardes" et
+"Salle des gardes").
+
+{skeleton}
+
+Identifie UNIQUEMENT les fusions ÉVIDENTES (même entité du livre sous deux noms). Sois
+CONSERVATEUR : dans le doute, ne fusionne PAS. Deux lieux/évènements distincts ne doivent
+JAMAIS être fusionnés.
+
+Réponds UNIQUEMENT par un objet JSON valide :
+{{"chapter_merges": [{{"into": "nom du chapitre à garder", "merge": ["nom à fusionner", ...]}}],
+  "scene_merges": [{{"chapter": "nom du chapitre", "into": "nom de la scène à garder",
+                     "merge": ["nom à fusionner", ...]}}]}}
+S'il n'y a RIEN à fusionner (cas le plus fréquent) : {{"chapter_merges": [], "scene_merges": []}}"""
+
+
 def _format_toc(toc) -> str:
     """Formate la TOC du PDF en liste indentée, bornée (niveaux hauts d'abord)."""
     entries = [e for e in toc if e.level <= _TOC_MAX_LEVEL][:_TOC_MAX_ENTRIES]
@@ -230,6 +252,79 @@ class _TreeMerger:
         scenes = sum(len(c["scenes"]) for a in self._arcs.values() for c in a["chapters"].values())
         return arcs, chapters, scenes
 
+    # --- Consolidation : fusion des quasi-doublons détectés par le LLM ---------
+
+    def skeleton_text(self) -> str:
+        """Squelette de l'arbre (noms seuls) — entrée compacte de la consolidation."""
+        lines: list[str] = []
+        for a in self._arcs.values():
+            lines.append(f"ARC: {a['name']}")
+            for c in a["chapters"].values():
+                lines.append(f"  CHAPITRE: {c['name']}")
+                for s in c["scenes"].values():
+                    lines.append(f"    SCENE: {s['name']}")
+        return "\n".join(lines)
+
+    def merge_chapters(self, into_name: str, merge_names: list[str]) -> bool:
+        """Fusionne les chapitres `merge_names` dans `into_name` (tous arcs).
+
+        Best-effort : les noms inconnus sont ignorés. Renvoie True si modifié.
+        """
+        target = self._find_chapter(into_name)
+        if target is None:
+            return False
+        changed = False
+        for mname in merge_names:
+            key = str(mname).strip().lower()
+            if not key or key == str(into_name).strip().lower():
+                continue
+            for a in self._arcs.values():
+                src = a["chapters"].pop(key, None)
+                if src is None or src is target:
+                    continue
+                self._fill_desc(target, src)
+                for skey, sdict in src["scenes"].items():
+                    if skey in target["scenes"]:
+                        self._merge_scene_into(target["scenes"][skey], sdict)
+                    else:
+                        target["scenes"][skey] = sdict
+                changed = True
+        return changed
+
+    def merge_scenes(self, chapter_name: str, into_name: str, merge_names: list[str]) -> bool:
+        """Fusionne les scènes `merge_names` dans `into_name` au sein du chapitre."""
+        chapter = self._find_chapter(chapter_name)
+        if chapter is None:
+            return False
+        target = chapter["scenes"].get(str(into_name).strip().lower())
+        if target is None:
+            return False
+        changed = False
+        for mname in merge_names:
+            key = str(mname).strip().lower()
+            if not key or key == str(into_name).strip().lower():
+                continue
+            src = chapter["scenes"].pop(key, None)
+            if src is None or src is target:
+                continue
+            self._merge_scene_into(target, src)
+            changed = True
+        return changed
+
+    def _find_chapter(self, name: str) -> dict | None:
+        key = str(name).strip().lower()
+        for a in self._arcs.values():
+            if key in a["chapters"]:
+                return a["chapters"][key]
+        return None
+
+    def _merge_scene_into(self, target: dict, src: dict) -> None:
+        self._fill_desc(target, src)
+        self._append_field(target, src, "player_narration")
+        self._append_field(target, src, "gm_notes")
+        for rkey, rdict in src.get("rooms", {}).items():
+            target["rooms"].setdefault(rkey, rdict)
+
 
 class ImportCampaignUseCase:
     """Transforme un PDF de campagne en proposition d'arbre arc→chapitre→scène."""
@@ -264,6 +359,8 @@ class ImportCampaignUseCase:
             ))
             for res in results:
                 merger.add(res)
+        if total > 1:
+            await self._consolidate(merger)
         return CampaignImportResult(
             arcs=merger.result(),
             page_count=doc.page_count,
@@ -351,6 +448,14 @@ class ImportCampaignUseCase:
                               f"Dernier message : {last_error or 'inconnu'}"}
             return
 
+        # Consolidation finale : fusion des quasi-doublons inter-morceaux
+        # (best-effort, voir _consolidate). Inutile sur un import mono-morceau.
+        if total > 1:
+            yield {"type": "consolidating", "total": total}
+            async for kind, _ in with_heartbeat(self._consolidate(merger)):
+                if kind == "heartbeat":
+                    yield {"type": "heartbeat", "current": total, "total": total}
+
         yield {
             "type": "done",
             "arcs": _serialize_arcs(merger.result()),
@@ -358,6 +463,44 @@ class ImportCampaignUseCase:
             "ocr_page_count": doc.ocr_page_count,
             "skipped": skipped,
         }
+
+    # --- Consolidation finale (fusion des quasi-doublons) ---------------------
+
+    async def _consolidate(self, merger: _TreeMerger) -> None:
+        """Une passe LLM sur le squelette pour fusionner les quasi-doublons.
+
+        BEST-EFFORT : toute erreur (LLM indisponible, JSON invalide, noms
+        inconnus) laisse l'arbre tel quel — la consolidation ne peut qu'améliorer,
+        jamais bloquer un import.
+        """
+        _, chapters, scenes = merger.counts()
+        if chapters + scenes < 3:
+            return  # rien à dédoublonner sur un arbre minuscule
+        skeleton = merger.skeleton_text()
+        try:
+            raw = await generate_with_retry(
+                self._llm, _CONSOLIDATE_PROMPT.format(skeleton=skeleton),
+                output_format="json", temperature=0.0)
+        except Exception as exc:  # noqa: BLE001 — best-effort STRICT : une erreur ici
+            # (LLM, réseau, bug) ne doit JAMAIS faire perdre un import terminé.
+            logger.warning("Consolidation ignorée (échec) : %s", exc)
+            return
+        parsed, _ = load_json_object(raw)
+        if not isinstance(parsed, dict):
+            logger.warning("Consolidation ignorée (réponse non-JSON).")
+            return
+        merged = 0
+        for cm in parsed.get("chapter_merges") or []:
+            if isinstance(cm, dict) and merger.merge_chapters(
+                    str(cm.get("into") or ""), list(cm.get("merge") or [])):
+                merged += 1
+        for sm in parsed.get("scene_merges") or []:
+            if isinstance(sm, dict) and merger.merge_scenes(
+                    str(sm.get("chapter") or ""), str(sm.get("into") or ""),
+                    list(sm.get("merge") or [])):
+                merged += 1
+        if merged:
+            logger.info("Consolidation : %s fusion(s) de quasi-doublons appliquée(s).", merged)
 
     # --- MAP : un morceau → sous-arbre ---------------------------------------
 
