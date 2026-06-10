@@ -83,6 +83,13 @@ class Settings(BaseSettings):
     # mais prompt plus long. 8 par défaut (montable jusqu'à ~20 sur grand contexte).
     rag_top_k: int = 8
 
+    # Cosinus minimal pour qu'un extrait soit injecté dans le prompt du chat
+    # atelier : en dessous, l'extrait n'a aucun rapport avec la question → mieux
+    # vaut moins d'extraits que du bruit. Défaut conservateur (0.30) : les paires
+    # pertinentes scorent typiquement 0.6+ avec nomic-embed-text/mistral-embed,
+    # les hors-sujet 0.2-0.4. Montable à ~0.4 si trop de bruit, 0 = désactivé.
+    rag_min_score: float = 0.30
+
     # Taille cible d'un morceau (en tokens) pour l'import de PDF (regles/campagne).
     # Plus c'est gros, moins il y a de morceaux => moins de fragmentation et un
     # import plus rapide, MAIS il faut que ca tienne dans la fenetre du modele.

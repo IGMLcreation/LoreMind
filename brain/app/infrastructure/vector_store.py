@@ -5,6 +5,12 @@ Chaque SOURCE est persistée en un fichier JSON sur le volume `data/` du Brain :
 
 À l'échelle d'un livre (quelques centaines d'extraits), une recherche cosinus en
 Python pur est instantanée — inutile d'ajouter numpy/pgvector/une base vectorielle.
+Les fichiers sont mis en cache mémoire (invalidation par mtime) : le coûteux est
+le re-parse JSON des vecteurs, pas le cosinus.
+
+Recherche HYBRIDE : score = cosinus + bonus lexical (mots significatifs de la
+question présents dans l'extrait). Sur du JdR, les requêtes sont souvent des noms
+propres exacts (« Strahd », « Barovia ») où le lexical bat l'embedding.
 """
 from __future__ import annotations
 
@@ -15,6 +21,27 @@ from pathlib import Path
 
 _STORE_DIR = Path("data/notebooks")
 _SAFE_ID = re.compile(r"[^A-Za-z0-9_-]")
+
+# Cache mémoire {source_id: (mtime_ns, chunks)} — évite de relire/re-parser le JSON
+# (vecteurs = gros) à chaque question. Invalidé si le fichier change (mtime).
+_CACHE: dict[str, tuple[int, list[dict]]] = {}
+_CACHE_MAX_SOURCES = 32  # garde-fou mémoire : ~10 Mo par gros livre en cache
+
+# Poids du bonus lexical dans le score hybride. Le cosinus reste dominant ; le
+# bonus (0..0.15) sert surtout à départager / repêcher les correspondances exactes.
+_LEX_WEIGHT = 0.15
+_WORD_RE = re.compile(r"[a-z0-9àâäçéèêëîïôöùûüœæ]{3,}")
+# Mots-outils FR/EN fréquents (≥3 lettres) : sans eux, le bonus lexical serait
+# dominé par « les », « pour », « the »… au lieu des termes porteurs de sens.
+_STOPWORDS = frozenset({
+    "les", "des", "une", "est", "son", "ses", "aux", "par", "pour", "dans",
+    "sur", "avec", "qui", "que", "quoi", "dont", "mais", "comme", "plus",
+    "pas", "tout", "tous", "toute", "toutes", "ils", "elles", "leur", "leurs",
+    "nous", "vous", "cette", "ces", "cet", "ont", "sont", "fait", "etre",
+    "être", "avoir", "peut", "quel", "quelle", "quels", "quelles", "ainsi",
+    "the", "and", "for", "with", "this", "that", "are", "was", "has", "have",
+    "not", "you", "his", "her", "its", "they", "them", "from", "what", "which",
+})
 
 
 def _path(source_id: str) -> Path:
@@ -42,6 +69,7 @@ def save(
         items.append(item)
     payload = {"dim": len(vectors[0]) if vectors else 0, "chunks": items}
     _path(source_id).write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+    _CACHE.pop(source_id, None)  # le mtime suffirait, mais soyons explicites
     return len(chunks)
 
 
@@ -50,18 +78,29 @@ def exists(source_id: str) -> bool:
 
 
 def delete(source_id: str) -> None:
+    _CACHE.pop(source_id, None)
     _path(source_id).unlink(missing_ok=True)
 
 
 def _load(source_id: str) -> list[dict]:
     p = _path(source_id)
-    if not p.exists():
+    try:
+        mtime = p.stat().st_mtime_ns
+    except OSError:
+        _CACHE.pop(source_id, None)
         return []
+    cached = _CACHE.get(source_id)
+    if cached is not None and cached[0] == mtime:
+        return cached[1]
     try:
         data = json.loads(p.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return []
-    return data.get("chunks", []) if isinstance(data, dict) else []
+    chunks = data.get("chunks", []) if isinstance(data, dict) else []
+    if len(_CACHE) >= _CACHE_MAX_SOURCES:
+        _CACHE.pop(next(iter(_CACHE)))  # éviction FIFO simple
+    _CACHE[source_id] = (mtime, chunks)
+    return chunks
 
 
 def all_chunks(source_id: str) -> list[dict]:
@@ -85,20 +124,49 @@ def _cosine(a: list[float], b: list[float]) -> float:
     return dot / (math.sqrt(na) * math.sqrt(nb))
 
 
+def _significant_words(text: str) -> frozenset[str]:
+    """Mots porteurs de sens d'un texte (minuscules, ≥3 lettres, hors mots-outils)."""
+    return frozenset(w for w in _WORD_RE.findall(text.lower()) if w not in _STOPWORDS)
+
+
+def _chunk_words(chunk: dict) -> frozenset[str]:
+    """Mots significatifs d'un extrait, mémoïsés sur le dict caché (calculés à la
+    1ère recherche, réutilisés tant que la source reste en cache)."""
+    words = chunk.get("_words")
+    if words is None:
+        words = _significant_words(chunk.get("text", ""))
+        chunk["_words"] = words
+    return words
+
+
 def search(
     source_ids: list[str],
     query_vector: list[float],
     top_k: int = 6,
+    query_text: str = "",
+    min_score: float = 0.0,
 ) -> list[dict]:
     """Renvoie les `top_k` extraits les plus proches, toutes sources confondues.
 
-    Chaque résultat : {"text": str, "score": float, "source_id": str}.
+    Score HYBRIDE : cosinus + `_LEX_WEIGHT` × (part des mots significatifs de
+    `query_text` présents dans l'extrait). Les extraits dont le cosinus est sous
+    `min_score` sont écartés (peut donc renvoyer MOINS de `top_k` résultats —
+    mieux vaut aucun extrait que du bruit injecté dans le prompt).
+
+    Chaque résultat : {"text": str, "score": float, "source_id": str, "page": int|None}.
     """
+    query_words = _significant_words(query_text) if query_text else frozenset()
     scored: list[dict] = []
     for sid in source_ids:
         for chunk in _load(sid):
             vector = chunk.get("vector") or []
-            score = _cosine(query_vector, vector)
+            cos = _cosine(query_vector, vector)
+            if cos < min_score:
+                continue
+            score = cos
+            if query_words:
+                overlap = len(query_words & _chunk_words(chunk)) / len(query_words)
+                score += _LEX_WEIGHT * overlap
             scored.append({
                 "text": chunk.get("text", ""),
                 "score": score,
