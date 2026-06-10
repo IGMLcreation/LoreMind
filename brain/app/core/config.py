@@ -89,6 +89,13 @@ class Settings(BaseSettings):
     # False = relire TOUT le document à chaque question (exhaustivité maximale).
     deep_summary_filter: bool = True
 
+    # Reranking LLM du chat atelier : recupere un pool elargi (3x top_k, max 24)
+    # puis fait NOTER la pertinence de chaque extrait par le LLM avant d'injecter
+    # les top_k meilleurs. Meilleure precision sur les questions ambigues, MAIS
+    # +1 appel LLM avant le premier token (quelques secondes sur un petit modele
+    # local). Desactive par defaut ; recommande avec un provider cloud rapide.
+    rag_rerank: bool = False
+
     # Cosinus minimal pour qu'un extrait soit injecté dans le prompt du chat
     # atelier : en dessous, l'extrait n'a aucun rapport avec la question → mieux
     # vaut moins d'extraits que du bruit. Défaut conservateur (0.30) : les paires

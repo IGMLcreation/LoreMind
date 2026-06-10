@@ -10,6 +10,7 @@ from typing import AsyncIterator
 
 from app.application.notebook_rag import NotebookRagUseCase
 from app.application.query_rewrite import standalone_question
+from app.application.rerank import pool_size, rerank
 from app.domain.models import ChatMessage
 from app.domain.ports import LLMChatProvider
 
@@ -58,9 +59,13 @@ Réponds en français, de façon utile et concise. Mets le texte explicatif AVAN
 
 
 class NotebookChatUseCase:
-    def __init__(self, rag: NotebookRagUseCase, llm: LLMChatProvider) -> None:
+    def __init__(
+        self, rag: NotebookRagUseCase, llm: LLMChatProvider, rerank_enabled: bool = False
+    ) -> None:
         self._rag = rag
         self._llm = llm
+        # Reranking LLM d'un pool élargi avant injection (voir app.application.rerank).
+        self._rerank_enabled = rerank_enabled
 
     async def stream(
         self,
@@ -76,7 +81,14 @@ class NotebookChatUseCase:
         # le sujet → on le résout depuis l'historique (best-effort, 1 appel léger,
         # uniquement à partir du 2e tour). La réponse, elle, voit tout l'historique.
         search_query = await standalone_question(self._llm, messages)
-        passages = await self._rag.retrieve(source_ids, search_query, top_k=top_k)
+        if self._rerank_enabled:
+            # Pool élargi → notation LLM → top_k final (meilleure précision sur
+            # les questions ambiguës, au prix d'un appel avant le premier token).
+            pool = await self._rag.retrieve(
+                source_ids, search_query, top_k=pool_size(top_k))
+            passages = await rerank(self._llm, search_query, pool, top_k)
+        else:
+            passages = await self._rag.retrieve(source_ids, search_query, top_k=top_k)
         # Évènement 'sources' AVANT le premier token : l'UI peut afficher les
         # pages utilisées (« 📖 p. 12, 47 ») dès le début de la réponse.
         yield {"type": "sources", "sources": [

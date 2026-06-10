@@ -136,8 +136,10 @@ def get_notebook_rag_use_case(
 def get_notebook_chat_use_case(
     llm: Annotated[LLMProvider, Depends(get_llm_provider)],
     rag: Annotated[NotebookRagUseCase, Depends(get_notebook_rag_use_case)],
+    settings: Annotated[Settings, Depends(get_settings)],
 ) -> NotebookChatUseCase:
-    return NotebookChatUseCase(rag=rag, llm=llm)  # type: ignore[arg-type]
+    return NotebookChatUseCase(
+        rag=rag, llm=llm, rerank_enabled=settings.rag_rerank)  # type: ignore[arg-type]
 
 
 def get_notebook_deep_use_case(
