@@ -113,3 +113,14 @@ class LLMProviderError(Exception):
     Définie dans le domaine (pas dans l'infra) pour que les couches
     supérieures puissent l'attraper sans connaître l'adapter concret.
     """
+
+
+class LLMGenerationTimeout(LLMProviderError):
+    """La génération a démarré mais n'a pas FINI dans le temps imparti.
+
+    Cas distinct d'un échec transitoire (file d'attente, 503) : le modèle
+    produisait des tokens mais trop lentement pour la taille de sortie demandée.
+    Réessayer à l'identique est inutile (même entrée → même lenteur) ; la bonne
+    réaction est de RÉDUIRE la sortie demandée (ex. import : re-découper le
+    morceau en deux moitiés).
+    """

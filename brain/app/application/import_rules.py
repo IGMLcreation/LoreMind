@@ -25,7 +25,12 @@ from app.application.streaming import with_heartbeat
 # 1-2 niveaux suffisent en pratique, le reste est un garde-fou).
 _MAX_SPLIT_DEPTH = 3
 from app.domain.models import RulesImportResult
-from app.domain.ports import LLMProvider, LLMProviderError, PdfTextExtractor
+from app.domain.ports import (
+    LLMGenerationTimeout,
+    LLMProvider,
+    LLMProviderError,
+    PdfTextExtractor,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -100,6 +105,29 @@ class _SectionMerger:
 
     def result(self) -> dict[str, str]:
         return {title: "\n\n".join(parts) for title, parts in self._merged.items()}
+
+
+def _coerce_markdown(value: object) -> str:
+    """Convertit une valeur de section renvoyée par le LLM en markdown plat.
+
+    Malgré la consigne « valeurs = markdown », certains modèles nichent des
+    sous-sections ({titre: {sous-titre: contenu}}) ou des listes. Un `str(v)`
+    naïf produirait du repr Python ({'k': 'v'}) ; on aplatit récursivement à la
+    place pour ne perdre aucun contenu.
+    """
+    if isinstance(value, str):
+        return value
+    if isinstance(value, dict):
+        parts = []
+        for k, v in value.items():
+            content = _coerce_markdown(v)
+            # Clé = sous-titre (cas normal) ; si la "valeur" est vide, la clé
+            # elle-même porte le contenu (dérive observée sur certains modèles).
+            parts.append(f"{k}\n\n{content}".strip() if content else str(k))
+        return "\n\n".join(parts)
+    if isinstance(value, list):
+        return "\n\n".join(_coerce_markdown(v) for v in value)
+    return "" if value is None else str(value)
 
 
 def _combine_sections(a: dict[str, str], b: dict[str, str]) -> dict[str, str]:
@@ -241,8 +269,24 @@ class ImportRulesUseCase:
             + f"\n\n--- EXTRAIT {index + 1}/{total} ---\n{text}\n\n"
             "Renvoie maintenant le JSON des sections."
         )
-        raw = await generate_with_retry(
-            self._llm, prompt, output_format="json", temperature=_TEMPERATURE)
+        try:
+            raw = await generate_with_retry(
+                self._llm, prompt, output_format="json", temperature=_TEMPERATURE)
+        except LLMGenerationTimeout:
+            # Le modèle générait mais trop lentement pour réécrire tout le morceau
+            # dans le temps imparti (fréquent sur tier gratuit + gros morceaux).
+            # Même remède que la troncature : deux moitiés → sortie 2× plus courte.
+            if depth >= _MAX_SPLIT_DEPTH:
+                raise
+            left, right = split_in_half(text)
+            if not left or not right:
+                raise
+            logger.info(
+                "Morceau %s : timeout de génération → re-découpage en 2 moitiés (niveau %s).",
+                index, depth + 1)
+            a = await self._extract_sections(left, index=index, total=total, depth=depth + 1)
+            b = await self._extract_sections(right, index=index, total=total, depth=depth + 1)
+            return _combine_sections(a, b)
         sections, truncated = self._parse_sections(raw, index=index)
 
         if truncated and depth < _MAX_SPLIT_DEPTH:
@@ -276,4 +320,4 @@ class ImportRulesUseCase:
         if not isinstance(parsed, dict):
             logger.warning("Morceau %s : le LLM n'a pas renvoyé un objet, ignoré.", index)
             return {}, False
-        return {str(k): str(v) for k, v in parsed.items()}, recovered
+        return {str(k): _coerce_markdown(v) for k, v in parsed.items()}, recovered

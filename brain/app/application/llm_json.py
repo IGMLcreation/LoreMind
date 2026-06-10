@@ -38,13 +38,16 @@ def load_json_object(raw: str) -> tuple[object | None, bool]:
     obj = extract_json_object(raw)
     if obj is not None:
         try:
-            return json.loads(obj), False
+            # strict=False : tolère les caractères de contrôle BRUTS (retours à la
+            # ligne non échappés…) dans les chaînes — erreur fréquente des LLM hors
+            # mode JSON natif, qui invalidait toute la réponse.
+            return json.loads(obj, strict=False), False
         except json.JSONDecodeError:
             pass
     repaired = repair_truncated_json(raw)
     if repaired is not None:
         try:
-            return json.loads(repaired), True
+            return json.loads(repaired, strict=False), True
         except json.JSONDecodeError:
             pass
     return None, False

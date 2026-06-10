@@ -39,9 +39,11 @@ public class GameSystemService {
             byte[] pdfBytes,
             String filename,
             java.util.function.Consumer<com.loremind.domain.gamesystemcontext.RulesImportProgress> onProgress,
+            Runnable onHeartbeat,
             java.util.function.Consumer<RulesImportResult> onDone,
             java.util.function.Consumer<Throwable> onError) {
-        rulesPdfImporter.importRulesStreaming(pdfBytes, filename, onProgress, onDone, onError);
+        rulesPdfImporter.importRulesStreaming(
+                pdfBytes, filename, onProgress, onHeartbeat, onDone, onError);
     }
 
     /**

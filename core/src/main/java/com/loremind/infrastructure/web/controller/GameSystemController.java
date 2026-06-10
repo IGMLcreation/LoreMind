@@ -3,7 +3,6 @@ package com.loremind.infrastructure.web.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loremind.application.gamesystemcontext.GameSystemService;
 import com.loremind.domain.gamesystemcontext.GameSystem;
-import com.loremind.domain.gamesystemcontext.RulesImportProgress;
 import com.loremind.domain.gamesystemcontext.RulesImportResult;
 import com.loremind.domain.gamesystemcontext.ports.RulesImportException;
 import com.loremind.domain.shared.template.TemplateField;
@@ -27,6 +26,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 @RestController
@@ -135,7 +135,7 @@ public class GameSystemController {
     public SseEmitter importRulesStream(@RequestParam("file") MultipartFile file) throws IOException {
         SseEmitter emitter = new SseEmitter(IMPORT_SSE_TIMEOUT_MS);
         if (file == null || file.isEmpty()) {
-            sendImportError(emitter, "Fichier PDF vide.");
+            sendImportError(emitter, new AtomicBoolean(false), "Fichier PDF vide.");
             return emitter;
         }
         // Les octets sont lus sur le thread servlet (le MultipartFile n'est plus
@@ -143,46 +143,100 @@ public class GameSystemController {
         byte[] bytes = file.getBytes();
         String filename = file.getOriginalFilename();
 
+        // Suivi de la déconnexion du navigateur : dès qu'un envoi échoue (ou que
+        // l'emitter se termine), on cesse d'envoyer ET on interrompt le streaming
+        // amont (l'exception ClientGone remonte dans le doOnNext du WebClient →
+        // annule la souscription → le Brain voit la coupure et stoppe le LLM).
+        AtomicBoolean clientGone = new AtomicBoolean(false);
+        emitter.onTimeout(() -> clientGone.set(true));
+        emitter.onError(e -> clientGone.set(true));
+
         taskExecutor.execute(() -> {
             try {
                 gameSystemService.importRulesFromPdfStreaming(
                         bytes, filename,
-                        progress -> sendImportEvent(emitter, "progress", progress),
+                        progress -> sendImportEvent(emitter, clientGone, "progress", progress),
+                        () -> sendImportHeartbeat(emitter, clientGone),
                         result -> {
-                            sendImportEvent(emitter, "done", result);
+                            sendImportEvent(emitter, clientGone, "done", result);
                             emitter.complete();
                         },
                         error -> {
+                            if (clientGone.get()) {
+                                // La "panne" amont n'est que l'écho de la déconnexion
+                                // du navigateur : pas un échec d'import.
+                                log.info("Import de règles (stream) interrompu : client déconnecté.");
+                                return;
+                            }
                             log.warn("Import de règles (stream) échoué : {}", error.getMessage());
-                            sendImportError(emitter, error.getMessage());
+                            sendImportError(emitter, clientGone, error.getMessage());
                         });
+            } catch (ClientGoneException e) {
+                log.info("Import de règles (stream) interrompu : client déconnecté.");
             } catch (Exception e) {
                 log.warn("Import de règles (stream) échoué : {}", e.getMessage());
-                sendImportError(emitter, e.getMessage());
+                sendImportError(emitter, clientGone, e.getMessage());
             }
         });
         return emitter;
     }
 
+    /** Signale que le navigateur a fermé le flux SSE : inutile de continuer l'import. */
+    private static final class ClientGoneException extends RuntimeException {
+        ClientGoneException(Throwable cause) {
+            super("Client SSE déconnecté.", cause);
+        }
+    }
+
     /** Sérialise `payload` en JSON et l'envoie comme évènement SSE nommé. */
-    private void sendImportEvent(SseEmitter emitter, String eventName, Object payload) {
+    private void sendImportEvent(
+            SseEmitter emitter, AtomicBoolean clientGone, String eventName, Object payload) {
+        if (clientGone.get()) {
+            throw new ClientGoneException(null);
+        }
         try {
             emitter.send(SseEmitter.event().name(eventName).data(
                     objectMapper.writeValueAsString(payload), MediaType.APPLICATION_JSON));
-        } catch (IOException e) {
+        } catch (Exception e) {
+            // IOException OU IllegalStateException (emitter déjà terminé) : le client
+            // est parti. On marque l'état et on INTERROMPT le pipeline amont — sinon
+            // chaque évènement suivant rejouerait l'échec (bruit de logs + LLM gaspillé).
+            clientGone.set(true);
             emitter.completeWithError(e);
+            throw new ClientGoneException(e);
+        }
+    }
+
+    /**
+     * Keep-alive vers le navigateur pendant un appel LLM long : un commentaire SSE
+     * (ignoré par le front) suffit à réarmer le {@code proxy_read_timeout} de nginx.
+     */
+    private void sendImportHeartbeat(SseEmitter emitter, AtomicBoolean clientGone) {
+        if (clientGone.get()) {
+            throw new ClientGoneException(null);
+        }
+        try {
+            emitter.send(SseEmitter.event().comment("keepalive"));
+        } catch (Exception e) {
+            clientGone.set(true);
+            emitter.completeWithError(e);
+            throw new ClientGoneException(e);
         }
     }
 
     /** Envoie un évènement `error` {message} puis termine le flux. */
-    private void sendImportError(SseEmitter emitter, String message) {
+    private void sendImportError(SseEmitter emitter, AtomicBoolean clientGone, String message) {
+        if (clientGone.get()) {
+            return; // le client n'est plus là pour lire le message d'erreur.
+        }
         try {
             emitter.send(SseEmitter.event().name("error").data(
                     objectMapper.writeValueAsString(Map.of(
                             "message", message != null ? message : "Erreur inconnue.")),
                     MediaType.APPLICATION_JSON));
             emitter.complete();
-        } catch (IOException e) {
+        } catch (Exception e) {
+            clientGone.set(true);
             emitter.completeWithError(e);
         }
     }

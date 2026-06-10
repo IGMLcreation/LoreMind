@@ -26,14 +26,18 @@ public interface RulesPdfImporter {
      * l'avancement au fil de l'eau. Les callbacks sont invoqués depuis le thread
      * d'exécution de l'adapter (synchrone jusqu'à {@code onDone}/{@code onError}).
      *
-     * @param onProgress invoqué à chaque étape (extraction, puis par morceau).
-     * @param onDone     invoqué une fois avec le résultat final.
-     * @param onError    invoqué si l'extraction/structuration échoue.
+     * @param onProgress  invoqué à chaque étape (extraction, puis par morceau).
+     * @param onHeartbeat invoqué périodiquement pendant un appel LLM long (aucune
+     *                    avancée à afficher, mais le canal SSE vers le navigateur
+     *                    doit rester actif — sinon un proxy intermédiaire le coupe).
+     * @param onDone      invoqué une fois avec le résultat final.
+     * @param onError     invoqué si l'extraction/structuration échoue.
      */
     void importRulesStreaming(
             byte[] pdfBytes,
             String filename,
             Consumer<RulesImportProgress> onProgress,
+            Runnable onHeartbeat,
             Consumer<RulesImportResult> onDone,
             Consumer<Throwable> onError);
 }

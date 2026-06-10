@@ -14,7 +14,7 @@ import asyncio
 import logging
 import re
 
-from app.domain.ports import LLMProvider, LLMProviderError
+from app.domain.ports import LLMGenerationTimeout, LLMProvider, LLMProviderError
 
 logger = logging.getLogger(__name__)
 
@@ -74,6 +74,12 @@ async def generate_with_retry(
     for attempt in range(_ATTEMPTS):
         try:
             return await llm.generate(prompt, output_format=output_format, temperature=temperature)
+        except LLMGenerationTimeout:
+            # Timeout de DÉBIT (génération trop lente pour la sortie demandée) :
+            # rejouer le même prompt re-timeoutera à l'identique — on a déjà perdu
+            # `timeout` secondes. On remonte tout de suite : l'appelant (import)
+            # sait re-découper le morceau en deux pour réduire la sortie.
+            raise
         except LLMProviderError as exc:
             last_error = exc
             # Quota JOURNALIER épuisé : inutile d'insister, on remonte tout de suite

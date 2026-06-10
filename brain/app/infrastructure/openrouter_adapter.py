@@ -22,7 +22,7 @@ from app.core.config import Settings
 from app.domain.models import ChatMessage
 
 logger = logging.getLogger(__name__)
-from app.domain.ports import LLMProviderError
+from app.domain.ports import LLMGenerationTimeout, LLMProviderError
 
 _API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
@@ -113,7 +113,7 @@ class OpenRouterLLMProvider:
         try:
             return await asyncio.wait_for(_collect(), timeout=self._timeout)
         except asyncio.TimeoutError as exc:
-            raise LLMProviderError(
+            raise LLMGenerationTimeout(
                 f"Erreur {provider} : génération non terminée en {self._timeout}s. Réduisez la "
                 "taille des morceaux d'import, augmentez le timeout, ou changez de modèle."
             ) from exc

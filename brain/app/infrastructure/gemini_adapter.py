@@ -20,7 +20,7 @@ import httpx
 
 from app.core.config import Settings
 from app.domain.models import ChatMessage
-from app.domain.ports import LLMProviderError
+from app.domain.ports import LLMGenerationTimeout, LLMProviderError
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +95,7 @@ class GeminiLLMProvider:
         try:
             return await asyncio.wait_for(_collect(), timeout=self._timeout)
         except asyncio.TimeoutError as exc:
-            raise LLMProviderError(
+            raise LLMGenerationTimeout(
                 f"Erreur Gemini : génération non terminée en {self._timeout}s. Réduisez la "
                 "taille des morceaux d'import ou augmentez le timeout."
             ) from exc
@@ -130,6 +130,10 @@ class GeminiLLMProvider:
         }
         if temperature is not None:
             body["temperature"] = temperature
+        # Mode JSON natif (supporté par l'endpoint OpenAI-compatible de Gemini) :
+        # supprime fences ```json et JSON invalide, principale cause de morceaux ignorés.
+        if output_format == "json":
+            body["response_format"] = {"type": "json_object"}
 
         async with httpx.AsyncClient(timeout=self._timeout) as client:
             try:

@@ -15,6 +15,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * REST Controller pour l'import d'un PDF de campagne → arbre arc/chapitre/scène.
@@ -54,31 +55,53 @@ public class CampaignImportController {
             @RequestParam("file") MultipartFile file) throws IOException {
         SseEmitter emitter = new SseEmitter(IMPORT_SSE_TIMEOUT_MS);
         if (file == null || file.isEmpty()) {
-            sendError(emitter, "Fichier PDF vide.");
+            sendError(emitter, new AtomicBoolean(false), "Fichier PDF vide.");
             return emitter;
         }
         byte[] bytes = file.getBytes();
         String filename = file.getOriginalFilename();
 
+        // Suivi de la déconnexion du navigateur : dès qu'un envoi échoue (ou que
+        // l'emitter se termine), on cesse d'envoyer ET on interrompt le streaming
+        // amont (ClientGoneException remonte dans le doOnNext du WebClient →
+        // annule la souscription → le Brain voit la coupure et stoppe le LLM).
+        AtomicBoolean clientGone = new AtomicBoolean(false);
+        emitter.onTimeout(() -> clientGone.set(true));
+        emitter.onError(e -> clientGone.set(true));
+
         taskExecutor.execute(() -> {
             try {
                 campaignImportService.importStructureStreaming(
                         bytes, filename,
-                        progress -> sendEvent(emitter, "progress", progress),
+                        progress -> sendEvent(emitter, clientGone, "progress", progress),
+                        () -> sendHeartbeat(emitter, clientGone),
                         proposal -> {
-                            sendEvent(emitter, "done", proposal);
+                            sendEvent(emitter, clientGone, "done", proposal);
                             emitter.complete();
                         },
                         error -> {
+                            if (clientGone.get()) {
+                                log.info("Import campagne (stream) interrompu : client déconnecté.");
+                                return;
+                            }
                             log.warn("Import campagne (stream) échoué : {}", error.getMessage());
-                            sendError(emitter, error.getMessage());
+                            sendError(emitter, clientGone, error.getMessage());
                         });
+            } catch (ClientGoneException e) {
+                log.info("Import campagne (stream) interrompu : client déconnecté.");
             } catch (Exception e) {
                 log.warn("Import campagne (stream) échoué : {}", e.getMessage());
-                sendError(emitter, e.getMessage());
+                sendError(emitter, clientGone, e.getMessage());
             }
         });
         return emitter;
+    }
+
+    /** Signale que le navigateur a fermé le flux SSE : inutile de continuer l'import. */
+    private static final class ClientGoneException extends RuntimeException {
+        ClientGoneException(Throwable cause) {
+            super("Client SSE déconnecté.", cause);
+        }
     }
 
     @PostMapping(value = "/apply", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -96,23 +119,52 @@ public class CampaignImportController {
 
     // --- Helpers SSE ---------------------------------------------------------
 
-    private void sendEvent(SseEmitter emitter, String eventName, Object payload) {
+    private void sendEvent(
+            SseEmitter emitter, AtomicBoolean clientGone, String eventName, Object payload) {
+        if (clientGone.get()) {
+            throw new ClientGoneException(null);
+        }
         try {
             emitter.send(SseEmitter.event().name(eventName).data(
                     objectMapper.writeValueAsString(payload), MediaType.APPLICATION_JSON));
-        } catch (IOException e) {
+        } catch (Exception e) {
+            // IOException OU IllegalStateException (emitter déjà terminé) : le client
+            // est parti — on interrompt le pipeline amont au lieu de rejouer l'échec.
+            clientGone.set(true);
             emitter.completeWithError(e);
+            throw new ClientGoneException(e);
         }
     }
 
-    private void sendError(SseEmitter emitter, String message) {
+    /**
+     * Keep-alive vers le navigateur pendant un appel LLM long : un commentaire SSE
+     * (ignoré par le front) suffit à réarmer le {@code proxy_read_timeout} de nginx.
+     */
+    private void sendHeartbeat(SseEmitter emitter, AtomicBoolean clientGone) {
+        if (clientGone.get()) {
+            throw new ClientGoneException(null);
+        }
+        try {
+            emitter.send(SseEmitter.event().comment("keepalive"));
+        } catch (Exception e) {
+            clientGone.set(true);
+            emitter.completeWithError(e);
+            throw new ClientGoneException(e);
+        }
+    }
+
+    private void sendError(SseEmitter emitter, AtomicBoolean clientGone, String message) {
+        if (clientGone.get()) {
+            return; // le client n'est plus là pour lire le message d'erreur.
+        }
         try {
             emitter.send(SseEmitter.event().name("error").data(
                     objectMapper.writeValueAsString(Map.of(
                             "message", message != null ? message : "Erreur inconnue.")),
                     MediaType.APPLICATION_JSON));
             emitter.complete();
-        } catch (IOException e) {
+        } catch (Exception e) {
+            clientGone.set(true);
             emitter.completeWithError(e);
         }
     }

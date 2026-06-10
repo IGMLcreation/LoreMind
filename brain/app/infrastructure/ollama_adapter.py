@@ -11,7 +11,7 @@ import httpx
 
 from app.core.config import Settings
 from app.domain.models import ChatMessage
-from app.domain.ports import LLMProviderError
+from app.domain.ports import LLMGenerationTimeout, LLMProviderError
 
 
 class OllamaLLMProvider:
@@ -71,6 +71,22 @@ class OllamaLLMProvider:
                     raise LLMProviderError(
                         f"Ollama HTTP {response.status_code} : {err_msg.strip()[:500]}"
                     )
+            except httpx.ConnectTimeout as exc:
+                # Serveur injoignable : erreur d'infrastructure, pas de lenteur.
+                raise LLMProviderError(
+                    f"Erreur lors de l'appel à Ollama : {exc}"
+                ) from exc
+            except httpx.TimeoutException as exc:
+                # `stream: False` → le read-timeout court jusqu'à la réponse COMPLÈTE,
+                # donc le dépasser = génération trop lente pour la sortie demandée
+                # (fréquent : modèle local modeste + gros morceau d'import à réécrire).
+                # Type dédié → pas de retry à l'identique ; l'import re-découpe le
+                # morceau en deux moitiés (sortie 2× plus courte) à la place.
+                raise LLMGenerationTimeout(
+                    f"Erreur Ollama : génération non terminée en {self._timeout}s. Réduisez "
+                    "la taille des morceaux d'import, augmentez le timeout, ou utilisez un "
+                    "modèle plus rapide."
+                ) from exc
             except httpx.HTTPError as exc:
                 raise LLMProviderError(
                     f"Erreur lors de l'appel à Ollama : {exc}"

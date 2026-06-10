@@ -20,7 +20,7 @@ import httpx
 
 from app.core.config import Settings
 from app.domain.models import ChatMessage
-from app.domain.ports import LLMProviderError
+from app.domain.ports import LLMGenerationTimeout, LLMProviderError
 
 logger = logging.getLogger(__name__)
 
@@ -101,7 +101,7 @@ class MistralLLMProvider:
         try:
             return await asyncio.wait_for(_collect(), timeout=self._timeout)
         except asyncio.TimeoutError as exc:
-            raise LLMProviderError(
+            raise LLMGenerationTimeout(
                 f"Erreur Mistral : génération non terminée en {self._timeout}s. Réduisez la "
                 "taille des morceaux d'import, augmentez le timeout, ou changez de modèle."
             ) from exc
@@ -136,6 +136,11 @@ class MistralLLMProvider:
         }
         if temperature is not None:
             body["temperature"] = temperature
+        # Mode JSON natif : TOUS les modèles Mistral le supportent → plus de fences
+        # ```json ni de JSON invalide (retours à la ligne bruts dans les chaînes),
+        # principale cause de morceaux d'import ignorés.
+        if output_format == "json":
+            body["response_format"] = {"type": "json_object"}
 
         async with httpx.AsyncClient(timeout=self._timeout) as client:
             try:

@@ -10,6 +10,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -68,6 +69,18 @@ public class GlobalExceptionHandler {
                 "error", "Validation failed",
                 "fields", fields
         ));
+    }
+
+    /**
+     * Client HTTP parti pendant une reponse asynchrone (SSE) : le navigateur a ferme
+     * la connexion (onglet ferme, proxy coupe...), la reponse n'est plus utilisable.
+     * Ce n'est PAS une erreur serveur -> pas de log ERROR + stack trace (bruit),
+     * et aucune reponse a renvoyer (le canal est mort).
+     */
+    @ExceptionHandler(AsyncRequestNotUsableException.class)
+    public void handleClientDisconnected(HttpServletRequest request, AsyncRequestNotUsableException ex) {
+        log.debug("Client deconnecte pendant la reponse asynchrone sur {} {} : {}",
+                request.getMethod(), request.getRequestURI(), ex.getMessage());
     }
 
     /**

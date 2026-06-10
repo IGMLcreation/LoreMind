@@ -60,6 +60,7 @@ public class BrainCampaignImportClient implements CampaignPdfImporter {
             byte[] pdfBytes,
             String filename,
             Consumer<CampaignImportProgress> onProgress,
+            Runnable onHeartbeat,
             Consumer<CampaignImportProposal> onDone,
             Consumer<Throwable> onError) {
 
@@ -83,7 +84,8 @@ public class BrainCampaignImportClient implements CampaignPdfImporter {
             flux
                 .timeout(Duration.ofSeconds(importTimeoutSeconds))
                 .doOnNext(sse -> handleEvent(
-                        sse, pageCount, ocrPageCount, terminated, onProgress, onDone, onError))
+                        sse, pageCount, ocrPageCount, terminated,
+                        onProgress, onHeartbeat, onDone, onError))
                 .blockLast();
             if (!terminated[0]) {
                 onError.accept(new CampaignImportException(
@@ -107,12 +109,19 @@ public class BrainCampaignImportClient implements CampaignPdfImporter {
             int[] ocrPageCount,
             boolean[] terminated,
             Consumer<CampaignImportProgress> onProgress,
+            Runnable onHeartbeat,
             Consumer<CampaignImportProposal> onDone,
             Consumer<Throwable> onError) {
 
         String event = sse.event();
         String data = sse.data() == null ? "" : sse.data();
 
+        if ("heartbeat".equals(event)) {
+            // Keep-alive du Brain pendant un appel LLM long : à PROPAGER jusqu'au
+            // navigateur, sinon nginx (proxy_read_timeout) coupe le SSE Core→front.
+            onHeartbeat.run();
+            return;
+        }
         if ("error".equals(event)) {
             terminated[0] = true;
             onError.accept(new CampaignImportException(

@@ -114,6 +114,7 @@ public class BrainRulesImportClient implements RulesPdfImporter {
             byte[] pdfBytes,
             String filename,
             Consumer<RulesImportProgress> onProgress,
+            Runnable onHeartbeat,
             Consumer<RulesImportResult> onDone,
             Consumer<Throwable> onError) {
 
@@ -139,7 +140,8 @@ public class BrainRulesImportClient implements RulesPdfImporter {
             flux
                 .timeout(Duration.ofSeconds(importTimeoutSeconds))
                 .doOnNext(sse -> handleEvent(
-                        sse, pageCount, ocrPageCount, terminated, onProgress, onDone, onError))
+                        sse, pageCount, ocrPageCount, terminated,
+                        onProgress, onHeartbeat, onDone, onError))
                 .blockLast();
             // Flux terminé sans event done/error (ex: connexion coupée) → on signale.
             if (!terminated[0]) {
@@ -165,12 +167,20 @@ public class BrainRulesImportClient implements RulesPdfImporter {
             int[] ocrPageCount,
             boolean[] terminated,
             Consumer<RulesImportProgress> onProgress,
+            Runnable onHeartbeat,
             Consumer<RulesImportResult> onDone,
             Consumer<Throwable> onError) {
 
         String event = sse.event();
         String data = sse.data() == null ? "" : sse.data();
 
+        if ("heartbeat".equals(event)) {
+            // Keep-alive du Brain pendant un appel LLM long : à PROPAGER jusqu'au
+            // navigateur, sinon nginx (proxy_read_timeout) coupe le SSE Core→front
+            // resté silencieux pendant tout le traitement du morceau.
+            onHeartbeat.run();
+            return;
+        }
         if ("error".equals(event)) {
             terminated[0] = true;
             onError.accept(new RulesImportException(
