@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import AsyncIterator
 
 from app.application.notebook_rag import NotebookRagUseCase
+from app.application.query_rewrite import standalone_question
 from app.domain.models import ChatMessage
 from app.domain.ports import LLMChatProvider
 
@@ -68,8 +69,12 @@ class NotebookChatUseCase:
         context: str = "",
         top_k: int = 6,
     ) -> AsyncIterator[str]:
-        last_user = next((m.content for m in reversed(messages) if m.role == "user"), "")
-        passages = await self._rag.retrieve(source_ids, last_user, top_k=top_k)
+        # Question AUTONOME pour la recherche : sur une relance (« et ses
+        # faiblesses ? »), l'embedding du dernier message seul ne contient pas
+        # le sujet → on le résout depuis l'historique (best-effort, 1 appel léger,
+        # uniquement à partir du 2e tour). La réponse, elle, voit tout l'historique.
+        search_query = await standalone_question(self._llm, messages)
+        passages = await self._rag.retrieve(source_ids, search_query, top_k=top_k)
         sources_block = (
             "\n\n".join(self._format_passage(p) for p in passages)
             if passages else "(aucun passage pertinent trouvé dans les sources)"

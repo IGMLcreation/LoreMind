@@ -20,6 +20,7 @@ from typing import AsyncIterator
 import tiktoken
 
 from app.application.llm_retry import generate_with_retry
+from app.application.query_rewrite import standalone_question
 from app.domain.models import ChatMessage
 from app.domain.ports import LLMChatProvider, LLMProvider, LLMProviderError
 from app.infrastructure import vector_store
@@ -85,7 +86,10 @@ class NotebookDeepUseCase:
         SYNTHÈSE (reduce) reçoit les `history_limit` derniers messages → les relances
         conversationnelles (« et pour les autres ? ») fonctionnent aussi en approfondi.
         """
-        question = next((m.content for m in reversed(messages) if m.role == "user"), "")
+        # Question autonome : la phase MAP lit chaque lot avec LA question — sur
+        # une relance conversationnelle, il faut y résoudre les références
+        # implicites, sinon les lots sont filtrés sur un texte sans sujet.
+        question = await standalone_question(self._llm, messages)
         chunks: list[dict] = []
         for sid in source_ids:
             chunks.extend(vector_store.all_chunks(sid))
