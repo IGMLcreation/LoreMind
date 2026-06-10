@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, ElementRef, ViewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { LucideAngularModule, ArrowLeft } from 'lucide-angular';
@@ -21,7 +21,7 @@ interface GraphEdge { key: string; label: string; x1: number; y1: number; x2: nu
  */
 @Component({
     selector: 'app-chapter-graph',
-    imports: [CommonModule, RouterModule, LucideAngularModule],
+    imports: [RouterModule, LucideAngularModule],
     templateUrl: './chapter-graph.component.html',
     styleUrls: ['./chapter-graph.component.scss']
 })

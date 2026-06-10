@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
@@ -34,15 +34,14 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
 @Component({
     selector: 'app-chapter-edit',
     imports: [
-        CommonModule,
-        ReactiveFormsModule,
-        LucideAngularModule,
-        LoreLinkPickerComponent,
-        AiChatDrawerComponent,
-        ImageGalleryComponent,
-        IconPickerComponent,
-        PrerequisiteEditorComponent
-    ],
+    ReactiveFormsModule,
+    LucideAngularModule,
+    LoreLinkPickerComponent,
+    AiChatDrawerComponent,
+    ImageGalleryComponent,
+    IconPickerComponent,
+    PrerequisiteEditorComponent
+],
     templateUrl: './chapter-edit.component.html',
     styleUrls: ['./chapter-edit.component.scss']
 })

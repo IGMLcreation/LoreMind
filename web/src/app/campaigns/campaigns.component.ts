@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router } from '@angular/router';
 import { LucideAngularModule, Map, Plus } from 'lucide-angular';
 import { CampaignService } from '../services/campaign.service';
@@ -9,7 +9,7 @@ import { CampaignCreateComponent, CampaignCreatePayload } from './campaign/campa
 
 @Component({
     selector: 'app-campaigns',
-    imports: [CommonModule, LucideAngularModule, CampaignCreateComponent],
+    imports: [LucideAngularModule, CampaignCreateComponent],
     templateUrl: './campaigns.component.html',
     styleUrls: ['./campaigns.component.scss']
 })

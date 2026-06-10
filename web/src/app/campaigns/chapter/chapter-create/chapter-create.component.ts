@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
@@ -19,7 +19,7 @@ import { CAMPAIGN_ICON_OPTIONS } from '../../campaign-icons';
  */
 @Component({
     selector: 'app-chapter-create',
-    imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, IconPickerComponent],
+    imports: [ReactiveFormsModule, LucideAngularModule, IconPickerComponent],
     templateUrl: './chapter-create.component.html',
     styleUrls: ['./chapter-create.component.scss']
 })

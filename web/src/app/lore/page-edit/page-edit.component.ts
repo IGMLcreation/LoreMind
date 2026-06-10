@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
@@ -36,7 +36,7 @@ import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog
  */
 @Component({
     selector: 'app-page-edit',
-    imports: [CommonModule, FormsModule, RouterLink, LucideAngularModule, ChipsInputComponent, LoreLinkPickerComponent, BreadcrumbComponent, AiChatDrawerComponent, ImageGalleryComponent],
+    imports: [FormsModule, RouterLink, LucideAngularModule, ChipsInputComponent, LoreLinkPickerComponent, BreadcrumbComponent, AiChatDrawerComponent, ImageGalleryComponent],
     templateUrl: './page-edit.component.html',
     styleUrls: ['./page-edit.component.scss']
 })

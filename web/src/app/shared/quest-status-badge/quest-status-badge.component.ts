@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { LucideAngularModule, Lock, Circle, Play, CheckCircle2, LucideIconData } from 'lucide-angular';
 import { QuestStatus } from '../../services/campaign.model';
 
@@ -9,7 +9,7 @@ import { QuestStatus } from '../../services/campaign.model';
  */
 @Component({
     selector: 'app-quest-status-badge',
-    imports: [CommonModule, LucideAngularModule],
+    imports: [LucideAngularModule],
     templateUrl: './quest-status-badge.component.html',
     styleUrls: ['./quest-status-badge.component.scss']
 })

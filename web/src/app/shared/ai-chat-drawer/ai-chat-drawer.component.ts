@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, ElementRef, EventEmitter, HostListener, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, Lightbulb, Maximize2, MessageSquarePlus, Minimize2, PanelLeftClose, PanelLeftOpen, Pencil, Send, Sparkles, Trash2, Wand2, X } from 'lucide-angular';
@@ -31,7 +31,7 @@ export interface ChatPrimaryAction {
  */
 @Component({
     selector: 'app-ai-chat-drawer',
-    imports: [CommonModule, FormsModule, LucideAngularModule, MarkdownPipe],
+    imports: [FormsModule, LucideAngularModule, MarkdownPipe],
     templateUrl: './ai-chat-drawer.component.html',
     styleUrls: ['./ai-chat-drawer.component.scss']
 })

@@ -7,9 +7,9 @@
     </div>
     <div class="header-actions">
       <button type="button" class="btn-ai"
-              (click)="toggleChat()"
-              [class.active]="chatOpen"
-              title="Ouvrir l'Assistant IA pour dialoguer autour de cet arc">
+        (click)="toggleChat()"
+        [class.active]="chatOpen"
+        title="Ouvrir l'Assistant IA pour dialoguer autour de cet arc">
         <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
         Assistant IA
       </button>
@@ -58,7 +58,7 @@
         formControlName="name"
         placeholder="Ex: L'Ombre du Nord"
         [class.invalid]="form.get('name')?.invalid && form.get('name')?.touched"
-      />
+        />
     </div>
 
     <div class="field">
@@ -145,25 +145,29 @@
     </div>
 
     <!-- ===== Pages Lore associées (phase B2 cross-context) ===== -->
-    <div class="field" *ngIf="loreId">
-      <label>Pages Lore associées</label>
-      <app-lore-link-picker
-        [value]="relatedPageIds"
-        [availablePages]="availablePages"
-        [loreId]="loreId"
-        (valueChange)="relatedPageIds = $event">
-      </app-lore-link-picker>
-      <small class="field-hint">
-        Liez cet arc à des PNJ, lieux ou éléments du Lore. Cliquez sur un chip pour ouvrir la page associée.
-      </small>
-    </div>
+    @if (loreId) {
+      <div class="field">
+        <label>Pages Lore associées</label>
+        <app-lore-link-picker
+          [value]="relatedPageIds"
+          [availablePages]="availablePages"
+          [loreId]="loreId"
+          (valueChange)="relatedPageIds = $event">
+        </app-lore-link-picker>
+        <small class="field-hint">
+          Liez cet arc à des PNJ, lieux ou éléments du Lore. Cliquez sur un chip pour ouvrir la page associée.
+        </small>
+      </div>
+    }
 
-    <div class="field lore-hint" *ngIf="!loreId">
-      <small class="field-hint">
-        💡 Cette campagne n'est associée à aucun univers. Associez-la à un Lore dans l'écran de la campagne
-        pour pouvoir lier cet arc à des pages du Lore (PNJ, lieux, etc.).
-      </small>
-    </div>
+    @if (!loreId) {
+      <div class="field lore-hint">
+        <small class="field-hint">
+          💡 Cette campagne n'est associée à aucun univers. Associez-la à un Lore dans l'écran de la campagne
+          pour pouvoir lier cet arc à des pages du Lore (PNJ, lieux, etc.).
+        </small>
+      </div>
+    }
 
   </form>
 

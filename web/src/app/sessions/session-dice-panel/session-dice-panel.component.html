@@ -2,13 +2,15 @@
 
   <div class="dice-controls">
     <div class="face-grid">
-      <button *ngFor="let f of faces"
-              type="button"
-              class="face-chip"
-              [class.face-chip--active]="selectedFace === f"
-              (click)="selectedFace = f">
-        d{{ f }}
-      </button>
+      @for (f of faces; track f) {
+        <button
+          type="button"
+          class="face-chip"
+          [class.face-chip--active]="selectedFace === f"
+          (click)="selectedFace = f">
+          d{{ f }}
+        </button>
+      }
     </div>
 
     <div class="dice-inputs">
@@ -28,34 +30,41 @@
     </button>
   </div>
 
-  <div class="dice-history" *ngIf="history.length > 0">
-    <div class="history-header">
-      <span>Derniers jets</span>
-      <button type="button" class="btn-link" (click)="clearHistory()" title="Vider l'historique local">
-        <lucide-icon [img]="Trash2" [size]="12"></lucide-icon>
-      </button>
-    </div>
-
-    <ul class="history-list">
-      <li *ngFor="let r of history" class="history-item">
-        <div class="history-text">
-          <span class="history-notation">{{ r.notation }}</span>
-          <span class="history-detail" *ngIf="r.rolls.length > 1">[{{ r.rolls.join(', ') }}]</span>
-          <span class="history-total">= {{ r.total }}</span>
-        </div>
-        <button type="button"
-                class="btn-icon"
-                [disabled]="!canAddToJournal"
-                [title]="canAddToJournal ? 'Ajouter au journal' : 'Session terminée'"
-                (click)="addToJournal(r)">
-          <lucide-icon [img]="BookmarkPlus" [size]="12"></lucide-icon>
+  @if (history.length > 0) {
+    <div class="dice-history">
+      <div class="history-header">
+        <span>Derniers jets</span>
+        <button type="button" class="btn-link" (click)="clearHistory()" title="Vider l'historique local">
+          <lucide-icon [img]="Trash2" [size]="12"></lucide-icon>
         </button>
-      </li>
-    </ul>
-  </div>
+      </div>
+      <ul class="history-list">
+        @for (r of history; track r) {
+          <li class="history-item">
+            <div class="history-text">
+              <span class="history-notation">{{ r.notation }}</span>
+              @if (r.rolls.length > 1) {
+                <span class="history-detail">[{{ r.rolls.join(', ') }}]</span>
+              }
+              <span class="history-total">= {{ r.total }}</span>
+            </div>
+            <button type="button"
+              class="btn-icon"
+              [disabled]="!canAddToJournal"
+              [title]="canAddToJournal ? 'Ajouter au journal' : 'Session terminée'"
+              (click)="addToJournal(r)">
+              <lucide-icon [img]="BookmarkPlus" [size]="12"></lucide-icon>
+            </button>
+          </li>
+        }
+      </ul>
+    </div>
+  }
 
-  <p class="placeholder-hint" *ngIf="history.length === 0">
-    Choisis un dé et lance.
-  </p>
+  @if (history.length === 0) {
+    <p class="placeholder-hint">
+      Choisis un dé et lance.
+    </p>
+  }
 
 </div>

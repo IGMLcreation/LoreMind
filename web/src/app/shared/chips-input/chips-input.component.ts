@@ -1,5 +1,5 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, X } from 'lucide-angular';
 
@@ -21,7 +21,7 @@ import { LucideAngularModule, X } from 'lucide-angular';
  */
 @Component({
     selector: 'app-chips-input',
-    imports: [CommonModule, FormsModule, LucideAngularModule],
+    imports: [FormsModule, LucideAngularModule],
     templateUrl: './chips-input.component.html',
     styleUrls: ['./chips-input.component.scss']
 })

@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { TemplateField } from '../../services/template.model';
 import { ImageGalleryComponent } from '../image-gallery/image-gallery.component';
@@ -17,7 +17,7 @@ import { ImageGalleryComponent } from '../image-gallery/image-gallery.component'
  */
 @Component({
     selector: 'app-dynamic-fields-form',
-    imports: [CommonModule, FormsModule, ImageGalleryComponent],
+    imports: [FormsModule, ImageGalleryComponent],
     templateUrl: './dynamic-fields-form.component.html',
     styleUrls: ['./dynamic-fields-form.component.scss']
 })

@@ -2,7 +2,9 @@
 
   <div class="page-header">
     <h1>Créer une nouvelle scène</h1>
-    <p class="chapter-ref" *ngIf="chapterName">Chapitre : {{ chapterName }}</p>
+    @if (chapterName) {
+      <p class="chapter-ref">Chapitre : {{ chapterName }}</p>
+    }
   </div>
 
   <form [formGroup]="form" (ngSubmit)="submit()" class="scene-form">
@@ -15,7 +17,7 @@
         formControlName="name"
         placeholder="Ex: Arrivée au village"
         [class.invalid]="form.get('name')?.invalid && form.get('name')?.touched"
-      />
+        />
     </div>
 
     <div class="field">

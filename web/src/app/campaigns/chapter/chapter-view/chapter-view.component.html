@@ -1,112 +1,127 @@
-<div class="view-page" *ngIf="chapter">
-
-  <header class="view-header">
-    <div>
-      <h1>
-        <lucide-icon *ngIf="chapter.icon" [img]="resolveCampaignIcon(chapter.icon)" [size]="22" class="title-icon"></lucide-icon>
-        {{ chapter.name }}
-      </h1>
-      <p class="view-subtitle">
-        {{ parentArc?.type === 'HUB' ? 'Quête (Hub)' : 'Chapitre' }}
-        <span class="cond-badge" *ngIf="(chapter.prerequisites?.length ?? 0) > 0"
+@if (chapter) {
+  <div class="view-page">
+    <header class="view-header">
+      <div>
+        <h1>
+          @if (chapter.icon) {
+            <lucide-icon [img]="resolveCampaignIcon(chapter.icon)" [size]="22" class="title-icon"></lucide-icon>
+          }
+          {{ chapter.name }}
+        </h1>
+        <p class="view-subtitle">
+          {{ parentArc?.type === 'HUB' ? 'Quête (Hub)' : 'Chapitre' }}
+          @if ((chapter.prerequisites?.length ?? 0) > 0) {
+            <span class="cond-badge"
               title="Ce chapitre a des conditions de déblocage : il se débloque en Partie quand elles sont remplies.">
-          <lucide-icon [img]="Lock" [size]="12"></lucide-icon>
-          Conditionnel
-        </span>
-      </p>
-    </div>
-    <div class="view-actions">
-      <button type="button" class="btn-secondary" (click)="openGraph()"
-              title="Voir l'organigramme des scènes et de leurs branches">
-        <lucide-icon [img]="Network" [size]="14"></lucide-icon>
-        Carte du chapitre
-      </button>
-      <button type="button" class="btn-primary" (click)="editMode()">
-        <lucide-icon [img]="Pencil" [size]="14"></lucide-icon>
-        Modifier
-      </button>
-      <button type="button" class="btn-danger" (click)="deleteChapter()" title="Supprimer le chapitre et ses scènes">
-        <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
-        Supprimer
-      </button>
-    </div>
-  </header>
-
-  <!-- Conditions de déblocage (scénario, read-only). Visible pour un arc HUB (quête)
-       OU dès qu'un chapitre linéaire porte des conditions. -->
-  <section class="view-section" *ngIf="parentArc?.type === 'HUB' || (chapter.prerequisites?.length ?? 0) > 0">
-    <h2 class="view-section-title"><span class="view-section-icon">🔒</span> Conditions de déblocage</h2>
-
-    <ng-container *ngIf="(chapter.prerequisites?.length ?? 0) > 0; else noPrereqs">
-      <ul class="view-section-body">
-        <li *ngFor="let p of chapter.prerequisites">{{ describePrerequisite(p) }}</li>
-      </ul>
-      <small class="view-section-empty">
-        Pendant une partie, {{ parentArc?.type === 'HUB' ? 'la quête' : 'ce chapitre' }} se débloque
-        dès que toutes ces conditions sont remplies. Le toggle des faits se fait dans l'écran
-        « Faits » de la Partie.
-      </small>
-    </ng-container>
-
-    <ng-template #noPrereqs>
-      <p class="view-section-empty">
-        Aucune condition — cette quête est disponible dès le début dans chaque Partie.
-      </p>
-      <p class="view-section-empty">
-        Cliquez sur <strong>Modifier</strong> pour ajouter des conditions
-        (« quête précédente terminée », « à partir de la session N », « quand un fait est vrai »).
-      </p>
-    </ng-template>
-  </section>
-
-  <!-- Illustrations (rendu editorial magazine) -->
-  <section class="view-section" *ngIf="(chapter.illustrationImageIds?.length ?? 0) > 0">
-    <app-image-gallery [imageIds]="chapter.illustrationImageIds ?? []" [layout]="'EDITORIAL'"></app-image-gallery>
-  </section>
-
-  <!-- Cartes & plans -->
-  <section class="view-section" *ngIf="(chapter.mapImageIds?.length ?? 0) > 0">
-    <h2 class="view-section-title"><span class="view-section-icon">🗺️</span> Cartes & plans</h2>
-    <app-image-gallery [imageIds]="chapter.mapImageIds ?? []" [layout]="'MAPS'"></app-image-gallery>
-  </section>
-
-  <section class="view-section">
-    <h2 class="view-section-title"><span class="view-section-icon">📖</span> Synopsis</h2>
-    <p class="view-section-body" *ngIf="chapter.description?.trim(); else emptyDesc">{{ chapter.description }}</p>
-    <ng-template #emptyDesc><p class="view-section-empty">Non renseigné</p></ng-template>
-  </section>
-
-  <div class="view-row">
+              <lucide-icon [img]="Lock" [size]="12"></lucide-icon>
+              Conditionnel
+            </span>
+          }
+        </p>
+      </div>
+      <div class="view-actions">
+        <button type="button" class="btn-secondary" (click)="openGraph()"
+          title="Voir l'organigramme des scènes et de leurs branches">
+          <lucide-icon [img]="Network" [size]="14"></lucide-icon>
+          Carte du chapitre
+        </button>
+        <button type="button" class="btn-primary" (click)="editMode()">
+          <lucide-icon [img]="Pencil" [size]="14"></lucide-icon>
+          Modifier
+        </button>
+        <button type="button" class="btn-danger" (click)="deleteChapter()" title="Supprimer le chapitre et ses scènes">
+          <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+          Supprimer
+        </button>
+      </div>
+    </header>
+    <!-- Conditions de déblocage (scénario, read-only). Visible pour un arc HUB (quête)
+    OU dès qu'un chapitre linéaire porte des conditions. -->
+    @if (parentArc?.type === 'HUB' || (chapter.prerequisites?.length ?? 0) > 0) {
+      <section class="view-section">
+        <h2 class="view-section-title"><span class="view-section-icon">🔒</span> Conditions de déblocage</h2>
+        @if ((chapter.prerequisites?.length ?? 0) > 0) {
+          <ul class="view-section-body">
+            @for (p of chapter.prerequisites; track p) {
+              <li>{{ describePrerequisite(p) }}</li>
+            }
+          </ul>
+          <small class="view-section-empty">
+            Pendant une partie, {{ parentArc?.type === 'HUB' ? 'la quête' : 'ce chapitre' }} se débloque
+            dès que toutes ces conditions sont remplies. Le toggle des faits se fait dans l'écran
+            « Faits » de la Partie.
+          </small>
+        } @else {
+          <p class="view-section-empty">
+            Aucune condition — cette quête est disponible dès le début dans chaque Partie.
+          </p>
+          <p class="view-section-empty">
+            Cliquez sur <strong>Modifier</strong> pour ajouter des conditions
+            (« quête précédente terminée », « à partir de la session N », « quand un fait est vrai »).
+          </p>
+        }
+      </section>
+    }
+    <!-- Illustrations (rendu editorial magazine) -->
+    @if ((chapter.illustrationImageIds?.length ?? 0) > 0) {
+      <section class="view-section">
+        <app-image-gallery [imageIds]="chapter.illustrationImageIds ?? []" [layout]="'EDITORIAL'"></app-image-gallery>
+      </section>
+    }
+    <!-- Cartes & plans -->
+    @if ((chapter.mapImageIds?.length ?? 0) > 0) {
+      <section class="view-section">
+        <h2 class="view-section-title"><span class="view-section-icon">🗺️</span> Cartes & plans</h2>
+        <app-image-gallery [imageIds]="chapter.mapImageIds ?? []" [layout]="'MAPS'"></app-image-gallery>
+      </section>
+    }
     <section class="view-section">
-      <h2 class="view-section-title"><span class="view-section-icon">🎯</span> Objectifs des joueurs</h2>
-      <p class="view-section-body" *ngIf="chapter.playerObjectives?.trim(); else emptyObj">{{ chapter.playerObjectives }}</p>
-      <ng-template #emptyObj><p class="view-section-empty">Non renseigné</p></ng-template>
+      <h2 class="view-section-title"><span class="view-section-icon">📖</span> Synopsis</h2>
+      @if (chapter.description?.trim()) {
+        <p class="view-section-body">{{ chapter.description }}</p>
+      } @else {
+        <p class="view-section-empty">Non renseigné</p>
+      }
     </section>
-
-    <section class="view-section">
-      <h2 class="view-section-title"><span class="view-section-icon">⚡</span> Enjeux narratifs</h2>
-      <p class="view-section-body" *ngIf="chapter.narrativeStakes?.trim(); else emptyNs">{{ chapter.narrativeStakes }}</p>
-      <ng-template #emptyNs><p class="view-section-empty">Non renseigné</p></ng-template>
-    </section>
+    <div class="view-row">
+      <section class="view-section">
+        <h2 class="view-section-title"><span class="view-section-icon">🎯</span> Objectifs des joueurs</h2>
+        @if (chapter.playerObjectives?.trim()) {
+          <p class="view-section-body">{{ chapter.playerObjectives }}</p>
+        } @else {
+          <p class="view-section-empty">Non renseigné</p>
+        }
+      </section>
+      <section class="view-section">
+        <h2 class="view-section-title"><span class="view-section-icon">⚡</span> Enjeux narratifs</h2>
+        @if (chapter.narrativeStakes?.trim()) {
+          <p class="view-section-body">{{ chapter.narrativeStakes }}</p>
+        } @else {
+          <p class="view-section-empty">Non renseigné</p>
+        }
+      </section>
+    </div>
+    @if (chapter.gmNotes?.trim()) {
+      <section class="view-section view-section--private">
+        <h2 class="view-section-title">
+          <span class="view-section-icon">🔒</span>
+          Notes du Maître de Jeu
+        </h2>
+        <p class="view-section-body">{{ chapter.gmNotes }}</p>
+      </section>
+    }
+    @if (loreId && (chapter.relatedPageIds?.length ?? 0) > 0) {
+      <section class="view-section">
+        <h2 class="view-section-title"><span class="view-section-icon">🔗</span> Pages Lore associées</h2>
+        <div class="view-chips">
+          @for (relId of chapter.relatedPageIds; track relId) {
+            <a class="view-chip"
+              [routerLink]="['/lore', loreId, 'pages', relId]">
+              {{ titleOfRelated(relId) }}
+            </a>
+          }
+        </div>
+      </section>
+    }
   </div>
-
-  <section class="view-section view-section--private" *ngIf="chapter.gmNotes?.trim()">
-    <h2 class="view-section-title">
-      <span class="view-section-icon">🔒</span>
-      Notes du Maître de Jeu
-    </h2>
-    <p class="view-section-body">{{ chapter.gmNotes }}</p>
-  </section>
-
-  <section class="view-section" *ngIf="loreId && (chapter.relatedPageIds?.length ?? 0) > 0">
-    <h2 class="view-section-title"><span class="view-section-icon">🔗</span> Pages Lore associées</h2>
-    <div class="view-chips">
-      <a class="view-chip"
-         *ngFor="let relId of chapter.relatedPageIds"
-         [routerLink]="['/lore', loreId, 'pages', relId]">
-        {{ titleOfRelated(relId) }}
-      </a>
-    </div>
-  </section>
-
-</div>
+}

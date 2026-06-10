@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LucideAngularModule, LucideIconData } from 'lucide-angular';
@@ -14,7 +14,7 @@ import { LORE_ICON_OPTIONS, IconOption, resolveIcon } from '../lore-icons';
 
 @Component({
     selector: 'app-lore-node-create',
-    imports: [CommonModule, ReactiveFormsModule, LucideAngularModule],
+    imports: [ReactiveFormsModule, LucideAngularModule],
     templateUrl: './lore-node-create.component.html',
     styleUrls: ['./lore-node-create.component.scss']
 })

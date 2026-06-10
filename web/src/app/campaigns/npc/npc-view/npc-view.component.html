@@ -5,10 +5,12 @@
       Retour
     </button>
     <span class="spacer"></span>
-    <button class="btn-ai" (click)="toggleChat()" [class.active]="chatOpen" *ngIf="npcId">
-      <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
-      Assistant IA
-    </button>
+    @if (npcId) {
+      <button class="btn-ai" (click)="toggleChat()" [class.active]="chatOpen">
+        <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
+        Assistant IA
+      </button>
+    }
     <button class="btn-edit" (click)="edit()">
       <lucide-icon [img]="Edit3" [size]="14"></lucide-icon>
       Editer
@@ -18,11 +20,12 @@
   <app-persona-view [persona]="npc" [templateFields]="templateFields"></app-persona-view>
 </div>
 
-<app-ai-chat-drawer
-  *ngIf="npcId && campaignId"
-  [campaignId]="campaignId"
-  entityType="npc"
-  [entityId]="npcId"
-  [isOpen]="chatOpen"
-  (close)="chatOpen = false">
-</app-ai-chat-drawer>
+@if (npcId && campaignId) {
+  <app-ai-chat-drawer
+    [campaignId]="campaignId"
+    entityType="npc"
+    [entityId]="npcId"
+    [isOpen]="chatOpen"
+    (close)="chatOpen = false">
+  </app-ai-chat-drawer>
+}

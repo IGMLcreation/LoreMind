@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { LucideAngularModule, Pencil, Trash2 } from 'lucide-angular';
@@ -28,7 +28,7 @@ import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog
  */
 @Component({
     selector: 'app-page-view',
-    imports: [CommonModule, RouterModule, LucideAngularModule, BreadcrumbComponent, ImageGalleryComponent],
+    imports: [RouterModule, LucideAngularModule, BreadcrumbComponent, ImageGalleryComponent],
     templateUrl: './page-view.component.html',
     styleUrls: ['./page-view.component.scss']
 })

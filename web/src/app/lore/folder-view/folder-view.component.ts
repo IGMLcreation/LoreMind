@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { LucideAngularModule, LucideIconData, Folder, FileText, Pencil, Trash2, Plus, ChevronRight } from 'lucide-angular';
@@ -24,7 +24,7 @@ import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog
  */
 @Component({
     selector: 'app-folder-view',
-    imports: [CommonModule, LucideAngularModule],
+    imports: [LucideAngularModule],
     templateUrl: './folder-view.component.html',
     styleUrls: ['./folder-view.component.scss']
 })

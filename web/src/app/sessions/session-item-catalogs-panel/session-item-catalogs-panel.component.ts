@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { LucideAngularModule, Package, BookmarkPlus, ChevronLeft } from 'lucide-angular';
 import { catchError, of } from 'rxjs';
 import { ItemCatalogService } from '../../services/item-catalog.service';
@@ -13,7 +13,7 @@ interface ItemGroup { category: string; items: CatalogItem[]; }
  */
 @Component({
     selector: 'app-session-item-catalogs-panel',
-    imports: [CommonModule, LucideAngularModule],
+    imports: [LucideAngularModule],
     templateUrl: './session-item-catalogs-panel.component.html',
     styleUrls: ['./session-item-catalogs-panel.component.scss']
 })

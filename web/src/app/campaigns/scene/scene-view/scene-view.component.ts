@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
@@ -24,7 +24,7 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  */
 @Component({
     selector: 'app-scene-view',
-    imports: [CommonModule, RouterModule, LucideAngularModule, ImageGalleryComponent],
+    imports: [RouterModule, LucideAngularModule, ImageGalleryComponent],
     templateUrl: './scene-view.component.html',
     styleUrls: ['./scene-view.component.scss']
 })

@@ -18,14 +18,18 @@
   </header>
 
   <div class="icl-list">
-    <p class="empty" *ngIf="catalogs.length === 0">Aucun catalogue pour l'instant.</p>
-    <button class="icl-item" *ngFor="let c of catalogs" (click)="open(c)">
-      <lucide-icon [img]="Package" [size]="16"></lucide-icon>
-      <span class="icl-item-name">{{ c.name }}</span>
-      <span class="icl-item-count">{{ c.items.length }} objet(s)</span>
-      <span class="icl-del" (click)="remove(c, $event)" title="Supprimer">
-        <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
-      </span>
-    </button>
+    @if (catalogs.length === 0) {
+      <p class="empty">Aucun catalogue pour l'instant.</p>
+    }
+    @for (c of catalogs; track c) {
+      <button class="icl-item" (click)="open(c)">
+        <lucide-icon [img]="Package" [size]="16"></lucide-icon>
+        <span class="icl-item-name">{{ c.name }}</span>
+        <span class="icl-item-count">{{ c.items.length }} objet(s)</span>
+        <span class="icl-del" (click)="remove(c, $event)" title="Supprimer">
+          <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+        </span>
+      </button>
+    }
   </div>
 </div>

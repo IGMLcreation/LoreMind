@@ -3,7 +3,7 @@ import { AppComponent } from './app/app.component';
 import { PreloadAllModules, provideRouter, withPreloading } from '@angular/router';
 import { routes } from './app/app.routes';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { APP_INITIALIZER } from '@angular/core';
+import { APP_INITIALIZER, provideZoneChangeDetection } from '@angular/core';
 import { ConfigService } from './app/services/config.service';
 import { sessionExpiredInterceptor } from './app/interceptors/session-expired.interceptor';
 
@@ -14,7 +14,7 @@ import { sessionExpiredInterceptor } from './app/interceptors/session-expired.in
 // (acceptable pour une app interne ou toutes les routes seront visitees).
 bootstrapApplication(AppComponent, {
   providers: [
-    provideRouter(routes, withPreloading(PreloadAllModules)),
+    provideZoneChangeDetection(),provideRouter(routes, withPreloading(PreloadAllModules)),
     provideHttpClient(withInterceptors([sessionExpiredInterceptor])),
     {
       provide: APP_INITIALIZER,

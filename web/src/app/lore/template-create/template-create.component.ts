@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { LucideAngularModule, Plus, Trash2, Type, Image as ImageIcon, ChevronUp, ChevronDown } from 'lucide-angular';
@@ -20,7 +20,7 @@ import { popReturnTo } from '../return-stack.helper';
  */
 @Component({
     selector: 'app-template-create',
-    imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, LucideAngularModule],
+    imports: [FormsModule, ReactiveFormsModule, RouterModule, LucideAngularModule],
     templateUrl: './template-create.component.html',
     styleUrls: ['./template-create.component.scss']
 })

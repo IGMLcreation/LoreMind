@@ -1,5 +1,5 @@
 import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { CampaignFlagService } from '../../services/campaign-flag.service';
@@ -15,7 +15,7 @@ import { forkJoin } from 'rxjs';
  */
 @Component({
     selector: 'app-playthrough-flags-manager',
-    imports: [CommonModule, FormsModule, LucideAngularModule],
+    imports: [FormsModule, LucideAngularModule],
     templateUrl: './playthrough-flags-manager.component.html',
     styleUrls: ['./playthrough-flags-manager.component.scss']
 })

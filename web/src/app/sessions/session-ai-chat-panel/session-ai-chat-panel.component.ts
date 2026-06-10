@@ -2,7 +2,7 @@ import {
   Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges,
   ElementRef, ViewChild
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import {
   LucideAngularModule, Send, Sparkles, Trash2, BookmarkPlus, Square
@@ -23,7 +23,7 @@ import { AiChatService, ChatMessage } from '../../services/ai-chat.service';
  */
 @Component({
     selector: 'app-session-ai-chat-panel',
-    imports: [CommonModule, FormsModule, LucideAngularModule],
+    imports: [FormsModule, LucideAngularModule],
     templateUrl: './session-ai-chat-panel.component.html',
     styleUrls: ['./session-ai-chat-panel.component.scss']
 })

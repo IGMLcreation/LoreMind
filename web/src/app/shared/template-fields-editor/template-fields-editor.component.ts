@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, Plus, Trash2, ArrowUp, ArrowDown, Type, Image as ImageIcon, Hash, ListOrdered, X } from 'lucide-angular';
 import { TemplateField, FieldType, ImageLayout } from '../../services/template.model';
@@ -16,7 +16,7 @@ import { TemplateField, FieldType, ImageLayout } from '../../services/template.m
  */
 @Component({
     selector: 'app-template-fields-editor',
-    imports: [CommonModule, FormsModule, LucideAngularModule],
+    imports: [FormsModule, LucideAngularModule],
     templateUrl: './template-fields-editor.component.html',
     styleUrls: ['./template-fields-editor.component.scss']
 })
@@ -122,7 +122,6 @@ export class TemplateFieldsEditorComponent {
     this.onFieldChanged();
   }
 
-  trackByIndex = (i: number) => i;
 
   remove(index: number): void {
     const next = [...this.fields];

@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LucideAngularModule, ArrowLeft, Upload, Trash2, Send, FileText, Loader, CheckCircle2, AlertCircle, Sparkles, Layers } from 'lucide-angular';
@@ -20,7 +20,7 @@ import { NotebookActionCardComponent } from '../notebook-action-card/notebook-ac
  */
 @Component({
     selector: 'app-notebook-detail',
-    imports: [CommonModule, FormsModule, LucideAngularModule, NotebookActionCardComponent],
+    imports: [FormsModule, LucideAngularModule, NotebookActionCardComponent],
     templateUrl: './notebook-detail.component.html',
     styleUrls: ['./notebook-detail.component.scss']
 })
@@ -108,7 +108,6 @@ export class NotebookDetailComponent implements OnInit {
   }
 
   /** trackBy stable pour les cartes d'action (évite toute recréation parasite). */
-  trackAction(index: number): number { return index; }
 
   load(): void {
     this.service.get(this.notebookId).subscribe({

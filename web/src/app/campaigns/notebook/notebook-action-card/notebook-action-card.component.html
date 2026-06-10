@@ -5,37 +5,55 @@
     <span class="nac-name">{{ action.name }}</span>
   </div>
 
-  <p class="nac-desc" *ngIf="action.description">{{ action.description }}</p>
+  @if (action.description) {
+    <p class="nac-desc">{{ action.description }}</p>
+  }
 
   <!-- Cibles -->
-  <div class="nac-targets" *ngIf="status !== 'created' && needsArc">
-    <label>
-      Arc
-      <select [(ngModel)]="selectedArcId" (ngModelChange)="syncChapter()">
-        <option *ngFor="let a of arcs" [value]="a.id">{{ a.name }}</option>
-      </select>
-    </label>
-    <label *ngIf="needsChapter">
-      Chapitre
-      <select [(ngModel)]="selectedChapterId">
-        <option *ngFor="let c of targetChapters" [value]="c.id">{{ c.name }}</option>
-      </select>
-    </label>
-  </div>
+  @if (status !== 'created' && needsArc) {
+    <div class="nac-targets">
+      <label>
+        Arc
+        <select [(ngModel)]="selectedArcId" (ngModelChange)="syncChapter()">
+          @for (a of arcs; track a) {
+            <option [value]="a.id">{{ a.name }}</option>
+          }
+        </select>
+      </label>
+      @if (needsChapter) {
+        <label>
+          Chapitre
+          <select [(ngModel)]="selectedChapterId">
+            @for (c of targetChapters; track c) {
+              <option [value]="c.id">{{ c.name }}</option>
+            }
+          </select>
+        </label>
+      }
+    </div>
+  }
 
-  <p class="nac-warn" *ngIf="needsArc && arcs.length === 0">
-    Crée d'abord un arc {{ needsChapter ? 'et un chapitre ' : '' }}dans la campagne pour pouvoir y rattacher cet élément.
-  </p>
+  @if (needsArc && arcs.length === 0) {
+    <p class="nac-warn">
+      Crée d'abord un arc {{ needsChapter ? 'et un chapitre ' : '' }}dans la campagne pour pouvoir y rattacher cet élément.
+    </p>
+  }
 
   <div class="nac-foot">
-    <button class="nac-create" *ngIf="status !== 'created'" (click)="create()" [disabled]="!canCreate">
-      <lucide-icon [img]="Plus" [size]="13"></lucide-icon>
-      {{ status === 'creating' ? 'Création…' : 'Créer dans la campagne' }}
-    </button>
-    <button class="nac-open" *ngIf="status === 'created'" (click)="openCreated()">
-      <lucide-icon [img]="Check" [size]="13"></lucide-icon> Créé — ouvrir
-      <lucide-icon [img]="ExternalLink" [size]="12"></lucide-icon>
-    </button>
-    <span class="nac-error" *ngIf="status === 'error'">{{ errorMsg }}</span>
+    @if (status !== 'created') {
+      <button class="nac-create" (click)="create()" [disabled]="!canCreate">
+        <lucide-icon [img]="Plus" [size]="13"></lucide-icon>
+        {{ status === 'creating' ? 'Création…' : 'Créer dans la campagne' }}
+      </button>
+    }
+    @if (status === 'created') {
+      <button class="nac-open" (click)="openCreated()">
+        <lucide-icon [img]="Check" [size]="13"></lucide-icon> Créé — ouvrir
+        <lucide-icon [img]="ExternalLink" [size]="12"></lucide-icon>
+      </button>
+    }
+    @if (status === 'error') {
+      <span class="nac-error">{{ errorMsg }}</span>
+    }
   </div>
 </div>

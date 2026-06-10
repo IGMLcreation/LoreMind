@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, Save, ArrowLeft, Drama, Trash2, Sparkles } from 'lucide-angular';
@@ -21,7 +21,7 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  */
 @Component({
     selector: 'app-npc-edit',
-    imports: [CommonModule, FormsModule, LucideAngularModule, AiChatDrawerComponent, DynamicFieldsFormComponent, SingleImagePickerComponent],
+    imports: [FormsModule, LucideAngularModule, AiChatDrawerComponent, DynamicFieldsFormComponent, SingleImagePickerComponent],
     templateUrl: './npc-edit.component.html',
     styleUrls: ['./npc-edit.component.scss']
 })

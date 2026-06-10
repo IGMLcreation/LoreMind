@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { LucideAngularModule, ChevronDown, ChevronUp } from 'lucide-angular';
 
 /**
@@ -13,7 +13,7 @@ import { LucideAngularModule, ChevronDown, ChevronUp } from 'lucide-angular';
  */
 @Component({
     selector: 'app-expandable-section',
-    imports: [CommonModule, LucideAngularModule],
+    imports: [LucideAngularModule],
     templateUrl: './expandable-section.component.html',
     styleUrls: ['./expandable-section.component.scss']
 })

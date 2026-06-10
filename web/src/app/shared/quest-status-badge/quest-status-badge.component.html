@@ -1,4 +1,6 @@
 <span [class]="cssClass" [attr.aria-label]="label" [title]="label">
   <lucide-icon [img]="icon" [size]="14"></lucide-icon>
-  <span class="status-label" *ngIf="!compact">{{ label }}</span>
+  @if (!compact) {
+    <span class="status-label">{{ label }}</span>
+  }
 </span>

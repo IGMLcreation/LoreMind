@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute, Router } from '@angular/router';
 import { LucideAngularModule, ArrowLeft, Plus, Trash2, Package } from 'lucide-angular';
 import { ItemCatalogService } from '../../../services/item-catalog.service';
@@ -13,7 +13,7 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  */
 @Component({
     selector: 'app-item-catalog-list',
-    imports: [CommonModule, LucideAngularModule],
+    imports: [LucideAngularModule],
     templateUrl: './item-catalog-list.component.html',
     styleUrls: ['./item-catalog-list.component.scss']
 })

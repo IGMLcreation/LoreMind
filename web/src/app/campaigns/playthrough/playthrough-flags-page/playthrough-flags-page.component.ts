@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { LucideAngularModule, ArrowLeft } from 'lucide-angular';
@@ -20,7 +20,7 @@ import { PlaythroughFlagsManagerComponent } from '../../../shared/playthrough-fl
  */
 @Component({
     selector: 'app-playthrough-flags-page',
-    imports: [CommonModule, RouterModule, LucideAngularModule, PlaythroughFlagsManagerComponent],
+    imports: [RouterModule, LucideAngularModule, PlaythroughFlagsManagerComponent],
     templateUrl: './playthrough-flags-page.component.html',
     styleUrls: ['./playthrough-flags-page.component.scss']
 })

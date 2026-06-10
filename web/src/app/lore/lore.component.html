@@ -8,18 +8,20 @@
 
   <div class="lore-grid">
 
-    <div class="lore-card" *ngFor="let lore of lores" (click)="navigateToDetail(lore.id!)">
-      <div class="card-header">
-        <lucide-icon [img]="Folder" [size]="20" class="card-icon"></lucide-icon>
-        <span class="card-date">Il y a 2h</span>
+    @for (lore of lores; track lore) {
+      <div class="lore-card" (click)="navigateToDetail(lore.id!)">
+        <div class="card-header">
+          <lucide-icon [img]="Folder" [size]="20" class="card-icon"></lucide-icon>
+          <span class="card-date">Il y a 2h</span>
+        </div>
+        <h2>{{ lore.name }}</h2>
+        <p class="card-description">{{ lore.description }}</p>
+        <div class="card-stats">
+          <span>📄 {{ lore.pageCount || 0 }} pages</span>
+          <span>🌳 {{ lore.nodeCount || 0 }} dossiers</span>
+        </div>
       </div>
-      <h2>{{ lore.name }}</h2>
-      <p class="card-description">{{ lore.description }}</p>
-      <div class="card-stats">
-        <span>📄 {{ lore.pageCount || 0 }} pages</span>
-        <span>🌳 {{ lore.nodeCount || 0 }} dossiers</span>
-      </div>
-    </div>
+    }
 
     <div class="lore-card card-new" (click)="openCreateModal()">
       <div class="new-icon">
@@ -35,8 +37,9 @@
 
 </div>
 
-<app-lore-create
-  *ngIf="showCreateModal"
-  (close)="onModalClose()"
-  (created)="onLoreCreated($event)">
-</app-lore-create>
+@if (showCreateModal) {
+  <app-lore-create
+    (close)="onModalClose()"
+    (created)="onLoreCreated($event)">
+  </app-lore-create>
+}

@@ -2,33 +2,43 @@
 
   <div #messagesContainer class="messages-area">
 
-    <div class="welcome-hint" *ngIf="messages.length === 0 && !currentAssistantText && !error">
-      <lucide-icon [img]="Sparkles" [size]="18"></lucide-icon>
-      <p>Pose une question à l'IA pendant la partie.</p>
-      <p class="welcome-sub">
-        Elle connaît ton univers, ta campagne, les règles du système et tout ce qui a été noté dans le journal.
-      </p>
-    </div>
+    @if (messages.length === 0 && !currentAssistantText && !error) {
+      <div class="welcome-hint">
+        <lucide-icon [img]="Sparkles" [size]="18"></lucide-icon>
+        <p>Pose une question à l'IA pendant la partie.</p>
+        <p class="welcome-sub">
+          Elle connaît ton univers, ta campagne, les règles du système et tout ce qui a été noté dans le journal.
+        </p>
+      </div>
+    }
 
-    <div *ngFor="let m of messages" class="msg" [class.msg--user]="m.role === 'user'" [class.msg--assistant]="m.role === 'assistant'">
-      <div class="msg-content">{{ m.content }}</div>
-      <button *ngIf="m.role === 'assistant'"
-              type="button"
-              class="msg-action"
-              [disabled]="!canSaveToJournal"
-              [title]="canSaveToJournal ? 'Ajouter cette réponse au journal' : 'Session terminée'"
-              (click)="onSaveToJournal(m.content)">
-        <lucide-icon [img]="BookmarkPlus" [size]="12"></lucide-icon>
-        Au journal
-      </button>
-    </div>
+    @for (m of messages; track m) {
+      <div class="msg" [class.msg--user]="m.role === 'user'" [class.msg--assistant]="m.role === 'assistant'">
+        <div class="msg-content">{{ m.content }}</div>
+        @if (m.role === 'assistant') {
+          <button
+            type="button"
+            class="msg-action"
+            [disabled]="!canSaveToJournal"
+            [title]="canSaveToJournal ? 'Ajouter cette réponse au journal' : 'Session terminée'"
+            (click)="onSaveToJournal(m.content)">
+            <lucide-icon [img]="BookmarkPlus" [size]="12"></lucide-icon>
+            Au journal
+          </button>
+        }
+      </div>
+    }
 
     <!-- Stream en cours : on affiche les tokens au fil de l'eau. -->
-    <div *ngIf="currentAssistantText" class="msg msg--assistant msg--streaming">
-      <div class="msg-content">{{ currentAssistantText }}<span class="cursor">▍</span></div>
-    </div>
+    @if (currentAssistantText) {
+      <div class="msg msg--assistant msg--streaming">
+        <div class="msg-content">{{ currentAssistantText }}<span class="cursor">▍</span></div>
+      </div>
+    }
 
-    <p class="error-hint" *ngIf="error">{{ error }}</p>
+    @if (error) {
+      <p class="error-hint">{{ error }}</p>
+    }
   </div>
 
   <div class="composer">
@@ -39,33 +49,37 @@
       rows="2"
       [placeholder]="isStreaming ? 'L’IA répond…' : 'Demande une idée, un rebondissement, une description…'"
       [disabled]="isStreaming"
-      (keydown.control.enter)="send()"></textarea>
+    (keydown.control.enter)="send()"></textarea>
 
     <div class="composer-actions">
       <button type="button"
-              class="btn-link"
-              [disabled]="messages.length === 0 && !currentAssistantText"
-              (click)="clearConversation()"
-              title="Effacer la conversation">
+        class="btn-link"
+        [disabled]="messages.length === 0 && !currentAssistantText"
+        (click)="clearConversation()"
+        title="Effacer la conversation">
         <lucide-icon [img]="Trash2" [size]="12"></lucide-icon>
       </button>
 
-      <button *ngIf="!isStreaming"
-              type="button"
-              class="btn-primary btn-send"
-              [disabled]="!input.trim()"
-              (click)="send()">
-        <lucide-icon [img]="Send" [size]="14"></lucide-icon>
-        Envoyer
-      </button>
+      @if (!isStreaming) {
+        <button
+          type="button"
+          class="btn-primary btn-send"
+          [disabled]="!input.trim()"
+          (click)="send()">
+          <lucide-icon [img]="Send" [size]="14"></lucide-icon>
+          Envoyer
+        </button>
+      }
 
-      <button *ngIf="isStreaming"
-              type="button"
-              class="btn-secondary btn-send"
-              (click)="cancelStream()">
-        <lucide-icon [img]="Square" [size]="14"></lucide-icon>
-        Stop
-      </button>
+      @if (isStreaming) {
+        <button
+          type="button"
+          class="btn-secondary btn-send"
+          (click)="cancelStream()">
+          <lucide-icon [img]="Square" [size]="14"></lucide-icon>
+          Stop
+        </button>
+      }
     </div>
   </div>
 

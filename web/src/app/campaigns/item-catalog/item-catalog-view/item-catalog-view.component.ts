@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute, Router } from '@angular/router';
 import { LucideAngularModule, ArrowLeft, Edit3, Package } from 'lucide-angular';
 import { ItemCatalogService } from '../../../services/item-catalog.service';
@@ -14,7 +14,7 @@ interface ItemGroup { category: string; items: CatalogItem[]; }
  */
 @Component({
     selector: 'app-item-catalog-view',
-    imports: [CommonModule, LucideAngularModule],
+    imports: [LucideAngularModule],
     templateUrl: './item-catalog-view.component.html',
     styleUrls: ['./item-catalog-view.component.scss']
 })

@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LucideAngularModule, ArrowLeft, Save, Plus, Trash2, Wand2, Sparkles } from 'lucide-angular';
@@ -15,7 +15,7 @@ import { DiceUtils } from '../../../shared/dice.utils';
  */
 @Component({
     selector: 'app-random-table-edit',
-    imports: [CommonModule, FormsModule, LucideAngularModule],
+    imports: [FormsModule, LucideAngularModule],
     templateUrl: './random-table-edit.component.html',
     styleUrls: ['./random-table-edit.component.scss']
 })

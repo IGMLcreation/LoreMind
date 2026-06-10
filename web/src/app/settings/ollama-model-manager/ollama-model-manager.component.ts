@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, Check, AlertCircle, Download, Trash2, X } from 'lucide-angular';
 import { SettingsService, OllamaPullEvent } from '../../services/settings.service';
@@ -19,7 +19,7 @@ import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog
  */
 @Component({
     selector: 'app-ollama-model-manager',
-    imports: [CommonModule, FormsModule, LucideAngularModule],
+    imports: [FormsModule, LucideAngularModule],
     templateUrl: './ollama-model-manager.component.html',
     // Reutilise la feuille de style de l'ecran Parametres (modal, suggestions,
     // progress-bar, installed-models) pour un rendu strictement identique.

@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, Dices, BookmarkPlus, Trash2 } from 'lucide-angular';
 
@@ -26,7 +26,7 @@ export interface DiceRollResult {
  */
 @Component({
     selector: 'app-session-dice-panel',
-    imports: [CommonModule, FormsModule, LucideAngularModule],
+    imports: [FormsModule, LucideAngularModule],
     templateUrl: './session-dice-panel.component.html',
     styleUrls: ['./session-dice-panel.component.scss']
 })

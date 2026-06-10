@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LucideAngularModule, Folder, Plus, Pencil, Trash2 } from 'lucide-angular';
@@ -14,7 +14,7 @@ import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog
 
 @Component({
     selector: 'app-lore-detail',
-    imports: [CommonModule, FormsModule, LucideAngularModule],
+    imports: [FormsModule, LucideAngularModule],
     templateUrl: './lore-detail.component.html',
     styleUrls: ['./lore-detail.component.scss']
 })

@@ -1,5 +1,5 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, X, Link2 } from 'lucide-angular';
 import { Page } from '../../services/page.model';
@@ -26,7 +26,7 @@ import { Page } from '../../services/page.model';
  */
 @Component({
     selector: 'app-lore-link-picker',
-    imports: [CommonModule, FormsModule, LucideAngularModule],
+    imports: [FormsModule, LucideAngularModule],
     templateUrl: './lore-link-picker.component.html',
     styleUrls: ['./lore-link-picker.component.scss']
 })

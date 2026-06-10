@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, Plus, Trash2, ChevronDown, ChevronUp, GitBranch, X } from 'lucide-angular';
 import { Room, RoomBranch } from '../../services/campaign.model';
@@ -15,7 +15,7 @@ import { Room, RoomBranch } from '../../services/campaign.model';
  */
 @Component({
     selector: 'app-rooms-editor',
-    imports: [CommonModule, FormsModule, LucideAngularModule],
+    imports: [FormsModule, LucideAngularModule],
     templateUrl: './rooms-editor.component.html',
     styleUrls: ['./rooms-editor.component.scss']
 })

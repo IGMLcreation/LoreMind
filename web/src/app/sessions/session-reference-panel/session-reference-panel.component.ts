@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { LucideAngularModule, User, Drama, Swords, Dices, ExternalLink, Sparkles, Table2, Package } from 'lucide-angular';
 import { catchError, of } from 'rxjs';
 import { CampaignService } from '../../services/campaign.service';
@@ -30,7 +30,7 @@ type TabId = 'dice' | 'tables' | 'objects' | 'characters' | 'scenes' | 'ai';
  */
 @Component({
     selector: 'app-session-reference-panel',
-    imports: [CommonModule, LucideAngularModule, SessionDicePanelComponent, SessionAiChatPanelComponent, SessionRandomTablesPanelComponent, SessionItemCatalogsPanelComponent],
+    imports: [LucideAngularModule, SessionDicePanelComponent, SessionAiChatPanelComponent, SessionRandomTablesPanelComponent, SessionItemCatalogsPanelComponent],
     templateUrl: './session-reference-panel.component.html',
     styleUrls: ['./session-reference-panel.component.scss']
 })

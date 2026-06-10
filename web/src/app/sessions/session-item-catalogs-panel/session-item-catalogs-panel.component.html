@@ -1,38 +1,57 @@
 <div class="sic-panel">
-  <p class="loading-hint" *ngIf="loading">Chargement…</p>
+  @if (loading) {
+    <p class="loading-hint">Chargement…</p>
+  }
 
   <!-- Liste des catalogues -->
-  <div *ngIf="!loading && !selected" class="sic-list">
-    <p class="empty-hint" *ngIf="catalogs.length === 0">
-      Aucun catalogue d'objets dans cette campagne.
-    </p>
-    <button *ngFor="let c of catalogs" type="button" class="sic-item" (click)="select(c)">
-      <lucide-icon [img]="Package" [size]="13"></lucide-icon>
-      <span class="sic-item-name">{{ c.name }}</span>
-      <span class="sic-item-count">{{ c.items.length }}</span>
-    </button>
-  </div>
+  @if (!loading && !selected) {
+    <div class="sic-list">
+      @if (catalogs.length === 0) {
+        <p class="empty-hint">
+          Aucun catalogue d'objets dans cette campagne.
+        </p>
+      }
+      @for (c of catalogs; track c) {
+        <button type="button" class="sic-item" (click)="select(c)">
+          <lucide-icon [img]="Package" [size]="13"></lucide-icon>
+          <span class="sic-item-name">{{ c.name }}</span>
+          <span class="sic-item-count">{{ c.items.length }}</span>
+        </button>
+      }
+    </div>
+  }
 
   <!-- Catalogue sélectionné -->
-  <div *ngIf="selected" class="sic-detail">
-    <button type="button" class="sic-back" (click)="backToList()">
-      <lucide-icon [img]="ChevronLeft" [size]="13"></lucide-icon> Catalogues
-    </button>
-    <h4>{{ selected.name }}</h4>
-
-    <div class="sic-group" *ngFor="let g of groups">
-      <div class="sic-group-title" *ngIf="g.category !== '—'">{{ g.category }}</div>
-      <div class="sic-obj" *ngFor="let it of g.items">
-        <div class="sic-obj-main">
-          <span class="sic-obj-name">{{ it.name }}</span>
-          <span class="sic-obj-price" *ngIf="it.price">{{ it.price }}</span>
-        </div>
-        <div class="sic-obj-desc" *ngIf="it.description">{{ it.description }}</div>
-        <button type="button" class="sic-note" (click)="note(it)" [disabled]="!canAddToJournal"
+  @if (selected) {
+    <div class="sic-detail">
+      <button type="button" class="sic-back" (click)="backToList()">
+        <lucide-icon [img]="ChevronLeft" [size]="13"></lucide-icon> Catalogues
+      </button>
+      <h4>{{ selected.name }}</h4>
+      @for (g of groups; track g) {
+        <div class="sic-group">
+          @if (g.category !== '—') {
+            <div class="sic-group-title">{{ g.category }}</div>
+          }
+          @for (it of g.items; track it) {
+            <div class="sic-obj">
+              <div class="sic-obj-main">
+                <span class="sic-obj-name">{{ it.name }}</span>
+                @if (it.price) {
+                  <span class="sic-obj-price">{{ it.price }}</span>
+                }
+              </div>
+              @if (it.description) {
+                <div class="sic-obj-desc">{{ it.description }}</div>
+              }
+              <button type="button" class="sic-note" (click)="note(it)" [disabled]="!canAddToJournal"
                 title="Consigner au journal (ex. achat)">
-          <lucide-icon [img]="BookmarkPlus" [size]="12"></lucide-icon> Journal
-        </button>
-      </div>
+                <lucide-icon [img]="BookmarkPlus" [size]="12"></lucide-icon> Journal
+              </button>
+            </div>
+          }
+        </div>
+      }
     </div>
-  </div>
+  }
 </div>

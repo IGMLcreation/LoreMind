@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { LucideAngularModule, BookOpen } from 'lucide-angular';
 import { TemplateField, ImageLayout } from '../../services/template.model';
 
@@ -34,7 +34,7 @@ export interface PersonaLike {
 
 @Component({
     selector: 'app-persona-view',
-    imports: [CommonModule, LucideAngularModule, ImageGalleryComponent],
+    imports: [LucideAngularModule, ImageGalleryComponent],
     templateUrl: './persona-view.component.html',
     styleUrls: ['./persona-view.component.scss']
 })

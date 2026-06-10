@@ -3,7 +3,7 @@
 <div class="app-container">
   <app-sidebar></app-sidebar>
 
-  <ng-container *ngIf="sidebarConfig$ | async as config">
+  @if (sidebarConfig$ | async; as config) {
     <app-secondary-sidebar
       [title]="config.title"
       [titleRoute]="config.titleRoute || null"
@@ -11,7 +11,7 @@
       [createActions]="config.createActions"
       [bottomPanel]="config.bottomPanel || null">
     </app-secondary-sidebar>
-  </ng-container>
+  }
 
   <main class="main-content">
     <router-outlet></router-outlet>

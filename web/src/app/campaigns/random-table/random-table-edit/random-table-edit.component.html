@@ -13,7 +13,9 @@
 
   <h1>{{ tableId ? 'Éditer la table' : 'Nouvelle table aléatoire' }}</h1>
 
-  <div class="error" *ngIf="errorMessage">{{ errorMessage }}</div>
+  @if (errorMessage) {
+    <div class="error">{{ errorMessage }}</div>
+  }
 
   <div class="form-row">
     <label for="rt-name">Nom *</label>
@@ -28,7 +30,7 @@
   <div class="form-row">
     <label for="rt-formula">Formule du dé *</label>
     <input id="rt-formula" type="text" [(ngModel)]="diceFormula" placeholder="1d20, 2d6, d100…"
-           [class.invalid]="diceFormula && !formulaValid">
+      [class.invalid]="diceFormula && !formulaValid">
     <small class="hint" [class.bad]="diceFormula && !formulaValid">
       {{ formulaValid ? 'Formule valide' : 'Format attendu : NdM (ex. 1d20, 2d6, d100)' }}
     </small>
@@ -41,13 +43,15 @@
     </div>
     <p class="ai-hint">Décris la table ; l'IA propose les entrées (revois-les avant d'enregistrer). Contextualisé avec ta campagne.</p>
     <textarea rows="2" [(ngModel)]="aiPrompt"
-              placeholder="Ex: rencontres aléatoires dans une forêt hantée, ton sombre"></textarea>
+    placeholder="Ex: rencontres aléatoires dans une forêt hantée, ton sombre"></textarea>
     <div class="ai-actions">
       <button class="btn-ai" (click)="generateWithAI()" [disabled]="generating">
         <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
         {{ generating ? 'Génération…' : 'Générer (' + diceFormula + ')' }}
       </button>
-      <span class="ai-error" *ngIf="aiError">{{ aiError }}</span>
+      @if (aiError) {
+        <span class="ai-error">{{ aiError }}</span>
+      }
     </div>
   </div>
 
@@ -71,15 +75,19 @@
     <span class="c-del"></span>
   </div>
 
-  <div class="entry-row" *ngFor="let e of entries; let i = index">
-    <input class="c-range" type="number" [(ngModel)]="e.minRoll">
-    <input class="c-range" type="number" [(ngModel)]="e.maxRoll">
-    <input class="c-label" type="text" [(ngModel)]="e.label" placeholder="Résultat">
-    <input class="c-detail" type="text" [(ngModel)]="e.detail" placeholder="Détail (optionnel)">
-    <button class="c-del btn-del" (click)="removeEntry(i)" title="Supprimer">
-      <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
-    </button>
-  </div>
+  @for (e of entries; track e; let i = $index) {
+    <div class="entry-row">
+      <input class="c-range" type="number" [(ngModel)]="e.minRoll">
+      <input class="c-range" type="number" [(ngModel)]="e.maxRoll">
+      <input class="c-label" type="text" [(ngModel)]="e.label" placeholder="Résultat">
+      <input class="c-detail" type="text" [(ngModel)]="e.detail" placeholder="Détail (optionnel)">
+      <button class="c-del btn-del" (click)="removeEntry(i)" title="Supprimer">
+        <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+      </button>
+    </div>
+  }
 
-  <p class="empty-hint" *ngIf="entries.length === 0">Aucune entrée — clique « Ajouter ».</p>
+  @if (entries.length === 0) {
+    <p class="empty-hint">Aucune entrée — clique « Ajouter ».</p>
+  }
 </div>

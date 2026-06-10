@@ -1,5 +1,5 @@
 import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { LucideAngularModule, X, Image as ImageIcon, ChevronLeft, ChevronRight } from 'lucide-angular';
 import { ImageService } from '../../services/image.service';
 import { Image } from '../../services/image.model';
@@ -27,7 +27,7 @@ import { ImageUploaderComponent } from '../image-uploader/image-uploader.compone
  */
 @Component({
     selector: 'app-image-gallery',
-    imports: [CommonModule, LucideAngularModule, ImageUploaderComponent],
+    imports: [LucideAngularModule, ImageUploaderComponent],
     templateUrl: './image-gallery.component.html',
     styleUrls: ['./image-gallery.component.scss']
 })

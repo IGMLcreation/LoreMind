@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -25,7 +25,7 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  */
 @Component({
     selector: 'app-playthrough-detail',
-    imports: [CommonModule, RouterModule, LucideAngularModule],
+    imports: [RouterModule, LucideAngularModule],
     templateUrl: './playthrough-detail.component.html',
     styleUrls: ['./playthrough-detail.component.scss']
 })

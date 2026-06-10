@@ -1,5 +1,5 @@
 import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Subject, forkJoin, of } from 'rxjs';
@@ -31,7 +31,7 @@ interface SearchResult {
  */
 @Component({
     selector: 'app-global-search',
-    imports: [CommonModule, FormsModule, LucideAngularModule],
+    imports: [FormsModule, LucideAngularModule],
     templateUrl: './global-search.component.html',
     styleUrls: ['./global-search.component.scss']
 })

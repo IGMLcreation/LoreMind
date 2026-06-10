@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { LucideAngularModule, Upload, AlertCircle } from 'lucide-angular';
 import { ImageService } from '../../services/image.service';
 import { Image } from '../../services/image.model';
@@ -19,7 +19,7 @@ import { Image } from '../../services/image.model';
  */
 @Component({
     selector: 'app-image-uploader',
-    imports: [CommonModule, LucideAngularModule],
+    imports: [LucideAngularModule],
     templateUrl: './image-uploader.component.html',
     styleUrls: ['./image-uploader.component.scss']
 })

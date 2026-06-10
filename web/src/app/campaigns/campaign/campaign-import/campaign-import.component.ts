@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import {
@@ -47,7 +47,7 @@ interface ArcNode {
  */
 @Component({
     selector: 'app-campaign-import',
-    imports: [CommonModule, FormsModule, LucideAngularModule],
+    imports: [FormsModule, LucideAngularModule],
     templateUrl: './campaign-import.component.html',
     styleUrls: ['./campaign-import.component.scss']
 })

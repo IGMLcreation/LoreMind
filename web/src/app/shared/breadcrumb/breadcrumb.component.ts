@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { RouterLink } from '@angular/router';
 
 /**
@@ -23,12 +23,11 @@ export interface BreadcrumbItem {
  */
 @Component({
     selector: 'app-breadcrumb',
-    imports: [CommonModule, RouterLink],
+    imports: [RouterLink],
     templateUrl: './breadcrumb.component.html',
     styleUrls: ['./breadcrumb.component.scss']
 })
 export class BreadcrumbComponent {
   @Input() items: BreadcrumbItem[] = [];
 
-  trackByIndex = (i: number) => i;
 }

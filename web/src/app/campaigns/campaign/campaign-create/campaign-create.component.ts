@@ -1,5 +1,5 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, BookCopy, X, Plus, Check } from 'lucide-angular';
@@ -22,7 +22,7 @@ export interface CampaignCreatePayload {
 
 @Component({
     selector: 'app-campaign-create',
-    imports: [CommonModule, ReactiveFormsModule, FormsModule, LucideAngularModule],
+    imports: [ReactiveFormsModule, FormsModule, LucideAngularModule],
     templateUrl: './campaign-create.component.html',
     styleUrls: ['./campaign-create.component.scss']
 })

@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router } from '@angular/router';
 import { LucideAngularModule, BookOpen, Folder, Plus } from 'lucide-angular';
 import { LoreService } from '../services/lore.service';
@@ -9,7 +9,7 @@ import { LoreCreateComponent } from './lore-create/lore-create.component';
 
 @Component({
     selector: 'app-lore',
-    imports: [CommonModule, LucideAngularModule, LoreCreateComponent],
+    imports: [LucideAngularModule, LoreCreateComponent],
     templateUrl: './lore.component.html',
     styleUrls: ['./lore.component.scss']
 })

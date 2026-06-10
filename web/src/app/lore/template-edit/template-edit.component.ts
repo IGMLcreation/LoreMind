@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, Subject } from 'rxjs';
@@ -21,7 +21,7 @@ import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog
  */
 @Component({
     selector: 'app-template-edit',
-    imports: [CommonModule, FormsModule, ReactiveFormsModule, LucideAngularModule],
+    imports: [FormsModule, ReactiveFormsModule, LucideAngularModule],
     templateUrl: './template-edit.component.html',
     styleUrls: ['./template-edit.component.scss']
 })

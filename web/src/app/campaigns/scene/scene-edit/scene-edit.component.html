@@ -7,9 +7,9 @@
     </div>
     <div class="header-actions">
       <button type="button" class="btn-ai"
-              (click)="toggleChat()"
-              [class.active]="chatOpen"
-              title="Ouvrir l'Assistant IA pour dialoguer autour de cette scène">
+        (click)="toggleChat()"
+        [class.active]="chatOpen"
+        title="Ouvrir l'Assistant IA pour dialoguer autour de cette scène">
         <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
         Assistant IA
       </button>
@@ -58,7 +58,7 @@
         formControlName="name"
         placeholder="Ex: Arrivée au village"
         [class.invalid]="form.get('name')?.invalid && form.get('name')?.touched"
-      />
+        />
     </div>
 
     <div class="field">
@@ -136,60 +136,63 @@
 
     <!-- Section : Branches narratives (graphe intra-chapitre) -->
     <app-expandable-section title="Branches narratives" icon="🌿">
-      <div class="branches-hint" *ngIf="siblingScenes.length === 0">
-        <small class="field-hint">
-          💡 Il faut au moins une autre scène dans ce chapitre pour créer des branches.
-          Créez d'abord d'autres scènes, puis revenez ici pour les connecter.
-        </small>
-      </div>
-
-      <div class="branches-list" *ngIf="siblingScenes.length > 0">
-        <div class="branch-item" *ngFor="let branch of branches; let i = index; trackBy: trackByIndex">
-          <div class="field">
-            <label>Libellé du choix</label>
-            <input
-              type="text"
-              [value]="branch.label"
-              (input)="updateBranchLabel(i, $any($event.target).value)"
-              placeholder="Ex: Si les joueurs attaquent le garde" />
-          </div>
-
-          <div class="field">
-            <label>Scène de destination *</label>
-            <select
-              (change)="updateBranchTarget(i, $any($event.target).value)">
-              <option value="" [selected]="!branch.targetSceneId">— Choisir une scène —</option>
-              <option *ngFor="let s of siblingScenes"
-                      [value]="s.id"
-                      [selected]="s.id === branch.targetSceneId">{{ s.name }}</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label>Condition MJ (optionnel)</label>
-            <input
-              type="text"
-              [value]="branch.condition || ''"
-              (input)="updateBranchCondition(i, $any($event.target).value)"
-              placeholder="Ex: Jet de Persuasion DD 15 réussi" />
-          </div>
-
-          <button type="button" class="btn-remove-branch" (click)="removeBranch(i)"
-                  title="Supprimer cette branche">
-            <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
-            Retirer
-          </button>
+      @if (siblingScenes.length === 0) {
+        <div class="branches-hint">
+          <small class="field-hint">
+            💡 Il faut au moins une autre scène dans ce chapitre pour créer des branches.
+            Créez d'abord d'autres scènes, puis revenez ici pour les connecter.
+          </small>
         </div>
+      }
 
-        <button type="button" class="btn-add-branch" (click)="addBranch()">
-          + Ajouter une branche
-        </button>
-
-        <small class="field-hint">
-          Chaque branche représente une "sortie" possible depuis cette scène selon l'action des joueurs.
-          Les cibles sont limitées aux scènes du même chapitre.
-        </small>
-      </div>
+      @if (siblingScenes.length > 0) {
+        <div class="branches-list">
+          @for (branch of branches; track $index; let i = $index) {
+            <div class="branch-item">
+              <div class="field">
+                <label>Libellé du choix</label>
+                <input
+                  type="text"
+                  [value]="branch.label"
+                  (input)="updateBranchLabel(i, $any($event.target).value)"
+                  placeholder="Ex: Si les joueurs attaquent le garde" />
+              </div>
+              <div class="field">
+                <label>Scène de destination *</label>
+                <select
+                  (change)="updateBranchTarget(i, $any($event.target).value)">
+                  <option value="" [selected]="!branch.targetSceneId">— Choisir une scène —</option>
+                  @for (s of siblingScenes; track s) {
+                    <option
+                      [value]="s.id"
+                    [selected]="s.id === branch.targetSceneId">{{ s.name }}</option>
+                  }
+                </select>
+              </div>
+              <div class="field">
+                <label>Condition MJ (optionnel)</label>
+                <input
+                  type="text"
+                  [value]="branch.condition || ''"
+                  (input)="updateBranchCondition(i, $any($event.target).value)"
+                  placeholder="Ex: Jet de Persuasion DD 15 réussi" />
+              </div>
+              <button type="button" class="btn-remove-branch" (click)="removeBranch(i)"
+                title="Supprimer cette branche">
+                <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+                Retirer
+              </button>
+            </div>
+          }
+          <button type="button" class="btn-add-branch" (click)="addBranch()">
+            + Ajouter une branche
+          </button>
+          <small class="field-hint">
+            Chaque branche représente une "sortie" possible depuis cette scène selon l'action des joueurs.
+            Les cibles sont limitées aux scènes du même chapitre.
+          </small>
+        </div>
+      }
     </app-expandable-section>
 
     <!-- Section : Combat ou rencontre -->
@@ -210,26 +213,30 @@
     </app-expandable-section>
 
     <!-- Section : Pages Lore associées (B2 cross-context) -->
-    <app-expandable-section title="Pages Lore associées" icon="🔗" *ngIf="loreId">
+    @if (loreId) {
+      <app-expandable-section title="Pages Lore associées" icon="🔗">
+        <div class="field">
+          <app-lore-link-picker
+            [value]="relatedPageIds"
+            [availablePages]="availablePages"
+            [loreId]="loreId"
+            (valueChange)="relatedPageIds = $event">
+          </app-lore-link-picker>
+          <small class="field-hint">
+            Épinglez ici le lieu, les PNJ ou créatures de cette scène. Cliquez sur un chip pour ouvrir la page.
+          </small>
+        </div>
+      </app-expandable-section>
+    }
+
+    @if (!loreId) {
       <div class="field">
-        <app-lore-link-picker
-          [value]="relatedPageIds"
-          [availablePages]="availablePages"
-          [loreId]="loreId"
-          (valueChange)="relatedPageIds = $event">
-        </app-lore-link-picker>
         <small class="field-hint">
-          Épinglez ici le lieu, les PNJ ou créatures de cette scène. Cliquez sur un chip pour ouvrir la page.
+          💡 Cette campagne n'est associée à aucun univers. Associez-la à un Lore dans l'écran de la campagne
+          pour pouvoir épingler des pages du Lore à cette scène.
         </small>
       </div>
-    </app-expandable-section>
-
-    <div class="field" *ngIf="!loreId">
-      <small class="field-hint">
-        💡 Cette campagne n'est associée à aucun univers. Associez-la à un Lore dans l'écran de la campagne
-        pour pouvoir épingler des pages du Lore à cette scène.
-      </small>
-    </div>
+    }
 
     <!-- Lieu explorable : pièces / donjon -->
     <app-expandable-section title="Lieu explorable (donjon, crypte…)" icon="🏰" [initiallyOpen]="rooms.length > 0">

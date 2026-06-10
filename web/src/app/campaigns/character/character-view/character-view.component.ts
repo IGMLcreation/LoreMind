@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute, Router } from '@angular/router';
 import { LucideAngularModule, ArrowLeft, Edit3, Sparkles } from 'lucide-angular';
 import { CharacterService } from '../../../services/character.service';
@@ -17,7 +17,7 @@ import { AiChatDrawerComponent } from '../../../shared/ai-chat-drawer/ai-chat-dr
  */
 @Component({
     selector: 'app-character-view',
-    imports: [CommonModule, LucideAngularModule, PersonaViewComponent, AiChatDrawerComponent],
+    imports: [LucideAngularModule, PersonaViewComponent, AiChatDrawerComponent],
     templateUrl: './character-view.component.html',
     styleUrls: ['./character-view.component.scss']
 })

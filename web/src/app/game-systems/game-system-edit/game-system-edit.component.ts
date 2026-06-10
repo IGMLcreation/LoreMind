@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, Save, ArrowLeft, Dices, Plus, Trash2, ChevronDown, ChevronRight, Upload } from 'lucide-angular';
@@ -41,7 +41,7 @@ const NPC_FIELD_SUGGESTIONS = ['Motivation', 'Apparence', 'Faction', 'Notes MJ']
 
 @Component({
     selector: 'app-game-system-edit',
-    imports: [CommonModule, FormsModule, LucideAngularModule, TemplateFieldsEditorComponent],
+    imports: [FormsModule, LucideAngularModule, TemplateFieldsEditorComponent],
     templateUrl: './game-system-edit.component.html',
     styleUrls: ['./game-system-edit.component.scss']
 })

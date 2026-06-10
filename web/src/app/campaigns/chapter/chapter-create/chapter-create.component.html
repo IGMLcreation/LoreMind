@@ -2,7 +2,9 @@
 
   <div class="page-header">
     <h1>{{ isHub ? 'Créer une nouvelle quête' : 'Créer un nouveau chapitre' }}</h1>
-    <p class="arc-ref" *ngIf="arcName">{{ isHub ? 'Hub' : 'Arc' }} : {{ arcName }}</p>
+    @if (arcName) {
+      <p class="arc-ref">{{ isHub ? 'Hub' : 'Arc' }} : {{ arcName }}</p>
+    }
   </div>
 
   <form [formGroup]="form" (ngSubmit)="submit()" class="chapter-form">
@@ -15,7 +17,7 @@
         formControlName="name"
         [placeholder]="isHub ? 'Ex: Sauver le marchand disparu' : 'Ex: Chapitre 1: Les Disparitions'"
         [class.invalid]="form.get('name')?.invalid && form.get('name')?.touched"
-      />
+        />
     </div>
 
     <div class="field">

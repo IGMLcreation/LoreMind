@@ -2,44 +2,44 @@
 
   <nav class="ref-tabs">
     <button type="button"
-            class="ref-tab"
-            [class.ref-tab--active]="activeTab === 'ai'"
-            (click)="selectTab('ai')">
+      class="ref-tab"
+      [class.ref-tab--active]="activeTab === 'ai'"
+      (click)="selectTab('ai')">
       <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
       IA
     </button>
     <button type="button"
-            class="ref-tab"
-            [class.ref-tab--active]="activeTab === 'dice'"
-            (click)="selectTab('dice')">
+      class="ref-tab"
+      [class.ref-tab--active]="activeTab === 'dice'"
+      (click)="selectTab('dice')">
       <lucide-icon [img]="Dices" [size]="14"></lucide-icon>
       Dés
     </button>
     <button type="button"
-            class="ref-tab"
-            [class.ref-tab--active]="activeTab === 'tables'"
-            (click)="selectTab('tables')">
+      class="ref-tab"
+      [class.ref-tab--active]="activeTab === 'tables'"
+      (click)="selectTab('tables')">
       <lucide-icon [img]="Table2" [size]="14"></lucide-icon>
       Tables
     </button>
     <button type="button"
-            class="ref-tab"
-            [class.ref-tab--active]="activeTab === 'objects'"
-            (click)="selectTab('objects')">
+      class="ref-tab"
+      [class.ref-tab--active]="activeTab === 'objects'"
+      (click)="selectTab('objects')">
       <lucide-icon [img]="Package" [size]="14"></lucide-icon>
       Objets
     </button>
     <button type="button"
-            class="ref-tab"
-            [class.ref-tab--active]="activeTab === 'characters'"
-            (click)="selectTab('characters')">
+      class="ref-tab"
+      [class.ref-tab--active]="activeTab === 'characters'"
+      (click)="selectTab('characters')">
       <lucide-icon [img]="User" [size]="14"></lucide-icon>
       PJ/PNJ
     </button>
     <button type="button"
-            class="ref-tab"
-            [class.ref-tab--active]="activeTab === 'scenes'"
-            (click)="selectTab('scenes')">
+      class="ref-tab"
+      [class.ref-tab--active]="activeTab === 'scenes'"
+      (click)="selectTab('scenes')">
       <lucide-icon [img]="Swords" [size]="14"></lucide-icon>
       Scènes
     </button>
@@ -48,104 +48,130 @@
   <div class="ref-content" [class.ref-content--fill]="activeTab === 'ai'">
 
     <!-- ====== IA ====== -->
-    <app-session-ai-chat-panel
-      *ngIf="activeTab === 'ai'"
-      [sessionId]="sessionId"
-      [canSaveToJournal]="canAddToJournal"
-      (saveToJournal)="onAiSaveToJournal($event)">
-    </app-session-ai-chat-panel>
+    @if (activeTab === 'ai') {
+      <app-session-ai-chat-panel
+        [sessionId]="sessionId"
+        [canSaveToJournal]="canAddToJournal"
+        (saveToJournal)="onAiSaveToJournal($event)">
+      </app-session-ai-chat-panel>
+    }
 
     <!-- ====== Dés ====== -->
-    <app-session-dice-panel
-      *ngIf="activeTab === 'dice'"
-      [canAddToJournal]="canAddToJournal"
-      (rolled)="onDiceRolled($event)">
-    </app-session-dice-panel>
+    @if (activeTab === 'dice') {
+      <app-session-dice-panel
+        [canAddToJournal]="canAddToJournal"
+        (rolled)="onDiceRolled($event)">
+      </app-session-dice-panel>
+    }
 
     <!-- ====== Tables aléatoires ====== -->
-    <app-session-random-tables-panel
-      *ngIf="activeTab === 'tables'"
-      [campaignId]="campaignId"
-      [canAddToJournal]="canAddToJournal"
-      (rolled)="onDiceRolled($event)"
-      (aiReplyToJournal)="onAiSaveToJournal($event)">
-    </app-session-random-tables-panel>
+    @if (activeTab === 'tables') {
+      <app-session-random-tables-panel
+        [campaignId]="campaignId"
+        [canAddToJournal]="canAddToJournal"
+        (rolled)="onDiceRolled($event)"
+        (aiReplyToJournal)="onAiSaveToJournal($event)">
+      </app-session-random-tables-panel>
+    }
 
     <!-- ====== Catalogues d'objets ====== -->
-    <app-session-item-catalogs-panel
-      *ngIf="activeTab === 'objects'"
-      [campaignId]="campaignId"
-      [canAddToJournal]="canAddToJournal"
-      (noteToJournal)="onItemNote($event)">
-    </app-session-item-catalogs-panel>
+    @if (activeTab === 'objects') {
+      <app-session-item-catalogs-panel
+        [campaignId]="campaignId"
+        [canAddToJournal]="canAddToJournal"
+        (noteToJournal)="onItemNote($event)">
+      </app-session-item-catalogs-panel>
+    }
 
     <!-- ====== Personnages (PJ + PNJ) ====== -->
-    <div *ngIf="activeTab === 'characters'" class="ref-list">
-      <p class="loading-hint" *ngIf="loadingChars">Chargement…</p>
-
-      <div *ngIf="!loadingChars">
-        <div class="ref-group" *ngIf="characters.length > 0">
-          <h4>
-            <lucide-icon [img]="User" [size]="13"></lucide-icon>
-            Personnages joueurs
-          </h4>
-          <button *ngFor="let c of characters"
-                  type="button"
-                  class="ref-item"
-                  (click)="openInNewTab(['campaigns', campaignId, 'playthroughs', playthroughId!, 'characters', c.id!])">
-            <span class="ref-item-name">{{ c.name }}</span>
-            <lucide-icon [img]="ExternalLink" [size]="12" class="ref-item-icon"></lucide-icon>
-          </button>
-        </div>
-
-        <div class="ref-group" *ngIf="npcs.length > 0">
-          <h4>
-            <lucide-icon [img]="Drama" [size]="13"></lucide-icon>
-            Personnages non-joueurs
-          </h4>
-          <button *ngFor="let n of npcs"
-                  type="button"
-                  class="ref-item"
-                  (click)="openInNewTab(['campaigns', campaignId, 'npcs', n.id!])">
-            <span class="ref-item-name">{{ n.name }}</span>
-            <lucide-icon [img]="ExternalLink" [size]="12" class="ref-item-icon"></lucide-icon>
-          </button>
-        </div>
-
-        <p class="empty-hint" *ngIf="characters.length === 0 && npcs.length === 0">
-          Aucun personnage dans cette campagne.
-        </p>
+    @if (activeTab === 'characters') {
+      <div class="ref-list">
+        @if (loadingChars) {
+          <p class="loading-hint">Chargement…</p>
+        }
+        @if (!loadingChars) {
+          <div>
+            @if (characters.length > 0) {
+              <div class="ref-group">
+                <h4>
+                  <lucide-icon [img]="User" [size]="13"></lucide-icon>
+                  Personnages joueurs
+                </h4>
+                @for (c of characters; track c) {
+                  <button
+                    type="button"
+                    class="ref-item"
+                    (click)="openInNewTab(['campaigns', campaignId, 'playthroughs', playthroughId!, 'characters', c.id!])">
+                    <span class="ref-item-name">{{ c.name }}</span>
+                    <lucide-icon [img]="ExternalLink" [size]="12" class="ref-item-icon"></lucide-icon>
+                  </button>
+                }
+              </div>
+            }
+            @if (npcs.length > 0) {
+              <div class="ref-group">
+                <h4>
+                  <lucide-icon [img]="Drama" [size]="13"></lucide-icon>
+                  Personnages non-joueurs
+                </h4>
+                @for (n of npcs; track n) {
+                  <button
+                    type="button"
+                    class="ref-item"
+                    (click)="openInNewTab(['campaigns', campaignId, 'npcs', n.id!])">
+                    <span class="ref-item-name">{{ n.name }}</span>
+                    <lucide-icon [img]="ExternalLink" [size]="12" class="ref-item-icon"></lucide-icon>
+                  </button>
+                }
+              </div>
+            }
+            @if (characters.length === 0 && npcs.length === 0) {
+              <p class="empty-hint">
+                Aucun personnage dans cette campagne.
+              </p>
+            }
+          </div>
+        }
       </div>
-    </div>
+    }
 
     <!-- ====== Scènes (arborescence aplatie) ====== -->
-    <div *ngIf="activeTab === 'scenes'" class="ref-list">
-      <p class="loading-hint" *ngIf="loadingTree">Chargement…</p>
-
-      <ng-container *ngIf="!loadingTree && treeData">
-        <p class="empty-hint" *ngIf="treeData.arcs.length === 0">
-          Aucun arc narratif. Construis le scénario de ta campagne pour le retrouver ici.
-        </p>
-
-        <div *ngFor="let arc of treeData.arcs" class="ref-group">
-          <h4>
-            <lucide-icon [img]="Swords" [size]="13"></lucide-icon>
-            {{ arc.name }}
-          </h4>
-
-          <div *ngFor="let chapter of chaptersOf(arc)" class="ref-subgroup">
-            <span class="ref-subgroup-title">{{ chapter.name }}</span>
-            <button *ngFor="let scene of scenesOf(chapter)"
-                    type="button"
-                    class="ref-item ref-item--nested"
-                    (click)="openInNewTab(['campaigns', campaignId, 'arcs', arc.id!, 'chapters', chapter.id!, 'scenes', scene.id!])">
-              <span class="ref-item-name">{{ scene.name }}</span>
-              <lucide-icon [img]="ExternalLink" [size]="12" class="ref-item-icon"></lucide-icon>
-            </button>
-          </div>
-        </div>
-      </ng-container>
-    </div>
+    @if (activeTab === 'scenes') {
+      <div class="ref-list">
+        @if (loadingTree) {
+          <p class="loading-hint">Chargement…</p>
+        }
+        @if (!loadingTree && treeData) {
+          @if (treeData.arcs.length === 0) {
+            <p class="empty-hint">
+              Aucun arc narratif. Construis le scénario de ta campagne pour le retrouver ici.
+            </p>
+          }
+          @for (arc of treeData.arcs; track arc) {
+            <div class="ref-group">
+              <h4>
+                <lucide-icon [img]="Swords" [size]="13"></lucide-icon>
+                {{ arc.name }}
+              </h4>
+              @for (chapter of chaptersOf(arc); track chapter) {
+                <div class="ref-subgroup">
+                  <span class="ref-subgroup-title">{{ chapter.name }}</span>
+                  @for (scene of scenesOf(chapter); track scene) {
+                    <button
+                      type="button"
+                      class="ref-item ref-item--nested"
+                      (click)="openInNewTab(['campaigns', campaignId, 'arcs', arc.id!, 'chapters', chapter.id!, 'scenes', scene.id!])">
+                      <span class="ref-item-name">{{ scene.name }}</span>
+                      <lucide-icon [img]="ExternalLink" [size]="12" class="ref-item-icon"></lucide-icon>
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+          }
+        }
+      </div>
+    }
 
   </div>
 </div>

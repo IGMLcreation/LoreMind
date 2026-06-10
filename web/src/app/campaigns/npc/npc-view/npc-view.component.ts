@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { LucideAngularModule, ArrowLeft, Edit3, Sparkles } from 'lucide-angular';
@@ -18,7 +18,7 @@ import { AiChatDrawerComponent } from '../../../shared/ai-chat-drawer/ai-chat-dr
  */
 @Component({
     selector: 'app-npc-view',
-    imports: [CommonModule, LucideAngularModule, PersonaViewComponent, AiChatDrawerComponent],
+    imports: [LucideAngularModule, PersonaViewComponent, AiChatDrawerComponent],
     templateUrl: './npc-view.component.html',
     styleUrls: ['./npc-view.component.scss']
 })

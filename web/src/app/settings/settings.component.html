@@ -8,373 +8,417 @@
     <h1>Parametres</h1>
   </header>
 
-  <div *ngIf="errorMessage" class="alert alert-error">
-    <lucide-icon [img]="AlertCircle" [size]="16"></lucide-icon>
-    <span>{{ errorMessage }}</span>
-  </div>
-  <div *ngIf="successMessage" class="alert alert-success">
-    <lucide-icon [img]="Check" [size]="16"></lucide-icon>
-    <span>{{ successMessage }}</span>
-  </div>
-
-  <section class="card" *ngIf="settings">
-    <h2>Moteur IA</h2>
-    <p class="hint">Choix du fournisseur de modele de langage utilise par le chat et la generation de pages.</p>
-
-    <div class="form-row">
-      <label>Fournisseur</label>
-      <div class="radio-group">
-        <label class="radio">
-          <input type="radio" name="provider" value="ollama" [(ngModel)]="settings.llm_provider">
-          <span>Ollama (local)</span>
-        </label>
-        <label class="radio">
-          <input type="radio" name="provider" value="onemin" [(ngModel)]="settings.llm_provider">
-          <span>1min.ai (cloud)</span>
-        </label>
-        <label class="radio">
-          <input type="radio" name="provider" value="openrouter" [(ngModel)]="settings.llm_provider">
-          <span>OpenRouter (cloud)</span>
-        </label>
-        <label class="radio">
-          <input type="radio" name="provider" value="mistral" [(ngModel)]="settings.llm_provider">
-          <span>Mistral (cloud)</span>
-        </label>
-        <label class="radio">
-          <input type="radio" name="provider" value="gemini" [(ngModel)]="settings.llm_provider">
-          <span>Gemini (cloud)</span>
-        </label>
-      </div>
+  @if (errorMessage) {
+    <div class="alert alert-error">
+      <lucide-icon [img]="AlertCircle" [size]="16"></lucide-icon>
+      <span>{{ errorMessage }}</span>
     </div>
-  </section>
+  }
+  @if (successMessage) {
+    <div class="alert alert-success">
+      <lucide-icon [img]="Check" [size]="16"></lucide-icon>
+      <span>{{ successMessage }}</span>
+    </div>
+  }
+
+  @if (settings) {
+    <section class="card">
+      <h2>Moteur IA</h2>
+      <p class="hint">Choix du fournisseur de modele de langage utilise par le chat et la generation de pages.</p>
+      <div class="form-row">
+        <label>Fournisseur</label>
+        <div class="radio-group">
+          <label class="radio">
+            <input type="radio" name="provider" value="ollama" [(ngModel)]="settings.llm_provider">
+            <span>Ollama (local)</span>
+          </label>
+          <label class="radio">
+            <input type="radio" name="provider" value="onemin" [(ngModel)]="settings.llm_provider">
+            <span>1min.ai (cloud)</span>
+          </label>
+          <label class="radio">
+            <input type="radio" name="provider" value="openrouter" [(ngModel)]="settings.llm_provider">
+            <span>OpenRouter (cloud)</span>
+          </label>
+          <label class="radio">
+            <input type="radio" name="provider" value="mistral" [(ngModel)]="settings.llm_provider">
+            <span>Mistral (cloud)</span>
+          </label>
+          <label class="radio">
+            <input type="radio" name="provider" value="gemini" [(ngModel)]="settings.llm_provider">
+            <span>Gemini (cloud)</span>
+          </label>
+        </div>
+      </div>
+    </section>
+  }
 
   <!-- Bloc Ollama -->
-  <section class="card" *ngIf="settings && settings.llm_provider === 'ollama'">
-    <h2>Configuration Ollama</h2>
-
-    <div class="form-row">
-      <label for="ollama-url">URL du serveur Ollama</label>
-      <input id="ollama-url" type="text" [(ngModel)]="settings.ollama_base_url" placeholder="http://localhost:11434">
-    </div>
-
-    <div class="form-row">
-      <label for="ollama-model">Modele</label>
-      <div class="inline-select">
-        <select id="ollama-model" [(ngModel)]="settings.llm_model" (ngModelChange)="fetchOllamaModelInfo()">
-          <option *ngIf="ollamaModels.length === 0" [value]="settings.llm_model">{{ settings.llm_model }}</option>
-          <option *ngFor="let m of ollamaModels" [value]="m">{{ m }}</option>
-        </select>
-        <button type="button" class="btn-secondary" (click)="refreshModels()" [disabled]="loadingModels">
-          <lucide-icon [img]="RefreshCw" [size]="14"></lucide-icon>
-          <span>{{ loadingModels ? 'Chargement...' : 'Actualiser' }}</span>
-        </button>
-        <button type="button" class="btn-secondary" (click)="modelManager.openPullDialog()">
-          <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
-          <span>Telecharger</span>
-        </button>
+  @if (settings && settings.llm_provider === 'ollama') {
+    <section class="card">
+      <h2>Configuration Ollama</h2>
+      <div class="form-row">
+        <label for="ollama-url">URL du serveur Ollama</label>
+        <input id="ollama-url" type="text" [(ngModel)]="settings.ollama_base_url" placeholder="http://localhost:11434">
       </div>
-      <p class="hint" *ngIf="ollamaModels.length === 0">Aucun modele detecte. Verifie que Ollama tourne et que l'URL est correcte.</p>
-    </div>
-
-    <!-- Gestion des modeles installes (liste + suppression + dialog de pull) -->
-    <app-ollama-model-manager
-      #modelManager
-      [models]="ollamaModels"
-      (modelsChanged)="refreshModels()"
-      (modelPulled)="onModelPulled($event)"
-      (modelDeleted)="onModelDeleted($event)">
-    </app-ollama-model-manager>
-  </section>
+      <div class="form-row">
+        <label for="ollama-model">Modele</label>
+        <div class="inline-select">
+          <select id="ollama-model" [(ngModel)]="settings.llm_model" (ngModelChange)="fetchOllamaModelInfo()">
+            @if (ollamaModels.length === 0) {
+              <option [value]="settings.llm_model">{{ settings.llm_model }}</option>
+            }
+            @for (m of ollamaModels; track m) {
+              <option [value]="m">{{ m }}</option>
+            }
+          </select>
+          <button type="button" class="btn-secondary" (click)="refreshModels()" [disabled]="loadingModels">
+            <lucide-icon [img]="RefreshCw" [size]="14"></lucide-icon>
+            <span>{{ loadingModels ? 'Chargement...' : 'Actualiser' }}</span>
+          </button>
+          <button type="button" class="btn-secondary" (click)="modelManager.openPullDialog()">
+            <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
+            <span>Telecharger</span>
+          </button>
+        </div>
+        @if (ollamaModels.length === 0) {
+          <p class="hint">Aucun modele detecte. Verifie que Ollama tourne et que l'URL est correcte.</p>
+        }
+      </div>
+      <!-- Gestion des modeles installes (liste + suppression + dialog de pull) -->
+      <app-ollama-model-manager
+        #modelManager
+        [models]="ollamaModels"
+        (modelsChanged)="refreshModels()"
+        (modelPulled)="onModelPulled($event)"
+        (modelDeleted)="onModelDeleted($event)">
+      </app-ollama-model-manager>
+    </section>
+  }
 
   <!-- Bloc 1min.ai -->
-  <section class="card" *ngIf="settings && settings.llm_provider === 'onemin'">
-    <h2>Configuration 1min.ai</h2>
-
-    <div class="form-row">
-      <label for="onemin-key">Cle API</label>
-      <input
-        id="onemin-key"
-        type="password"
-        [(ngModel)]="oneminApiKeyInput"
-        [placeholder]="settings.onemin_api_key_set ? 'Cle configuree (laisser vide pour ne pas changer)' : 'Saisir votre cle API'">
-      <label class="checkbox" *ngIf="settings.onemin_api_key_set">
-        <input type="checkbox" [(ngModel)]="clearApiKey">
-        <span>Effacer la cle enregistree</span>
-      </label>
-    </div>
-
-    <div class="form-row">
-      <label for="onemin-provider">Fournisseur</label>
-      <select id="onemin-provider" [(ngModel)]="oneminProvider" (ngModelChange)="onProviderChange()">
-        <option *ngFor="let g of oneminGroups" [value]="g.provider">{{ g.provider }}</option>
-      </select>
-    </div>
-
-    <div class="form-row">
-      <label for="onemin-model">Modele</label>
-      <select id="onemin-model" [(ngModel)]="settings.onemin_model">
-        <option *ngFor="let m of currentProviderModels" [value]="m">{{ m }}</option>
-      </select>
-    </div>
-  </section>
-
-  <!-- Bloc OpenRouter -->
-  <section class="card" *ngIf="settings && settings.llm_provider === 'openrouter'">
-    <h2>Configuration OpenRouter</h2>
-
-    <div class="form-row">
-      <label for="openrouter-key">Cle API</label>
-      <input
-        id="openrouter-key"
-        type="password"
-        [(ngModel)]="openrouterApiKeyInput"
-        [placeholder]="settings.openrouter_api_key_set ? 'Cle configuree (laisser vide pour ne pas changer)' : 'Saisir votre cle API (sk-or-...)'">
-      <label class="checkbox" *ngIf="settings.openrouter_api_key_set">
-        <input type="checkbox" [(ngModel)]="clearOpenrouterKey">
-        <span>Effacer la cle enregistree</span>
-      </label>
-    </div>
-
-    <div class="form-row">
-      <label for="openrouter-model">Modele</label>
-      <label class="checkbox">
-        <input type="checkbox" [(ngModel)]="openrouterFreeOnly">
-        <span>Gratuits seulement</span>
-      </label>
-      <select id="openrouter-model" [(ngModel)]="settings.openrouter_model">
-        <option *ngFor="let o of openrouterSelectOptions" [value]="o.id">{{ o.label }}</option>
-      </select>
-      <p class="hint">
-        Liste chargee automatiquement depuis OpenRouter. Pour rester <strong>gratuit</strong> :
-        un modele marque <code>· gratuit</code> ou le routeur <code>openrouter/free</code>
-        (choisit un modele gratuit tout seul). Pour les imports, prefere un gratuit a
-        <strong>grand contexte</strong> (valeur « ctx »).
-      </p>
-    </div>
-  </section>
-
-  <!-- Bloc Mistral -->
-  <section class="card" *ngIf="settings && settings.llm_provider === 'mistral'">
-    <h2>Configuration Mistral</h2>
-
-    <div class="form-row">
-      <label for="mistral-key">Cle API</label>
-      <input
-        id="mistral-key"
-        type="password"
-        [(ngModel)]="mistralApiKeyInput"
-        [placeholder]="settings.mistral_api_key_set ? 'Cle configuree (laisser vide pour ne pas changer)' : 'Saisir votre cle API Mistral'">
-      <label class="checkbox" *ngIf="settings.mistral_api_key_set">
-        <input type="checkbox" [(ngModel)]="clearMistralKey">
-        <span>Effacer la cle enregistree</span>
-      </label>
-    </div>
-
-    <div class="form-row">
-      <label for="mistral-model">Modele</label>
-      <select id="mistral-model" [(ngModel)]="settings.mistral_model">
-        <option *ngFor="let o of mistralSelectOptions" [value]="o.id">{{ o.label }}</option>
-      </select>
-      <p class="hint">
-        Cle gratuite sur <code>console.mistral.ai</code> (tier « Experiment », sans CB).
-        Pour les imports, prefere <code>mistral-large-latest</code> (128k contexte, fidele
-        et bon en francais) ou <code>mistral-small-latest</code> (plus rapide).
-      </p>
-    </div>
-  </section>
-
-  <!-- Bloc Gemini -->
-  <section class="card" *ngIf="settings && settings.llm_provider === 'gemini'">
-    <h2>Configuration Gemini</h2>
-
-    <div class="form-row">
-      <label for="gemini-key">Cle API</label>
-      <input
-        id="gemini-key"
-        type="password"
-        [(ngModel)]="geminiApiKeyInput"
-        [placeholder]="settings.gemini_api_key_set ? 'Cle configuree (laisser vide pour ne pas changer)' : 'Saisir votre cle API Gemini'">
-      <label class="checkbox" *ngIf="settings.gemini_api_key_set">
-        <input type="checkbox" [(ngModel)]="clearGeminiKey">
-        <span>Effacer la cle enregistree</span>
-      </label>
-    </div>
-
-    <div class="form-row">
-      <label for="gemini-model">Modele</label>
-      <select id="gemini-model" [(ngModel)]="settings.gemini_model">
-        <option *ngFor="let o of geminiSelectOptions" [value]="o.id">{{ o.label }}</option>
-      </select>
-      <p class="hint">
-        Cle gratuite sur <code>aistudio.google.com</code> (sans CB). Ideal pour les imports :
-        <code>gemini-2.0-flash</code> a un <strong>contexte ~1M</strong> → un livre entier tient
-        en 1-2 appels (plus de morceaux perdus). Pense a monter la <strong>taille des morceaux</strong>
-        d'import pour en profiter.
-      </p>
-    </div>
-  </section>
-
-  <!-- Bloc Embeddings (Atelier RAG) : indépendant du modèle de CHAT ci-dessus. -->
-  <section class="card" *ngIf="settings">
-    <h2>Embeddings (Atelier RAG)</h2>
-    <p class="hint">
-      Modèle utilisé pour <strong>indexer les sources PDF</strong> des ateliers et y faire
-      de la recherche. C'est un modèle <strong>séparé</strong> du modèle de chat ci-dessus.
-    </p>
-
-    <div class="form-row">
-      <label>Fournisseur d'embeddings</label>
-      <div class="radio-group">
-        <label class="radio">
-          <input type="radio" name="embprovider" value="ollama" [(ngModel)]="settings.embedding_provider">
-          <span>Ollama (local, gratuit)</span>
-        </label>
-        <label class="radio">
-          <input type="radio" name="embprovider" value="mistral" [(ngModel)]="settings.embedding_provider">
-          <span>Mistral (cloud, EU)</span>
-        </label>
-      </div>
-    </div>
-
-    <!-- Ollama embeddings -->
-    <div *ngIf="settings.embedding_provider === 'ollama'">
+  @if (settings && settings.llm_provider === 'onemin') {
+    <section class="card">
+      <h2>Configuration 1min.ai</h2>
       <div class="form-row">
-        <label for="emb-ollama-model">Modèle d'embedding Ollama</label>
-        <input id="emb-ollama-model" type="text" [(ngModel)]="settings.ollama_embedding_model"
-               placeholder="nomic-embed-text">
-        <p class="hint">
-          Recommandé : <code>nomic-embed-text</code> (léger). Gratuit et illimité (local).
-        </p>
-      </div>
-      <div class="form-row">
-        <label class="checkbox">
-          <input type="checkbox" [(ngModel)]="settings.auto_pull_embedding_model">
-          <span>Installer automatiquement le modèle au démarrage s'il manque</span>
-        </label>
-      </div>
-    </div>
+        <label for="onemin-key">Cle API</label>
+        <input
+          id="onemin-key"
+          type="password"
+          [(ngModel)]="oneminApiKeyInput"
+          [placeholder]="settings.onemin_api_key_set ? 'Cle configuree (laisser vide pour ne pas changer)' : 'Saisir votre cle API'">
+          @if (settings.onemin_api_key_set) {
+            <label class="checkbox">
+              <input type="checkbox" [(ngModel)]="clearApiKey">
+              <span>Effacer la cle enregistree</span>
+            </label>
+          }
+        </div>
+        <div class="form-row">
+          <label for="onemin-provider">Fournisseur</label>
+          <select id="onemin-provider" [(ngModel)]="oneminProvider" (ngModelChange)="onProviderChange()">
+            @for (g of oneminGroups; track g) {
+              <option [value]="g.provider">{{ g.provider }}</option>
+            }
+          </select>
+        </div>
+        <div class="form-row">
+          <label for="onemin-model">Modele</label>
+          <select id="onemin-model" [(ngModel)]="settings.onemin_model">
+            @for (m of currentProviderModels; track m) {
+              <option [value]="m">{{ m }}</option>
+            }
+          </select>
+        </div>
+      </section>
+    }
 
-    <div class="form-row">
-      <label for="rag-topk">Extraits récupérés par question (couverture RAG)</label>
-      <input id="rag-topk" type="number" min="3" max="200" [(ngModel)]="settings.rag_top_k">
-      <p class="hint">
-        Plus haut = l'IA voit plus de passages par question (mieux pour les questions
-        larges « liste les… »), mais prompt plus long. Défaut 8. Avec un modèle
-        <strong>gros-contexte</strong> (Gemini), tu peux monter à <strong>50-150</strong> pour
-        une couverture quasi « document entier ». Pour les questions exhaustives, préfère
-        le bouton <strong>« Analyse approfondie »</strong> de l'atelier.
-      </p>
-    </div>
+    <!-- Bloc OpenRouter -->
+    @if (settings && settings.llm_provider === 'openrouter') {
+      <section class="card">
+        <h2>Configuration OpenRouter</h2>
+        <div class="form-row">
+          <label for="openrouter-key">Cle API</label>
+          <input
+            id="openrouter-key"
+            type="password"
+            [(ngModel)]="openrouterApiKeyInput"
+            [placeholder]="settings.openrouter_api_key_set ? 'Cle configuree (laisser vide pour ne pas changer)' : 'Saisir votre cle API (sk-or-...)'">
+            @if (settings.openrouter_api_key_set) {
+              <label class="checkbox">
+                <input type="checkbox" [(ngModel)]="clearOpenrouterKey">
+                <span>Effacer la cle enregistree</span>
+              </label>
+            }
+          </div>
+          <div class="form-row">
+            <label for="openrouter-model">Modele</label>
+            <label class="checkbox">
+              <input type="checkbox" [(ngModel)]="openrouterFreeOnly">
+              <span>Gratuits seulement</span>
+            </label>
+            <select id="openrouter-model" [(ngModel)]="settings.openrouter_model">
+              @for (o of openrouterSelectOptions; track o) {
+                <option [value]="o.id">{{ o.label }}</option>
+              }
+            </select>
+            <p class="hint">
+              Liste chargee automatiquement depuis OpenRouter. Pour rester <strong>gratuit</strong> :
+              un modele marque <code>· gratuit</code> ou le routeur <code>openrouter/free</code>
+              (choisit un modele gratuit tout seul). Pour les imports, prefere un gratuit a
+              <strong>grand contexte</strong> (valeur « ctx »).
+            </p>
+          </div>
+        </section>
+      }
 
-    <!-- Mistral embeddings -->
-    <div *ngIf="settings.embedding_provider === 'mistral'">
-      <div class="form-row">
-        <label for="emb-mistral-key">
-          Clé API Mistral
-          <span class="key-state" *ngIf="settings.mistral_api_key_set">✓ configurée</span>
-        </label>
-        <input id="emb-mistral-key" type="password" [(ngModel)]="mistralApiKeyInput"
-               [placeholder]="settings.mistral_api_key_set ? 'Clé configurée (laisser vide pour ne pas changer)' : 'Saisir votre clé API Mistral'">
-        <label class="checkbox" *ngIf="settings.mistral_api_key_set">
-          <input type="checkbox" [(ngModel)]="clearMistralKey">
-          <span>Effacer la clé enregistrée</span>
-        </label>
-        <p class="hint">
-          C'est la <strong>même clé</strong> que pour le chat Mistral (une seule clé partagée).
-          Soumis au rate limit du tier gratuit.
-        </p>
-      </div>
-      <div class="form-row">
-        <label for="emb-mistral-model">Modèle d'embedding Mistral</label>
-        <input id="emb-mistral-model" type="text" [(ngModel)]="settings.mistral_embedding_model"
-               placeholder="mistral-embed">
-      </div>
-    </div>
-  </section>
+      <!-- Bloc Mistral -->
+      @if (settings && settings.llm_provider === 'mistral') {
+        <section class="card">
+          <h2>Configuration Mistral</h2>
+          <div class="form-row">
+            <label for="mistral-key">Cle API</label>
+            <input
+              id="mistral-key"
+              type="password"
+              [(ngModel)]="mistralApiKeyInput"
+              [placeholder]="settings.mistral_api_key_set ? 'Cle configuree (laisser vide pour ne pas changer)' : 'Saisir votre cle API Mistral'">
+              @if (settings.mistral_api_key_set) {
+                <label class="checkbox">
+                  <input type="checkbox" [(ngModel)]="clearMistralKey">
+                  <span>Effacer la cle enregistree</span>
+                </label>
+              }
+            </div>
+            <div class="form-row">
+              <label for="mistral-model">Modele</label>
+              <select id="mistral-model" [(ngModel)]="settings.mistral_model">
+                @for (o of mistralSelectOptions; track o) {
+                  <option [value]="o.id">{{ o.label }}</option>
+                }
+              </select>
+              <p class="hint">
+                Cle gratuite sur <code>console.mistral.ai</code> (tier « Experiment », sans CB).
+                Pour les imports, prefere <code>mistral-large-latest</code> (128k contexte, fidele
+                et bon en francais) ou <code>mistral-small-latest</code> (plus rapide).
+              </p>
+            </div>
+          </section>
+        }
 
-  <!-- Bloc Fenetre de contexte : seulement pour Ollama (num_ctx est un vrai
-       parametre du modele local). Pour le cloud (1min/OpenRouter), on ne fixe rien :
-       on utilise ce que le modele accepte, et la jauge du chat s'affiche sans max. -->
-  <section class="card" *ngIf="settings && settings.llm_provider === 'ollama'">
-    <h2>Fenetre de contexte</h2>
+        <!-- Bloc Gemini -->
+        @if (settings && settings.llm_provider === 'gemini') {
+          <section class="card">
+            <h2>Configuration Gemini</h2>
+            <div class="form-row">
+              <label for="gemini-key">Cle API</label>
+              <input
+                id="gemini-key"
+                type="password"
+                [(ngModel)]="geminiApiKeyInput"
+                [placeholder]="settings.gemini_api_key_set ? 'Cle configuree (laisser vide pour ne pas changer)' : 'Saisir votre cle API Gemini'">
+                @if (settings.gemini_api_key_set) {
+                  <label class="checkbox">
+                    <input type="checkbox" [(ngModel)]="clearGeminiKey">
+                    <span>Effacer la cle enregistree</span>
+                  </label>
+                }
+              </div>
+              <div class="form-row">
+                <label for="gemini-model">Modele</label>
+                <select id="gemini-model" [(ngModel)]="settings.gemini_model">
+                  @for (o of geminiSelectOptions; track o) {
+                    <option [value]="o.id">{{ o.label }}</option>
+                  }
+                </select>
+                <p class="hint">
+                  Cle gratuite sur <code>aistudio.google.com</code> (sans CB). Ideal pour les imports :
+                  <code>gemini-2.0-flash</code> a un <strong>contexte ~1M</strong> → un livre entier tient
+                  en 1-2 appels (plus de morceaux perdus). Pense a monter la <strong>taille des morceaux</strong>
+                  d'import pour en profiter.
+                </p>
+              </div>
+            </section>
+          }
 
-    <!-- Ollama : slider borne par le max du modele -->
-    <div class="form-row" *ngIf="settings.llm_provider === 'ollama'">
-      <label for="llm-num-ctx">
-        Tokens alloues au modele
-        <span class="ctx-value">{{ settings.llm_num_ctx | number }}</span>
-        <span class="ctx-max" *ngIf="ollamaModelMaxContext > 0">
-          / {{ ollamaModelMaxContext | number }} max
-        </span>
-      </label>
-      <input
-        id="llm-num-ctx"
-        type="range"
-        [min]="CTX_MIN"
-        [max]="effectiveMaxContext"
-        step="1024"
-        [(ngModel)]="settings.llm_num_ctx"
-        class="ctx-slider">
-      <p class="hint" *ngIf="ollamaModelMaxContext > 0">
-        Le modele <strong>{{ settings.llm_model }}</strong> accepte jusqu'a
-        {{ ollamaModelMaxContext | number }} tokens. Plus la valeur est elevee, plus
-        l'IA peut tenir d'historique et de contexte — au prix de VRAM et de latence.
-      </p>
-      <p class="hint" *ngIf="ollamaModelMaxContext === 0">
-        Impossible de determiner la fenetre max du modele (Ollama injoignable ou modele
-        inconnu). Slider borne a {{ CTX_FALLBACK_MAX | number }} par securite.
-      </p>
-    </div>
+          <!-- Bloc Embeddings (Atelier RAG) : indépendant du modèle de CHAT ci-dessus. -->
+          @if (settings) {
+            <section class="card">
+              <h2>Embeddings (Atelier RAG)</h2>
+              <p class="hint">
+                Modèle utilisé pour <strong>indexer les sources PDF</strong> des ateliers et y faire
+                de la recherche. C'est un modèle <strong>séparé</strong> du modèle de chat ci-dessus.
+              </p>
+              <div class="form-row">
+                <label>Fournisseur d'embeddings</label>
+                <div class="radio-group">
+                  <label class="radio">
+                    <input type="radio" name="embprovider" value="ollama" [(ngModel)]="settings.embedding_provider">
+                    <span>Ollama (local, gratuit)</span>
+                  </label>
+                  <label class="radio">
+                    <input type="radio" name="embprovider" value="mistral" [(ngModel)]="settings.embedding_provider">
+                    <span>Mistral (cloud, EU)</span>
+                  </label>
+                </div>
+              </div>
+              <!-- Ollama embeddings -->
+              @if (settings.embedding_provider === 'ollama') {
+                <div>
+                  <div class="form-row">
+                    <label for="emb-ollama-model">Modèle d'embedding Ollama</label>
+                    <input id="emb-ollama-model" type="text" [(ngModel)]="settings.ollama_embedding_model"
+                      placeholder="nomic-embed-text">
+                      <p class="hint">
+                        Recommandé : <code>nomic-embed-text</code> (léger). Gratuit et illimité (local).
+                      </p>
+                    </div>
+                    <div class="form-row">
+                      <label class="checkbox">
+                        <input type="checkbox" [(ngModel)]="settings.auto_pull_embedding_model">
+                        <span>Installer automatiquement le modèle au démarrage s'il manque</span>
+                      </label>
+                    </div>
+                  </div>
+                }
+                <div class="form-row">
+                  <label for="rag-topk">Extraits récupérés par question (couverture RAG)</label>
+                  <input id="rag-topk" type="number" min="3" max="200" [(ngModel)]="settings.rag_top_k">
+                  <p class="hint">
+                    Plus haut = l'IA voit plus de passages par question (mieux pour les questions
+                    larges « liste les… »), mais prompt plus long. Défaut 8. Avec un modèle
+                    <strong>gros-contexte</strong> (Gemini), tu peux monter à <strong>50-150</strong> pour
+                    une couverture quasi « document entier ». Pour les questions exhaustives, préfère
+                    le bouton <strong>« Analyse approfondie »</strong> de l'atelier.
+                  </p>
+                </div>
+                <!-- Mistral embeddings -->
+                @if (settings.embedding_provider === 'mistral') {
+                  <div>
+                    <div class="form-row">
+                      <label for="emb-mistral-key">
+                        Clé API Mistral
+                        @if (settings.mistral_api_key_set) {
+                          <span class="key-state">✓ configurée</span>
+                        }
+                      </label>
+                      <input id="emb-mistral-key" type="password" [(ngModel)]="mistralApiKeyInput"
+                        [placeholder]="settings.mistral_api_key_set ? 'Clé configurée (laisser vide pour ne pas changer)' : 'Saisir votre clé API Mistral'">
+                        @if (settings.mistral_api_key_set) {
+                          <label class="checkbox">
+                            <input type="checkbox" [(ngModel)]="clearMistralKey">
+                            <span>Effacer la clé enregistrée</span>
+                          </label>
+                        }
+                        <p class="hint">
+                          C'est la <strong>même clé</strong> que pour le chat Mistral (une seule clé partagée).
+                          Soumis au rate limit du tier gratuit.
+                        </p>
+                      </div>
+                      <div class="form-row">
+                        <label for="emb-mistral-model">Modèle d'embedding Mistral</label>
+                        <input id="emb-mistral-model" type="text" [(ngModel)]="settings.mistral_embedding_model"
+                          placeholder="mistral-embed">
+                        </div>
+                      </div>
+                    }
+                  </section>
+                }
 
-  </section>
+                <!-- Bloc Fenetre de contexte : seulement pour Ollama (num_ctx est un vrai
+                parametre du modele local). Pour le cloud (1min/OpenRouter), on ne fixe rien :
+                on utilise ce que le modele accepte, et la jauge du chat s'affiche sans max. -->
+                @if (settings && settings.llm_provider === 'ollama') {
+                  <section class="card">
+                    <h2>Fenetre de contexte</h2>
+                    <!-- Ollama : slider borne par le max du modele -->
+                    @if (settings.llm_provider === 'ollama') {
+                      <div class="form-row">
+                        <label for="llm-num-ctx">
+                          Tokens alloues au modele
+                          <span class="ctx-value">{{ settings.llm_num_ctx | number }}</span>
+                          @if (ollamaModelMaxContext > 0) {
+                            <span class="ctx-max">
+                              / {{ ollamaModelMaxContext | number }} max
+                            </span>
+                          }
+                        </label>
+                        <input
+                          id="llm-num-ctx"
+                          type="range"
+                          [min]="CTX_MIN"
+                          [max]="effectiveMaxContext"
+                          step="1024"
+                          [(ngModel)]="settings.llm_num_ctx"
+                          class="ctx-slider">
+                          @if (ollamaModelMaxContext > 0) {
+                            <p class="hint">
+                              Le modele <strong>{{ settings.llm_model }}</strong> accepte jusqu'a
+                              {{ ollamaModelMaxContext | number }} tokens. Plus la valeur est elevee, plus
+                              l'IA peut tenir d'historique et de contexte — au prix de VRAM et de latence.
+                            </p>
+                          }
+                          @if (ollamaModelMaxContext === 0) {
+                            <p class="hint">
+                              Impossible de determiner la fenetre max du modele (Ollama injoignable ou modele
+                              inconnu). Slider borne a {{ CTX_FALLBACK_MAX | number }} par securite.
+                            </p>
+                          }
+                        </div>
+                      }
+                    </section>
+                  }
 
-  <!-- Bloc Import de PDF -->
-  <section class="card" *ngIf="settings">
-    <h2>Import de PDF</h2>
-    <div class="form-row">
-      <label for="import-chunk-tokens">Taille des morceaux a l'import (tokens)</label>
-      <input
-        id="import-chunk-tokens"
-        type="number"
-        min="2000"
-        step="1000"
-        [(ngModel)]="settings.import_chunk_tokens">
-      <p class="hint">
-        Lors de l'import d'un PDF (regles ou campagne), le texte est decoupe en morceaux
-        de cette taille avant d'etre analyse par l'IA. <strong>Plus gros = moins de morceaux</strong>,
-        donc plus rapide et moins de fragmentation/doublons — mais le morceau doit tenir dans
-        la fenetre du modele.
-        <br />
-        Repere : ~10 000 pour Ollama (16k de contexte) ; jusqu'a ~100 000 pour un modele a
-        grand contexte (ex : GPT-5 mini, 400k) afin de traiter un livre entier en une seule passe.
-        Attention : un gros morceau = generation plus longue (voir le timeout ci-dessous).
-      </p>
-    </div>
+                  <!-- Bloc Import de PDF -->
+                  @if (settings) {
+                    <section class="card">
+                      <h2>Import de PDF</h2>
+                      <div class="form-row">
+                        <label for="import-chunk-tokens">Taille des morceaux a l'import (tokens)</label>
+                        <input
+                          id="import-chunk-tokens"
+                          type="number"
+                          min="2000"
+                          step="1000"
+                          [(ngModel)]="settings.import_chunk_tokens">
+                          <p class="hint">
+                            Lors de l'import d'un PDF (regles ou campagne), le texte est decoupe en morceaux
+                            de cette taille avant d'etre analyse par l'IA. <strong>Plus gros = moins de morceaux</strong>,
+                            donc plus rapide et moins de fragmentation/doublons — mais le morceau doit tenir dans
+                            la fenetre du modele.
+                            <br />
+                            Repere : ~10 000 pour Ollama (16k de contexte) ; jusqu'a ~100 000 pour un modele a
+                            grand contexte (ex : GPT-5 mini, 400k) afin de traiter un livre entier en une seule passe.
+                            Attention : un gros morceau = generation plus longue (voir le timeout ci-dessous).
+                          </p>
+                        </div>
+                        <div class="form-row">
+                          <label for="llm-timeout">Timeout des appels IA (secondes)</label>
+                          <input
+                            id="llm-timeout"
+                            type="number"
+                            min="30"
+                            step="30"
+                            [(ngModel)]="settings.llm_timeout_seconds">
+                            <p class="hint">
+                              Delai max d'attente d'une reponse du modele. Si un import lourd echoue avec
+                              « delai depasse » (timeout), <strong>augmentez cette valeur</strong> (ex : 600)
+                              ou reduisez la taille des morceaux ci-dessus. Defaut : 300 s.
+                            </p>
+                          </div>
+                        </section>
+                      }
 
-    <div class="form-row">
-      <label for="llm-timeout">Timeout des appels IA (secondes)</label>
-      <input
-        id="llm-timeout"
-        type="number"
-        min="30"
-        step="30"
-        [(ngModel)]="settings.llm_timeout_seconds">
-      <p class="hint">
-        Delai max d'attente d'une reponse du modele. Si un import lourd echoue avec
-        « delai depasse » (timeout), <strong>augmentez cette valeur</strong> (ex : 600)
-        ou reduisez la taille des morceaux ci-dessus. Defaut : 300 s.
-      </p>
-    </div>
-  </section>
+                      <!-- Mises a jour conteneurs + licence Patreon + canal beta (sous-composant) -->
+                      <app-settings-updates-section></app-settings-updates-section>
 
-  <!-- Mises a jour conteneurs + licence Patreon + canal beta (sous-composant) -->
-  <app-settings-updates-section></app-settings-updates-section>
+                      @if (settings) {
+                        <div class="actions">
+                          <button class="btn-primary" (click)="save()" [disabled]="saving">
+                            <lucide-icon [img]="Save" [size]="16"></lucide-icon>
+                            <span>{{ saving ? 'Sauvegarde...' : 'Sauvegarder' }}</span>
+                          </button>
+                        </div>
+                      }
 
-  <div class="actions" *ngIf="settings">
-    <button class="btn-primary" (click)="save()" [disabled]="saving">
-      <lucide-icon [img]="Save" [size]="16"></lucide-icon>
-      <span>{{ saving ? 'Sauvegarde...' : 'Sauvegarder' }}</span>
-    </button>
-  </div>
-
-</div>
+                    </div>

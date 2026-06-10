@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router } from '@angular/router';
 import { LucideAngularModule, Dices, Plus, Pencil, Trash2 } from 'lucide-angular';
 import { GameSystemService } from '../services/game-system.service';
@@ -9,7 +9,7 @@ import { ConfirmDialogService } from '../shared/confirm-dialog/confirm-dialog.se
 
 @Component({
     selector: 'app-game-systems',
-    imports: [CommonModule, LucideAngularModule],
+    imports: [LucideAngularModule],
     templateUrl: './game-systems.component.html',
     styleUrls: ['./game-systems.component.scss']
 })

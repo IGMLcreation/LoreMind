@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LucideAngularModule, ArrowLeft, Save, Plus, Trash2, Sparkles } from 'lucide-angular';
@@ -14,7 +14,7 @@ import { ItemCatalog, CatalogItem, ItemCatalogCreate } from '../../../services/i
  */
 @Component({
     selector: 'app-item-catalog-edit',
-    imports: [CommonModule, FormsModule, LucideAngularModule],
+    imports: [FormsModule, LucideAngularModule],
     templateUrl: './item-catalog-edit.component.html',
     styleUrls: ['./item-catalog-edit.component.scss']
 })

@@ -1,11 +1,11 @@
 import { Component, EventEmitter, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { LucideAngularModule, BookCopy, X } from 'lucide-angular';
 
 @Component({
     selector: 'app-lore-create',
-    imports: [CommonModule, ReactiveFormsModule, LucideAngularModule],
+    imports: [ReactiveFormsModule, LucideAngularModule],
     templateUrl: './lore-create.component.html',
     styleUrls: ['./lore-create.component.scss']
 })

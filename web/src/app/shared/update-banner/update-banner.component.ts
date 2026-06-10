@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { LucideAngularModule, RefreshCw, X } from 'lucide-angular';
 import { VersionCheckerService } from '../../services/version-checker.service';
 
@@ -10,7 +10,7 @@ import { VersionCheckerService } from '../../services/version-checker.service';
  */
 @Component({
     selector: 'app-update-banner',
-    imports: [CommonModule, LucideAngularModule],
+    imports: [LucideAngularModule],
     templateUrl: './update-banner.component.html',
     styleUrls: ['./update-banner.component.scss']
 })

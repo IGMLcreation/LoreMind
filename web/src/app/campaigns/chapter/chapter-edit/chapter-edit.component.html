@@ -7,9 +7,9 @@
     </div>
     <div class="header-actions">
       <button type="button" class="btn-ai"
-              (click)="toggleChat()"
-              [class.active]="chatOpen"
-              title="Ouvrir l'Assistant IA pour dialoguer autour de ce chapitre">
+        (click)="toggleChat()"
+        [class.active]="chatOpen"
+        title="Ouvrir l'Assistant IA pour dialoguer autour de ce chapitre">
         <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
         Assistant IA
       </button>
@@ -27,7 +27,7 @@
   <form [formGroup]="form" (ngSubmit)="submit()" class="edit-form">
 
     <!-- Conditions de déblocage (scénario) — pour TOUT chapitre : arc HUB (= quête)
-         comme arc linéaire (= chapitre conditionnel). Vide = disponible d'emblée. -->
+    comme arc linéaire (= chapitre conditionnel). Vide = disponible d'emblée. -->
     <div class="hub-section">
       <h2 class="hub-section-title">
         {{ parentArc?.type === 'HUB' ? '🗺️ Conditions de déblocage de la quête' : '🔒 Conditions de déblocage du chapitre' }}
@@ -78,7 +78,7 @@
         formControlName="name"
         placeholder="Ex: Chapitre 1: Les Disparitions"
         [class.invalid]="form.get('name')?.invalid && form.get('name')?.touched"
-      />
+        />
     </div>
 
     <div class="field">
@@ -129,25 +129,29 @@
     </div>
 
     <!-- ===== Pages Lore associées (B2 cross-context) ===== -->
-    <div class="field" *ngIf="loreId">
-      <label>Pages Lore associées</label>
-      <app-lore-link-picker
-        [value]="relatedPageIds"
-        [availablePages]="availablePages"
-        [loreId]="loreId"
-        (valueChange)="relatedPageIds = $event">
-      </app-lore-link-picker>
-      <small class="field-hint">
-        Liez ce chapitre à des PNJ, lieux ou éléments du Lore qui y apparaissent.
-      </small>
-    </div>
+    @if (loreId) {
+      <div class="field">
+        <label>Pages Lore associées</label>
+        <app-lore-link-picker
+          [value]="relatedPageIds"
+          [availablePages]="availablePages"
+          [loreId]="loreId"
+          (valueChange)="relatedPageIds = $event">
+        </app-lore-link-picker>
+        <small class="field-hint">
+          Liez ce chapitre à des PNJ, lieux ou éléments du Lore qui y apparaissent.
+        </small>
+      </div>
+    }
 
-    <div class="field" *ngIf="!loreId">
-      <small class="field-hint">
-        💡 Cette campagne n'est associée à aucun univers. Associez-la à un Lore dans l'écran de la campagne
-        pour pouvoir lier ce chapitre à des pages du Lore.
-      </small>
-    </div>
+    @if (!loreId) {
+      <div class="field">
+        <small class="field-hint">
+          💡 Cette campagne n'est associée à aucun univers. Associez-la à un Lore dans l'écran de la campagne
+          pour pouvoir lier ce chapitre à des pages du Lore.
+        </small>
+      </div>
+    }
 
   </form>
 

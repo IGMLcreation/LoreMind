@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
@@ -32,7 +32,7 @@ import { LORE_ICON_OPTIONS, IconOption } from '../lore-icons';
  */
 @Component({
     selector: 'app-lore-node-edit',
-    imports: [CommonModule, ReactiveFormsModule, LucideAngularModule],
+    imports: [ReactiveFormsModule, LucideAngularModule],
     templateUrl: './lore-node-edit.component.html',
     styleUrls: ['./lore-node-edit.component.scss']
 })

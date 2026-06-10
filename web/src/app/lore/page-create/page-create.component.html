@@ -17,64 +17,66 @@
     <div class="field">
       <label>Template *</label>
 
-      <div class="templates-grid" *ngIf="templates.length; else emptyTemplates">
-        <button
-          type="button"
-          class="template-card"
-          *ngFor="let t of templates"
-          [class.selected]="selectedTemplateId === t.id"
-          (click)="selectTemplate(t)">
-          <div class="template-card-head">
-            <lucide-icon [img]="FileText" [size]="16"></lucide-icon>
-            <span class="template-name">{{ t.name }}</span>
-          </div>
-          <p class="template-description">{{ t.description || '—' }}</p>
-        </button>
-
-        <!-- Carte "+" : sauvegarde le brouillon et part creer un nouveau template ;
-             template-create renverra ici via le mecanisme returnTo. -->
-        <a
-          class="template-card template-card-create"
-          [routerLink]="['/lore', loreId, 'templates', 'create']"
-          [queryParams]="{ returnTo: 'page-create' }"
-          (click)="saveDraft()"
-          title="Créer un nouveau template pour ce Lore">
-          <div class="template-card-head">
-            <lucide-icon [img]="Plus" [size]="16"></lucide-icon>
-            <span class="template-name">Créer un template</span>
-          </div>
-          <p class="template-description">
-            Vous reviendrez ici automatiquement, votre saisie sera conservée.
-          </p>
-        </a>
-      </div>
-
-      <ng-template #emptyTemplates>
+      @if (templates.length) {
+        <div class="templates-grid">
+          @for (t of templates; track t) {
+            <button
+              type="button"
+              class="template-card"
+              [class.selected]="selectedTemplateId === t.id"
+              (click)="selectTemplate(t)">
+              <div class="template-card-head">
+                <lucide-icon [img]="FileText" [size]="16"></lucide-icon>
+                <span class="template-name">{{ t.name }}</span>
+              </div>
+              <p class="template-description">{{ t.description || '—' }}</p>
+            </button>
+          }
+          <!-- Carte "+" : sauvegarde le brouillon et part creer un nouveau template ;
+          template-create renverra ici via le mecanisme returnTo. -->
+          <a
+            class="template-card template-card-create"
+            [routerLink]="['/lore', loreId, 'templates', 'create']"
+            [queryParams]="{ returnTo: 'page-create' }"
+            (click)="saveDraft()"
+            title="Créer un nouveau template pour ce Lore">
+            <div class="template-card-head">
+              <lucide-icon [img]="Plus" [size]="16"></lucide-icon>
+              <span class="template-name">Créer un template</span>
+            </div>
+            <p class="template-description">
+              Vous reviendrez ici automatiquement, votre saisie sera conservée.
+            </p>
+          </a>
+        </div>
+      } @else {
         <p class="empty-hint">
           Aucun template défini pour ce Lore.
           <a [routerLink]="['/lore', loreId, 'templates', 'create']" [queryParams]="{ returnTo: 'page-create' }" (click)="saveDraft()">Créer un template</a> d'abord.
         </p>
-      </ng-template>
+      }
+
     </div>
 
     <!-- Dossier de destination -->
     <div class="field">
       <label for="page-node">Dossier de destination *</label>
 
-      <ng-container *ngIf="nodes.length; else emptyFolders">
+      @if (nodes.length) {
         <select id="page-node" formControlName="nodeId">
           <option value="" disabled>Sélectionnez un dossier</option>
-          <option *ngFor="let node of nodes" [value]="node.id">{{ node.name }}</option>
+          @for (node of nodes; track node) {
+            <option [value]="node.id">{{ node.name }}</option>
+          }
         </select>
         <p class="hint">La page sera créée dans ce dossier</p>
-      </ng-container>
-
-      <ng-template #emptyFolders>
+      } @else {
         <p class="empty-hint">
           Aucun dossier dans ce Lore.
           <a [routerLink]="['/lore', loreId, 'nodes', 'create']" [queryParams]="{ returnTo: 'page-create' }" (click)="saveDraft()">Créer un dossier</a> d'abord.
         </p>
-      </ng-template>
+      }
+
     </div>
 
     <!-- Aide contextuelle -->
@@ -84,13 +86,15 @@
     </div>
 
     <!-- Erreur wizard (parsing &lt;values&gt; ou échec HTTP) -->
-    <div class="wizard-error" *ngIf="wizardError" role="alert">{{ wizardError }}</div>
+    @if (wizardError) {
+      <div class="wizard-error" role="alert">{{ wizardError }}</div>
+    }
 
     <!-- Actions -->
     <div class="actions-row">
       <button type="button" class="btn-secondary" (click)="cancel()">Annuler</button>
       <button type="button" class="btn-ai" (click)="openWizard()" [disabled]="!canSubmit"
-              title="Ouvrir l'assistant IA pour pré-remplir les champs">
+        title="Ouvrir l'assistant IA pour pré-remplir les champs">
         <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
         Créer avec l'IA
       </button>

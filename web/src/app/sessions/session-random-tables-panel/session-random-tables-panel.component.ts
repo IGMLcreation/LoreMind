@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { LucideAngularModule, Dices, BookmarkPlus, Sparkles, ChevronLeft } from 'lucide-angular';
 import { catchError, of } from 'rxjs';
 import { RandomTableService } from '../../services/random-table.service';
@@ -18,7 +18,7 @@ import { DiceRollResult } from '../session-dice-panel/session-dice-panel.compone
  */
 @Component({
     selector: 'app-session-random-tables-panel',
-    imports: [CommonModule, LucideAngularModule],
+    imports: [LucideAngularModule],
     templateUrl: './session-random-tables-panel.component.html',
     styleUrls: ['./session-random-tables-panel.component.scss']
 })

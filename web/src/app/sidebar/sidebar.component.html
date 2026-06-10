@@ -18,29 +18,28 @@
   </div>
 
   <!-- Mode contextuel : liste des lores ou campagnes -->
-  <ng-container *ngIf="layoutConfig$ | async as config">
+  @if (layoutConfig$ | async; as config) {
     <div class="context-list">
-      <button
-        class="context-item"
-        *ngFor="let item of config.globalItems"
-        [class.active]="isActive(item.route)"
-        (click)="navigateTo(item.route)">
-        {{ item.name }}
-      </button>
+      @for (item of config.globalItems; track item) {
+        <button
+          class="context-item"
+          [class.active]="isActive(item.route)"
+          (click)="navigateTo(item.route)">
+          {{ item.name }}
+        </button>
+      }
     </div>
-
     <div class="spacer"></div>
-
     <button class="btn-back-all" (click)="navigateTo(config.globalBackRoute)">
       <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon>
       <span>{{ config.globalBackLabel }}</span>
     </button>
-  </ng-container>
+  }
 
   <!-- Mode normal : spacer + outils -->
-  <ng-container *ngIf="!(layoutConfig$ | async)">
+  @if (!(layoutConfig$ | async)) {
     <div class="spacer"></div>
-  </ng-container>
+  }
 
   <div class="tools-section">
     <p class="tools-label">OUTILS</p>
@@ -53,15 +52,21 @@
       <lucide-icon [img]="Dices" [size]="16"></lucide-icon>
       <span>Systèmes de JDR</span>
     </button>
-    <button class="tool-btn" *ngIf="!config.demoMode">
-      <lucide-icon [img]="Download" [size]="16"></lucide-icon>
-      <span>Export VTT</span>
-    </button>
-    <button class="tool-btn" *ngIf="!config.demoMode" [class.active]="currentRoute.startsWith('/settings')" (click)="navigateTo('/settings')">
-      <lucide-icon [img]="Settings" [size]="16"></lucide-icon>
-      <span>Paramètres</span>
-      <span class="update-badge" *ngIf="updateAvailable$ | async" title="Mise a jour disponible">MAJ</span>
-    </button>
+    @if (!config.demoMode) {
+      <button class="tool-btn">
+        <lucide-icon [img]="Download" [size]="16"></lucide-icon>
+        <span>Export VTT</span>
+      </button>
+    }
+    @if (!config.demoMode) {
+      <button class="tool-btn" [class.active]="currentRoute.startsWith('/settings')" (click)="navigateTo('/settings')">
+        <lucide-icon [img]="Settings" [size]="16"></lucide-icon>
+        <span>Paramètres</span>
+        @if (updateAvailable$ | async) {
+          <span class="update-badge" title="Mise a jour disponible">MAJ</span>
+        }
+      </button>
+    }
   </div>
 
   <div class="sidebar-footer">

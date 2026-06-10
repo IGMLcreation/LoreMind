@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LucideAngularModule, Plus, Check, Drama, Clapperboard, BookText, GitBranch, Dices, ExternalLink } from 'lucide-angular';
@@ -15,7 +15,7 @@ import { NotebookAction } from '../../../services/notebook-action.model';
  */
 @Component({
     selector: 'app-notebook-action-card',
-    imports: [CommonModule, FormsModule, LucideAngularModule],
+    imports: [FormsModule, LucideAngularModule],
     templateUrl: './notebook-action-card.component.html',
     styleUrls: ['./notebook-action-card.component.scss']
 })

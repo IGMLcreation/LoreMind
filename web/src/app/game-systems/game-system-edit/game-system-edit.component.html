@@ -37,120 +37,135 @@
       </p>
 
       <!-- Import d'un PDF de règles : l'IA propose un découpage en sections,
-           que l'utilisateur révise ci-dessous avant d'enregistrer. -->
+      que l'utilisateur révise ci-dessous avant d'enregistrer. -->
       <div class="import-row">
         <input #pdfInput type="file" accept="application/pdf,.pdf" hidden (change)="onPdfSelected($event)" />
         <button type="button" class="btn-import" [disabled]="importing" (click)="pdfInput.click()">
           <lucide-icon [img]="Upload" [size]="14"></lucide-icon>
           {{ importing ? 'Import en cours…' : 'Importer un PDF de règles' }}
         </button>
-        <span class="import-hint" *ngIf="!importing">L'IA propose un découpage en sections — vous révisez avant d'enregistrer.</span>
+        @if (!importing) {
+          <span class="import-hint">L'IA propose un découpage en sections — vous révisez avant d'enregistrer.</span>
+        }
       </div>
 
       <!-- Progression live de l'import (étape + barre + sections trouvées). -->
-      <div class="import-progress" *ngIf="importing">
-        <p class="import-phase">{{ importPhase }}</p>
-        <div class="progress-bar" *ngIf="importProgress">
-          <div class="progress-fill"
-               [style.width.%]="importProgress.total ? (importProgress.current / importProgress.total) * 100 : 0">
-          </div>
+      @if (importing) {
+        <div class="import-progress">
+          <p class="import-phase">{{ importPhase }}</p>
+          @if (importProgress) {
+            <div class="progress-bar">
+              <div class="progress-fill"
+                [style.width.%]="importProgress.total ? (importProgress.current / importProgress.total) * 100 : 0">
+              </div>
+            </div>
+          }
+          @if (importFound.length) {
+            <p class="import-found">
+              Sections trouvées : {{ importFound.join(' · ') }}
+            </p>
+          }
         </div>
-        <p class="import-found" *ngIf="importFound.length">
-          Sections trouvées : {{ importFound.join(' · ') }}
-        </p>
-      </div>
+      }
 
-      <p class="import-note" *ngIf="importNote">{{ importNote }}</p>
-      <p class="import-error" *ngIf="importError">{{ importError }}</p>
+      @if (importNote) {
+        <p class="import-note">{{ importNote }}</p>
+      }
+      @if (importError) {
+        <p class="import-error">{{ importError }}</p>
+      }
 
       <div class="section-list">
-        <div class="section-card" *ngFor="let section of sections; let i = index" [class.collapsed]="section.collapsed">
+        @for (section of sections; track section; let i = $index) {
+          <div class="section-card" [class.collapsed]="section.collapsed">
+            <div class="section-head">
+              <button type="button" class="btn-collapse" (click)="toggleCollapse(section)">
+                <lucide-icon [img]="section.collapsed ? ChevronRight : ChevronDown" [size]="16"></lucide-icon>
+              </button>
+              <input
+                type="text"
+                class="section-title-input"
+                [(ngModel)]="section.title"
+                [name]="'title-' + i"
+                placeholder="Nom de la section (ex: Combat)"
+                />
+                <button type="button" class="btn-remove" (click)="removeSection(i)" title="Supprimer cette section">
+                  <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+                </button>
+              </div>
+              @if (!section.collapsed) {
+                <textarea
+                  class="section-content"
+                  [(ngModel)]="section.content"
+                  [name]="'content-' + i"
+                  rows="6"
+                  placeholder="Décrivez les règles de cette section..."
+                ></textarea>
+              }
+            </div>
+          }
 
-          <div class="section-head">
-            <button type="button" class="btn-collapse" (click)="toggleCollapse(section)">
-              <lucide-icon [img]="section.collapsed ? ChevronRight : ChevronDown" [size]="16"></lucide-icon>
-            </button>
-            <input
-              type="text"
-              class="section-title-input"
-              [(ngModel)]="section.title"
-              [name]="'title-' + i"
-              placeholder="Nom de la section (ex: Combat)"
-            />
-            <button type="button" class="btn-remove" (click)="removeSection(i)" title="Supprimer cette section">
-              <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
-            </button>
-          </div>
-
-          <textarea
-            *ngIf="!section.collapsed"
-            class="section-content"
-            [(ngModel)]="section.content"
-            [name]="'content-' + i"
-            rows="6"
-            placeholder="Décrivez les règles de cette section..."
-          ></textarea>
-
+          @if (sections.length === 0) {
+            <div class="empty-hint">
+              Aucune section pour l'instant — ajoutez-en une avec les boutons ci-dessous.
+            </div>
+          }
         </div>
 
-        <div *ngIf="sections.length === 0" class="empty-hint">
-          Aucune section pour l'instant — ajoutez-en une avec les boutons ci-dessous.
+        <div class="add-row">
+          <span class="add-label">Ajouter une section :</span>
+          @for (name of suggestedSections; track name) {
+            <button
+              type="button"
+              class="chip"
+              [class.disabled]="isSectionUsed(name)"
+              (click)="addSuggested(name)"
+              [disabled]="isSectionUsed(name)">
+              <lucide-icon [img]="Plus" [size]="12"></lucide-icon>
+              {{ name }}
+            </button>
+          }
+          <button type="button" class="chip chip-custom" (click)="addBlank()">
+            <lucide-icon [img]="Plus" [size]="12"></lucide-icon>
+            Autre…
+          </button>
         </div>
       </div>
 
-      <div class="add-row">
-        <span class="add-label">Ajouter une section :</span>
-        <button
-          type="button"
-          *ngFor="let name of suggestedSections"
-          class="chip"
-          [class.disabled]="isSectionUsed(name)"
-          (click)="addSuggested(name)"
-          [disabled]="isSectionUsed(name)">
-          <lucide-icon [img]="Plus" [size]="12"></lucide-icon>
-          {{ name }}
-        </button>
-        <button type="button" class="chip chip-custom" (click)="addBlank()">
-          <lucide-icon [img]="Plus" [size]="12"></lucide-icon>
-          Autre…
-        </button>
+      <!-- Templates de fiches PJ/PNJ -->
+      <div class="templates-area">
+        <h2 class="sections-title">Fiches de personnages</h2>
+        <p class="sections-hint">
+          Definissez la structure des fiches PJ et PNJ pour ce systeme. Les champs
+          universels (nom, portrait, header) sont automatiques — ne rajoutez ici
+          que les champs specifiques au systeme (Histoire, PV, Stats…).
+        </p>
+
+        <app-template-fields-editor
+          label="Champs de la fiche PJ"
+          hint="Affiches lors de la creation/edition d'un personnage joueur."
+          [fields]="characterTemplate"
+          [suggestions]="characterFieldSuggestions"
+          (fieldsChange)="characterTemplate = $event">
+        </app-template-fields-editor>
+
+        <app-template-fields-editor
+          label="Champs de la fiche PNJ"
+          hint="Affiches lors de la creation/edition d'un personnage non-joueur."
+          [fields]="npcTemplate"
+          [suggestions]="npcFieldSuggestions"
+          (fieldsChange)="npcTemplate = $event">
+        </app-template-fields-editor>
       </div>
-    </div>
 
-    <!-- Templates de fiches PJ/PNJ -->
-    <div class="templates-area">
-      <h2 class="sections-title">Fiches de personnages</h2>
-      <p class="sections-hint">
-        Definissez la structure des fiches PJ et PNJ pour ce systeme. Les champs
-        universels (nom, portrait, header) sont automatiques — ne rajoutez ici
-        que les champs specifiques au systeme (Histoire, PV, Stats…).
-      </p>
+      <div class="actions">
+        <button type="button" class="btn-primary" [disabled]="!name.trim()" (click)="submit()">
+          <lucide-icon [img]="Save" [size]="16"></lucide-icon>
+          {{ id ? 'Enregistrer' : 'Créer' }}
+        </button>
+        <button type="button" class="btn-secondary" (click)="back()">Annuler</button>
+      </div>
 
-      <app-template-fields-editor
-        label="Champs de la fiche PJ"
-        hint="Affiches lors de la creation/edition d'un personnage joueur."
-        [fields]="characterTemplate"
-        [suggestions]="characterFieldSuggestions"
-        (fieldsChange)="characterTemplate = $event">
-      </app-template-fields-editor>
-
-      <app-template-fields-editor
-        label="Champs de la fiche PNJ"
-        hint="Affiches lors de la creation/edition d'un personnage non-joueur."
-        [fields]="npcTemplate"
-        [suggestions]="npcFieldSuggestions"
-        (fieldsChange)="npcTemplate = $event">
-      </app-template-fields-editor>
-    </div>
-
-    <div class="actions">
-      <button type="button" class="btn-primary" [disabled]="!name.trim()" (click)="submit()">
-        <lucide-icon [img]="Save" [size]="16"></lucide-icon>
-        {{ id ? 'Enregistrer' : 'Créer' }}
-      </button>
-      <button type="button" class="btn-secondary" (click)="back()">Annuler</button>
     </div>
 
   </div>
-
-</div>

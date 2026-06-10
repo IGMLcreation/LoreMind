@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute, Router } from '@angular/router';
 import { LucideAngularModule, ArrowLeft, Edit3, Dices } from 'lucide-angular';
 import { RandomTableService } from '../../../services/random-table.service';
@@ -14,7 +14,7 @@ import { DiceUtils, DiceRoll } from '../../../shared/dice.utils';
  */
 @Component({
     selector: 'app-random-table-view',
-    imports: [CommonModule, LucideAngularModule],
+    imports: [LucideAngularModule],
     templateUrl: './random-table-view.component.html',
     styleUrls: ['./random-table-view.component.scss']
 })

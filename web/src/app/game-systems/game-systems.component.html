@@ -8,21 +8,27 @@
 
   <div class="gs-grid">
 
-    <div class="gs-card" *ngFor="let gs of gameSystems" (click)="edit(gs.id!)">
-      <div class="card-header">
-        <h2>{{ gs.name }}</h2>
-        <div class="card-actions">
-          <button class="icon-btn" (click)="delete(gs, $event)" title="Supprimer">
-            <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
-          </button>
+    @for (gs of gameSystems; track gs) {
+      <div class="gs-card" (click)="edit(gs.id!)">
+        <div class="card-header">
+          <h2>{{ gs.name }}</h2>
+          <div class="card-actions">
+            <button class="icon-btn" (click)="delete(gs, $event)" title="Supprimer">
+              <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+            </button>
+          </div>
+        </div>
+        <p class="card-description">{{ gs.description || '(Pas de description)' }}</p>
+        <div class="card-footer">
+          @if (gs.author) {
+            <span class="author">par {{ gs.author }}</span>
+          }
+          @if (gs.isPublic) {
+            <span class="badge-public">public</span>
+          }
         </div>
       </div>
-      <p class="card-description">{{ gs.description || '(Pas de description)' }}</p>
-      <div class="card-footer">
-        <span *ngIf="gs.author" class="author">par {{ gs.author }}</span>
-        <span *ngIf="gs.isPublic" class="badge-public">public</span>
-      </div>
-    </div>
+    }
 
     <div class="gs-card card-new" (click)="create()">
       <div class="new-icon">

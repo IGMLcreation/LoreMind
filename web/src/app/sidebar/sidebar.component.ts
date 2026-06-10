@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { AsyncPipe, NgIf, NgFor } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { LucideAngularModule, Search, Download, Settings, ArrowLeft, Dices } from 'lucide-angular';
 import { LayoutService } from '../services/layout.service';
@@ -12,7 +12,7 @@ import packageJson from '../../../package.json';
 
 @Component({
     selector: 'app-sidebar',
-    imports: [AsyncPipe, NgIf, NgFor, LucideAngularModule],
+    imports: [AsyncPipe, LucideAngularModule],
     templateUrl: './sidebar.component.html',
     styleUrls: ['./sidebar.component.scss']
 })

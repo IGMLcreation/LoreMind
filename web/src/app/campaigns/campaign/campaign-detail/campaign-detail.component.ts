@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, Swords, Plus, Globe, Pencil, Trash2, Dices, Drama, Check, Play, Upload, Sparkles } from 'lucide-angular';
@@ -27,7 +27,7 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
 
 @Component({
     selector: 'app-campaign-detail',
-    imports: [CommonModule, FormsModule, LucideAngularModule, RouterLink],
+    imports: [FormsModule, LucideAngularModule, RouterLink],
     templateUrl: './campaign-detail.component.html',
     styleUrls: ['./campaign-detail.component.scss']
 })

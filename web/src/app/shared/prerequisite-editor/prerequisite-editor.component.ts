@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, Plus, Trash2, ChevronDown } from 'lucide-angular';
 import { Chapter, Prerequisite } from '../../services/campaign.model';
@@ -13,7 +13,7 @@ import { Chapter, Prerequisite } from '../../services/campaign.model';
  */
 @Component({
     selector: 'app-prerequisite-editor',
-    imports: [CommonModule, FormsModule, LucideAngularModule],
+    imports: [FormsModule, LucideAngularModule],
     templateUrl: './prerequisite-editor.component.html',
     styleUrls: ['./prerequisite-editor.component.scss']
 })
@@ -81,7 +81,6 @@ export class PrerequisiteEditorComponent {
   }
 
   /** trackBy stable pour *ngFor (sinon les inputs reset à chaque édition). */
-  trackByIndex(i: number): number { return i; }
 
   // === Casts typés pour le template ===
   // Angular strict templates ne fait pas le narrowing d'une union discriminée à travers

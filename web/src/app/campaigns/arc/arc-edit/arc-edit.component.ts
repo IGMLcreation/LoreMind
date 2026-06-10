@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
@@ -33,7 +33,7 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  */
 @Component({
     selector: 'app-arc-edit',
-    imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, LoreLinkPickerComponent, AiChatDrawerComponent, ImageGalleryComponent, IconPickerComponent],
+    imports: [ReactiveFormsModule, LucideAngularModule, LoreLinkPickerComponent, AiChatDrawerComponent, ImageGalleryComponent, IconPickerComponent],
     templateUrl: './arc-edit.component.html',
     styleUrls: ['./arc-edit.component.scss']
 })

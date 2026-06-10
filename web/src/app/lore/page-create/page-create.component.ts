@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { LucideAngularModule, FileText, Sparkles, Plus } from 'lucide-angular';
@@ -26,7 +26,7 @@ import { AiChatDrawerComponent, ChatPrimaryAction } from '../../shared/ai-chat-d
  */
 @Component({
     selector: 'app-page-create',
-    imports: [CommonModule, ReactiveFormsModule, RouterModule, LucideAngularModule, AiChatDrawerComponent],
+    imports: [ReactiveFormsModule, RouterModule, LucideAngularModule, AiChatDrawerComponent],
     templateUrl: './page-create.component.html',
     styleUrls: ['./page-create.component.scss']
 })

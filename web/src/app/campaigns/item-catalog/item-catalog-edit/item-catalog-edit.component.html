@@ -12,7 +12,9 @@
 
   <h1>{{ catalogId ? 'Éditer le catalogue' : 'Nouveau catalogue d\'objets' }}</h1>
 
-  <div class="error" *ngIf="errorMessage">{{ errorMessage }}</div>
+  @if (errorMessage) {
+    <div class="error">{{ errorMessage }}</div>
+  }
 
   <div class="form-row">
     <label for="ic-name">Nom *</label>
@@ -29,13 +31,15 @@
     <div class="ai-title"><lucide-icon [img]="Sparkles" [size]="15"></lucide-icon> Générer avec l'IA</div>
     <p class="ai-hint">Décris la boutique/le butin ; l'IA propose les objets (revois-les avant d'enregistrer). Contextualisé avec ta campagne.</p>
     <textarea rows="2" [(ngModel)]="aiPrompt"
-              placeholder="Ex: boutique d'alchimiste dans une cité portuaire, objets exotiques"></textarea>
+    placeholder="Ex: boutique d'alchimiste dans une cité portuaire, objets exotiques"></textarea>
     <div class="ai-actions">
       <button class="btn-ai" (click)="generateWithAI()" [disabled]="generating">
         <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
         {{ generating ? 'Génération…' : 'Générer' }}
       </button>
-      <span class="ai-error" *ngIf="aiError">{{ aiError }}</span>
+      @if (aiError) {
+        <span class="ai-error">{{ aiError }}</span>
+      }
     </div>
   </div>
 
@@ -54,15 +58,19 @@
     <span class="c-del"></span>
   </div>
 
-  <div class="item-row" *ngFor="let it of items; let i = index">
-    <input class="c-name" type="text" [(ngModel)]="it.name" placeholder="Objet">
-    <input class="c-price" type="text" [(ngModel)]="it.price" placeholder="50 po">
-    <input class="c-cat" type="text" [(ngModel)]="it.category" placeholder="Armes">
-    <input class="c-desc" type="text" [(ngModel)]="it.description" placeholder="Effet / détails">
-    <button class="c-del btn-del" (click)="removeItem(i)" title="Supprimer">
-      <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
-    </button>
-  </div>
+  @for (it of items; track it; let i = $index) {
+    <div class="item-row">
+      <input class="c-name" type="text" [(ngModel)]="it.name" placeholder="Objet">
+      <input class="c-price" type="text" [(ngModel)]="it.price" placeholder="50 po">
+      <input class="c-cat" type="text" [(ngModel)]="it.category" placeholder="Armes">
+      <input class="c-desc" type="text" [(ngModel)]="it.description" placeholder="Effet / détails">
+      <button class="c-del btn-del" (click)="removeItem(i)" title="Supprimer">
+        <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+      </button>
+    </div>
+  }
 
-  <p class="empty-hint" *ngIf="items.length === 0">Aucun objet — clique « Ajouter ».</p>
+  @if (items.length === 0) {
+    <p class="empty-hint">Aucun objet — clique « Ajouter ».</p>
+  }
 </div>

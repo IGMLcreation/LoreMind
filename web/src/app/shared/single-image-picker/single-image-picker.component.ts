@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { LucideAngularModule, X, Image as ImageIcon } from 'lucide-angular';
 import { ImageService } from '../../services/image.service';
 import { Image } from '../../services/image.model';
@@ -21,7 +21,7 @@ import { ImageUploaderComponent } from '../image-uploader/image-uploader.compone
  */
 @Component({
     selector: 'app-single-image-picker',
-    imports: [CommonModule, LucideAngularModule, ImageUploaderComponent],
+    imports: [LucideAngularModule, ImageUploaderComponent],
     templateUrl: './single-image-picker.component.html',
     styleUrls: ['./single-image-picker.component.scss']
 })

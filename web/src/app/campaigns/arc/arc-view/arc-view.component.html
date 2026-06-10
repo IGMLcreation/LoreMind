@@ -1,123 +1,150 @@
-<div class="view-page" *ngIf="arc">
-
-  <header class="view-header">
-    <div>
-      <h1>
-        <lucide-icon *ngIf="arc.icon" [img]="resolveCampaignIcon(arc.icon)" [size]="22" class="title-icon"></lucide-icon>
-        {{ arc.name }}
-      </h1>
-      <p class="view-subtitle">
-        {{ arc.type === 'HUB' ? 'Arc en hub (quêtes non linéaires)' : 'Arc narratif' }}
-      </p>
-    </div>
-    <div class="view-actions">
-      <button type="button" class="btn-primary" (click)="editMode()">
-        <lucide-icon [img]="Pencil" [size]="14"></lucide-icon>
-        Modifier
-      </button>
-      <button type="button" class="btn-danger" (click)="deleteArc()" title="Supprimer l'arc et tout son contenu">
-        <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
-        Supprimer
-      </button>
-    </div>
-  </header>
-
-  <!-- Illustrations (rendu editorial magazine) -->
-  <section class="view-section" *ngIf="(arc.illustrationImageIds?.length ?? 0) > 0">
-    <app-image-gallery [imageIds]="arc.illustrationImageIds ?? []" [layout]="'EDITORIAL'"></app-image-gallery>
-  </section>
-
-  <!-- Cartes & plans -->
-  <section class="view-section" *ngIf="(arc.mapImageIds?.length ?? 0) > 0">
-    <h2 class="view-section-title"><span class="view-section-icon">🗺️</span> Cartes & plans</h2>
-    <app-image-gallery [imageIds]="arc.mapImageIds ?? []" [layout]="'MAPS'"></app-image-gallery>
-  </section>
-
-  <!-- Vue Hub (scénario) : liste les quêtes et leurs conditions, sans statut.
-       Le statut effectif et les actions de jeu vivent dans l'écran d'une Partie. -->
-  <section class="view-section" *ngIf="arc.type === 'HUB'">
-    <h2 class="view-section-title"><span class="view-section-icon">🗺️</span> Quêtes du hub (scénario)</h2>
-
-    <p class="view-section-empty" *ngIf="hubQuests.length === 0">
-      Aucune quête pour ce hub. Créez-en une pour démarrer.
-    </p>
-
-    <div class="hub-quest-grid" *ngIf="hubQuests.length > 0">
-      <button type="button"
-              class="hub-quest-card"
-              *ngFor="let q of hubQuests"
-              (click)="openQuest(q)">
-        <div class="hub-quest-card-head">
-          <span class="hub-quest-card-icon" *ngIf="q.icon">
-            <lucide-icon [img]="resolveCampaignIcon(q.icon)" [size]="18"></lucide-icon>
-          </span>
-          <span class="hub-quest-card-name">{{ q.name }}</span>
-        </div>
-
-        <p class="hub-quest-card-desc" *ngIf="q.description?.trim()">{{ q.description }}</p>
-
-        <div class="hub-quest-card-locked-hint" *ngIf="(q.prerequisites?.length ?? 0) > 0">
-          <lucide-icon [img]="AlertCircle" [size]="13"></lucide-icon>
-          <span>{{ q.prerequisites!.length }} condition(s) de déblocage</span>
-          <ul class="hub-quest-card-prereq-list">
-            <li *ngFor="let p of q.prerequisites">{{ describePrerequisite(p) }}</li>
-          </ul>
-        </div>
-      </button>
-    </div>
-  </section>
-
-  <section class="view-section">
-    <h2 class="view-section-title"><span class="view-section-icon">📜</span> Synopsis</h2>
-    <p class="view-section-body" *ngIf="arc.description?.trim(); else emptyDesc">{{ arc.description }}</p>
-    <ng-template #emptyDesc><p class="view-section-empty">Non renseigné</p></ng-template>
-  </section>
-
-  <div class="view-row">
+@if (arc) {
+  <div class="view-page">
+    <header class="view-header">
+      <div>
+        <h1>
+          @if (arc.icon) {
+            <lucide-icon [img]="resolveCampaignIcon(arc.icon)" [size]="22" class="title-icon"></lucide-icon>
+          }
+          {{ arc.name }}
+        </h1>
+        <p class="view-subtitle">
+          {{ arc.type === 'HUB' ? 'Arc en hub (quêtes non linéaires)' : 'Arc narratif' }}
+        </p>
+      </div>
+      <div class="view-actions">
+        <button type="button" class="btn-primary" (click)="editMode()">
+          <lucide-icon [img]="Pencil" [size]="14"></lucide-icon>
+          Modifier
+        </button>
+        <button type="button" class="btn-danger" (click)="deleteArc()" title="Supprimer l'arc et tout son contenu">
+          <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+          Supprimer
+        </button>
+      </div>
+    </header>
+    <!-- Illustrations (rendu editorial magazine) -->
+    @if ((arc.illustrationImageIds?.length ?? 0) > 0) {
+      <section class="view-section">
+        <app-image-gallery [imageIds]="arc.illustrationImageIds ?? []" [layout]="'EDITORIAL'"></app-image-gallery>
+      </section>
+    }
+    <!-- Cartes & plans -->
+    @if ((arc.mapImageIds?.length ?? 0) > 0) {
+      <section class="view-section">
+        <h2 class="view-section-title"><span class="view-section-icon">🗺️</span> Cartes & plans</h2>
+        <app-image-gallery [imageIds]="arc.mapImageIds ?? []" [layout]="'MAPS'"></app-image-gallery>
+      </section>
+    }
+    <!-- Vue Hub (scénario) : liste les quêtes et leurs conditions, sans statut.
+    Le statut effectif et les actions de jeu vivent dans l'écran d'une Partie. -->
+    @if (arc.type === 'HUB') {
+      <section class="view-section">
+        <h2 class="view-section-title"><span class="view-section-icon">🗺️</span> Quêtes du hub (scénario)</h2>
+        @if (hubQuests.length === 0) {
+          <p class="view-section-empty">
+            Aucune quête pour ce hub. Créez-en une pour démarrer.
+          </p>
+        }
+        @if (hubQuests.length > 0) {
+          <div class="hub-quest-grid">
+            @for (q of hubQuests; track q) {
+              <button type="button"
+                class="hub-quest-card"
+                (click)="openQuest(q)">
+                <div class="hub-quest-card-head">
+                  @if (q.icon) {
+                    <span class="hub-quest-card-icon">
+                      <lucide-icon [img]="resolveCampaignIcon(q.icon)" [size]="18"></lucide-icon>
+                    </span>
+                  }
+                  <span class="hub-quest-card-name">{{ q.name }}</span>
+                </div>
+                @if (q.description?.trim()) {
+                  <p class="hub-quest-card-desc">{{ q.description }}</p>
+                }
+                @if ((q.prerequisites?.length ?? 0) > 0) {
+                  <div class="hub-quest-card-locked-hint">
+                    <lucide-icon [img]="AlertCircle" [size]="13"></lucide-icon>
+                    <span>{{ q.prerequisites!.length }} condition(s) de déblocage</span>
+                    <ul class="hub-quest-card-prereq-list">
+                      @for (p of q.prerequisites; track p) {
+                        <li>{{ describePrerequisite(p) }}</li>
+                      }
+                    </ul>
+                  </div>
+                }
+              </button>
+            }
+          </div>
+        }
+      </section>
+    }
     <section class="view-section">
-      <h2 class="view-section-title"><span class="view-section-icon">✨</span> Thèmes principaux</h2>
-      <p class="view-section-body" *ngIf="arc.themes?.trim(); else emptyThemes">{{ arc.themes }}</p>
-      <ng-template #emptyThemes><p class="view-section-empty">Non renseigné</p></ng-template>
+      <h2 class="view-section-title"><span class="view-section-icon">📜</span> Synopsis</h2>
+      @if (arc.description?.trim()) {
+        <p class="view-section-body">{{ arc.description }}</p>
+      } @else {
+        <p class="view-section-empty">Non renseigné</p>
+      }
     </section>
-
+    <div class="view-row">
+      <section class="view-section">
+        <h2 class="view-section-title"><span class="view-section-icon">✨</span> Thèmes principaux</h2>
+        @if (arc.themes?.trim()) {
+          <p class="view-section-body">{{ arc.themes }}</p>
+        } @else {
+          <p class="view-section-empty">Non renseigné</p>
+        }
+      </section>
+      <section class="view-section">
+        <h2 class="view-section-title"><span class="view-section-icon">⚖️</span> Enjeux globaux</h2>
+        @if (arc.stakes?.trim()) {
+          <p class="view-section-body">{{ arc.stakes }}</p>
+        } @else {
+          <p class="view-section-empty">Non renseigné</p>
+        }
+      </section>
+    </div>
     <section class="view-section">
-      <h2 class="view-section-title"><span class="view-section-icon">⚖️</span> Enjeux globaux</h2>
-      <p class="view-section-body" *ngIf="arc.stakes?.trim(); else emptyStakes">{{ arc.stakes }}</p>
-      <ng-template #emptyStakes><p class="view-section-empty">Non renseigné</p></ng-template>
+      <h2 class="view-section-title"><span class="view-section-icon">🎁</span> Récompenses et progression</h2>
+      @if (arc.rewards?.trim()) {
+        <p class="view-section-body">{{ arc.rewards }}</p>
+      } @else {
+        <p class="view-section-empty">Non renseigné</p>
+      }
     </section>
+    <section class="view-section">
+      <h2 class="view-section-title"><span class="view-section-icon">🎬</span> Dénouement prévu</h2>
+      @if (arc.resolution?.trim()) {
+        <p class="view-section-body">{{ arc.resolution }}</p>
+      } @else {
+        <p class="view-section-empty">Non renseigné</p>
+      }
+    </section>
+    <!-- Notes MJ (bloc privé rouge discret) -->
+    @if (arc.gmNotes?.trim()) {
+      <section class="view-section view-section--private">
+        <h2 class="view-section-title">
+          <span class="view-section-icon">🔒</span>
+          Notes et planification du MJ
+        </h2>
+        <p class="view-section-body">{{ arc.gmNotes }}</p>
+      </section>
+    }
+    <!-- Pages Lore liées (chips cliquables) -->
+    @if (loreId && (arc.relatedPageIds?.length ?? 0) > 0) {
+      <section class="view-section">
+        <h2 class="view-section-title"><span class="view-section-icon">🔗</span> Pages Lore associées</h2>
+        <div class="view-chips">
+          @for (relId of arc.relatedPageIds; track relId) {
+            <a class="view-chip"
+              [routerLink]="['/lore', loreId, 'pages', relId]">
+              {{ titleOfRelated(relId) }}
+            </a>
+          }
+        </div>
+      </section>
+    }
   </div>
-
-  <section class="view-section">
-    <h2 class="view-section-title"><span class="view-section-icon">🎁</span> Récompenses et progression</h2>
-    <p class="view-section-body" *ngIf="arc.rewards?.trim(); else emptyRewards">{{ arc.rewards }}</p>
-    <ng-template #emptyRewards><p class="view-section-empty">Non renseigné</p></ng-template>
-  </section>
-
-  <section class="view-section">
-    <h2 class="view-section-title"><span class="view-section-icon">🎬</span> Dénouement prévu</h2>
-    <p class="view-section-body" *ngIf="arc.resolution?.trim(); else emptyResolution">{{ arc.resolution }}</p>
-    <ng-template #emptyResolution><p class="view-section-empty">Non renseigné</p></ng-template>
-  </section>
-
-  <!-- Notes MJ (bloc privé rouge discret) -->
-  <section class="view-section view-section--private" *ngIf="arc.gmNotes?.trim()">
-    <h2 class="view-section-title">
-      <span class="view-section-icon">🔒</span>
-      Notes et planification du MJ
-    </h2>
-    <p class="view-section-body">{{ arc.gmNotes }}</p>
-  </section>
-
-  <!-- Pages Lore liées (chips cliquables) -->
-  <section class="view-section" *ngIf="loreId && (arc.relatedPageIds?.length ?? 0) > 0">
-    <h2 class="view-section-title"><span class="view-section-icon">🔗</span> Pages Lore associées</h2>
-    <div class="view-chips">
-      <a class="view-chip"
-         *ngFor="let relId of arc.relatedPageIds"
-         [routerLink]="['/lore', loreId, 'pages', relId]">
-        {{ titleOfRelated(relId) }}
-      </a>
-    </div>
-  </section>
-
-</div>
+}

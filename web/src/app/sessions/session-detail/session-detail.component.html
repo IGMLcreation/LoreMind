@@ -1,190 +1,193 @@
-<div class="session-detail" *ngIf="session">
-
-  <a class="back-link" [routerLink]="campaignId ? ['/campaigns', campaignId] : ['/campaigns']">
-    <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon>
-    Retour à la campagne
-  </a>
-
-  <div class="detail-header">
-    <div class="header-texts">
-      <div class="title-row" *ngIf="!editingName">
-        <h1>
-          <lucide-icon [img]="Dices" [size]="24"></lucide-icon>
-          {{ session.name }}
-        </h1>
-        <button type="button" class="btn-icon" (click)="startRename()" title="Renommer la session">
-          <lucide-icon [img]="Pencil" [size]="14"></lucide-icon>
-        </button>
+@if (session) {
+  <div class="session-detail">
+    <a class="back-link" [routerLink]="campaignId ? ['/campaigns', campaignId] : ['/campaigns']">
+      <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon>
+      Retour à la campagne
+    </a>
+    <div class="detail-header">
+      <div class="header-texts">
+        @if (!editingName) {
+          <div class="title-row">
+            <h1>
+              <lucide-icon [img]="Dices" [size]="24"></lucide-icon>
+              {{ session.name }}
+            </h1>
+            <button type="button" class="btn-icon" (click)="startRename()" title="Renommer la session">
+              <lucide-icon [img]="Pencil" [size]="14"></lucide-icon>
+            </button>
+          </div>
+        }
+        @if (editingName) {
+          <div class="title-row edit-mode">
+            <input type="text"
+              [(ngModel)]="editName"
+              name="editName"
+              (keydown.enter)="saveRename()"
+              (keydown.escape)="cancelRename()"
+              autofocus />
+            <button type="button" class="btn-icon" (click)="saveRename()" [disabled]="!editName.trim()" title="Valider">
+              <lucide-icon [img]="Check" [size]="14"></lucide-icon>
+            </button>
+            <button type="button" class="btn-icon" (click)="cancelRename()" title="Annuler">
+              Annuler
+            </button>
+          </div>
+        }
+        <div class="meta">
+          <span class="badge" [class.badge-active]="session.active">
+            {{ session.active ? 'En cours' : 'Terminée' }}
+          </span>
+          <span class="badge badge-muted">Démarrée le {{ session.startedAt | date:'dd/MM/yyyy HH:mm' }}</span>
+          @if (session.endedAt) {
+            <span class="badge badge-muted">
+              Terminée le {{ session.endedAt | date:'dd/MM/yyyy HH:mm' }}
+            </span>
+          }
+        </div>
       </div>
-
-      <div class="title-row edit-mode" *ngIf="editingName">
-        <input type="text"
-               [(ngModel)]="editName"
-               name="editName"
-               (keydown.enter)="saveRename()"
-               (keydown.escape)="cancelRename()"
-               autofocus />
-        <button type="button" class="btn-icon" (click)="saveRename()" [disabled]="!editName.trim()" title="Valider">
-          <lucide-icon [img]="Check" [size]="14"></lucide-icon>
+      <div class="header-actions">
+        @if (session.active) {
+          <button type="button" class="btn-secondary" (click)="endSession()">
+            <lucide-icon [img]="Square" [size]="14"></lucide-icon>
+            Terminer la session
+          </button>
+        }
+        <button type="button" class="btn-danger" (click)="deleteSession()">
+          <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+          Supprimer
         </button>
-        <button type="button" class="btn-icon" (click)="cancelRename()" title="Annuler">
-          Annuler
-        </button>
-      </div>
-
-      <div class="meta">
-        <span class="badge" [class.badge-active]="session.active">
-          {{ session.active ? 'En cours' : 'Terminée' }}
-        </span>
-        <span class="badge badge-muted">Démarrée le {{ session.startedAt | date:'dd/MM/yyyy HH:mm' }}</span>
-        <span class="badge badge-muted" *ngIf="session.endedAt">
-          Terminée le {{ session.endedAt | date:'dd/MM/yyyy HH:mm' }}
-        </span>
       </div>
     </div>
-
-    <div class="header-actions">
-      <button *ngIf="session.active" type="button" class="btn-secondary" (click)="endSession()">
-        <lucide-icon [img]="Square" [size]="14"></lucide-icon>
-        Terminer la session
-      </button>
-      <button type="button" class="btn-danger" (click)="deleteSession()">
-        <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
-        Supprimer
-      </button>
-    </div>
-  </div>
-
-  <!-- ============ Mode jeu : 2 colonnes (journal + panneau référence) ============ -->
-  <div class="play-grid">
-
-    <!-- Colonne gauche : journal -->
-    <div class="play-main">
-
-      <!-- Ajouter une entrée -->
-      <section class="detail-section add-entry-section" *ngIf="session.active">
-        <div class="type-selector">
-          <button *ngFor="let type of entryTypes"
+    <!-- ============ Mode jeu : 2 colonnes (journal + panneau référence) ============ -->
+    <div class="play-grid">
+      <!-- Colonne gauche : journal -->
+      <div class="play-main">
+        <!-- Ajouter une entrée -->
+        @if (session.active) {
+          <section class="detail-section add-entry-section">
+            <div class="type-selector">
+              @for (type of entryTypes; track type) {
+                <button
                   type="button"
                   class="type-chip"
                   [class.type-chip--active]="newEntryType === type"
                   [style.--type-color]="entryTypeMeta[type].color"
                   (click)="newEntryType = type">
-            <lucide-icon [img]="typeIcons[type]" [size]="14"></lucide-icon>
-            {{ entryTypeMeta[type].label }}
-          </button>
-        </div>
-
-        <textarea class="entry-input"
-                  [(ngModel)]="newEntryContent"
-                  name="newEntryContent"
-                  rows="3"
-                  [placeholder]="'Ajouter une ' + entryTypeMeta[newEntryType].label.toLowerCase() + '…'"
-                  (keydown.control.enter)="submitNewEntry()"></textarea>
-
-        <div class="entry-input-footer">
-          <span class="hint">Ctrl + Entrée pour ajouter</span>
-          <button type="button"
-                  class="btn-primary"
-                  [disabled]="!newEntryContent.trim() || submittingEntry"
-                  (click)="submitNewEntry()">
-            <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
-            Ajouter
-          </button>
-        </div>
-      </section>
-
-      <!-- Timeline -->
-      <section class="detail-section timeline-section">
-        <h2>Journal de session</h2>
-
-        <div class="empty-state" *ngIf="entries.length === 0">
-          <p>Aucune entrée pour le moment.</p>
-          <p class="hint" *ngIf="session.active">
-            Saisis une note, un évènement ou un jet ci-dessus pour commencer le journal.
-          </p>
-        </div>
-
-        <ul class="timeline" *ngIf="entries.length > 0">
-          <li class="timeline-entry"
-              *ngFor="let entry of entries"
-              [style.--type-color]="entryTypeMeta[entry.type].color">
-
-            <div class="entry-marker">
-              <lucide-icon [img]="typeIcons[entry.type]" [size]="14"></lucide-icon>
+                  <lucide-icon [img]="typeIcons[type]" [size]="14"></lucide-icon>
+                  {{ entryTypeMeta[type].label }}
+                </button>
+              }
             </div>
-
-            <div class="entry-body">
-              <!-- Mode lecture -->
-              <ng-container *ngIf="editingEntryId !== entry.id">
-                <div class="entry-header">
-                  <span class="entry-type">{{ entryTypeMeta[entry.type].label }}</span>
-                  <span class="entry-time">{{ entry.occurredAt | date:'HH:mm — dd/MM/yyyy' }}</span>
-                  <div class="entry-actions">
-                    <button type="button" class="btn-icon" (click)="startEditEntry(entry)" title="Modifier">
-                      <lucide-icon [img]="Pencil" [size]="12"></lucide-icon>
-                    </button>
-                    <button type="button" class="btn-icon btn-icon--danger" (click)="deleteEntry(entry)" title="Supprimer">
-                      <lucide-icon [img]="Trash2" [size]="12"></lucide-icon>
-                    </button>
+            <textarea class="entry-input"
+              [(ngModel)]="newEntryContent"
+              name="newEntryContent"
+              rows="3"
+              [placeholder]="'Ajouter une ' + entryTypeMeta[newEntryType].label.toLowerCase() + '…'"
+            (keydown.control.enter)="submitNewEntry()"></textarea>
+            <div class="entry-input-footer">
+              <span class="hint">Ctrl + Entrée pour ajouter</span>
+              <button type="button"
+                class="btn-primary"
+                [disabled]="!newEntryContent.trim() || submittingEntry"
+                (click)="submitNewEntry()">
+                <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
+                Ajouter
+              </button>
+            </div>
+          </section>
+        }
+        <!-- Timeline -->
+        <section class="detail-section timeline-section">
+          <h2>Journal de session</h2>
+          @if (entries.length === 0) {
+            <div class="empty-state">
+              <p>Aucune entrée pour le moment.</p>
+              @if (session.active) {
+                <p class="hint">
+                  Saisis une note, un évènement ou un jet ci-dessus pour commencer le journal.
+                </p>
+              }
+            </div>
+          }
+          @if (entries.length > 0) {
+            <ul class="timeline">
+              @for (entry of entries; track entry) {
+                <li class="timeline-entry"
+                  [style.--type-color]="entryTypeMeta[entry.type].color">
+                  <div class="entry-marker">
+                    <lucide-icon [img]="typeIcons[entry.type]" [size]="14"></lucide-icon>
                   </div>
-                </div>
-                <p class="entry-content">{{ entry.content }}</p>
-              </ng-container>
-
-              <!-- Mode édition -->
-              <ng-container *ngIf="editingEntryId === entry.id">
-                <div class="type-selector type-selector--compact">
-                  <button *ngFor="let type of entryTypes"
-                          type="button"
-                          class="type-chip"
-                          [class.type-chip--active]="editEntryType === type"
-                          [style.--type-color]="entryTypeMeta[type].color"
-                          (click)="editEntryType = type">
-                    <lucide-icon [img]="typeIcons[type]" [size]="12"></lucide-icon>
-                    {{ entryTypeMeta[type].label }}
-                  </button>
-                </div>
-                <textarea class="entry-input"
-                          [(ngModel)]="editEntryContent"
-                          name="editEntryContent"
-                          rows="3"
-                          (keydown.control.enter)="saveEditEntry(entry)"
-                          (keydown.escape)="cancelEditEntry()"></textarea>
-                <div class="entry-input-footer">
-                  <button type="button" class="btn-secondary btn-sm" (click)="cancelEditEntry()">
-                    <lucide-icon [img]="X" [size]="12"></lucide-icon>
-                    Annuler
-                  </button>
-                  <button type="button"
+                  <div class="entry-body">
+                    <!-- Mode lecture -->
+                    @if (editingEntryId !== entry.id) {
+                      <div class="entry-header">
+                        <span class="entry-type">{{ entryTypeMeta[entry.type].label }}</span>
+                        <span class="entry-time">{{ entry.occurredAt | date:'HH:mm — dd/MM/yyyy' }}</span>
+                        <div class="entry-actions">
+                          <button type="button" class="btn-icon" (click)="startEditEntry(entry)" title="Modifier">
+                            <lucide-icon [img]="Pencil" [size]="12"></lucide-icon>
+                          </button>
+                          <button type="button" class="btn-icon btn-icon--danger" (click)="deleteEntry(entry)" title="Supprimer">
+                            <lucide-icon [img]="Trash2" [size]="12"></lucide-icon>
+                          </button>
+                        </div>
+                      </div>
+                      <p class="entry-content">{{ entry.content }}</p>
+                    }
+                    <!-- Mode édition -->
+                    @if (editingEntryId === entry.id) {
+                      <div class="type-selector type-selector--compact">
+                        @for (type of entryTypes; track type) {
+                          <button
+                            type="button"
+                            class="type-chip"
+                            [class.type-chip--active]="editEntryType === type"
+                            [style.--type-color]="entryTypeMeta[type].color"
+                            (click)="editEntryType = type">
+                            <lucide-icon [img]="typeIcons[type]" [size]="12"></lucide-icon>
+                            {{ entryTypeMeta[type].label }}
+                          </button>
+                        }
+                      </div>
+                      <textarea class="entry-input"
+                        [(ngModel)]="editEntryContent"
+                        name="editEntryContent"
+                        rows="3"
+                        (keydown.control.enter)="saveEditEntry(entry)"
+                      (keydown.escape)="cancelEditEntry()"></textarea>
+                      <div class="entry-input-footer">
+                        <button type="button" class="btn-secondary btn-sm" (click)="cancelEditEntry()">
+                          <lucide-icon [img]="X" [size]="12"></lucide-icon>
+                          Annuler
+                        </button>
+                        <button type="button"
                           class="btn-primary btn-sm"
                           [disabled]="!editEntryContent.trim()"
                           (click)="saveEditEntry(entry)">
-                    <lucide-icon [img]="Check" [size]="12"></lucide-icon>
-                    Sauvegarder
-                  </button>
-                </div>
-              </ng-container>
-            </div>
-
-          </li>
-        </ul>
-      </section>
+                          <lucide-icon [img]="Check" [size]="12"></lucide-icon>
+                          Sauvegarder
+                        </button>
+                      </div>
+                    }
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+      </div>
+      <!-- Colonne droite : panneau référence (Dés / Personnages / Scènes) -->
+      <aside class="play-aside">
+        <app-session-reference-panel
+          [campaignId]="campaignId ?? ''"
+          [playthroughId]="session.playthroughId"
+          [sessionId]="session.id"
+          [canAddToJournal]="session.active"
+          (rolled)="onDiceRolled($event)"
+          (aiReplyToJournal)="onAiReplyToJournal($event)"
+          (noteToJournal)="onItemNoteToJournal($event)">
+        </app-session-reference-panel>
+      </aside>
     </div>
-
-    <!-- Colonne droite : panneau référence (Dés / Personnages / Scènes) -->
-    <aside class="play-aside">
-      <app-session-reference-panel
-        [campaignId]="campaignId ?? ''"
-        [playthroughId]="session.playthroughId"
-        [sessionId]="session.id"
-        [canAddToJournal]="session.active"
-        (rolled)="onDiceRolled($event)"
-        (aiReplyToJournal)="onAiReplyToJournal($event)"
-        (noteToJournal)="onItemNoteToJournal($event)">
-      </app-session-reference-panel>
-    </aside>
-
   </div>
-
-</div>
+}

@@ -10,16 +10,17 @@
         <lucide-icon [img]="User" [size]="22"></lucide-icon>
         {{ characterId ? 'Éditer la fiche' : 'Nouveau personnage' }}
       </h1>
-      <button
-        *ngIf="characterId"
-        type="button"
-        class="btn-ai"
-        (click)="toggleChat()"
-        [class.active]="chatOpen"
-        title="Ouvrir l'Assistant IA pour dialoguer autour de ce PJ">
-        <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
-        Assistant IA
-      </button>
+      @if (characterId) {
+        <button
+          type="button"
+          class="btn-ai"
+          (click)="toggleChat()"
+          [class.active]="chatOpen"
+          title="Ouvrir l'Assistant IA pour dialoguer autour de ce PJ">
+          <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
+          Assistant IA
+        </button>
+      }
     </div>
   </div>
 
@@ -33,70 +34,72 @@
         [(ngModel)]="name"
         name="name"
         placeholder="Ex: Thorin le Grand-Hache, Lyra l'Errante..."
-      />
-    </div>
-
-    <div class="field-row image-row">
-      <div class="field portrait-field">
-        <label>Portrait</label>
-        <app-single-image-picker
-          [imageId]="portraitImageId"
-          aspectRatio="1 / 1"
-          hint="Carre conseille (400×400)."
-          (imageIdChange)="portraitImageId = $event">
-        </app-single-image-picker>
+        />
       </div>
-      <div class="field header-field">
-        <label>Bandeau / Header</label>
-        <app-single-image-picker
-          [imageId]="headerImageId"
-          aspectRatio="3 / 1"
-          hint="Format paysage conseille (1200×400)."
-          (imageIdChange)="headerImageId = $event">
-        </app-single-image-picker>
+
+      <div class="field-row image-row">
+        <div class="field portrait-field">
+          <label>Portrait</label>
+          <app-single-image-picker
+            [imageId]="portraitImageId"
+            aspectRatio="1 / 1"
+            hint="Carre conseille (400×400)."
+            (imageIdChange)="portraitImageId = $event">
+          </app-single-image-picker>
+        </div>
+        <div class="field header-field">
+          <label>Bandeau / Header</label>
+          <app-single-image-picker
+            [imageId]="headerImageId"
+            aspectRatio="3 / 1"
+            hint="Format paysage conseille (1200×400)."
+            (imageIdChange)="headerImageId = $event">
+          </app-single-image-picker>
+        </div>
       </div>
-    </div>
 
-    <div class="template-fields">
-      <app-dynamic-fields-form
-        [fields]="templateFields"
-        [values]="values"
-        [imageValues]="imageValues"
-        [keyValueValues]="keyValueValues"
-        (valuesChange)="values = $event"
-        (imageValuesChange)="imageValues = $event"
-        (keyValueValuesChange)="keyValueValues = $event">
-      </app-dynamic-fields-form>
-    </div>
+      <div class="template-fields">
+        <app-dynamic-fields-form
+          [fields]="templateFields"
+          [values]="values"
+          [imageValues]="imageValues"
+          [keyValueValues]="keyValueValues"
+          (valuesChange)="values = $event"
+          (imageValuesChange)="imageValues = $event"
+          (keyValueValuesChange)="keyValueValues = $event">
+        </app-dynamic-fields-form>
+      </div>
 
-    <div class="actions">
-      <button type="button" class="btn-primary" [disabled]="!name.trim()" (click)="submit()">
-        <lucide-icon [img]="Save" [size]="16"></lucide-icon>
-        {{ characterId ? 'Enregistrer' : 'Créer' }}
-      </button>
-      <button type="button" class="btn-secondary" (click)="back()">Annuler</button>
-      <span class="spacer"></span>
-      <button
-        *ngIf="characterId"
-        type="button"
-        class="btn-danger"
-        (click)="deleteCharacter()">
-        <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
-        Supprimer
-      </button>
+      <div class="actions">
+        <button type="button" class="btn-primary" [disabled]="!name.trim()" (click)="submit()">
+          <lucide-icon [img]="Save" [size]="16"></lucide-icon>
+          {{ characterId ? 'Enregistrer' : 'Créer' }}
+        </button>
+        <button type="button" class="btn-secondary" (click)="back()">Annuler</button>
+        <span class="spacer"></span>
+        @if (characterId) {
+          <button
+            type="button"
+            class="btn-danger"
+            (click)="deleteCharacter()">
+            <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+            Supprimer
+          </button>
+        }
+      </div>
+
     </div>
 
   </div>
 
-</div>
-
-<app-ai-chat-drawer
-  *ngIf="characterId && campaignId"
-  [campaignId]="campaignId"
-  entityType="character"
-  [entityId]="characterId"
-  [isOpen]="chatOpen"
-  welcomeMessage="Je vois cette fiche de personnage. Demande-moi de proposer stats, backstory, équipement ou objectifs personnels."
-  [quickSuggestions]="chatQuickSuggestions"
-  (close)="chatOpen = false">
-</app-ai-chat-drawer>
+  @if (characterId && campaignId) {
+    <app-ai-chat-drawer
+      [campaignId]="campaignId"
+      entityType="character"
+      [entityId]="characterId"
+      [isOpen]="chatOpen"
+      welcomeMessage="Je vois cette fiche de personnage. Demande-moi de proposer stats, backstory, équipement ou objectifs personnels."
+      [quickSuggestions]="chatQuickSuggestions"
+      (close)="chatOpen = false">
+    </app-ai-chat-drawer>
+  }

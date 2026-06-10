@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
@@ -30,7 +30,7 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  */
 @Component({
     selector: 'app-scene-edit',
-    imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, ExpandableSectionComponent, LoreLinkPickerComponent, AiChatDrawerComponent, ImageGalleryComponent, IconPickerComponent, RoomsEditorComponent],
+    imports: [ReactiveFormsModule, LucideAngularModule, ExpandableSectionComponent, LoreLinkPickerComponent, AiChatDrawerComponent, ImageGalleryComponent, IconPickerComponent, RoomsEditorComponent],
     templateUrl: './scene-edit.component.html',
     styleUrls: ['./scene-edit.component.scss']
 })
@@ -218,7 +218,6 @@ export class SceneEditComponent implements OnInit, OnDestroy {
 
   // ─────────────── Gestion des branches narratives ───────────────
 
-  trackByIndex = (i: number) => i;
 
   addBranch(): void {
     this.branches.push({ label: '', targetSceneId: '', condition: '' });
