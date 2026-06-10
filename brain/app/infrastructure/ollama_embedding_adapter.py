@@ -11,6 +11,14 @@ from app.application.embeddings import EmbeddingError
 from app.core.config import Settings
 
 
+# Préfixes de tâche des modèles nomic-embed : le modèle est ENTRAÎNÉ avec
+# (search_document pour le corpus, search_query pour la question). Sans eux,
+# la pertinence du retrieval est mesurablement dégradée. Ne s'applique qu'aux
+# modèles nomic — les autres (mxbai, bge…) ont leurs propres conventions ou
+# aucune ; on reste neutre pour eux.
+_NOMIC_PREFIXES = {"document": "search_document: ", "query": "search_query: "}
+
+
 class OllamaEmbeddingProvider:
     """Implémente EmbeddingProvider via Ollama /api/embed (batch)."""
 
@@ -19,11 +27,22 @@ class OllamaEmbeddingProvider:
         self._model = settings.ollama_embedding_model
         self._timeout = settings.llm_timeout_seconds
 
-    async def embed(self, texts: list[str]) -> list[list[float]]:
+    def _prepare(self, texts: list[str], kind: str) -> list[str]:
+        """Applique le préfixe de tâche si le modèle est de la famille nomic-embed.
+
+        NB : les sources indexées AVANT l'introduction des préfixes doivent être
+        ré-uploadées pour que documents et questions vivent dans le même espace.
+        """
+        if "nomic-embed" not in self._model:
+            return texts
+        prefix = _NOMIC_PREFIXES.get(kind, _NOMIC_PREFIXES["document"])
+        return [prefix + t for t in texts]
+
+    async def embed(self, texts: list[str], kind: str = "document") -> list[list[float]]:
         if not texts:
             return []
         url = f"{self._base_url}/api/embed"
-        payload = {"model": self._model, "input": texts}
+        payload = {"model": self._model, "input": self._prepare(texts, kind)}
         async with httpx.AsyncClient(timeout=self._timeout) as client:
             try:
                 response = await client.post(url, json=payload)

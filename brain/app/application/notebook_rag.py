@@ -86,7 +86,7 @@ class NotebookRagUseCase:
         ids = [s for s in source_ids if vector_store.exists(s)]
         if not ids or not query.strip():
             return []
-        query_vectors = await self._embedder.embed([query])
+        query_vectors = await self._embedder.embed([query], kind="query")
         if not query_vectors:
             return []
         return vector_store.search(

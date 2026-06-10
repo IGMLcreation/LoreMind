@@ -28,7 +28,8 @@ class MistralEmbeddingProvider:
         self._model = settings.mistral_embedding_model
         self._timeout = settings.llm_timeout_seconds
 
-    async def embed(self, texts: list[str]) -> list[list[float]]:
+    async def embed(self, texts: list[str], kind: str = "document") -> list[list[float]]:
+        # `kind` ignoré : mistral-embed n'utilise pas de préfixe de tâche.
         if not texts:
             return []
         out: list[list[float]] = []
