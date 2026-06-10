@@ -92,7 +92,11 @@ def get_import_campaign_use_case(
 ) -> ImportCampaignUseCase:
     """Factory du use case d'import de campagne PDF (extraction + arborescence)."""
     return ImportCampaignUseCase(
-        llm=llm, extractor=_PDF_EXTRACTOR, chunk_target_tokens=settings.import_chunk_tokens)
+        llm=llm,
+        extractor=_PDF_EXTRACTOR,
+        chunk_target_tokens=settings.import_chunk_tokens,
+        map_concurrency=settings.llm_map_concurrency,
+    )
 
 
 def get_adapt_campaign_use_case(
@@ -140,4 +144,8 @@ def get_notebook_deep_use_case(
     llm: Annotated[LLMProvider, Depends(get_llm_provider)],
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> NotebookDeepUseCase:
-    return NotebookDeepUseCase(llm=llm, batch_tokens=settings.import_chunk_tokens)
+    return NotebookDeepUseCase(
+        llm=llm,
+        batch_tokens=settings.import_chunk_tokens,
+        map_concurrency=settings.llm_map_concurrency,
+    )

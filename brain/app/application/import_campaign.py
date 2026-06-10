@@ -10,6 +10,7 @@ PROPOSITION non persistée : le Core crée les entités seulement après revue.
 """
 from __future__ import annotations
 
+import asyncio
 import logging
 
 from app.application.chunking import chunk_text, split_in_half
@@ -217,10 +218,15 @@ class ImportCampaignUseCase:
         llm: LLMProvider,
         extractor: PdfTextExtractor,
         chunk_target_tokens: int = _CHUNK_TARGET_TOKENS,
+        map_concurrency: int = 1,
     ) -> None:
         self._llm = llm
         self._extractor = extractor
         self._chunk_target_tokens = chunk_target_tokens
+        # Appels MAP par VAGUES de cette taille : l'ordre narratif est préservé
+        # (fusion vague par vague, dans l'ordre du livre) mais le mur d'attente
+        # des appels LLM est divisé d'autant. 1 = comportement séquentiel.
+        self._map_concurrency = max(1, map_concurrency)
 
     async def execute(self, pdf_bytes: bytes) -> CampaignImportResult:
         """Variante non-streamée : traite tout puis renvoie l'arbre complet."""
@@ -228,9 +234,15 @@ class ImportCampaignUseCase:
         chunks = chunk_text(doc.full_text, self._chunk_target_tokens)
         toc_block = _format_toc(doc.toc)
         merger = _TreeMerger()
-        for i, chunk in enumerate(chunks):
-            merger.add(await self._map_chunk(
-                chunk, index=i, total=len(chunks), toc_block=toc_block))
+        total = len(chunks)
+        for start in range(0, total, self._map_concurrency):
+            wave = list(enumerate(chunks))[start:start + self._map_concurrency]
+            results = await asyncio.gather(*(
+                self._map_chunk(c, index=i, total=total, toc_block=toc_block)
+                for i, c in wave
+            ))
+            for res in results:
+                merger.add(res)
         return CampaignImportResult(
             arcs=merger.result(),
             page_count=doc.page_count,
@@ -266,38 +278,50 @@ class ImportCampaignUseCase:
         merger = _TreeMerger()
         skipped = 0
         last_error: str | None = None
-        for i, chunk in enumerate(chunks):
-            # RÉSILIENCE : un morceau qui échoue (provider saturé, quota, etc.) est
-            # SAUTÉ — on ne perd pas tout l'import pour autant. On n'abandonne que
-            # si AUCUN morceau ne passe (cf. après la boucle).
-            # HEARTBEAT : keep-alive pendant l'appel LLM pour ne jamais laisser le
-            # flux SSE silencieux (sinon le Core coupe sur timeout d'inactivité).
-            try:
-                arcs_payload: list[dict] | None = None
-                async for kind, payload in with_heartbeat(
-                    self._map_chunk(chunk, index=i, total=total, toc_block=toc_block)
-                ):
-                    if kind == "heartbeat":
-                        yield {"type": "heartbeat", "current": i + 1, "total": total}
-                    else:
-                        arcs_payload = payload
-                merger.add(arcs_payload or [])
-            except LLMProviderError as exc:
-                skipped += 1
-                last_error = str(exc)
-                logger.warning("Morceau %s/%s ignoré (échec LLM) : %s", i + 1, total, exc)
-                yield {"type": "chunk_failed", "current": i + 1, "total": total,
-                       "message": str(exc)[:300]}
-            arcs, chapters, scenes = merger.counts()
-            yield {
-                "type": "progress",
-                "current": i + 1,
-                "total": total,
-                "arc_count": arcs,
-                "chapter_count": chapters,
-                "scene_count": scenes,
-                "skipped": skipped,
-            }
+        done_count = 0
+        # PARALLÉLISME : les morceaux sont traités par VAGUES de `map_concurrency`
+        # appels simultanés. L'ordre narratif est préservé : la fusion se fait
+        # vague par vague, dans l'ordre du livre.
+        # RÉSILIENCE : un morceau qui échoue (provider saturé, quota, etc.) est
+        # SAUTÉ — on ne perd pas tout l'import pour autant. On n'abandonne que
+        # si AUCUN morceau ne passe (cf. après la boucle).
+        # HEARTBEAT : keep-alive pendant la vague d'appels LLM pour ne jamais
+        # laisser le flux SSE silencieux (sinon le Core coupe sur inactivité).
+        for start in range(0, total, self._map_concurrency):
+            wave = list(enumerate(chunks))[start:start + self._map_concurrency]
+            gathered = asyncio.gather(
+                *(self._map_chunk(c, index=i, total=total, toc_block=toc_block)
+                  for i, c in wave),
+                return_exceptions=True,
+            )
+            results: list | None = None
+            async for kind, payload in with_heartbeat(gathered):
+                if kind == "heartbeat":
+                    yield {"type": "heartbeat", "current": done_count + 1, "total": total}
+                else:
+                    results = payload
+            for (i, _), res in zip(wave, results or []):
+                done_count += 1
+                if isinstance(res, LLMProviderError):
+                    skipped += 1
+                    last_error = str(res)
+                    logger.warning("Morceau %s/%s ignoré (échec LLM) : %s", i + 1, total, res)
+                    yield {"type": "chunk_failed", "current": i + 1, "total": total,
+                           "message": str(res)[:300]}
+                elif isinstance(res, BaseException):
+                    raise res  # bug inattendu : ne pas l'avaler en silence
+                else:
+                    merger.add(res or [])
+                arcs, chapters, scenes = merger.counts()
+                yield {
+                    "type": "progress",
+                    "current": done_count,
+                    "total": total,
+                    "arc_count": arcs,
+                    "chapter_count": chapters,
+                    "scene_count": scenes,
+                    "skipped": skipped,
+                }
 
         if total > 0 and skipped == total:
             # Tout a échoué : "done" vide serait trompeur → erreur explicite.

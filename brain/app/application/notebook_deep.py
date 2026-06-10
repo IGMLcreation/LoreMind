@@ -13,6 +13,7 @@ lots ; avec un petit modèle local, plus de lots (mais ça reste exhaustif).
 """
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import AsyncIterator
 
@@ -62,9 +63,13 @@ Réponds en français."""
 
 
 class NotebookDeepUseCase:
-    def __init__(self, llm: LLMProvider, batch_tokens: int = 10000) -> None:
+    def __init__(
+        self, llm: LLMProvider, batch_tokens: int = 10000, map_concurrency: int = 1
+    ) -> None:
         self._llm = llm
         self._batch_tokens = max(2000, batch_tokens)
+        # Lots MAP traités par vagues de cette taille (parallélisme LLM).
+        self._map_concurrency = max(1, map_concurrency)
 
     async def stream(
         self,
@@ -92,21 +97,21 @@ class NotebookDeepUseCase:
         batches = self._group(chunks)
         total = len(batches)
         notes: list[str] = []
-        for i, batch in enumerate(batches):
-            yield {"type": "progress", "current": i, "total": total}
-            excerpt = "\n\n".join(
-                f"(p. {c['page']}) {c['text'].strip()}" if c.get("page") else c["text"].strip()
-                for c in batch
-            )
-            prompt = _MAP_PROMPT.format(no_match=_NO_MATCH, question=question, excerpt=excerpt)
-            try:
-                raw = await generate_with_retry(self._llm, prompt, temperature=_MAP_TEMPERATURE)
-            except LLMProviderError as exc:
-                logger.warning("Analyse approfondie : lot %s/%s ignoré : %s", i + 1, total, exc)
-                continue
-            answer = raw.strip()
-            if answer and answer.upper().rstrip(".") != _NO_MATCH:
-                notes.append(answer)
+        # Lots traités par VAGUES parallèles ; les notes restent dans l'ordre du
+        # document (gather préserve l'ordre des tâches de la vague).
+        for start in range(0, total, self._map_concurrency):
+            yield {"type": "progress", "current": start, "total": total}
+            wave = batches[start:start + self._map_concurrency]
+            results = await asyncio.gather(
+                *(self._map_batch(question, b) for b in wave), return_exceptions=True)
+            for j, res in enumerate(results):
+                if isinstance(res, LLMProviderError):
+                    logger.warning(
+                        "Analyse approfondie : lot %s/%s ignoré : %s", start + j + 1, total, res)
+                elif isinstance(res, BaseException):
+                    raise res  # bug inattendu : ne pas l'avaler
+                elif res:
+                    notes.append(res)
         yield {"type": "progress", "current": total, "total": total}
 
         notes_block = "\n\n".join(notes) if notes else "(aucune information pertinente trouvée dans le document)"
@@ -135,6 +140,19 @@ class NotebookDeepUseCase:
                 "voit ta campagne, et te propose des cartes « Créer dans la campagne »."
             )}
         yield {"type": "done"}
+
+    async def _map_batch(self, question: str, batch: list[dict]) -> str:
+        """Phase MAP d'un lot : extrait les infos pertinentes ('' si RAS)."""
+        excerpt = "\n\n".join(
+            f"(p. {c['page']}) {c['text'].strip()}" if c.get("page") else c["text"].strip()
+            for c in batch
+        )
+        prompt = _MAP_PROMPT.format(no_match=_NO_MATCH, question=question, excerpt=excerpt)
+        raw = await generate_with_retry(self._llm, prompt, temperature=_MAP_TEMPERATURE)
+        answer = raw.strip()
+        if answer and answer.upper().rstrip(".") != _NO_MATCH:
+            return answer
+        return ""
 
     def _group(self, chunks: list[dict]) -> list[list[dict]]:
         """Regroupe les extraits en lots ~`batch_tokens` (compte tiktoken)."""

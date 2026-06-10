@@ -90,6 +90,12 @@ class Settings(BaseSettings):
     # les hors-sujet 0.2-0.4. Montable à ~0.4 si trop de bruit, 0 = désactivé.
     rag_min_score: float = 0.30
 
+    # Nombre d'appels LLM MAP menes EN PARALLELE (import de campagne, analyse
+    # approfondie). 3 = bon defaut cloud (divise le temps d'un gros livre par ~3).
+    # Ollama local sequence les requetes de toute facon (pas de gain, pas de mal).
+    # Baisser a 1 si un provider gratuit rate-limite agressivement.
+    llm_map_concurrency: int = 3
+
     # Taille cible d'un morceau (en tokens) pour l'import de PDF (regles/campagne).
     # Plus c'est gros, moins il y a de morceaux => moins de fragmentation et un
     # import plus rapide, MAIS il faut que ca tienne dans la fenetre du modele.
