@@ -24,11 +24,10 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  * et les PJ de cette Partie.
  */
 @Component({
-  selector: 'app-playthrough-detail',
-  standalone: true,
-  imports: [CommonModule, RouterModule, LucideAngularModule],
-  templateUrl: './playthrough-detail.component.html',
-  styleUrls: ['./playthrough-detail.component.scss']
+    selector: 'app-playthrough-detail',
+    imports: [CommonModule, RouterModule, LucideAngularModule],
+    templateUrl: './playthrough-detail.component.html',
+    styleUrls: ['./playthrough-detail.component.scss']
 })
 export class PlaythroughDetailComponent implements OnInit, OnDestroy {
   readonly ArrowLeft = ArrowLeft;

@@ -13,11 +13,10 @@ import { ItemCatalog, CatalogItem, ItemCatalogCreate } from '../../../services/i
  *          /campaigns/:campaignId/item-catalogs/:catalogId/edit
  */
 @Component({
-  selector: 'app-item-catalog-edit',
-  standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule],
-  templateUrl: './item-catalog-edit.component.html',
-  styleUrls: ['./item-catalog-edit.component.scss']
+    selector: 'app-item-catalog-edit',
+    imports: [CommonModule, FormsModule, LucideAngularModule],
+    templateUrl: './item-catalog-edit.component.html',
+    styleUrls: ['./item-catalog-edit.component.scss']
 })
 export class ItemCatalogEditComponent implements OnInit {
   readonly ArrowLeft = ArrowLeft;

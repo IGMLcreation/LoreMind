@@ -17,11 +17,10 @@ import { AiChatDrawerComponent } from '../../../shared/ai-chat-drawer/ai-chat-dr
  * Route : /campaigns/:campaignId/npcs/:npcId
  */
 @Component({
-  selector: 'app-npc-view',
-  standalone: true,
-  imports: [CommonModule, LucideAngularModule, PersonaViewComponent, AiChatDrawerComponent],
-  templateUrl: './npc-view.component.html',
-  styleUrls: ['./npc-view.component.scss']
+    selector: 'app-npc-view',
+    imports: [CommonModule, LucideAngularModule, PersonaViewComponent, AiChatDrawerComponent],
+    templateUrl: './npc-view.component.html',
+    styleUrls: ['./npc-view.component.scss']
 })
 export class NpcViewComponent implements OnInit, OnDestroy {
   readonly ArrowLeft = ArrowLeft;

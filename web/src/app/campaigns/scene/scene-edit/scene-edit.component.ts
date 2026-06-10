@@ -29,11 +29,10 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  * Route : /campaigns/:campaignId/arcs/:arcId/chapters/:chapterId/scenes/:sceneId
  */
 @Component({
-  selector: 'app-scene-edit',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, ExpandableSectionComponent, LoreLinkPickerComponent, AiChatDrawerComponent, ImageGalleryComponent, IconPickerComponent, RoomsEditorComponent],
-  templateUrl: './scene-edit.component.html',
-  styleUrls: ['./scene-edit.component.scss']
+    selector: 'app-scene-edit',
+    imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, ExpandableSectionComponent, LoreLinkPickerComponent, AiChatDrawerComponent, ImageGalleryComponent, IconPickerComponent, RoomsEditorComponent],
+    templateUrl: './scene-edit.component.html',
+    styleUrls: ['./scene-edit.component.scss']
 })
 export class SceneEditComponent implements OnInit, OnDestroy {
   readonly Trash2 = Trash2;

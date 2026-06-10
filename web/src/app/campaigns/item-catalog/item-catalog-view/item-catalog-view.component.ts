@@ -13,11 +13,10 @@ interface ItemGroup { category: string; items: CatalogItem[]; }
  * Route : /campaigns/:campaignId/item-catalogs/:catalogId
  */
 @Component({
-  selector: 'app-item-catalog-view',
-  standalone: true,
-  imports: [CommonModule, LucideAngularModule],
-  templateUrl: './item-catalog-view.component.html',
-  styleUrls: ['./item-catalog-view.component.scss']
+    selector: 'app-item-catalog-view',
+    imports: [CommonModule, LucideAngularModule],
+    templateUrl: './item-catalog-view.component.html',
+    styleUrls: ['./item-catalog-view.component.scss']
 })
 export class ItemCatalogViewComponent implements OnInit {
   readonly ArrowLeft = ArrowLeft;

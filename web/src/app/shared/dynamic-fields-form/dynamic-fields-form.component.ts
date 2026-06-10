@@ -16,11 +16,10 @@ import { ImageGalleryComponent } from '../image-gallery/image-gallery.component'
  * qui gere l'upload, la suppression et le respect du layout.
  */
 @Component({
-  selector: 'app-dynamic-fields-form',
-  standalone: true,
-  imports: [CommonModule, FormsModule, ImageGalleryComponent],
-  templateUrl: './dynamic-fields-form.component.html',
-  styleUrls: ['./dynamic-fields-form.component.scss']
+    selector: 'app-dynamic-fields-form',
+    imports: [CommonModule, FormsModule, ImageGalleryComponent],
+    templateUrl: './dynamic-fields-form.component.html',
+    styleUrls: ['./dynamic-fields-form.component.scss']
 })
 export class DynamicFieldsFormComponent {
   @Input() fields: TemplateField[] = [];

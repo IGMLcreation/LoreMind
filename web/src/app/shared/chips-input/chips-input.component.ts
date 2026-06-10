@@ -20,11 +20,10 @@ import { LucideAngularModule, X } from 'lucide-angular';
  *  - Clic sur X retire le chip
  */
 @Component({
-  selector: 'app-chips-input',
-  standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule],
-  templateUrl: './chips-input.component.html',
-  styleUrls: ['./chips-input.component.scss']
+    selector: 'app-chips-input',
+    imports: [CommonModule, FormsModule, LucideAngularModule],
+    templateUrl: './chips-input.component.html',
+    styleUrls: ['./chips-input.component.scss']
 })
 export class ChipsInputComponent {
   readonly X = X;

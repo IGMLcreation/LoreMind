@@ -19,11 +19,10 @@ import { PlaythroughFlagsManagerComponent } from '../../../shared/playthrough-fl
  * Route : /campaigns/:campaignId/playthroughs/:playthroughId/flags
  */
 @Component({
-  selector: 'app-playthrough-flags-page',
-  standalone: true,
-  imports: [CommonModule, RouterModule, LucideAngularModule, PlaythroughFlagsManagerComponent],
-  templateUrl: './playthrough-flags-page.component.html',
-  styleUrls: ['./playthrough-flags-page.component.scss']
+    selector: 'app-playthrough-flags-page',
+    imports: [CommonModule, RouterModule, LucideAngularModule, PlaythroughFlagsManagerComponent],
+    templateUrl: './playthrough-flags-page.component.html',
+    styleUrls: ['./playthrough-flags-page.component.scss']
 })
 export class PlaythroughFlagsPageComponent implements OnInit, OnDestroy {
   readonly ArrowLeft = ArrowLeft;

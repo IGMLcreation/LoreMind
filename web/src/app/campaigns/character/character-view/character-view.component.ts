@@ -16,11 +16,10 @@ import { AiChatDrawerComponent } from '../../../shared/ai-chat-drawer/ai-chat-dr
  * Route : /campaigns/:campaignId/playthroughs/:playthroughId/characters/:characterId
  */
 @Component({
-  selector: 'app-character-view',
-  standalone: true,
-  imports: [CommonModule, LucideAngularModule, PersonaViewComponent, AiChatDrawerComponent],
-  templateUrl: './character-view.component.html',
-  styleUrls: ['./character-view.component.scss']
+    selector: 'app-character-view',
+    imports: [CommonModule, LucideAngularModule, PersonaViewComponent, AiChatDrawerComponent],
+    templateUrl: './character-view.component.html',
+    styleUrls: ['./character-view.component.scss']
 })
 export class CharacterViewComponent implements OnInit {
   readonly ArrowLeft = ArrowLeft;

@@ -14,11 +14,10 @@ import { NotebookAction } from '../../../services/notebook-action.model';
  * (chapitre pour une scène, arc pour un chapitre) et appelle les services existants.
  */
 @Component({
-  selector: 'app-notebook-action-card',
-  standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule],
-  templateUrl: './notebook-action-card.component.html',
-  styleUrls: ['./notebook-action-card.component.scss']
+    selector: 'app-notebook-action-card',
+    imports: [CommonModule, FormsModule, LucideAngularModule],
+    templateUrl: './notebook-action-card.component.html',
+    styleUrls: ['./notebook-action-card.component.scss']
 })
 export class NotebookActionCardComponent implements OnInit {
   readonly Plus = Plus;

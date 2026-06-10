@@ -14,11 +14,10 @@ import { Room, RoomBranch } from '../../services/campaign.model';
  * Les branches (graphe inter-pièces) sont éditables dans la card expand.
  */
 @Component({
-  selector: 'app-rooms-editor',
-  standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule],
-  templateUrl: './rooms-editor.component.html',
-  styleUrls: ['./rooms-editor.component.scss']
+    selector: 'app-rooms-editor',
+    imports: [CommonModule, FormsModule, LucideAngularModule],
+    templateUrl: './rooms-editor.component.html',
+    styleUrls: ['./rooms-editor.component.scss']
 })
 export class RoomsEditorComponent {
 

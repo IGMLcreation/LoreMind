@@ -25,11 +25,10 @@ import { AiChatDrawerComponent, ChatPrimaryAction } from '../../shared/ai-chat-d
  * champs dynamiques du template se fait APRÈS création, via l'écran page-edit.
  */
 @Component({
-  selector: 'app-page-create',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, LucideAngularModule, AiChatDrawerComponent],
-  templateUrl: './page-create.component.html',
-  styleUrls: ['./page-create.component.scss']
+    selector: 'app-page-create',
+    imports: [CommonModule, ReactiveFormsModule, RouterModule, LucideAngularModule, AiChatDrawerComponent],
+    templateUrl: './page-create.component.html',
+    styleUrls: ['./page-create.component.scss']
 })
 export class PageCreateComponent implements OnInit, OnDestroy {
   readonly FileText = FileText;

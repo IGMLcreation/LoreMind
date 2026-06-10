@@ -13,11 +13,10 @@ import { DiceUtils, DiceRoll } from '../../../shared/dice.utils';
  * Route : /campaigns/:campaignId/random-tables/:tableId
  */
 @Component({
-  selector: 'app-random-table-view',
-  standalone: true,
-  imports: [CommonModule, LucideAngularModule],
-  templateUrl: './random-table-view.component.html',
-  styleUrls: ['./random-table-view.component.scss']
+    selector: 'app-random-table-view',
+    imports: [CommonModule, LucideAngularModule],
+    templateUrl: './random-table-view.component.html',
+    styleUrls: ['./random-table-view.component.scss']
 })
 export class RandomTableViewComponent implements OnInit {
   readonly ArrowLeft = ArrowLeft;

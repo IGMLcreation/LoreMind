@@ -23,11 +23,10 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  * Route : /campaigns/:campaignId/arcs/:arcId/chapters/:chapterId
  */
 @Component({
-  selector: 'app-chapter-view',
-  standalone: true,
-  imports: [CommonModule, RouterModule, LucideAngularModule, ImageGalleryComponent],
-  templateUrl: './chapter-view.component.html',
-  styleUrls: ['./chapter-view.component.scss']
+    selector: 'app-chapter-view',
+    imports: [CommonModule, RouterModule, LucideAngularModule, ImageGalleryComponent],
+    templateUrl: './chapter-view.component.html',
+    styleUrls: ['./chapter-view.component.scss']
 })
 export class ChapterViewComponent implements OnInit, OnDestroy {
   readonly Pencil = Pencil;

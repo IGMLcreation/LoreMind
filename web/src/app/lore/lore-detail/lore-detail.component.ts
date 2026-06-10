@@ -13,11 +13,10 @@ import { loadLoreSidebarData, buildLoreSidebarConfig } from '../lore-sidebar.hel
 import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 
 @Component({
-  selector: 'app-lore-detail',
-  standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule],
-  templateUrl: './lore-detail.component.html',
-  styleUrls: ['./lore-detail.component.scss']
+    selector: 'app-lore-detail',
+    imports: [CommonModule, FormsModule, LucideAngularModule],
+    templateUrl: './lore-detail.component.html',
+    styleUrls: ['./lore-detail.component.scss']
 })
 export class LoreDetailComponent implements OnInit, OnDestroy {
   readonly Folder = Folder;

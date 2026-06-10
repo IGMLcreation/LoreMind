@@ -35,11 +35,10 @@ import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog
  *  - Bouton "Assistant IA" branché (Phase 3 Python)
  */
 @Component({
-  selector: 'app-page-edit',
-  standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, LucideAngularModule, ChipsInputComponent, LoreLinkPickerComponent, BreadcrumbComponent, AiChatDrawerComponent, ImageGalleryComponent],
-  templateUrl: './page-edit.component.html',
-  styleUrls: ['./page-edit.component.scss']
+    selector: 'app-page-edit',
+    imports: [CommonModule, FormsModule, RouterLink, LucideAngularModule, ChipsInputComponent, LoreLinkPickerComponent, BreadcrumbComponent, AiChatDrawerComponent, ImageGalleryComponent],
+    templateUrl: './page-edit.component.html',
+    styleUrls: ['./page-edit.component.scss']
 })
 export class PageEditComponent implements OnInit, OnDestroy {
   readonly Sparkles = Sparkles;

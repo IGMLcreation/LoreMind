@@ -21,13 +21,12 @@ import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog
  * (SettingsComponent) ne gere plus que le formulaire de configuration LLM.
  */
 @Component({
-  selector: 'app-settings-updates-section',
-  standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule],
-  templateUrl: './updates-section.component.html',
-  // Reutilise la feuille de style de l'ecran Parametres : les blocs deplaces
-  // gardent exactement le meme rendu (cards, alerts, channel-switch, …).
-  styleUrls: ['../settings.component.scss']
+    selector: 'app-settings-updates-section',
+    imports: [CommonModule, FormsModule, LucideAngularModule],
+    templateUrl: './updates-section.component.html',
+    // Reutilise la feuille de style de l'ecran Parametres : les blocs deplaces
+    // gardent exactement le meme rendu (cards, alerts, channel-switch, …).
+    styleUrls: ['../settings.component.scss']
 })
 export class UpdatesSectionComponent implements OnInit, OnDestroy {
 

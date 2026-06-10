@@ -20,11 +20,10 @@ import { ImageUploaderComponent } from '../image-uploader/image-uploader.compone
  * lien (passe imageId a null). L'image reste accessible via d'autres entites.
  */
 @Component({
-  selector: 'app-single-image-picker',
-  standalone: true,
-  imports: [CommonModule, LucideAngularModule, ImageUploaderComponent],
-  templateUrl: './single-image-picker.component.html',
-  styleUrls: ['./single-image-picker.component.scss']
+    selector: 'app-single-image-picker',
+    imports: [CommonModule, LucideAngularModule, ImageUploaderComponent],
+    templateUrl: './single-image-picker.component.html',
+    styleUrls: ['./single-image-picker.component.scss']
 })
 export class SingleImagePickerComponent {
   readonly X = X;

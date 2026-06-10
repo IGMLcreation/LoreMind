@@ -19,11 +19,10 @@ import { CAMPAIGN_ICON_OPTIONS } from '../../campaign-icons';
  * le nombre d'arcs existants dans la campagne courante.
  */
 @Component({
-  selector: 'app-arc-create',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, IconPickerComponent],
-  templateUrl: './arc-create.component.html',
-  styleUrls: ['./arc-create.component.scss']
+    selector: 'app-arc-create',
+    imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, IconPickerComponent],
+    templateUrl: './arc-create.component.html',
+    styleUrls: ['./arc-create.component.scss']
 })
 export class ArcCreateComponent implements OnInit, OnDestroy {
   readonly BookOpen = BookOpen;

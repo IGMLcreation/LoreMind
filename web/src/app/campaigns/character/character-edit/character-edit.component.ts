@@ -25,11 +25,10 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  *    saisie manuelle d'IDs d'images.
  */
 @Component({
-  selector: 'app-character-edit',
-  standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, AiChatDrawerComponent, DynamicFieldsFormComponent, SingleImagePickerComponent],
-  templateUrl: './character-edit.component.html',
-  styleUrls: ['./character-edit.component.scss']
+    selector: 'app-character-edit',
+    imports: [CommonModule, FormsModule, LucideAngularModule, AiChatDrawerComponent, DynamicFieldsFormComponent, SingleImagePickerComponent],
+    templateUrl: './character-edit.component.html',
+    styleUrls: ['./character-edit.component.scss']
 })
 export class CharacterEditComponent implements OnInit {
   readonly Save = Save;

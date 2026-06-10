@@ -25,11 +25,10 @@ export interface DiceRollResult {
  * et émission d'un événement vers le parent pour ajout au journal.
  */
 @Component({
-  selector: 'app-session-dice-panel',
-  standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule],
-  templateUrl: './session-dice-panel.component.html',
-  styleUrls: ['./session-dice-panel.component.scss']
+    selector: 'app-session-dice-panel',
+    imports: [CommonModule, FormsModule, LucideAngularModule],
+    templateUrl: './session-dice-panel.component.html',
+    styleUrls: ['./session-dice-panel.component.scss']
 })
 export class SessionDicePanelComponent {
   readonly Dices = Dices;

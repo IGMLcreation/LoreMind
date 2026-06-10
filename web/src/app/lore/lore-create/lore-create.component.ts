@@ -4,11 +4,10 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { LucideAngularModule, BookCopy, X } from 'lucide-angular';
 
 @Component({
-  selector: 'app-lore-create',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule],
-  templateUrl: './lore-create.component.html',
-  styleUrls: ['./lore-create.component.scss']
+    selector: 'app-lore-create',
+    imports: [CommonModule, ReactiveFormsModule, LucideAngularModule],
+    templateUrl: './lore-create.component.html',
+    styleUrls: ['./lore-create.component.scss']
 })
 export class LoreCreateComponent {
   @Output() close = new EventEmitter<void>();

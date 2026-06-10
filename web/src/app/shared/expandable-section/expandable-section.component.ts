@@ -12,11 +12,10 @@ import { LucideAngularModule, ChevronDown, ChevronUp } from 'lucide-angular';
  *   </app-expandable-section>
  */
 @Component({
-  selector: 'app-expandable-section',
-  standalone: true,
-  imports: [CommonModule, LucideAngularModule],
-  templateUrl: './expandable-section.component.html',
-  styleUrls: ['./expandable-section.component.scss']
+    selector: 'app-expandable-section',
+    imports: [CommonModule, LucideAngularModule],
+    templateUrl: './expandable-section.component.html',
+    styleUrls: ['./expandable-section.component.scss']
 })
 export class ExpandableSectionComponent {
   readonly ChevronDown = ChevronDown;

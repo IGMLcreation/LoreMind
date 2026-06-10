@@ -13,11 +13,10 @@ import { popReturnTo } from '../return-stack.helper';
 import { LORE_ICON_OPTIONS, IconOption, resolveIcon } from '../lore-icons';
 
 @Component({
-  selector: 'app-lore-node-create',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule],
-  templateUrl: './lore-node-create.component.html',
-  styleUrls: ['./lore-node-create.component.scss']
+    selector: 'app-lore-node-create',
+    imports: [CommonModule, ReactiveFormsModule, LucideAngularModule],
+    templateUrl: './lore-node-create.component.html',
+    styleUrls: ['./lore-node-create.component.scss']
 })
 export class LoreNodeCreateComponent implements OnInit, OnDestroy {
 

@@ -18,13 +18,12 @@ import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog
  * liste et corriger la selection courante si besoin.
  */
 @Component({
-  selector: 'app-ollama-model-manager',
-  standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule],
-  templateUrl: './ollama-model-manager.component.html',
-  // Reutilise la feuille de style de l'ecran Parametres (modal, suggestions,
-  // progress-bar, installed-models) pour un rendu strictement identique.
-  styleUrls: ['../settings.component.scss']
+    selector: 'app-ollama-model-manager',
+    imports: [CommonModule, FormsModule, LucideAngularModule],
+    templateUrl: './ollama-model-manager.component.html',
+    // Reutilise la feuille de style de l'ecran Parametres (modal, suggestions,
+    // progress-bar, installed-models) pour un rendu strictement identique.
+    styleUrls: ['../settings.component.scss']
 })
 export class OllamaModelManagerComponent implements OnDestroy {
 

@@ -19,11 +19,10 @@ import { popReturnTo } from '../return-stack.helper';
  *   Le user peut ajouter/retirer n'importe lequel — tous sont égaux.
  */
 @Component({
-  selector: 'app-template-create',
-  standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, LucideAngularModule],
-  templateUrl: './template-create.component.html',
-  styleUrls: ['./template-create.component.scss']
+    selector: 'app-template-create',
+    imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, LucideAngularModule],
+    templateUrl: './template-create.component.html',
+    styleUrls: ['./template-create.component.scss']
 })
 export class TemplateCreateComponent implements OnInit, OnDestroy {
   readonly Plus = Plus;

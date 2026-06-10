@@ -24,11 +24,10 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  * Bouton "Modifier" → /campaigns/:campaignId/arcs/:arcId/edit
  */
 @Component({
-  selector: 'app-arc-view',
-  standalone: true,
-  imports: [CommonModule, RouterModule, LucideAngularModule, ImageGalleryComponent],
-  templateUrl: './arc-view.component.html',
-  styleUrls: ['./arc-view.component.scss']
+    selector: 'app-arc-view',
+    imports: [CommonModule, RouterModule, LucideAngularModule, ImageGalleryComponent],
+    templateUrl: './arc-view.component.html',
+    styleUrls: ['./arc-view.component.scss']
 })
 export class ArcViewComponent implements OnInit, OnDestroy {
   readonly Pencil = Pencil;

@@ -26,11 +26,10 @@ import { loadCampaignTreeData, buildCampaignSidebarConfig, CampaignTreeData } fr
 import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 
 @Component({
-  selector: 'app-campaign-detail',
-  standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, RouterLink],
-  templateUrl: './campaign-detail.component.html',
-  styleUrls: ['./campaign-detail.component.scss']
+    selector: 'app-campaign-detail',
+    imports: [CommonModule, FormsModule, LucideAngularModule, RouterLink],
+    templateUrl: './campaign-detail.component.html',
+    styleUrls: ['./campaign-detail.component.scss']
 })
 export class CampaignDetailComponent implements OnInit, OnDestroy {
   readonly Swords = Swords;

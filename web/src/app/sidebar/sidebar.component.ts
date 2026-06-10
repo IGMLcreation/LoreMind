@@ -11,11 +11,10 @@ import { UpdatesService } from '../services/updates.service';
 import packageJson from '../../../package.json';
 
 @Component({
-  selector: 'app-sidebar',
-  standalone: true,
-  imports: [AsyncPipe, NgIf, NgFor, LucideAngularModule],
-  templateUrl: './sidebar.component.html',
-  styleUrls: ['./sidebar.component.scss']
+    selector: 'app-sidebar',
+    imports: [AsyncPipe, NgIf, NgFor, LucideAngularModule],
+    templateUrl: './sidebar.component.html',
+    styleUrls: ['./sidebar.component.scss']
 })
 export class SidebarComponent implements OnInit {
   currentRoute = '';

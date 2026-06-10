@@ -13,11 +13,10 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  * Route : /campaigns/:campaignId/notebooks
  */
 @Component({
-  selector: 'app-notebook-list',
-  standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule],
-  templateUrl: './notebook-list.component.html',
-  styleUrls: ['./notebook-list.component.scss']
+    selector: 'app-notebook-list',
+    imports: [CommonModule, FormsModule, LucideAngularModule],
+    templateUrl: './notebook-list.component.html',
+    styleUrls: ['./notebook-list.component.scss']
 })
 export class NotebookListComponent implements OnInit {
   readonly ArrowLeft = ArrowLeft;

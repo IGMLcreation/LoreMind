@@ -8,11 +8,10 @@ import { QuestStatus } from '../../services/campaign.model';
  * Composant standalone, sans dépendance métier.
  */
 @Component({
-  selector: 'app-quest-status-badge',
-  standalone: true,
-  imports: [CommonModule, LucideAngularModule],
-  templateUrl: './quest-status-badge.component.html',
-  styleUrls: ['./quest-status-badge.component.scss']
+    selector: 'app-quest-status-badge',
+    imports: [CommonModule, LucideAngularModule],
+    templateUrl: './quest-status-badge.component.html',
+    styleUrls: ['./quest-status-badge.component.scss']
 })
 export class QuestStatusBadgeComponent {
   @Input() status: QuestStatus | undefined | null = 'AVAILABLE';

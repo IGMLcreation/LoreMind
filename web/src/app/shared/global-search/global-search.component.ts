@@ -30,11 +30,10 @@ interface SearchResult {
  * Navigation clavier : ↑↓ ↵ Esc.
  */
 @Component({
-  selector: 'app-global-search',
-  standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule],
-  templateUrl: './global-search.component.html',
-  styleUrls: ['./global-search.component.scss']
+    selector: 'app-global-search',
+    imports: [CommonModule, FormsModule, LucideAngularModule],
+    templateUrl: './global-search.component.html',
+    styleUrls: ['./global-search.component.scss']
 })
 export class GlobalSearchComponent implements OnInit, OnDestroy {
   readonly Search = Search;

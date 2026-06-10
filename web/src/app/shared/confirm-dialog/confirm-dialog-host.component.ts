@@ -4,10 +4,9 @@ import { ConfirmDialogComponent } from './confirm-dialog.component';
 import { ConfirmDialogService } from './confirm-dialog.service';
 
 @Component({
-  selector: 'app-confirm-dialog-host',
-  standalone: true,
-  imports: [CommonModule, ConfirmDialogComponent],
-  template: `
+    selector: 'app-confirm-dialog-host',
+    imports: [CommonModule, ConfirmDialogComponent],
+    template: `
     <app-confirm-dialog
       *ngIf="(svc.state$ | async) as s"
       [open]="s.open"

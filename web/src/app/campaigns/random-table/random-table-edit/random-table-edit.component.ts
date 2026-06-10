@@ -14,11 +14,10 @@ import { DiceUtils } from '../../../shared/dice.utils';
  *          /campaigns/:campaignId/random-tables/:tableId/edit
  */
 @Component({
-  selector: 'app-random-table-edit',
-  standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule],
-  templateUrl: './random-table-edit.component.html',
-  styleUrls: ['./random-table-edit.component.scss']
+    selector: 'app-random-table-edit',
+    imports: [CommonModule, FormsModule, LucideAngularModule],
+    templateUrl: './random-table-edit.component.html',
+    styleUrls: ['./random-table-edit.component.scss']
 })
 export class RandomTableEditComponent implements OnInit {
   readonly ArrowLeft = ArrowLeft;

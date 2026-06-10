@@ -14,11 +14,10 @@ import { forkJoin } from 'rxjs';
  * met à jour la valeur du Playthrough courant.</p>
  */
 @Component({
-  selector: 'app-playthrough-flags-manager',
-  standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule],
-  templateUrl: './playthrough-flags-manager.component.html',
-  styleUrls: ['./playthrough-flags-manager.component.scss']
+    selector: 'app-playthrough-flags-manager',
+    imports: [CommonModule, FormsModule, LucideAngularModule],
+    templateUrl: './playthrough-flags-manager.component.html',
+    styleUrls: ['./playthrough-flags-manager.component.scss']
 })
 export class PlaythroughFlagsManagerComponent implements OnInit, OnChanges {
 

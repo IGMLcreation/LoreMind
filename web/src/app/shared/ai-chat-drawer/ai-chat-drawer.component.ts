@@ -30,11 +30,10 @@ export interface ChatPrimaryAction {
  *    ou la conversation n'a aucune valeur au-dela de l'usage immediat).
  */
 @Component({
-  selector: 'app-ai-chat-drawer',
-  standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, MarkdownPipe],
-  templateUrl: './ai-chat-drawer.component.html',
-  styleUrls: ['./ai-chat-drawer.component.scss'],
+    selector: 'app-ai-chat-drawer',
+    imports: [CommonModule, FormsModule, LucideAngularModule, MarkdownPipe],
+    templateUrl: './ai-chat-drawer.component.html',
+    styleUrls: ['./ai-chat-drawer.component.scss']
 })
 export class AiChatDrawerComponent implements OnInit, OnChanges, OnDestroy {
   readonly X = X;

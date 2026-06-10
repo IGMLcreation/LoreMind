@@ -32,20 +32,19 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  * prérequis (conditions de déblocage), qui font partie du scénario.
  */
 @Component({
-  selector: 'app-chapter-edit',
-  standalone: true,
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    LucideAngularModule,
-    LoreLinkPickerComponent,
-    AiChatDrawerComponent,
-    ImageGalleryComponent,
-    IconPickerComponent,
-    PrerequisiteEditorComponent
-  ],
-  templateUrl: './chapter-edit.component.html',
-  styleUrls: ['./chapter-edit.component.scss']
+    selector: 'app-chapter-edit',
+    imports: [
+        CommonModule,
+        ReactiveFormsModule,
+        LucideAngularModule,
+        LoreLinkPickerComponent,
+        AiChatDrawerComponent,
+        ImageGalleryComponent,
+        IconPickerComponent,
+        PrerequisiteEditorComponent
+    ],
+    templateUrl: './chapter-edit.component.html',
+    styleUrls: ['./chapter-edit.component.scss']
 })
 export class ChapterEditComponent implements OnInit, OnDestroy {
   readonly Trash2 = Trash2;

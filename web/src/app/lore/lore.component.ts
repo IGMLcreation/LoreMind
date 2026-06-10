@@ -8,11 +8,10 @@ import { Lore } from '../services/lore.model';
 import { LoreCreateComponent } from './lore-create/lore-create.component';
 
 @Component({
-  selector: 'app-lore',
-  standalone: true,
-  imports: [CommonModule, LucideAngularModule, LoreCreateComponent],
-  templateUrl: './lore.component.html',
-  styleUrls: ['./lore.component.scss']
+    selector: 'app-lore',
+    imports: [CommonModule, LucideAngularModule, LoreCreateComponent],
+    templateUrl: './lore.component.html',
+    styleUrls: ['./lore.component.scss']
 })
 export class LoreComponent implements OnInit {
   lores: Lore[] = [];

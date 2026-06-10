@@ -29,11 +29,10 @@ type TabId = 'dice' | 'tables' | 'objects' | 'characters' | 'scenes' | 'ai';
  * de jet qui remonte ici puis vers le parent via {@link rolled}.</p>
  */
 @Component({
-  selector: 'app-session-reference-panel',
-  standalone: true,
-  imports: [CommonModule, LucideAngularModule, SessionDicePanelComponent, SessionAiChatPanelComponent, SessionRandomTablesPanelComponent, SessionItemCatalogsPanelComponent],
-  templateUrl: './session-reference-panel.component.html',
-  styleUrls: ['./session-reference-panel.component.scss']
+    selector: 'app-session-reference-panel',
+    imports: [CommonModule, LucideAngularModule, SessionDicePanelComponent, SessionAiChatPanelComponent, SessionRandomTablesPanelComponent, SessionItemCatalogsPanelComponent],
+    templateUrl: './session-reference-panel.component.html',
+    styleUrls: ['./session-reference-panel.component.scss']
 })
 export class SessionReferencePanelComponent implements OnChanges {
   readonly User = User;

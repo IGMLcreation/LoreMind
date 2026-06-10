@@ -26,11 +26,10 @@ import { ImageUploaderComponent } from '../image-uploader/image-uploader.compone
  *                      (imageIdsChange)="tempIds = $event"></app-image-gallery>
  */
 @Component({
-  selector: 'app-image-gallery',
-  standalone: true,
-  imports: [CommonModule, LucideAngularModule, ImageUploaderComponent],
-  templateUrl: './image-gallery.component.html',
-  styleUrls: ['./image-gallery.component.scss']
+    selector: 'app-image-gallery',
+    imports: [CommonModule, LucideAngularModule, ImageUploaderComponent],
+    templateUrl: './image-gallery.component.html',
+    styleUrls: ['./image-gallery.component.scss']
 })
 export class ImageGalleryComponent {
   readonly X = X;

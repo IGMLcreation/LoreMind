@@ -18,11 +18,10 @@ import { CAMPAIGN_ICON_OPTIONS } from '../../campaign-icons';
  * Route : /campaigns/:campaignId/arcs/:arcId/chapters/:chapterId/scenes/create
  */
 @Component({
-  selector: 'app-scene-create',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, IconPickerComponent],
-  templateUrl: './scene-create.component.html',
-  styleUrls: ['./scene-create.component.scss']
+    selector: 'app-scene-create',
+    imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, IconPickerComponent],
+    templateUrl: './scene-create.component.html',
+    styleUrls: ['./scene-create.component.scss']
 })
 export class SceneCreateComponent implements OnInit, OnDestroy {
   readonly campaignIconOptions = CAMPAIGN_ICON_OPTIONS;

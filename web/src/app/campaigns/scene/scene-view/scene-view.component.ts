@@ -23,11 +23,10 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  * Route : /campaigns/:campaignId/arcs/:arcId/chapters/:chapterId/scenes/:sceneId
  */
 @Component({
-  selector: 'app-scene-view',
-  standalone: true,
-  imports: [CommonModule, RouterModule, LucideAngularModule, ImageGalleryComponent],
-  templateUrl: './scene-view.component.html',
-  styleUrls: ['./scene-view.component.scss']
+    selector: 'app-scene-view',
+    imports: [CommonModule, RouterModule, LucideAngularModule, ImageGalleryComponent],
+    templateUrl: './scene-view.component.html',
+    styleUrls: ['./scene-view.component.scss']
 })
 export class SceneViewComponent implements OnInit, OnDestroy {
   readonly Pencil = Pencil;

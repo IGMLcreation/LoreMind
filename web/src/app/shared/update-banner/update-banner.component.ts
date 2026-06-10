@@ -9,11 +9,10 @@ import { VersionCheckerService } from '../../services/version-checker.service';
  * ouvert. Propose un reload en un clic.
  */
 @Component({
-  selector: 'app-update-banner',
-  standalone: true,
-  imports: [CommonModule, LucideAngularModule],
-  templateUrl: './update-banner.component.html',
-  styleUrls: ['./update-banner.component.scss']
+    selector: 'app-update-banner',
+    imports: [CommonModule, LucideAngularModule],
+    templateUrl: './update-banner.component.html',
+    styleUrls: ['./update-banner.component.scss']
 })
 export class UpdateBannerComponent {
   readonly RefreshCw = RefreshCw;

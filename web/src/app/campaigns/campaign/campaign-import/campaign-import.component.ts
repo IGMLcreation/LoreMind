@@ -46,11 +46,10 @@ interface ArcNode {
  * Rien n'est créé tant que l'utilisateur n'a pas validé « Créer dans la campagne ».
  */
 @Component({
-  selector: 'app-campaign-import',
-  standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule],
-  templateUrl: './campaign-import.component.html',
-  styleUrls: ['./campaign-import.component.scss']
+    selector: 'app-campaign-import',
+    imports: [CommonModule, FormsModule, LucideAngularModule],
+    templateUrl: './campaign-import.component.html',
+    styleUrls: ['./campaign-import.component.scss']
 })
 export class CampaignImportComponent implements OnInit {
   readonly ArrowLeft = ArrowLeft;

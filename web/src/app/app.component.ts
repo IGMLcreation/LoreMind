@@ -11,20 +11,19 @@ import { GlobalSearchService } from './services/global-search.service';
 import { VersionCheckerService } from './services/version-checker.service';
 
 @Component({
-  selector: 'app-root',
-  standalone: true,
-  imports: [
-    RouterOutlet,
-    SidebarComponent,
-    SecondarySidebarComponent,
-    GlobalSearchComponent,
-    UpdateBannerComponent,
-    ConfirmDialogHostComponent,
-    AsyncPipe,
-    NgIf,
-  ],
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss']
+    selector: 'app-root',
+    imports: [
+        RouterOutlet,
+        SidebarComponent,
+        SecondarySidebarComponent,
+        GlobalSearchComponent,
+        UpdateBannerComponent,
+        ConfirmDialogHostComponent,
+        AsyncPipe,
+        NgIf,
+    ],
+    templateUrl: './app.component.html',
+    styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
   readonly sidebarConfig$ = this.layoutService.secondarySidebar$;

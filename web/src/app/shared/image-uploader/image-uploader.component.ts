@@ -18,11 +18,10 @@ import { Image } from '../../services/image.model';
  *  - Afficher l'etat loading et les erreurs
  */
 @Component({
-  selector: 'app-image-uploader',
-  standalone: true,
-  imports: [CommonModule, LucideAngularModule],
-  templateUrl: './image-uploader.component.html',
-  styleUrls: ['./image-uploader.component.scss']
+    selector: 'app-image-uploader',
+    imports: [CommonModule, LucideAngularModule],
+    templateUrl: './image-uploader.component.html',
+    styleUrls: ['./image-uploader.component.scss']
 })
 export class ImageUploaderComponent {
   readonly Upload = Upload;

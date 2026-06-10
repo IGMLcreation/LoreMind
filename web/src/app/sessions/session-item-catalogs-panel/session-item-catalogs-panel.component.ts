@@ -12,11 +12,10 @@ interface ItemGroup { category: string; items: CatalogItem[]; }
  * campagne et consigner un objet au journal (ex. « le joueur achète X »).
  */
 @Component({
-  selector: 'app-session-item-catalogs-panel',
-  standalone: true,
-  imports: [CommonModule, LucideAngularModule],
-  templateUrl: './session-item-catalogs-panel.component.html',
-  styleUrls: ['./session-item-catalogs-panel.component.scss']
+    selector: 'app-session-item-catalogs-panel',
+    imports: [CommonModule, LucideAngularModule],
+    templateUrl: './session-item-catalogs-panel.component.html',
+    styleUrls: ['./session-item-catalogs-panel.component.scss']
 })
 export class SessionItemCatalogsPanelComponent implements OnInit {
   readonly Package = Package;

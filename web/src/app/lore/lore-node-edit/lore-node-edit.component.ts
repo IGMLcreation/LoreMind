@@ -31,11 +31,10 @@ import { LORE_ICON_OPTIONS, IconOption } from '../lore-icons';
  * d'édition ET tous ses descendants — sinon l'arbre deviendrait circulaire.
  */
 @Component({
-  selector: 'app-lore-node-edit',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule],
-  templateUrl: './lore-node-edit.component.html',
-  styleUrls: ['./lore-node-edit.component.scss']
+    selector: 'app-lore-node-edit',
+    imports: [CommonModule, ReactiveFormsModule, LucideAngularModule],
+    templateUrl: './lore-node-edit.component.html',
+    styleUrls: ['./lore-node-edit.component.scss']
 })
 export class LoreNodeEditComponent implements OnInit, OnDestroy {
 

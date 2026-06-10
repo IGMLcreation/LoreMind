@@ -6,11 +6,10 @@ import { TreeItem, TreeCreateAction, SidebarAction, BottomPanel, BottomPanelItem
 import { resolveIcon } from '../../lore/lore-icons';
 
 @Component({
-  selector: 'app-secondary-sidebar',
-  standalone: true,
-  imports: [CommonModule, LucideAngularModule],
-  templateUrl: './secondary-sidebar.component.html',
-  styleUrls: ['./secondary-sidebar.component.scss']
+    selector: 'app-secondary-sidebar',
+    imports: [CommonModule, LucideAngularModule],
+    templateUrl: './secondary-sidebar.component.html',
+    styleUrls: ['./secondary-sidebar.component.scss']
 })
 export class SecondarySidebarComponent implements OnDestroy {
   @Input() title = '';

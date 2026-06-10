@@ -40,11 +40,10 @@ const CHARACTER_FIELD_SUGGESTIONS = ['Histoire', 'Personnalite', 'Apparence', 'N
 const NPC_FIELD_SUGGESTIONS = ['Motivation', 'Apparence', 'Faction', 'Notes MJ'];
 
 @Component({
-  selector: 'app-game-system-edit',
-  standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, TemplateFieldsEditorComponent],
-  templateUrl: './game-system-edit.component.html',
-  styleUrls: ['./game-system-edit.component.scss']
+    selector: 'app-game-system-edit',
+    imports: [CommonModule, FormsModule, LucideAngularModule, TemplateFieldsEditorComponent],
+    templateUrl: './game-system-edit.component.html',
+    styleUrls: ['./game-system-edit.component.scss']
 })
 export class GameSystemEditComponent implements OnInit {
   readonly Save = Save;

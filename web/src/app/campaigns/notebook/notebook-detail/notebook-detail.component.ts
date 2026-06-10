@@ -19,11 +19,10 @@ import { NotebookActionCardComponent } from '../notebook-action-card/notebook-ac
  * Route : /campaigns/:campaignId/notebooks/:notebookId
  */
 @Component({
-  selector: 'app-notebook-detail',
-  standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, NotebookActionCardComponent],
-  templateUrl: './notebook-detail.component.html',
-  styleUrls: ['./notebook-detail.component.scss']
+    selector: 'app-notebook-detail',
+    imports: [CommonModule, FormsModule, LucideAngularModule, NotebookActionCardComponent],
+    templateUrl: './notebook-detail.component.html',
+    styleUrls: ['./notebook-detail.component.scss']
 })
 export class NotebookDetailComponent implements OnInit {
   readonly ArrowLeft = ArrowLeft;

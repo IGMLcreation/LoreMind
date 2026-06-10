@@ -22,11 +22,10 @@ import { AiChatService, ChatMessage } from '../../services/ai-chat.service';
  * lore + campagne + GameSystem + journal — l'IA "sait" tout ce qui s'est passé.</p>
  */
 @Component({
-  selector: 'app-session-ai-chat-panel',
-  standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule],
-  templateUrl: './session-ai-chat-panel.component.html',
-  styleUrls: ['./session-ai-chat-panel.component.scss']
+    selector: 'app-session-ai-chat-panel',
+    imports: [CommonModule, FormsModule, LucideAngularModule],
+    templateUrl: './session-ai-chat-panel.component.html',
+    styleUrls: ['./session-ai-chat-panel.component.scss']
 })
 export class SessionAiChatPanelComponent implements OnChanges, OnDestroy {
   readonly Send = Send;

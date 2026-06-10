@@ -8,11 +8,10 @@ import { GameSystem } from '../services/game-system.model';
 import { ConfirmDialogService } from '../shared/confirm-dialog/confirm-dialog.service';
 
 @Component({
-  selector: 'app-game-systems',
-  standalone: true,
-  imports: [CommonModule, LucideAngularModule],
-  templateUrl: './game-systems.component.html',
-  styleUrls: ['./game-systems.component.scss']
+    selector: 'app-game-systems',
+    imports: [CommonModule, LucideAngularModule],
+    templateUrl: './game-systems.component.html',
+    styleUrls: ['./game-systems.component.scss']
 })
 export class GameSystemsComponent implements OnInit {
   readonly Dices = Dices;

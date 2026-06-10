@@ -28,11 +28,10 @@ import { DiceRollResult } from '../session-dice-panel/session-dice-panel.compone
  * Le layout dédié "mode jeu" sera ajouté en Phase 4.
  */
 @Component({
-  selector: 'app-session-detail',
-  standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, RouterLink, SessionReferencePanelComponent],
-  templateUrl: './session-detail.component.html',
-  styleUrls: ['./session-detail.component.scss']
+    selector: 'app-session-detail',
+    imports: [CommonModule, FormsModule, LucideAngularModule, RouterLink, SessionReferencePanelComponent],
+    templateUrl: './session-detail.component.html',
+    styleUrls: ['./session-detail.component.scss']
 })
 export class SessionDetailComponent implements OnInit, OnDestroy {
   readonly Dices = Dices;

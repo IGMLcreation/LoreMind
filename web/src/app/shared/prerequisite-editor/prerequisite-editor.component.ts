@@ -12,11 +12,10 @@ import { Chapter, Prerequisite } from '../../services/campaign.model';
  * un menu à 3 entrées (quête, session, fait).
  */
 @Component({
-  selector: 'app-prerequisite-editor',
-  standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule],
-  templateUrl: './prerequisite-editor.component.html',
-  styleUrls: ['./prerequisite-editor.component.scss']
+    selector: 'app-prerequisite-editor',
+    imports: [CommonModule, FormsModule, LucideAngularModule],
+    templateUrl: './prerequisite-editor.component.html',
+    styleUrls: ['./prerequisite-editor.component.scss']
 })
 export class PrerequisiteEditorComponent {
   /** Liste courante. */

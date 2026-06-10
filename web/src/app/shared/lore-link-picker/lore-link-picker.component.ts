@@ -25,11 +25,10 @@ import { Page } from '../../services/page.model';
  *  - Exclut la page courante et les pages déjà sélectionnées
  */
 @Component({
-  selector: 'app-lore-link-picker',
-  standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule],
-  templateUrl: './lore-link-picker.component.html',
-  styleUrls: ['./lore-link-picker.component.scss']
+    selector: 'app-lore-link-picker',
+    imports: [CommonModule, FormsModule, LucideAngularModule],
+    templateUrl: './lore-link-picker.component.html',
+    styleUrls: ['./lore-link-picker.component.scss']
 })
 export class LoreLinkPickerComponent {
   readonly X = X;

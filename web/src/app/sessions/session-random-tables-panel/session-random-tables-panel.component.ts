@@ -17,11 +17,10 @@ import { DiceRollResult } from '../session-dice-panel/session-dice-panel.compone
  *  - `aiReplyToJournal` (string) → entrée NOTE (récit IA).
  */
 @Component({
-  selector: 'app-session-random-tables-panel',
-  standalone: true,
-  imports: [CommonModule, LucideAngularModule],
-  templateUrl: './session-random-tables-panel.component.html',
-  styleUrls: ['./session-random-tables-panel.component.scss']
+    selector: 'app-session-random-tables-panel',
+    imports: [CommonModule, LucideAngularModule],
+    templateUrl: './session-random-tables-panel.component.html',
+    styleUrls: ['./session-random-tables-panel.component.scss']
 })
 export class SessionRandomTablesPanelComponent implements OnInit {
   readonly Dices = Dices;

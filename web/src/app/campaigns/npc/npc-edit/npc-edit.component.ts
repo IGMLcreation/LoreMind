@@ -20,11 +20,10 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  * GameSystem associe a la campagne.
  */
 @Component({
-  selector: 'app-npc-edit',
-  standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, AiChatDrawerComponent, DynamicFieldsFormComponent, SingleImagePickerComponent],
-  templateUrl: './npc-edit.component.html',
-  styleUrls: ['./npc-edit.component.scss']
+    selector: 'app-npc-edit',
+    imports: [CommonModule, FormsModule, LucideAngularModule, AiChatDrawerComponent, DynamicFieldsFormComponent, SingleImagePickerComponent],
+    templateUrl: './npc-edit.component.html',
+    styleUrls: ['./npc-edit.component.scss']
 })
 export class NpcEditComponent implements OnInit {
   readonly Save = Save;

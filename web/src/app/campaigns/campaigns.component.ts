@@ -8,11 +8,10 @@ import { Campaign } from '../services/campaign.model';
 import { CampaignCreateComponent, CampaignCreatePayload } from './campaign/campaign-create/campaign-create.component';
 
 @Component({
-  selector: 'app-campaigns',
-  standalone: true,
-  imports: [CommonModule, LucideAngularModule, CampaignCreateComponent],
-  templateUrl: './campaigns.component.html',
-  styleUrls: ['./campaigns.component.scss']
+    selector: 'app-campaigns',
+    imports: [CommonModule, LucideAngularModule, CampaignCreateComponent],
+    templateUrl: './campaigns.component.html',
+    styleUrls: ['./campaigns.component.scss']
 })
 export class CampaignsComponent implements OnInit {
   readonly Map = Map;

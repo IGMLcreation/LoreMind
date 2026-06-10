@@ -12,11 +12,10 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  * Route : /campaigns/:campaignId/item-catalogs
  */
 @Component({
-  selector: 'app-item-catalog-list',
-  standalone: true,
-  imports: [CommonModule, LucideAngularModule],
-  templateUrl: './item-catalog-list.component.html',
-  styleUrls: ['./item-catalog-list.component.scss']
+    selector: 'app-item-catalog-list',
+    imports: [CommonModule, LucideAngularModule],
+    templateUrl: './item-catalog-list.component.html',
+    styleUrls: ['./item-catalog-list.component.scss']
 })
 export class ItemCatalogListComponent implements OnInit {
   readonly ArrowLeft = ArrowLeft;

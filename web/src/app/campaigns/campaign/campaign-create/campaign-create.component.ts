@@ -21,11 +21,10 @@ export interface CampaignCreatePayload {
 }
 
 @Component({
-  selector: 'app-campaign-create',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, LucideAngularModule],
-  templateUrl: './campaign-create.component.html',
-  styleUrls: ['./campaign-create.component.scss']
+    selector: 'app-campaign-create',
+    imports: [CommonModule, ReactiveFormsModule, FormsModule, LucideAngularModule],
+    templateUrl: './campaign-create.component.html',
+    styleUrls: ['./campaign-create.component.scss']
 })
 export class CampaignCreateComponent implements OnInit {
   @Output() close = new EventEmitter<void>();

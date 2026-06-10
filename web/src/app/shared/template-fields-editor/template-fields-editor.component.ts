@@ -15,11 +15,10 @@ import { TemplateField, FieldType, ImageLayout } from '../../services/template.m
  * mais c'est le parent qui decide du blocage du submit.
  */
 @Component({
-  selector: 'app-template-fields-editor',
-  standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule],
-  templateUrl: './template-fields-editor.component.html',
-  styleUrls: ['./template-fields-editor.component.scss']
+    selector: 'app-template-fields-editor',
+    imports: [CommonModule, FormsModule, LucideAngularModule],
+    templateUrl: './template-fields-editor.component.html',
+    styleUrls: ['./template-fields-editor.component.scss']
 })
 export class TemplateFieldsEditorComponent {
   readonly Plus = Plus;

@@ -27,11 +27,10 @@ import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog
  * Pour modifier → bouton "Modifier" qui navigue vers /lore/:loreId/pages/:pageId/edit.
  */
 @Component({
-  selector: 'app-page-view',
-  standalone: true,
-  imports: [CommonModule, RouterModule, LucideAngularModule, BreadcrumbComponent, ImageGalleryComponent],
-  templateUrl: './page-view.component.html',
-  styleUrls: ['./page-view.component.scss']
+    selector: 'app-page-view',
+    imports: [CommonModule, RouterModule, LucideAngularModule, BreadcrumbComponent, ImageGalleryComponent],
+    templateUrl: './page-view.component.html',
+    styleUrls: ['./page-view.component.scss']
 })
 export class PageViewComponent implements OnInit, OnDestroy {
   readonly Pencil = Pencil;

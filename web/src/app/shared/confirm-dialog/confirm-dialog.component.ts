@@ -5,11 +5,10 @@ import { LucideAngularModule, TriangleAlert, X } from 'lucide-angular';
 export type ConfirmDialogVariant = 'warning' | 'danger' | 'info';
 
 @Component({
-  selector: 'app-confirm-dialog',
-  standalone: true,
-  imports: [CommonModule, LucideAngularModule],
-  templateUrl: './confirm-dialog.component.html',
-  styleUrls: ['./confirm-dialog.component.scss']
+    selector: 'app-confirm-dialog',
+    imports: [CommonModule, LucideAngularModule],
+    templateUrl: './confirm-dialog.component.html',
+    styleUrls: ['./confirm-dialog.component.scss']
 })
 export class ConfirmDialogComponent {
   readonly TriangleAlert = TriangleAlert;

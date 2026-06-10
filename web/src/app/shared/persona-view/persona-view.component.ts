@@ -33,11 +33,10 @@ export interface PersonaLike {
 }
 
 @Component({
-  selector: 'app-persona-view',
-  standalone: true,
-  imports: [CommonModule, LucideAngularModule, ImageGalleryComponent],
-  templateUrl: './persona-view.component.html',
-  styleUrls: ['./persona-view.component.scss']
+    selector: 'app-persona-view',
+    imports: [CommonModule, LucideAngularModule, ImageGalleryComponent],
+    templateUrl: './persona-view.component.html',
+    styleUrls: ['./persona-view.component.scss']
 })
 export class PersonaViewComponent {
   readonly BookOpen = BookOpen;

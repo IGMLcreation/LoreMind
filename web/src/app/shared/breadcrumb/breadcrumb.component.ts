@@ -22,11 +22,10 @@ export interface BreadcrumbItem {
  *   ]"></app-breadcrumb>
  */
 @Component({
-  selector: 'app-breadcrumb',
-  standalone: true,
-  imports: [CommonModule, RouterLink],
-  templateUrl: './breadcrumb.component.html',
-  styleUrls: ['./breadcrumb.component.scss']
+    selector: 'app-breadcrumb',
+    imports: [CommonModule, RouterLink],
+    templateUrl: './breadcrumb.component.html',
+    styleUrls: ['./breadcrumb.component.scss']
 })
 export class BreadcrumbComponent {
   @Input() items: BreadcrumbItem[] = [];

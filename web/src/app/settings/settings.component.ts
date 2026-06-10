@@ -23,11 +23,10 @@ import { OllamaModelManagerComponent } from './ollama-model-manager/ollama-model
  * requete chat / generate — pas besoin de redemarrer.
  */
 @Component({
-  selector: 'app-settings',
-  standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, UpdatesSectionComponent, OllamaModelManagerComponent],
-  templateUrl: './settings.component.html',
-  styleUrls: ['./settings.component.scss']
+    selector: 'app-settings',
+    imports: [CommonModule, FormsModule, LucideAngularModule, UpdatesSectionComponent, OllamaModelManagerComponent],
+    templateUrl: './settings.component.html',
+    styleUrls: ['./settings.component.scss']
 })
 export class SettingsComponent implements OnInit {
 

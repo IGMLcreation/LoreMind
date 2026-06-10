@@ -20,11 +20,10 @@ interface GraphEdge { key: string; label: string; x1: number; y1: number; x2: nu
  * Layout custom (BFS par niveaux) en SVG — évite une dépendance lourde type ngx-graph.
  */
 @Component({
-  selector: 'app-chapter-graph',
-  standalone: true,
-  imports: [CommonModule, RouterModule, LucideAngularModule],
-  templateUrl: './chapter-graph.component.html',
-  styleUrls: ['./chapter-graph.component.scss']
+    selector: 'app-chapter-graph',
+    imports: [CommonModule, RouterModule, LucideAngularModule],
+    templateUrl: './chapter-graph.component.html',
+    styleUrls: ['./chapter-graph.component.scss']
 })
 export class ChapterGraphComponent implements OnInit, OnDestroy {
   readonly ArrowLeft = ArrowLeft;

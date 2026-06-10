@@ -32,11 +32,10 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  * personnages / lieux / objets du Lore.
  */
 @Component({
-  selector: 'app-arc-edit',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, LoreLinkPickerComponent, AiChatDrawerComponent, ImageGalleryComponent, IconPickerComponent],
-  templateUrl: './arc-edit.component.html',
-  styleUrls: ['./arc-edit.component.scss']
+    selector: 'app-arc-edit',
+    imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, LoreLinkPickerComponent, AiChatDrawerComponent, ImageGalleryComponent, IconPickerComponent],
+    templateUrl: './arc-edit.component.html',
+    styleUrls: ['./arc-edit.component.scss']
 })
 export class ArcEditComponent implements OnInit, OnDestroy {
   readonly Trash2 = Trash2;

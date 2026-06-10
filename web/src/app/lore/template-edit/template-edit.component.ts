@@ -20,11 +20,10 @@ import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog
  * Mêmes champs que la création + bouton Supprimer.
  */
 @Component({
-  selector: 'app-template-edit',
-  standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, LucideAngularModule],
-  templateUrl: './template-edit.component.html',
-  styleUrls: ['./template-edit.component.scss']
+    selector: 'app-template-edit',
+    imports: [CommonModule, FormsModule, ReactiveFormsModule, LucideAngularModule],
+    templateUrl: './template-edit.component.html',
+    styleUrls: ['./template-edit.component.scss']
 })
 export class TemplateEditComponent implements OnInit, OnDestroy {
   readonly Plus = Plus;

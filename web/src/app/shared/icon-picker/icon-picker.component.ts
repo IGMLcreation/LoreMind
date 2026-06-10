@@ -19,10 +19,9 @@ export interface IconPickerOption {
  * d'icones lui-meme — l'appelant lui passe la banque a afficher.
  */
 @Component({
-  selector: 'app-icon-picker',
-  standalone: true,
-  imports: [CommonModule, LucideAngularModule],
-  template: `
+    selector: 'app-icon-picker',
+    imports: [CommonModule, LucideAngularModule],
+    template: `
     <div class="icon-grid">
       <button
         type="button"
@@ -36,7 +35,7 @@ export interface IconPickerOption {
       </button>
     </div>
   `,
-  styleUrls: ['./icon-picker.component.scss']
+    styleUrls: ['./icon-picker.component.scss']
 })
 export class IconPickerComponent {
   @Input() options: IconPickerOption[] = [];

@@ -23,11 +23,10 @@ import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog
  * dialogue d'impact que les autres écrans.
  */
 @Component({
-  selector: 'app-folder-view',
-  standalone: true,
-  imports: [CommonModule, LucideAngularModule],
-  templateUrl: './folder-view.component.html',
-  styleUrls: ['./folder-view.component.scss']
+    selector: 'app-folder-view',
+    imports: [CommonModule, LucideAngularModule],
+    templateUrl: './folder-view.component.html',
+    styleUrls: ['./folder-view.component.scss']
 })
 export class FolderViewComponent implements OnInit, OnDestroy {
   readonly Folder = Folder;
