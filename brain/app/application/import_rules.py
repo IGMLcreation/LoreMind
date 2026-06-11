@@ -243,9 +243,21 @@ class ImportRulesUseCase:
                               f"Dernier message : {last_error or 'inconnu'}"}
             return
 
+        sections = merger.result()
+        if total > 0 and not sections:
+            # Le texte a bien été extrait mais AUCUN morceau n'a produit de JSON
+            # exploitable (sorties coupées/illisibles). Sans ce signal, l'UI reçoit
+            # un `done` vide et l'utilisateur conclut à tort que le PDF est illisible.
+            yield {"type": "error",
+                   "message": "Le texte du PDF a été extrait, mais le modèle n'a produit "
+                              "aucune section exploitable (réponses JSON vides ou coupées). "
+                              "Réduisez la taille des morceaux d'import, augmentez la fenêtre "
+                              "de contexte (num_ctx) ou essayez un autre modèle."}
+            return
+
         yield {
             "type": "done",
-            "sections": merger.result(),
+            "sections": sections,
             "page_count": doc.page_count,
             "ocr_page_count": doc.ocr_page_count,
             "skipped": skipped,

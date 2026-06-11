@@ -5,6 +5,7 @@ Isole le reste de l'application des spécificités du protocole Ollama
 demain, on écrit un nouvel adapter sans toucher au reste du code.
 """
 import json
+import logging
 from typing import AsyncIterator
 
 import httpx
@@ -12,6 +13,8 @@ import httpx
 from app.core.config import Settings
 from app.domain.models import ChatMessage
 from app.domain.ports import LLMGenerationTimeout, LLMProviderError
+
+logger = logging.getLogger(__name__)
 
 
 class OllamaLLMProvider:
@@ -92,7 +95,24 @@ class OllamaLLMProvider:
                     f"Erreur lors de l'appel à Ollama : {exc}"
                 ) from exc
 
-        return response.json()["response"]
+        data = response.json()
+        # Diagnostic crucial pour les imports : `done_reason` != "stop" signifie que
+        # la génération a été INTERROMPUE (fenêtre de contexte pleine, num_predict…)
+        # et non terminée par le modèle. Sans ce log, on ne voit qu'un JSON coupé
+        # en aval, sans la cause. `prompt_eval_count` révèle aussi la VRAIE taille
+        # du prompt en tokens du modèle (les morceaux sont mesurés en tokens
+        # cl100k, ~20-40% plus compacts que les tokenizers locaux).
+        done_reason = data.get("done_reason")
+        if done_reason and done_reason != "stop":
+            logger.warning(
+                "Ollama a interrompu la génération (done_reason=%s) : prompt=%s tokens, "
+                "sortie=%s tokens, num_ctx demandé=%s. Si prompt+sortie ≈ num_ctx, la "
+                "fenêtre de contexte est pleine : réduisez la taille des morceaux "
+                "d'import ou augmentez num_ctx (Paramètres).",
+                done_reason, data.get("prompt_eval_count"),
+                data.get("eval_count"), self._num_ctx,
+            )
+        return data["response"]
 
     async def stream_chat(
         self,

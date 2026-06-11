@@ -5,6 +5,7 @@ port (LLM, embeddings, extracteur PDF), en fonction des Settings — modifiables
 à chaud depuis l'écran Paramètres de l'UI. Les routers ne connaissent que les
 ports et les use cases, jamais Ollama/Mistral/etc.
 """
+import logging
 from typing import Annotated
 
 from fastapi import Depends, HTTPException
@@ -29,9 +30,37 @@ from app.infrastructure.onemin_adapter import OneMinAiLLMProvider
 from app.infrastructure.openrouter_adapter import OpenRouterLLMProvider
 from app.infrastructure.pdf_extractor import PyMuPdfTextExtractor
 
+logger = logging.getLogger(__name__)
+
 # Extracteur PDF partagé : la détection OCR (version Tesseract) a un coût
 # (subprocess) qu'on ne veut pas payer à chaque requête → singleton module.
 _PDF_EXTRACTOR = PyMuPdfTextExtractor()
+
+
+def _effective_import_chunk_tokens(settings: Settings) -> int:
+    """Taille de morceau réellement utilisable pour l'import.
+
+    Avec Ollama, le morceau (entrée) ET sa réécriture en sections (sortie ≈ même
+    taille) doivent tenir ensemble dans `num_ctx` — sinon Ollama remplit la fenêtre
+    avec le prompt et la génération s'arrête après quelques tokens (JSON coupé net,
+    morceau perdu). Budget : entrée×~1.3 (les morceaux sont mesurés en tokens
+    cl100k, plus compacts que les tokenizers locaux) + consignes + sortie×~1.4
+    ≤ num_ctx  →  morceau ≤ (num_ctx − 800) / 2.7. On plafonne, avec un log pour
+    rester transparent. Les providers cloud (gros contexte) ne sont pas plafonnés.
+    """
+    requested = settings.import_chunk_tokens
+    if settings.llm_provider != "ollama":
+        return requested
+    cap = max(1000, int((settings.llm_num_ctx - 800) / 2.7))
+    if requested > cap:
+        logger.warning(
+            "Taille de morceau d'import réduite de %s à %s tokens : avec num_ctx=%s, "
+            "un morceau plus gros ne laisserait pas la place à la sortie du modèle "
+            "(génération coupée). Augmentez num_ctx pour utiliser de plus gros morceaux.",
+            requested, cap, settings.llm_num_ctx,
+        )
+        return cap
+    return requested
 
 
 def get_llm_provider(
@@ -83,7 +112,8 @@ def get_import_rules_use_case(
 ) -> ImportRulesUseCase:
     """Factory du use case d'import de règles PDF (extraction + structuration)."""
     return ImportRulesUseCase(
-        llm=llm, extractor=_PDF_EXTRACTOR, chunk_target_tokens=settings.import_chunk_tokens)
+        llm=llm, extractor=_PDF_EXTRACTOR,
+        chunk_target_tokens=_effective_import_chunk_tokens(settings))
 
 
 def get_import_campaign_use_case(
@@ -94,7 +124,7 @@ def get_import_campaign_use_case(
     return ImportCampaignUseCase(
         llm=llm,
         extractor=_PDF_EXTRACTOR,
-        chunk_target_tokens=settings.import_chunk_tokens,
+        chunk_target_tokens=_effective_import_chunk_tokens(settings),
         map_concurrency=settings.llm_map_concurrency,
     )
 

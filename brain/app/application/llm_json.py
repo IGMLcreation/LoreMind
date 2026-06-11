@@ -57,12 +57,20 @@ def looks_like_truncated_json(raw: str) -> bool:
     """La sortie ressemble-t-elle à un JSON COUPÉ (accolades/crochets non refermés)
     plutôt qu'à de la prose ? Sert à déclencher un re-découpage même quand RIEN n'a
     pu être récupéré (cas où le 1er contenu est si long qu'il est coupé avant toute
-    sous-structure complète). On exige un contenu substantiel pour éviter les
-    faux positifs sur une courte réponse non-JSON."""
-    s = (raw or "").strip()
-    if "{" not in s or len(s) < 100:
+    sous-structure complète).
+
+    Une réponse qui COMMENCE par `{` est jugée sur le seul équilibre des accolades,
+    même très courte : en mode JSON un `{"` de 2 caractères est une génération
+    interrompue net (contexte plein, plafond de sortie), pas de la prose — c'est le
+    signal de re-découpage. Pour le reste (prose contenant des accolades), on exige
+    un contenu substantiel pour éviter les faux positifs."""
+    s = _strip_reasoning(raw or "").strip()
+    if "{" not in s:
         return False
-    return s.count("{") > s.count("}") or s.count("[") > s.count("]")
+    unbalanced = s.count("{") > s.count("}") or s.count("[") > s.count("]")
+    if s.startswith("{"):
+        return unbalanced
+    return len(s) >= 100 and unbalanced
 
 
 def extract_json_object(raw: str) -> str | None:
