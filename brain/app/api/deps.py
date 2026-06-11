@@ -111,9 +111,14 @@ def get_import_rules_use_case(
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> ImportRulesUseCase:
     """Factory du use case d'import de règles PDF (extraction + structuration)."""
+    # Modèle LOCAL → mode segmentation : le LLM ne renvoie que les frontières des
+    # sections (~200 tokens) et le texte original est découpé localement. Réécrire
+    # tout le contenu à ~100 tokens/s prendrait des dizaines de minutes par livre.
+    # Les providers cloud (rapides, grand contexte) gardent la réécriture nettoyée.
     return ImportRulesUseCase(
         llm=llm, extractor=_PDF_EXTRACTOR,
-        chunk_target_tokens=_effective_import_chunk_tokens(settings))
+        chunk_target_tokens=_effective_import_chunk_tokens(settings),
+        segment_only=settings.llm_provider == "ollama")
 
 
 def get_import_campaign_use_case(

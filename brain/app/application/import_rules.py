@@ -13,6 +13,7 @@ Ne dépend que des abstractions du domaine (ports LLMProvider + PdfTextExtractor
 from __future__ import annotations
 
 import logging
+import re
 
 from app.application.chunking import CHUNK_TARGET_TOKENS, chunk_text, split_in_half
 from app.application.llm_json import load_json_object, looks_like_truncated_json
@@ -85,6 +86,55 @@ Règles impératives :
   par un tiret en fin de ligne, retirer les en-têtes/pieds de page et numéros de page parasites.
 - N'INVENTE AUCUNE règle, ne résume pas abusivement : tu réorganises, tu ne réécris pas le fond.
 - Ignore les pages de garde, sommaires, crédits, pages vides (renvoie {{}} si l'extrait n'a aucune règle)."""
+
+# --- Mode SEGMENTATION (modèles locaux) --------------------------------------
+# Réécrire tout le texte en JSON impose une SORTIE ≈ taille de l'ENTRÉE : à
+# ~100 tokens/s en local, un livre = des dizaines de minutes et des troncatures
+# en cascade. Ici le modèle ne renvoie que les FRONTIÈRES des sections (titre +
+# premiers mots exacts) — ~200 tokens quel que soit le morceau — et c'est NOUS
+# qui découpons le texte original. ~50× plus rapide, fidélité parfaite du
+# contenu (texte source intact), plus de troncature possible.
+
+_SEGMENT_SYSTEM = """Tu analyses un EXTRAIT brut d'un livre de règles de jeu de rôle.
+Ta tâche : repérer où COMMENCENT les sections thématiques. Tu ne réécris RIEN.
+
+Format EXACT attendu :
+{{"sections": [{{"titre": "Combat", "debut": "Le combat se déroule en tours de"}}, ...]}}
+
+Règles impératives :
+- "debut" = les 5 à 10 PREMIERS MOTS du passage où la section commence, COPIÉS À L'IDENTIQUE
+  depuis l'extrait (même orthographe, même ponctuation, même langue). JAMAIS un résumé.
+- La PREMIÈRE entrée commence aux tout premiers mots de l'extrait (même si le contenu
+  poursuit une section entamée avant cet extrait).
+- Les entrées suivent l'ordre du texte. Vise des sections LARGES (un thème), pas un titre
+  par paragraphe : un extrait contient typiquement 1 à 6 sections.
+- Titres : EN PRIORITÉ parmi :
+{canonical}
+  sinon un titre court et clair en français.
+- Pages de garde, sommaires, crédits : n'en fais pas des sections. Si l'extrait n'est que ça,
+  renvoie {{"sections": []}}."""
+
+# Schéma passé à Ollama (structured outputs) : un objet {"sections": [...]}.
+# Racine objet (pas tableau) car l'extraction côté Brain repère le premier {…}.
+_ANCHORS_SCHEMA: dict = {
+    "type": "object",
+    "properties": {
+        "sections": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "titre": {"type": "string"},
+                    "debut": {"type": "string"},
+                },
+                "required": ["titre", "debut"],
+                "additionalProperties": False,
+            },
+        },
+    },
+    "required": ["sections"],
+    "additionalProperties": False,
+}
 
 
 class _SectionMerger:
@@ -178,6 +228,27 @@ def _coerce_markdown(value: object) -> str:
     return "" if value is None else str(value)
 
 
+def _find_anchor(text: str, anchor: str, start: int) -> int | None:
+    """Position de `anchor` dans `text` à partir de `start`, ou None.
+
+    Le modèle recopie les premiers mots d'un passage, mais le texte extrait du
+    PDF contient des sauts de ligne/espaces multiples au même endroit, et le
+    modèle normalise parfois la casse. Trois passes, de la plus stricte à la
+    plus tolérante : exacte → espaces≈\\s+ → idem insensible à la casse."""
+    pos = text.find(anchor, start)
+    if pos != -1:
+        return pos
+    words = anchor.split()
+    if not words:
+        return None
+    pattern = r"\s+".join(re.escape(w) for w in words)
+    match = re.compile(pattern).search(text, start)
+    if match:
+        return match.start()
+    match = re.compile(pattern, re.IGNORECASE).search(text, start)
+    return match.start() if match else None
+
+
 def _combine_sections(a: dict[str, str], b: dict[str, str]) -> dict[str, str]:
     """Fusionne deux dicts de sections (issus des 2 moitiés d'un morceau re-découpé).
 
@@ -204,10 +275,16 @@ class ImportRulesUseCase:
         llm: LLMProvider,
         extractor: PdfTextExtractor,
         chunk_target_tokens: int = CHUNK_TARGET_TOKENS,
+        segment_only: bool = False,
     ) -> None:
+        """`segment_only=True` (modèles locaux) : le LLM ne renvoie que les
+        frontières des sections (titre + premiers mots) et le texte original est
+        découpé localement — sortie minuscule, pas de réécriture. False (cloud) :
+        le LLM réécrit le contenu en sections markdown nettoyées."""
         self._llm = llm
         self._extractor = extractor
         self._chunk_target_tokens = chunk_target_tokens
+        self._segment_only = segment_only
 
     async def execute(self, pdf_bytes: bytes) -> RulesImportResult:
         """Variante non-streamée : traite tout puis renvoie le résultat complet."""
@@ -322,8 +399,10 @@ class ImportRulesUseCase:
         """Extrait les sections d'un texte. Si la SORTIE est tronquée, retraite le
         texte en DEUX moitiés (chacune produit une réponse complète) et fusionne —
         ainsi aucune section n'est perdue, quel que soit le plafond de sortie."""
+        system = _SEGMENT_SYSTEM if self._segment_only else _MAP_SYSTEM
+        schema = _ANCHORS_SCHEMA if self._segment_only else _SECTIONS_SCHEMA
         prompt = (
-            _MAP_SYSTEM.format(
+            system.format(
                 canonical="\n".join(f"  - {s}" for s in _CANONICAL_SECTIONS)
             )
             + f"\n\n--- EXTRAIT {index + 1}/{total} ---\n{text}\n\n"
@@ -331,7 +410,7 @@ class ImportRulesUseCase:
         )
         try:
             raw = await generate_with_retry(
-                self._llm, prompt, output_format=_SECTIONS_SCHEMA, temperature=_TEMPERATURE)
+                self._llm, prompt, output_format=schema, temperature=_TEMPERATURE)
         except LLMGenerationTimeout:
             # Le modèle générait mais trop lentement pour réécrire tout le morceau
             # dans le temps imparti (fréquent sur tier gratuit + gros morceaux).
@@ -347,7 +426,10 @@ class ImportRulesUseCase:
             a = await self._extract_sections(left, index=index, total=total, depth=depth + 1)
             b = await self._extract_sections(right, index=index, total=total, depth=depth + 1)
             return _combine_sections(a, b)
-        sections, truncated = self._parse_sections(raw, index=index)
+        if self._segment_only:
+            sections, truncated = self._parse_anchors(raw, text, index=index)
+        else:
+            sections, truncated = self._parse_sections(raw, index=index)
 
         if truncated and depth < _MAX_SPLIT_DEPTH:
             left, right = split_in_half(text)
@@ -362,6 +444,68 @@ class ImportRulesUseCase:
             logger.warning(
                 "Morceau %s : sortie tronquée, profondeur max atteinte — partiel conservé.", index)
         return sections
+
+    @staticmethod
+    def _parse_anchors(raw: str, text: str, *, index: int) -> tuple[dict[str, str], bool]:
+        """Mode segmentation : réponse {"sections": [{titre, debut}, …]} → on localise
+        chaque `debut` dans le texte ORIGINAL et on découpe entre les ancres.
+
+        Une ancre introuvable est abandonnée (son contenu reste dans la section
+        précédente — aucun texte n'est perdu). Le texte avant la première ancre
+        trouvée est rattaché à la première section (le prompt demande au modèle de
+        faire démarrer la première entrée aux premiers mots de l'extrait)."""
+        parsed, recovered = load_json_object(raw)
+        if parsed is None:
+            truncated = looks_like_truncated_json(raw)
+            if not truncated:
+                logger.warning(
+                    "Morceau %s : aucun objet JSON exploitable (segmentation), ignoré. "
+                    "Début de la réponse du modèle : %r",
+                    index, (raw or "").strip()[:300] or "(réponse VIDE)")
+            return {}, truncated
+        entries = parsed.get("sections") if isinstance(parsed, dict) else None
+        if not isinstance(entries, list):
+            logger.warning("Morceau %s : pas de liste 'sections' exploitable, ignoré.", index)
+            return {}, False
+
+        # Localisation séquentielle : chaque ancre est cherchée APRÈS la précédente
+        # (préserve l'ordre du texte, évite qu'une phrase répétée matche trop tôt).
+        located: list[tuple[str, int]] = []
+        cursor = 0
+        dropped = 0
+        for entry in entries:
+            if not isinstance(entry, dict):
+                continue
+            title = str(entry.get("titre") or "").strip()
+            anchor = str(entry.get("debut") or "").strip()
+            if not title or not anchor:
+                continue
+            pos = _find_anchor(text, anchor, cursor)
+            if pos is None:
+                dropped += 1
+                continue
+            located.append((title, pos))
+            cursor = pos + 1
+        if dropped:
+            logger.info(
+                "Morceau %s : %s ancre(s) de section introuvable(s) — contenu rattaché "
+                "à la section précédente.", index, dropped)
+        if not located:
+            return {}, False
+
+        # Découpe entre ancres ; le préambule éventuel rejoint la première section.
+        located[0] = (located[0][0], 0)
+        sections: dict[str, str] = {}
+        for i, (title, start) in enumerate(located):
+            end = located[i + 1][1] if i + 1 < len(located) else len(text)
+            content = text[start:end].strip()
+            if not content:
+                continue
+            if title in sections:
+                sections[title] = f"{sections[title]}\n\n{content}"
+            else:
+                sections[title] = content
+        return sections, recovered
 
     @staticmethod
     def _parse_sections(raw: str, *, index: int) -> tuple[dict[str, str], bool]:

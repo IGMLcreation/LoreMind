@@ -61,17 +61,24 @@ export class CampaignImportService {
     let buffer = '';
     let currentEvent: string | null = null;
     let currentData = '';
+    // Le flux s'est-il terminé PROPREMENT (évènement done ou error reçu) ?
+    // Sans ce suivi, une connexion coupée en plein import (timeout serveur,
+    // proxy, Core redémarré) terminait l'Observable en silence : barre de
+    // progression figée et aucun message pour l'utilisateur.
+    let terminated = false;
 
     const dispatch = () => {
       const name = currentEvent ?? 'message';
       if (name === 'error') {
         let message = 'Échec de l\'import.';
         try { message = (JSON.parse(currentData) as { message?: string }).message ?? message; } catch { /* défaut */ }
+        terminated = true;
         subscriber.error(new Error(message));
       } else if (name === 'progress' || name === 'done') {
         try {
           const obj = JSON.parse(currentData);
           if (name === 'done') {
+            terminated = true;
             subscriber.next({ type: 'done', arcs: obj.arcs ?? [], npcs: obj.npcs ?? [] });
             subscriber.complete();
           } else {
@@ -105,9 +112,12 @@ export class CampaignImportService {
         }
       }
       if (currentEvent !== null || currentData !== '') dispatch();
-      subscriber.complete();
+      if (!terminated) {
+        subscriber.error(new Error(
+          'L\'import s\'est interrompu avant la fin (connexion coupée ou délai dépassé). Réessayez.'));
+      }
     } catch (err) {
-      subscriber.error(err);
+      if (!terminated) subscriber.error(err);
     }
   }
 }

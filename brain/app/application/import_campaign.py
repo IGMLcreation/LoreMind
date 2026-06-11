@@ -29,7 +29,12 @@ from app.domain.models import (
     RoomProposal,
     SceneProposal,
 )
-from app.domain.ports import LLMProvider, LLMProviderError, PdfTextExtractor
+from app.domain.ports import (
+    LLMGenerationTimeout,
+    LLMProvider,
+    LLMProviderError,
+    PdfTextExtractor,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -106,6 +111,84 @@ Format de réponse :
 - Si le livre n'est PAS découpé en actes/parties, regroupe tout sous un seul arc nommé "{default_arc}".
 - N'invente pas de contenu : tu réorganises et recopies ce qui est présent dans l'extrait.
 - Si l'extrait ne contient aucune matière narrative, renvoie {{"arcs": []}}."""
+
+# Schéma de l'arbre attendu, passé aux providers à sorties structurées (Ollama
+# contraint la grammaire : un modèle local ne PEUT plus produire de clés
+# inventées, d'objets bavards type "thought" ni de texte hors JSON). Les
+# adapters cloud le traduisent en mode JSON natif. Seuls les "name" sont
+# requis : le _TreeMerger tolère déjà tous les champs absents.
+_TREE_SCHEMA: dict = {
+    "type": "object",
+    "properties": {
+        "arcs": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                    "description": {"type": "string"},
+                    "type": {"type": "string", "enum": ["LINEAR", "HUB"]},
+                    "chapters": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {"type": "string"},
+                                "description": {"type": "string"},
+                                "scenes": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "name": {"type": "string"},
+                                            "description": {"type": "string"},
+                                            "player_narration": {"type": "string"},
+                                            "gm_notes": {"type": "string"},
+                                            "rooms": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "name": {"type": "string"},
+                                                        "description": {"type": "string"},
+                                                        "enemies": {"type": "string"},
+                                                        "loot": {"type": "string"},
+                                                    },
+                                                    "required": ["name"],
+                                                    "additionalProperties": False,
+                                                },
+                                            },
+                                        },
+                                        "required": ["name"],
+                                        "additionalProperties": False,
+                                    },
+                                },
+                            },
+                            "required": ["name"],
+                            "additionalProperties": False,
+                        },
+                    },
+                },
+                "required": ["name"],
+                "additionalProperties": False,
+            },
+        },
+        "npcs": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                    "description": {"type": "string"},
+                },
+                "required": ["name"],
+                "additionalProperties": False,
+            },
+        },
+    },
+    "required": ["arcs"],
+    "additionalProperties": False,
+}
 
 # Bloc TOC injecté quand le PDF a des bookmarks : les morceaux étant traités
 # séparément, c'est CE référentiel commun qui garantit que tous nomment les
@@ -480,6 +563,17 @@ class ImportCampaignUseCase:
                               f"Dernier message : {last_error or 'inconnu'}"}
             return
 
+        if total > 0 and merger.counts()[0] == 0 and not merger.npcs():
+            # Le texte a été extrait mais le modèle n'a produit AUCUNE structure
+            # exploitable : sans ce signal, l'UI reçoit un `done` vide et
+            # l'utilisateur conclut à tort que le PDF est illisible.
+            yield {"type": "error",
+                   "message": "Le texte du PDF a été extrait, mais le modèle n'a produit "
+                              "aucune structure exploitable (réponses JSON vides ou coupées). "
+                              "Réduisez la taille des morceaux d'import, augmentez la fenêtre "
+                              "de contexte (num_ctx) ou essayez un autre modèle."}
+            return
+
         # Consolidation finale : fusion des quasi-doublons inter-morceaux
         # (best-effort, voir _consolidate). Inutile sur un import mono-morceau.
         if total > 1:
@@ -557,8 +651,26 @@ class ImportCampaignUseCase:
             + f"\n\n--- EXTRAIT {index + 1}/{total} ---\n{text}\n\n"
             "Renvoie maintenant le JSON de l'arborescence."
         )
-        raw = await generate_with_retry(
-            self._llm, prompt, output_format="json", temperature=_TEMPERATURE)
+        try:
+            raw = await generate_with_retry(
+                self._llm, prompt, output_format=_TREE_SCHEMA, temperature=_TEMPERATURE)
+        except LLMGenerationTimeout:
+            # Génération trop lente pour la taille demandée (fréquent en local /
+            # tier gratuit) : même remède que la troncature, deux moitiés →
+            # sortie 2× plus courte. Re-lever si plus découpable.
+            if depth >= _MAX_SPLIT_DEPTH:
+                raise
+            left, right = split_in_half(text)
+            if not left or not right:
+                raise
+            logger.info(
+                "Morceau %s : timeout de génération → re-découpage en 2 moitiés (niveau %s).",
+                index, depth + 1)
+            a = await self._extract_payload(
+                left, index=index, total=total, depth=depth + 1, toc_block=toc_block)
+            b = await self._extract_payload(
+                right, index=index, total=total, depth=depth + 1, toc_block=toc_block)
+            return {"arcs": a["arcs"] + b["arcs"], "npcs": a["npcs"] + b["npcs"]}
         payload, truncated = self._parse_payload(raw, index=index)
 
         if truncated and depth < _MAX_SPLIT_DEPTH:

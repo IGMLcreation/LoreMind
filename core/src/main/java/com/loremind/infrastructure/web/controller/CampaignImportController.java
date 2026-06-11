@@ -31,8 +31,13 @@ public class CampaignImportController {
 
     private static final Logger log = LoggerFactory.getLogger(CampaignImportController.class);
 
-    /** Timeout SSE généreux : un import de livre entier peut durer plusieurs minutes. */
-    private static final long IMPORT_SSE_TIMEOUT_MS = 15 * 60 * 1000L;
+    /**
+     * Timeout SSE = durée TOTALE maximale de l'import (pas un timeout d'inactivité :
+     * les heartbeats ne le réarment pas). Un livre entier sur un modèle local peut
+     * largement dépasser 15 min → 60 min. La déconnexion du client reste détectée
+     * immédiatement par ailleurs (échec d'envoi → interruption de l'import).
+     */
+    private static final long IMPORT_SSE_TIMEOUT_MS = 60 * 60 * 1000L;
 
     private final CampaignImportService campaignImportService;
     private final TaskExecutor taskExecutor;
@@ -66,7 +71,15 @@ public class CampaignImportController {
         // amont (ClientGoneException remonte dans le doOnNext du WebClient →
         // annule la souscription → le Brain voit la coupure et stoppe le LLM).
         AtomicBoolean clientGone = new AtomicBoolean(false);
-        emitter.onTimeout(() -> clientGone.set(true));
+        emitter.onTimeout(() -> {
+            // Timeout = durée totale dépassée, mais la connexion est encore vivante :
+            // on envoie une vraie erreur au navigateur AVANT de fermer (sinon le flux
+            // se termine en silence et l'UI reste figée sur la barre de progression).
+            sendError(emitter, clientGone,
+                    "L'import a dépassé la durée maximale autorisée et a été interrompu. "
+                            + "Réessayez avec un modèle plus rapide ou un PDF plus petit.");
+            clientGone.set(true);
+        });
         emitter.onError(e -> clientGone.set(true));
 
         taskExecutor.execute(() -> {
