@@ -24,17 +24,20 @@ class LLMProvider(Protocol):
         self,
         prompt: str,
         *,
-        output_format: str | None = None,
+        output_format: str | dict | None = None,
         temperature: float | None = None,
     ) -> str:
         """Génère une réponse textuelle à partir d'un prompt donné.
 
         Args:
             prompt: le texte envoyé au modèle.
-            output_format: contrainte de format optionnelle. Exemple : "json"
-                pour forcer le modèle à renvoyer du JSON valide. Les
-                fournisseurs qui ne supportent pas une valeur donnée doivent
-                l'ignorer silencieusement ou la traduire au mieux.
+            output_format: contrainte de format optionnelle. "json" pour forcer
+                un JSON valide ; un dict = SCHÉMA JSON décrivant la structure
+                attendue (les fournisseurs qui supportent les sorties
+                structurées — ex. Ollama — contraignent la génération au schéma,
+                les autres retombent sur leur mode JSON natif). Les fournisseurs
+                qui ne supportent pas une valeur donnée doivent l'ignorer
+                silencieusement ou la traduire au mieux.
             temperature: créativité du modèle, 0.0 (déterministe/factuel) à
                 1.0+ (très créatif, hallucine plus facilement). None =
                 valeur par défaut de l'adapter. Recommandation LoreMind :

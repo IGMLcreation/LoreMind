@@ -138,8 +138,10 @@ class MistralLLMProvider:
             body["temperature"] = temperature
         # Mode JSON natif : TOUS les modèles Mistral le supportent → plus de fences
         # ```json ni de JSON invalide (retours à la ligne bruts dans les chaînes),
-        # principale cause de morceaux d'import ignorés.
-        if output_format == "json":
+        # principale cause de morceaux d'import ignorés. Un SCHÉMA (dict) est
+        # traduit en json_object : suffisant ici, les grands modèles cloud
+        # respectent la structure demandée par le prompt.
+        if output_format is not None:
             body["response_format"] = {"type": "json_object"}
 
         async with httpx.AsyncClient(timeout=self._timeout) as client:

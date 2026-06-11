@@ -60,7 +60,7 @@ async def generate_with_retry(
     llm: LLMProvider,
     prompt: str,
     *,
-    output_format: str | None = None,
+    output_format: str | dict | None = None,
     temperature: float | None = None,
 ) -> str:
     """Comme `llm.generate`, mais réessaie les erreurs transitoires (backoff).

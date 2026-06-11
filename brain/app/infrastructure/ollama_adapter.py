@@ -48,7 +48,7 @@ class OllamaLLMProvider:
         self,
         prompt: str,
         *,
-        output_format: str | None = None,
+        output_format: str | dict | None = None,
         temperature: float | None = None,
     ) -> str:
         url = f"{self._base_url}/api/generate"
@@ -58,6 +58,10 @@ class OllamaLLMProvider:
             "stream": False,
             "options": self._build_options(temperature),
         }
+        # "json" (mode JSON simple) ou un SCHÉMA JSON complet (structured outputs) :
+        # Ollama contraint alors la grammaire de génération au schéma — un petit
+        # modèle local ne PEUT physiquement plus produire d'objets imbriqués, de
+        # clés "thought" bavardes ou de texte hors JSON.
         if output_format is not None:
             payload["format"] = output_format
 

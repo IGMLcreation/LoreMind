@@ -131,8 +131,10 @@ class GeminiLLMProvider:
         if temperature is not None:
             body["temperature"] = temperature
         # Mode JSON natif (supporté par l'endpoint OpenAI-compatible de Gemini) :
-        # supprime fences ```json et JSON invalide, principale cause de morceaux ignorés.
-        if output_format == "json":
+        # supprime fences ```json et JSON invalide, principale cause de morceaux
+        # ignorés. Un SCHÉMA (dict) est traduit en json_object : suffisant, les
+        # grands modèles cloud respectent la structure demandée par le prompt.
+        if output_format is not None:
             body["response_format"] = {"type": "json_object"}
 
         async with httpx.AsyncClient(timeout=self._timeout) as client:

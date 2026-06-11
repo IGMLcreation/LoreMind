@@ -39,6 +39,16 @@ logger = logging.getLogger(__name__)
 # Plus la valeur est haute, plus le modèle "brode" (invente du contenu absent).
 _TEMPERATURE = 0.1
 
+# Schéma de la sortie attendue : objet PLAT {titre: markdown}. Passé tel quel à
+# Ollama (structured outputs : la grammaire interdit physiquement les objets
+# imbriqués, les clés "thought" à valeur non-string, le bavardage hors JSON…
+# indispensable pour les petits modèles locaux qui ne suivent pas les consignes).
+# Les adapters cloud le traduisent en mode JSON natif (json_object).
+_SECTIONS_SCHEMA: dict = {
+    "type": "object",
+    "additionalProperties": {"type": "string"},
+}
+
 # Taxonomie canonique suggérée au modèle pour homogénéiser les titres entre
 # morceaux (sinon "Combat" / "Le combat" / "Règles de combat" se dispersent).
 # Le modèle reste libre d'en créer d'autres si rien ne correspond.
@@ -61,9 +71,13 @@ On te donne un EXTRAIT brut d'un PDF de règles (texte parfois mal coupé par la
 
 Ta tâche : répartir le contenu de cet extrait dans des SECTIONS THÉMATIQUES.
 
+Format EXACT attendu — un objet JSON plat {{titre de section: contenu markdown}} :
+{{"Combat": "## Initiative\\n\\nChaque participant lance 1d20...", "Magie et sorts": "## Sorts\\n\\n..."}}
+
 Règles impératives :
-- Tu réponds UNIQUEMENT par un objet JSON valide, sans markdown ni commentaire autour.
-- Les CLÉS sont des titres de section (texte court). Les VALEURS sont le contenu de la règle en markdown.
+- Tu réponds UNIQUEMENT par cet objet JSON, sans texte avant ni après.
+- Les CLÉS sont des titres de section (texte court). Les VALEURS sont le contenu de la règle en markdown (chaîne de caractères, jamais un objet ou une liste).
+- INTERDIT : des clés génériques comme "title", "content", "sections", "thought" ou "notes" ; des objets imbriqués ; tout commentaire sur ta démarche ou ton raisonnement.
 - Utilise EN PRIORITÉ ces titres canoniques quand le contenu y correspond :
 {canonical}
 - Si un contenu ne rentre dans aucun, crée un titre clair et concis (en français).
@@ -105,6 +119,40 @@ class _SectionMerger:
 
     def result(self) -> dict[str, str]:
         return {title: "\n\n".join(parts) for title, parts in self._merged.items()}
+
+
+# Clés "méta" que certains modèles glissent dans le JSON (fuite de raisonnement,
+# schéma title/content inventé…) : jamais des titres de section voulus.
+_META_KEYS = frozenset({
+    "thought", "thoughts", "thinking", "reasoning", "raisonnement",
+    "comment", "commentaire", "commentaires", "note", "notes", "explanation",
+})
+
+
+def _normalize_sections(parsed: dict) -> dict:
+    """Ramène les formes déviantes courantes au format attendu {titre: contenu}.
+
+    Observé sur les petits modèles locaux (gemma 12b) malgré les consignes :
+      - enveloppe {"sections": {...}} ou {"règles": {...}} autour du vrai contenu ;
+      - schéma inventé {"title": "...", "content": "...", "thought": "..."} →
+        une seule section dont le titre est la valeur de "title" ;
+      - clés méta ("thought", "notes"…) mêlées aux vraies sections → retirées.
+    """
+    by_lower = {str(k).strip().lower(): k for k in parsed}
+    # Enveloppe : un unique conteneur connu dont la valeur est l'objet attendu.
+    if len(parsed) == 1:
+        only_key, only_val = next(iter(parsed.items()))
+        if (isinstance(only_val, dict)
+                and str(only_key).strip().lower() in {"sections", "règles", "regles", "rules"}):
+            return _normalize_sections(only_val)
+    # Schéma {"title": ..., "content": ...} : le titre est une VALEUR, pas une clé.
+    if "title" in by_lower and "content" in by_lower:
+        title = str(parsed[by_lower["title"]]).strip()
+        content = parsed[by_lower["content"]]
+        if title and not isinstance(content, dict):
+            return {title: content}
+    return {k: v for k, v in parsed.items()
+            if str(k).strip().lower() not in _META_KEYS}
 
 
 def _coerce_markdown(value: object) -> str:
@@ -283,7 +331,7 @@ class ImportRulesUseCase:
         )
         try:
             raw = await generate_with_retry(
-                self._llm, prompt, output_format="json", temperature=_TEMPERATURE)
+                self._llm, prompt, output_format=_SECTIONS_SCHEMA, temperature=_TEMPERATURE)
         except LLMGenerationTimeout:
             # Le modèle générait mais trop lentement pour réécrire tout le morceau
             # dans le temps imparti (fréquent sur tier gratuit + gros morceaux).
@@ -332,4 +380,5 @@ class ImportRulesUseCase:
         if not isinstance(parsed, dict):
             logger.warning("Morceau %s : le LLM n'a pas renvoyé un objet, ignoré.", index)
             return {}, False
-        return {str(k): _coerce_markdown(v) for k, v in parsed.items()}, recovered
+        normalized = _normalize_sections(parsed)
+        return {str(k): _coerce_markdown(v) for k, v in normalized.items()}, recovered
