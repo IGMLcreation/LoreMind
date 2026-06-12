@@ -34,6 +34,14 @@ public class NotebookMessageJpaEntity {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    /**
+     * Null = message de la conversation ACTIVE. Non-null = message archivé lors
+     * d'un « vider la conversation » ; tous les messages d'un même clear portent
+     * le même horodatage, qui sert d'identifiant de lot d'archive.
+     */
+    @Column(name = "archived_at")
+    private LocalDateTime archivedAt;
+
     @PrePersist
     protected void onCreate() {
         if (createdAt == null) createdAt = LocalDateTime.now();

@@ -34,6 +34,15 @@ export interface NotebookMessage {
   sources?: NotebookChatSource[];
 }
 
+/**
+ * Conversation archivée par « Vider la conversation » : un lot horodaté de
+ * messages, consultable en lecture seule (rien n'est supprimé au clear).
+ */
+export interface NotebookArchive {
+  archivedAt: string;
+  messages: NotebookMessage[];
+}
+
 export interface NotebookDetail {
   id: string;
   name: string;

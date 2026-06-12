@@ -2,17 +2,19 @@ import { Component, OnInit } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { LucideAngularModule, ArrowLeft, Upload, Trash2, Send, FileText, Loader, CheckCircle2, AlertCircle, Sparkles, Layers } from 'lucide-angular';
+import { LucideAngularModule, ArrowLeft, Upload, Trash2, Send, FileText, Loader, CheckCircle2, AlertCircle, Sparkles, Layers, Eraser, History, X } from 'lucide-angular';
 import { NotebookService } from '../../../services/notebook.service';
 import { CampaignSidebarService } from '../../../services/campaign-sidebar.service';
 import { CampaignService } from '../../../services/campaign.service';
 import { CharacterService } from '../../../services/character.service';
 import { NpcService } from '../../../services/npc.service';
-import { NotebookDetail, NotebookSource, NotebookMessage } from '../../../services/notebook.model';
+import { NotebookArchive, NotebookDetail, NotebookSource, NotebookMessage } from '../../../services/notebook.model';
 import { parseNotebookActions, NotebookAction } from '../../../services/notebook-action.model';
 import { Arc, Chapter } from '../../../services/campaign.model';
 import { loadCampaignTreeData } from '../../campaign-tree.helper';
 import { NotebookActionCardComponent } from '../notebook-action-card/notebook-action-card.component';
+import { MarkdownPipe } from '../../../shared/markdown.pipe';
+import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 
 /**
  * Atelier (workspace) : sources indexées (gauche) + chat ancré RAG (droite).
@@ -20,7 +22,7 @@ import { NotebookActionCardComponent } from '../notebook-action-card/notebook-ac
  */
 @Component({
     selector: 'app-notebook-detail',
-    imports: [FormsModule, LucideAngularModule, NotebookActionCardComponent],
+    imports: [FormsModule, LucideAngularModule, NotebookActionCardComponent, MarkdownPipe],
     templateUrl: './notebook-detail.component.html',
     styleUrls: ['./notebook-detail.component.scss']
 })
@@ -35,6 +37,9 @@ export class NotebookDetailComponent implements OnInit {
   readonly AlertCircle = AlertCircle;
   readonly Sparkles = Sparkles;
   readonly Layers = Layers;
+  readonly Eraser = Eraser;
+  readonly History = History;
+  readonly X = X;
 
   campaignId = '';
   notebookId = '';
@@ -60,7 +65,8 @@ export class NotebookDetailComponent implements OnInit {
     private campaignSidebar: CampaignSidebarService,
     private campaignService: CampaignService,
     private characterService: CharacterService,
-    private npcService: NpcService
+    private npcService: NpcService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -210,6 +216,81 @@ export class NotebookDetailComponent implements OnInit {
     this.service.deleteSource(s.id).subscribe(() => this.reloadSources());
   }
 
+  // --- Vider la conversation / archives -------------------------------------
+  // « Vider » ARCHIVE le fil (rien n'est supprimé) ; les archives restent
+  // consultables en lecture seule via le sélecteur.
+
+  /** Conversations archivées (chargées à l'ouverture du panneau). */
+  archives: NotebookArchive[] = [];
+  /** Archive affichée en lecture seule (null = chat actif). */
+  viewingArchive: NotebookArchive | null = null;
+  /** Panneau « archives » ouvert ? */
+  archivesOpen = false;
+
+  clearChat(): void {
+    if (this.sending || this.messages.length === 0) return;
+    this.confirmDialog.confirm({
+      title: 'Vider la conversation',
+      message: 'Repartir d\'une conversation vierge ?',
+      details: ['Le fil actuel est archivé (pas supprimé) : il restera consultable via « Archives ».'],
+      confirmLabel: 'Vider',
+      variant: 'danger'
+    }).then(ok => {
+      if (!ok) return;
+      this.service.clearChat(this.notebookId).subscribe({
+        next: () => {
+          this.messages = [];
+          this.archives = [];      // re-chargées à la prochaine ouverture du panneau
+          this.archivesOpen = false;
+        },
+        error: () => { /* le fil reste affiché : rien n'a été modifié côté serveur */ }
+      });
+    });
+  }
+
+  toggleArchives(): void {
+    this.archivesOpen = !this.archivesOpen;
+    if (this.archivesOpen && this.archives.length === 0) {
+      this.service.getArchives(this.notebookId).subscribe({
+        next: (a) => this.archives = a,
+        error: () => { this.archives = []; }
+      });
+    }
+  }
+
+  /**
+   * Archives cochées « en référence » : leur contenu est injecté dans le
+   * contexte de chaque tour de chat (normal et approfondi). Clés = archivedAt.
+   */
+  referencedArchiveIds = new Set<string>();
+
+  isReferenced(a: NotebookArchive): boolean {
+    return this.referencedArchiveIds.has(a.archivedAt);
+  }
+
+  toggleReference(a: NotebookArchive): void {
+    if (this.referencedArchiveIds.has(a.archivedAt)) this.referencedArchiveIds.delete(a.archivedAt);
+    else this.referencedArchiveIds.add(a.archivedAt);
+  }
+
+  openArchive(a: NotebookArchive): void {
+    this.viewingArchive = a;
+    this.archivesOpen = false;
+  }
+
+  closeArchive(): void {
+    this.viewingArchive = null;
+  }
+
+  /** Libellé d'une archive : date du clear + nb d'échanges. */
+  archiveLabel(a: NotebookArchive): string {
+    const date = new Date(a.archivedAt);
+    const when = isNaN(date.getTime())
+      ? a.archivedAt
+      : date.toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
+    return `${when} · ${a.messages.length} message(s)`;
+  }
+
   // --- Chat ---
 
   send(deep = false): void {
@@ -222,7 +303,10 @@ export class NotebookDetailComponent implements OnInit {
     this.messages.push(assistant);
     this.sending = true;
 
-    this.service.streamChat(this.notebookId, text, deep, [...this.selectedSourceIds]).subscribe({
+    this.service.streamChat(
+      this.notebookId, text, deep,
+      [...this.selectedSourceIds], [...this.referencedArchiveIds]
+    ).subscribe({
       next: (ev) => {
         if (ev.type === 'token') { this.deepProgress = null; assistant.content += ev.value; }
         else if (ev.type === 'sources') assistant.sources = ev.sources;

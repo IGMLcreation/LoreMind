@@ -1,7 +1,7 @@
 import { Injectable, NgZone } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Notebook, NotebookDetail, NotebookSource, NotebookChatEvent } from './notebook.model';
+import { Notebook, NotebookArchive, NotebookDetail, NotebookSource, NotebookChatEvent } from './notebook.model';
 
 /**
  * Service des notebooks (atelier RAG) : CRUD, upload/indexation de sources,
@@ -44,14 +44,26 @@ export class NotebookService {
     return this.http.delete<void>(`${this.apiUrl}/sources/${sourceId}`);
   }
 
+  /** « Vider la conversation » : archive le fil actif (rien n'est supprimé). */
+  clearChat(notebookId: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/${notebookId}/chat/clear`, {});
+  }
+
+  /** Conversations archivées, plus récentes d'abord. */
+  getArchives(notebookId: string): Observable<NotebookArchive[]> {
+    return this.http.get<NotebookArchive[]>(`${this.apiUrl}/${notebookId}/chat/archives`);
+  }
+
   /**
    * Chat ancré streamé. fetch() + ReadableStream (HttpClient bufferise les SSE).
    * Émissions forcées dans la zone Angular pour la détection de changement.
    *
-   * `sourceIds` : sous-ensemble de sources à utiliser pour ce tour (cases cochées) ;
-   * undefined = toutes les sources prêtes du notebook.
+   * `sourceIds`  : sous-ensemble de sources à utiliser pour ce tour (cases cochées) ;
+   *                undefined = toutes les sources prêtes du notebook.
+   * `archiveIds` : archives de conversation cochées comme référence (clés archivedAt) ;
+   *                leur contenu est injecté dans le contexte du prompt.
    */
-  streamChat(notebookId: string, message: string, deep = false, sourceIds?: string[]): Observable<NotebookChatEvent> {
+  streamChat(notebookId: string, message: string, deep = false, sourceIds?: string[], archiveIds?: string[]): Observable<NotebookChatEvent> {
     return new Observable<NotebookChatEvent>((subscriber) => {
       const controller = new AbortController();
       const emit = (ev: NotebookChatEvent) => this.zone.run(() => subscriber.next(ev));
@@ -62,7 +74,11 @@ export class NotebookService {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
             credentials: 'include',
-            body: JSON.stringify({ message, deep, sourceIds: sourceIds ?? null }),
+            body: JSON.stringify({
+              message, deep,
+              sourceIds: sourceIds ?? null,
+              archiveIds: archiveIds?.length ? archiveIds : null
+            }),
             signal: controller.signal,
           });
           if (!response.ok || !response.body) {

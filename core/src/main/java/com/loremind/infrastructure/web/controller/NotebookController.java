@@ -105,6 +105,43 @@ public class NotebookController {
         return ResponseEntity.noContent().build();
     }
 
+    // --- Conversation : vider (= archiver) et consulter les archives ---
+
+    /**
+     * « Vider la conversation » : le fil actif est ARCHIVÉ en un lot horodaté,
+     * jamais supprimé — consultable ensuite via {@link #listArchives}.
+     */
+    @PostMapping("/{id}/chat/clear")
+    public ResponseEntity<Void> clearChat(@PathVariable String id) {
+        if (service.getNotebook(id).isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Notebook introuvable");
+        }
+        service.clearChat(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    /** Archives de conversation, plus récentes d'abord : [{archivedAt, messages:[…]}]. */
+    @GetMapping("/{id}/chat/archives")
+    public ResponseEntity<List<Map<String, Object>>> listArchives(@PathVariable String id) {
+        var grouped = new java.util.TreeMap<java.time.LocalDateTime, List<Map<String, Object>>>(
+                java.util.Comparator.reverseOrder());
+        for (var m : service.getArchivedMessages(id)) {
+            grouped.computeIfAbsent(m.getArchivedAt(), k -> new java.util.ArrayList<>())
+                    .add(Map.of(
+                            "role", m.getRole(),
+                            "content", m.getContent(),
+                            "createdAt", m.getCreatedAt().toString()));
+        }
+        List<Map<String, Object>> out = new java.util.ArrayList<>();
+        grouped.forEach((archivedAt, messages) -> {
+            Map<String, Object> archive = new LinkedHashMap<>();
+            archive.put("archivedAt", archivedAt.toString());
+            archive.put("messages", messages);
+            out.add(archive);
+        });
+        return ResponseEntity.ok(out);
+    }
+
     // --- Chat ancré streamé ---
 
     @PostMapping(value = "/{id}/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
@@ -136,7 +173,14 @@ public class NotebookController {
         } else {
             sourceIds = readyIds;
         }
-        String context = service.buildContext(nb.getCampaignId());
+        // Contexte = brief de campagne + archives cochées en référence (le tout
+        // dans une variable finale : capturée par la lambda du taskExecutor).
+        String campaignContext = service.buildContext(nb.getCampaignId());
+        String archiveContext = service.buildArchiveContext(id, req.archiveIds());
+        final String context = archiveContext.isEmpty()
+                ? campaignContext
+                : (campaignContext.isEmpty() ? archiveContext
+                        : campaignContext + "\n\n" + archiveContext);
 
         boolean deep = req.deep() != null && req.deep();
         taskExecutor.execute(() -> {
@@ -232,9 +276,13 @@ public class NotebookController {
     public record CreateRequest(String campaignId, String name) {}
     public record RenameRequest(String name) {}
     /**
-     * @param sourceIds Optionnel : sous-ensemble de sources à utiliser pour ce tour
-     *                  (cases cochées dans l'UI). Null = toutes les sources prêtes.
-     *                  Toujours intersecté avec les sources du notebook (sécurité).
+     * @param sourceIds  Optionnel : sous-ensemble de sources à utiliser pour ce tour
+     *                   (cases cochées dans l'UI). Null = toutes les sources prêtes.
+     *                   Toujours intersecté avec les sources du notebook (sécurité).
+     * @param archiveIds Optionnel : archives de conversation cochées comme RÉFÉRENCE
+     *                   (clés = archivedAt). Leur contenu est injecté dans le contexte
+     *                   du prompt — toujours résolu dans CE notebook (sécurité).
      */
-    public record ChatRequest(String message, Boolean deep, List<String> sourceIds) {}
+    public record ChatRequest(String message, Boolean deep, List<String> sourceIds,
+                              List<String> archiveIds) {}
 }

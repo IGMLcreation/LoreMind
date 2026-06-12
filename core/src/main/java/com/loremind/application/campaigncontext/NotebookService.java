@@ -119,6 +119,58 @@ public class NotebookService {
                 .notebookId(notebookId).role(role).content(content).build());
     }
 
+    /** « Vider la conversation » : archive le fil actif (rien n'est supprimé). */
+    public void clearChat(String notebookId) {
+        repository.archiveMessagesByNotebookId(notebookId);
+    }
+
+    /** Messages archivés, chronologiques — l'appelant regroupe par {@code archivedAt}. */
+    public List<NotebookMessage> getArchivedMessages(String notebookId) {
+        return repository.findArchivedMessagesByNotebookId(notebookId);
+    }
+
+    // Budget total (caractères ≈ tokens/4) des archives injectées en référence :
+    // borne le prompt même si l'utilisateur coche plusieurs longues conversations.
+    private static final int ARCHIVE_CONTEXT_MAX_CHARS = 16000;
+
+    /**
+     * Bloc de contexte construit à partir des archives COCHÉES par l'utilisateur
+     * (clés = {@code archivedAt.toString()}). Injecté dans le prompt du chat pour
+     * que l'IA puisse s'appuyer sur d'anciennes conversations. Chaîne vide si
+     * aucune clé valide. Chaque archive est tronquée PAR LE DÉBUT au-delà de son
+     * budget : la fin d'une conversation (conclusions) est la partie utile.
+     */
+    public String buildArchiveContext(String notebookId, List<String> archivedAtKeys) {
+        if (archivedAtKeys == null || archivedAtKeys.isEmpty()) return "";
+        var wanted = new java.util.HashSet<>(archivedAtKeys);
+        var groups = new java.util.LinkedHashMap<java.time.LocalDateTime, List<NotebookMessage>>();
+        for (NotebookMessage m : repository.findArchivedMessagesByNotebookId(notebookId)) {
+            if (m.getArchivedAt() != null && wanted.contains(m.getArchivedAt().toString())) {
+                groups.computeIfAbsent(m.getArchivedAt(), k -> new java.util.ArrayList<>()).add(m);
+            }
+        }
+        if (groups.isEmpty()) return "";
+
+        int budgetPerArchive = Math.max(2000, ARCHIVE_CONTEXT_MAX_CHARS / groups.size());
+        StringBuilder out = new StringBuilder(
+                "--- ANCIENNES CONVERSATIONS DE CET ATELIER (références choisies par le MJ : "
+                        + "tu peux t'appuyer sur leurs conclusions) ---\n");
+        groups.forEach((archivedAt, messages) -> {
+            StringBuilder convo = new StringBuilder();
+            for (NotebookMessage m : messages) {
+                convo.append("user".equals(m.getRole()) ? "MJ : " : "IA : ")
+                        .append(m.getContent()).append('\n');
+            }
+            String text = convo.toString();
+            if (text.length() > budgetPerArchive) {
+                text = "[…début tronqué…]\n" + text.substring(text.length() - budgetPerArchive);
+            }
+            out.append("[Archive du ").append(archivedAt).append("]\n").append(text).append('\n');
+        });
+        out.append("--- FIN DES ANCIENNES CONVERSATIONS ---");
+        return out.toString();
+    }
+
     // --- Contexte campagne (oriente l'IA) ---
 
     /** Brief COMPLET de la campagne (structure arcs/chapitres/scènes + PNJ + lore) :

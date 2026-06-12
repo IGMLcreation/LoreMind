@@ -17,4 +17,6 @@ public class NotebookMessage {
     private String role;
     private String content;
     private LocalDateTime createdAt;
+    /** Null = conversation active ; sinon horodatage du « vider » (lot d'archive). */
+    private LocalDateTime archivedAt;
 }

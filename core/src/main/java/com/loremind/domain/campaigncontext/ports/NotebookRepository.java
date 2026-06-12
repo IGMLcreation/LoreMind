@@ -28,5 +28,10 @@ public interface NotebookRepository {
 
     // --- Messages (conversation) ---
     NotebookMessage saveMessage(NotebookMessage message);
+    /** Messages de la conversation ACTIVE (les archives sont exclues). */
     List<NotebookMessage> findMessagesByNotebookId(String notebookId);
+    /** « Vider » : archive le fil actif en un lot horodaté (rien n'est supprimé). */
+    void archiveMessagesByNotebookId(String notebookId);
+    /** Messages archivés, chronologiques (regroupables par {@code archivedAt}). */
+    List<NotebookMessage> findArchivedMessagesByNotebookId(String notebookId);
 }

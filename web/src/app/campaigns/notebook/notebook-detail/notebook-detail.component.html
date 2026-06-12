@@ -71,55 +71,140 @@
       </aside>
       <!-- Chat -->
       <section class="nbd-chat">
-        <div class="nbd-messages">
-          @if (messages.length === 0) {
-            <p class="nbd-empty">
-              Pose une question sur ta source, ou demande une adaptation pour ta campagne.
-              @if (!hasReadySource()) {
-                <span><br>(Ajoute d'abord une source indexée pour des réponses ancrées.)</span>
-              }
-            </p>
-          }
-          @for (m of messages; track m) {
-            <div class="nbd-msg" [class.user]="m.role === 'user'" [class.assistant]="m.role === 'assistant'">
-              <div class="nbd-msg-role">
-                @if (m.role === 'assistant') {
-                  <lucide-icon [img]="Sparkles" [size]="12"></lucide-icon>
-                }
-                {{ m.role === 'user' ? 'Vous' : 'IA' }}
-              </div>
-              @if (m.role === 'assistant') {
-                @if (parsedOf(m); as p) {
-                  @if (sending && deepProgress && !p.text) {
-                    <div class="nbd-deep-progress">
-                      <lucide-icon [img]="Layers" [size]="13"></lucide-icon>
-                      Analyse approfondie du document… {{ deepProgress.current }}/{{ deepProgress.total }}
-                    </div>
-                  }
-                  <div class="nbd-msg-content">{{ p.text }}@if (sending && !p.text && !p.actions.length && !deepProgress) {
-                    <span class="cursor">▌</span>
-                  }</div>
-                  @for (a of p.actions; track $index) {
-                    <app-notebook-action-card
-                      [action]="a"
-                      [campaignId]="campaignId"
-                      [arcs]="arcs"
-                      [chaptersByArc]="chaptersByArc"
-                      (created)="onActionCreated()">
-                    </app-notebook-action-card>
-                  }
-                  @if (sourcesLabel(m); as label) {
-                    <div class="nbd-msg-sources" title="Pages de la source utilisées pour ancrer cette réponse">
-                      📖 {{ label }}
-                    </div>
-                  }
-                }
-              } @else {
-                <div class="nbd-msg-content">{{ m.content }}</div>
-              }
-            </div>
+        <!-- Barre d'actions du chat : archives + vider -->
+        <div class="nbd-chat-head">
+          @if (viewingArchive) {
+            <span class="nbd-archive-banner">
+              <lucide-icon [img]="History" [size]="13"></lucide-icon>
+              Archive du {{ archiveLabel(viewingArchive) }} — lecture seule
+            </span>
+            <button type="button" class="nbd-chat-btn" (click)="closeArchive()">
+              <lucide-icon [img]="X" [size]="13"></lucide-icon>
+              Revenir au chat
+            </button>
+          } @else {
+            @if (referencedArchiveIds.size > 0) {
+              <span class="nbd-ref-badge"
+                title="Le contenu de ces archives est injecté comme référence dans chaque question">
+                <lucide-icon [img]="History" [size]="12"></lucide-icon>
+                {{ referencedArchiveIds.size }} archive(s) en référence
+              </span>
+            }
+            <span class="nbd-chat-head-spacer"></span>
+            <button type="button" class="nbd-chat-btn" (click)="toggleArchives()"
+              [class.active]="archivesOpen"
+              title="Conversations archivées (lecture seule + référence)">
+              <lucide-icon [img]="History" [size]="13"></lucide-icon>
+              Archives
+            </button>
+            <button type="button" class="nbd-chat-btn nbd-chat-btn--danger" (click)="clearChat()"
+              [disabled]="sending || messages.length === 0"
+              title="Vider la conversation (le fil actuel est archivé, pas supprimé)">
+              <lucide-icon [img]="Eraser" [size]="13"></lucide-icon>
+              Vider
+            </button>
           }
         </div>
+        <!-- Panneau des archives -->
+        @if (archivesOpen && !viewingArchive) {
+          <div class="nbd-archives">
+            @if (archives.length === 0) {
+              <p class="nbd-empty">Aucune conversation archivée pour l'instant — « Vider » archive le fil courant ici.</p>
+            } @else {
+              <p class="nbd-archives-help">
+                Cochez une archive pour l'utiliser comme <strong>référence</strong> dans le chat ;
+                cliquez sur son nom pour la relire.
+              </p>
+            }
+            @for (a of archives; track a.archivedAt) {
+              <div class="nbd-archive-row" [class.referenced]="isReferenced(a)">
+                <input
+                  type="checkbox"
+                  class="nbd-archive-check"
+                  [checked]="isReferenced(a)"
+                  (change)="toggleReference(a)"
+                  [title]="isReferenced(a)
+                    ? 'Archive utilisée comme référence — décocher pour la retirer'
+                    : 'Utiliser cette archive comme référence dans le chat'" />
+                <button type="button" class="nbd-archive-item" (click)="openArchive(a)">
+                  <lucide-icon [img]="History" [size]="13"></lucide-icon>
+                  {{ archiveLabel(a) }}
+                </button>
+              </div>
+            }
+          </div>
+        }
+        <div class="nbd-messages">
+          @if (viewingArchive) {
+            <!-- Archive en lecture seule -->
+            @for (m of viewingArchive.messages; track $index) {
+              <div class="nbd-msg" [class.user]="m.role === 'user'" [class.assistant]="m.role === 'assistant'">
+                <div class="nbd-msg-role">
+                  @if (m.role === 'assistant') {
+                    <lucide-icon [img]="Sparkles" [size]="12"></lucide-icon>
+                  }
+                  {{ m.role === 'user' ? 'Vous' : 'IA' }}
+                </div>
+                @if (m.role === 'assistant') {
+                  <div class="nbd-msg-content md" [innerHTML]="m.content | markdown"></div>
+                } @else {
+                  <div class="nbd-msg-content">{{ m.content }}</div>
+                }
+              </div>
+            }
+          } @else {
+            @if (messages.length === 0) {
+              <p class="nbd-empty">
+                Pose une question sur ta source, ou demande une adaptation pour ta campagne.
+                @if (!hasReadySource()) {
+                  <span><br>(Ajoute d'abord une source indexée pour des réponses ancrées.)</span>
+                }
+              </p>
+            }
+            @for (m of messages; track m) {
+              <div class="nbd-msg" [class.user]="m.role === 'user'" [class.assistant]="m.role === 'assistant'">
+                <div class="nbd-msg-role">
+                  @if (m.role === 'assistant') {
+                    <lucide-icon [img]="Sparkles" [size]="12"></lucide-icon>
+                  }
+                  {{ m.role === 'user' ? 'Vous' : 'IA' }}
+                </div>
+                @if (m.role === 'assistant') {
+                  @if (parsedOf(m); as p) {
+                    @if (sending && deepProgress && !p.text) {
+                      <div class="nbd-deep-progress">
+                        <lucide-icon [img]="Layers" [size]="13"></lucide-icon>
+                        Analyse approfondie du document… {{ deepProgress.current }}/{{ deepProgress.total }}
+                      </div>
+                    }
+                    @if (p.text) {
+                      <div class="nbd-msg-content md" [innerHTML]="p.text | markdown"></div>
+                    } @else if (sending && !p.actions.length && !deepProgress) {
+                      <div class="nbd-msg-content"><span class="cursor">▌</span></div>
+                    }
+                    @for (a of p.actions; track $index) {
+                      <app-notebook-action-card
+                        [action]="a"
+                        [campaignId]="campaignId"
+                        [arcs]="arcs"
+                        [chaptersByArc]="chaptersByArc"
+                        (created)="onActionCreated()">
+                      </app-notebook-action-card>
+                    }
+                    @if (sourcesLabel(m); as label) {
+                      <div class="nbd-msg-sources" title="Pages de la source utilisées pour ancrer cette réponse">
+                        📖 {{ label }}
+                      </div>
+                    }
+                  }
+                } @else {
+                  <div class="nbd-msg-content">{{ m.content }}</div>
+                }
+              </div>
+            }
+          }
+        </div>
+        @if (!viewingArchive) {
         <div class="nbd-input">
           <textarea [(ngModel)]="draft" rows="2"
             placeholder="Demande une adaptation, un résumé, un PNJ inspiré de la source…"
@@ -133,6 +218,7 @@
             <lucide-icon [img]="Send" [size]="15"></lucide-icon>
           </button>
         </div>
+        }
       </section>
     </div>
   </div>

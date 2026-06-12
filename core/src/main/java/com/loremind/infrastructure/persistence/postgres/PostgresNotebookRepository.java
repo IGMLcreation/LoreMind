@@ -115,7 +115,19 @@ public class PostgresNotebookRepository implements NotebookRepository {
 
     @Override
     public List<NotebookMessage> findMessagesByNotebookId(String notebookId) {
-        return messageJpa.findByNotebookIdOrderByCreatedAtAsc(Long.parseLong(notebookId)).stream()
+        return messageJpa.findByNotebookIdAndArchivedAtIsNullOrderByCreatedAtAsc(Long.parseLong(notebookId)).stream()
+                .map(this::toMessage).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void archiveMessagesByNotebookId(String notebookId) {
+        messageJpa.archiveActiveMessages(Long.parseLong(notebookId), java.time.LocalDateTime.now());
+    }
+
+    @Override
+    public List<NotebookMessage> findArchivedMessagesByNotebookId(String notebookId) {
+        return messageJpa.findByNotebookIdAndArchivedAtIsNotNullOrderByCreatedAtAsc(Long.parseLong(notebookId)).stream()
                 .map(this::toMessage).collect(Collectors.toList());
     }
 
@@ -150,6 +162,7 @@ public class PostgresNotebookRepository implements NotebookRepository {
                 .role(e.getRole())
                 .content(e.getContent())
                 .createdAt(e.getCreatedAt())
+                .archivedAt(e.getArchivedAt())
                 .build();
     }
 }
