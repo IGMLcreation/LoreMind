@@ -60,6 +60,9 @@
               </div>
             </div>
           }
+          @if (importStatus) {
+            <p class="import-status" role="status">{{ importStatus }}</p>
+          }
           @if (importFound.length) {
             <p class="import-found">
               Sections trouvées : {{ importFound.join(' · ') }}

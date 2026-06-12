@@ -63,10 +63,13 @@ export interface CampaignImportApplyResult {
 /**
  * Évènements du flux SSE d'import streamé.
  * - progress : avancement (total=0 ⇒ extraction en cours).
+ * - status   : message d'attente lisible (fournisseur saturé → retry, morceau
+ *              re-découpé, morceau ignoré…) — feedback live pour l'utilisateur.
  * - done     : arbre proposé (à réviser).
  * - error    : message d'erreur côté serveur.
  */
 export type CampaignImportStreamEvent =
+  | { type: 'status'; message: string }
   | {
       type: 'progress';
       current: number;

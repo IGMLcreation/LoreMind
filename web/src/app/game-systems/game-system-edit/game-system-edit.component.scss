@@ -163,6 +163,16 @@
   line-height: 1.4;
 }
 
+// Message d'attente live (fournisseur saturé → retry, morceau re-découpé…) :
+// ambre pour signaler « ça travaille, mais il se passe quelque chose ».
+.import-status {
+  margin: 0.55rem 0 0;
+  color: #fbbf24;
+  font-size: 0.8rem;
+  font-style: italic;
+  line-height: 1.4;
+}
+
 .import-note {
   margin: -0.4rem 0 1rem;
   padding: 0.55rem 0.8rem;

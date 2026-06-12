@@ -170,6 +170,8 @@ public class GameSystemController {
                         bytes, filename,
                         progress -> sendImportEvent(emitter, clientGone, "progress", progress),
                         () -> sendImportHeartbeat(emitter, clientGone),
+                        status -> sendImportEvent(emitter, clientGone, "status",
+                                Map.of("message", status != null ? status : "")),
                         result -> {
                             sendImportEvent(emitter, clientGone, "done", result);
                             emitter.complete();

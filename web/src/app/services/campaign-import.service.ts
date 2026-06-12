@@ -74,6 +74,12 @@ export class CampaignImportService {
         try { message = (JSON.parse(currentData) as { message?: string }).message ?? message; } catch { /* défaut */ }
         terminated = true;
         subscriber.error(new Error(message));
+      } else if (name === 'status') {
+        // Message d'attente lisible (fournisseur saturé, morceau re-découpé…).
+        try {
+          const obj = JSON.parse(currentData) as { message?: string };
+          if (obj.message) subscriber.next({ type: 'status', message: obj.message });
+        } catch { /* bloc malformé ignoré */ }
       } else if (name === 'progress' || name === 'done') {
         try {
           const obj = JSON.parse(currentData);

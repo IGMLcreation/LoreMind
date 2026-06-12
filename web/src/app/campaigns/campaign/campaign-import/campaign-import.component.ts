@@ -74,6 +74,12 @@ export class CampaignImportComponent implements OnInit {
   importing = false;
   importPhase = '';
   importProgress: { current: number; total: number } | null = null;
+  /**
+   * Dernier message de statut du flux (fournisseur saturé → retry, morceau
+   * re-découpé/ignoré…). Effacé à chaque progression : il explique l'ATTENTE
+   * en cours, pas l'historique.
+   */
+  importStatus: string | null = null;
   importCounts: { arcs: number; chapters: number; scenes: number; npcs: number } | null = null;
   importError: string | null = null;
   /** Vrai une fois la proposition reçue (on affiche l'arbre éditable). */
@@ -132,12 +138,15 @@ export class CampaignImportComponent implements OnInit {
     this.applyError = null;
     this.importPhase = 'Extraction du texte…';
     this.importProgress = null;
+    this.importStatus = null;
     this.importCounts = null;
     this.tree = [];
 
     this.service.importStructureStream(this.campaignId, file).subscribe({
       next: (ev) => {
         if (ev.type === 'progress') {
+          // Un morceau vient d'aboutir : le message d'attente est obsolète.
+          this.importStatus = null;
           if (ev.total === 0) {
             this.importPhase = 'Extraction du texte…';
             this.importProgress = null;
@@ -149,10 +158,13 @@ export class CampaignImportComponent implements OnInit {
               scenes: ev.sceneCount, npcs: ev.npcCount ?? 0
             };
           }
+        } else if (ev.type === 'status') {
+          this.importStatus = ev.message;
         } else if (ev.type === 'done') {
           this.importing = false;
           this.importPhase = '';
           this.importProgress = null;
+          this.importStatus = null;
           if ((ev.arcs ?? []).length === 0 && (ev.npcs ?? []).length === 0) {
             this.importError = "Aucune structure narrative détectée dans ce PDF.";
             this.reviewing = false;

@@ -87,6 +87,16 @@
 
 .import-counts { margin: 0.55rem 0 0; color: #9ca3af; font-size: 0.8rem; }
 
+// Message d'attente live (fournisseur saturé → retry, morceau re-découpé…) :
+// ambre pour signaler « ça travaille, mais il se passe quelque chose ».
+.import-status {
+  margin: 0.55rem 0 0;
+  color: #fbbf24;
+  font-size: 0.8rem;
+  font-style: italic;
+  line-height: 1.4;
+}
+
 .import-error,
 .apply-error {
   margin: 1rem 0 0;

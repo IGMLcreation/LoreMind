@@ -144,6 +144,16 @@ class GeminiLLMProvider:
                 ) as response:
                     if response.status_code >= 400:
                         detail = (await response.aread()).decode("utf-8", "replace").strip()
+                        # 401/403 = clé rejetée par GOOGLE (pas un problème LoreMind) :
+                        # message actionnable plutôt que le JSON brut de l'API.
+                        if response.status_code in (401, 403):
+                            raise LLMProviderError(
+                                "Erreur Gemini : clé API refusée par Google "
+                                f"(HTTP {response.status_code}). Vérifiez que la clé vient bien "
+                                "de aistudio.google.com (« Get API key ») et qu'elle n'a pas de "
+                                "restrictions (API ou adresse IP) dans la Google Cloud Console. "
+                                f"Détail : {detail[:300]}"
+                            )
                         raise LLMProviderError(
                             f"Erreur Gemini (HTTP {response.status_code})"
                             + (f" : {detail[:500]}" if detail else "")

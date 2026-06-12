@@ -14,6 +14,7 @@ import asyncio
 import logging
 import re
 
+from app.application.import_status import notify_status
 from app.domain.ports import LLMGenerationTimeout, LLMProvider, LLMProviderError
 
 logger = logging.getLogger(__name__)
@@ -102,6 +103,14 @@ async def generate_with_retry(
                     "Appel LLM échoué (tentative %s/%s)%s : %s — nouvelle tentative dans %ss.",
                     attempt + 1, _ATTEMPTS, " [rate limit]" if _is_rate_limit(exc) else "",
                     exc, wait,
+                )
+                # Remonte aussi l'info à l'UI (flux d'import) : sans ça l'utilisateur
+                # voit une barre figée sans savoir que le fournisseur est saturé.
+                notify_status(
+                    ("Fournisseur IA saturé (rate limit)" if _is_rate_limit(exc)
+                     else "Appel IA échoué")
+                    + f" — tentative {attempt + 1}/{_ATTEMPTS}, nouvel essai dans {int(wait)}s. "
+                    + str(exc)[:160]
                 )
                 await asyncio.sleep(wait)
     assert last_error is not None

@@ -88,6 +88,8 @@ public class CampaignImportController {
                         bytes, filename,
                         progress -> sendEvent(emitter, clientGone, "progress", progress),
                         () -> sendHeartbeat(emitter, clientGone),
+                        status -> sendEvent(emitter, clientGone, "status",
+                                Map.of("message", status != null ? status : "")),
                         proposal -> {
                             sendEvent(emitter, clientGone, "done", proposal);
                             emitter.complete();

@@ -31,6 +31,9 @@
               </div>
             </div>
           }
+          @if (importStatus) {
+            <p class="import-status" role="status">{{ importStatus }}</p>
+          }
           @if (importCounts) {
             <p class="import-counts">
               Trouvé jusqu'ici : {{ importCounts.arcs }} arc(s) · {{ importCounts.chapters }} chapitre(s) · {{ importCounts.scenes }} scène(s) · {{ importCounts.npcs }} PNJ

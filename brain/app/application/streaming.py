@@ -25,21 +25,43 @@ async def with_heartbeat(
     coro: Awaitable[Any],
     *,
     interval: float = HEARTBEAT_INTERVAL_SECONDS,
+    status_queue: "asyncio.Queue | None" = None,
 ) -> AsyncIterator[tuple[str, Any]]:
     """Exécute `coro` en émettant ('heartbeat', None) toutes les `interval`s tant
     qu'elle n'est pas terminée, puis ('result', valeur).
+
+    Si `status_queue` est fournie, les messages qui y sont publiés pendant
+    l'exécution (cf. import_status.notify_status : retry LLM, re-découpage…)
+    sont émis AU FIL DE L'EAU sous forme ('status', message) — c'est ce qui
+    permet à l'UI d'expliquer une attente au lieu d'une barre figée.
 
     L'exception éventuelle de `coro` est propagée (re-levée par `task.result()`),
     donc l'appelant peut l'attraper normalement. Si l'itération est abandonnée
     (client déconnecté), la tâche sous-jacente est annulée.
     """
     task: asyncio.Task = asyncio.ensure_future(coro)
+    getter: asyncio.Task | None = None
     try:
         while not task.done():
-            done, _ = await asyncio.wait({task}, timeout=interval)
+            waiters: set[asyncio.Task] = {task}
+            if status_queue is not None and getter is None:
+                getter = asyncio.ensure_future(status_queue.get())
+            if getter is not None:
+                waiters.add(getter)
+            done, _ = await asyncio.wait(
+                waiters, timeout=interval, return_when=asyncio.FIRST_COMPLETED)
+            if getter is not None and getter in done:
+                yield ("status", getter.result())
+                getter = None  # un nouveau get() sera créé au tour suivant
             if not done:
                 yield ("heartbeat", None)
+        # Vide les statuts restés en file (publiés juste avant la fin de la tâche).
+        if status_queue is not None:
+            while not status_queue.empty():
+                yield ("status", status_queue.get_nowait())
         yield ("result", task.result())
     finally:
+        if getter is not None and not getter.done():
+            getter.cancel()
         if not task.done():
             task.cancel()

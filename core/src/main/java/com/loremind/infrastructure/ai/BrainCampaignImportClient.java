@@ -61,6 +61,7 @@ public class BrainCampaignImportClient implements CampaignPdfImporter {
             String filename,
             Consumer<CampaignImportProgress> onProgress,
             Runnable onHeartbeat,
+            Consumer<String> onStatus,
             Consumer<CampaignImportProposal> onDone,
             Consumer<Throwable> onError) {
 
@@ -85,7 +86,7 @@ public class BrainCampaignImportClient implements CampaignPdfImporter {
                 .timeout(Duration.ofSeconds(importTimeoutSeconds))
                 .doOnNext(sse -> handleEvent(
                         sse, pageCount, ocrPageCount, terminated,
-                        onProgress, onHeartbeat, onDone, onError))
+                        onProgress, onHeartbeat, onStatus, onDone, onError))
                 .blockLast();
             if (!terminated[0]) {
                 onError.accept(new CampaignImportException(
@@ -110,6 +111,7 @@ public class BrainCampaignImportClient implements CampaignPdfImporter {
             boolean[] terminated,
             Consumer<CampaignImportProgress> onProgress,
             Runnable onHeartbeat,
+            Consumer<String> onStatus,
             Consumer<CampaignImportProposal> onDone,
             Consumer<Throwable> onError) {
 
@@ -120,6 +122,22 @@ public class BrainCampaignImportClient implements CampaignPdfImporter {
             // Keep-alive du Brain pendant un appel LLM long : à PROPAGER jusqu'au
             // navigateur, sinon nginx (proxy_read_timeout) coupe le SSE Core→front.
             onHeartbeat.run();
+            return;
+        }
+        if ("status".equals(event)) {
+            // Message d'attente lisible (retry sur fournisseur saturé, morceau
+            // re-découpé…) : affiché par l'UI au lieu de n'exister qu'en logs.
+            onStatus.accept(readMessage(data));
+            return;
+        }
+        if ("chunk_failed".equals(event)) {
+            JsonNode node = readJson(data);
+            String msg = node != null && node.hasNonNull("message")
+                    ? node.get("message").asText() : "";
+            int current = node != null ? node.path("current").asInt() : 0;
+            int total = node != null ? node.path("total").asInt() : 0;
+            onStatus.accept("Morceau " + current + "/" + total + " ignoré"
+                    + (msg.isEmpty() ? "." : " : " + msg));
             return;
         }
         if ("error".equals(event)) {

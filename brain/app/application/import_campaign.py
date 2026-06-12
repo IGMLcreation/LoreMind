@@ -14,6 +14,11 @@ import asyncio
 import logging
 
 from app.application.chunking import chunk_text, split_in_half
+from app.application.import_status import (
+    notify_status,
+    reset_status_queue,
+    set_status_queue,
+)
 from app.application.llm_json import load_json_object, looks_like_truncated_json
 from app.application.llm_retry import generate_with_retry
 from app.application.streaming import with_heartbeat
@@ -510,86 +515,101 @@ class ImportCampaignUseCase:
         skipped = 0
         last_error: str | None = None
         done_count = 0
-        # PARALLÉLISME : les morceaux sont traités par VAGUES de `map_concurrency`
-        # appels simultanés. L'ordre narratif est préservé : la fusion se fait
-        # vague par vague, dans l'ordre du livre.
-        # RÉSILIENCE : un morceau qui échoue (provider saturé, quota, etc.) est
-        # SAUTÉ — on ne perd pas tout l'import pour autant. On n'abandonne que
-        # si AUCUN morceau ne passe (cf. après la boucle).
-        # HEARTBEAT : keep-alive pendant la vague d'appels LLM pour ne jamais
-        # laisser le flux SSE silencieux (sinon le Core coupe sur inactivité).
-        for start in range(0, total, self._map_concurrency):
-            wave = list(enumerate(chunks))[start:start + self._map_concurrency]
-            gathered = asyncio.gather(
-                *(self._map_chunk(c, index=i, total=total, toc_block=toc_block)
-                  for i, c in wave),
-                return_exceptions=True,
-            )
-            results: list | None = None
-            async for kind, payload in with_heartbeat(gathered):
-                if kind == "heartbeat":
-                    yield {"type": "heartbeat", "current": done_count + 1, "total": total}
-                else:
-                    results = payload
-            for (i, _), res in zip(wave, results or []):
-                done_count += 1
-                if isinstance(res, LLMProviderError):
-                    skipped += 1
-                    last_error = str(res)
-                    logger.warning("Morceau %s/%s ignoré (échec LLM) : %s", i + 1, total, res)
-                    yield {"type": "chunk_failed", "current": i + 1, "total": total,
-                           "message": str(res)[:300]}
-                elif isinstance(res, BaseException):
-                    raise res  # bug inattendu : ne pas l'avaler en silence
-                else:
-                    merger.add((res or {}).get("arcs") or [])
-                    merger.add_npcs((res or {}).get("npcs") or [])
-                arcs, chapters, scenes = merger.counts()
-                yield {
-                    "type": "progress",
-                    "current": done_count,
-                    "total": total,
-                    "arc_count": arcs,
-                    "chapter_count": chapters,
-                    "scene_count": scenes,
-                    "npc_count": len(merger.npcs()),
-                    "skipped": skipped,
-                }
+        # Canal de statut : les couches profondes (retry LLM, re-découpage) y
+        # publient des messages destinés à l'UI — cf. import_status.notify_status.
+        status_queue: asyncio.Queue = asyncio.Queue()
+        status_token = set_status_queue(status_queue)
+        try:
+            # PARALLÉLISME : les morceaux sont traités par VAGUES de `map_concurrency`
+            # appels simultanés. L'ordre narratif est préservé : la fusion se fait
+            # vague par vague, dans l'ordre du livre.
+            # RÉSILIENCE : un morceau qui échoue (provider saturé, quota, etc.) est
+            # SAUTÉ — on ne perd pas tout l'import pour autant. On n'abandonne que
+            # si AUCUN morceau ne passe (cf. après la boucle).
+            # HEARTBEAT : keep-alive pendant la vague d'appels LLM pour ne jamais
+            # laisser le flux SSE silencieux (sinon le Core coupe sur inactivité).
+            for start in range(0, total, self._map_concurrency):
+                wave = list(enumerate(chunks))[start:start + self._map_concurrency]
+                gathered = asyncio.gather(
+                    *(self._map_chunk(c, index=i, total=total, toc_block=toc_block)
+                      for i, c in wave),
+                    return_exceptions=True,
+                )
+                results: list | None = None
+                async for kind, payload in with_heartbeat(gathered, status_queue=status_queue):
+                    if kind == "heartbeat":
+                        yield {"type": "heartbeat", "current": done_count + 1, "total": total}
+                    elif kind == "status":
+                        yield {"type": "status", "message": payload,
+                               "current": done_count + 1, "total": total}
+                    else:
+                        results = payload
+                for (i, _), res in zip(wave, results or []):
+                    done_count += 1
+                    if isinstance(res, LLMProviderError):
+                        skipped += 1
+                        last_error = str(res)
+                        logger.warning("Morceau %s/%s ignoré (échec LLM) : %s", i + 1, total, res)
+                        yield {"type": "chunk_failed", "current": i + 1, "total": total,
+                               "message": str(res)[:300]}
+                    elif isinstance(res, BaseException):
+                        raise res  # bug inattendu : ne pas l'avaler en silence
+                    else:
+                        merger.add((res or {}).get("arcs") or [])
+                        merger.add_npcs((res or {}).get("npcs") or [])
+                    arcs, chapters, scenes = merger.counts()
+                    yield {
+                        "type": "progress",
+                        "current": done_count,
+                        "total": total,
+                        "arc_count": arcs,
+                        "chapter_count": chapters,
+                        "scene_count": scenes,
+                        "npc_count": len(merger.npcs()),
+                        "skipped": skipped,
+                    }
 
-        if total > 0 and skipped == total:
-            # Tout a échoué : "done" vide serait trompeur → erreur explicite.
-            yield {"type": "error",
-                   "message": "Tous les morceaux ont échoué auprès du fournisseur IA. "
-                              f"Dernier message : {last_error or 'inconnu'}"}
-            return
+            if total > 0 and skipped == total:
+                # Tout a échoué : "done" vide serait trompeur → erreur explicite.
+                yield {"type": "error",
+                       "message": "Tous les morceaux ont échoué auprès du fournisseur IA. "
+                                  f"Dernier message : {last_error or 'inconnu'}"}
+                return
 
-        if total > 0 and merger.counts()[0] == 0 and not merger.npcs():
-            # Le texte a été extrait mais le modèle n'a produit AUCUNE structure
-            # exploitable : sans ce signal, l'UI reçoit un `done` vide et
-            # l'utilisateur conclut à tort que le PDF est illisible.
-            yield {"type": "error",
-                   "message": "Le texte du PDF a été extrait, mais le modèle n'a produit "
-                              "aucune structure exploitable (réponses JSON vides ou coupées). "
-                              "Réduisez la taille des morceaux d'import, augmentez la fenêtre "
-                              "de contexte (num_ctx) ou essayez un autre modèle."}
-            return
+            if total > 0 and merger.counts()[0] == 0 and not merger.npcs():
+                # Le texte a été extrait mais le modèle n'a produit AUCUNE structure
+                # exploitable : sans ce signal, l'UI reçoit un `done` vide et
+                # l'utilisateur conclut à tort que le PDF est illisible.
+                yield {"type": "error",
+                       "message": "Le texte du PDF a été extrait, mais le modèle n'a produit "
+                                  "aucune structure exploitable (réponses JSON vides ou coupées). "
+                                  "Réduisez la taille des morceaux d'import, augmentez la fenêtre "
+                                  "de contexte (num_ctx) ou essayez un autre modèle."}
+                return
 
-        # Consolidation finale : fusion des quasi-doublons inter-morceaux
-        # (best-effort, voir _consolidate). Inutile sur un import mono-morceau.
-        if total > 1:
-            yield {"type": "consolidating", "total": total}
-            async for kind, _ in with_heartbeat(self._consolidate(merger)):
-                if kind == "heartbeat":
-                    yield {"type": "heartbeat", "current": total, "total": total}
+            # Consolidation finale : fusion des quasi-doublons inter-morceaux
+            # (best-effort, voir _consolidate). Inutile sur un import mono-morceau.
+            if total > 1:
+                yield {"type": "consolidating", "total": total}
+                async for kind, payload in with_heartbeat(
+                    self._consolidate(merger), status_queue=status_queue
+                ):
+                    if kind == "heartbeat":
+                        yield {"type": "heartbeat", "current": total, "total": total}
+                    elif kind == "status":
+                        yield {"type": "status", "message": payload,
+                               "current": total, "total": total}
 
-        yield {
-            "type": "done",
-            "arcs": _serialize_arcs(merger.result()),
-            "npcs": [{"name": n.name, "description": n.description} for n in merger.npcs()],
-            "page_count": doc.page_count,
-            "ocr_page_count": doc.ocr_page_count,
-            "skipped": skipped,
-        }
+            yield {
+                "type": "done",
+                "arcs": _serialize_arcs(merger.result()),
+                "npcs": [{"name": n.name, "description": n.description} for n in merger.npcs()],
+                "page_count": doc.page_count,
+                "ocr_page_count": doc.ocr_page_count,
+                "skipped": skipped,
+            }
+        finally:
+            reset_status_queue(status_token)
 
     # --- Consolidation finale (fusion des quasi-doublons) ---------------------
 
@@ -666,6 +686,9 @@ class ImportCampaignUseCase:
             logger.info(
                 "Morceau %s : timeout de génération → re-découpage en 2 moitiés (niveau %s).",
                 index, depth + 1)
+            notify_status(
+                f"Le modèle est trop lent sur le morceau {index + 1} : "
+                "re-découpage en 2 moitiés plus digestes…")
             a = await self._extract_payload(
                 left, index=index, total=total, depth=depth + 1, toc_block=toc_block)
             b = await self._extract_payload(
@@ -679,6 +702,9 @@ class ImportCampaignUseCase:
                 logger.info(
                     "Morceau %s : sortie tronquée → re-découpage en 2 moitiés (niveau %s).",
                     index, depth + 1)
+                notify_status(
+                    f"Réponse du modèle coupée sur le morceau {index + 1} : "
+                    "re-découpage en 2 moitiés plus digestes…")
                 a = await self._extract_payload(
                     left, index=index, total=total, depth=depth + 1, toc_block=toc_block)
                 b = await self._extract_payload(

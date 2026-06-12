@@ -30,6 +30,10 @@ public interface RulesPdfImporter {
      * @param onHeartbeat invoqué périodiquement pendant un appel LLM long (aucune
      *                    avancée à afficher, mais le canal SSE vers le navigateur
      *                    doit rester actif — sinon un proxy intermédiaire le coupe).
+     * @param onStatus    invoqué avec un message lisible quand quelque chose se
+     *                    passe pendant l'attente (fournisseur saturé → retry,
+     *                    morceau re-découpé, morceau ignoré…) — affiché par l'UI
+     *                    pour que l'utilisateur n'ait pas à lire les logs.
      * @param onDone      invoqué une fois avec le résultat final.
      * @param onError     invoqué si l'extraction/structuration échoue.
      */
@@ -38,6 +42,7 @@ public interface RulesPdfImporter {
             String filename,
             Consumer<RulesImportProgress> onProgress,
             Runnable onHeartbeat,
+            Consumer<String> onStatus,
             Consumer<RulesImportResult> onDone,
             Consumer<Throwable> onError);
 }

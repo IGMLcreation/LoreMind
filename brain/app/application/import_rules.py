@@ -15,7 +15,14 @@ from __future__ import annotations
 import logging
 import re
 
+import asyncio
+
 from app.application.chunking import CHUNK_TARGET_TOKENS, chunk_text, split_in_half
+from app.application.import_status import (
+    notify_status,
+    reset_status_queue,
+    set_status_queue,
+)
 from app.application.llm_json import load_json_object, looks_like_truncated_json
 from app.application.llm_retry import generate_with_retry
 from app.application.streaming import with_heartbeat
@@ -332,35 +339,46 @@ class ImportRulesUseCase:
         merger = _SectionMerger()
         skipped = 0
         last_error: str | None = None
-        for i, chunk in enumerate(chunks):
-            # RÉSILIENCE : un morceau qui échoue est SAUTÉ, l'import continue.
-            # Abandon seulement si AUCUN morceau ne passe (cf. après la boucle).
-            # HEARTBEAT : on émet des keep-alive pendant l'appel LLM (long sur un
-            # provider lent) pour que le flux SSE ne soit jamais coupé par le Core.
-            new_titles: list[str] = []
-            try:
-                sections: dict[str, str] | None = None
-                async for kind, payload in with_heartbeat(
-                    self._map_chunk(chunk, index=i, total=total)
-                ):
-                    if kind == "heartbeat":
-                        yield {"type": "heartbeat", "current": i + 1, "total": total}
-                    else:
-                        sections = payload
-                new_titles = merger.add(sections or {})
-            except LLMProviderError as exc:
-                skipped += 1
-                last_error = str(exc)
-                logger.warning("Morceau %s/%s ignoré (échec LLM) : %s", i + 1, total, exc)
-                yield {"type": "chunk_failed", "current": i + 1, "total": total,
-                       "message": str(exc)[:300]}
-            yield {
-                "type": "progress",
-                "current": i + 1,
-                "total": total,
-                "new_sections": new_titles,
-                "skipped": skipped,
-            }
+        # Canal de statut : les couches profondes (retry LLM, re-découpage) y
+        # publient des messages destinés à l'UI — cf. import_status.notify_status.
+        status_queue: asyncio.Queue = asyncio.Queue()
+        status_token = set_status_queue(status_queue)
+        try:
+            for i, chunk in enumerate(chunks):
+                # RÉSILIENCE : un morceau qui échoue est SAUTÉ, l'import continue.
+                # Abandon seulement si AUCUN morceau ne passe (cf. après la boucle).
+                # HEARTBEAT : on émet des keep-alive pendant l'appel LLM (long sur un
+                # provider lent) pour que le flux SSE ne soit jamais coupé par le Core.
+                new_titles: list[str] = []
+                try:
+                    sections: dict[str, str] | None = None
+                    async for kind, payload in with_heartbeat(
+                        self._map_chunk(chunk, index=i, total=total),
+                        status_queue=status_queue,
+                    ):
+                        if kind == "heartbeat":
+                            yield {"type": "heartbeat", "current": i + 1, "total": total}
+                        elif kind == "status":
+                            yield {"type": "status", "message": payload,
+                                   "current": i + 1, "total": total}
+                        else:
+                            sections = payload
+                    new_titles = merger.add(sections or {})
+                except LLMProviderError as exc:
+                    skipped += 1
+                    last_error = str(exc)
+                    logger.warning("Morceau %s/%s ignoré (échec LLM) : %s", i + 1, total, exc)
+                    yield {"type": "chunk_failed", "current": i + 1, "total": total,
+                           "message": str(exc)[:300]}
+                yield {
+                    "type": "progress",
+                    "current": i + 1,
+                    "total": total,
+                    "new_sections": new_titles,
+                    "skipped": skipped,
+                }
+        finally:
+            reset_status_queue(status_token)
 
         if total > 0 and skipped == total:
             yield {"type": "error",
@@ -423,6 +441,9 @@ class ImportRulesUseCase:
             logger.info(
                 "Morceau %s : timeout de génération → re-découpage en 2 moitiés (niveau %s).",
                 index, depth + 1)
+            notify_status(
+                f"Le modèle est trop lent sur le morceau {index + 1} : "
+                "re-découpage en 2 moitiés plus digestes…")
             a = await self._extract_sections(left, index=index, total=total, depth=depth + 1)
             b = await self._extract_sections(right, index=index, total=total, depth=depth + 1)
             return _combine_sections(a, b)
@@ -437,6 +458,9 @@ class ImportRulesUseCase:
                 logger.info(
                     "Morceau %s : sortie tronquée → re-découpage en 2 moitiés (niveau %s).",
                     index, depth + 1)
+                notify_status(
+                    f"Réponse du modèle coupée sur le morceau {index + 1} : "
+                    "re-découpage en 2 moitiés plus digestes…")
                 a = await self._extract_sections(left, index=index, total=total, depth=depth + 1)
                 b = await self._extract_sections(right, index=index, total=total, depth=depth + 1)
                 return _combine_sections(a, b)

@@ -69,6 +69,12 @@ export class GameSystemEditComponent implements OnInit {
   importProgress: { current: number; total: number } | null = null;
   /** Titres de sections trouvés au fil de l'eau (affichage live). */
   importFound: string[] = [];
+  /**
+   * Dernier message de statut du flux (fournisseur saturé → retry, morceau
+   * re-découpé/ignoré…). Effacé à chaque progression : il explique l'ATTENTE
+   * en cours, pas l'historique.
+   */
+  importStatus: string | null = null;
 
   name = '';
   description = '';
@@ -139,10 +145,13 @@ export class GameSystemEditComponent implements OnInit {
     this.importPhase = 'Extraction du texte…';
     this.importProgress = null;
     this.importFound = [];
+    this.importStatus = null;
 
     this.service.importRulesStream(file).subscribe({
       next: (ev) => {
         if (ev.type === 'progress') {
+          // Un morceau vient d'aboutir : le message d'attente est obsolète.
+          this.importStatus = null;
           if (ev.total === 0) {
             // Phase d'extraction (total encore inconnu).
             this.importPhase = 'Extraction du texte…';
@@ -154,6 +163,8 @@ export class GameSystemEditComponent implements OnInit {
               if (!this.importFound.includes(t)) this.importFound.push(t);
             }
           }
+        } else if (ev.type === 'status') {
+          this.importStatus = ev.message;
         } else if (ev.type === 'done') {
           this.finishImport(ev.sections, ev.pageCount, ev.ocrPageCount);
         }

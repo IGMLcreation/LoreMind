@@ -32,11 +32,14 @@ export interface RulesImportResponse {
 /**
  * Évènements du flux SSE d'import streamé.
  * - progress : avancement (total=0 ⇒ phase d'extraction en cours).
+ * - status   : message d'attente lisible (fournisseur saturé → retry, morceau
+ *              re-découpé, morceau ignoré…) — feedback live pour l'utilisateur.
  * - done     : résultat final (sections proposées).
  * - error    : message d'erreur côté serveur.
  */
 export type RulesImportStreamEvent =
   | { type: 'progress'; current: number; total: number; pageCount: number; ocrPageCount: number; newSectionTitles: string[] }
+  | { type: 'status'; message: string }
   | { type: 'done'; sections: Record<string, string>; pageCount: number; ocrPageCount: number }
   | { type: 'error'; message: string };
 

@@ -65,10 +65,11 @@ public class CampaignImportService {
             String filename,
             Consumer<CampaignImportProgress> onProgress,
             Runnable onHeartbeat,
+            Consumer<String> onStatus,
             Consumer<CampaignImportProposal> onDone,
             Consumer<Throwable> onError) {
         campaignPdfImporter.importCampaignStreaming(
-                pdfBytes, filename, onProgress, onHeartbeat, onDone, onError);
+                pdfBytes, filename, onProgress, onHeartbeat, onStatus, onDone, onError);
     }
 
     /**
