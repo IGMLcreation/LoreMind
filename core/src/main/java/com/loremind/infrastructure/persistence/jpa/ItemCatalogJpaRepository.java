@@ -10,4 +10,7 @@ import java.util.List;
 public interface ItemCatalogJpaRepository extends JpaRepository<ItemCatalogJpaEntity, Long> {
 
     List<ItemCatalogJpaEntity> findByCampaignIdOrderByOrderAsc(Long campaignId);
+
+    /** Recherche globale : bornée pour ne jamais inonder la palette de résultats. */
+    List<ItemCatalogJpaEntity> findTop20ByNameContainingIgnoreCaseOrderByNameAsc(String name);
 }

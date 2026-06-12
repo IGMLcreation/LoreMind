@@ -58,6 +58,14 @@ public class ItemCatalogController {
         return ResponseEntity.noContent().build();
     }
 
+    /** Recherche par nom — alimente la recherche globale (Ctrl+K). */
+    @GetMapping("/search")
+    public ResponseEntity<List<ItemCatalogDTO>> search(@RequestParam("q") String query) {
+        return ResponseEntity.ok(service.searchCatalogs(query).stream()
+                .map(mapper::toDTO)
+                .collect(java.util.stream.Collectors.toList()));
+    }
+
     /** Génère une PROPOSITION de catalogue via l'IA (non persistée) — l'UI préremplit le formulaire. */
     @PostMapping("/generate")
     public ResponseEntity<ItemCatalogDTO> generate(@RequestBody GenerateRequest req) {

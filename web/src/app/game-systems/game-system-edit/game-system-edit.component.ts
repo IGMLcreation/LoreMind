@@ -39,6 +39,9 @@ const CHARACTER_FIELD_SUGGESTIONS = ['Histoire', 'Personnalite', 'Apparence', 'N
 /** Suggestions de champs pour la fiche PNJ — focus sur les besoins MJ. */
 const NPC_FIELD_SUGGESTIONS = ['Motivation', 'Apparence', 'Faction', 'Notes MJ'];
 
+/** Suggestions de champs pour la fiche ENNEMI — stats de combat. */
+const ENEMY_FIELD_SUGGESTIONS = ['Stats', 'Attaques', 'Capacités', 'Faiblesses', 'Butin', 'Tactique'];
+
 @Component({
     selector: 'app-game-system-edit',
     imports: [FormsModule, LucideAngularModule, TemplateFieldsEditorComponent],
@@ -82,10 +85,12 @@ export class GameSystemEditComponent implements OnInit {
   sections: RuleSection[] = [];
   characterTemplate: TemplateField[] = [];
   npcTemplate: TemplateField[] = [];
+  enemyTemplate: TemplateField[] = [];
 
   readonly suggestedSections = SUGGESTED_SECTIONS;
   readonly characterFieldSuggestions = CHARACTER_FIELD_SUGGESTIONS;
   readonly npcFieldSuggestions = NPC_FIELD_SUGGESTIONS;
+  readonly enemyFieldSuggestions = ENEMY_FIELD_SUGGESTIONS;
 
   constructor(
     private route: ActivatedRoute,
@@ -104,6 +109,7 @@ export class GameSystemEditComponent implements OnInit {
           this.sections = this.parseMarkdown(gs.rulesMarkdown ?? '');
           this.characterTemplate = gs.characterTemplate ? [...gs.characterTemplate] : [];
           this.npcTemplate = gs.npcTemplate ? [...gs.npcTemplate] : [];
+          this.enemyTemplate = gs.enemyTemplate ? [...gs.enemyTemplate] : [];
         },
         error: () => this.back()
       });
@@ -243,6 +249,7 @@ export class GameSystemEditComponent implements OnInit {
       rulesMarkdown: this.serializeMarkdown(),
       characterTemplate: this.characterTemplate,
       npcTemplate: this.npcTemplate,
+      enemyTemplate: this.enemyTemplate,
       isPublic: false
     };
     const req = this.id
@@ -260,7 +267,9 @@ export class GameSystemEditComponent implements OnInit {
 
   /** Validation cote front : nom vide ou doublons (case-insensitive). */
   private hasInvalidTemplateFields(): boolean {
-    return this.hasInvalidList(this.characterTemplate) || this.hasInvalidList(this.npcTemplate);
+    return this.hasInvalidList(this.characterTemplate)
+        || this.hasInvalidList(this.npcTemplate)
+        || this.hasInvalidList(this.enemyTemplate);
   }
 
   private hasInvalidList(fields: TemplateField[]): boolean {

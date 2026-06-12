@@ -82,6 +82,11 @@ public class ItemCatalogService {
         repository.deleteById(id);
     }
 
+    public List<ItemCatalog> searchCatalogs(String query) {
+        if (query == null || query.isBlank()) return List.of();
+        return repository.searchByName(query.trim());
+    }
+
     /** Génère une PROPOSITION de catalogue (non persistée) via l'IA, contextualisée campagne. */
     public ItemCatalog generateProposal(String campaignId, String description) {
         ItemCatalogGenerator.GeneratedCatalog g = generator.generate(description, buildContext(campaignId));

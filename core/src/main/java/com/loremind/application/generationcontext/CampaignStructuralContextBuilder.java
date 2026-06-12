@@ -1,6 +1,7 @@
 package com.loremind.application.generationcontext;
 
 import com.loremind.domain.campaigncontext.Arc;
+import com.loremind.domain.campaigncontext.ArcType;
 import com.loremind.domain.campaigncontext.Campaign;
 import com.loremind.domain.campaigncontext.Chapter;
 import com.loremind.domain.campaigncontext.Character;
@@ -10,6 +11,7 @@ import com.loremind.domain.campaigncontext.ports.ArcRepository;
 import com.loremind.domain.campaigncontext.ports.CampaignRepository;
 import com.loremind.domain.campaigncontext.ports.ChapterRepository;
 import com.loremind.domain.campaigncontext.ports.CharacterRepository;
+import com.loremind.domain.campaigncontext.ports.EnemyRepository;
 import com.loremind.domain.campaigncontext.ports.NpcRepository;
 import com.loremind.domain.campaigncontext.ports.SceneRepository;
 import com.loremind.domain.generationcontext.CampaignStructuralContext;
@@ -48,6 +50,7 @@ public class CampaignStructuralContextBuilder {
     private final SceneRepository sceneRepository;
     private final CharacterRepository characterRepository;
     private final NpcRepository npcRepository;
+    private final EnemyRepository enemyRepository;
 
     public CampaignStructuralContextBuilder(
             CampaignRepository campaignRepository,
@@ -55,13 +58,15 @@ public class CampaignStructuralContextBuilder {
             ChapterRepository chapterRepository,
             SceneRepository sceneRepository,
             CharacterRepository characterRepository,
-            NpcRepository npcRepository) {
+            NpcRepository npcRepository,
+            EnemyRepository enemyRepository) {
         this.campaignRepository = campaignRepository;
         this.arcRepository = arcRepository;
         this.chapterRepository = chapterRepository;
         this.sceneRepository = sceneRepository;
         this.characterRepository = characterRepository;
         this.npcRepository = npcRepository;
+        this.enemyRepository = enemyRepository;
     }
 
     /** Longueur max du snippet de PJ/PNJ injecté dans le contexte (coût tokens maîtrisé). */
@@ -84,9 +89,17 @@ public class CampaignStructuralContextBuilder {
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Campagne non trouvée avec l'ID: " + campaignId));
 
+        // Libellés du bestiaire (« Nom (niveau) ») chargés UNE fois pour résoudre
+        // les enemyIds des pièces sans N+1 sur le repo.
+        Map<String, String> enemyLabelById = enemyRepository.findByCampaignId(campaignId).stream()
+                .collect(Collectors.toMap(
+                        com.loremind.domain.campaigncontext.Enemy::getId,
+                        CampaignStructuralContextBuilder::enemyLabel,
+                        (a, b) -> a));
+
         List<ArcSummary> arcs = arcRepository.findByCampaignId(campaignId).stream()
                 .sorted(Comparator.comparingInt(Arc::getOrder))
-                .map(this::toArcSummary)
+                .map(arc -> toArcSummary(arc, enemyLabelById))
                 .collect(Collectors.toList());
 
         List<CharacterSummary> characters = (playthroughId == null || playthroughId.isBlank())
@@ -143,19 +156,20 @@ public class CampaignStructuralContextBuilder {
         return "";
     }
 
-    private ArcSummary toArcSummary(Arc arc) {
+    private ArcSummary toArcSummary(Arc arc, Map<String, String> enemyLabelById) {
         List<ChapterSummary> chapters = chapterRepository.findByArcId(arc.getId()).stream()
                 .sorted(Comparator.comparingInt(Chapter::getOrder))
-                .map(this::toChapterSummary)
+                .map(chapter -> toChapterSummary(chapter, enemyLabelById))
                 .collect(Collectors.toList());
         return new ArcSummary(
                 arc.getName(),
                 arc.getDescription(),
+                arc.getType() == ArcType.HUB,
                 countImages(arc.getIllustrationImageIds()),
                 chapters);
     }
 
-    private ChapterSummary toChapterSummary(Chapter chapter) {
+    private ChapterSummary toChapterSummary(Chapter chapter, Map<String, String> enemyLabelById) {
         List<Scene> scenes = sceneRepository.findByChapterId(chapter.getId()).stream()
                 .sorted(Comparator.comparingInt(Scene::getOrder))
                 .toList();
@@ -166,7 +180,7 @@ public class CampaignStructuralContextBuilder {
                 .collect(Collectors.toMap(Scene::getId, Scene::getName));
 
         List<SceneSummary> summaries = scenes.stream()
-                .map(s -> toSceneSummary(s, nameById))
+                .map(s -> toSceneSummary(s, nameById, enemyLabelById))
                 .collect(Collectors.toList());
 
         return new ChapterSummary(
@@ -176,7 +190,8 @@ public class CampaignStructuralContextBuilder {
                 summaries);
     }
 
-    private SceneSummary toSceneSummary(Scene scene, Map<String, String> nameById) {
+    private SceneSummary toSceneSummary(
+            Scene scene, Map<String, String> nameById, Map<String, String> enemyLabelById) {
         List<BranchHint> hints = scene.getBranches() == null
                 ? List.of()
                 : scene.getBranches().stream()
@@ -186,7 +201,7 @@ public class CampaignStructuralContextBuilder {
                             b.condition()))
                     .collect(Collectors.toList());
 
-        List<RoomSummary> rooms = toRoomSummaries(scene);
+        List<RoomSummary> rooms = toRoomSummaries(scene, enemyLabelById);
 
         return new SceneSummary(
                 scene.getName(),
@@ -202,7 +217,7 @@ public class CampaignStructuralContextBuilder {
      * connaît la structure du lieu (nom des pièces, ennemis, sorties) — c'est
      * suffisant pour proposer de la narration ou anticiper les choix.
      */
-    private List<RoomSummary> toRoomSummaries(Scene scene) {
+    private List<RoomSummary> toRoomSummaries(Scene scene, Map<String, String> enemyLabelById) {
         if (scene.getRooms() == null || scene.getRooms().isEmpty()) return List.of();
         Map<String, String> nameById = scene.getRooms().stream()
                 .collect(Collectors.toMap(
@@ -219,9 +234,34 @@ public class CampaignStructuralContextBuilder {
                                         nameById.getOrDefault(b.targetRoomId(), "(pièce inconnue)"),
                                         b.condition()))
                                 .collect(Collectors.toList());
-                    return new RoomSummary(r.getName(), r.getFloor(), r.getDescription(), r.getEnemies(), hints);
+                    return new RoomSummary(
+                            r.getName(), r.getFloor(), r.getDescription(),
+                            roomEnemiesText(r, enemyLabelById), hints);
                 })
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Texte « ennemis » d'une pièce pour le prompt : fiches du bestiaire
+     * référencées (libellés résolus, IDs orphelins ignorés) suivies du texte
+     * libre. L'un ou l'autre peut être vide.
+     */
+    private static String roomEnemiesText(
+            com.loremind.domain.campaigncontext.Room room, Map<String, String> enemyLabelById) {
+        String linked = room.getEnemyIds() == null ? "" : room.getEnemyIds().stream()
+                .map(enemyLabelById::get)
+                .filter(l -> l != null && !l.isBlank())
+                .collect(Collectors.joining(", "));
+        String freeText = room.getEnemies() == null ? "" : room.getEnemies().strip();
+        if (linked.isEmpty()) return freeText;
+        if (freeText.isEmpty()) return linked;
+        return linked + " — " + freeText;
+    }
+
+    /** Libellé court d'une fiche du bestiaire : « Nom (niveau) » ou « Nom ». */
+    private static String enemyLabel(com.loremind.domain.campaigncontext.Enemy enemy) {
+        String level = enemy.getLevel() == null ? "" : enemy.getLevel().strip();
+        return level.isEmpty() ? enemy.getName() : enemy.getName() + " (" + level + ")";
     }
 
     /** Helper defensif : compte les illustrations attachees (null-safe). */

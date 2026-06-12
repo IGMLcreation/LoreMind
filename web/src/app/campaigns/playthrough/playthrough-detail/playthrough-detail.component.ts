@@ -8,6 +8,7 @@ import { CampaignService } from '../../../services/campaign.service';
 import { CharacterService } from '../../../services/character.service';
 import { NpcService } from '../../../services/npc.service';
 import { RandomTableService } from '../../../services/random-table.service';
+import { EnemyService } from '../../../services/enemy.service';
 import { PlaythroughService } from '../../../services/playthrough.service';
 import { SessionService } from '../../../services/session.service';
 import { LayoutService } from '../../../services/layout.service';
@@ -56,6 +57,7 @@ export class PlaythroughDetailComponent implements OnInit, OnDestroy {
     private characterService: CharacterService,
     private npcService: NpcService,
     private randomTableService: RandomTableService,
+    private enemyService: EnemyService,
     private playthroughService: PlaythroughService,
     private sessionService: SessionService,
     private layoutService: LayoutService,
@@ -79,7 +81,7 @@ export class PlaythroughDetailComponent implements OnInit, OnDestroy {
     forkJoin({
       campaign: this.campaignService.getCampaignById(this.campaignId),
       allCampaigns: this.campaignService.getAllCampaigns(),
-      treeData: loadCampaignTreeData(this.campaignService, this.campaignId, this.characterService, this.npcService, this.randomTableService),
+      treeData: loadCampaignTreeData(this.campaignService, this.campaignId, this.characterService, this.npcService, this.randomTableService, this.enemyService),
       playthrough: this.playthroughService.getById(this.playthroughId),
       sessions: this.sessionService.getSessions(this.playthroughId).pipe(catchError(() => of([] as Session[]))),
       characters: this.characterService.getByPlaythrough(this.playthroughId).pipe(catchError(() => of([] as Character[]))),

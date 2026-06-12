@@ -9,14 +9,17 @@ import { CampaignService } from '../../../services/campaign.service';
 import { CharacterService } from '../../../services/character.service';
 import { NpcService } from '../../../services/npc.service';
 import { RandomTableService } from '../../../services/random-table.service';
+import { EnemyService } from '../../../services/enemy.service';
 import { PageService } from '../../../services/page.service';
 import { LayoutService } from '../../../services/layout.service';
 import { PageTitleService } from '../../../services/page-title.service';
 import { Scene, SceneBranch, Room } from '../../../services/campaign.model';
 import { Page } from '../../../services/page.model';
+import { Enemy } from '../../../services/enemy.model';
 import { loadCampaignTreeData, buildCampaignSidebarConfig } from '../../campaign-tree.helper';
 import { ExpandableSectionComponent } from '../../../shared/expandable-section/expandable-section.component';
 import { LoreLinkPickerComponent } from '../../../shared/lore-link-picker/lore-link-picker.component';
+import { EnemyLinkPickerComponent } from '../../../shared/enemy-link-picker/enemy-link-picker.component';
 import { AiChatDrawerComponent } from '../../../shared/ai-chat-drawer/ai-chat-drawer.component';
 import { ImageGalleryComponent } from '../../../shared/image-gallery/image-gallery.component';
 import { IconPickerComponent } from '../../../shared/icon-picker/icon-picker.component';
@@ -30,7 +33,7 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  */
 @Component({
     selector: 'app-scene-edit',
-    imports: [ReactiveFormsModule, LucideAngularModule, ExpandableSectionComponent, LoreLinkPickerComponent, AiChatDrawerComponent, ImageGalleryComponent, IconPickerComponent, RoomsEditorComponent],
+    imports: [ReactiveFormsModule, LucideAngularModule, ExpandableSectionComponent, LoreLinkPickerComponent, EnemyLinkPickerComponent, AiChatDrawerComponent, ImageGalleryComponent, IconPickerComponent, RoomsEditorComponent],
     templateUrl: './scene-edit.component.html',
     styleUrls: ['./scene-edit.component.scss']
 })
@@ -60,6 +63,9 @@ export class SceneEditComponent implements OnInit, OnDestroy {
   availablePages: Page[] = [];
   loreId: string | null = null;
   relatedPageIds: string[] = [];
+  /** Bestiaire de la campagne + fiches liées à la rencontre. */
+  availableEnemies: Enemy[] = [];
+  enemyIds: string[] = [];
   illustrationImageIds: string[] = [];
   mapImageIds: string[] = [];
 
@@ -81,6 +87,7 @@ export class SceneEditComponent implements OnInit, OnDestroy {
     private characterService: CharacterService,
     private npcService: NpcService,
     private randomTableService: RandomTableService,
+    private enemyService: EnemyService,
     private pageService: PageService,
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService,
@@ -133,7 +140,7 @@ export class SceneEditComponent implements OnInit, OnDestroy {
       allCampaigns: this.campaignService.getAllCampaigns(),
       scene: this.campaignService.getSceneById(this.sceneId),
       chapterScenes: this.campaignService.getScenes(this.chapterId),
-      treeData: loadCampaignTreeData(this.campaignService, this.campaignId, this.characterService, this.npcService, this.randomTableService)
+      treeData: loadCampaignTreeData(this.campaignService, this.campaignId, this.characterService, this.npcService, this.randomTableService, this.enemyService)
     }).pipe(
       switchMap(data => {
         const lid = data.campaign.loreId ?? null;
@@ -146,6 +153,8 @@ export class SceneEditComponent implements OnInit, OnDestroy {
       this.loreId = loreId;
       this.availablePages = pages;
       this.relatedPageIds = [...(scene.relatedPageIds ?? [])];
+      this.availableEnemies = treeData.enemies ?? [];
+      this.enemyIds = [...(scene.enemyIds ?? [])];
       this.selectedIcon = scene.icon ?? null;
       this.illustrationImageIds = [...(scene.illustrationImageIds ?? [])];
       this.mapImageIds = [...(scene.mapImageIds ?? [])];
@@ -184,6 +193,7 @@ export class SceneEditComponent implements OnInit, OnDestroy {
       choicesConsequences:  this.form.value.choicesConsequences,
       combatDifficulty:     this.form.value.combatDifficulty,
       enemies:              this.form.value.enemies,
+      enemyIds:             this.enemyIds,
       relatedPageIds:       this.relatedPageIds,
       illustrationImageIds: this.illustrationImageIds,
       mapImageIds:          this.mapImageIds,

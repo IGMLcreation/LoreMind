@@ -40,7 +40,15 @@ public class Scene {
 
     // === Combat ou rencontre ===
     private String combatDifficulty;       // Difficulté estimée
-    private String enemies;                // Liste des ennemis et créatures
+    private String enemies;                // Liste des ennemis et créatures (texte libre)
+
+    /**
+     * IDs des fiches du bestiaire ({@link Enemy}) engagées dans cette rencontre
+     * (weak cross-aggregate references). Complète le texte libre `enemies` :
+     * l'utilisateur peut référencer ses fiches, ou tout écrire à la main, ou les deux.
+     */
+    @Builder.Default
+    private List<String> enemyIds = new ArrayList<>();
 
     /**
      * IDs des pages du Lore associées à cette scène (weak cross-context references).

@@ -159,6 +159,14 @@
           [suggestions]="npcFieldSuggestions"
           (fieldsChange)="npcTemplate = $event">
         </app-template-fields-editor>
+
+        <app-template-fields-editor
+          label="Champs de la fiche Ennemi"
+          hint="Affiches lors de la creation/edition d'un ennemi (bestiaire). Nom, niveau, dossier, portrait et bandeau sont automatiques."
+          [fields]="enemyTemplate"
+          [suggestions]="enemyFieldSuggestions"
+          (fieldsChange)="enemyTemplate = $event">
+        </app-template-fields-editor>
       </div>
 
       <div class="actions">

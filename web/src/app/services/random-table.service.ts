@@ -32,6 +32,11 @@ export class RandomTableService {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
+  /** Recherche par nom — alimente la recherche globale (Ctrl+K). */
+  search(q: string): Observable<RandomTable[]> {
+    return this.http.get<RandomTable[]>(`${this.apiUrl}/search`, { params: { q } });
+  }
+
   /** Génère une PROPOSITION de table via l'IA (non persistée) à préremplir dans le formulaire. */
   generate(campaignId: string, description: string, diceFormula: string): Observable<RandomTable> {
     return this.http.post<RandomTable>(`${this.apiUrl}/generate`, { campaignId, description, diceFormula });

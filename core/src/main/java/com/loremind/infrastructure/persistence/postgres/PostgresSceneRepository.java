@@ -80,6 +80,9 @@ public class PostgresSceneRepository implements SceneRepository {
                 .choicesConsequences(jpaEntity.getChoicesConsequences())
                 .combatDifficulty(jpaEntity.getCombatDifficulty())
                 .enemies(jpaEntity.getEnemies())
+                .enemyIds(jpaEntity.getEnemyIds() != null
+                        ? new ArrayList<>(jpaEntity.getEnemyIds())
+                        : new ArrayList<>())
                 .relatedPageIds(jpaEntity.getRelatedPageIds() != null
                         ? new ArrayList<>(jpaEntity.getRelatedPageIds())
                         : new ArrayList<>())
@@ -117,6 +120,9 @@ public class PostgresSceneRepository implements SceneRepository {
                 .choicesConsequences(scene.getChoicesConsequences())
                 .combatDifficulty(scene.getCombatDifficulty())
                 .enemies(scene.getEnemies())
+                .enemyIds(scene.getEnemyIds() != null
+                        ? new ArrayList<>(scene.getEnemyIds())
+                        : new ArrayList<>())
                 .relatedPageIds(scene.getRelatedPageIds() != null
                         ? new ArrayList<>(scene.getRelatedPageIds())
                         : new ArrayList<>())

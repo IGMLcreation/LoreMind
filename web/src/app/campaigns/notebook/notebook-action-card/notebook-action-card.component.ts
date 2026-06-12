@@ -103,10 +103,19 @@ export class NotebookActionCardComponent implements OnInit {
   }
 
   private createNpc(): void {
+    // Valeurs de fiche proposées par l'IA (clés = champs du template PNJ) ;
+    // la description sert de repli si le modèle n'a pas détaillé par champ.
+    const values: Record<string, string> = {};
+    for (const [key, val] of Object.entries(this.action.values ?? {})) {
+      if (typeof val === 'string' && val.trim()) values[key] = val;
+    }
+    if (Object.keys(values).length === 0 && this.action.description) {
+      values['Description'] = this.action.description;
+    }
     this.npcService.create({
       name: this.action.name,
       campaignId: this.campaignId,
-      values: this.action.description ? { Description: this.action.description } : {}
+      values
     }).subscribe({
       next: (n) => this.done(['/campaigns', this.campaignId, 'npcs', n.id!]),
       error: (e) => this.fail(e)
@@ -119,7 +128,12 @@ export class NotebookActionCardComponent implements OnInit {
       description: this.action.description,
       campaignId: this.campaignId,
       order: this.arcs.length,
-      type: this.action.arcType === 'HUB' ? 'HUB' : 'LINEAR'
+      type: this.action.arcType === 'HUB' ? 'HUB' : 'LINEAR',
+      themes: this.action.themes,
+      stakes: this.action.stakes,
+      rewards: this.action.rewards,
+      resolution: this.action.resolution,
+      gmNotes: this.action.gmNotes
     }).subscribe({
       next: (a) => this.done(['/campaigns', this.campaignId, 'arcs', a.id!]),
       error: (e) => this.fail(e)
@@ -132,7 +146,10 @@ export class NotebookActionCardComponent implements OnInit {
       name: this.action.name,
       description: this.action.description,
       arcId: this.selectedArcId,
-      order
+      order,
+      playerObjectives: this.action.playerObjectives,
+      narrativeStakes: this.action.narrativeStakes,
+      gmNotes: this.action.gmNotes
     }).subscribe({
       next: (c) => this.done(['/campaigns', this.campaignId, 'arcs', this.selectedArcId, 'chapters', c.id!]),
       error: (e) => this.fail(e)
@@ -143,9 +160,17 @@ export class NotebookActionCardComponent implements OnInit {
     this.campaignService.createScene({
       name: this.action.name,
       description: this.action.description,
-      playerNarration: this.action.content,
+      // `content` = ancien protocole (messages archivés d'avant l'enrichissement).
+      playerNarration: this.action.playerNarration ?? this.action.content,
       chapterId: this.selectedChapterId,
-      order: 0
+      order: 0,
+      location: this.action.location,
+      timing: this.action.timing,
+      atmosphere: this.action.atmosphere,
+      gmSecretNotes: this.action.gmSecretNotes,
+      choicesConsequences: this.action.choicesConsequences,
+      combatDifficulty: this.action.combatDifficulty,
+      enemies: this.action.enemies
     }).subscribe({
       next: (s) => this.done(
         ['/campaigns', this.campaignId, 'arcs', this.selectedArcId, 'chapters', this.selectedChapterId, 'scenes', s.id!]),

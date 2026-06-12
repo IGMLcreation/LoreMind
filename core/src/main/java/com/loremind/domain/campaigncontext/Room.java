@@ -38,6 +38,13 @@ public class Room {
     /** Énemis, créatures, boss éventuels (markdown libre). */
     private String enemies;
 
+    /**
+     * IDs des fiches du bestiaire ({@link Enemy}) présentes dans la pièce
+     * (weak refs). Complète le texte libre {@code enemies}, comme sur Scene.
+     */
+    @Builder.Default
+    private List<String> enemyIds = new ArrayList<>();
+
     /** Loot / récompenses présentes dans la pièce. */
     private String loot;
 

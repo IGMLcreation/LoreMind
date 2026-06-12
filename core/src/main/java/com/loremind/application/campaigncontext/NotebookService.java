@@ -22,16 +22,19 @@ public class NotebookService {
     private final NotebookIndexer indexer;
     private final CampaignRepository campaignRepository;
     private final CampaignBriefBuilder briefBuilder;
+    private final com.loremind.domain.gamesystemcontext.ports.GameSystemRepository gameSystemRepository;
 
     public NotebookService(
             NotebookRepository repository,
             NotebookIndexer indexer,
             CampaignRepository campaignRepository,
-            CampaignBriefBuilder briefBuilder) {
+            CampaignBriefBuilder briefBuilder,
+            com.loremind.domain.gamesystemcontext.ports.GameSystemRepository gameSystemRepository) {
         this.repository = repository;
         this.indexer = indexer;
         this.campaignRepository = campaignRepository;
         this.briefBuilder = briefBuilder;
+        this.gameSystemRepository = gameSystemRepository;
     }
 
     // --- Notebooks ---
@@ -179,6 +182,25 @@ public class NotebookService {
         if (campaignId == null) return "";
         Campaign campaign = campaignRepository.findById(campaignId).orElse(null);
         if (campaign == null) return "";
-        return briefBuilder.build(campaign);
+        String brief = briefBuilder.build(campaign);
+        // Champs TEXT de la fiche PNJ du système de jeu : permet à l'IA de remplir
+        // `values` des actions "npc" avec les BONS noms de champs (Histoire,
+        // Apparence…) au lieu de tout entasser dans une description générique.
+        String npcFields = npcSheetFields(campaign.getGameSystemId());
+        return npcFields.isEmpty() ? brief : brief + "\n\n" + npcFields;
+    }
+
+    private String npcSheetFields(String gameSystemId) {
+        if (gameSystemId == null || gameSystemId.isBlank()) return "";
+        var gameSystem = gameSystemRepository.findById(gameSystemId).orElse(null);
+        if (gameSystem == null || gameSystem.getNpcTemplate() == null) return "";
+        var names = gameSystem.getNpcTemplate().stream()
+                .filter(f -> f.getType() == com.loremind.domain.shared.template.FieldType.TEXT)
+                .map(com.loremind.domain.shared.template.TemplateField::getName)
+                .filter(n -> n != null && !n.isBlank())
+                .toList();
+        if (names.isEmpty()) return "";
+        return "FICHE PNJ — champs texte disponibles (clés à utiliser dans `values` "
+                + "d'une action npc) : " + String.join(", ", names);
     }
 }

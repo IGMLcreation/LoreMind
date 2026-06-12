@@ -5,6 +5,7 @@ import { catchError, of } from 'rxjs';
 import { CampaignService } from '../../services/campaign.service';
 import { CharacterService } from '../../services/character.service';
 import { NpcService } from '../../services/npc.service';
+import { EnemyService } from '../../services/enemy.service';
 import { Character } from '../../services/character.model';
 import { Npc } from '../../services/npc.model';
 import { Arc, Chapter, Scene } from '../../services/campaign.model';
@@ -70,7 +71,8 @@ export class SessionReferencePanelComponent implements OnChanges {
   constructor(
     private campaignService: CampaignService,
     private characterService: CharacterService,
-    private npcService: NpcService
+    private npcService: NpcService,
+    private enemyService: EnemyService
   ) {}
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -113,8 +115,8 @@ export class SessionReferencePanelComponent implements OnChanges {
   private ensureTreeLoaded(): void {
     if (this.treeLoaded || this.loadingTree || !this.campaignId) return;
     this.loadingTree = true;
-    loadCampaignTreeData(this.campaignService, this.campaignId, this.characterService, this.npcService).pipe(
-      catchError(() => of({ arcs: [], chaptersByArc: {}, scenesByChapter: {}, characters: [], npcs: [], randomTables: [] } as CampaignTreeData))
+    loadCampaignTreeData(this.campaignService, this.campaignId, this.characterService, this.npcService, undefined, this.enemyService).pipe(
+      catchError(() => of({ arcs: [], chaptersByArc: {}, scenesByChapter: {}, characters: [], npcs: [], randomTables: [], enemies: [] } as CampaignTreeData))
     ).subscribe(data => {
       this.treeData = data;
       this.loadingTree = false;

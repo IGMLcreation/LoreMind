@@ -49,6 +49,13 @@ public class PostgresCharacterRepository implements CharacterRepository {
         return jpaRepository.existsById(Long.parseLong(id));
     }
 
+    @Override
+    public List<Character> searchByName(String query) {
+        return jpaRepository.findTop20ByNameContainingIgnoreCaseOrderByNameAsc(query).stream()
+                .map(this::toDomainEntity)
+                .collect(Collectors.toList());
+    }
+
     private Character toDomainEntity(CharacterJpaEntity e) {
         return Character.builder()
                 .id(e.getId().toString())

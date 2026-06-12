@@ -263,6 +263,7 @@ public class GameSystemController {
                 dto.getRulesMarkdown(),
                 toDomainFields(dto.getCharacterTemplate()),
                 toDomainFields(dto.getNpcTemplate()),
+                toDomainFields(dto.getEnemyTemplate()),
                 dto.getAuthor(),
                 dto.isPublic()
         );

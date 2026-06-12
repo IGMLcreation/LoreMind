@@ -19,4 +19,7 @@ public interface RandomTableRepository {
     void deleteById(String id);
 
     boolean existsById(String id);
+
+    /** Recherche par nom (insensible à la casse) — alimente la recherche globale. */
+    List<RandomTable> searchByName(String query);
 }

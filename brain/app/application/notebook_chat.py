@@ -34,23 +34,59 @@ Règles :
 
 PROPOSITIONS D'INTÉGRATION (IMPORTANT) :
 Quand l'utilisateur veut CRÉER ou ADAPTER un élément concret pour sa campagne (un PNJ,
-une scène, un chapitre, un arc, une table aléatoire), termine ta réponse par un ou
-plusieurs BLOCS D'ACTION — un objet JSON par bloc, dans une clôture ```loremind-action.
-L'interface les transformera en boutons « Créer dans la campagne ». N'en mets que si
-c'est pertinent et explicitement souhaité. Formats acceptés :
+une scène, un chapitre, une quête, un arc, une table aléatoire), termine ta réponse par
+un ou plusieurs BLOCS D'ACTION — un objet JSON par bloc, dans une clôture
+```loremind-action. L'interface les transformera en boutons « Créer dans la campagne ».
+Si l'utilisateur demande PLUSIEURS éléments (« propose-moi 3 quêtes »), produis UN bloc
+par élément. N'en mets pas si l'utilisateur pose une simple question.
+
+VOCABULAIRE DE LA CAMPAGNE : une « quête » n'est PAS un type à part — c'est un CHAPITRE
+rangé dans un arc de type HUB (quêtes parallèles, sans ordre imposé), tandis qu'un arc
+LINEAR contient des chapitres joués en séquence. Donc :
+- demande de QUÊTE → action "chapter" (l'utilisateur la placera dans son arc HUB) ;
+  s'il n'a aucun arc HUB dans sa campagne, propose AUSSI une action "arc" avec
+  "arcType": "HUB" pour les accueillir.
+- demande de CHAPITRE → action "chapter" (destinée plutôt à un arc LINEAR).
+
+RÈGLE CLÉ : remplis TOUS les champs pour lesquels tu as de la matière — pas seulement
+le résumé ou les notes MJ. Chaque champ rempli atterrit au bon endroit de la fiche ;
+un champ laissé vide est une fiche que l'utilisateur devra compléter à la main. Vise
+2 à 5 phrases concrètes par champ narratif, tirées de la source et de la campagne.
+Omets simplement un champ si tu n'as rien de précis à y mettre. Formats acceptés :
 
 ```loremind-action
-{{"type": "npc", "name": "Nom", "description": "Fiche en quelques phrases."}}
+{{"type": "npc", "name": "Nom",
+  "description": "Résumé du PNJ (rôle, apparence, motivation).",
+  "values": {{"<champ de la fiche PNJ>": "contenu", "<autre champ>": "contenu"}}}}
+```
+(`values` : utilise comme clés les CHAMPS DE LA FICHE PNJ listés dans le contexte
+campagne s'ils y figurent — ex. "Histoire", "Apparence" — sinon omets `values`.)
+
+```loremind-action
+{{"type": "scene", "name": "Nom",
+  "description": "Résumé court de la scène.",
+  "location": "Lieu précis", "timing": "Quand elle survient",
+  "atmosphere": "Ambiance sensorielle (sons, odeurs, lumière…)",
+  "playerNarration": "Texte d'ambiance À LIRE AUX JOUEURS, immersif, à la 2e personne.",
+  "gmSecretNotes": "Secrets, vérités cachées, notes pour le MJ uniquement.",
+  "choicesConsequences": "Choix offerts aux joueurs et leurs conséquences.",
+  "combatDifficulty": "Difficulté du combat éventuel", "enemies": "Ennemis présents (effectifs, tactiques)"}}
 ```
 ```loremind-action
-{{"type": "scene", "name": "Nom", "description": "Résumé", "content": "Déroulé détaillé."}}
+{{"type": "chapter", "name": "Nom",
+  "description": "Résumé du chapitre (ou de la quête).",
+  "playerObjectives": "Objectifs tels que les joueurs les perçoivent.",
+  "narrativeStakes": "Enjeux narratifs (ce qui se joue vraiment).",
+  "gmNotes": "Notes MJ : fils à tirer, points d'attention."}}
 ```
 ```loremind-action
-{{"type": "chapter", "name": "Nom", "description": "Résumé du chapitre."}}
+{{"type": "arc", "name": "Nom", "description": "Résumé", "arcType": "LINEAR",
+  "themes": "Thèmes de l'arc", "stakes": "Enjeux",
+  "rewards": "Récompenses attendues", "resolution": "Issues possibles",
+  "gmNotes": "Notes MJ."}}
 ```
-```loremind-action
-{{"type": "arc", "name": "Nom", "description": "Résumé", "arcType": "LINEAR"}}
-```
+(`arcType` : "LINEAR" pour des chapitres en séquence, "HUB" pour un recueil de
+quêtes parallèles.)
 ```loremind-action
 {{"type": "table", "name": "Nom", "diceFormula": "1d8", "entries": [{{"minRoll":1,"maxRoll":4,"label":"...","detail":"..."}}]}}
 ```

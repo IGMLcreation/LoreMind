@@ -81,6 +81,14 @@ public class PostgresRandomTableRepository implements RandomTableRepository {
         return jpaRepository.existsById(Long.parseLong(id));
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<RandomTable> searchByName(String query) {
+        return jpaRepository.findTop20ByNameContainingIgnoreCaseOrderByNameAsc(query).stream()
+                .map(this::toDomainEntity)
+                .collect(Collectors.toList());
+    }
+
     private RandomTable toDomainEntity(RandomTableJpaEntity e) {
         List<RandomTableEntry> entries = e.getEntries().stream()
                 .map(c -> RandomTableEntry.builder()

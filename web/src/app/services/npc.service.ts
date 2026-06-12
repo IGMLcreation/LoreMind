@@ -36,4 +36,9 @@ export class NpcService {
   delete(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
+
+  /** Recherche par nom — alimente la recherche globale (Ctrl+K). */
+  search(q: string): Observable<Npc[]> {
+    return this.http.get<Npc[]>(`${this.apiUrl}/search`, { params: { q } });
+  }
 }

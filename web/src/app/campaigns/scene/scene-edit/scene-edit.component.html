@@ -202,7 +202,19 @@
         <input id="scene-edit-combat-difficulty" type="text" formControlName="combatDifficulty" placeholder="Ex: Moyenne, 3 gobelins niveau 2" />
       </div>
       <div class="field">
-        <label for="scene-edit-enemies">Ennemis et créatures</label>
+        <label>Ennemis du bestiaire</label>
+        <app-enemy-link-picker
+          [value]="enemyIds"
+          [availableEnemies]="availableEnemies"
+          [campaignId]="campaignId"
+          (valueChange)="enemyIds = $event">
+        </app-enemy-link-picker>
+        <small class="field-hint">
+          Référencez des fiches de votre bestiaire — cliquez sur un chip pour ouvrir la fiche.
+        </small>
+      </div>
+      <div class="field">
+        <label for="scene-edit-enemies">Ennemis et créatures (texte libre)</label>
         <textarea
           id="scene-edit-enemies"
           formControlName="enemies"

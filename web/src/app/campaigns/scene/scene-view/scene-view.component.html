@@ -81,17 +81,29 @@
       </section>
     }
     <!-- Combat ou rencontre -->
-    @if (scene.combatDifficulty?.trim() || scene.enemies?.trim()) {
+    @if (scene.combatDifficulty?.trim() || scene.enemies?.trim() || linkedEnemies.length > 0) {
       @if (scene.combatDifficulty?.trim()) {
         <section class="view-section">
           <h2 class="view-section-title"><span class="view-section-icon">⚔️</span> Difficulté estimée</h2>
           <p class="view-section-body">{{ scene.combatDifficulty }}</p>
         </section>
       }
-      @if (scene.enemies?.trim()) {
+      @if (scene.enemies?.trim() || linkedEnemies.length > 0) {
         <section class="view-section">
           <h2 class="view-section-title"><span class="view-section-icon">🐲</span> Ennemis et créatures</h2>
-          <p class="view-section-body">{{ scene.enemies }}</p>
+          @if (linkedEnemies.length > 0) {
+            <div class="view-chips">
+              @for (e of linkedEnemies; track e.id) {
+                <a class="view-chip"
+                  [routerLink]="['/campaigns', campaignId, 'enemies', e.id]">
+                  {{ enemyLabel(e) }}
+                </a>
+              }
+            </div>
+          }
+          @if (scene.enemies?.trim()) {
+            <p class="view-section-body">{{ scene.enemies }}</p>
+          }
         </section>
       }
     }

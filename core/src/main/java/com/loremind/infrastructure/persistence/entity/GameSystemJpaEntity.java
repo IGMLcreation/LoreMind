@@ -46,6 +46,11 @@ public class GameSystemJpaEntity {
     @Column(name = "npc_template", columnDefinition = "TEXT")
     private List<TemplateField> npcTemplate;
 
+    /** Template ENNEMI (bestiaire) serialise en JSON. */
+    @Convert(converter = TemplateFieldListJsonConverter.class)
+    @Column(name = "enemy_template", columnDefinition = "TEXT")
+    private List<TemplateField> enemyTemplate;
+
     @Column
     private String author;
 
@@ -64,6 +69,7 @@ public class GameSystemJpaEntity {
         updatedAt = LocalDateTime.now();
         if (characterTemplate == null) characterTemplate = new ArrayList<>();
         if (npcTemplate == null) npcTemplate = new ArrayList<>();
+        if (enemyTemplate == null) enemyTemplate = new ArrayList<>();
     }
 
     @PreUpdate

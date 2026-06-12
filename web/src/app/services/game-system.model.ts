@@ -14,6 +14,7 @@ export interface GameSystem {
   rulesMarkdown?: string | null;
   characterTemplate?: TemplateField[];
   npcTemplate?: TemplateField[];
+  enemyTemplate?: TemplateField[];
   author?: string | null;
   isPublic?: boolean;
 }
@@ -50,6 +51,7 @@ export interface GameSystemCreate {
   rulesMarkdown?: string | null;
   characterTemplate?: TemplateField[];
   npcTemplate?: TemplateField[];
+  enemyTemplate?: TemplateField[];
   author?: string | null;
   isPublic: boolean;
 }

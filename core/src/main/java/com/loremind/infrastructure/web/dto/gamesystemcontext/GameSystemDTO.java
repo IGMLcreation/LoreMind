@@ -19,6 +19,7 @@ public class GameSystemDTO {
     private String rulesMarkdown;
     private List<TemplateFieldDTO> characterTemplate = new ArrayList<>();
     private List<TemplateFieldDTO> npcTemplate = new ArrayList<>();
+    private List<TemplateFieldDTO> enemyTemplate = new ArrayList<>();
     private String author;
     private boolean isPublic;
 }

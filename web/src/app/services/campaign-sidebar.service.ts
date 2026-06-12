@@ -4,6 +4,7 @@ import { CampaignService } from './campaign.service';
 import { CharacterService } from './character.service';
 import { NpcService } from './npc.service';
 import { RandomTableService } from './random-table.service';
+import { EnemyService } from './enemy.service';
 import { LayoutService } from './layout.service';
 import { loadCampaignTreeData, buildCampaignSidebarConfig } from '../campaigns/campaign-tree.helper';
 
@@ -28,6 +29,7 @@ export class CampaignSidebarService {
     private characterService: CharacterService,
     private npcService: NpcService,
     private randomTableService: RandomTableService,
+    private enemyService: EnemyService,
     private layoutService: LayoutService
   ) {}
 
@@ -45,7 +47,8 @@ export class CampaignSidebarService {
         campaignId,
         this.characterService,
         this.npcService,
-        this.randomTableService
+        this.randomTableService,
+        this.enemyService
       )
     }).subscribe(({ campaign, allCampaigns, treeData }) => {
       this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, campaignId));

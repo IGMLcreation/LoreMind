@@ -10,4 +10,7 @@ import java.util.List;
 public interface RandomTableJpaRepository extends JpaRepository<RandomTableJpaEntity, Long> {
 
     List<RandomTableJpaEntity> findByCampaignIdOrderByOrderAsc(Long campaignId);
+
+    /** Recherche globale : bornée pour ne jamais inonder la palette de résultats. */
+    List<RandomTableJpaEntity> findTop20ByNameContainingIgnoreCaseOrderByNameAsc(String name);
 }

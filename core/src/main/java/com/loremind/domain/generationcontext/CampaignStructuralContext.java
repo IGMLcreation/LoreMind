@@ -52,11 +52,15 @@ public record CampaignStructuralContext(
     /**
      * Résumé d'un arc : nom + description courte + ses chapitres.
      *
+     * @param hub               true si l'arc est de type HUB : ses chapitres sont des
+     *                          « quêtes » parallèles (vocabulaire UI). L'IA doit le savoir
+     *                          pour parler de quêtes et cibler le bon arc.
      * @param illustrationCount Nombre d'illustrations attachees a cet arc (pour hint dans le prompt IA).
      */
     public record ArcSummary(
             String name,
             String description,
+            boolean hub,
             int illustrationCount,
             List<ChapterSummary> chapters) {
     }

@@ -4,11 +4,13 @@ import { CampaignService } from '../services/campaign.service';
 import { CharacterService } from '../services/character.service';
 import { NpcService } from '../services/npc.service';
 import { RandomTableService } from '../services/random-table.service';
+import { EnemyService } from '../services/enemy.service';
 import { TreeItem, SecondarySidebarConfig, GlobalItem } from '../services/layout.service';
 import { Arc, Chapter, Scene, Campaign } from '../services/campaign.model';
 import { Character } from '../services/character.model';
 import { Npc } from '../services/npc.model';
 import { RandomTable } from '../services/random-table.model';
+import { Enemy } from '../services/enemy.model';
 import { catchError } from 'rxjs/operators';
 
 /**
@@ -26,6 +28,7 @@ export interface CampaignTreeData {
   characters: Character[];
   npcs: Npc[];
   randomTables: RandomTable[];
+  enemies: Enemy[];
 }
 
 export function loadCampaignTreeData(
@@ -35,7 +38,10 @@ export function loadCampaignTreeData(
   npcService: NpcService,
   // Optionnel pour ne pas casser les ~15 appelants existants : si fourni, les
   // tables aléatoires sont chargées et apparaissent dans la sidebar.
-  randomTableService?: RandomTableService
+  randomTableService?: RandomTableService,
+  // Optionnel (même principe) : si fourni, les ennemis sont chargés et le nœud
+  // « Ennemis » devient dépliable (dossiers → fiches) en plus du lien.
+  enemyService?: EnemyService
 ): Observable<CampaignTreeData> {
   // Note refonte Playthrough : les PJ appartiennent désormais à une Partie,
   // pas à la campagne — on ne les charge plus ici (les vues qui les affichent
@@ -46,11 +52,14 @@ export function loadCampaignTreeData(
     npcs: npcService.getByCampaign(campaignId),
     randomTables: randomTableService
       ? randomTableService.getByCampaign(campaignId).pipe(catchError(() => of([] as RandomTable[])))
-      : of([] as RandomTable[])
+      : of([] as RandomTable[]),
+    enemies: enemyService
+      ? enemyService.getByCampaign(campaignId).pipe(catchError(() => of([] as Enemy[])))
+      : of([] as Enemy[])
   }).pipe(
-    switchMap(({ arcs, characters, npcs, randomTables }) => {
+    switchMap(({ arcs, characters, npcs, randomTables, enemies }) => {
       if (arcs.length === 0) {
-        return of({ arcs, chaptersByArc: {}, scenesByChapter: {}, characters, npcs, randomTables });
+        return of({ arcs, chaptersByArc: {}, scenesByChapter: {}, characters, npcs, randomTables, enemies });
       }
       const chapterCalls = arcs.map(a =>
         service.getChapters(a.id!).pipe(map(chapters => ({ arcId: a.id!, chapters })))
@@ -65,7 +74,7 @@ export function loadCampaignTreeData(
           });
 
           if (allChapters.length === 0) {
-            return of({ arcs, chaptersByArc, scenesByChapter: {}, characters, npcs, randomTables });
+            return of({ arcs, chaptersByArc, scenesByChapter: {}, characters, npcs, randomTables, enemies });
           }
           const sceneCalls = allChapters.map(c =>
             service.getScenes(c.id!).pipe(map(scenes => ({ chapterId: c.id!, scenes })))
@@ -74,7 +83,7 @@ export function loadCampaignTreeData(
             map(sceneResults => {
               const scenesByChapter: Record<string, Scene[]> = {};
               sceneResults.forEach(r => { scenesByChapter[r.chapterId] = r.scenes; });
-              return { arcs, chaptersByArc, scenesByChapter, characters, npcs, randomTables };
+              return { arcs, chaptersByArc, scenesByChapter, characters, npcs, randomTables, enemies };
             })
           );
         })
@@ -135,6 +144,9 @@ export function buildCampaignTree(campaignId: string, data: CampaignTreeData): T
     iconKey: 'c-drama',
     children: npcChildren,
     meta: sortedNpcs.length ? String(sortedNpcs.length) : undefined,
+    // Cliquer le LIBELLÉ ouvre la page de liste (vue d'ensemble par dossiers) ;
+    // cliquer le CHEVRON déplie l'arbre dans la sidebar — les deux coexistent.
+    route: `/campaigns/${campaignId}/npcs`,
     // Porte le header de section "Personnages" (les PJ ayant migré vers la Partie).
     // Le filet au-dessus est masqué par CSS si c'est le tout premier item de la sidebar.
     sectionHeaderBefore: 'Personnages',
@@ -145,6 +157,40 @@ export function buildCampaignTree(campaignId: string, data: CampaignTreeData): T
       actionIcon: 'plus'
     }]
   };
+
+  // --- Ennemis (bestiaire) : même structure que les PNJ — dossiers dépliables
+  // dans la sidebar + libellé cliquable vers la page de liste.
+  const sortedEnemies = [...(data.enemies ?? [])].sort(byName);
+  const enemyItem = (e: Enemy): TreeItem => ({
+    id: `enemy-${e.id}`,
+    label: e.name,
+    route: `/campaigns/${campaignId}/enemies/${e.id}`,
+    meta: e.level ? `Niv. ${e.level}` : undefined
+  });
+  const enemiesByFolder = new Map<string, Enemy[]>();
+  const ungroupedEnemies: Enemy[] = [];
+  for (const e of sortedEnemies) {
+    const f = (e.folder ?? '').trim();
+    if (f) {
+      if (!enemiesByFolder.has(f)) enemiesByFolder.set(f, []);
+      enemiesByFolder.get(f)!.push(e);
+    } else {
+      ungroupedEnemies.push(e);
+    }
+  }
+  const enemyFolderNodes: TreeItem[] = [...enemiesByFolder.keys()]
+    .sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }))
+    .map(folder => {
+      const items = enemiesByFolder.get(folder)!.map(enemyItem);
+      return {
+        id: `enemy-folder-${folder}`,
+        label: folder,
+        iconKey: 'folder',
+        children: items,
+        meta: String(items.length)
+      };
+    });
+  const enemyChildren: TreeItem[] = [...enemyFolderNodes, ...ungroupedEnemies.map(enemyItem)];
 
   const sortedArcs = [...data.arcs].sort(byName);
 
@@ -233,6 +279,24 @@ export function buildCampaignTree(campaignId: string, data: CampaignTreeData): T
     route: `/campaigns/${campaignId}/item-catalogs`
   };
 
+  // Ennemis (bestiaire, fiches pilotées par le template Ennemi du GameSystem,
+  // classées par dossier) — rangé avec les PERSONNAGES, comme les PNJ.
+  // Libellé → page de liste ; chevron → arbre dépliable (dossiers → fiches).
+  const enemiesNode: TreeItem = {
+    id: 'enemies-root',
+    label: 'Ennemis',
+    iconKey: 'skull',
+    children: enemyChildren,
+    meta: sortedEnemies.length ? String(sortedEnemies.length) : undefined,
+    route: `/campaigns/${campaignId}/enemies`,
+    createActions: [{
+      id: 'new-enemy',
+      label: 'Nouvel ennemi',
+      route: `/campaigns/${campaignId}/enemies/create`,
+      actionIcon: 'plus'
+    }]
+  };
+
   // Importer un PDF de campagne → arborescence (outil, comme tables & ateliers).
   const importNode: TreeItem = {
     id: 'import-pdf-root',
@@ -241,7 +305,7 @@ export function buildCampaignTree(campaignId: string, data: CampaignTreeData): T
     route: `/campaigns/${campaignId}/import`
   };
 
-  return [...arcNodes, npcsNode, tablesNode, notebooksNode, catalogsNode, importNode];
+  return [...arcNodes, npcsNode, enemiesNode, tablesNode, notebooksNode, catalogsNode, importNode];
 }
 
 /**

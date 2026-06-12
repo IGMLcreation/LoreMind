@@ -19,4 +19,7 @@ public interface CharacterRepository {
     void deleteById(String id);
 
     boolean existsById(String id);
+
+    /** Recherche par nom (insensible à la casse) — alimente la recherche globale. */
+    List<Character> searchByName(String query);
 }

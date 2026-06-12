@@ -78,6 +78,11 @@ public class CharacterService {
         characterRepository.deleteById(id);
     }
 
+    public List<Character> searchCharacters(String query) {
+        if (query == null || query.isBlank()) return List.of();
+        return characterRepository.searchByName(query.trim());
+    }
+
     private int nextOrderFor(String playthroughId) {
         return characterRepository.findByPlaythroughId(playthroughId).stream()
                 .mapToInt(Character::getOrder)

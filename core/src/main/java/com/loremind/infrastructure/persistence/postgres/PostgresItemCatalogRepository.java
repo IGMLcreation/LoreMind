@@ -77,6 +77,14 @@ public class PostgresItemCatalogRepository implements ItemCatalogRepository {
         return jpaRepository.existsById(Long.parseLong(id));
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<ItemCatalog> searchByName(String query) {
+        return jpaRepository.findTop20ByNameContainingIgnoreCaseOrderByNameAsc(query).stream()
+                .map(this::toDomainEntity)
+                .collect(Collectors.toList());
+    }
+
     private ItemCatalog toDomainEntity(ItemCatalogJpaEntity e) {
         List<CatalogItem> items = e.getItems().stream()
                 .map(c -> CatalogItem.builder()

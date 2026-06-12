@@ -40,6 +40,9 @@ public class SceneMapper {
         dto.setChoicesConsequences(scene.getChoicesConsequences());
         dto.setCombatDifficulty(scene.getCombatDifficulty());
         dto.setEnemies(scene.getEnemies());
+        dto.setEnemyIds(scene.getEnemyIds() != null
+                ? new ArrayList<>(scene.getEnemyIds())
+                : new ArrayList<>());
         dto.setRelatedPageIds(scene.getRelatedPageIds() != null
                 ? new ArrayList<>(scene.getRelatedPageIds())
                 : new ArrayList<>());
@@ -74,6 +77,9 @@ public class SceneMapper {
                 .choicesConsequences(dto.getChoicesConsequences())
                 .combatDifficulty(dto.getCombatDifficulty())
                 .enemies(dto.getEnemies())
+                .enemyIds(dto.getEnemyIds() != null
+                        ? new ArrayList<>(dto.getEnemyIds())
+                        : new ArrayList<>())
                 .relatedPageIds(dto.getRelatedPageIds() != null
                         ? new ArrayList<>(dto.getRelatedPageIds())
                         : new ArrayList<>())
@@ -117,6 +123,9 @@ public class SceneMapper {
         dto.setName(r.getName());
         dto.setDescription(r.getDescription());
         dto.setEnemies(r.getEnemies());
+        dto.setEnemyIds(r.getEnemyIds() != null
+                ? new ArrayList<>(r.getEnemyIds())
+                : new ArrayList<>());
         dto.setLoot(r.getLoot());
         dto.setTraps(r.getTraps());
         dto.setGmNotes(r.getGmNotes());
@@ -145,6 +154,9 @@ public class SceneMapper {
                 .name(d.getName())
                 .description(d.getDescription())
                 .enemies(d.getEnemies())
+                .enemyIds(d.getEnemyIds() != null
+                        ? new ArrayList<>(d.getEnemyIds())
+                        : new ArrayList<>())
                 .loot(d.getLoot())
                 .traps(d.getTraps())
                 .gmNotes(d.getGmNotes())

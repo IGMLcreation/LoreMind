@@ -7,6 +7,7 @@ import { CampaignService } from '../../../services/campaign.service';
 import { CharacterService } from '../../../services/character.service';
 import { NpcService } from '../../../services/npc.service';
 import { RandomTableService } from '../../../services/random-table.service';
+import { EnemyService } from '../../../services/enemy.service';
 import { LayoutService, GlobalItem } from '../../../services/layout.service';
 import { PageTitleService } from '../../../services/page-title.service';
 import { Campaign, Chapter, Scene } from '../../../services/campaign.model';
@@ -71,6 +72,7 @@ export class ChapterGraphComponent implements OnInit, OnDestroy {
     private characterService: CharacterService,
     private npcService: NpcService,
     private randomTableService: RandomTableService,
+    private enemyService: EnemyService,
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService
   ) {}
@@ -90,7 +92,7 @@ export class ChapterGraphComponent implements OnInit, OnDestroy {
       allCampaigns: this.campaignService.getAllCampaigns(),
       chapter: this.campaignService.getChapterById(this.chapterId),
       scenes: this.campaignService.getScenes(this.chapterId),
-      treeData: loadCampaignTreeData(this.campaignService, this.campaignId, this.characterService, this.npcService, this.randomTableService)
+      treeData: loadCampaignTreeData(this.campaignService, this.campaignId, this.characterService, this.npcService, this.randomTableService, this.enemyService)
     }).subscribe(({ campaign, allCampaigns, chapter, scenes, treeData }) => {
       this.chapter = chapter;
       this.scenes = scenes;

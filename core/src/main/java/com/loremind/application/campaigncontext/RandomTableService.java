@@ -85,6 +85,11 @@ public class RandomTableService {
         repository.deleteById(id);
     }
 
+    public List<RandomTable> searchTables(String query) {
+        if (query == null || query.isBlank()) return List.of();
+        return repository.searchByName(query.trim());
+    }
+
     /** Génère une PROPOSITION de table (non persistée) via l'IA, contextualisée campagne. */
     public RandomTable generateProposal(String campaignId, String description, String diceFormula) {
         String formula = (diceFormula == null || diceFormula.isBlank()) ? "1d20" : diceFormula;

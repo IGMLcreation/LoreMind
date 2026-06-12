@@ -75,6 +75,12 @@ public class SceneJpaEntity {
     @Column(columnDefinition = "TEXT")
     private String enemies;
 
+    /** IDs des fiches du bestiaire liées à la rencontre (JSON, weak refs). */
+    @Column(name = "enemy_ids", columnDefinition = "TEXT")
+    @Convert(converter = StringListJsonConverter.class)
+    @Builder.Default
+    private List<String> enemyIds = new ArrayList<>();
+
     @Column(name = "related_page_ids", columnDefinition = "TEXT")
     @Convert(converter = StringListJsonConverter.class)
     @Builder.Default

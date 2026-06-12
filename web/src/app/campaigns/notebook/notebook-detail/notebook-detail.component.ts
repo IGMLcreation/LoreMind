@@ -8,6 +8,7 @@ import { CampaignSidebarService } from '../../../services/campaign-sidebar.servi
 import { CampaignService } from '../../../services/campaign.service';
 import { CharacterService } from '../../../services/character.service';
 import { NpcService } from '../../../services/npc.service';
+import { EnemyService } from '../../../services/enemy.service';
 import { NotebookArchive, NotebookDetail, NotebookSource, NotebookMessage } from '../../../services/notebook.model';
 import { parseNotebookActions, NotebookAction } from '../../../services/notebook-action.model';
 import { Arc, Chapter } from '../../../services/campaign.model';
@@ -66,6 +67,7 @@ export class NotebookDetailComponent implements OnInit {
     private campaignService: CampaignService,
     private characterService: CharacterService,
     private npcService: NpcService,
+    private enemyService: EnemyService,
     private confirmDialog: ConfirmDialogService
   ) {}
 
@@ -80,7 +82,7 @@ export class NotebookDetailComponent implements OnInit {
   }
 
   private loadTree(): void {
-    loadCampaignTreeData(this.campaignService, this.campaignId, this.characterService, this.npcService)
+    loadCampaignTreeData(this.campaignService, this.campaignId, this.characterService, this.npcService, undefined, this.enemyService)
       .subscribe({
         next: (data) => { this.arcs = data.arcs; this.chaptersByArc = data.chaptersByArc; },
         error: () => { /* cibles indisponibles : les cartes le signaleront */ }

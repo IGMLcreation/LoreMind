@@ -16,6 +16,8 @@ public class RoomDTO {
     private String name;
     private String description;
     private String enemies;
+    /** IDs des fiches du bestiaire présentes dans la pièce (weak refs). */
+    private List<String> enemyIds = new ArrayList<>();
     private String loot;
     private String traps;
     private String gmNotes;

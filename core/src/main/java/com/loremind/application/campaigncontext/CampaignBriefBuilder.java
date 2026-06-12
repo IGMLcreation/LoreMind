@@ -42,15 +42,17 @@ public class CampaignBriefBuilder {
         if (notBlank(cc.campaignDescription())) sb.append(cc.campaignDescription()).append("\n");
 
         sb.append("\n## Structure (arcs → chapitres → scènes)\n");
+        sb.append("_Un arc HUB contient des chapitres parallèles appelés « quêtes » ; ")
+                .append("un arc LINEAR contient des chapitres en séquence._\n");
         if (cc.arcs().isEmpty()) {
             sb.append("_(aucun arc pour le moment)_\n");
         }
         for (ArcSummary arc : cc.arcs()) {
-            sb.append("### Arc : ").append(arc.name());
+            sb.append(arc.hub() ? "### Arc HUB (à quêtes) : " : "### Arc : ").append(arc.name());
             if (notBlank(arc.description())) sb.append(" — ").append(arc.description());
             sb.append("\n");
             for (ChapterSummary ch : arc.chapters()) {
-                sb.append("- Chapitre : ").append(ch.name());
+                sb.append(arc.hub() ? "- Quête : " : "- Chapitre : ").append(ch.name());
                 if (notBlank(ch.description())) sb.append(" — ").append(ch.description());
                 sb.append("\n");
                 for (SceneSummary sc : ch.scenes()) {

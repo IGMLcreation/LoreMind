@@ -10,4 +10,7 @@ import java.util.List;
 public interface CharacterJpaRepository extends JpaRepository<CharacterJpaEntity, Long> {
 
     List<CharacterJpaEntity> findByPlaythroughIdOrderByOrderAsc(Long playthroughId);
+
+    /** Recherche globale : bornée pour ne jamais inonder la palette de résultats. */
+    List<CharacterJpaEntity> findTop20ByNameContainingIgnoreCaseOrderByNameAsc(String name);
 }

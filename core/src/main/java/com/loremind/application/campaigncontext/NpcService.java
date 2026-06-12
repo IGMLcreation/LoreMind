@@ -102,6 +102,11 @@ public class NpcService {
         npcRepository.deleteById(id);
     }
 
+    public List<Npc> searchNpcs(String query) {
+        if (query == null || query.isBlank()) return List.of();
+        return npcRepository.searchByName(query.trim());
+    }
+
     /** Trim le dossier ; chaîne vide → null (= non classé). */
     private static String normalizeFolder(String folder) {
         if (folder == null) return null;

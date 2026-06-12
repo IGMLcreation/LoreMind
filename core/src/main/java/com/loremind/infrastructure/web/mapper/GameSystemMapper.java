@@ -27,6 +27,7 @@ public class GameSystemMapper {
         dto.setRulesMarkdown(g.getRulesMarkdown());
         dto.setCharacterTemplate(toDTOList(g.getCharacterTemplate()));
         dto.setNpcTemplate(toDTOList(g.getNpcTemplate()));
+        dto.setEnemyTemplate(toDTOList(g.getEnemyTemplate()));
         dto.setAuthor(g.getAuthor());
         dto.setPublic(g.isPublic());
         return dto;
@@ -41,6 +42,7 @@ public class GameSystemMapper {
                 .rulesMarkdown(dto.getRulesMarkdown())
                 .characterTemplate(toDomainList(dto.getCharacterTemplate()))
                 .npcTemplate(toDomainList(dto.getNpcTemplate()))
+                .enemyTemplate(toDomainList(dto.getEnemyTemplate()))
                 .author(dto.getAuthor())
                 .isPublic(dto.isPublic())
                 .build();

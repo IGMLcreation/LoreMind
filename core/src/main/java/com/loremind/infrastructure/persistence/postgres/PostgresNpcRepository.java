@@ -50,6 +50,13 @@ public class PostgresNpcRepository implements NpcRepository {
         return jpaRepository.existsById(Long.parseLong(id));
     }
 
+    @Override
+    public List<Npc> searchByName(String query) {
+        return jpaRepository.findTop20ByNameContainingIgnoreCaseOrderByNameAsc(query).stream()
+                .map(this::toDomainEntity)
+                .collect(Collectors.toList());
+    }
+
     private Npc toDomainEntity(NpcJpaEntity e) {
         return Npc.builder()
                 .id(e.getId().toString())

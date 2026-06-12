@@ -1,0 +1,52 @@
+<div class="picker">
+
+  <!-- Chips des ennemis déjà liés -->
+  @if (linkedEnemies.length > 0) {
+    <div class="linked-chips">
+      @for (e of linkedEnemies; track e.id) {
+        <span class="chip">
+          <a
+            class="chip-label"
+            [href]="enemyUrl(e.id!)"
+            target="_blank"
+            rel="noopener"
+            title="Ouvrir la fiche dans un nouvel onglet">
+            <lucide-icon [img]="Skull" [size]="12"></lucide-icon>
+            {{ label(e) }}
+          </a>
+          <button type="button" class="chip-remove" (click)="remove(e.id!)" title="Retirer le lien">
+            <lucide-icon [img]="X" [size]="12"></lucide-icon>
+          </button>
+        </span>
+      }
+    </div>
+  }
+
+  <!-- Input + dropdown de suggestions -->
+  <div class="search-wrapper">
+    <input
+      type="text"
+      class="search-input"
+      placeholder="Rechercher un ennemi du bestiaire..."
+      [(ngModel)]="query"
+      (focus)="dropdownOpen = true"
+      (blur)="onBlur()" />
+
+    @if (dropdownOpen && suggestions.length > 0) {
+      <ul class="suggestions">
+        @for (e of suggestions; track e.id) {
+          <li (mousedown)="add(e)">
+            {{ label(e) }}
+          </li>
+        }
+      </ul>
+    }
+
+    @if (dropdownOpen && query && suggestions.length === 0) {
+      <p class="empty-hint">
+        Aucun ennemi ne correspond
+      </p>
+    }
+  </div>
+
+</div>

@@ -10,4 +10,7 @@ import java.util.List;
 public interface NpcJpaRepository extends JpaRepository<NpcJpaEntity, Long> {
 
     List<NpcJpaEntity> findByCampaignIdOrderByOrderAsc(Long campaignId);
+
+    /** Recherche globale : bornée pour ne jamais inonder la palette de résultats. */
+    List<NpcJpaEntity> findTop20ByNameContainingIgnoreCaseOrderByNameAsc(String name);
 }

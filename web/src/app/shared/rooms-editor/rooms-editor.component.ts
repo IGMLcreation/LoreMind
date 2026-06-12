@@ -3,6 +3,8 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, Plus, Trash2, ChevronDown, ChevronUp, GitBranch, X } from 'lucide-angular';
 import { Room, RoomBranch } from '../../services/campaign.model';
+import { Enemy } from '../../services/enemy.model';
+import { EnemyLinkPickerComponent } from '../enemy-link-picker/enemy-link-picker.component';
 
 /**
  * Éditeur de pièces (Rooms) d'une Scene explorable.
@@ -15,13 +17,17 @@ import { Room, RoomBranch } from '../../services/campaign.model';
  */
 @Component({
     selector: 'app-rooms-editor',
-    imports: [FormsModule, LucideAngularModule],
+    imports: [FormsModule, LucideAngularModule, EnemyLinkPickerComponent],
     templateUrl: './rooms-editor.component.html',
     styleUrls: ['./rooms-editor.component.scss']
 })
 export class RoomsEditorComponent {
 
   @Input() rooms: Room[] = [];
+  /** Bestiaire de la campagne (pour référencer des fiches dans une pièce). */
+  @Input() availableEnemies: Enemy[] = [];
+  /** ID de la campagne (URLs des chips du picker d'ennemis). */
+  @Input() campaignId = '';
   @Output() roomsChange = new EventEmitter<Room[]>();
 
   readonly Plus = Plus;

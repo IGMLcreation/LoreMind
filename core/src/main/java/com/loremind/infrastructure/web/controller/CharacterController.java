@@ -16,10 +16,13 @@ public class CharacterController {
 
     private final CharacterService characterService;
     private final CharacterMapper characterMapper;
+    private final com.loremind.domain.playcontext.ports.PlaythroughRepository playthroughRepository;
 
-    public CharacterController(CharacterService characterService, CharacterMapper characterMapper) {
+    public CharacterController(CharacterService characterService, CharacterMapper characterMapper,
+                               com.loremind.domain.playcontext.ports.PlaythroughRepository playthroughRepository) {
         this.characterService = characterService;
         this.characterMapper = characterMapper;
+        this.playthroughRepository = playthroughRepository;
     }
 
     @PostMapping
@@ -42,6 +45,31 @@ public class CharacterController {
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
     }
+
+    /**
+     * Recherche par nom — alimente la recherche globale (Ctrl+K). Le résultat est
+     * enrichi du campaignId (résolu via le Playthrough) pour que le front puisse
+     * construire la route /campaigns/{c}/playthroughs/{p}/characters/{id}.
+     */
+    @GetMapping("/search")
+    public ResponseEntity<List<CharacterSearchDTO>> search(@RequestParam("q") String query) {
+        List<CharacterSearchDTO> out = characterService.searchCharacters(query).stream()
+                .map(c -> new CharacterSearchDTO(
+                        c.getId(),
+                        c.getName(),
+                        c.getPlaythroughId(),
+                        c.getPlaythroughId() != null
+                                ? playthroughRepository.findById(c.getPlaythroughId())
+                                        .map(com.loremind.domain.playcontext.Playthrough::getCampaignId)
+                                        .orElse(null)
+                                : null))
+                .filter(r -> r.campaignId() != null) // PJ orphelin (legacy) : non navigable → exclu
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(out);
+    }
+
+    /** Résultat de recherche d'un PJ, enrichi pour la navigation. */
+    public record CharacterSearchDTO(String id, String name, String playthroughId, String campaignId) {}
 
     @PutMapping("/{id}")
     public ResponseEntity<CharacterDTO> updateCharacter(@PathVariable String id, @RequestBody CharacterDTO dto) {

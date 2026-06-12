@@ -59,6 +59,14 @@ public class RandomTableController {
         return ResponseEntity.noContent().build();
     }
 
+    /** Recherche par nom — alimente la recherche globale (Ctrl+K). */
+    @GetMapping("/search")
+    public ResponseEntity<List<RandomTableDTO>> search(@RequestParam("q") String query) {
+        return ResponseEntity.ok(service.searchTables(query).stream()
+                .map(mapper::toDTO)
+                .collect(java.util.stream.Collectors.toList()));
+    }
+
     /** Génère une PROPOSITION de table via l'IA (non persistée) — l'UI préremplit le formulaire. */
     @PostMapping("/generate")
     public ResponseEntity<RandomTableDTO> generate(@RequestBody GenerateRequest req) {

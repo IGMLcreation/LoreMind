@@ -15,10 +15,37 @@ export interface NotebookAction {
   type: 'npc' | 'scene' | 'chapter' | 'arc' | 'table';
   name: string;
   description?: string;
+  /** Legacy (anciens messages) : déroulé d'une scène → repli sur playerNarration. */
   content?: string;
   arcType?: 'LINEAR' | 'HUB';
   diceFormula?: string;
   entries?: NotebookActionEntry[];
+
+  // --- PNJ : valeurs des champs TEXT de la fiche (clés = template du système). ---
+  values?: Record<string, string>;
+
+  // --- Scène : champs narratifs enrichis (miroir de SceneCreate). ---
+  location?: string;
+  timing?: string;
+  atmosphere?: string;
+  playerNarration?: string;
+  gmSecretNotes?: string;
+  choicesConsequences?: string;
+  combatDifficulty?: string;
+  enemies?: string;
+
+  // --- Chapitre. ---
+  playerObjectives?: string;
+  narrativeStakes?: string;
+
+  // --- Chapitre + Arc. ---
+  gmNotes?: string;
+
+  // --- Arc. ---
+  themes?: string;
+  stakes?: string;
+  rewards?: string;
+  resolution?: string;
 }
 
 const ACTION_RE = /```loremind-action\s*([\s\S]*?)```/g;

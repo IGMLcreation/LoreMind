@@ -202,6 +202,8 @@ export interface Room {
   name: string;
   description?: string;
   enemies?: string;
+  /** IDs des fiches du bestiaire présentes dans la pièce (weak refs). */
+  enemyIds?: string[];
   loot?: string;
   traps?: string;
   gmNotes?: string;
@@ -231,6 +233,9 @@ export interface Scene {
   combatDifficulty?: string;
   enemies?: string;
 
+  /** IDs des fiches du bestiaire engagées dans la rencontre (weak refs). */
+  enemyIds?: string[];
+
   relatedPageIds?: string[];
   illustrationImageIds?: string[];
   mapImageIds?: string[];
@@ -257,6 +262,9 @@ export interface SceneCreate {
   choicesConsequences?: string;
   combatDifficulty?: string;
   enemies?: string;
+
+  /** IDs des fiches du bestiaire engagées dans la rencontre (weak refs). */
+  enemyIds?: string[];
 
   relatedPageIds?: string[];
   illustrationImageIds?: string[];

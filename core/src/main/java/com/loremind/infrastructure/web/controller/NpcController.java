@@ -43,6 +43,15 @@ public class NpcController {
         return ResponseEntity.ok(dtos);
     }
 
+    /** Recherche par nom — alimente la recherche globale (Ctrl+K). */
+    @GetMapping("/search")
+    public ResponseEntity<List<NpcDTO>> search(@RequestParam("q") String query) {
+        List<NpcDTO> dtos = npcService.searchNpcs(query).stream()
+                .map(npcMapper::toDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
+    }
+
     /** PNJ de toutes les campagnes liées au Lore donné — alimente le graphe du Lore. */
     @GetMapping("/lore/{loreId}")
     public ResponseEntity<List<NpcDTO>> getNpcsByLore(@PathVariable String loreId) {

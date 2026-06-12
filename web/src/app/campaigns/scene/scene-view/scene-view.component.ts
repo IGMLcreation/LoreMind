@@ -9,11 +9,13 @@ import { CampaignService } from '../../../services/campaign.service';
 import { CharacterService } from '../../../services/character.service';
 import { NpcService } from '../../../services/npc.service';
 import { RandomTableService } from '../../../services/random-table.service';
+import { EnemyService } from '../../../services/enemy.service';
 import { PageService } from '../../../services/page.service';
 import { LayoutService } from '../../../services/layout.service';
 import { PageTitleService } from '../../../services/page-title.service';
 import { Scene } from '../../../services/campaign.model';
 import { Page } from '../../../services/page.model';
+import { Enemy } from '../../../services/enemy.model';
 import { loadCampaignTreeData, buildCampaignSidebarConfig } from '../../campaign-tree.helper';
 import { ImageGalleryComponent } from '../../../shared/image-gallery/image-gallery.component';
 import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
@@ -41,6 +43,8 @@ export class SceneViewComponent implements OnInit, OnDestroy {
 
   loreId: string | null = null;
   availablePages: Page[] = [];
+  /** Bestiaire de la campagne — résout les enemyIds de la scène en fiches. */
+  availableEnemies: Enemy[] = [];
 
   constructor(
     private route: ActivatedRoute,
@@ -49,6 +53,7 @@ export class SceneViewComponent implements OnInit, OnDestroy {
     private characterService: CharacterService,
     private npcService: NpcService,
     private randomTableService: RandomTableService,
+    private enemyService: EnemyService,
     private pageService: PageService,
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService,
@@ -79,7 +84,7 @@ export class SceneViewComponent implements OnInit, OnDestroy {
       campaign: this.campaignService.getCampaignById(this.campaignId),
       allCampaigns: this.campaignService.getAllCampaigns(),
       scene: this.campaignService.getSceneById(this.sceneId),
-      treeData: loadCampaignTreeData(this.campaignService, this.campaignId, this.characterService, this.npcService, this.randomTableService)
+      treeData: loadCampaignTreeData(this.campaignService, this.campaignId, this.characterService, this.npcService, this.randomTableService, this.enemyService)
     }).pipe(
       switchMap(data => {
         const lid = data.campaign.loreId ?? null;
@@ -90,6 +95,7 @@ export class SceneViewComponent implements OnInit, OnDestroy {
       this.scene = scene;
       this.loreId = loreId;
       this.availablePages = pages;
+      this.availableEnemies = treeData.enemies ?? [];
       this.pageTitleService.set(scene.name);
 
       this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId));
@@ -98,6 +104,19 @@ export class SceneViewComponent implements OnInit, OnDestroy {
 
   titleOfRelated(pageId: string): string {
     return this.availablePages.find(p => p.id === pageId)?.title ?? '(page supprimée)';
+  }
+
+  /** Fiches du bestiaire liées à la rencontre (IDs orphelins ignorés). */
+  get linkedEnemies(): Enemy[] {
+    return (this.scene?.enemyIds ?? [])
+      .map(id => this.availableEnemies.find(e => e.id === id))
+      .filter((e): e is Enemy => !!e);
+  }
+
+  /** Libellé d'un chip ennemi : nom + niveau s'il est renseigné. */
+  enemyLabel(enemy: Enemy): string {
+    const level = enemy.level?.trim();
+    return level ? `${enemy.name} (${level})` : enemy.name;
   }
 
   /** Résout le nom d'une pièce cible (pour afficher les sorties inter-pièces). */

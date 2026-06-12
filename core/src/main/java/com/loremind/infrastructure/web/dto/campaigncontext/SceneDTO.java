@@ -30,6 +30,9 @@ public class SceneDTO {
     private String combatDifficulty;
     private String enemies;
 
+    /** IDs des fiches du bestiaire engagées dans la rencontre (weak refs). */
+    private List<String> enemyIds = new ArrayList<>();
+
     /** IDs des pages du Lore liées (weak cross-context references). */
     private List<String> relatedPageIds = new ArrayList<>();
 

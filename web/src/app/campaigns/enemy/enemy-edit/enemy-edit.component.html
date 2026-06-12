@@ -1,0 +1,111 @@
+<div class="ne-page">
+
+  <div class="ne-header">
+    <button class="btn-back" (click)="back()">
+      <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon>
+      Retour aux ennemis
+    </button>
+    <div class="header-row">
+      <h1>
+        <lucide-icon [img]="Skull" [size]="22"></lucide-icon>
+        {{ enemyId ? 'Éditer l\'ennemi' : 'Nouvel ennemi' }}
+      </h1>
+    </div>
+  </div>
+
+  <div class="ne-form">
+
+    <div class="field">
+      <label for="enemy-name">Nom de l'ennemi *</label>
+      <input
+        id="enemy-name"
+        type="text"
+        [(ngModel)]="name"
+        name="name"
+        placeholder="Ex: Balor, Gobelin chef de guerre, Liche…"
+        />
+      </div>
+
+      <div class="field-row image-row">
+        <div class="field">
+          <label for="enemy-level">Niveau / FP</label>
+          <input
+            id="enemy-level"
+            type="text"
+            [(ngModel)]="level"
+            name="level"
+            placeholder="Ex: 5, FP 8, Boss…"
+            />
+        </div>
+        <div class="field">
+          <label for="enemy-folder">Dossier</label>
+          <input
+            id="enemy-folder"
+            type="text"
+            [(ngModel)]="folder"
+            name="folder"
+            list="enemy-folders"
+            placeholder="Ex: Démons, Humanoïdes… (vide = non classé)"
+            />
+            <datalist id="enemy-folders">
+              @for (f of existingFolders; track f) {
+                <option [value]="f"></option>
+              }
+            </datalist>
+          </div>
+        </div>
+
+        <div class="field-row image-row">
+          <div class="field portrait-field">
+            <label>Portrait</label>
+            <app-single-image-picker
+              [imageId]="portraitImageId"
+              aspectRatio="1 / 1"
+              hint="Carre conseille (400×400)."
+              (imageIdChange)="portraitImageId = $event">
+            </app-single-image-picker>
+          </div>
+          <div class="field header-field">
+            <label>Bandeau / Header</label>
+            <app-single-image-picker
+              [imageId]="headerImageId"
+              aspectRatio="3 / 1"
+              hint="Format paysage conseille (1200×400)."
+              (imageIdChange)="headerImageId = $event">
+            </app-single-image-picker>
+          </div>
+        </div>
+
+        <div class="template-fields">
+          <app-dynamic-fields-form
+            [fields]="templateFields"
+            [values]="values"
+            [imageValues]="imageValues"
+            [keyValueValues]="keyValueValues"
+            (valuesChange)="values = $event"
+            (imageValuesChange)="imageValues = $event"
+            (keyValueValuesChange)="keyValueValues = $event">
+          </app-dynamic-fields-form>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn-primary" [disabled]="!name.trim()" (click)="submit()">
+            <lucide-icon [img]="Save" [size]="16"></lucide-icon>
+            {{ enemyId ? 'Enregistrer' : 'Créer' }}
+          </button>
+          <button type="button" class="btn-secondary" (click)="back()">Annuler</button>
+          <span class="spacer"></span>
+          @if (enemyId) {
+            <button
+              type="button"
+              class="btn-danger"
+              (click)="deleteEnemy()">
+              <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+              Supprimer
+            </button>
+          }
+        </div>
+
+      </div>
+
+    </div>

@@ -32,6 +32,11 @@ export class ItemCatalogService {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
+  /** Recherche par nom — alimente la recherche globale (Ctrl+K). */
+  search(q: string): Observable<ItemCatalog[]> {
+    return this.http.get<ItemCatalog[]>(`${this.apiUrl}/search`, { params: { q } });
+  }
+
   /** Génère une PROPOSITION de catalogue via l'IA (non persistée) à préremplir. */
   generate(campaignId: string, description: string): Observable<ItemCatalog> {
     return this.http.post<ItemCatalog>(`${this.apiUrl}/generate`, { campaignId, description });

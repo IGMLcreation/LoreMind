@@ -57,6 +57,7 @@ public class GameSystemService {
             String rulesMarkdown,
             List<TemplateField> characterTemplate,
             List<TemplateField> npcTemplate,
+            List<TemplateField> enemyTemplate,
             String author,
             boolean isPublic
     ) {}
@@ -71,6 +72,7 @@ public class GameSystemService {
                 .build();
         gameSystem.replaceCharacterTemplate(data.characterTemplate());
         gameSystem.replaceNpcTemplate(data.npcTemplate());
+        gameSystem.replaceEnemyTemplate(data.enemyTemplate());
         return gameSystemRepository.save(gameSystem);
     }
 
@@ -90,6 +92,7 @@ public class GameSystemService {
         existing.setRulesMarkdown(data.rulesMarkdown());
         existing.replaceCharacterTemplate(data.characterTemplate());
         existing.replaceNpcTemplate(data.npcTemplate());
+        existing.replaceEnemyTemplate(data.enemyTemplate());
         existing.setAuthor(normalize(data.author()));
         existing.setPublic(data.isPublic());
         return gameSystemRepository.save(existing);

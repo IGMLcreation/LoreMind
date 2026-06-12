@@ -50,6 +50,14 @@ public class GameSystem {
      */
     private List<TemplateField> npcTemplate;
 
+    /**
+     * Template de fiche ENNEMI (monstres/créatures du bestiaire de campagne).
+     * Mêmes règles que {@link #characterTemplate} — distinct du template PNJ :
+     * un ennemi porte des stats de combat (CA, PV, attaques…), pas une
+     * caractérisation narrative.
+     */
+    private List<TemplateField> enemyTemplate;
+
     /** Auteur déclaré — futur marketplace. Nullable. */
     private String author;
 
@@ -96,6 +104,10 @@ public class GameSystem {
 
     public void replaceNpcTemplate(List<TemplateField> fields) {
         npcTemplate = validateAndCopy(fields);
+    }
+
+    public void replaceEnemyTemplate(List<TemplateField> fields) {
+        enemyTemplate = validateAndCopy(fields);
     }
 
     // --- Helpers privés ----------------------------------------------------

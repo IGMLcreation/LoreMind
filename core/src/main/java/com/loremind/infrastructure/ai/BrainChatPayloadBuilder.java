@@ -252,9 +252,15 @@ public class BrainChatPayloadBuilder {
                 ArcSummary::name,
                 ArcSummary::description,
                 ArcSummary::illustrationCount,
-                (map, arc) -> map.put("chapters", arc.chapters().stream()
-                        .map(this::chapterSummaryToMap)
-                        .collect(Collectors.toList())));
+                (map, arc) -> {
+                    // Vocabulaire UI : les chapitres d'un arc HUB sont des « quêtes ».
+                    if (arc.hub()) {
+                        map.put("arc_type", "HUB");
+                    }
+                    map.put("chapters", arc.chapters().stream()
+                            .map(this::chapterSummaryToMap)
+                            .collect(Collectors.toList()));
+                });
     }
 
     private Map<String, Object> chapterSummaryToMap(ChapterSummary c) {

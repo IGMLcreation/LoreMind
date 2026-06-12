@@ -45,9 +45,18 @@
                   (ngModelChange)="patch(r, { description: $event })"
                 placeholder="Atmosphère, ce que voient les PJ en entrant…"></textarea>
               </div>
+              <div class="field">
+                <label>Ennemis du bestiaire</label>
+                <app-enemy-link-picker
+                  [value]="r.enemyIds ?? []"
+                  [availableEnemies]="availableEnemies"
+                  [campaignId]="campaignId"
+                  (valueChange)="patch(r, { enemyIds: $event })">
+                </app-enemy-link-picker>
+              </div>
               <div class="field-row">
                 <div class="field">
-                  <label>Ennemis / créatures / boss</label>
+                  <label>Ennemis / créatures / boss (texte libre)</label>
                   <textarea rows="3"
                     [ngModel]="r.enemies"
                     (ngModelChange)="patch(r, { enemies: $event })"
