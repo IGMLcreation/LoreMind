@@ -47,8 +47,11 @@ export class NotebookService {
   /**
    * Chat ancré streamé. fetch() + ReadableStream (HttpClient bufferise les SSE).
    * Émissions forcées dans la zone Angular pour la détection de changement.
+   *
+   * `sourceIds` : sous-ensemble de sources à utiliser pour ce tour (cases cochées) ;
+   * undefined = toutes les sources prêtes du notebook.
    */
-  streamChat(notebookId: string, message: string, deep = false): Observable<NotebookChatEvent> {
+  streamChat(notebookId: string, message: string, deep = false, sourceIds?: string[]): Observable<NotebookChatEvent> {
     return new Observable<NotebookChatEvent>((subscriber) => {
       const controller = new AbortController();
       const emit = (ev: NotebookChatEvent) => this.zone.run(() => subscriber.next(ev));
@@ -59,7 +62,7 @@ export class NotebookService {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
             credentials: 'include',
-            body: JSON.stringify({ message, deep }),
+            body: JSON.stringify({ message, deep, sourceIds: sourceIds ?? null }),
             signal: controller.signal,
           });
           if (!response.ok || !response.body) {

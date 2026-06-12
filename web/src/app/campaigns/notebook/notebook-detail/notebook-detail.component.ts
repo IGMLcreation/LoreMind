@@ -137,13 +137,54 @@ export class NotebookDetailComponent implements OnInit {
         this.detail = d;
         this.sources = d.sources ?? [];
         this.messages = d.messages ?? [];
+        this.syncSelection();
       },
       error: () => this.back()
     });
   }
 
   reloadSources(): void {
-    this.service.get(this.notebookId).subscribe({ next: (d) => this.sources = d.sources ?? [] });
+    this.service.get(this.notebookId).subscribe({ next: (d) => {
+      this.sources = d.sources ?? [];
+      this.syncSelection();
+    } });
+  }
+
+  // --- Sélection des sources utilisées par le chat -------------------------
+  // Par défaut tout est coché ; décocher permet de limiter une question (et
+  // surtout une analyse approfondie, coûteuse en requêtes) à certains PDF.
+
+  /** IDs des sources cochées (sous-ensemble des sources READY). */
+  selectedSourceIds = new Set<string>();
+  /** IDs déjà vus — pour ne cocher par défaut que les NOUVELLES sources. */
+  private knownSourceIds = new Set<string>();
+
+  /** Aligne la sélection sur la liste courante : nouvelles sources cochées par
+   *  défaut, sources supprimées retirées, choix de l'utilisateur préservés. */
+  private syncSelection(): void {
+    const readyIds = new Set(this.sources.filter(s => s.status === 'READY').map(s => s.id));
+    for (const id of readyIds) {
+      if (!this.knownSourceIds.has(id)) {
+        this.selectedSourceIds.add(id);
+        this.knownSourceIds.add(id);
+      }
+    }
+    for (const id of [...this.selectedSourceIds]) {
+      if (!readyIds.has(id)) this.selectedSourceIds.delete(id);
+    }
+  }
+
+  isSelected(s: NotebookSource): boolean {
+    return this.selectedSourceIds.has(s.id);
+  }
+
+  toggleSource(s: NotebookSource): void {
+    if (this.selectedSourceIds.has(s.id)) this.selectedSourceIds.delete(s.id);
+    else this.selectedSourceIds.add(s.id);
+  }
+
+  get readySourceCount(): number {
+    return this.sources.filter(s => s.status === 'READY').length;
   }
 
   // --- Sources ---
@@ -181,7 +222,7 @@ export class NotebookDetailComponent implements OnInit {
     this.messages.push(assistant);
     this.sending = true;
 
-    this.service.streamChat(this.notebookId, text, deep).subscribe({
+    this.service.streamChat(this.notebookId, text, deep, [...this.selectedSourceIds]).subscribe({
       next: (ev) => {
         if (ev.type === 'token') { this.deepProgress = null; assistant.content += ev.value; }
         else if (ev.type === 'sources') assistant.sources = ev.sources;

@@ -20,13 +20,30 @@
         @if (uploadError) {
           <p class="nbd-upload-error">{{ uploadError }}</p>
         }
+        @if (readySourceCount > 1) {
+          <p class="nbd-sources-hint"
+            [class.partial]="selectedSourceIds.size < readySourceCount">
+            {{ selectedSourceIds.size }}/{{ readySourceCount }} source(s) utilisée(s) par le chat et l'analyse approfondie
+          </p>
+        }
         @for (s of sources; track s) {
-          <div class="nbd-source">
-            <lucide-icon
-              [img]="s.status === 'READY' ? CheckCircle2 : (s.status === 'FAILED' ? AlertCircle : Loader)"
-              [size]="14"
-              [class.ok]="s.status === 'READY'" [class.fail]="s.status === 'FAILED'" [class.busy]="s.status === 'INDEXING'">
-            </lucide-icon>
+          <div class="nbd-source" [class.nbd-source--off]="s.status === 'READY' && !isSelected(s)">
+            @if (s.status === 'READY') {
+              <input
+                type="checkbox"
+                class="nbd-source-check"
+                [checked]="isSelected(s)"
+                (change)="toggleSource(s)"
+                [title]="isSelected(s)
+                  ? 'Source utilisée par le chat — décocher pour l\'exclure'
+                  : 'Source ignorée par le chat — cocher pour l\'inclure'" />
+            } @else {
+              <lucide-icon
+                [img]="s.status === 'FAILED' ? AlertCircle : Loader"
+                [size]="14"
+                [class.fail]="s.status === 'FAILED'" [class.busy]="s.status === 'INDEXING'">
+              </lucide-icon>
+            }
             <div class="nbd-source-info">
               <div class="nbd-source-name">{{ s.filename }}</div>
               <div class="nbd-source-meta">

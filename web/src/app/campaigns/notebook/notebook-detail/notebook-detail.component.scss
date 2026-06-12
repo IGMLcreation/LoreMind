@@ -39,12 +39,36 @@
 }
 .nbd-upload-error { color: #e88; font-size: 0.8rem; margin: 0.2rem 0; }
 
+// Compteur de sources actives — ambre quand une partie est décochée, pour
+// rappeler que le chat ne voit pas tout.
+.nbd-sources-hint {
+  font-size: 0.72rem;
+  color: var(--color-text-muted, #9aa0aa);
+  margin: 0.1rem 0 0.2rem;
+
+  &.partial { color: #fbbf24; }
+}
+
 .nbd-source {
   display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.5rem;
   border-radius: 7px; background: rgba(255,255,255,0.03);
   lucide-icon.ok { color: #6bd08a; }
   lucide-icon.fail { color: #e88; }
   lucide-icon.busy { color: #e0c074; }
+
+  // Case « source utilisée par le chat » (sources prêtes uniquement).
+  .nbd-source-check {
+    margin: 2px 0 0;
+    accent-color: #6bd08a;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  // Source décochée : grisée = hors du périmètre du chat et de l'analyse.
+  &.nbd-source--off {
+    opacity: 0.5;
+  }
+
   .nbd-source-info { flex: 1; min-width: 0; }
   .nbd-source-name { font-size: 0.85rem; font-weight: 500; word-break: break-word; }
   .nbd-source-meta { font-size: 0.72rem; color: var(--color-text-muted, #9aa0aa); }
