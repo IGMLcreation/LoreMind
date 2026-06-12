@@ -29,7 +29,8 @@ public class TemplateFieldMapper {
             layoutStr = layout.name();
         }
         List<String> labels = null;
-        if (field.getType() == FieldType.KEY_VALUE_LIST && field.getLabels() != null) {
+        if ((field.getType() == FieldType.KEY_VALUE_LIST || field.getType() == FieldType.TABLE)
+                && field.getLabels() != null) {
             labels = new ArrayList<>(field.getLabels());
         }
         return new TemplateFieldDTO(field.getName(), typeStr, layoutStr, labels);
@@ -54,7 +55,7 @@ public class TemplateFieldMapper {
             }
         }
         List<String> labels = null;
-        if (type == FieldType.KEY_VALUE_LIST && dto.getLabels() != null) {
+        if ((type == FieldType.KEY_VALUE_LIST || type == FieldType.TABLE) && dto.getLabels() != null) {
             labels = new ArrayList<>(dto.getLabels());
         }
         return new TemplateField(dto.getName(), type, layout, labels);

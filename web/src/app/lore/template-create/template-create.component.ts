@@ -2,13 +2,13 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { LucideAngularModule, Plus, Trash2, Type, Image as ImageIcon, ChevronUp, ChevronDown } from 'lucide-angular';
+import { LucideAngularModule, Plus, Trash2, Type, Image as ImageIcon, ChevronUp, ChevronDown, ListOrdered, Table as TableIcon, X } from 'lucide-angular';
 import { LoreService } from '../../services/lore.service';
 import { TemplateService } from '../../services/template.service';
 import { PageService } from '../../services/page.service';
 import { LayoutService } from '../../services/layout.service';
 import { LoreNode } from '../../services/lore.model';
-import { FieldType, ImageLayout, TemplateField } from '../../services/template.model';
+import { FieldType, ImageLayout, TemplateField, buildLoreTemplateField, cleanFieldLabels } from '../../services/template.model';
 import { loadLoreSidebarData, buildLoreSidebarConfig } from '../lore-sidebar.helper';
 import { popReturnTo } from '../return-stack.helper';
 
@@ -31,6 +31,19 @@ export class TemplateCreateComponent implements OnInit, OnDestroy {
   readonly ImageIcon = ImageIcon;
   readonly ChevronUp = ChevronUp;
   readonly ChevronDown = ChevronDown;
+  readonly ListOrdered = ListOrdered;
+  readonly TableIcon = TableIcon;
+  readonly X = X;
+
+  /** Icone du chip selon le type du champ. */
+  iconFor(type: FieldType) {
+    switch (type) {
+      case 'IMAGE': return this.ImageIcon;
+      case 'KEY_VALUE_LIST': return this.ListOrdered;
+      case 'TABLE': return this.TableIcon;
+      default: return this.Type;
+    }
+  }
 
   form: FormGroup;
   loreId = '';
@@ -123,10 +136,7 @@ export class TemplateCreateComponent implements OnInit, OnDestroy {
     if (!name) return;
     // Unicite par nom (on ignore le type pour eviter des collisions d'affichage).
     if (this.fields.some(f => f.name === name)) return;
-    const newField: TemplateField = this.newFieldType === 'IMAGE'
-      ? { name, type: 'IMAGE', layout: 'GALLERY' }
-      : { name, type: 'TEXT' };
-    this.fields = [...this.fields, newField];
+    this.fields = [...this.fields, buildLoreTemplateField(name, this.newFieldType)];
     this.newFieldName = '';
     // Le type reste sur la derniere valeur choisie : pratique pour enchainer
     // plusieurs champs du meme type.
@@ -145,17 +155,11 @@ export class TemplateCreateComponent implements OnInit, OnDestroy {
     this.fields = next;
   }
 
-  /** Bascule le type d'un champ existant (TEXT <-> IMAGE). */
-  toggleFieldType(index: number): void {
-    const field = this.fields[index];
-    if (!field) return;
-    const nextType: FieldType = field.type === 'TEXT' ? 'IMAGE' : 'TEXT';
-    this.fields = this.fields.map((f, i) => {
-      if (i !== index) return f;
-      return nextType === 'IMAGE'
-        ? { name: f.name, type: 'IMAGE', layout: f.layout ?? 'GALLERY' }
-        : { name: f.name, type: 'TEXT' };
-    });
+  /** Change le type d'un champ existant (TEXT / IMAGE / KEY_VALUE_LIST). */
+  setFieldType(index: number, type: FieldType): void {
+    this.fields = this.fields.map((f, i) =>
+      i === index ? buildLoreTemplateField(f.name, type, f) : f
+    );
   }
 
   /** Met a jour le layout d'un champ IMAGE. */
@@ -163,6 +167,24 @@ export class TemplateCreateComponent implements OnInit, OnDestroy {
     this.fields = this.fields.map((f, i) =>
       i === index && f.type === 'IMAGE' ? { ...f, layout } : f
     );
+  }
+
+  // --- Sous-editeur des libelles (KEY_VALUE_LIST) -------------------------
+  // Mutation en place des labels : recreer le tableau de fields a chaque
+  // frappe ferait perdre le focus de l'input en cours d'edition.
+
+  addLabel(field: TemplateField): void {
+    field.labels = [...(field.labels ?? []), ''];
+  }
+
+  updateLabel(field: TemplateField, labelIndex: number, value: string): void {
+    if (!field.labels) return;
+    field.labels[labelIndex] = value;
+  }
+
+  removeLabel(field: TemplateField, labelIndex: number): void {
+    if (!field.labels) return;
+    field.labels = field.labels.filter((_, i) => i !== labelIndex);
   }
 
   submit(): void {
@@ -173,7 +195,7 @@ export class TemplateCreateComponent implements OnInit, OnDestroy {
       name: raw.name,
       description: raw.description,
       defaultNodeId: raw.defaultNodeId,
-      fields: this.fields
+      fields: cleanFieldLabels(this.fields)
     }).subscribe({
       next: (created) => this.navigateBack(created.id ?? null),
       error: () => console.error('Erreur lors de la création du template')

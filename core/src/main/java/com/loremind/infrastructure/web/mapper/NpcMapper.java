@@ -4,6 +4,7 @@ import com.loremind.domain.campaigncontext.Npc;
 import com.loremind.infrastructure.web.dto.campaigncontext.NpcDTO;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 @Component
@@ -20,6 +21,7 @@ public class NpcMapper {
         dto.setImageValues(n.getImageValues() != null ? new HashMap<>(n.getImageValues()) : new HashMap<>());
         dto.setKeyValueValues(n.getKeyValueValues() != null ? new HashMap<>(n.getKeyValueValues()) : new HashMap<>());
         dto.setCampaignId(n.getCampaignId());
+        dto.setRelatedPageIds(n.getRelatedPageIds() != null ? new ArrayList<>(n.getRelatedPageIds()) : new ArrayList<>());
         dto.setFolder(n.getFolder());
         dto.setOrder(n.getOrder());
         return dto;
@@ -36,6 +38,7 @@ public class NpcMapper {
                 .imageValues(dto.getImageValues() != null ? new HashMap<>(dto.getImageValues()) : new HashMap<>())
                 .keyValueValues(dto.getKeyValueValues() != null ? new HashMap<>(dto.getKeyValueValues()) : new HashMap<>())
                 .campaignId(dto.getCampaignId())
+                .relatedPageIds(dto.getRelatedPageIds() != null ? new ArrayList<>(dto.getRelatedPageIds()) : new ArrayList<>())
                 .folder(dto.getFolder())
                 .order(dto.getOrder())
                 .build();

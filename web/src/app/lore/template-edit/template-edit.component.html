@@ -54,17 +54,24 @@
               </div>
               <span class="field-chip"
                 [class.field-chip-image]="f.type === 'IMAGE'"
-                [class.field-chip-existing]="f.type !== 'IMAGE' && isExistingField(f)"
-                [class.field-chip-new]="f.type !== 'IMAGE' && !isExistingField(f)">
-                <lucide-icon [img]="f.type === 'IMAGE' ? ImageIcon : Type" [size]="12"></lucide-icon>
+                [class.field-chip-kv]="f.type === 'KEY_VALUE_LIST'"
+                [class.field-chip-table]="f.type === 'TABLE'"
+                [class.field-chip-existing]="f.type === 'TEXT' && isExistingField(f)"
+                [class.field-chip-new]="f.type === 'TEXT' && !isExistingField(f)">
+                <lucide-icon [img]="iconFor(f.type)" [size]="12"></lucide-icon>
                 {{ f.name }}
               </span>
-              <button type="button"
-                class="btn-icon-ghost btn-type-toggle"
-                (click)="toggleFieldType(i)"
-                [title]="f.type === 'TEXT' ? 'Transformer en champ Image' : 'Transformer en champ Texte'">
-                {{ f.type === 'TEXT' ? 'Texte' : 'Image' }}
-              </button>
+              <select
+                class="type-select"
+                [ngModel]="f.type"
+                [ngModelOptions]="{ standalone: true }"
+                (ngModelChange)="setFieldType(i, $event)"
+                title="Type du champ">
+                <option value="TEXT">Texte</option>
+                <option value="IMAGE">Image</option>
+                <option value="KEY_VALUE_LIST">Liste clé/valeur</option>
+                <option value="TABLE">Tableau</option>
+              </select>
               @if (f.type === 'IMAGE') {
                 <select
                   class="layout-select"
@@ -82,6 +89,36 @@
                 <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
               </button>
             </li>
+            <!-- Libelles (lignes d'une liste clé/valeur, ou colonnes d'un tableau) -->
+            @if (f.type === 'KEY_VALUE_LIST' || f.type === 'TABLE') {
+              <li class="kv-labels-row">
+                @for (lbl of f.labels ?? []; track $index; let li = $index) {
+                  <span class="kv-label-chip">
+                    <input
+                      type="text"
+                      [ngModel]="lbl"
+                      [ngModelOptions]="{ standalone: true }"
+                      (ngModelChange)="updateLabel(f, li, $event)"
+                      [placeholder]="f.type === 'TABLE' ? 'Colonne' : 'Libellé'"
+                      [attr.aria-label]="(f.type === 'TABLE' ? 'Colonne ' : 'Libellé ') + (li + 1)" />
+                    <button type="button" class="kv-label-remove" (click)="removeLabel(f, li)" aria-label="Retirer">
+                      <lucide-icon [img]="X" [size]="11"></lucide-icon>
+                    </button>
+                  </span>
+                }
+                <button type="button" class="btn-kv-add-label" (click)="addLabel(f)">
+                  <lucide-icon [img]="Plus" [size]="12"></lucide-icon>
+                  {{ f.type === 'TABLE' ? 'Colonne' : 'Libellé' }}
+                </button>
+                @if (!(f.labels ?? []).length) {
+                  <span class="kv-labels-hint">
+                    {{ f.type === 'TABLE'
+                      ? 'Ajoutez les colonnes du tableau (ex : Objet, Prix, Description…)'
+                      : 'Ajoutez les libellés des lignes (ex : FOR, DEX, CON…)' }}
+                  </span>
+                }
+              </li>
+            }
           }
         </ul>
         <div class="field-row add-row">
@@ -98,12 +135,14 @@
             aria-label="Type du champ">
             <option value="TEXT">Texte</option>
             <option value="IMAGE">Image</option>
+            <option value="KEY_VALUE_LIST">Liste clé/valeur</option>
+            <option value="TABLE">Tableau</option>
           </select>
           <button type="button" class="btn-add" (click)="addField()" title="Ajouter le champ">
             <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
           </button>
         </div>
-        <p class="hint">Texte = zone editable + generable par l'IA. Image = galerie d'illustrations.</p>
+        <p class="hint">Texte = libre + generable par l'IA. Image = galerie. Liste clé/valeur = paires libellé/valeur (stats). Tableau = colonnes fixes + lignes ajoutées librement (boutique, inventaire…).</p>
       </div>
     </form>
   </div>

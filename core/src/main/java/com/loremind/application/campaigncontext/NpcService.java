@@ -1,9 +1,12 @@
 package com.loremind.application.campaigncontext;
 
+import com.loremind.domain.campaigncontext.Campaign;
 import com.loremind.domain.campaigncontext.Npc;
+import com.loremind.domain.campaigncontext.ports.CampaignRepository;
 import com.loremind.domain.campaigncontext.ports.NpcRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,9 +19,11 @@ import java.util.Optional;
 public class NpcService {
 
     private final NpcRepository npcRepository;
+    private final CampaignRepository campaignRepository;
 
-    public NpcService(NpcRepository npcRepository) {
+    public NpcService(NpcRepository npcRepository, CampaignRepository campaignRepository) {
         this.npcRepository = npcRepository;
+        this.campaignRepository = campaignRepository;
     }
 
     public record NpcData(
@@ -29,6 +34,7 @@ public class NpcService {
             Map<String, List<String>> imageValues,
             Map<String, Map<String, String>> keyValueValues,
             String campaignId,
+            List<String> relatedPageIds,
             String folder,
             Integer order
     ) {}
@@ -45,6 +51,7 @@ public class NpcService {
                 .imageValues(data.imageValues() != null ? new HashMap<>(data.imageValues()) : new HashMap<>())
                 .keyValueValues(data.keyValueValues() != null ? new HashMap<>(data.keyValueValues()) : new HashMap<>())
                 .campaignId(data.campaignId())
+                .relatedPageIds(data.relatedPageIds() != null ? new ArrayList<>(data.relatedPageIds()) : new ArrayList<>())
                 .folder(normalizeFolder(data.folder()))
                 .order(order)
                 .build();
@@ -59,6 +66,21 @@ public class NpcService {
         return npcRepository.findByCampaignId(campaignId);
     }
 
+    /**
+     * PNJ de TOUTES les campagnes liées au Lore donné (via {@code campaign.loreId}).
+     * Sert au graphe du Lore : relier les PNJ aux pages qu'ils référencent.
+     * Volume faible (usage mono-utilisateur) → filtrage en mémoire assumé.
+     */
+    public List<Npc> getNpcsByLoreId(String loreId) {
+        List<Npc> out = new ArrayList<>();
+        for (Campaign campaign : campaignRepository.findAll()) {
+            if (campaign.isLinkedToLore() && campaign.getLoreId().equals(loreId)) {
+                out.addAll(npcRepository.findByCampaignId(campaign.getId()));
+            }
+        }
+        return out;
+    }
+
     public Npc updateNpc(String id, NpcData data) {
         Npc existing = npcRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Npc non trouvé avec l'ID: " + id));
@@ -68,6 +90,7 @@ public class NpcService {
         existing.setValues(data.values() != null ? new HashMap<>(data.values()) : new HashMap<>());
         existing.setImageValues(data.imageValues() != null ? new HashMap<>(data.imageValues()) : new HashMap<>());
         existing.setKeyValueValues(data.keyValueValues() != null ? new HashMap<>(data.keyValueValues()) : new HashMap<>());
+        existing.setRelatedPageIds(data.relatedPageIds() != null ? new ArrayList<>(data.relatedPageIds()) : new ArrayList<>());
         existing.setFolder(normalizeFolder(data.folder()));
         if (data.order() != null) {
             existing.setOrder(data.order());

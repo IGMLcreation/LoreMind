@@ -3,6 +3,8 @@ package com.loremind.infrastructure.persistence.entity;
 import com.loremind.infrastructure.persistence.converter.StringListJsonConverter;
 import com.loremind.infrastructure.persistence.converter.StringListMapJsonConverter;
 import com.loremind.infrastructure.persistence.converter.StringMapJsonConverter;
+import com.loremind.infrastructure.persistence.converter.StringMapMapJsonConverter;
+import com.loremind.infrastructure.persistence.converter.StringRowListMapJsonConverter;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -51,6 +53,16 @@ public class PageJpaEntity {
     @Column(name = "image_values_json", columnDefinition = "TEXT")
     @Convert(converter = StringListMapJsonConverter.class)
     private Map<String, List<String>> imageValues;
+
+    /** Valeurs des champs KEY_VALUE_LIST : fieldName → (label → valeur). JSON TEXT. */
+    @Column(name = "key_value_values", columnDefinition = "TEXT")
+    @Convert(converter = StringMapMapJsonConverter.class)
+    private Map<String, Map<String, String>> keyValueValues;
+
+    /** Valeurs des champs TABLE : fieldName → lignes (colonne → cellule). JSON TEXT. */
+    @Column(name = "table_values", columnDefinition = "TEXT")
+    @Convert(converter = StringRowListMapJsonConverter.class)
+    private Map<String, List<Map<String, String>>> tableValues;
 
     @Column(columnDefinition = "TEXT")
     private String notes;

@@ -18,6 +18,23 @@
   </div>
 
   <app-persona-view [persona]="npc" [templateFields]="templateFields"></app-persona-view>
+
+  <!-- Pages de Lore liées à ce PNJ (sa ville, sa faction…) -->
+  @if (loreId && (npc?.relatedPageIds?.length ?? 0) > 0) {
+    <section class="nv-lore-links">
+      <h2 class="nv-lore-links-title">
+        <lucide-icon [img]="Link2" [size]="14"></lucide-icon>
+        Pages de Lore liées
+      </h2>
+      <div class="nv-lore-chips">
+        @for (pageId of npc!.relatedPageIds; track pageId) {
+          <a class="nv-lore-chip" [routerLink]="['/lore', loreId, 'pages', pageId]">
+            {{ titleOfPage(pageId) }}
+          </a>
+        }
+      </div>
+    </section>
+  }
 </div>
 
 @if (npcId && campaignId) {

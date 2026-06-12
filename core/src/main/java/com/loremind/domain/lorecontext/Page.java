@@ -39,6 +39,20 @@ public class Page {
      */
     private Map<String, List<String>> imageValues;
 
+    /**
+     * Valeurs des champs KEY_VALUE_LIST (tableau libelle → valeur, comme sur les
+     * fiches de personnage) : fieldName → (label → valeur). Les labels sont
+     * definis par le Template ; seules les valeurs vivent sur la page.
+     */
+    private Map<String, Map<String, String>> keyValueValues;
+
+    /**
+     * Valeurs des champs TABLE (colonnes figees au template, lignes libres) :
+     * fieldName → liste ordonnee de lignes, chaque ligne = colonne → cellule.
+     * Usage type : inventaire de boutique, table d'objets.
+     */
+    private Map<String, List<Map<String, String>>> tableValues;
+
     /** Notes privées du MJ (non exportées vers FoundryVTT). */
     private String notes;
 

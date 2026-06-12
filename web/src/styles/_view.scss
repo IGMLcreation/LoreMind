@@ -142,6 +142,71 @@
     }
   }
 
+  // Tableau libellé/valeur (champ KEY_VALUE_LIST) en lecture seule.
+  // Même esthétique que la grille de saisie des fiches de personnage.
+  .view-kv-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 8px;
+
+    .view-kv-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 10px 6px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
+
+      .view-kv-label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #9ca3af;
+      }
+
+      .view-kv-value {
+        color: #e0e0e0;
+        font-family: 'Cinzel', 'EB Garamond', Georgia, serif;
+        font-weight: 700;
+        font-size: 1.05rem;
+        text-align: center;
+        word-break: break-word;
+      }
+    }
+  }
+
+  // Tableau à colonnes (champ TABLE) en lecture seule : boutique, inventaire…
+  .view-table {
+    width: 100%;
+    border-collapse: collapse;
+
+    th {
+      text-align: left;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #99f6e4;
+      padding: 8px 10px;
+      border-bottom: 1px solid rgba(20, 184, 166, 0.35);
+    }
+
+    td {
+      color: #e0e0e0;
+      font-size: 0.92rem;
+      padding: 8px 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      vertical-align: top;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    tbody tr:nth-child(odd) {
+      background: rgba(255, 255, 255, 0.02);
+    }
+  }
+
   // Chips (tags et pages liées en lecture seule)
   .view-chips {
     display: flex;

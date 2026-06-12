@@ -87,6 +87,20 @@
           </app-dynamic-fields-form>
         </div>
 
+        <!-- Pages de Lore liées (uniquement si la campagne est rattachée à un Lore) -->
+        @if (loreId) {
+          <div class="field">
+            <label>Pages de Lore liées</label>
+            <app-lore-link-picker
+              [value]="relatedPageIds"
+              [availablePages]="lorePages"
+              [loreId]="loreId"
+              (valueChange)="relatedPageIds = $event">
+            </app-lore-link-picker>
+            <p class="hint">Reliez ce PNJ aux pages de l'univers (sa ville, sa faction, sa région…). Ces liens apparaissent dans le graphe du Lore.</p>
+          </div>
+        }
+
         <div class="actions">
           <button type="button" class="btn-primary" [disabled]="!name.trim()" (click)="submit()">
             <lucide-icon [img]="Save" [size]="16"></lucide-icon>

@@ -20,6 +20,10 @@ public class PageDTO {
     private Map<String, String> values;
     /** Pour chaque champ IMAGE du template, la liste ordonnee des IDs d'images. */
     private Map<String, List<String>> imageValues;
+    /** Pour chaque champ KEY_VALUE_LIST du template : label → valeur. */
+    private Map<String, Map<String, String>> keyValueValues;
+    /** Pour chaque champ TABLE du template : lignes (colonne → cellule). */
+    private Map<String, List<Map<String, String>>> tableValues;
     private String notes;
     private List<String> tags;
     private List<String> relatedPageIds;

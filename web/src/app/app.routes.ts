@@ -4,6 +4,7 @@ import { hiddenInDemoGuard } from './guards/demo-mode.guard';
 export const routes: Routes = [
   { path: 'lore', loadComponent: () => import('./lore/lore.component').then(m => m.LoreComponent) },
   { path: 'lore/:id', loadComponent: () => import('./lore/lore-detail/lore-detail.component').then(m => m.LoreDetailComponent) },
+  { path: 'lore/:loreId/graph', loadComponent: () => import('./lore/lore-graph/lore-graph.component').then(m => m.LoreGraphComponent) },
   { path: 'lore/:loreId/nodes/create', loadComponent: () => import('./lore/lore-node-create/lore-node-create.component').then(m => m.LoreNodeCreateComponent) },
   { path: 'lore/:loreId/folders/:parentId/create', loadComponent: () => import('./lore/lore-node-create/lore-node-create.component').then(m => m.LoreNodeCreateComponent) },
   { path: 'lore/:loreId/folders/:folderId', loadComponent: () => import('./lore/folder-view/folder-view.component').then(m => m.FolderViewComponent) },

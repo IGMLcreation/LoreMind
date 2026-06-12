@@ -6,11 +6,14 @@ import { LucideAngularModule, Save, ArrowLeft, Drama, Trash2, Sparkles } from 'l
 import { NpcService } from '../../../services/npc.service';
 import { CampaignService } from '../../../services/campaign.service';
 import { GameSystemService } from '../../../services/game-system.service';
+import { PageService } from '../../../services/page.service';
 import { CampaignSidebarService } from '../../../services/campaign-sidebar.service';
 import { TemplateField } from '../../../services/template.model';
+import { Page } from '../../../services/page.model';
 import { AiChatDrawerComponent } from '../../../shared/ai-chat-drawer/ai-chat-drawer.component';
 import { DynamicFieldsFormComponent } from '../../../shared/dynamic-fields-form/dynamic-fields-form.component';
 import { SingleImagePickerComponent } from '../../../shared/single-image-picker/single-image-picker.component';
+import { LoreLinkPickerComponent } from '../../../shared/lore-link-picker/lore-link-picker.component';
 import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 
 /**
@@ -21,7 +24,7 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  */
 @Component({
     selector: 'app-npc-edit',
-    imports: [FormsModule, LucideAngularModule, AiChatDrawerComponent, DynamicFieldsFormComponent, SingleImagePickerComponent],
+    imports: [FormsModule, LucideAngularModule, AiChatDrawerComponent, DynamicFieldsFormComponent, SingleImagePickerComponent, LoreLinkPickerComponent],
     templateUrl: './npc-edit.component.html',
     styleUrls: ['./npc-edit.component.scss']
 })
@@ -56,12 +59,20 @@ export class NpcEditComponent implements OnInit {
   templateFields: TemplateField[] = [];
   private order = 0;
 
+  /** Lore lié à la campagne (null = pas de lore → section liens masquée). */
+  loreId: string | null = null;
+  /** Pages du lore lié — référentiel du picker. */
+  lorePages: Page[] = [];
+  /** IDs des pages de lore référencées par ce PNJ. */
+  relatedPageIds: string[] = [];
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private service: NpcService,
     private campaignService: CampaignService,
     private gameSystemService: GameSystemService,
+    private pageService: PageService,
     private campaignSidebar: CampaignSidebarService,
     private confirmDialog: ConfirmDialogService
   ) {}
@@ -87,6 +98,7 @@ export class NpcEditComponent implements OnInit {
           this.values = n.values ?? {};
           this.imageValues = n.imageValues ?? {};
           this.keyValueValues = n.keyValueValues ?? {};
+          this.relatedPageIds = [...(n.relatedPageIds ?? [])];
           this.order = n.order ?? 0;
         },
         error: () => this.back()
@@ -108,6 +120,14 @@ export class NpcEditComponent implements OnInit {
   private loadTemplateForCampaign(campaignId: string): void {
     this.campaignService.getCampaignById(campaignId).subscribe({
       next: (campaign) => {
+        // Lore lié → charge ses pages pour le picker de références.
+        if (campaign.loreId) {
+          this.loreId = campaign.loreId;
+          this.pageService.getByLoreId(campaign.loreId).subscribe({
+            next: (pages) => { this.lorePages = pages; },
+            error: () => { this.lorePages = []; }
+          });
+        }
         if (!campaign.gameSystemId) {
           this.templateFields = [];
           return;
@@ -132,7 +152,8 @@ export class NpcEditComponent implements OnInit {
       values: this.values,
       imageValues: this.imageValues,
       keyValueValues: this.keyValueValues,
-      campaignId: this.campaignId
+      campaignId: this.campaignId,
+      relatedPageIds: this.relatedPageIds
     };
     const isCreation = !this.npcId;
     const req = this.npcId

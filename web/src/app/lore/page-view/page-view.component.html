@@ -40,6 +40,50 @@
             </app-image-gallery>
           </section>
         }
+        @if (field.type === 'KEY_VALUE_LIST') {
+          <section class="view-section">
+            <h2 class="view-section-title">{{ field.name }}</h2>
+            @if (kvHasContent(field.name, field.labels)) {
+              <div class="view-kv-grid">
+                @for (lbl of field.labels ?? []; track $index) {
+                  <div class="view-kv-cell">
+                    <span class="view-kv-label">{{ lbl }}</span>
+                    <span class="view-kv-value">{{ kvValueOf(field.name, lbl) || '—' }}</span>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="view-section-empty">Non renseigné</p>
+            }
+          </section>
+        }
+        @if (field.type === 'TABLE') {
+          <section class="view-section">
+            <h2 class="view-section-title">{{ field.name }}</h2>
+            @if (tableRowsOf(field.name).length) {
+              <table class="view-table">
+                <thead>
+                  <tr>
+                    @for (col of field.labels ?? []; track $index) {
+                      <th>{{ col }}</th>
+                    }
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of tableRowsOf(field.name); track $index) {
+                    <tr>
+                      @for (col of field.labels ?? []; track $index) {
+                        <td>{{ row[col] || '—' }}</td>
+                      }
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            } @else {
+              <p class="view-section-empty">Non renseigné</p>
+            }
+          </section>
+        }
       }
     }
     <!-- Tags -->

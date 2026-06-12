@@ -6,6 +6,7 @@ import com.loremind.infrastructure.persistence.entity.NpcJpaEntity;
 import com.loremind.infrastructure.persistence.jpa.NpcJpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -59,6 +60,7 @@ public class PostgresNpcRepository implements NpcRepository {
                 .imageValues(e.getImageValues() != null ? new HashMap<>(e.getImageValues()) : new HashMap<>())
                 .keyValueValues(e.getKeyValueValues() != null ? new HashMap<>(e.getKeyValueValues()) : new HashMap<>())
                 .campaignId(e.getCampaignId().toString())
+                .relatedPageIds(e.getRelatedPageIds() != null ? new ArrayList<>(e.getRelatedPageIds()) : new ArrayList<>())
                 .folder(e.getFolder())
                 .order(e.getOrder())
                 .createdAt(e.getCreatedAt())
@@ -77,6 +79,7 @@ public class PostgresNpcRepository implements NpcRepository {
                 .imageValues(n.getImageValues() != null ? new HashMap<>(n.getImageValues()) : new HashMap<>())
                 .keyValueValues(n.getKeyValueValues() != null ? new HashMap<>(n.getKeyValueValues()) : new HashMap<>())
                 .campaignId(Long.parseLong(n.getCampaignId()))
+                .relatedPageIds(n.getRelatedPageIds() != null ? new ArrayList<>(n.getRelatedPageIds()) : new ArrayList<>())
                 .folder(n.getFolder())
                 .order(n.getOrder())
                 .createdAt(n.getCreatedAt())

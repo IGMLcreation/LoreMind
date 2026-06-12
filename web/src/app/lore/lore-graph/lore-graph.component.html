@@ -1,0 +1,71 @@
+@if (lore) {
+  <div class="graph-page">
+    <header class="graph-header">
+      <button type="button" class="btn-back" (click)="back()">
+        <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon>
+        Retour au Lore
+      </button>
+      <div class="graph-title">
+        <h1>
+          <lucide-icon [img]="Network" [size]="20"></lucide-icon>
+          {{ lore.name }} — Graphe
+        </h1>
+        <p class="graph-subtitle">
+          {{ nodes.length - npcCount }} page(s) · {{ npcCount }} PNJ · {{ edgeCount }} lien(s).
+          Cliquez sur un nœud pour l'ouvrir, glissez-le pour réarranger.
+        </p>
+      </div>
+      <div class="graph-legend">
+        <span class="legend-item"><span class="legend-dot legend-dot--page"></span> Page de Lore</span>
+        <span class="legend-item"><span class="legend-dot legend-dot--npc"></span> PNJ</span>
+        <span class="legend-item"><span class="legend-line legend-line--npc"></span> Lien PNJ → page</span>
+      </div>
+    </header>
+
+    @if (nodes.length === 0) {
+      <div class="graph-empty">
+        Aucune page dans ce Lore pour l'instant — le graphe se remplira au fur et à mesure.
+      </div>
+    } @else {
+      <div class="graph-scroll">
+        <svg #svgEl
+          [attr.width]="svgWidth"
+          [attr.height]="svgHeight"
+          (pointermove)="onPointerMove($event)"
+          (pointerup)="onPointerUp($event)"
+          (pointerleave)="onPointerUp($event)">
+
+          <!-- Arêtes (sous les nœuds) -->
+          @for (e of edges; track e.key) {
+            <line
+              [attr.x1]="e.x1" [attr.y1]="e.y1"
+              [attr.x2]="e.x2" [attr.y2]="e.y2"
+              [class.edge-page]="e.kind === 'page'"
+              [class.edge-npc]="e.kind === 'npc'" />
+          }
+
+          <!-- Nœuds -->
+          @for (n of nodes; track n.id) {
+            <g class="node"
+              [class.node--npc]="n.kind === 'npc'"
+              [class.dragging]="draggingId === n.id"
+              (pointerdown)="onPointerDown($event, n)">
+              <circle [attr.cx]="n.x" [attr.cy]="n.y" [attr.r]="radiusOf(n)" />
+              <text class="node-label"
+                [attr.x]="n.x"
+                [attr.y]="n.y + radiusOf(n) + 14"
+                text-anchor="middle">{{ n.displayLabel }}</text>
+              <title>{{ n.label }}</title>
+            </g>
+          }
+        </svg>
+      </div>
+      @if (edgeCount === 0) {
+        <p class="graph-hint">
+          Aucun lien pour l'instant : liez des pages entre elles (« Pages liées » d'une page)
+          ou rattachez un PNJ à des pages de Lore depuis sa fiche.
+        </p>
+      }
+    }
+  </div>
+}

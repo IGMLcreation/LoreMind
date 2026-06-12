@@ -1,5 +1,6 @@
 package com.loremind.infrastructure.persistence.entity;
 
+import com.loremind.infrastructure.persistence.converter.StringListJsonConverter;
 import com.loremind.infrastructure.persistence.converter.StringListMapJsonConverter;
 import com.loremind.infrastructure.persistence.converter.StringMapJsonConverter;
 import com.loremind.infrastructure.persistence.converter.StringMapMapJsonConverter;
@@ -53,6 +54,11 @@ public class NpcJpaEntity {
 
     @Column(name = "campaign_id", nullable = false)
     private Long campaignId;
+
+    /** IDs de Pages de Lore référencées (référence faible cross-context). JSON TEXT. */
+    @Convert(converter = StringListJsonConverter.class)
+    @Column(name = "related_page_ids", columnDefinition = "TEXT")
+    private List<String> relatedPageIds;
 
     @Column(name = "folder")
     private String folder;

@@ -8,6 +8,11 @@
           <p class="description">{{ lore.description }}</p>
         </div>
         <div class="header-actions">
+          <button type="button" class="btn-secondary" (click)="openGraph()"
+            title="Visualiser le graphe des pages et de leurs liens (PNJ inclus)">
+            <lucide-icon [img]="Network" [size]="14"></lucide-icon>
+            Graphe
+          </button>
           <button type="button" class="btn-secondary" (click)="startEdit()" title="Modifier le Lore">
             <lucide-icon [img]="Pencil" [size]="14"></lucide-icon>
             Modifier

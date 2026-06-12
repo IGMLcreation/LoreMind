@@ -23,6 +23,8 @@ public class PageMapper {
         dto.setTitle(page.getTitle());
         dto.setValues(CollectionUtils.copyMap(page.getValues()));
         dto.setImageValues(CollectionUtils.copyMap(page.getImageValues()));
+        dto.setKeyValueValues(CollectionUtils.copyMap(page.getKeyValueValues()));
+        dto.setTableValues(CollectionUtils.copyMap(page.getTableValues()));
         dto.setNotes(page.getNotes());
         dto.setTags(CollectionUtils.copyList(page.getTags()));
         dto.setRelatedPageIds(CollectionUtils.copyList(page.getRelatedPageIds()));
@@ -41,6 +43,8 @@ public class PageMapper {
                 .title(dto.getTitle())
                 .values(CollectionUtils.copyMap(dto.getValues()))
                 .imageValues(CollectionUtils.copyMap(dto.getImageValues()))
+                .keyValueValues(CollectionUtils.copyMap(dto.getKeyValueValues()))
+                .tableValues(CollectionUtils.copyMap(dto.getTableValues()))
                 .notes(dto.getNotes())
                 .tags(CollectionUtils.copyList(dto.getTags()))
                 .relatedPageIds(CollectionUtils.copyList(dto.getRelatedPageIds()))

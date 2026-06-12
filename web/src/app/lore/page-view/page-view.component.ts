@@ -114,6 +114,21 @@ export class PageViewComponent implements OnInit, OnDestroy {
     return this.page?.imageValues?.[fieldName] ?? [];
   }
 
+  /** Valeur d'un libellé d'un champ KEY_VALUE_LIST (tableau). */
+  kvValueOf(fieldName: string, label: string): string {
+    return this.page?.keyValueValues?.[fieldName]?.[label] ?? '';
+  }
+
+  /** True si au moins une valeur de la liste clé/valeur est renseignée. */
+  kvHasContent(fieldName: string, labels: string[] | null | undefined): boolean {
+    return (labels ?? []).some(lbl => this.kvValueOf(fieldName, lbl).trim() !== '');
+  }
+
+  /** Lignes d'un champ TABLE (liste vide si jamais rempli). */
+  tableRowsOf(fieldName: string): Array<Record<string, string>> {
+    return this.page?.tableValues?.[fieldName] ?? [];
+  }
+
   /** Helper — résout l'ID d'une page liée en son titre (pour affichage dans les chips). */
   titleOfRelated(pageId: string): string {
     return this.allPages.find(p => p.id === pageId)?.title ?? '(page supprimée)';

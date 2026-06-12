@@ -71,6 +71,75 @@
               </app-image-gallery>
             </div>
           }
+          <!-- Champ KEY_VALUE_LIST : liste libellé/valeur (labels figés par le template). -->
+          @if (field.type === 'KEY_VALUE_LIST') {
+            <div class="field">
+              <label>{{ field.name }}</label>
+              <div class="kv-grid">
+                @for (lbl of field.labels ?? []; track $index) {
+                  <div class="kv-cell">
+                    <span class="kv-label">{{ lbl }}</span>
+                    <input
+                      type="text"
+                      [(ngModel)]="keyValueValues[field.name][lbl]"
+                      [name]="'kv_' + field.name + '_' + lbl"
+                      placeholder="—" />
+                  </div>
+                }
+                @if (!(field.labels ?? []).length) {
+                  <p class="kv-empty">Aucun libellé défini dans le template pour ce champ.</p>
+                }
+              </div>
+            </div>
+          }
+          <!-- Champ TABLE : colonnes figées par le template, lignes libres. -->
+          @if (field.type === 'TABLE') {
+            <div class="field">
+              <label>{{ field.name }}</label>
+              @if ((field.labels ?? []).length) {
+                <div class="table-edit-wrap">
+                  <table class="table-edit">
+                    <thead>
+                      <tr>
+                        @for (col of field.labels; track $index) {
+                          <th>{{ col }}</th>
+                        }
+                        <th class="table-edit-actions-col"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (row of tableValues[field.name] ?? []; track $index; let ri = $index) {
+                        <tr>
+                          @for (col of field.labels; track $index) {
+                            <td>
+                              <input
+                                type="text"
+                                [(ngModel)]="row[col]"
+                                [name]="'tbl_' + field.name + '_' + ri + '_' + col"
+                                [placeholder]="col" />
+                            </td>
+                          }
+                          <td class="table-edit-actions-col">
+                            <button type="button" class="btn-row-delete"
+                              (click)="removeTableRow(field.name, ri)"
+                              [attr.aria-label]="'Supprimer la ligne ' + (ri + 1)" title="Supprimer la ligne">
+                              <lucide-icon [img]="Trash2" [size]="13"></lucide-icon>
+                            </button>
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                  <button type="button" class="btn-row-add" (click)="addTableRow(field.name, field.labels)">
+                    <lucide-icon [img]="Plus" [size]="13"></lucide-icon>
+                    Ajouter une ligne
+                  </button>
+                </div>
+              } @else {
+                <p class="kv-empty">Aucune colonne définie dans le template pour ce tableau.</p>
+              }
+            </div>
+          }
         }
       }
       <!-- Tags --------------------------------------------------------- -->

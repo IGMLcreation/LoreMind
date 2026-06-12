@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { LucideAngularModule, Folder, Plus, Pencil, Trash2 } from 'lucide-angular';
+import { LucideAngularModule, Folder, Plus, Pencil, Trash2, Network } from 'lucide-angular';
 import { LoreService } from '../../services/lore.service';
 import { TemplateService } from '../../services/template.service';
 import { PageService } from '../../services/page.service';
@@ -23,6 +23,7 @@ export class LoreDetailComponent implements OnInit, OnDestroy {
   readonly Plus = Plus;
   readonly Pencil = Pencil;
   readonly Trash2 = Trash2;
+  readonly Network = Network;
 
   lore: Lore | null = null;
   /** Tous les dossiers du Lore (racines + enfants). */
@@ -79,6 +80,13 @@ export class LoreDetailComponent implements OnInit, OnDestroy {
 
   navigateToFolder(nodeId: string): void {
     this.router.navigate(['/lore', this.lore!.id, 'folders', nodeId]);
+  }
+
+  /** Ouvre la vue graphe : pages du Lore + PNJ liés, reliés par leurs liens. */
+  openGraph(): void {
+    if (this.lore?.id) {
+      this.router.navigate(['/lore', this.lore.id, 'graph']);
+    }
   }
 
   // ─────────────── Édition / suppression du Lore ───────────────

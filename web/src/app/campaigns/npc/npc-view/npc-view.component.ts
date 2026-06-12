@@ -1,14 +1,16 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { LucideAngularModule, ArrowLeft, Edit3, Sparkles } from 'lucide-angular';
+import { LucideAngularModule, ArrowLeft, Edit3, Sparkles, Link2 } from 'lucide-angular';
 import { NpcService } from '../../../services/npc.service';
 import { CampaignService } from '../../../services/campaign.service';
 import { GameSystemService } from '../../../services/game-system.service';
+import { PageService } from '../../../services/page.service';
 import { CampaignSidebarService } from '../../../services/campaign-sidebar.service';
 import { TemplateField } from '../../../services/template.model';
 import { Npc } from '../../../services/npc.model';
+import { Page } from '../../../services/page.model';
 import { PersonaViewComponent } from '../../../shared/persona-view/persona-view.component';
 import { AiChatDrawerComponent } from '../../../shared/ai-chat-drawer/ai-chat-drawer.component';
 
@@ -18,7 +20,7 @@ import { AiChatDrawerComponent } from '../../../shared/ai-chat-drawer/ai-chat-dr
  */
 @Component({
     selector: 'app-npc-view',
-    imports: [LucideAngularModule, PersonaViewComponent, AiChatDrawerComponent],
+    imports: [LucideAngularModule, RouterLink, PersonaViewComponent, AiChatDrawerComponent],
     templateUrl: './npc-view.component.html',
     styleUrls: ['./npc-view.component.scss']
 })
@@ -26,12 +28,17 @@ export class NpcViewComponent implements OnInit, OnDestroy {
   readonly ArrowLeft = ArrowLeft;
   readonly Edit3 = Edit3;
   readonly Sparkles = Sparkles;
+  readonly Link2 = Link2;
 
   campaignId: string | null = null;
   npcId: string | null = null;
 
   npc: Npc | null = null;
   templateFields: TemplateField[] = [];
+  /** Lore lié à la campagne (résolution des chips de pages liées). */
+  loreId: string | null = null;
+  /** Pages du lore lié, indexées pour résoudre les titres des chips. */
+  private lorePagesById = new Map<string, Page>();
 
   chatOpen = false;
   toggleChat(): void { this.chatOpen = !this.chatOpen; }
@@ -44,6 +51,7 @@ export class NpcViewComponent implements OnInit, OnDestroy {
     private service: NpcService,
     private campaignService: CampaignService,
     private gameSystemService: GameSystemService,
+    private pageService: PageService,
     private campaignSidebar: CampaignSidebarService
   ) {}
 
@@ -75,6 +83,13 @@ export class NpcViewComponent implements OnInit, OnDestroy {
               this.templateFields = gs.npcTemplate ?? [];
             });
           }
+          // Lore lié → référentiel de pages pour résoudre les chips de liens.
+          if (camp.loreId) {
+            this.loreId = camp.loreId;
+            this.pageService.getByLoreId(camp.loreId).subscribe(pages => {
+              this.lorePagesById = new Map(pages.map(p => [p.id!, p]));
+            });
+          }
         });
       } else if (newCampaignId) {
         this.campaignId = newCampaignId;
@@ -84,6 +99,11 @@ export class NpcViewComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.paramsSub?.unsubscribe();
+  }
+
+  /** Titre d'une page de lore liée (pour les chips). */
+  titleOfPage(pageId: string): string {
+    return this.lorePagesById.get(pageId)?.title ?? '(page supprimée)';
   }
 
   edit(): void {

@@ -16,6 +16,11 @@ export class NpcService {
     return this.http.get<Npc[]>(`${this.apiUrl}/campaign/${campaignId}`);
   }
 
+  /** PNJ de toutes les campagnes liées à un Lore — alimente le graphe du Lore. */
+  getByLore(loreId: string): Observable<Npc[]> {
+    return this.http.get<Npc[]>(`${this.apiUrl}/lore/${loreId}`);
+  }
+
   getById(id: string): Observable<Npc> {
     return this.http.get<Npc>(`${this.apiUrl}/${id}`);
   }

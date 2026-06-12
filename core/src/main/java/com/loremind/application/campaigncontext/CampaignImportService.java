@@ -163,7 +163,7 @@ public class CampaignImportService {
                     isBlank(p.description())
                             ? java.util.Map.of()
                             : java.util.Map.of("Description", p.description().trim()),
-                    null, null, campaignId, null, null));
+                    null, null, campaignId, null, null, null));
             created++;
         }
         return created;
