@@ -124,13 +124,17 @@ public class NotebookController {
         List<NotebookChatStreamer.Msg> history = service.getMessages(id).stream()
                 .map(m -> new NotebookChatStreamer.Msg(m.getRole(), m.getContent()))
                 .toList();
-        List<String> sourceIds = service.readySourceIds(id);
+        // Sélection de l'UI (cases cochées) : on ne garde que les sources qui
+        // appartiennent bien à CE notebook et sont prêtes — un id étranger est
+        // ignoré. Limite le coût (ex. analyse approfondie sur 1 PDF au lieu de 5).
+        // Variable finale : elle est capturée par la lambda du taskExecutor.
+        List<String> readyIds = service.readySourceIds(id);
+        final List<String> sourceIds;
         if (req.sourceIds() != null) {
-            // Sélection de l'UI (cases cochées) : on ne garde que les sources qui
-            // appartiennent bien à CE notebook et sont prêtes — un id étranger est
-            // ignoré. Limite le coût (ex. analyse approfondie sur 1 PDF au lieu de 5).
             var wanted = new java.util.HashSet<>(req.sourceIds());
-            sourceIds = sourceIds.stream().filter(wanted::contains).toList();
+            sourceIds = readyIds.stream().filter(wanted::contains).toList();
+        } else {
+            sourceIds = readyIds;
         }
         String context = service.buildContext(nb.getCampaignId());
 
