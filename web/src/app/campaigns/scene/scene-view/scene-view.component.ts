@@ -13,7 +13,7 @@ import { EnemyService } from '../../../services/enemy.service';
 import { PageService } from '../../../services/page.service';
 import { LayoutService } from '../../../services/layout.service';
 import { PageTitleService } from '../../../services/page-title.service';
-import { Scene } from '../../../services/campaign.model';
+import { Scene, Room } from '../../../services/campaign.model';
 import { Page } from '../../../services/page.model';
 import { Enemy } from '../../../services/enemy.model';
 import { loadCampaignTreeData, buildCampaignSidebarConfig } from '../../campaign-tree.helper';
@@ -117,6 +117,13 @@ export class SceneViewComponent implements OnInit, OnDestroy {
   enemyLabel(enemy: Enemy): string {
     const level = enemy.level?.trim();
     return level ? `${enemy.name} (${level})` : enemy.name;
+  }
+
+  /** Fiches du bestiaire liées à une pièce (IDs orphelins ignorés). */
+  roomLinkedEnemies(room: Room): Enemy[] {
+    return (room.enemyIds ?? [])
+      .map(id => this.availableEnemies.find(e => e.id === id))
+      .filter((e): e is Enemy => !!e);
   }
 
   /** Résout le nom d'une pièce cible (pour afficher les sorties inter-pièces). */

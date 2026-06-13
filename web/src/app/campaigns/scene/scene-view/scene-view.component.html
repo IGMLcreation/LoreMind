@@ -151,10 +151,22 @@
                 <p class="room-readonly-desc">{{ r.description }}</p>
               }
               <div class="room-readonly-grid">
-                @if (r.enemies?.trim()) {
+                @if (r.enemies?.trim() || roomLinkedEnemies(r).length > 0) {
                   <div>
                     <strong>⚔️ Ennemis</strong>
-                    <p>{{ r.enemies }}</p>
+                    @if (roomLinkedEnemies(r).length > 0) {
+                      <div class="view-chips">
+                        @for (e of roomLinkedEnemies(r); track e.id) {
+                          <a class="view-chip"
+                            [routerLink]="['/campaigns', campaignId, 'enemies', e.id]">
+                            {{ enemyLabel(e) }}
+                          </a>
+                        }
+                      </div>
+                    }
+                    @if (r.enemies?.trim()) {
+                      <p>{{ r.enemies }}</p>
+                    }
                   </div>
                 }
                 @if (r.loot?.trim()) {

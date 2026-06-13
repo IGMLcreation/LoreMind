@@ -258,6 +258,8 @@
       </small>
       <app-rooms-editor
         [rooms]="rooms"
+        [availableEnemies]="availableEnemies"
+        [campaignId]="campaignId"
         (roomsChange)="onRoomsChange($event)">
       </app-rooms-editor>
     </app-expandable-section>
