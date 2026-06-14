@@ -1,8 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, Save, ArrowLeft, User, Trash2, Sparkles } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { CharacterService } from '../../../services/character.service';
 import { CampaignService } from '../../../services/campaign.service';
 import { GameSystemService } from '../../../services/game-system.service';
@@ -25,11 +26,10 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  *    saisie manuelle d'IDs d'images.
  */
 @Component({
-  selector: 'app-character-edit',
-  standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, AiChatDrawerComponent, DynamicFieldsFormComponent, SingleImagePickerComponent],
-  templateUrl: './character-edit.component.html',
-  styleUrls: ['./character-edit.component.scss']
+    selector: 'app-character-edit',
+    imports: [FormsModule, LucideAngularModule, TranslatePipe, AiChatDrawerComponent, DynamicFieldsFormComponent, SingleImagePickerComponent],
+    templateUrl: './character-edit.component.html',
+    styleUrls: ['./character-edit.component.scss']
 })
 export class CharacterEditComponent implements OnInit {
   readonly Save = Save;
@@ -39,15 +39,19 @@ export class CharacterEditComponent implements OnInit {
   readonly Sparkles = Sparkles;
 
   chatOpen = false;
-  readonly chatQuickSuggestions = [
-    'Propose une backstory coherente avec l\'univers',
-    'Suggere 3 objectifs personnels pour ce personnage',
-    'Aide-moi a equilibrer les stats de combat'
-  ];
+  get chatQuickSuggestions(): string[] {
+    return [
+      this.translate.instant('characterEdit.chatSuggestion1'),
+      this.translate.instant('characterEdit.chatSuggestion2'),
+      this.translate.instant('characterEdit.chatSuggestion3')
+    ];
+  }
 
   toggleChat(): void { this.chatOpen = !this.chatOpen; }
 
   campaignId: string | null = null;
+  /** Partie propriétaire du PJ — lue depuis la route (les PJ sont scoping Playthrough). */
+  playthroughId: string | null = null;
   characterId: string | null = null;
 
   name = '';
@@ -66,12 +70,14 @@ export class CharacterEditComponent implements OnInit {
     private campaignService: CampaignService,
     private gameSystemService: GameSystemService,
     private campaignSidebar: CampaignSidebarService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
     const params = this.route.snapshot.paramMap;
     this.campaignId = params.get('campaignId');
+    this.playthroughId = params.get('playthroughId');
     this.characterId = params.get('characterId');
 
     if (this.campaignId) {
@@ -113,7 +119,7 @@ export class CharacterEditComponent implements OnInit {
 
 
   submit(): void {
-    if (!this.name.trim() || !this.campaignId) return;
+    if (!this.name.trim() || !this.campaignId || !this.playthroughId) return;
     const payload = {
       name: this.name.trim(),
       portraitImageId: this.portraitImageId,
@@ -121,7 +127,7 @@ export class CharacterEditComponent implements OnInit {
       values: this.values,
       imageValues: this.imageValues,
       keyValueValues: this.keyValueValues,
-      campaignId: this.campaignId
+      playthroughId: this.playthroughId
     };
     const isCreation = !this.characterId;
     const req = this.characterId
@@ -130,7 +136,7 @@ export class CharacterEditComponent implements OnInit {
     req.subscribe({
       next: (saved) => {
         if (isCreation && saved.id) {
-          this.router.navigate(['/campaigns', this.campaignId, 'characters', saved.id]);
+          this.router.navigate(['/campaigns', this.campaignId, 'playthroughs', this.playthroughId, 'characters', saved.id]);
         } else {
           this.back();
         }
@@ -142,10 +148,10 @@ export class CharacterEditComponent implements OnInit {
   deleteCharacter(): void {
     if (!this.characterId) return;
     this.confirmDialog.confirm({
-      title: 'Supprimer la fiche ?',
-      message: `Supprimer la fiche de "${this.name}" ?`,
-      details: ['Cette action est irreversible.'],
-      confirmLabel: 'Supprimer',
+      title: this.translate.instant('characterEdit.deleteTitle'),
+      message: this.translate.instant('characterEdit.deleteMessage', { name: this.name }),
+      details: [this.translate.instant('characterEdit.irreversible')],
+      confirmLabel: this.translate.instant('common.delete'),
       variant: 'danger'
     }).then(ok => {
       if (!ok || !this.characterId) return;
@@ -157,7 +163,9 @@ export class CharacterEditComponent implements OnInit {
   }
 
   back(): void {
-    if (this.campaignId) {
+    if (this.campaignId && this.playthroughId) {
+      this.router.navigate(['/campaigns', this.campaignId, 'playthroughs', this.playthroughId]);
+    } else if (this.campaignId) {
       this.router.navigate(['/campaigns', this.campaignId]);
     } else {
       this.router.navigate(['/campaigns']);

@@ -40,7 +40,15 @@ public class Scene {
 
     // === Combat ou rencontre ===
     private String combatDifficulty;       // Difficulté estimée
-    private String enemies;                // Liste des ennemis et créatures
+    private String enemies;                // Liste des ennemis et créatures (texte libre)
+
+    /**
+     * IDs des fiches du bestiaire ({@link Enemy}) engagées dans cette rencontre
+     * (weak cross-aggregate references). Complète le texte libre `enemies` :
+     * l'utilisateur peut référencer ses fiches, ou tout écrire à la main, ou les deux.
+     */
+    @Builder.Default
+    private List<String> enemyIds = new ArrayList<>();
 
     /**
      * IDs des pages du Lore associées à cette scène (weak cross-context references).
@@ -71,6 +79,15 @@ public class Scene {
      */
     @Builder.Default
     private List<SceneBranch> branches = new ArrayList<>();
+
+    /**
+     * Pièces du lieu explorable représenté par cette scène (donjon, crypte, manoir…).
+     * Vide => scène classique « beat narratif » (comportement inchangé).
+     * Non vide => la scène devient explorable, l'UI affiche un layout dédié pièce-par-pièce.
+     * Sérialisé en JSONB.
+     */
+    @Builder.Default
+    private List<Room> rooms = new ArrayList<>();
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

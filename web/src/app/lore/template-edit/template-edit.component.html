@@ -1,117 +1,147 @@
-<div class="page" *ngIf="template">
-
-  <header class="page-header">
-    <div>
-      <h1>{{ template.name }}</h1>
-      <p class="subtitle">Template</p>
-    </div>
-    <div class="header-actions">
-      <button type="button" class="btn-danger" (click)="delete()">Supprimer</button>
-      <button type="button" class="btn-primary" (click)="save()" [disabled]="form.invalid">Sauvegarder</button>
-    </div>
-  </header>
-
-  <form [formGroup]="form" class="template-form">
-
-    <!-- Colonne gauche ---------------------------------------------- -->
-    <div class="col-left">
-
-      <div class="field">
-        <label for="template-edit-name">Nom</label>
-        <input id="template-edit-name" type="text" formControlName="name" />
+@if (template) {
+  <div class="page">
+    <header class="page-header">
+      <div>
+        <h1>{{ template.name }}</h1>
+        <p class="subtitle">{{ 'templateEdit.subtitle' | translate }}</p>
       </div>
-
-      <div class="field">
-        <label for="template-edit-default-node">Dossier par défaut</label>
-        <select id="template-edit-default-node" formControlName="defaultNodeId">
-          <option value="">-- Aucun --</option>
-          <option *ngFor="let node of nodes" [value]="node.id">{{ node.name }}</option>
-        </select>
-        <p class="hint">Les pages créées avec ce template seront placées dans ce dossier par défaut</p>
+      <div class="header-actions">
+        <button type="button" class="btn-danger" (click)="delete()">{{ 'common.delete' | translate }}</button>
+        <button type="button" class="btn-primary" (click)="save()" [disabled]="form.invalid">{{ 'common.save' | translate }}</button>
       </div>
-
-      <div class="field">
-        <label for="template-edit-description">Description</label>
-        <textarea id="template-edit-description" formControlName="description" rows="6"></textarea>
+    </header>
+    <form [formGroup]="form" class="template-form">
+      <!-- Colonne gauche ---------------------------------------------- -->
+      <div class="col-left">
+        <div class="field">
+          <label for="template-edit-name">{{ 'common.name' | translate }}</label>
+          <input id="template-edit-name" type="text" formControlName="name" />
+        </div>
+        <div class="field">
+          <label for="template-edit-default-node">{{ 'templateEdit.defaultNodeLabel' | translate }}</label>
+          <select id="template-edit-default-node" formControlName="defaultNodeId">
+            <option value="">{{ 'templateEdit.noneOption' | translate }}</option>
+            @for (node of nodes; track node) {
+              <option [value]="node.id">{{ node.name }}</option>
+            }
+          </select>
+          <p class="hint">{{ 'templateEdit.defaultNodeHint' | translate }}</p>
+        </div>
+        <div class="field">
+          <label for="template-edit-description">{{ 'common.description' | translate }}</label>
+          <textarea id="template-edit-description" formControlName="description" rows="6"></textarea>
+        </div>
       </div>
-
-    </div>
-
-    <!-- Colonne droite --------------------------------------------- -->
-    <div class="col-right">
-
-      <label class="section-label">Champs du template</label>
-
-      <ul class="fields-list">
-        <li class="field-row" *ngFor="let f of fields; let i = index; let first = first; let last = last">
-          <div class="reorder-stack">
-            <button type="button" class="btn-icon-ghost btn-reorder"
-                    (click)="moveField(i, -1)"
-                    [disabled]="first"
-                    aria-label="Monter d'un cran" title="Monter">
-              <lucide-icon [img]="ChevronUp" [size]="12"></lucide-icon>
-            </button>
-            <button type="button" class="btn-icon-ghost btn-reorder"
-                    (click)="moveField(i, 1)"
-                    [disabled]="last"
-                    aria-label="Descendre d'un cran" title="Descendre">
-              <lucide-icon [img]="ChevronDown" [size]="12"></lucide-icon>
-            </button>
-          </div>
-          <span class="field-chip"
+      <!-- Colonne droite --------------------------------------------- -->
+      <div class="col-right">
+        <label class="section-label">{{ 'templateEdit.fieldsLabel' | translate }}</label>
+        <ul class="fields-list">
+          @for (f of fields; track f; let i = $index; let first = $first; let last = $last) {
+            <li class="field-row">
+              <div class="reorder-stack">
+                <button type="button" class="btn-icon-ghost btn-reorder"
+                  (click)="moveField(i, -1)"
+                  [disabled]="first"
+                  [attr.aria-label]="'templateEdit.moveUp' | translate" [title]="'templateEdit.moveUp' | translate">
+                  <lucide-icon [img]="ChevronUp" [size]="12"></lucide-icon>
+                </button>
+                <button type="button" class="btn-icon-ghost btn-reorder"
+                  (click)="moveField(i, 1)"
+                  [disabled]="last"
+                  [attr.aria-label]="'templateEdit.moveDown' | translate" [title]="'templateEdit.moveDown' | translate">
+                  <lucide-icon [img]="ChevronDown" [size]="12"></lucide-icon>
+                </button>
+              </div>
+              <span class="field-chip"
                 [class.field-chip-image]="f.type === 'IMAGE'"
-                [class.field-chip-existing]="f.type !== 'IMAGE' && isExistingField(f)"
-                [class.field-chip-new]="f.type !== 'IMAGE' && !isExistingField(f)">
-            <lucide-icon [img]="f.type === 'IMAGE' ? ImageIcon : Type" [size]="12"></lucide-icon>
-            {{ f.name }}
-          </span>
-          <button type="button"
-                  class="btn-icon-ghost btn-type-toggle"
-                  (click)="toggleFieldType(i)"
-                  [title]="f.type === 'TEXT' ? 'Transformer en champ Image' : 'Transformer en champ Texte'">
-            {{ f.type === 'TEXT' ? 'Texte' : 'Image' }}
-          </button>
-          <select *ngIf="f.type === 'IMAGE'"
+                [class.field-chip-kv]="f.type === 'KEY_VALUE_LIST'"
+                [class.field-chip-table]="f.type === 'TABLE'"
+                [class.field-chip-existing]="f.type === 'TEXT' && isExistingField(f)"
+                [class.field-chip-new]="f.type === 'TEXT' && !isExistingField(f)">
+                <lucide-icon [img]="iconFor(f.type)" [size]="12"></lucide-icon>
+                {{ f.name }}
+              </span>
+              <select
+                class="type-select"
+                [ngModel]="f.type"
+                [ngModelOptions]="{ standalone: true }"
+                (ngModelChange)="setFieldType(i, $event)"
+                [title]="'templateEdit.fieldTypeTitle' | translate">
+                <option value="TEXT">{{ 'templateEdit.typeText' | translate }}</option>
+                <option value="IMAGE">{{ 'templateEdit.typeImage' | translate }}</option>
+                <option value="KEY_VALUE_LIST">{{ 'templateEdit.typeKeyValue' | translate }}</option>
+                <option value="TABLE">{{ 'templateEdit.typeTable' | translate }}</option>
+              </select>
+              @if (f.type === 'IMAGE') {
+                <select
                   class="layout-select"
                   [ngModel]="f.layout ?? 'GALLERY'"
                   [ngModelOptions]="{ standalone: true }"
                   (ngModelChange)="setFieldLayout(i, $event)"
-                  title="Mise en page des images">
-            <option value="GALLERY">Grille</option>
-            <option value="HERO">Heros</option>
-            <option value="MASONRY">Mosaique</option>
-            <option value="CAROUSEL">Carrousel</option>
+                  [title]="'templateEdit.layoutTitle' | translate">
+                  <option value="GALLERY">{{ 'templateEdit.layoutGallery' | translate }}</option>
+                  <option value="HERO">{{ 'templateEdit.layoutHero' | translate }}</option>
+                  <option value="MASONRY">{{ 'templateEdit.layoutMasonry' | translate }}</option>
+                  <option value="CAROUSEL">{{ 'templateEdit.layoutCarousel' | translate }}</option>
+                </select>
+              }
+              <button type="button" class="btn-icon-danger" (click)="removeField(i)" [attr.aria-label]="'common.delete' | translate">
+                <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+              </button>
+            </li>
+            <!-- Libelles (lignes d'une liste clé/valeur, ou colonnes d'un tableau) -->
+            @if (f.type === 'KEY_VALUE_LIST' || f.type === 'TABLE') {
+              <li class="kv-labels-row">
+                @for (lbl of f.labels ?? []; track $index; let li = $index) {
+                  <span class="kv-label-chip">
+                    <input
+                      type="text"
+                      [ngModel]="lbl"
+                      [ngModelOptions]="{ standalone: true }"
+                      (ngModelChange)="updateLabel(f, li, $event)"
+                      [placeholder]="(f.type === 'TABLE' ? 'templateEdit.column' : 'templateEdit.label') | translate"
+                      [attr.aria-label]="(f.type === 'TABLE' ? 'templateEdit.columnN' : 'templateEdit.labelN') | translate:{ n: (li + 1) }" />
+                    <button type="button" class="kv-label-remove" (click)="removeLabel(f, li)" [attr.aria-label]="'common.remove' | translate">
+                      <lucide-icon [img]="X" [size]="11"></lucide-icon>
+                    </button>
+                  </span>
+                }
+                <button type="button" class="btn-kv-add-label" (click)="addLabel(f)">
+                  <lucide-icon [img]="Plus" [size]="12"></lucide-icon>
+                  {{ (f.type === 'TABLE' ? 'templateEdit.column' : 'templateEdit.label') | translate }}
+                </button>
+                @if (!(f.labels ?? []).length) {
+                  <span class="kv-labels-hint">
+                    {{ (f.type === 'TABLE' ? 'templateEdit.tableLabelsHint' : 'templateEdit.kvLabelsHint') | translate }}
+                  </span>
+                }
+              </li>
+            }
+          }
+        </ul>
+        <div class="field-row add-row">
+          <input
+            type="text"
+            [(ngModel)]="newFieldName"
+            [ngModelOptions]="{ standalone: true }"
+            [placeholder]="'templateEdit.addFieldPlaceholder' | translate"
+            (keydown.enter)="$event.preventDefault(); addField()" />
+          <select
+            class="type-select"
+            [(ngModel)]="newFieldType"
+            [ngModelOptions]="{ standalone: true }"
+            [attr.aria-label]="'templateEdit.fieldTypeTitle' | translate">
+            <option value="TEXT">{{ 'templateEdit.typeText' | translate }}</option>
+            <option value="IMAGE">{{ 'templateEdit.typeImage' | translate }}</option>
+            <option value="KEY_VALUE_LIST">{{ 'templateEdit.typeKeyValue' | translate }}</option>
+            <option value="TABLE">{{ 'templateEdit.typeTable' | translate }}</option>
           </select>
-          <button type="button" class="btn-icon-danger" (click)="removeField(i)" aria-label="Supprimer">
-            <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+          <button type="button" class="btn-add" (click)="addField()" [title]="'templateEdit.addFieldTitle' | translate">
+            <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
           </button>
-        </li>
-      </ul>
-
-      <div class="field-row add-row">
-        <input
-          type="text"
-          [(ngModel)]="newFieldName"
-          [ngModelOptions]="{ standalone: true }"
-          placeholder="+ Ajouter un champ"
-          (keydown.enter)="$event.preventDefault(); addField()" />
-        <select
-          class="type-select"
-          [(ngModel)]="newFieldType"
-          [ngModelOptions]="{ standalone: true }"
-          aria-label="Type du champ">
-          <option value="TEXT">Texte</option>
-          <option value="IMAGE">Image</option>
-        </select>
-        <button type="button" class="btn-add" (click)="addField()" title="Ajouter le champ">
-          <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
-        </button>
+        </div>
+        <p class="hint">{{ 'templateEdit.fieldsHelp' | translate }}</p>
       </div>
-
-      <p class="hint">Texte = zone editable + generable par l'IA. Image = galerie d'illustrations.</p>
-
-    </div>
-
-  </form>
-
-</div>
+    </form>
+  </div>
+}

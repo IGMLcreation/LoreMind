@@ -1,7 +1,8 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, X } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 /**
  * Composant réutilisable de saisie de chips (étiquettes textuelles).
@@ -20,21 +21,24 @@ import { LucideAngularModule, X } from 'lucide-angular';
  *  - Clic sur X retire le chip
  */
 @Component({
-  selector: 'app-chips-input',
-  standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule],
-  templateUrl: './chips-input.component.html',
-  styleUrls: ['./chips-input.component.scss']
+    selector: 'app-chips-input',
+    imports: [FormsModule, LucideAngularModule, TranslatePipe],
+    templateUrl: './chips-input.component.html',
+    styleUrls: ['./chips-input.component.scss']
 })
 export class ChipsInputComponent {
   readonly X = X;
 
   @Input() value: string[] = [];
-  @Input() placeholder = 'Ajouter...';
+  @Input() placeholder = '';
   @Output() valueChange = new EventEmitter<string[]>();
 
   /** Texte de l'input en cours de saisie. */
   current = '';
+
+  constructor(private translate: TranslateService) {
+    this.placeholder = this.translate.instant('chipsInput.placeholder');
+  }
 
   /** Ajoute le texte courant s'il est non vide et non déjà présent. */
   add(): void {

@@ -1,12 +1,15 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { LucideAngularModule, BookOpen } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { CampaignService } from '../../../services/campaign.service';
 import { CharacterService } from '../../../services/character.service';
 import { NpcService } from '../../../services/npc.service';
+import { RandomTableService } from '../../../services/random-table.service';
+import { EnemyService } from '../../../services/enemy.service';
 import { LayoutService } from '../../../services/layout.service';
 import { loadCampaignTreeData, buildCampaignSidebarConfig } from '../../campaign-tree.helper';
 import { IconPickerComponent } from '../../../shared/icon-picker/icon-picker.component';
@@ -18,11 +21,10 @@ import { CAMPAIGN_ICON_OPTIONS } from '../../campaign-icons';
  * le nombre d'arcs existants dans la campagne courante.
  */
 @Component({
-  selector: 'app-arc-create',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, IconPickerComponent],
-  templateUrl: './arc-create.component.html',
-  styleUrls: ['./arc-create.component.scss']
+    selector: 'app-arc-create',
+    imports: [ReactiveFormsModule, LucideAngularModule, IconPickerComponent, TranslatePipe],
+    templateUrl: './arc-create.component.html',
+    styleUrls: ['./arc-create.component.scss']
 })
 export class ArcCreateComponent implements OnInit, OnDestroy {
   readonly BookOpen = BookOpen;
@@ -40,11 +42,16 @@ export class ArcCreateComponent implements OnInit, OnDestroy {
     private campaignService: CampaignService,
     private characterService: CharacterService,
     private npcService: NpcService,
-    private layoutService: LayoutService
+    private randomTableService: RandomTableService,
+    private enemyService: EnemyService,
+    private layoutService: LayoutService,
+    private translate: TranslateService
   ) {
     this.form = this.fb.group({
       name:        ['', Validators.required],
-      description: ['']
+      description: [''],
+      // Type structurel : LINEAR (séquentiel) par défaut, HUB (sandbox/quêtes parallèles).
+      type:        ['LINEAR', Validators.required]
     });
   }
 
@@ -57,11 +64,11 @@ export class ArcCreateComponent implements OnInit, OnDestroy {
     forkJoin({
       campaign: this.campaignService.getCampaignById(this.campaignId),
       allCampaigns: this.campaignService.getAllCampaigns(),
-      treeData: loadCampaignTreeData(this.campaignService, this.campaignId, this.characterService, this.npcService)
+      treeData: loadCampaignTreeData(this.campaignService, this.campaignId, this.characterService, this.npcService, this.randomTableService, this.enemyService)
     }).subscribe(({ campaign, allCampaigns, treeData }) => {
       this.existingArcCount = treeData.arcs.length;
 
-      this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId));
+      this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId, this.translate));
     });
   }
 
@@ -72,6 +79,7 @@ export class ArcCreateComponent implements OnInit, OnDestroy {
       description: this.form.value.description,
       campaignId: this.campaignId,
       order: this.existingArcCount + 1,
+      type: this.form.value.type,
       icon: this.selectedIcon
     }).subscribe({
       next: (created) => this.router.navigate(['/campaigns', this.campaignId, 'arcs', created.id]),

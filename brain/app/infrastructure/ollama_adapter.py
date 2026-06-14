@@ -5,13 +5,16 @@ Isole le reste de l'application des spécificités du protocole Ollama
 demain, on écrit un nouvel adapter sans toucher au reste du code.
 """
 import json
+import logging
 from typing import AsyncIterator
 
 import httpx
 
 from app.core.config import Settings
 from app.domain.models import ChatMessage
-from app.domain.ports import LLMProviderError
+from app.domain.ports import LLMGenerationTimeout, LLMProviderError
+
+logger = logging.getLogger(__name__)
 
 
 class OllamaLLMProvider:
@@ -45,7 +48,7 @@ class OllamaLLMProvider:
         self,
         prompt: str,
         *,
-        output_format: str | None = None,
+        output_format: str | dict | None = None,
         temperature: float | None = None,
     ) -> str:
         url = f"{self._base_url}/api/generate"
@@ -55,6 +58,10 @@ class OllamaLLMProvider:
             "stream": False,
             "options": self._build_options(temperature),
         }
+        # "json" (mode JSON simple) ou un SCHÉMA JSON complet (structured outputs) :
+        # Ollama contraint alors la grammaire de génération au schéma — un petit
+        # modèle local ne PEUT physiquement plus produire d'objets imbriqués, de
+        # clés "thought" bavardes ou de texte hors JSON.
         if output_format is not None:
             payload["format"] = output_format
 
@@ -71,12 +78,45 @@ class OllamaLLMProvider:
                     raise LLMProviderError(
                         f"Ollama HTTP {response.status_code} : {err_msg.strip()[:500]}"
                     )
+            except httpx.ConnectTimeout as exc:
+                # Serveur injoignable : erreur d'infrastructure, pas de lenteur.
+                raise LLMProviderError(
+                    f"Erreur lors de l'appel à Ollama : {exc}"
+                ) from exc
+            except httpx.TimeoutException as exc:
+                # `stream: False` → le read-timeout court jusqu'à la réponse COMPLÈTE,
+                # donc le dépasser = génération trop lente pour la sortie demandée
+                # (fréquent : modèle local modeste + gros morceau d'import à réécrire).
+                # Type dédié → pas de retry à l'identique ; l'import re-découpe le
+                # morceau en deux moitiés (sortie 2× plus courte) à la place.
+                raise LLMGenerationTimeout(
+                    f"Erreur Ollama : génération non terminée en {self._timeout}s. Réduisez "
+                    "la taille des morceaux d'import, augmentez le timeout, ou utilisez un "
+                    "modèle plus rapide."
+                ) from exc
             except httpx.HTTPError as exc:
                 raise LLMProviderError(
                     f"Erreur lors de l'appel à Ollama : {exc}"
                 ) from exc
 
-        return response.json()["response"]
+        data = response.json()
+        # Diagnostic crucial pour les imports : `done_reason` != "stop" signifie que
+        # la génération a été INTERROMPUE (fenêtre de contexte pleine, num_predict…)
+        # et non terminée par le modèle. Sans ce log, on ne voit qu'un JSON coupé
+        # en aval, sans la cause. `prompt_eval_count` révèle aussi la VRAIE taille
+        # du prompt en tokens du modèle (les morceaux sont mesurés en tokens
+        # cl100k, ~20-40% plus compacts que les tokenizers locaux).
+        done_reason = data.get("done_reason")
+        if done_reason and done_reason != "stop":
+            logger.warning(
+                "Ollama a interrompu la génération (done_reason=%s) : prompt=%s tokens, "
+                "sortie=%s tokens, num_ctx demandé=%s. Si prompt+sortie ≈ num_ctx, la "
+                "fenêtre de contexte est pleine : réduisez la taille des morceaux "
+                "d'import ou augmentez num_ctx (Paramètres).",
+                done_reason, data.get("prompt_eval_count"),
+                data.get("eval_count"), self._num_ctx,
+            )
+        return data["response"]
 
     async def stream_chat(
         self,

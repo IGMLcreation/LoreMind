@@ -22,6 +22,6 @@ public class CharacterDTO {
     private Map<String, String> values = new HashMap<>();
     private Map<String, List<String>> imageValues = new HashMap<>();
     private Map<String, Map<String, String>> keyValueValues = new HashMap<>();
-    private String campaignId;
+    private String playthroughId;
     private int order;
 }

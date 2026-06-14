@@ -1,8 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { LucideAngularModule, Save, ArrowLeft, Dices, Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-angular';
+import { LucideAngularModule, Save, ArrowLeft, Dices, Plus, Trash2, ChevronDown, ChevronRight, Upload } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { GameSystemService } from '../../services/game-system.service';
 import { TemplateField } from '../../services/template.model';
 import { TemplateFieldsEditorComponent } from '../../shared/template-fields-editor/template-fields-editor.component';
@@ -39,12 +40,14 @@ const CHARACTER_FIELD_SUGGESTIONS = ['Histoire', 'Personnalite', 'Apparence', 'N
 /** Suggestions de champs pour la fiche PNJ — focus sur les besoins MJ. */
 const NPC_FIELD_SUGGESTIONS = ['Motivation', 'Apparence', 'Faction', 'Notes MJ'];
 
+/** Suggestions de champs pour la fiche ENNEMI — stats de combat. */
+const ENEMY_FIELD_SUGGESTIONS = ['Stats', 'Attaques', 'Capacités', 'Faiblesses', 'Butin', 'Tactique'];
+
 @Component({
-  selector: 'app-game-system-edit',
-  standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, TemplateFieldsEditorComponent],
-  templateUrl: './game-system-edit.component.html',
-  styleUrls: ['./game-system-edit.component.scss']
+    selector: 'app-game-system-edit',
+    imports: [FormsModule, LucideAngularModule, TranslatePipe, TemplateFieldsEditorComponent],
+    templateUrl: './game-system-edit.component.html',
+    styleUrls: ['./game-system-edit.component.scss']
 })
 export class GameSystemEditComponent implements OnInit {
   readonly Save = Save;
@@ -54,8 +57,28 @@ export class GameSystemEditComponent implements OnInit {
   readonly Trash2 = Trash2;
   readonly ChevronDown = ChevronDown;
   readonly ChevronRight = ChevronRight;
+  readonly Upload = Upload;
 
   id: string | null = null;
+
+  /** Import PDF en cours (appel LLM long) → désactive le bouton + spinner. */
+  importing = false;
+  /** Message de succès post-import (sections ajoutées, pages, OCR). */
+  importNote: string | null = null;
+  /** Message d'erreur d'import (Brain injoignable, PDF illisible…). */
+  importError: string | null = null;
+  /** Libellé de l'étape courante (« Extraction… », « Analyse… (3/12) »). */
+  importPhase = '';
+  /** Avancement de la structuration ; null pendant l'extraction (total inconnu). */
+  importProgress: { current: number; total: number } | null = null;
+  /** Titres de sections trouvés au fil de l'eau (affichage live). */
+  importFound: string[] = [];
+  /**
+   * Dernier message de statut du flux (fournisseur saturé → retry, morceau
+   * re-découpé/ignoré…). Effacé à chaque progression : il explique l'ATTENTE
+   * en cours, pas l'historique.
+   */
+  importStatus: string | null = null;
 
   name = '';
   description = '';
@@ -63,15 +86,18 @@ export class GameSystemEditComponent implements OnInit {
   sections: RuleSection[] = [];
   characterTemplate: TemplateField[] = [];
   npcTemplate: TemplateField[] = [];
+  enemyTemplate: TemplateField[] = [];
 
   readonly suggestedSections = SUGGESTED_SECTIONS;
   readonly characterFieldSuggestions = CHARACTER_FIELD_SUGGESTIONS;
   readonly npcFieldSuggestions = NPC_FIELD_SUGGESTIONS;
+  readonly enemyFieldSuggestions = ENEMY_FIELD_SUGGESTIONS;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private service: GameSystemService
+    private service: GameSystemService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -85,6 +111,7 @@ export class GameSystemEditComponent implements OnInit {
           this.sections = this.parseMarkdown(gs.rulesMarkdown ?? '');
           this.characterTemplate = gs.characterTemplate ? [...gs.characterTemplate] : [];
           this.npcTemplate = gs.npcTemplate ? [...gs.npcTemplate] : [];
+          this.enemyTemplate = gs.enemyTemplate ? [...gs.enemyTemplate] : [];
         },
         error: () => this.back()
       });
@@ -108,6 +135,105 @@ export class GameSystemEditComponent implements OnInit {
     this.sections.push({ title: '', content: '', collapsed: false });
   }
 
+  // --- Import d'un PDF de règles -------------------------------------------
+
+  /** Déclenché par le <input file> caché : lance l'import du PDF choisi. */
+  onPdfSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    // Reset de la valeur : re-sélectionner le même fichier doit re-déclencher.
+    input.value = '';
+    if (file) this.importPdf(file);
+  }
+
+  private importPdf(file: File): void {
+    this.importing = true;
+    this.importNote = null;
+    this.importError = null;
+    this.importPhase = this.translate.instant('gameSystemEdit.importExtracting');
+    this.importProgress = null;
+    this.importFound = [];
+    this.importStatus = null;
+
+    this.service.importRulesStream(file).subscribe({
+      next: (ev) => {
+        if (ev.type === 'progress') {
+          // Un morceau vient d'aboutir : le message d'attente est obsolète.
+          this.importStatus = null;
+          if (ev.total === 0) {
+            // Phase d'extraction (total encore inconnu).
+            this.importPhase = this.translate.instant('gameSystemEdit.importExtracting');
+            this.importProgress = null;
+          } else {
+            this.importPhase = this.translate.instant('gameSystemEdit.importAnalyzing', { current: ev.current, total: ev.total });
+            this.importProgress = { current: ev.current, total: ev.total };
+            for (const t of ev.newSectionTitles) {
+              if (!this.importFound.includes(t)) this.importFound.push(t);
+            }
+          }
+        } else if (ev.type === 'status') {
+          this.importStatus = ev.message;
+        } else if (ev.type === 'done') {
+          this.finishImport(ev.sections, ev.pageCount, ev.ocrPageCount);
+        }
+      },
+      error: (err: Error) => {
+        this.resetImportProgress();
+        this.importError = err?.message
+          ? this.translate.instant('gameSystemEdit.importFailedReason', { reason: err.message })
+          : this.translate.instant('gameSystemEdit.importFailed');
+      }
+    });
+  }
+
+  private finishImport(sections: Record<string, string>, pageCount: number, ocrPageCount: number): void {
+    this.resetImportProgress();
+    const added = this.mergeImportedSections(sections);
+    if (added === 0) {
+      this.importError = this.translate.instant('gameSystemEdit.importNoRules');
+      return;
+    }
+    const ocr = ocrPageCount > 0
+      ? this.translate.instant('gameSystemEdit.importOcrSuffix', { count: ocrPageCount })
+      : '';
+    this.importNote = this.translate.instant('gameSystemEdit.importNote', {
+      added,
+      pages: pageCount,
+      ocr
+    });
+  }
+
+  private resetImportProgress(): void {
+    this.importing = false;
+    this.importPhase = '';
+    this.importProgress = null;
+  }
+
+  /**
+   * Fusionne les sections proposées dans l'éditeur. Section de même titre
+   * (insensible à la casse) → contenu ajouté à la suite ; sinon nouvelle carte.
+   * Retourne le nombre de sections effectivement intégrées.
+   */
+  private mergeImportedSections(sections: Record<string, string>): number {
+    let count = 0;
+    for (const [rawTitle, rawContent] of Object.entries(sections ?? {})) {
+      const title = (rawTitle ?? '').trim();
+      const content = (rawContent ?? '').trim();
+      if (!title || !content) continue;
+      const existing = this.sections.find(
+        s => s.title.trim().toLowerCase() === title.toLowerCase()
+      );
+      if (existing) {
+        existing.content = `${existing.content.trim()}\n\n${content}`.trim();
+        existing.collapsed = false;
+      } else {
+        this.sections.push({ title, content, collapsed: false });
+      }
+      count++;
+    }
+    return count;
+  }
+
   removeSection(index: number): void {
     this.sections.splice(index, 1);
   }
@@ -129,6 +255,7 @@ export class GameSystemEditComponent implements OnInit {
       rulesMarkdown: this.serializeMarkdown(),
       characterTemplate: this.characterTemplate,
       npcTemplate: this.npcTemplate,
+      enemyTemplate: this.enemyTemplate,
       isPublic: false
     };
     const req = this.id
@@ -146,7 +273,9 @@ export class GameSystemEditComponent implements OnInit {
 
   /** Validation cote front : nom vide ou doublons (case-insensitive). */
   private hasInvalidTemplateFields(): boolean {
-    return this.hasInvalidList(this.characterTemplate) || this.hasInvalidList(this.npcTemplate);
+    return this.hasInvalidList(this.characterTemplate)
+        || this.hasInvalidList(this.npcTemplate)
+        || this.hasInvalidList(this.enemyTemplate);
   }
 
   private hasInvalidList(fields: TemplateField[]): boolean {

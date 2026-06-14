@@ -52,11 +52,15 @@ public record CampaignStructuralContext(
     /**
      * Résumé d'un arc : nom + description courte + ses chapitres.
      *
+     * @param hub               true si l'arc est de type HUB : ses chapitres sont des
+     *                          « quêtes » parallèles (vocabulaire UI). L'IA doit le savoir
+     *                          pour parler de quêtes et cibler le bon arc.
      * @param illustrationCount Nombre d'illustrations attachees a cet arc (pour hint dans le prompt IA).
      */
     public record ArcSummary(
             String name,
             String description,
+            boolean hub,
             int illustrationCount,
             List<ChapterSummary> chapters) {
     }
@@ -69,12 +73,13 @@ public record CampaignStructuralContext(
             List<SceneSummary> scenes) {
     }
 
-    /** Résumé d'une scène : nom + description courte + branches narratives. */
+    /** Résumé d'une scène : nom + description courte + branches + pièces explorables. */
     public record SceneSummary(
             String name,
             String description,
             int illustrationCount,
-            List<BranchHint> branches) {
+            List<BranchHint> branches,
+            List<RoomSummary> rooms) {
     }
 
     /**
@@ -85,5 +90,28 @@ public record CampaignStructuralContext(
      * @param condition       Condition MJ privée (optionnel).
      */
     public record BranchHint(String label, String targetSceneName, String condition) {
+    }
+
+    /**
+     * Pièce d'un lieu explorable (donjon, crypte). Projection volontairement plate
+     * pour le prompt IA : pas de notes MJ (jamais leakées dans le contexte campagne),
+     * la narration et les ennemis suffisent à camper la pièce.
+     *
+     * @param name        Nom de la pièce.
+     * @param floor       Étage (nullable).
+     * @param description Narration courte.
+     * @param enemies     Ennemis (texte libre).
+     * @param branches    Sorties vers d'autres pièces (noms résolus).
+     */
+    public record RoomSummary(
+            String name,
+            Integer floor,
+            String description,
+            String enemies,
+            List<RoomBranchHint> branches) {
+    }
+
+    /** Indice d'une sortie entre pièces ; {@code targetRoomName} déjà résolu. */
+    public record RoomBranchHint(String label, String targetRoomName, String condition) {
     }
 }

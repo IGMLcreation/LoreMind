@@ -59,10 +59,14 @@ public class Character {
      */
     private Map<String, Map<String, String>> keyValueValues;
 
-    /** Référence vers la Campaign parente. */
-    private String campaignId;
+    /**
+     * Référence vers le Playthrough (= la partie / table) auquel ce PJ appartient.
+     * Les PJ sont propres à une table jouée, pas au scénario générique de la campagne.
+     * Weak reference cross-context.
+     */
+    private String playthroughId;
 
-    /** Ordre d'affichage dans la liste des PJ de la campagne. */
+    /** Ordre d'affichage dans la liste des PJ de la Partie. */
     private int order;
 
     private LocalDateTime createdAt;

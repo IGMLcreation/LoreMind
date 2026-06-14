@@ -8,6 +8,7 @@ import com.loremind.domain.campaigncontext.Scene;
 import com.loremind.domain.campaigncontext.ports.ArcRepository;
 import com.loremind.domain.campaigncontext.ports.ChapterRepository;
 import com.loremind.domain.campaigncontext.ports.CharacterRepository;
+import com.loremind.domain.campaigncontext.ports.EnemyRepository;
 import com.loremind.domain.campaigncontext.ports.NpcRepository;
 import com.loremind.domain.campaigncontext.ports.SceneRepository;
 import com.loremind.domain.generationcontext.NarrativeEntityContext;
@@ -32,18 +33,21 @@ public class NarrativeEntityContextBuilder {
     private final SceneRepository sceneRepository;
     private final CharacterRepository characterRepository;
     private final NpcRepository npcRepository;
+    private final EnemyRepository enemyRepository;
 
     public NarrativeEntityContextBuilder(
             ArcRepository arcRepository,
             ChapterRepository chapterRepository,
             SceneRepository sceneRepository,
             CharacterRepository characterRepository,
-            NpcRepository npcRepository) {
+            NpcRepository npcRepository,
+            EnemyRepository enemyRepository) {
         this.arcRepository = arcRepository;
         this.chapterRepository = chapterRepository;
         this.sceneRepository = sceneRepository;
         this.characterRepository = characterRepository;
         this.npcRepository = npcRepository;
+        this.enemyRepository = enemyRepository;
     }
 
     /**
@@ -124,8 +128,39 @@ public class NarrativeEntityContextBuilder {
         putField(fields, "choicesConsequences",  s.getChoicesConsequences());
         putField(fields, "combatDifficulty",     s.getCombatDifficulty());
         putField(fields, "enemies",              s.getEnemies());
+        putField(fields, "linkedEnemies",        resolveLinkedEnemies(s));
         putField(fields, "gmSecretNotes",        s.getGmSecretNotes());
         return new NarrativeEntityContext("scene", s.getName(), fields);
+    }
+
+    /**
+     * Résout les fiches du bestiaire référencées par la scène en une ligne par
+     * ennemi : « Nom (niveau) — champ: valeur ; … ». Valeurs tronquées : le
+     * contexte focus doit camper la rencontre, pas embarquer la fiche complète.
+     * Les IDs orphelins (fiche supprimée) sont ignorés silencieusement.
+     */
+    private String resolveLinkedEnemies(Scene s) {
+        if (s.getEnemyIds() == null || s.getEnemyIds().isEmpty()) return "";
+        StringBuilder sb = new StringBuilder();
+        for (String enemyId : s.getEnemyIds()) {
+            enemyRepository.findById(enemyId).ifPresent(e -> {
+                if (sb.length() > 0) sb.append("\n");
+                sb.append("- ").append(e.getName());
+                if (e.getLevel() != null && !e.getLevel().isBlank()) {
+                    sb.append(" (").append(e.getLevel().trim()).append(")");
+                }
+                String stats = e.getValues().entrySet().stream()
+                        .filter(en -> en.getValue() != null && !en.getValue().isBlank())
+                        .map(en -> en.getKey() + ": " + truncate(en.getValue().trim(), 100))
+                        .collect(java.util.stream.Collectors.joining(" ; "));
+                if (!stats.isEmpty()) sb.append(" — ").append(stats);
+            });
+        }
+        return sb.toString();
+    }
+
+    private static String truncate(String value, int maxLen) {
+        return value.length() <= maxLen ? value : value.substring(0, maxLen - 1).stripTrailing() + "…";
     }
 
     private NarrativeEntityContext fromCharacter(Character c) {

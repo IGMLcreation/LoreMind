@@ -1,13 +1,16 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { LucideAngularModule, Trash2, Sparkles } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { CampaignService } from '../../../services/campaign.service';
 import { CharacterService } from '../../../services/character.service';
 import { NpcService } from '../../../services/npc.service';
+import { RandomTableService } from '../../../services/random-table.service';
+import { EnemyService } from '../../../services/enemy.service';
 import { PageService } from '../../../services/page.service';
 import { LayoutService } from '../../../services/layout.service';
 import { PageTitleService } from '../../../services/page-title.service';
@@ -31,11 +34,10 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  * personnages / lieux / objets du Lore.
  */
 @Component({
-  selector: 'app-arc-edit',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, LoreLinkPickerComponent, AiChatDrawerComponent, ImageGalleryComponent, IconPickerComponent],
-  templateUrl: './arc-edit.component.html',
-  styleUrls: ['./arc-edit.component.scss']
+    selector: 'app-arc-edit',
+    imports: [ReactiveFormsModule, LucideAngularModule, LoreLinkPickerComponent, AiChatDrawerComponent, ImageGalleryComponent, IconPickerComponent, TranslatePipe],
+    templateUrl: './arc-edit.component.html',
+    styleUrls: ['./arc-edit.component.scss']
 })
 export class ArcEditComponent implements OnInit, OnDestroy {
   readonly Trash2 = Trash2;
@@ -45,11 +47,13 @@ export class ArcEditComponent implements OnInit, OnDestroy {
 
   /** État drawer chat IA (b5.7 — intégration Campagne). */
   chatOpen = false;
-  readonly chatQuickSuggestions = [
-    'Propose 3 thèmes majeurs pour cet arc',
-    'Imagine des enjeux qui mettent la pression sur les joueurs',
-    'Suggère un dénouement en deux actes'
-  ];
+  get chatQuickSuggestions(): string[] {
+    return [
+      this.translate.instant('arcEdit.chatSuggestion1'),
+      this.translate.instant('arcEdit.chatSuggestion2'),
+      this.translate.instant('arcEdit.chatSuggestion3')
+    ];
+  }
 
   toggleChat(): void { this.chatOpen = !this.chatOpen; }
 
@@ -77,14 +81,18 @@ export class ArcEditComponent implements OnInit, OnDestroy {
     private campaignService: CampaignService,
     private characterService: CharacterService,
     private npcService: NpcService,
+    private randomTableService: RandomTableService,
+    private enemyService: EnemyService,
     private pageService: PageService,
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private translate: TranslateService
   ) {
     this.form = this.fb.group({
       name:        ['', Validators.required],
       description: [''],
+      type:        ['LINEAR', Validators.required],
       themes:      [''],
       stakes:      [''],
       gmNotes:     [''],
@@ -115,7 +123,7 @@ export class ArcEditComponent implements OnInit, OnDestroy {
       campaign: this.campaignService.getCampaignById(this.campaignId),
       allCampaigns: this.campaignService.getAllCampaigns(),
       arc: this.campaignService.getArcById(this.arcId),
-      treeData: loadCampaignTreeData(this.campaignService, this.campaignId, this.characterService, this.npcService)
+      treeData: loadCampaignTreeData(this.campaignService, this.campaignId, this.characterService, this.npcService, this.randomTableService, this.enemyService)
     }).pipe(
       switchMap(data => {
         const lid = data.campaign.loreId ?? null;
@@ -137,6 +145,7 @@ export class ArcEditComponent implements OnInit, OnDestroy {
       this.form.patchValue({
         name:        arc.name,
         description: arc.description ?? '',
+        type:        arc.type ?? 'LINEAR',
         themes:      arc.themes ?? '',
         stakes:      arc.stakes ?? '',
         gmNotes:     arc.gmNotes ?? '',
@@ -144,7 +153,7 @@ export class ArcEditComponent implements OnInit, OnDestroy {
         resolution:  arc.resolution ?? ''
       });
 
-      this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId));
+      this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId, this.translate));
     });
   }
 
@@ -155,6 +164,7 @@ export class ArcEditComponent implements OnInit, OnDestroy {
       description:    this.form.value.description,
       campaignId:     this.campaignId,
       order:          this.arc.order ?? 1,
+      type:           this.form.value.type,
       themes:         this.form.value.themes,
       stakes:         this.form.value.stakes,
       gmNotes:        this.form.value.gmNotes,
@@ -172,10 +182,10 @@ export class ArcEditComponent implements OnInit, OnDestroy {
 
   delete(): void {
     this.confirmDialog.confirm({
-      title: 'Supprimer l\'arc',
-      message: `Supprimer l'arc "${this.arc?.name}" ?`,
-      details: ['Cette action est irréversible.'],
-      confirmLabel: 'Supprimer',
+      title: this.translate.instant('arcEdit.deleteTitle'),
+      message: this.translate.instant('arcEdit.deleteMessage', { name: this.arc?.name }),
+      details: [this.translate.instant('arcEdit.irreversible')],
+      confirmLabel: this.translate.instant('common.delete'),
       variant: 'danger'
     }).then(ok => {
       if (!ok) return;

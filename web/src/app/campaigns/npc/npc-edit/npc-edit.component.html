@@ -3,100 +3,134 @@
   <div class="ne-header">
     <button class="btn-back" (click)="back()">
       <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon>
-      Retour à la campagne
+      {{ 'npcEdit.backToCampaign' | translate }}
     </button>
     <div class="header-row">
       <h1>
         <lucide-icon [img]="Drama" [size]="22"></lucide-icon>
-        {{ npcId ? 'Éditer le PNJ' : 'Nouveau PNJ' }}
+        {{ (npcId ? 'npcEdit.titleEdit' : 'npcEdit.titleNew') | translate }}
       </h1>
-      <button
-        *ngIf="npcId"
-        type="button"
-        class="btn-ai"
-        (click)="toggleChat()"
-        [class.active]="chatOpen"
-        title="Ouvrir l'Assistant IA pour dialoguer autour de ce PNJ">
-        <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
-        Assistant IA
-      </button>
+      @if (npcId) {
+        <button
+          type="button"
+          class="btn-ai"
+          (click)="toggleChat()"
+          [class.active]="chatOpen"
+          [title]="'npcEdit.aiAssistantTitle' | translate">
+          <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
+          {{ 'npcEdit.aiAssistant' | translate }}
+        </button>
+      }
     </div>
   </div>
 
   <div class="ne-form">
 
     <div class="field">
-      <label for="npc-name">Nom du PNJ *</label>
+      <label for="npc-name">{{ 'npcEdit.nameLabel' | translate }}</label>
       <input
         id="npc-name"
         type="text"
         [(ngModel)]="name"
         name="name"
-        placeholder="Ex: Borin le forgeron, Dame Elara, Kael l'aubergiste..."
-      />
-    </div>
-
-    <div class="field-row image-row">
-      <div class="field portrait-field">
-        <label>Portrait</label>
-        <app-single-image-picker
-          [imageId]="portraitImageId"
-          aspectRatio="1 / 1"
-          hint="Carre conseille (400×400)."
-          (imageIdChange)="portraitImageId = $event">
-        </app-single-image-picker>
+        [placeholder]="'npcEdit.namePlaceholder' | translate"
+        />
       </div>
-      <div class="field header-field">
-        <label>Bandeau / Header</label>
-        <app-single-image-picker
-          [imageId]="headerImageId"
-          aspectRatio="3 / 1"
-          hint="Format paysage conseille (1200×400)."
-          (imageIdChange)="headerImageId = $event">
-        </app-single-image-picker>
+
+      <div class="field">
+        <label for="npc-folder">{{ 'npcEdit.folder' | translate }}</label>
+        <input
+          id="npc-folder"
+          type="text"
+          [(ngModel)]="folder"
+          name="folder"
+          list="npc-folders"
+          [placeholder]="'npcEdit.folderPlaceholder' | translate"
+          />
+          <datalist id="npc-folders">
+            @for (f of existingFolders; track f) {
+              <option [value]="f"></option>
+            }
+          </datalist>
+        </div>
+
+        <div class="field-row image-row">
+          <div class="field portrait-field">
+            <label>{{ 'npcEdit.portrait' | translate }}</label>
+            <app-single-image-picker
+              [imageId]="portraitImageId"
+              aspectRatio="1 / 1"
+              [hint]="'npcEdit.portraitHint' | translate"
+              (imageIdChange)="portraitImageId = $event">
+            </app-single-image-picker>
+          </div>
+          <div class="field header-field">
+            <label>{{ 'npcEdit.header' | translate }}</label>
+            <app-single-image-picker
+              [imageId]="headerImageId"
+              aspectRatio="3 / 1"
+              [hint]="'npcEdit.headerHint' | translate"
+              (imageIdChange)="headerImageId = $event">
+            </app-single-image-picker>
+          </div>
+        </div>
+
+        <div class="template-fields">
+          <app-dynamic-fields-form
+            [fields]="templateFields"
+            [values]="values"
+            [imageValues]="imageValues"
+            [keyValueValues]="keyValueValues"
+            (valuesChange)="values = $event"
+            (imageValuesChange)="imageValues = $event"
+            (keyValueValuesChange)="keyValueValues = $event">
+          </app-dynamic-fields-form>
+        </div>
+
+        <!-- Pages de Lore liées (uniquement si la campagne est rattachée à un Lore) -->
+        @if (loreId) {
+          <div class="field">
+            <label>{{ 'npcEdit.relatedPages' | translate }}</label>
+            <app-lore-link-picker
+              [value]="relatedPageIds"
+              [availablePages]="lorePages"
+              [loreId]="loreId"
+              (valueChange)="relatedPageIds = $event">
+            </app-lore-link-picker>
+            <p class="hint">{{ 'npcEdit.relatedPagesHint' | translate }}</p>
+          </div>
+        }
+
+        <div class="actions">
+          <button type="button" class="btn-primary" [disabled]="!name.trim()" (click)="submit()">
+            <lucide-icon [img]="Save" [size]="16"></lucide-icon>
+            {{ (npcId ? 'common.save' : 'common.create') | translate }}
+          </button>
+          <button type="button" class="btn-secondary" (click)="back()">{{ 'common.cancel' | translate }}</button>
+          <span class="spacer"></span>
+          @if (npcId) {
+            <button
+              type="button"
+              class="btn-danger"
+              (click)="deleteNpc()">
+              <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+              {{ 'common.delete' | translate }}
+            </button>
+          }
+        </div>
+
       </div>
+
     </div>
 
-    <div class="template-fields">
-      <app-dynamic-fields-form
-        [fields]="templateFields"
-        [values]="values"
-        [imageValues]="imageValues"
-        [keyValueValues]="keyValueValues"
-        (valuesChange)="values = $event"
-        (imageValuesChange)="imageValues = $event"
-        (keyValueValuesChange)="keyValueValues = $event">
-      </app-dynamic-fields-form>
-    </div>
-
-    <div class="actions">
-      <button type="button" class="btn-primary" [disabled]="!name.trim()" (click)="submit()">
-        <lucide-icon [img]="Save" [size]="16"></lucide-icon>
-        {{ npcId ? 'Enregistrer' : 'Créer' }}
-      </button>
-      <button type="button" class="btn-secondary" (click)="back()">Annuler</button>
-      <span class="spacer"></span>
-      <button
-        *ngIf="npcId"
-        type="button"
-        class="btn-danger"
-        (click)="deleteNpc()">
-        <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
-        Supprimer
-      </button>
-    </div>
-
-  </div>
-
-</div>
-
-<app-ai-chat-drawer
-  *ngIf="npcId && campaignId"
-  [campaignId]="campaignId"
-  entityType="npc"
-  [entityId]="npcId"
-  [isOpen]="chatOpen"
-  welcomeMessage="Je vois cette fiche de PNJ. Demande-moi de proposer apparence, motivations, secrets, ou répliques signatures."
-  [quickSuggestions]="chatQuickSuggestions"
-  (close)="chatOpen = false">
-</app-ai-chat-drawer>
+    @if (npcId && campaignId) {
+      <app-ai-chat-drawer
+        [campaignId]="campaignId"
+        entityType="npc"
+        [entityId]="npcId"
+        [isOpen]="chatOpen"
+        [welcomeMessage]="'npcEdit.chatWelcome' | translate"
+        [quickSuggestions]="chatQuickSuggestions"
+        (close)="chatOpen = false">
+      </app-ai-chat-drawer>
+    }

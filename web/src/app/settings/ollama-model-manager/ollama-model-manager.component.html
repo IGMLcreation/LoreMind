@@ -1,0 +1,108 @@
+<!-- Messages locaux a la gestion des modeles (pull / suppression) -->
+@if (errorMessage) {
+  <div class="alert alert-error">
+    <lucide-icon [img]="AlertCircle" [size]="16"></lucide-icon>
+    <span>{{ errorMessage }}</span>
+  </div>
+}
+@if (successMessage) {
+  <div class="alert alert-success">
+    <lucide-icon [img]="Check" [size]="16"></lucide-icon>
+    <span>{{ successMessage }}</span>
+  </div>
+}
+
+<!-- Liste des modeles installes avec bouton supprimer -->
+@if (models.length > 0) {
+  <div class="form-row">
+    <label>{{ 'ollamaModelManager.installedModels' | translate }}</label>
+    <ul class="installed-models">
+      @for (m of models; track m) {
+        <li>
+          <span class="model-name">{{ m }}</span>
+          <button type="button" class="btn-icon btn-danger"
+            (click)="deleteModel(m)"
+            [disabled]="deletingModel === m"
+            [title]="'ollamaModelManager.deleteModelTitle' | translate:{ name: m }">
+            <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+          </button>
+        </li>
+      }
+    </ul>
+  </div>
+}
+
+<!-- Dialog de telechargement de modele -->
+@if (pullDialogOpen) {
+  <div class="modal-overlay" (click)="closePullDialog()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <header class="modal-header">
+        <h3>{{ 'ollamaModelManager.pullDialogTitle' | translate }}</h3>
+        <button type="button" class="btn-icon" (click)="closePullDialog()" [disabled]="pullInProgress" [title]="'common.close' | translate">
+          <lucide-icon [img]="X" [size]="18"></lucide-icon>
+        </button>
+      </header>
+      <div class="modal-body">
+        @if (!pullInProgress) {
+          <div>
+            <label for="pull-name">{{ 'ollamaModelManager.modelNameLabel' | translate }}</label>
+            <input id="pull-name" type="text" [(ngModel)]="pullModelName"
+              placeholder="ex: gemma4:e4b" autocomplete="off"
+              (keydown.enter)="startPull()">
+            <p class="hint">{{ 'ollamaModelManager.suggestions' | translate }}</p>
+            <div class="suggestions">
+              @for (s of pullSuggestions; track s) {
+                <button type="button"
+                class="suggestion-chip" (click)="selectSuggestion(s)">{{ s }}</button>
+              }
+            </div>
+            <p class="hint" style="margin-top: 0.75rem;" [innerHTML]="'ollamaModelManager.libraryHint' | translate">
+            </p>
+          </div>
+        }
+        @if (pullInProgress) {
+          <div class="pull-progress">
+            <div class="pull-status">{{ pullStatus }}</div>
+            @if (pullTotal > 0) {
+              <div class="progress-bar">
+                <div class="progress-fill" [style.width.%]="pullPercent"></div>
+              </div>
+            }
+            @if (pullTotal > 0) {
+              <div class="progress-text">
+                {{ formatBytes(pullCompleted) }} / {{ formatBytes(pullTotal) }} ({{ pullPercent }}%)
+              </div>
+            }
+            @if (pullTotal === 0) {
+              <div class="progress-text">
+                {{ 'ollamaModelManager.preparing' | translate }}
+              </div>
+            }
+          </div>
+        }
+      </div>
+      <footer class="modal-footer">
+        @if (pullInProgress) {
+          <button type="button" class="btn-secondary"
+            (click)="cancelPull()">
+            {{ 'common.cancel' | translate }}
+          </button>
+        }
+        @if (!pullInProgress) {
+          <button type="button" class="btn-secondary"
+            (click)="closePullDialog()">
+            {{ 'common.close' | translate }}
+          </button>
+        }
+        @if (!pullInProgress) {
+          <button type="button" class="btn-primary"
+            (click)="startPull()"
+            [disabled]="pullInProgress || !pullModelName.trim()">
+            <lucide-icon [img]="Download" [size]="14"></lucide-icon>
+            <span>{{ 'common.download' | translate }}</span>
+          </button>
+        }
+      </footer>
+    </div>
+  </div>
+}

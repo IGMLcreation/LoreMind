@@ -1,1 +1,51 @@
 // Styles partagés via styles/_view.scss
+
+// Badge "Conditionnel" : chapitre porteur de conditions de déblocage.
+.cond-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  vertical-align: middle;
+  color: #f0c674;
+  background: rgba(240, 198, 116, 0.12);
+  border: 1px solid rgba(240, 198, 116, 0.35);
+}
+
+.quest-status-bar {
+  border: 1px solid rgba(66, 133, 244, 0.25);
+  background: rgba(66, 133, 244, 0.04);
+}
+
+.quest-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.quest-status-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.quest-prereq-summary {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed rgba(66, 133, 244, 0.2);
+  font-size: 0.85rem;
+  color: var(--color-text-muted, #555);
+
+  ul {
+    margin: 0.3rem 0 0;
+    padding-left: 1.2rem;
+
+    li { margin-bottom: 0.15rem; }
+  }
+}

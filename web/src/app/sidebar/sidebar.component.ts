@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { AsyncPipe, NgIf, NgFor } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { Router } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 import { LucideAngularModule, Search, Download, Settings, ArrowLeft, Dices } from 'lucide-angular';
 import { LayoutService } from '../services/layout.service';
 import { GlobalSearchService } from '../services/global-search.service';
@@ -11,11 +12,10 @@ import { UpdatesService } from '../services/updates.service';
 import packageJson from '../../../package.json';
 
 @Component({
-  selector: 'app-sidebar',
-  standalone: true,
-  imports: [AsyncPipe, NgIf, NgFor, LucideAngularModule],
-  templateUrl: './sidebar.component.html',
-  styleUrls: ['./sidebar.component.scss']
+    selector: 'app-sidebar',
+    imports: [AsyncPipe, LucideAngularModule, TranslatePipe],
+    templateUrl: './sidebar.component.html',
+    styleUrls: ['./sidebar.component.scss']
 })
 export class SidebarComponent implements OnInit {
   currentRoute = '';

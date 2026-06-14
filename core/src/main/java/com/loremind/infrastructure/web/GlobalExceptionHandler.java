@@ -10,6 +10,8 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -68,6 +70,33 @@ public class GlobalExceptionHandler {
                 "error", "Validation failed",
                 "fields", fields
         ));
+    }
+
+    /**
+     * Statut HTTP explicitement choisi par un controller via {@link ResponseStatusException}
+     * (ex: {@code NotebookController} -> 404 si notebook introuvable, 502 si Brain injoignable).
+     * <p>
+     * SANS ce handler, le fallback {@code @ExceptionHandler(Throwable.class)} ci-dessous
+     * interceptait ces exceptions et renvoyait 500 — ecrasant le statut voulu (le
+     * resolver natif de Spring est court-circuite des qu'un advice gere Throwable).
+     */
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<Map<String, String>> handleResponseStatus(ResponseStatusException ex) {
+        String reason = ex.getReason();
+        return ResponseEntity.status(ex.getStatusCode())
+                .body(Map.of("error", reason != null ? reason : ex.getStatusCode().toString()));
+    }
+
+    /**
+     * Client HTTP parti pendant une reponse asynchrone (SSE) : le navigateur a ferme
+     * la connexion (onglet ferme, proxy coupe...), la reponse n'est plus utilisable.
+     * Ce n'est PAS une erreur serveur -> pas de log ERROR + stack trace (bruit),
+     * et aucune reponse a renvoyer (le canal est mort).
+     */
+    @ExceptionHandler(AsyncRequestNotUsableException.class)
+    public void handleClientDisconnected(HttpServletRequest request, AsyncRequestNotUsableException ex) {
+        log.debug("Client deconnecte pendant la reponse asynchrone sur {} {} : {}",
+                request.getMethod(), request.getRequestURI(), ex.getMessage());
     }
 
     /**

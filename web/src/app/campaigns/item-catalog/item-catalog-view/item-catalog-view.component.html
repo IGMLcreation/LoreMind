@@ -1,0 +1,42 @@
+@if (catalog) {
+  <div class="ic-page">
+    <div class="ic-toolbar">
+      <button class="btn-back" (click)="back()">
+        <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon> {{ 'common.back' | translate }}
+      </button>
+      <span class="spacer"></span>
+      <button class="btn-edit" (click)="edit()">
+        <lucide-icon [img]="Edit3" [size]="14"></lucide-icon> {{ 'common.edit' | translate }}
+      </button>
+    </div>
+    <header class="ic-header">
+      <h1><lucide-icon [img]="Package" [size]="22"></lucide-icon> {{ catalog.name }}</h1>
+      @if (catalog.description) {
+        <p class="ic-desc">{{ catalog.description }}</p>
+      }
+    </header>
+    @if (catalog.items.length === 0) {
+      <p class="ic-empty">
+        {{ 'itemCatalogView.empty' | translate }}
+      </p>
+    }
+    @for (g of groups; track g) {
+      <section class="ic-group">
+        @if (g.category !== '—') {
+          <h2>{{ g.category }}</h2>
+        }
+        <table>
+          <tbody>
+            @for (it of g.items; track it) {
+              <tr>
+                <td class="col-name">{{ it.name }}</td>
+                <td class="col-price">{{ it.price }}</td>
+                <td class="col-desc">{{ it.description }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </section>
+    }
+  </div>
+}

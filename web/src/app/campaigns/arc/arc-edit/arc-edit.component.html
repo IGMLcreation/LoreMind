@@ -2,24 +2,24 @@
 
   <div class="page-header">
     <div>
-      <h1>{{ arc?.name || 'Arc' }}</h1>
-      <p class="subtitle">Arc narratif</p>
+      <h1>{{ arc?.name || ('arcEdit.fallbackTitle' | translate) }}</h1>
+      <p class="subtitle">{{ 'arcEdit.subtitle' | translate }}</p>
     </div>
     <div class="header-actions">
       <button type="button" class="btn-ai"
-              (click)="toggleChat()"
-              [class.active]="chatOpen"
-              title="Ouvrir l'Assistant IA pour dialoguer autour de cet arc">
+        (click)="toggleChat()"
+        [class.active]="chatOpen"
+        [title]="'arcEdit.aiAssistantTitle' | translate">
         <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
-        Assistant IA
+        {{ 'arcEdit.aiAssistant' | translate }}
       </button>
-      <button type="button" class="btn-secondary" (click)="cancel()">Annuler</button>
+      <button type="button" class="btn-secondary" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
       <button type="button" class="btn-danger" (click)="delete()">
         <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
-        Supprimer
+        {{ 'common.delete' | translate }}
       </button>
       <button type="button" class="btn-primary" (click)="submit()" [disabled]="form.invalid">
-        Sauvegarder
+        {{ 'common.save' | translate }}
       </button>
     </div>
   </div>
@@ -28,126 +28,145 @@
 
     <!-- Illustrations (galerie editable, rendu editorial) -->
     <div class="field">
-      <label>Illustrations</label>
+      <label>{{ 'arcEdit.illustrationsLabel' | translate }}</label>
       <app-image-gallery
         [imageIds]="illustrationImageIds"
         [editable]="true"
         [layout]="'EDITORIAL'"
         (imageIdsChange)="illustrationImageIds = $event">
       </app-image-gallery>
-      <small class="field-hint">Ambiances, portraits, visuels evocateurs de l'arc. JPEG, PNG, WebP ou GIF, 10 Mo max.</small>
+      <small class="field-hint">{{ 'arcEdit.illustrationsHint' | translate }}</small>
     </div>
 
     <!-- Cartes & plans -->
     <div class="field">
-      <label>Cartes &amp; plans</label>
+      <label>{{ 'arcEdit.mapsLabel' | translate }}</label>
       <app-image-gallery
         [imageIds]="mapImageIds"
         [editable]="true"
         [layout]="'MAPS'"
         (imageIdsChange)="mapImageIds = $event">
       </app-image-gallery>
-      <small class="field-hint">Cartes regionales et plans utiles aux joueurs pour situer l'action.</small>
+      <small class="field-hint">{{ 'arcEdit.mapsHint' | translate }}</small>
     </div>
 
     <div class="field">
-      <label for="arc-edit-name">Titre de l'arc *</label>
+      <label for="arc-edit-name">{{ 'arcEdit.nameLabel' | translate }}</label>
       <input
         id="arc-edit-name"
         type="text"
         formControlName="name"
-        placeholder="Ex: L'Ombre du Nord"
+        [placeholder]="'arcEdit.namePlaceholder' | translate"
         [class.invalid]="form.get('name')?.invalid && form.get('name')?.touched"
-      />
+        />
     </div>
 
     <div class="field">
-      <label for="arc-edit-description">Synopsis de l'arc</label>
+      <label for="arc-edit-description">{{ 'arcEdit.synopsisLabel' | translate }}</label>
       <textarea
         id="arc-edit-description"
         formControlName="description"
-        placeholder="Décrivez l'histoire principale de cet arc narratif..."
+        [placeholder]="'arcEdit.synopsisPlaceholder' | translate"
         rows="5">
       </textarea>
     </div>
 
     <div class="field">
-      <label>Icône</label>
+      <label>{{ 'arcEdit.structureLabel' | translate }}</label>
+      <div class="arc-type-choice">
+        <label class="arc-type-option" [class.selected]="form.get('type')?.value === 'LINEAR'">
+          <input type="radio" formControlName="type" value="LINEAR" />
+          <span class="arc-type-title">{{ 'arcEdit.linearTitle' | translate }}</span>
+          <span class="arc-type-desc">{{ 'arcEdit.linearDesc' | translate }}</span>
+        </label>
+        <label class="arc-type-option" [class.selected]="form.get('type')?.value === 'HUB'">
+          <input type="radio" formControlName="type" value="HUB" />
+          <span class="arc-type-title">{{ 'arcEdit.hubTitle' | translate }}</span>
+          <span class="arc-type-desc">{{ 'arcEdit.hubDesc' | translate }}</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>{{ 'arcEdit.iconLabel' | translate }}</label>
       <app-icon-picker [options]="campaignIconOptions" [(selected)]="selectedIcon"></app-icon-picker>
     </div>
 
     <div class="field-row">
       <div class="field">
-        <label for="arc-edit-themes">Thèmes principaux</label>
+        <label for="arc-edit-themes">{{ 'arcEdit.themesLabel' | translate }}</label>
         <textarea
           id="arc-edit-themes"
           formControlName="themes"
-          placeholder="Quels sont les thèmes explorés dans cet arc ? (trahison, rédemption...)"
+          [placeholder]="'arcEdit.themesPlaceholder' | translate"
           rows="4">
         </textarea>
       </div>
       <div class="field">
-        <label for="arc-edit-stakes">Enjeux globaux</label>
+        <label for="arc-edit-stakes">{{ 'arcEdit.stakesLabel' | translate }}</label>
         <textarea
           id="arc-edit-stakes"
           formControlName="stakes"
-          placeholder="Quels sont les enjeux majeurs de cet arc pour les personnages ?"
+          [placeholder]="'arcEdit.stakesPlaceholder' | translate"
           rows="4">
         </textarea>
       </div>
     </div>
 
     <div class="field">
-      <label for="arc-edit-gm-notes">Notes et planification du MJ</label>
+      <label for="arc-edit-gm-notes">{{ 'arcEdit.gmNotesLabel' | translate }}</label>
       <textarea
         id="arc-edit-gm-notes"
         formControlName="gmNotes"
-        placeholder="Vos notes sur la direction de l'arc, les twists prévus, les révélations importantes..."
+        [placeholder]="'arcEdit.gmNotesPlaceholder' | translate"
         rows="5">
       </textarea>
-      <small class="field-hint">Ces notes sont privées et ne seront pas exportées vers FoundryVTT.</small>
+      <small class="field-hint">{{ 'arcEdit.gmNotesHint' | translate }}</small>
     </div>
 
     <div class="field">
-      <label for="arc-edit-rewards">Récompenses et progression</label>
+      <label for="arc-edit-rewards">{{ 'arcEdit.rewardsLabel' | translate }}</label>
       <textarea
         id="arc-edit-rewards"
         formControlName="rewards"
-        placeholder="Quelles récompenses les joueurs obtiendront-ils ? Objets, niveaux, connaissances, contacts..."
+        [placeholder]="'arcEdit.rewardsPlaceholder' | translate"
         rows="4">
       </textarea>
     </div>
 
     <div class="field">
-      <label for="arc-edit-resolution">Dénouement prévu</label>
+      <label for="arc-edit-resolution">{{ 'arcEdit.resolutionLabel' | translate }}</label>
       <textarea
         id="arc-edit-resolution"
         formControlName="resolution"
-        placeholder="Comment cet arc devrait-il se terminer ? Quelles sont les issues possibles ?"
+        [placeholder]="'arcEdit.resolutionPlaceholder' | translate"
         rows="4">
       </textarea>
     </div>
 
     <!-- ===== Pages Lore associées (phase B2 cross-context) ===== -->
-    <div class="field" *ngIf="loreId">
-      <label>Pages Lore associées</label>
-      <app-lore-link-picker
-        [value]="relatedPageIds"
-        [availablePages]="availablePages"
-        [loreId]="loreId"
-        (valueChange)="relatedPageIds = $event">
-      </app-lore-link-picker>
-      <small class="field-hint">
-        Liez cet arc à des PNJ, lieux ou éléments du Lore. Cliquez sur un chip pour ouvrir la page associée.
-      </small>
-    </div>
+    @if (loreId) {
+      <div class="field">
+        <label>{{ 'arcEdit.relatedPagesLabel' | translate }}</label>
+        <app-lore-link-picker
+          [value]="relatedPageIds"
+          [availablePages]="availablePages"
+          [loreId]="loreId"
+          (valueChange)="relatedPageIds = $event">
+        </app-lore-link-picker>
+        <small class="field-hint">
+          {{ 'arcEdit.relatedPagesHint' | translate }}
+        </small>
+      </div>
+    }
 
-    <div class="field lore-hint" *ngIf="!loreId">
-      <small class="field-hint">
-        💡 Cette campagne n'est associée à aucun univers. Associez-la à un Lore dans l'écran de la campagne
-        pour pouvoir lier cet arc à des pages du Lore (PNJ, lieux, etc.).
-      </small>
-    </div>
+    @if (!loreId) {
+      <div class="field lore-hint">
+        <small class="field-hint">
+          {{ 'arcEdit.noLoreHint' | translate }}
+        </small>
+      </div>
+    }
 
   </form>
 
@@ -159,7 +178,7 @@
   entityType="arc"
   [entityId]="arcId"
   [isOpen]="chatOpen"
-  welcomeMessage="Je vois cet arc. Demande-moi d'enrichir ses thèmes, ses enjeux ou son dénouement."
+  [welcomeMessage]="'arcEdit.chatWelcome' | translate"
   [quickSuggestions]="chatQuickSuggestions"
   (close)="chatOpen = false">
 </app-ai-chat-drawer>

@@ -1,0 +1,83 @@
+@if (playthrough) {
+  <div class="playthrough-page">
+    <header class="page-header">
+      <button type="button" class="btn-secondary" (click)="back()">
+        <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon>
+        {{ 'common.back' | translate }}
+      </button>
+      <div class="header-info">
+        <h1>{{ playthrough.name }}</h1>
+        @if (playthrough.description) {
+          <p class="subtitle">{{ playthrough.description }}</p>
+        }
+      </div>
+      <div class="header-actions">
+        <button type="button" class="btn-danger" (click)="delete()">
+          <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+          {{ 'common.delete' | translate }}
+        </button>
+      </div>
+    </header>
+    <!-- Bloc action principal : démarrer ou reprendre la session -->
+    <section class="play-action">
+      @if (!activeOnThis) {
+        <button type="button" class="btn-primary big"
+          [disabled]="startingSession"
+          (click)="startSession()">
+          <lucide-icon [img]="Play" [size]="16"></lucide-icon>
+          {{ 'playthroughDetail.startSession' | translate }}
+        </button>
+      }
+      @if (activeOnThis) {
+        <button type="button" class="btn-primary big"
+          (click)="openSession(activeOnThis)">
+          <lucide-icon [img]="Play" [size]="16"></lucide-icon>
+          {{ 'playthroughDetail.resumeSession' | translate }}
+        </button>
+      }
+      <button type="button" class="btn-secondary" (click)="openFlags()">
+        <lucide-icon [img]="Flag" [size]="14"></lucide-icon>
+        {{ 'playthroughDetail.facts' | translate }}
+      </button>
+    </section>
+    <!-- PJ -->
+    <section class="block">
+      <div class="block-header">
+        <h2><lucide-icon [img]="Users" [size]="18"></lucide-icon> {{ 'playthroughDetail.charactersTitle' | translate }}</h2>
+        <button type="button" class="btn-add" (click)="createCharacter()">
+          <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
+          {{ 'playthroughDetail.newCharacter' | translate }}
+        </button>
+      </div>
+      @if (characters.length === 0) {
+        <p class="empty">{{ 'playthroughDetail.noCharacters' | translate }}</p>
+      }
+      @if (characters.length > 0) {
+        <ul class="character-list">
+          @for (c of characters; track c) {
+            <li>
+              <a [routerLink]="['/campaigns', campaignId, 'playthroughs', playthroughId, 'characters', c.id]">{{ c.name }}</a>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+    <!-- Sessions -->
+    <section class="block">
+      <h2>{{ 'playthroughDetail.sessionsTitle' | translate }}</h2>
+      @if (sessions.length === 0) {
+        <p class="empty">{{ 'playthroughDetail.noSessions' | translate }}</p>
+      }
+      @if (sessions.length > 0) {
+        <ul class="session-list">
+          @for (s of sessions; track s) {
+            <li (click)="openSession(s)">
+              <span class="session-name">{{ s.name }}</span>
+              <span class="session-status" [class.active]="s.active">{{ (s.active ? 'playthroughDetail.statusActive' : 'playthroughDetail.statusEnded') | translate }}</span>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  </div>
+}

@@ -1,0 +1,38 @@
+<div class="nbl-page">
+  <div class="nbl-toolbar">
+    <button class="btn-back" (click)="back()">
+      <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon> {{ 'common.back' | translate }}
+    </button>
+  </div>
+
+  <header class="nbl-header">
+    <h1><lucide-icon [img]="BookOpen" [size]="22"></lucide-icon> {{ 'notebookList.title' | translate }}</h1>
+    <p class="nbl-hint">
+      {{ 'notebookList.hint' | translate }}
+    </p>
+  </header>
+
+  <div class="nbl-create">
+    <input type="text" [(ngModel)]="newName" [placeholder]="'notebookList.namePlaceholder' | translate"
+      (keyup.enter)="create()">
+    <button class="btn-create" (click)="create()" [disabled]="creating">
+      <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
+      {{ (creating ? 'common.creating' : 'notebookList.newNotebook') | translate }}
+    </button>
+  </div>
+
+  <div class="nbl-list">
+    @if (notebooks.length === 0) {
+      <p class="empty">{{ 'notebookList.empty' | translate }}</p>
+    }
+    @for (nb of notebooks; track nb) {
+      <button class="nbl-item" (click)="open(nb)">
+        <lucide-icon [img]="BookOpen" [size]="16"></lucide-icon>
+        <span class="nbl-item-name">{{ nb.name }}</span>
+        <span class="nbl-del" (click)="remove(nb, $event)" [title]="'common.delete' | translate">
+          <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+        </span>
+      </button>
+    }
+  </div>
+</div>

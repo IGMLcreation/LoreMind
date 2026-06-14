@@ -1,15 +1,15 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { LucideAngularModule, TriangleAlert, X } from 'lucide-angular';
+import { TranslatePipe } from '@ngx-translate/core';
 
 export type ConfirmDialogVariant = 'warning' | 'danger' | 'info';
 
 @Component({
-  selector: 'app-confirm-dialog',
-  standalone: true,
-  imports: [CommonModule, LucideAngularModule],
-  templateUrl: './confirm-dialog.component.html',
-  styleUrls: ['./confirm-dialog.component.scss']
+    selector: 'app-confirm-dialog',
+    imports: [LucideAngularModule, TranslatePipe],
+    templateUrl: './confirm-dialog.component.html',
+    styleUrls: ['./confirm-dialog.component.scss']
 })
 export class ConfirmDialogComponent {
   readonly TriangleAlert = TriangleAlert;

@@ -1,0 +1,222 @@
+@if (detail) {
+  <div class="nbd-page">
+    <div class="nbd-toolbar">
+      <button class="btn-back" (click)="back()">
+        <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon> {{ 'notebookDetail.backToList' | translate }}
+      </button>
+      <input class="nbd-title" [(ngModel)]="detail.name" (blur)="rename()" (keyup.enter)="rename()">
+    </div>
+    <div class="nbd-grid">
+      <!-- Sources -->
+      <aside class="nbd-sources">
+        <div class="nbd-sources-head">
+          <h3><lucide-icon [img]="FileText" [size]="15"></lucide-icon> {{ 'notebookDetail.sources' | translate }}</h3>
+          <label class="btn-upload" [class.disabled]="uploading">
+            <lucide-icon [img]="Upload" [size]="13"></lucide-icon>
+            {{ (uploading ? 'notebookDetail.indexing' : 'notebookDetail.addPdf') | translate }}
+            <input type="file" accept="application/pdf" hidden (change)="onFile($event)" [disabled]="uploading">
+          </label>
+        </div>
+        @if (uploadError) {
+          <p class="nbd-upload-error">{{ uploadError }}</p>
+        }
+        @if (readySourceCount > 1) {
+          <p class="nbd-sources-hint"
+            [class.partial]="selectedSourceIds.size < readySourceCount">
+            {{ 'notebookDetail.sourcesUsed' | translate:{ selected: selectedSourceIds.size, total: readySourceCount } }}
+          </p>
+        }
+        @for (s of sources; track s) {
+          <div class="nbd-source" [class.nbd-source--off]="s.status === 'READY' && !isSelected(s)">
+            @if (s.status === 'READY') {
+              <input
+                type="checkbox"
+                class="nbd-source-check"
+                [checked]="isSelected(s)"
+                (change)="toggleSource(s)"
+                [title]="(isSelected(s)
+                  ? 'notebookDetail.sourceIncludedTitle'
+                  : 'notebookDetail.sourceExcludedTitle') | translate" />
+            } @else {
+              <lucide-icon
+                [img]="s.status === 'FAILED' ? AlertCircle : Loader"
+                [size]="14"
+                [class.fail]="s.status === 'FAILED'" [class.busy]="s.status === 'INDEXING'">
+              </lucide-icon>
+            }
+            <div class="nbd-source-info">
+              <div class="nbd-source-name">{{ s.filename }}</div>
+              <div class="nbd-source-meta">
+                @if (s.status === 'READY') {
+                  <span>{{ 'notebookDetail.sourceMeta' | translate:{ pages: s.pageCount, chunks: s.chunkCount } }}</span>
+                }
+                @if (s.status === 'INDEXING') {
+                  <span>{{ 'notebookDetail.indexingInProgress' | translate }}</span>
+                }
+                @if (s.status === 'FAILED') {
+                  <span>{{ 'notebookDetail.indexingFailed' | translate }}</span>
+                }
+              </div>
+            </div>
+            <button class="nbd-source-del" (click)="removeSource(s)" [title]="'common.delete' | translate">
+              <lucide-icon [img]="Trash2" [size]="13"></lucide-icon>
+            </button>
+          </div>
+        }
+        @if (sources.length === 0 && !uploading) {
+          <p class="nbd-empty">
+            {{ 'notebookDetail.sourcesEmpty' | translate }}
+          </p>
+        }
+      </aside>
+      <!-- Chat -->
+      <section class="nbd-chat">
+        <!-- Barre d'actions du chat : archives + vider -->
+        <div class="nbd-chat-head">
+          @if (viewingArchive) {
+            <span class="nbd-archive-banner">
+              <lucide-icon [img]="History" [size]="13"></lucide-icon>
+              {{ 'notebookDetail.archiveBanner' | translate:{ label: archiveLabel(viewingArchive) } }}
+            </span>
+            <button type="button" class="nbd-chat-btn" (click)="closeArchive()">
+              <lucide-icon [img]="X" [size]="13"></lucide-icon>
+              {{ 'notebookDetail.backToChat' | translate }}
+            </button>
+          } @else {
+            @if (referencedArchiveIds.size > 0) {
+              <span class="nbd-ref-badge"
+                [title]="'notebookDetail.refBadgeTitle' | translate">
+                <lucide-icon [img]="History" [size]="12"></lucide-icon>
+                {{ 'notebookDetail.refBadge' | translate:{ n: referencedArchiveIds.size } }}
+              </span>
+            }
+            <span class="nbd-chat-head-spacer"></span>
+            <button type="button" class="nbd-chat-btn" (click)="toggleArchives()"
+              [class.active]="archivesOpen"
+              [title]="'notebookDetail.archivesBtnTitle' | translate">
+              <lucide-icon [img]="History" [size]="13"></lucide-icon>
+              {{ 'notebookDetail.archives' | translate }}
+            </button>
+            <button type="button" class="nbd-chat-btn nbd-chat-btn--danger" (click)="clearChat()"
+              [disabled]="sending || messages.length === 0"
+              [title]="'notebookDetail.clearBtnTitle' | translate">
+              <lucide-icon [img]="Eraser" [size]="13"></lucide-icon>
+              {{ 'notebookDetail.clear' | translate }}
+            </button>
+          }
+        </div>
+        <!-- Panneau des archives -->
+        @if (archivesOpen && !viewingArchive) {
+          <div class="nbd-archives">
+            @if (archives.length === 0) {
+              <p class="nbd-empty">{{ 'notebookDetail.archivesEmpty' | translate }}</p>
+            } @else {
+              <p class="nbd-archives-help" [innerHTML]="'notebookDetail.archivesHelp' | translate"></p>
+            }
+            @for (a of archives; track a.archivedAt) {
+              <div class="nbd-archive-row" [class.referenced]="isReferenced(a)">
+                <input
+                  type="checkbox"
+                  class="nbd-archive-check"
+                  [checked]="isReferenced(a)"
+                  (change)="toggleReference(a)"
+                  [title]="(isReferenced(a)
+                    ? 'notebookDetail.archiveRefOnTitle'
+                    : 'notebookDetail.archiveRefOffTitle') | translate" />
+                <button type="button" class="nbd-archive-item" (click)="openArchive(a)">
+                  <lucide-icon [img]="History" [size]="13"></lucide-icon>
+                  {{ archiveLabel(a) }}
+                </button>
+              </div>
+            }
+          </div>
+        }
+        <div class="nbd-messages">
+          @if (viewingArchive) {
+            <!-- Archive en lecture seule -->
+            @for (m of viewingArchive.messages; track $index) {
+              <div class="nbd-msg" [class.user]="m.role === 'user'" [class.assistant]="m.role === 'assistant'">
+                <div class="nbd-msg-role">
+                  @if (m.role === 'assistant') {
+                    <lucide-icon [img]="Sparkles" [size]="12"></lucide-icon>
+                  }
+                  {{ (m.role === 'user' ? 'notebookDetail.roleUser' : 'notebookDetail.roleAi') | translate }}
+                </div>
+                @if (m.role === 'assistant') {
+                  <div class="nbd-msg-content md" [innerHTML]="m.content | markdown"></div>
+                } @else {
+                  <div class="nbd-msg-content">{{ m.content }}</div>
+                }
+              </div>
+            }
+          } @else {
+            @if (messages.length === 0) {
+              <p class="nbd-empty">
+                {{ 'notebookDetail.chatEmpty' | translate }}
+                @if (!hasReadySource()) {
+                  <span [innerHTML]="'notebookDetail.chatEmptyNoSource' | translate"></span>
+                }
+              </p>
+            }
+            @for (m of messages; track m) {
+              <div class="nbd-msg" [class.user]="m.role === 'user'" [class.assistant]="m.role === 'assistant'">
+                <div class="nbd-msg-role">
+                  @if (m.role === 'assistant') {
+                    <lucide-icon [img]="Sparkles" [size]="12"></lucide-icon>
+                  }
+                  {{ (m.role === 'user' ? 'notebookDetail.roleUser' : 'notebookDetail.roleAi') | translate }}
+                </div>
+                @if (m.role === 'assistant') {
+                  @if (parsedOf(m); as p) {
+                    @if (sending && deepProgress && !p.text) {
+                      <div class="nbd-deep-progress">
+                        <lucide-icon [img]="Layers" [size]="13"></lucide-icon>
+                        {{ 'notebookDetail.deepProgress' | translate:{ current: deepProgress.current, total: deepProgress.total } }}
+                      </div>
+                    }
+                    @if (p.text) {
+                      <div class="nbd-msg-content md" [innerHTML]="p.text | markdown"></div>
+                    } @else if (sending && !p.actions.length && !deepProgress) {
+                      <div class="nbd-msg-content"><span class="cursor">▌</span></div>
+                    }
+                    @for (a of p.actions; track $index) {
+                      <app-notebook-action-card
+                        [action]="a"
+                        [campaignId]="campaignId"
+                        [arcs]="arcs"
+                        [chaptersByArc]="chaptersByArc"
+                        (created)="onActionCreated()">
+                      </app-notebook-action-card>
+                    }
+                    @if (sourcesLabel(m); as label) {
+                      <div class="nbd-msg-sources" [title]="'notebookDetail.sourcesPagesTitle' | translate">
+                        📖 {{ label }}
+                      </div>
+                    }
+                  }
+                } @else {
+                  <div class="nbd-msg-content">{{ m.content }}</div>
+                }
+              </div>
+            }
+          }
+        </div>
+        @if (!viewingArchive) {
+        <div class="nbd-input">
+          <textarea [(ngModel)]="draft" rows="2"
+            [placeholder]="'notebookDetail.draftPlaceholder' | translate"
+          (keydown.enter)="$event.preventDefault(); send()"></textarea>
+          <button class="btn-deep" (click)="send(true)" [disabled]="sending || !draft.trim()"
+            [title]="'notebookDetail.deepBtnTitle' | translate">
+            <lucide-icon [img]="Layers" [size]="15"></lucide-icon>
+          </button>
+          <button class="btn-send" (click)="send()" [disabled]="sending || !draft.trim()"
+            [title]="'notebookDetail.sendBtnTitle' | translate">
+            <lucide-icon [img]="Send" [size]="15"></lucide-icon>
+          </button>
+        </div>
+        }
+      </section>
+    </div>
+  </div>
+}

@@ -1,6 +1,7 @@
 package com.loremind.application.campaigncontext;
 
 import com.loremind.domain.campaigncontext.Npc;
+import com.loremind.domain.campaigncontext.ports.CampaignRepository;
 import com.loremind.domain.campaigncontext.ports.NpcRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,6 +30,9 @@ public class NpcServiceTest {
     @Mock
     private NpcRepository npcRepository;
 
+    @Mock
+    private CampaignRepository campaignRepository;
+
     @InjectMocks
     private NpcService npcService;
 
@@ -51,7 +55,7 @@ public class NpcServiceTest {
 
         Npc result = npcService.createNpc(
                 new NpcService.NpcData("Borin le forgeron", null, null,
-                        Map.of("Notes", "Borin"), null, null, "camp-1", 5));
+                        Map.of("Notes", "Borin"), null, null, "camp-1", null, null, 5));
 
         assertNotNull(result);
         ArgumentCaptor<Npc> captor = ArgumentCaptor.forClass(Npc.class);
@@ -67,7 +71,7 @@ public class NpcServiceTest {
         when(npcRepository.findByCampaignId("camp-1")).thenReturn(List.of(a, b));
         when(npcRepository.save(any(Npc.class))).thenReturn(testNpc);
 
-        npcService.createNpc(new NpcService.NpcData("Nouveau", null, null, null, null, null, "camp-1", null));
+        npcService.createNpc(new NpcService.NpcData("Nouveau", null, null, null, null, null, "camp-1", null, null, null));
 
         ArgumentCaptor<Npc> captor = ArgumentCaptor.forClass(Npc.class);
         verify(npcRepository).save(captor.capture());
@@ -79,7 +83,7 @@ public class NpcServiceTest {
         when(npcRepository.findByCampaignId("camp-1")).thenReturn(List.of());
         when(npcRepository.save(any(Npc.class))).thenReturn(testNpc);
 
-        npcService.createNpc(new NpcService.NpcData("Premier", null, null, null, null, null, "camp-1", null));
+        npcService.createNpc(new NpcService.NpcData("Premier", null, null, null, null, null, "camp-1", null, null, null));
 
         ArgumentCaptor<Npc> captor = ArgumentCaptor.forClass(Npc.class);
         verify(npcRepository).save(captor.capture());
@@ -124,7 +128,7 @@ public class NpcServiceTest {
 
         Npc result = npcService.updateNpc("npc-1",
                 new NpcService.NpcData("Borin renommé", null, null,
-                        Map.of("Notes", "v2"), null, null, "camp-1", 7));
+                        Map.of("Notes", "v2"), null, null, "camp-1", null, null, 7));
 
         assertEquals("Borin renommé", result.getName());
         assertEquals("v2", result.getValues().get("Notes"));
@@ -138,7 +142,7 @@ public class NpcServiceTest {
 
         Npc result = npcService.updateNpc("npc-1",
                 new NpcService.NpcData("Borin", null, null,
-                        Map.of("Notes", "txt"), null, null, "camp-1", null));
+                        Map.of("Notes", "txt"), null, null, "camp-1", null, null, null));
 
         // testNpc avait order=1 → préservé
         assertEquals(1, result.getOrder());
@@ -150,7 +154,7 @@ public class NpcServiceTest {
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> npcService.updateNpc("missing",
-                        new NpcService.NpcData("x", null, null, null, null, null, "camp-1", null)));
+                        new NpcService.NpcData("x", null, null, null, null, null, "camp-1", null, null, null)));
         assertTrue(ex.getMessage().contains("missing"));
         verify(npcRepository, never()).save(any());
     }

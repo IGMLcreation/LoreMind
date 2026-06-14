@@ -1,0 +1,95 @@
+{
+  "characterEdit": {
+    "backToCampaign": "Retour à la campagne",
+    "titleEdit": "Éditer la fiche",
+    "titleNew": "Nouveau personnage",
+    "aiAssistant": "Assistant IA",
+    "aiAssistantTitle": "Ouvrir l'Assistant IA pour dialoguer autour de ce PJ",
+    "nameLabel": "Nom du personnage *",
+    "namePlaceholder": "Ex: Thorin le Grand-Hache, Lyra l'Errante...",
+    "portrait": "Portrait",
+    "portraitHint": "Carré conseillé (400×400).",
+    "header": "Bandeau / Header",
+    "headerHint": "Format paysage conseillé (1200×400).",
+    "chatWelcome": "Je vois cette fiche de personnage. Demande-moi de proposer stats, backstory, équipement ou objectifs personnels.",
+    "chatSuggestion1": "Propose une backstory cohérente avec l'univers",
+    "chatSuggestion2": "Suggère 3 objectifs personnels pour ce personnage",
+    "chatSuggestion3": "Aide-moi à équilibrer les stats de combat",
+    "deleteTitle": "Supprimer la fiche ?",
+    "deleteMessage": "Supprimer la fiche de \"{{name}}\" ?",
+    "irreversible": "Cette action est irréversible."
+  },
+  "characterView": {
+    "aiAssistant": "Assistant IA"
+  },
+  "npcEdit": {
+    "backToCampaign": "Retour à la campagne",
+    "titleEdit": "Éditer le PNJ",
+    "titleNew": "Nouveau PNJ",
+    "aiAssistant": "Assistant IA",
+    "aiAssistantTitle": "Ouvrir l'Assistant IA pour dialoguer autour de ce PNJ",
+    "nameLabel": "Nom du PNJ *",
+    "namePlaceholder": "Ex: Borin le forgeron, Dame Elara, Kael l'aubergiste...",
+    "folder": "Dossier",
+    "folderPlaceholder": "Ex: Bard's Gate, Faction des Pipers… (laisser vide = non classé)",
+    "portrait": "Portrait",
+    "portraitHint": "Carré conseillé (400×400).",
+    "header": "Bandeau / Header",
+    "headerHint": "Format paysage conseillé (1200×400).",
+    "relatedPages": "Pages de Lore liées",
+    "relatedPagesHint": "Reliez ce PNJ aux pages de l'univers (sa ville, sa faction, sa région…). Ces liens apparaissent dans le graphe du Lore.",
+    "chatWelcome": "Je vois cette fiche de PNJ. Demande-moi de proposer apparence, motivations, secrets, ou répliques signatures.",
+    "chatSuggestion1": "Propose une apparence et une posture marquantes",
+    "chatSuggestion2": "Suggère 2 motivations et un secret pour ce PNJ",
+    "chatSuggestion3": "Imagine 3 répliques signatures qui le caractérisent",
+    "deleteTitle": "Supprimer la fiche ?",
+    "deleteMessage": "Supprimer la fiche de \"{{name}}\" ?",
+    "irreversible": "Cette action est irréversible."
+  },
+  "npcList": {
+    "create": "Nouveau PNJ",
+    "title": "PNJ",
+    "hint": "Tous les personnages non-joueurs de la campagne, classés par dossier. Le champ « Dossier » de chaque fiche pilote le classement.",
+    "empty": "Aucun PNJ pour l'instant.",
+    "unclassified": "Non classés",
+    "deleteTitle": "Supprimer la fiche",
+    "deleteMessage": "Supprimer la fiche de « {{name}} » ?",
+    "irreversible": "Cette action est irréversible."
+  },
+  "npcView": {
+    "aiAssistant": "Assistant IA",
+    "relatedPages": "Pages de Lore liées",
+    "deletedPage": "(page supprimée)"
+  },
+  "enemyEdit": {
+    "backToEnemies": "Retour aux ennemis",
+    "titleEdit": "Éditer l'ennemi",
+    "titleNew": "Nouvel ennemi",
+    "nameLabel": "Nom de l'ennemi *",
+    "namePlaceholder": "Ex: Balor, Gobelin chef de guerre, Liche…",
+    "level": "Niveau / FP",
+    "levelPlaceholder": "Ex: 5, FP 8, Boss…",
+    "folder": "Dossier",
+    "folderPlaceholder": "Ex: Démons, Humanoïdes… (vide = non classé)",
+    "portrait": "Portrait",
+    "portraitHint": "Carré conseillé (400×400).",
+    "header": "Bandeau / Header",
+    "headerHint": "Format paysage conseillé (1200×400).",
+    "deleteTitle": "Supprimer la fiche ?",
+    "deleteMessage": "Supprimer la fiche de \"{{name}}\" ?",
+    "irreversible": "Cette action est irréversible."
+  },
+  "enemyList": {
+    "create": "Nouvel ennemi",
+    "title": "Ennemis",
+    "hint": "Le bestiaire de la campagne : monstres et créatures avec leur fiche (pilotée par le template Ennemi du système de jeu), classés par dossier (Démons, Humanoïdes…).",
+    "empty": "Aucun ennemi pour l'instant.",
+    "unclassified": "Non classés",
+    "levelShort": "Niv. {{level}}",
+    "deleteTitle": "Supprimer l'ennemi",
+    "deleteMessage": "Supprimer « {{name}} » ?"
+  },
+  "enemyView": {
+    "levelLong": "Niveau {{level}}"
+  }
+}

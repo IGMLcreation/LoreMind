@@ -1,12 +1,15 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { LucideAngularModule } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { CampaignService } from '../../../services/campaign.service';
 import { CharacterService } from '../../../services/character.service';
 import { NpcService } from '../../../services/npc.service';
+import { RandomTableService } from '../../../services/random-table.service';
+import { EnemyService } from '../../../services/enemy.service';
 import { LayoutService } from '../../../services/layout.service';
 import { loadCampaignTreeData, buildCampaignSidebarConfig } from '../../campaign-tree.helper';
 import { IconPickerComponent } from '../../../shared/icon-picker/icon-picker.component';
@@ -17,11 +20,10 @@ import { CAMPAIGN_ICON_OPTIONS } from '../../campaign-icons';
  * Route : /campaigns/:campaignId/arcs/:arcId/chapters/create
  */
 @Component({
-  selector: 'app-chapter-create',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, IconPickerComponent],
-  templateUrl: './chapter-create.component.html',
-  styleUrls: ['./chapter-create.component.scss']
+    selector: 'app-chapter-create',
+    imports: [ReactiveFormsModule, LucideAngularModule, IconPickerComponent, TranslatePipe],
+    templateUrl: './chapter-create.component.html',
+    styleUrls: ['./chapter-create.component.scss']
 })
 export class ChapterCreateComponent implements OnInit, OnDestroy {
   readonly campaignIconOptions = CAMPAIGN_ICON_OPTIONS;
@@ -31,6 +33,8 @@ export class ChapterCreateComponent implements OnInit, OnDestroy {
   campaignId = '';
   arcId = '';
   arcName = '';
+  /** Arc parent de type hub : un "chapitre" y est présenté comme une "quête". */
+  isHub = false;
   private existingChapterCount = 0;
 
   constructor(
@@ -40,7 +44,10 @@ export class ChapterCreateComponent implements OnInit, OnDestroy {
     private campaignService: CampaignService,
     private characterService: CharacterService,
     private npcService: NpcService,
-    private layoutService: LayoutService
+    private randomTableService: RandomTableService,
+    private enemyService: EnemyService,
+    private layoutService: LayoutService,
+    private translate: TranslateService
   ) {
     this.form = this.fb.group({
       name:        ['', Validators.required],
@@ -58,13 +65,14 @@ export class ChapterCreateComponent implements OnInit, OnDestroy {
     forkJoin({
       campaign: this.campaignService.getCampaignById(this.campaignId),
       allCampaigns: this.campaignService.getAllCampaigns(),
-      treeData: loadCampaignTreeData(this.campaignService, this.campaignId, this.characterService, this.npcService)
+      treeData: loadCampaignTreeData(this.campaignService, this.campaignId, this.characterService, this.npcService, this.randomTableService, this.enemyService)
     }).subscribe(({ campaign, allCampaigns, treeData }) => {
       const currentArc = treeData.arcs.find(a => a.id === this.arcId);
       this.arcName = currentArc?.name ?? '';
+      this.isHub = currentArc?.type === 'HUB';
       this.existingChapterCount = treeData.chaptersByArc[this.arcId]?.length ?? 0;
 
-      this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId));
+      this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId, this.translate));
     });
   }
 

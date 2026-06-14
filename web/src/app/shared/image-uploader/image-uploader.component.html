@@ -1,51 +1,53 @@
 <!-- Mode compact : bouton "+ ajouter" carre, utilise dans les galeries. -->
-<ng-container *ngIf="compact; else dropZone">
-  <label class="upload-compact" [class.loading]="uploading" [title]="errorMessage || 'Ajouter une image'">
-    <ng-container *ngIf="!uploading; else spinner">
+@if (compact) {
+  <label class="upload-compact" [class.loading]="uploading" [title]="errorMessage || ('imageUploader.addImage' | translate)">
+    @if (!uploading) {
       <lucide-icon [img]="Upload" [size]="18"></lucide-icon>
-      <span>Ajouter</span>
-    </ng-container>
+      <span>{{ 'common.add' | translate }}</span>
+    } @else {
+      <div class="upload-spinner" [attr.aria-label]="'imageUploader.uploading' | translate"></div>
+      <p class="upload-zone-hint">{{ 'imageUploader.uploadingHint' | translate }}</p>
+    }
     <input type="file"
-           accept="image/jpeg,image/png,image/webp,image/gif"
-           (change)="onFileSelected($event)"
-           [disabled]="uploading"
-           hidden />
+      accept="image/jpeg,image/png,image/webp,image/gif"
+      (change)="onFileSelected($event)"
+      [disabled]="uploading"
+      hidden />
   </label>
-  <p *ngIf="errorMessage" class="upload-error-inline">
-    <lucide-icon [img]="AlertCircle" [size]="12"></lucide-icon>
-    {{ errorMessage }}
-  </p>
-</ng-container>
+  @if (errorMessage) {
+    <p class="upload-error-inline">
+      <lucide-icon [img]="AlertCircle" [size]="12"></lucide-icon>
+      {{ errorMessage }}
+    </p>
+  }
+} @else {
+  <label class="upload-zone"
+    [class.drag-over]="dragOver"
+    [class.loading]="uploading"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave()"
+    (drop)="onDrop($event)">
+    @if (!uploading) {
+      <lucide-icon [img]="Upload" [size]="32"></lucide-icon>
+      <p class="upload-zone-title">{{ 'imageUploader.dropTitle' | translate }}</p>
+      <p class="upload-zone-hint">{{ 'imageUploader.dropHint' | translate }}</p>
+    } @else {
+      <div class="upload-spinner" [attr.aria-label]="'imageUploader.uploading' | translate"></div>
+      <p class="upload-zone-hint">{{ 'imageUploader.uploadingHint' | translate }}</p>
+    }
+    <input type="file"
+      accept="image/jpeg,image/png,image/webp,image/gif"
+      (change)="onFileSelected($event)"
+      [disabled]="uploading"
+      hidden />
+  </label>
+  @if (errorMessage) {
+    <p class="upload-error" role="alert">
+      <lucide-icon [img]="AlertCircle" [size]="14"></lucide-icon>
+      {{ errorMessage }}
+    </p>
+  }
+}
 
 <!-- Mode standard : grande drop-zone cliquable. -->
-<ng-template #dropZone>
-  <label class="upload-zone"
-         [class.drag-over]="dragOver"
-         [class.loading]="uploading"
-         (dragover)="onDragOver($event)"
-         (dragleave)="onDragLeave()"
-         (drop)="onDrop($event)">
 
-    <ng-container *ngIf="!uploading; else spinner">
-      <lucide-icon [img]="Upload" [size]="32"></lucide-icon>
-      <p class="upload-zone-title">Glisse une image ici</p>
-      <p class="upload-zone-hint">ou clique pour choisir un fichier (JPEG, PNG, WebP, GIF, max 10 Mo)</p>
-    </ng-container>
-
-    <input type="file"
-           accept="image/jpeg,image/png,image/webp,image/gif"
-           (change)="onFileSelected($event)"
-           [disabled]="uploading"
-           hidden />
-  </label>
-
-  <p *ngIf="errorMessage" class="upload-error" role="alert">
-    <lucide-icon [img]="AlertCircle" [size]="14"></lucide-icon>
-    {{ errorMessage }}
-  </p>
-</ng-template>
-
-<ng-template #spinner>
-  <div class="upload-spinner" aria-label="Upload en cours"></div>
-  <p class="upload-zone-hint">Upload en cours...</p>
-</ng-template>

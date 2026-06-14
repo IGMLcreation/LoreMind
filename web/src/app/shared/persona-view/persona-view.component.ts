@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { LucideAngularModule, BookOpen } from 'lucide-angular';
+import { TranslatePipe } from '@ngx-translate/core';
 import { TemplateField, ImageLayout } from '../../services/template.model';
 
 /** Section rendue dans la vue, dans l'ordre du template. Discriminee par `kind`. */
@@ -33,11 +34,10 @@ export interface PersonaLike {
 }
 
 @Component({
-  selector: 'app-persona-view',
-  standalone: true,
-  imports: [CommonModule, LucideAngularModule, ImageGalleryComponent],
-  templateUrl: './persona-view.component.html',
-  styleUrls: ['./persona-view.component.scss']
+    selector: 'app-persona-view',
+    imports: [LucideAngularModule, ImageGalleryComponent, TranslatePipe],
+    templateUrl: './persona-view.component.html',
+    styleUrls: ['./persona-view.component.scss']
 })
 export class PersonaViewComponent {
   readonly BookOpen = BookOpen;

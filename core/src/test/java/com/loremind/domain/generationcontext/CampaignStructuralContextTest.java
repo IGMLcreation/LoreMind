@@ -25,7 +25,8 @@ class CampaignStructuralContextTest {
                 "L'auberge",
                 "Rencontre tendue avec le tavernier",
                 2,
-                List.of(branch));
+                List.of(branch),
+                List.of());
 
         ChapterSummary chapter = new ChapterSummary(
                 "L'arrivee",
@@ -36,6 +37,7 @@ class CampaignStructuralContextTest {
         ArcSummary arc = new ArcSummary(
                 "Acte I",
                 "Mise en place",
+                false,
                 1,
                 List.of(chapter));
 
@@ -75,9 +77,9 @@ class CampaignStructuralContextTest {
 
     @Test
     void illustrationCount_defaultsToZero_onAllSummaryTypes() {
-        ArcSummary arc = new ArcSummary("X", null, 0, List.of());
+        ArcSummary arc = new ArcSummary("X", null, false, 0, List.of());
         ChapterSummary chapter = new ChapterSummary("X", null, 0, List.of());
-        SceneSummary scene = new SceneSummary("X", null, 0, List.of());
+        SceneSummary scene = new SceneSummary("X", null, 0, List.of(), List.of());
 
         assertEquals(0, arc.illustrationCount());
         assertEquals(0, chapter.illustrationCount());
@@ -91,6 +93,7 @@ class CampaignStructuralContextTest {
         ArcSummary arc = new ArcSummary(
                 "Acte I",
                 null,
+                false,
                 0,
                 List.of(
                         new ChapterSummary("Ch1", null, 0, List.of()),

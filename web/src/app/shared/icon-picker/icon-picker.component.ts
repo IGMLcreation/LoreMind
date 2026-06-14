@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { LucideAngularModule, LucideIconData } from 'lucide-angular';
 
 export interface IconPickerOption {
@@ -19,24 +19,24 @@ export interface IconPickerOption {
  * d'icones lui-meme — l'appelant lui passe la banque a afficher.
  */
 @Component({
-  selector: 'app-icon-picker',
-  standalone: true,
-  imports: [CommonModule, LucideAngularModule],
-  template: `
+    selector: 'app-icon-picker',
+    imports: [LucideAngularModule],
+    template: `
     <div class="icon-grid">
-      <button
-        type="button"
-        class="icon-btn"
-        *ngFor="let option of options"
-        [class.selected]="selected === option.key"
-        [attr.aria-pressed]="selected === option.key"
-        [title]="option.key"
-        (click)="pick(option.key)">
-        <lucide-icon [img]="option.icon" [size]="18"></lucide-icon>
-      </button>
+      @for (option of options; track option) {
+        <button
+          type="button"
+          class="icon-btn"
+          [class.selected]="selected === option.key"
+          [attr.aria-pressed]="selected === option.key"
+          [title]="option.key"
+          (click)="pick(option.key)">
+          <lucide-icon [img]="option.icon" [size]="18"></lucide-icon>
+        </button>
+      }
     </div>
-  `,
-  styleUrls: ['./icon-picker.component.scss']
+    `,
+    styleUrls: ['./icon-picker.component.scss']
 })
 export class IconPickerComponent {
   @Input() options: IconPickerOption[] = [];

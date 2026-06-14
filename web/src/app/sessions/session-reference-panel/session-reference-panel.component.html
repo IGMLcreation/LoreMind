@@ -1,0 +1,177 @@
+<div class="reference-panel">
+
+  <nav class="ref-tabs">
+    <button type="button"
+      class="ref-tab"
+      [class.ref-tab--active]="activeTab === 'ai'"
+      (click)="selectTab('ai')">
+      <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
+      {{ 'sessionReferencePanel.tabAi' | translate }}
+    </button>
+    <button type="button"
+      class="ref-tab"
+      [class.ref-tab--active]="activeTab === 'dice'"
+      (click)="selectTab('dice')">
+      <lucide-icon [img]="Dices" [size]="14"></lucide-icon>
+      {{ 'sessionReferencePanel.tabDice' | translate }}
+    </button>
+    <button type="button"
+      class="ref-tab"
+      [class.ref-tab--active]="activeTab === 'tables'"
+      (click)="selectTab('tables')">
+      <lucide-icon [img]="Table2" [size]="14"></lucide-icon>
+      {{ 'sessionReferencePanel.tabTables' | translate }}
+    </button>
+    <button type="button"
+      class="ref-tab"
+      [class.ref-tab--active]="activeTab === 'objects'"
+      (click)="selectTab('objects')">
+      <lucide-icon [img]="Package" [size]="14"></lucide-icon>
+      {{ 'sessionReferencePanel.tabObjects' | translate }}
+    </button>
+    <button type="button"
+      class="ref-tab"
+      [class.ref-tab--active]="activeTab === 'characters'"
+      (click)="selectTab('characters')">
+      <lucide-icon [img]="User" [size]="14"></lucide-icon>
+      {{ 'sessionReferencePanel.tabCharacters' | translate }}
+    </button>
+    <button type="button"
+      class="ref-tab"
+      [class.ref-tab--active]="activeTab === 'scenes'"
+      (click)="selectTab('scenes')">
+      <lucide-icon [img]="Swords" [size]="14"></lucide-icon>
+      {{ 'sessionReferencePanel.tabScenes' | translate }}
+    </button>
+  </nav>
+
+  <div class="ref-content" [class.ref-content--fill]="activeTab === 'ai'">
+
+    <!-- ====== IA ====== -->
+    @if (activeTab === 'ai') {
+      <app-session-ai-chat-panel
+        [sessionId]="sessionId"
+        [canSaveToJournal]="canAddToJournal"
+        (saveToJournal)="onAiSaveToJournal($event)">
+      </app-session-ai-chat-panel>
+    }
+
+    <!-- ====== Dés ====== -->
+    @if (activeTab === 'dice') {
+      <app-session-dice-panel
+        [canAddToJournal]="canAddToJournal"
+        (rolled)="onDiceRolled($event)">
+      </app-session-dice-panel>
+    }
+
+    <!-- ====== Tables aléatoires ====== -->
+    @if (activeTab === 'tables') {
+      <app-session-random-tables-panel
+        [campaignId]="campaignId"
+        [canAddToJournal]="canAddToJournal"
+        (rolled)="onDiceRolled($event)"
+        (aiReplyToJournal)="onAiSaveToJournal($event)">
+      </app-session-random-tables-panel>
+    }
+
+    <!-- ====== Catalogues d'objets ====== -->
+    @if (activeTab === 'objects') {
+      <app-session-item-catalogs-panel
+        [campaignId]="campaignId"
+        [canAddToJournal]="canAddToJournal"
+        (noteToJournal)="onItemNote($event)">
+      </app-session-item-catalogs-panel>
+    }
+
+    <!-- ====== Personnages (PJ + PNJ) ====== -->
+    @if (activeTab === 'characters') {
+      <div class="ref-list">
+        @if (loadingChars) {
+          <p class="loading-hint">{{ 'common.loading' | translate }}</p>
+        }
+        @if (!loadingChars) {
+          <div>
+            @if (characters.length > 0) {
+              <div class="ref-group">
+                <h4>
+                  <lucide-icon [img]="User" [size]="13"></lucide-icon>
+                  {{ 'sessionReferencePanel.playerCharacters' | translate }}
+                </h4>
+                @for (c of characters; track c) {
+                  <button
+                    type="button"
+                    class="ref-item"
+                    (click)="openInNewTab(['campaigns', campaignId, 'playthroughs', playthroughId!, 'characters', c.id!])">
+                    <span class="ref-item-name">{{ c.name }}</span>
+                    <lucide-icon [img]="ExternalLink" [size]="12" class="ref-item-icon"></lucide-icon>
+                  </button>
+                }
+              </div>
+            }
+            @if (npcs.length > 0) {
+              <div class="ref-group">
+                <h4>
+                  <lucide-icon [img]="Drama" [size]="13"></lucide-icon>
+                  {{ 'sessionReferencePanel.nonPlayerCharacters' | translate }}
+                </h4>
+                @for (n of npcs; track n) {
+                  <button
+                    type="button"
+                    class="ref-item"
+                    (click)="openInNewTab(['campaigns', campaignId, 'npcs', n.id!])">
+                    <span class="ref-item-name">{{ n.name }}</span>
+                    <lucide-icon [img]="ExternalLink" [size]="12" class="ref-item-icon"></lucide-icon>
+                  </button>
+                }
+              </div>
+            }
+            @if (characters.length === 0 && npcs.length === 0) {
+              <p class="empty-hint">
+                {{ 'sessionReferencePanel.emptyCharacters' | translate }}
+              </p>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ====== Scènes (arborescence aplatie) ====== -->
+    @if (activeTab === 'scenes') {
+      <div class="ref-list">
+        @if (loadingTree) {
+          <p class="loading-hint">{{ 'common.loading' | translate }}</p>
+        }
+        @if (!loadingTree && treeData) {
+          @if (treeData.arcs.length === 0) {
+            <p class="empty-hint">
+              {{ 'sessionReferencePanel.emptyScenes' | translate }}
+            </p>
+          }
+          @for (arc of treeData.arcs; track arc) {
+            <div class="ref-group">
+              <h4>
+                <lucide-icon [img]="Swords" [size]="13"></lucide-icon>
+                {{ arc.name }}
+              </h4>
+              @for (chapter of chaptersOf(arc); track chapter) {
+                <div class="ref-subgroup">
+                  <span class="ref-subgroup-title">{{ chapter.name }}</span>
+                  @for (scene of scenesOf(chapter); track scene) {
+                    <button
+                      type="button"
+                      class="ref-item ref-item--nested"
+                      (click)="openInNewTab(['campaigns', campaignId, 'arcs', arc.id!, 'chapters', chapter.id!, 'scenes', scene.id!])">
+                      <span class="ref-item-name">{{ scene.name }}</span>
+                      <lucide-icon [img]="ExternalLink" [size]="12" class="ref-item-icon"></lucide-icon>
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+          }
+        }
+      </div>
+    }
+
+  </div>
+</div>

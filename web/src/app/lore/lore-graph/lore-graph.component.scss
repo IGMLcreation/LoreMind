@@ -1,0 +1,163 @@
+.graph-page {
+  padding: 1.5rem 2rem;
+}
+
+.graph-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+
+  .btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 4px;
+    color: #d1d5db;
+    font-size: 0.85rem;
+    cursor: pointer;
+
+    &:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
+  }
+
+  .graph-title {
+    flex: 1;
+    min-width: 240px;
+
+    h1 {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1.4rem;
+      color: white;
+      margin: 0 0 0.25rem;
+    }
+
+    .graph-subtitle {
+      color: #9ca3af;
+      font-size: 0.82rem;
+      margin: 0;
+    }
+  }
+
+  .graph-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.78rem;
+    color: #9ca3af;
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+
+      &.legend-dot--page { background: #4338ca; border: 1px solid #818cf8; }
+      &.legend-dot--npc  { background: #92400e; border: 1px solid #fbbf24; }
+    }
+
+    .legend-line {
+      width: 18px;
+      height: 0;
+      display: inline-block;
+
+      &.legend-line--npc { border-top: 2px dashed #d97706; }
+    }
+  }
+}
+
+// Le SVG peut dépasser l'écran sur un gros lore : scroll dans les 2 sens.
+.graph-scroll {
+  overflow: auto;
+  border: 1px solid #1e1e3a;
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.05) 1px, transparent 0) 0 0 / 26px 26px,
+    #0d0d1c;
+}
+
+svg {
+  display: block;
+  touch-action: none; // requis pour le drag au pointeur sur tactile
+
+  line {
+    &.edge-page {
+      stroke: #4f4f7a;
+      stroke-width: 1.6;
+    }
+
+    &.edge-npc {
+      stroke: #d97706;
+      stroke-width: 1.4;
+      stroke-dasharray: 5 4;
+      opacity: 0.8;
+    }
+  }
+
+  .node {
+    cursor: grab;
+
+    circle {
+      fill: #1e1b4b;
+      stroke: #6366f1;
+      stroke-width: 2;
+      transition: stroke 0.12s, fill 0.12s;
+    }
+
+    .node-label {
+      fill: #c7d2fe;
+      font-size: 11px;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    &:hover circle {
+      fill: #312e81;
+      stroke: #a5b4fc;
+    }
+
+    &.dragging { cursor: grabbing; }
+
+    // PNJ : palette ambre, distincte des pages.
+    &.node--npc {
+      circle {
+        fill: #451a03;
+        stroke: #d97706;
+      }
+
+      .node-label { fill: #fcd34d; }
+
+      &:hover circle {
+        fill: #78350f;
+        stroke: #fbbf24;
+      }
+    }
+  }
+}
+
+.graph-empty {
+  padding: 3rem;
+  text-align: center;
+  color: #6b7280;
+  font-style: italic;
+  border: 1px dashed #2a2a3d;
+  border-radius: 8px;
+}
+
+.graph-hint {
+  margin-top: 0.75rem;
+  font-size: 0.82rem;
+  color: #6b7280;
+  font-style: italic;
+}

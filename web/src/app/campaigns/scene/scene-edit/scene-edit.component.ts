@@ -1,24 +1,30 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { LucideAngularModule, Trash2, Sparkles } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { CampaignService } from '../../../services/campaign.service';
 import { CharacterService } from '../../../services/character.service';
 import { NpcService } from '../../../services/npc.service';
+import { RandomTableService } from '../../../services/random-table.service';
+import { EnemyService } from '../../../services/enemy.service';
 import { PageService } from '../../../services/page.service';
 import { LayoutService } from '../../../services/layout.service';
 import { PageTitleService } from '../../../services/page-title.service';
-import { Scene, SceneBranch } from '../../../services/campaign.model';
+import { Scene, SceneBranch, Room } from '../../../services/campaign.model';
 import { Page } from '../../../services/page.model';
+import { Enemy } from '../../../services/enemy.model';
 import { loadCampaignTreeData, buildCampaignSidebarConfig } from '../../campaign-tree.helper';
 import { ExpandableSectionComponent } from '../../../shared/expandable-section/expandable-section.component';
 import { LoreLinkPickerComponent } from '../../../shared/lore-link-picker/lore-link-picker.component';
+import { EnemyLinkPickerComponent } from '../../../shared/enemy-link-picker/enemy-link-picker.component';
 import { AiChatDrawerComponent } from '../../../shared/ai-chat-drawer/ai-chat-drawer.component';
 import { ImageGalleryComponent } from '../../../shared/image-gallery/image-gallery.component';
 import { IconPickerComponent } from '../../../shared/icon-picker/icon-picker.component';
+import { RoomsEditorComponent } from '../../../shared/rooms-editor/rooms-editor.component';
 import { CAMPAIGN_ICON_OPTIONS } from '../../campaign-icons';
 import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 
@@ -27,11 +33,10 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  * Route : /campaigns/:campaignId/arcs/:arcId/chapters/:chapterId/scenes/:sceneId
  */
 @Component({
-  selector: 'app-scene-edit',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, ExpandableSectionComponent, LoreLinkPickerComponent, AiChatDrawerComponent, ImageGalleryComponent, IconPickerComponent],
-  templateUrl: './scene-edit.component.html',
-  styleUrls: ['./scene-edit.component.scss']
+    selector: 'app-scene-edit',
+    imports: [ReactiveFormsModule, LucideAngularModule, ExpandableSectionComponent, LoreLinkPickerComponent, EnemyLinkPickerComponent, AiChatDrawerComponent, ImageGalleryComponent, IconPickerComponent, RoomsEditorComponent, TranslatePipe],
+    templateUrl: './scene-edit.component.html',
+    styleUrls: ['./scene-edit.component.scss']
 })
 export class SceneEditComponent implements OnInit, OnDestroy {
   readonly Trash2 = Trash2;
@@ -41,11 +46,13 @@ export class SceneEditComponent implements OnInit, OnDestroy {
 
   /** État drawer chat IA (b5.7 — intégration Campagne). */
   chatOpen = false;
-  readonly chatQuickSuggestions = [
-    'Propose une ambiance sensorielle immersive pour cette scène',
-    'Suggère une narration d\'ouverture à lire aux joueurs',
-    'Imagine 2 choix avec conséquences marquantes'
-  ];
+  get chatQuickSuggestions(): string[] {
+    return [
+      this.translate.instant('sceneEdit.chatSuggestion1'),
+      this.translate.instant('sceneEdit.chatSuggestion2'),
+      this.translate.instant('sceneEdit.chatSuggestion3')
+    ];
+  }
 
   toggleChat(): void { this.chatOpen = !this.chatOpen; }
 
@@ -59,6 +66,9 @@ export class SceneEditComponent implements OnInit, OnDestroy {
   availablePages: Page[] = [];
   loreId: string | null = null;
   relatedPageIds: string[] = [];
+  /** Bestiaire de la campagne + fiches liées à la rencontre. */
+  availableEnemies: Enemy[] = [];
+  enemyIds: string[] = [];
   illustrationImageIds: string[] = [];
   mapImageIds: string[] = [];
 
@@ -67,6 +77,11 @@ export class SceneEditComponent implements OnInit, OnDestroy {
   /** Branches narratives (état local mutable, persisté au submit). */
   branches: SceneBranch[] = [];
 
+  /** Pièces du lieu explorable (état local, persisté au submit). */
+  rooms: Room[] = [];
+
+  onRoomsChange(next: Room[]): void { this.rooms = next; }
+
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
@@ -74,10 +89,13 @@ export class SceneEditComponent implements OnInit, OnDestroy {
     private campaignService: CampaignService,
     private characterService: CharacterService,
     private npcService: NpcService,
+    private randomTableService: RandomTableService,
+    private enemyService: EnemyService,
     private pageService: PageService,
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private translate: TranslateService
   ) {
     this.form = this.fb.group({
       name:                 ['', Validators.required],
@@ -126,7 +144,7 @@ export class SceneEditComponent implements OnInit, OnDestroy {
       allCampaigns: this.campaignService.getAllCampaigns(),
       scene: this.campaignService.getSceneById(this.sceneId),
       chapterScenes: this.campaignService.getScenes(this.chapterId),
-      treeData: loadCampaignTreeData(this.campaignService, this.campaignId, this.characterService, this.npcService)
+      treeData: loadCampaignTreeData(this.campaignService, this.campaignId, this.characterService, this.npcService, this.randomTableService, this.enemyService)
     }).pipe(
       switchMap(data => {
         const lid = data.campaign.loreId ?? null;
@@ -139,11 +157,14 @@ export class SceneEditComponent implements OnInit, OnDestroy {
       this.loreId = loreId;
       this.availablePages = pages;
       this.relatedPageIds = [...(scene.relatedPageIds ?? [])];
+      this.availableEnemies = treeData.enemies ?? [];
+      this.enemyIds = [...(scene.enemyIds ?? [])];
       this.selectedIcon = scene.icon ?? null;
       this.illustrationImageIds = [...(scene.illustrationImageIds ?? [])];
       this.mapImageIds = [...(scene.mapImageIds ?? [])];
       this.siblingScenes = chapterScenes.filter(s => s.id !== this.sceneId);
       this.branches = (scene.branches ?? []).map(b => ({ ...b }));
+      this.rooms = (scene.rooms ?? []).map(r => ({ ...r, branches: [...(r.branches ?? [])] }));
       this.form.patchValue({
         name:                 scene.name,
         description:          scene.description ?? '',
@@ -157,7 +178,7 @@ export class SceneEditComponent implements OnInit, OnDestroy {
         enemies:              scene.enemies ?? ''
       });
 
-      this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId));
+      this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId, this.translate));
     });
   }
 
@@ -176,10 +197,12 @@ export class SceneEditComponent implements OnInit, OnDestroy {
       choicesConsequences:  this.form.value.choicesConsequences,
       combatDifficulty:     this.form.value.combatDifficulty,
       enemies:              this.form.value.enemies,
+      enemyIds:             this.enemyIds,
       relatedPageIds:       this.relatedPageIds,
       illustrationImageIds: this.illustrationImageIds,
       mapImageIds:          this.mapImageIds,
       branches:             this.branches,
+      rooms:                this.rooms,
       icon:                 this.selectedIcon
     }).subscribe({
       next: () => this.router.navigate(['/campaigns', this.campaignId, 'arcs', this.arcId, 'chapters', this.chapterId, 'scenes', this.sceneId]),
@@ -189,10 +212,10 @@ export class SceneEditComponent implements OnInit, OnDestroy {
 
   delete(): void {
     this.confirmDialog.confirm({
-      title: 'Supprimer la scène',
-      message: `Supprimer la scène "${this.scene?.name}" ?`,
-      details: ['Cette action est irréversible.'],
-      confirmLabel: 'Supprimer',
+      title: this.translate.instant('sceneEdit.deleteTitle'),
+      message: this.translate.instant('sceneEdit.deleteMessage', { name: this.scene?.name }),
+      details: [this.translate.instant('sceneEdit.deleteIrreversible')],
+      confirmLabel: this.translate.instant('common.delete'),
       variant: 'danger'
     }).then(ok => {
       if (!ok) return;
@@ -209,7 +232,6 @@ export class SceneEditComponent implements OnInit, OnDestroy {
 
   // ─────────────── Gestion des branches narratives ───────────────
 
-  trackByIndex = (i: number) => i;
 
   addBranch(): void {
     this.branches.push({ label: '', targetSceneId: '', condition: '' });

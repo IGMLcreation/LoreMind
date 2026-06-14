@@ -1,15 +1,16 @@
 package com.loremind.application.campaigncontext;
 
+import com.loremind.application.playcontext.PlaythroughService;
 import com.loremind.domain.campaigncontext.Arc;
 import com.loremind.domain.campaigncontext.Campaign;
 import com.loremind.domain.campaigncontext.Chapter;
-import com.loremind.domain.campaigncontext.Character;
 import com.loremind.domain.campaigncontext.Scene;
 import com.loremind.domain.campaigncontext.ports.ArcRepository;
 import com.loremind.domain.campaigncontext.ports.CampaignRepository;
 import com.loremind.domain.campaigncontext.ports.ChapterRepository;
-import com.loremind.domain.campaigncontext.ports.CharacterRepository;
 import com.loremind.domain.campaigncontext.ports.SceneRepository;
+import com.loremind.domain.playcontext.Playthrough;
+import com.loremind.domain.playcontext.ports.PlaythroughRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,7 +43,9 @@ public class CampaignServiceTest {
     @Mock
     private SceneRepository sceneRepository;
     @Mock
-    private CharacterRepository characterRepository;
+    private PlaythroughRepository playthroughRepository;
+    @Mock
+    private PlaythroughService playthroughService;
 
     @InjectMocks
     private CampaignService campaignService;
@@ -222,7 +225,7 @@ public class CampaignServiceTest {
         verify(arcRepository, never()).deleteById(anyString());
         verify(chapterRepository, never()).deleteById(anyString());
         verify(sceneRepository, never()).deleteById(anyString());
-        verify(characterRepository, never()).deleteById(anyString());
+        verify(playthroughService, never()).delete(anyString());
     }
 
     @Test
@@ -249,13 +252,15 @@ public class CampaignServiceTest {
     }
 
     @Test
-    void testDeleteCampaign_CascadesCharacters() {
-        Character pc = Character.builder().id("char-1").campaignId("campaign-1").name("Alric").build();
-        when(characterRepository.findByCampaignId("campaign-1")).thenReturn(List.of(pc));
+    void testDeleteCampaign_CascadesPlaythroughs() {
+        // Depuis Playthrough : les PJ/sessions ne sont plus rattachés à la campagne ;
+        // la suppression cascade sur les Parties, qui cascadent elles-mêmes.
+        Playthrough play = Playthrough.builder().id("play-1").campaignId("campaign-1").name("Partie principale").build();
+        when(playthroughRepository.findByCampaignId("campaign-1")).thenReturn(List.of(play));
 
         campaignService.deleteCampaign("campaign-1");
 
-        verify(characterRepository).deleteById("char-1");
+        verify(playthroughService).delete("play-1");
         verify(campaignRepository).deleteById("campaign-1");
     }
 
@@ -267,20 +272,20 @@ public class CampaignServiceTest {
         Scene s1 = Scene.builder().id("s-1").chapterId("chap-1").name("S1").build();
         Scene s2 = Scene.builder().id("s-2").chapterId("chap-2").name("S2").build();
         Scene s3 = Scene.builder().id("s-3").chapterId("chap-2").name("S3").build();
-        Character pc = Character.builder().id("char-1").campaignId("campaign-1").name("Alric").build();
+        Playthrough play = Playthrough.builder().id("play-1").campaignId("campaign-1").name("Partie principale").build();
 
         when(arcRepository.findByCampaignId("campaign-1")).thenReturn(List.of(arc));
         when(chapterRepository.findByArcId("arc-1")).thenReturn(List.of(c1, c2));
         when(sceneRepository.findByChapterId("chap-1")).thenReturn(List.of(s1));
         when(sceneRepository.findByChapterId("chap-2")).thenReturn(List.of(s2, s3));
-        when(characterRepository.findByCampaignId("campaign-1")).thenReturn(List.of(pc));
+        when(playthroughRepository.findByCampaignId("campaign-1")).thenReturn(List.of(play));
 
         CampaignService.DeletionImpact impact = campaignService.getDeletionImpact("campaign-1");
 
         assertEquals(1, impact.arcs());
         assertEquals(2, impact.chapters());
         assertEquals(3, impact.scenes());
-        assertEquals(1, impact.characters());
+        assertEquals(1, impact.playthroughs());
     }
 
     @Test

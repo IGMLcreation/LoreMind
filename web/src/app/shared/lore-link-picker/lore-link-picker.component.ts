@@ -1,7 +1,8 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, X, Link2 } from 'lucide-angular';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Page } from '../../services/page.model';
 
 /**
@@ -25,11 +26,10 @@ import { Page } from '../../services/page.model';
  *  - Exclut la page courante et les pages déjà sélectionnées
  */
 @Component({
-  selector: 'app-lore-link-picker',
-  standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule],
-  templateUrl: './lore-link-picker.component.html',
-  styleUrls: ['./lore-link-picker.component.scss']
+    selector: 'app-lore-link-picker',
+    imports: [FormsModule, LucideAngularModule, TranslatePipe],
+    templateUrl: './lore-link-picker.component.html',
+    styleUrls: ['./lore-link-picker.component.scss']
 })
 export class LoreLinkPickerComponent {
   readonly X = X;

@@ -1,0 +1,57 @@
+<div class="sic-panel">
+  @if (loading) {
+    <p class="loading-hint">{{ 'common.loading' | translate }}</p>
+  }
+
+  <!-- Liste des catalogues -->
+  @if (!loading && !selected) {
+    <div class="sic-list">
+      @if (catalogs.length === 0) {
+        <p class="empty-hint">
+          {{ 'sessionItemCatalogsPanel.empty' | translate }}
+        </p>
+      }
+      @for (c of catalogs; track c) {
+        <button type="button" class="sic-item" (click)="select(c)">
+          <lucide-icon [img]="Package" [size]="13"></lucide-icon>
+          <span class="sic-item-name">{{ c.name }}</span>
+          <span class="sic-item-count">{{ c.items.length }}</span>
+        </button>
+      }
+    </div>
+  }
+
+  <!-- Catalogue sélectionné -->
+  @if (selected) {
+    <div class="sic-detail">
+      <button type="button" class="sic-back" (click)="backToList()">
+        <lucide-icon [img]="ChevronLeft" [size]="13"></lucide-icon> {{ 'sessionItemCatalogsPanel.catalogs' | translate }}
+      </button>
+      <h4>{{ selected.name }}</h4>
+      @for (g of groups; track g) {
+        <div class="sic-group">
+          @if (g.category !== '—') {
+            <div class="sic-group-title">{{ g.category }}</div>
+          }
+          @for (it of g.items; track it) {
+            <div class="sic-obj">
+              <div class="sic-obj-main">
+                <span class="sic-obj-name">{{ it.name }}</span>
+                @if (it.price) {
+                  <span class="sic-obj-price">{{ it.price }}</span>
+                }
+              </div>
+              @if (it.description) {
+                <div class="sic-obj-desc">{{ it.description }}</div>
+              }
+              <button type="button" class="sic-note" (click)="note(it)" [disabled]="!canAddToJournal"
+                [title]="'sessionItemCatalogsPanel.noteTitle' | translate">
+                <lucide-icon [img]="BookmarkPlus" [size]="12"></lucide-icon> {{ 'sessionItemCatalogsPanel.journal' | translate }}
+              </button>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

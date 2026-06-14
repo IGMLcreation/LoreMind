@@ -44,6 +44,16 @@ public class ChapterService {
         return chapterRepository.save(chapter);
     }
 
+    /**
+     * Création à partir d'un Chapter complet (utilisé par le controller pour faire passer
+     * les nouveaux champs comme progressionStatus / prerequisites sans démultiplier les
+     * paramètres). L'id est forcé à null pour laisser la DB le générer.
+     */
+    public Chapter createChapter(Chapter input) {
+        input.setId(null);
+        return chapterRepository.save(input);
+    }
+
     public Optional<Chapter> getChapterById(String id) {
         return chapterRepository.findById(id);
     }

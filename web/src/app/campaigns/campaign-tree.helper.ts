@@ -1,12 +1,18 @@
 import { Observable, forkJoin, of } from 'rxjs';
 import { switchMap, map } from 'rxjs/operators';
+import { TranslateService } from '@ngx-translate/core';
 import { CampaignService } from '../services/campaign.service';
 import { CharacterService } from '../services/character.service';
 import { NpcService } from '../services/npc.service';
+import { RandomTableService } from '../services/random-table.service';
+import { EnemyService } from '../services/enemy.service';
 import { TreeItem, SecondarySidebarConfig, GlobalItem } from '../services/layout.service';
 import { Arc, Chapter, Scene, Campaign } from '../services/campaign.model';
 import { Character } from '../services/character.model';
 import { Npc } from '../services/npc.model';
+import { RandomTable } from '../services/random-table.model';
+import { Enemy } from '../services/enemy.model';
+import { catchError } from 'rxjs/operators';
 
 /**
  * Helper — charge l'arborescence complète d'une campagne (arcs -> chapitres -> scènes)
@@ -22,22 +28,39 @@ export interface CampaignTreeData {
   scenesByChapter: Record<string, Scene[]>;
   characters: Character[];
   npcs: Npc[];
+  randomTables: RandomTable[];
+  enemies: Enemy[];
 }
 
 export function loadCampaignTreeData(
   service: CampaignService,
   campaignId: string,
   characterService: CharacterService,
-  npcService: NpcService
+  npcService: NpcService,
+  // Optionnel pour ne pas casser les ~15 appelants existants : si fourni, les
+  // tables aléatoires sont chargées et apparaissent dans la sidebar.
+  randomTableService?: RandomTableService,
+  // Optionnel (même principe) : si fourni, les ennemis sont chargés et le nœud
+  // « Ennemis » devient dépliable (dossiers → fiches) en plus du lien.
+  enemyService?: EnemyService
 ): Observable<CampaignTreeData> {
+  // Note refonte Playthrough : les PJ appartiennent désormais à une Partie,
+  // pas à la campagne — on ne les charge plus ici (les vues qui les affichent
+  // doivent passer par PlaythroughService et appeler characterService.getByPlaythrough).
   return forkJoin({
     arcs: service.getArcs(campaignId),
-    characters: characterService.getByCampaign(campaignId),
-    npcs: npcService.getByCampaign(campaignId)
+    characters: of([] as Character[]),
+    npcs: npcService.getByCampaign(campaignId),
+    randomTables: randomTableService
+      ? randomTableService.getByCampaign(campaignId).pipe(catchError(() => of([] as RandomTable[])))
+      : of([] as RandomTable[]),
+    enemies: enemyService
+      ? enemyService.getByCampaign(campaignId).pipe(catchError(() => of([] as Enemy[])))
+      : of([] as Enemy[])
   }).pipe(
-    switchMap(({ arcs, characters, npcs }) => {
+    switchMap(({ arcs, characters, npcs, randomTables, enemies }) => {
       if (arcs.length === 0) {
-        return of({ arcs, chaptersByArc: {}, scenesByChapter: {}, characters, npcs });
+        return of({ arcs, chaptersByArc: {}, scenesByChapter: {}, characters, npcs, randomTables, enemies });
       }
       const chapterCalls = arcs.map(a =>
         service.getChapters(a.id!).pipe(map(chapters => ({ arcId: a.id!, chapters })))
@@ -52,7 +75,7 @@ export function loadCampaignTreeData(
           });
 
           if (allChapters.length === 0) {
-            return of({ arcs, chaptersByArc, scenesByChapter: {}, characters, npcs });
+            return of({ arcs, chaptersByArc, scenesByChapter: {}, characters, npcs, randomTables, enemies });
           }
           const sceneCalls = allChapters.map(c =>
             service.getScenes(c.id!).pipe(map(scenes => ({ chapterId: c.id!, scenes })))
@@ -61,7 +84,7 @@ export function loadCampaignTreeData(
             map(sceneResults => {
               const scenesByChapter: Record<string, Scene[]> = {};
               sceneResults.forEach(r => { scenesByChapter[r.chapterId] = r.scenes; });
-              return { arcs, chaptersByArc, scenesByChapter, characters, npcs };
+              return { arcs, chaptersByArc, scenesByChapter, characters, npcs, randomTables, enemies };
             })
           );
         })
@@ -70,7 +93,7 @@ export function loadCampaignTreeData(
   );
 }
 
-export function buildCampaignTree(campaignId: string, data: CampaignTreeData): TreeItem[] {
+export function buildCampaignTree(campaignId: string, data: CampaignTreeData, translate: TranslateService): TreeItem[] {
   // Tri FR avec `numeric: true` pour que "1. Intro", "2. Voyage", "10. Final" soient
   // classés 1, 2, 10 (et pas 1, 10, 2). `sensitivity: 'base'` ignore la casse.
   const byName = (a: { name: string }, b: { name: string }) =>
@@ -79,51 +102,96 @@ export function buildCampaignTree(campaignId: string, data: CampaignTreeData): T
   // IDs préfixés par type pour éviter les collisions dans LayoutService.expanded
   // (chaque entité a sa propre séquence IDENTITY en base → arc.id=1 et chapter.id=1
   // peuvent coexister et se marchaient sur les pieds dans le Set<string> global).
-  const sortedCharacters = [...data.characters].sort(byName);
-  const characterItems: TreeItem[] = sortedCharacters.map(ch => ({
-    id: `character-${ch.id}`,
-    label: ch.name,
-    route: `/campaigns/${campaignId}/characters/${ch.id}`
-  }));
-
-  const charactersNode: TreeItem = {
-    id: 'characters-root',
-    label: 'PJ',
-    iconKey: 'users',
-    children: characterItems,
-    meta: characterItems.length ? String(characterItems.length) : undefined,
-    sectionHeaderBefore: 'Personnages',
-    // Note : le section header "Personnages" est porté par le premier nœud (PJ).
-    // Le filet au-dessus est masqué par CSS si c'est le tout premier item de la sidebar.
-    createActions: [{
-      id: 'new-character',
-      label: 'Nouveau PJ',
-      route: `/campaigns/${campaignId}/characters/create`,
-      actionIcon: 'plus'
-    }]
-  };
-
+  // Note refonte Playthrough : les PJ ne sont plus rattachés à la campagne mais
+  // à une Partie (Playthrough). On ne les affiche donc plus dans la sidebar de
+  // campagne — seuls les PNJ (donnée de scénario) restent sous "Personnages".
   const sortedNpcs = [...data.npcs].sort(byName);
-  const npcItems: TreeItem[] = sortedNpcs.map(n => ({
+  const npcItem = (n: Npc): TreeItem => ({
     id: `npc-${n.id}`,
     label: n.name,
     route: `/campaigns/${campaignId}/npcs/${n.id}`
-  }));
+  });
+
+  // Regroupement par DOSSIER : un sous-nœud (dépliable) par dossier, puis les PNJ
+  // non classés directement sous « PNJ ».
+  const npcsByFolder = new Map<string, Npc[]>();
+  const ungroupedNpcs: Npc[] = [];
+  for (const n of sortedNpcs) {
+    const f = (n.folder ?? '').trim();
+    if (f) {
+      if (!npcsByFolder.has(f)) npcsByFolder.set(f, []);
+      npcsByFolder.get(f)!.push(n);
+    } else {
+      ungroupedNpcs.push(n);
+    }
+  }
+  const npcFolderNodes: TreeItem[] = [...npcsByFolder.keys()]
+    .sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }))
+    .map(folder => {
+      const items = npcsByFolder.get(folder)!.map(npcItem);
+      return {
+        id: `npc-folder-${folder}`,
+        label: folder,
+        iconKey: 'folder',
+        children: items,
+        meta: String(items.length)
+      };
+    });
+  const npcChildren: TreeItem[] = [...npcFolderNodes, ...ungroupedNpcs.map(npcItem)];
 
   const npcsNode: TreeItem = {
     id: 'npcs-root',
-    label: 'PNJ',
+    label: translate.instant('campaignTree.npcs'),
     iconKey: 'c-drama',
-    children: npcItems,
-    meta: npcItems.length ? String(npcItems.length) : undefined,
-    // Pas de sectionHeaderBefore : on reste sous le header "Personnages" du nœud PJ.
+    children: npcChildren,
+    meta: sortedNpcs.length ? String(sortedNpcs.length) : undefined,
+    // Cliquer le LIBELLÉ ouvre la page de liste (vue d'ensemble par dossiers) ;
+    // cliquer le CHEVRON déplie l'arbre dans la sidebar — les deux coexistent.
+    route: `/campaigns/${campaignId}/npcs`,
+    // Porte le header de section "Personnages" (les PJ ayant migré vers la Partie).
+    // Le filet au-dessus est masqué par CSS si c'est le tout premier item de la sidebar.
+    sectionHeaderBefore: translate.instant('campaignTree.sectionCharacters'),
     createActions: [{
       id: 'new-npc',
-      label: 'Nouveau PNJ',
+      label: translate.instant('campaignTree.newNpc'),
       route: `/campaigns/${campaignId}/npcs/create`,
       actionIcon: 'plus'
     }]
   };
+
+  // --- Ennemis (bestiaire) : même structure que les PNJ — dossiers dépliables
+  // dans la sidebar + libellé cliquable vers la page de liste.
+  const sortedEnemies = [...(data.enemies ?? [])].sort(byName);
+  const enemyItem = (e: Enemy): TreeItem => ({
+    id: `enemy-${e.id}`,
+    label: e.name,
+    route: `/campaigns/${campaignId}/enemies/${e.id}`,
+    meta: e.level ? `Niv. ${e.level}` : undefined
+  });
+  const enemiesByFolder = new Map<string, Enemy[]>();
+  const ungroupedEnemies: Enemy[] = [];
+  for (const e of sortedEnemies) {
+    const f = (e.folder ?? '').trim();
+    if (f) {
+      if (!enemiesByFolder.has(f)) enemiesByFolder.set(f, []);
+      enemiesByFolder.get(f)!.push(e);
+    } else {
+      ungroupedEnemies.push(e);
+    }
+  }
+  const enemyFolderNodes: TreeItem[] = [...enemiesByFolder.keys()]
+    .sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }))
+    .map(folder => {
+      const items = enemiesByFolder.get(folder)!.map(enemyItem);
+      return {
+        id: `enemy-folder-${folder}`,
+        label: folder,
+        iconKey: 'folder',
+        children: items,
+        meta: String(items.length)
+      };
+    });
+  const enemyChildren: TreeItem[] = [...enemyFolderNodes, ...ungroupedEnemies.map(enemyItem)];
 
   const sortedArcs = [...data.arcs].sort(byName);
 
@@ -143,11 +211,13 @@ export function buildCampaignTree(campaignId: string, data: CampaignTreeData): T
         id: `chapter-${ch.id}`,
         label: ch.name,
         iconKey: ch.icon ?? undefined,
+        // Cadenas si le chapitre porte des conditions de déblocage (hub ou linéaire).
+        meta: (ch.prerequisites?.length ?? 0) > 0 ? '🔒' : undefined,
         children: sceneItems,
         route: `/campaigns/${campaignId}/arcs/${arc.id}/chapters/${ch.id}`,
         createActions: [{
           id: `new-scene-${ch.id}`,
-          label: 'Nouvelle scène',
+          label: translate.instant('campaignTree.newScene'),
           route: `/campaigns/${campaignId}/arcs/${arc.id}/chapters/${ch.id}/scenes/create`,
           actionIcon: 'plus'
         }]
@@ -159,18 +229,84 @@ export function buildCampaignTree(campaignId: string, data: CampaignTreeData): T
       iconKey: arc.icon ?? undefined,
       children: chapterItems,
       route: `/campaigns/${campaignId}/arcs/${arc.id}`,
-      sectionHeaderBefore: idx === 0 ? 'Narration' : undefined,
+      sectionHeaderBefore: idx === 0 ? translate.instant('campaignTree.sectionNarration') : undefined,
 
       createActions: [{
         id: `new-chapter-${arc.id}`,
-        label: 'Nouveau chapitre',
+        // Dans un arc hub, un "chapitre" est présenté comme une "quête".
+        label: arc.type === 'HUB' ? translate.instant('campaignTree.newQuest') : translate.instant('campaignTree.newChapter'),
         route: `/campaigns/${campaignId}/arcs/${arc.id}/chapters/create`,
         actionIcon: 'plus'
       }]
     };
   });
 
-  return [...arcNodes, charactersNode, npcsNode];
+  const sortedTables = [...(data.randomTables ?? [])].sort(byName);
+  const tableItems: TreeItem[] = sortedTables.map(t => ({
+    id: `random-table-${t.id}`,
+    label: t.name,
+    iconKey: t.icon ?? 'dice',
+    route: `/campaigns/${campaignId}/random-tables/${t.id}`
+  }));
+
+  const tablesNode: TreeItem = {
+    id: 'random-tables-root',
+    label: translate.instant('campaignTree.randomTables'),
+    iconKey: 'dice',
+    children: tableItems,
+    meta: tableItems.length ? String(tableItems.length) : undefined,
+    sectionHeaderBefore: translate.instant('campaignTree.sectionTools'),
+    createActions: [{
+      id: 'new-random-table',
+      label: translate.instant('campaignTree.newTable'),
+      route: `/campaigns/${campaignId}/random-tables/create`,
+      actionIcon: 'plus'
+    }]
+  };
+
+  // Lien simple vers les ateliers (la liste se charge sur sa page — pas de fetch ici).
+  const notebooksNode: TreeItem = {
+    id: 'notebooks-root',
+    label: translate.instant('campaignTree.notebooks'),
+    iconKey: 'book-open',
+    route: `/campaigns/${campaignId}/notebooks`
+  };
+
+  // Catalogues d'objets (boutiques, butins…) → page de liste (outil).
+  const catalogsNode: TreeItem = {
+    id: 'item-catalogs-root',
+    label: translate.instant('campaignTree.itemCatalogs'),
+    iconKey: 'package',
+    route: `/campaigns/${campaignId}/item-catalogs`
+  };
+
+  // Ennemis (bestiaire, fiches pilotées par le template Ennemi du GameSystem,
+  // classées par dossier) — rangé avec les PERSONNAGES, comme les PNJ.
+  // Libellé → page de liste ; chevron → arbre dépliable (dossiers → fiches).
+  const enemiesNode: TreeItem = {
+    id: 'enemies-root',
+    label: translate.instant('campaignTree.enemies'),
+    iconKey: 'skull',
+    children: enemyChildren,
+    meta: sortedEnemies.length ? String(sortedEnemies.length) : undefined,
+    route: `/campaigns/${campaignId}/enemies`,
+    createActions: [{
+      id: 'new-enemy',
+      label: translate.instant('campaignTree.newEnemy'),
+      route: `/campaigns/${campaignId}/enemies/create`,
+      actionIcon: 'plus'
+    }]
+  };
+
+  // Importer un PDF de campagne → arborescence (outil, comme tables & ateliers).
+  const importNode: TreeItem = {
+    id: 'import-pdf-root',
+    label: translate.instant('campaignTree.importPdf'),
+    iconKey: 'file-up',
+    route: `/campaigns/${campaignId}/import`
+  };
+
+  return [...arcNodes, npcsNode, enemiesNode, tablesNode, notebooksNode, catalogsNode, importNode];
 }
 
 /**
@@ -187,20 +323,23 @@ export function buildCampaignSidebarConfig(
   campaign: Campaign,
   allCampaigns: Campaign[],
   treeData: CampaignTreeData,
-  campaignId: string
+  campaignId: string,
+  translate: TranslateService
 ): SecondarySidebarConfig {
   const globalItems: GlobalItem[] = allCampaigns.map(c => ({
     id: c.id!, name: c.name, route: `/campaigns/${c.id}`
   }));
   return {
     title: campaign.name,
-    items: buildCampaignTree(campaignId, treeData),
-    footerLabel: 'Toutes les campagnes',
+    // Titre cliquable → accueil de la campagne (raccourci depuis n'importe quelle sous-page).
+    titleRoute: `/campaigns/${campaignId}`,
+    items: buildCampaignTree(campaignId, treeData, translate),
+    footerLabel: translate.instant('campaignTree.allCampaigns'),
     createActions: [
-      { id: 'create-arc', label: '+ Nouvel arc', variant: 'primary', route: `/campaigns/${campaignId}/arcs/create` }
+      { id: 'create-arc', label: translate.instant('campaignTree.newArc'), variant: 'primary', route: `/campaigns/${campaignId}/arcs/create` }
     ],
     globalItems,
-    globalBackLabel: 'Toutes les campagnes',
+    globalBackLabel: translate.instant('campaignTree.allCampaigns'),
     globalBackRoute: '/campaigns'
   };
 }

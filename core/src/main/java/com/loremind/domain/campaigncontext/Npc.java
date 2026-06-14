@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,6 +47,16 @@ public class Npc {
     /** Référence vers la Campaign parente (cross-aggregate via ID). */
     private String campaignId;
 
+    /**
+     * IDs de Pages de Lore référencées par ce PNJ (sa ville, sa faction, sa
+     * région…). Référence faible cross-context, même principe que sur
+     * Arc/Chapter/Scene — alimente notamment le graphe du Lore.
+     */
+    private List<String> relatedPageIds;
+
+    /** Dossier de classement (texte libre, ex. « Bard's Gate »). Nullable = non classé. */
+    private String folder;
+
     /** Ordre d'affichage dans la liste des PNJ de la campagne. */
     private int order;
 
@@ -65,5 +76,10 @@ public class Npc {
     public Map<String, Map<String, String>> getKeyValueValues() {
         if (keyValueValues == null) keyValueValues = new HashMap<>();
         return keyValueValues;
+    }
+
+    public List<String> getRelatedPageIds() {
+        if (relatedPageIds == null) relatedPageIds = new ArrayList<>();
+        return relatedPageIds;
     }
 }

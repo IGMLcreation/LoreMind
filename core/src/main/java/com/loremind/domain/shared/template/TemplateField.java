@@ -30,8 +30,9 @@ public class TemplateField {
     /** Variante de rendu pour les champs IMAGE. Null = GALLERY. */
     private ImageLayout layout;
     /**
-     * Labels predefinis pour les champs KEY_VALUE_LIST (ordre significatif).
-     * Ex: ["FOR","DEX","CON","INT","SAG","CHA"] pour un champ "Caracteristiques".
+     * Labels predefinis (ordre significatif), selon le type :
+     * - KEY_VALUE_LIST : libelles des lignes. Ex: ["FOR","DEX","CON","INT","SAG","CHA"].
+     * - TABLE          : noms des COLONNES. Ex: ["Objet","Prix","Description"].
      * Null/vide pour les autres types.
      */
     private List<String> labels;
@@ -69,5 +70,10 @@ public class TemplateField {
     /** Raccourci : construit un champ KEY_VALUE_LIST avec labels predefinis. */
     public static TemplateField keyValueList(String name, List<String> labels) {
         return new TemplateField(name, FieldType.KEY_VALUE_LIST, null, labels);
+    }
+
+    /** Raccourci : construit un champ TABLE avec ses noms de colonnes. */
+    public static TemplateField table(String name, List<String> columns) {
+        return new TemplateField(name, FieldType.TABLE, null, columns);
     }
 }

@@ -67,6 +67,9 @@ public class PostgresGameSystemRepository implements GameSystemRepository {
                 .npcTemplate(e.getNpcTemplate() != null
                         ? new java.util.ArrayList<>(e.getNpcTemplate())
                         : new java.util.ArrayList<>())
+                .enemyTemplate(e.getEnemyTemplate() != null
+                        ? new java.util.ArrayList<>(e.getEnemyTemplate())
+                        : new java.util.ArrayList<>())
                 .author(e.getAuthor())
                 .isPublic(e.isPublic())
                 .createdAt(e.getCreatedAt())
@@ -86,6 +89,9 @@ public class PostgresGameSystemRepository implements GameSystemRepository {
                         : new java.util.ArrayList<>())
                 .npcTemplate(g.getNpcTemplate() != null
                         ? new java.util.ArrayList<>(g.getNpcTemplate())
+                        : new java.util.ArrayList<>())
+                .enemyTemplate(g.getEnemyTemplate() != null
+                        ? new java.util.ArrayList<>(g.getEnemyTemplate())
                         : new java.util.ArrayList<>())
                 .author(g.getAuthor())
                 .isPublic(g.isPublic())

@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 import { TemplateField } from '../../services/template.model';
 import { ImageGalleryComponent } from '../image-gallery/image-gallery.component';
 
@@ -16,11 +17,10 @@ import { ImageGalleryComponent } from '../image-gallery/image-gallery.component'
  * qui gere l'upload, la suppression et le respect du layout.
  */
 @Component({
-  selector: 'app-dynamic-fields-form',
-  standalone: true,
-  imports: [CommonModule, FormsModule, ImageGalleryComponent],
-  templateUrl: './dynamic-fields-form.component.html',
-  styleUrls: ['./dynamic-fields-form.component.scss']
+    selector: 'app-dynamic-fields-form',
+    imports: [FormsModule, ImageGalleryComponent, TranslatePipe],
+    templateUrl: './dynamic-fields-form.component.html',
+    styleUrls: ['./dynamic-fields-form.component.scss']
 })
 export class DynamicFieldsFormComponent {
   @Input() fields: TemplateField[] = [];

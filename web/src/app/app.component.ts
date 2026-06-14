@@ -1,5 +1,5 @@
 import { Component, HostListener } from '@angular/core';
-import { AsyncPipe, NgIf } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { SidebarComponent } from './sidebar/sidebar.component';
 import { SecondarySidebarComponent } from './shared/secondary-sidebar/secondary-sidebar.component';
@@ -11,20 +11,18 @@ import { GlobalSearchService } from './services/global-search.service';
 import { VersionCheckerService } from './services/version-checker.service';
 
 @Component({
-  selector: 'app-root',
-  standalone: true,
-  imports: [
+    selector: 'app-root',
+    imports: [
     RouterOutlet,
     SidebarComponent,
     SecondarySidebarComponent,
     GlobalSearchComponent,
     UpdateBannerComponent,
     ConfirmDialogHostComponent,
-    AsyncPipe,
-    NgIf,
-  ],
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss']
+    AsyncPipe
+],
+    templateUrl: './app.component.html',
+    styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
   readonly sidebarConfig$ = this.layoutService.secondarySidebar$;

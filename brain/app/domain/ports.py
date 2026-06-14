@@ -7,7 +7,10 @@ En Python moderne on privilégie Protocol (PEP 544) sur ABC pour bénéficier
 du duck typing structurel : toute classe qui possède les bonnes méthodes
 satisfait le contrat, sans héritage explicite.
 """
-from typing import AsyncIterator, Protocol
+from typing import TYPE_CHECKING, AsyncIterator, Protocol
+
+if TYPE_CHECKING:
+    from app.domain.models import ExtractedDocument
 
 
 class LLMProvider(Protocol):
@@ -21,17 +24,20 @@ class LLMProvider(Protocol):
         self,
         prompt: str,
         *,
-        output_format: str | None = None,
+        output_format: str | dict | None = None,
         temperature: float | None = None,
     ) -> str:
         """Génère une réponse textuelle à partir d'un prompt donné.
 
         Args:
             prompt: le texte envoyé au modèle.
-            output_format: contrainte de format optionnelle. Exemple : "json"
-                pour forcer le modèle à renvoyer du JSON valide. Les
-                fournisseurs qui ne supportent pas une valeur donnée doivent
-                l'ignorer silencieusement ou la traduire au mieux.
+            output_format: contrainte de format optionnelle. "json" pour forcer
+                un JSON valide ; un dict = SCHÉMA JSON décrivant la structure
+                attendue (les fournisseurs qui supportent les sorties
+                structurées — ex. Ollama — contraignent la génération au schéma,
+                les autres retombent sur leur mode JSON natif). Les fournisseurs
+                qui ne supportent pas une valeur donnée doivent l'ignorer
+                silencieusement ou la traduire au mieux.
             temperature: créativité du modèle, 0.0 (déterministe/factuel) à
                 1.0+ (très créatif, hallucine plus facilement). None =
                 valeur par défaut de l'adapter. Recommandation LoreMind :
@@ -78,9 +84,46 @@ class LLMChatProvider(Protocol):
         ...
 
 
+class PdfTextExtractor(Protocol):
+    """Port sortant — extrait le texte d'un PDF (born-digital ou scan).
+
+    L'implémentation décide de sa stratégie (couche texte directe, repli OCR
+    page par page…). Le domaine ne connaît ni PyMuPDF ni Tesseract.
+    """
+
+    def extract(self, pdf_bytes: bytes) -> "ExtractedDocument":
+        """Extrait le texte du PDF fourni sous forme d'octets.
+
+        Args:
+            pdf_bytes: contenu binaire du fichier PDF.
+
+        Returns:
+            ExtractedDocument : une entrée par page (texte + flag OCR).
+
+        Raises:
+            PdfExtractionError: si le PDF est illisible/corrompu.
+        """
+        ...
+
+
+class PdfExtractionError(Exception):
+    """Erreur du domaine : un PDF n'a pas pu être lu/extrait."""
+
+
 class LLMProviderError(Exception):
     """Erreur du domaine signalant qu'un LLMProvider n'a pas pu générer.
 
     Définie dans le domaine (pas dans l'infra) pour que les couches
     supérieures puissent l'attraper sans connaître l'adapter concret.
+    """
+
+
+class LLMGenerationTimeout(LLMProviderError):
+    """La génération a démarré mais n'a pas FINI dans le temps imparti.
+
+    Cas distinct d'un échec transitoire (file d'attente, 503) : le modèle
+    produisait des tokens mais trop lentement pour la taille de sortie demandée.
+    Réessayer à l'identique est inutile (même entrée → même lenteur) ; la bonne
+    réaction est de RÉDUIRE la sortie demandée (ex. import : re-découper le
+    morceau en deux moitiés).
     """

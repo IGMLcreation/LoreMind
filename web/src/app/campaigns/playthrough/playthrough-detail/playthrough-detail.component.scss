@@ -1,0 +1,135 @@
+.playthrough-page {
+  padding: 2.5rem 2rem;
+  max-width: 880px;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+
+  h1 { margin: 0 0 0.2rem; font-size: 1.6rem; }
+}
+
+.header-info { flex: 1; }
+
+.subtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-text-muted, #666);
+}
+
+.play-action {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.btn-primary.big,
+.btn-secondary.big {
+  padding: 0.75rem 1.25rem;
+  font-size: 0.95rem;
+}
+
+.block {
+  margin-bottom: 1.75rem;
+
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.05rem;
+    margin: 0 0 0.7rem;
+  }
+}
+
+.block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.7rem;
+
+  h2 { margin: 0; }
+}
+
+.btn-add {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  background: #6c63ff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover { background: #5b52e0; }
+}
+
+.empty {
+  font-size: 0.88rem;
+  color: var(--color-text-muted, #777);
+  font-style: italic;
+}
+
+.character-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+
+  a {
+    display: inline-block;
+    padding: 0.35rem 0.7rem;
+    border: 1px solid var(--color-border, #e2e2e2);
+    border-radius: 999px;
+    text-decoration: none;
+    color: inherit;
+
+    &:hover { border-color: var(--color-primary, #2c6cd6); }
+  }
+}
+
+.session-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+
+  li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 0.85rem;
+    border: 1px solid var(--color-border, #e2e2e2);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color 120ms ease;
+
+    &:hover { border-color: var(--color-primary, #2c6cd6); }
+  }
+}
+
+.session-status {
+  font-size: 0.78rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(128, 128, 128, 0.1);
+  color: var(--color-text-muted, #666);
+
+  &.active {
+    background: rgba(52, 168, 83, 0.15);
+    color: #2f7a47;
+    font-weight: 600;
+  }
+}

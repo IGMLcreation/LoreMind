@@ -1,0 +1,44 @@
+<div class="sbl-page">
+  <div class="sbl-toolbar">
+    <button class="btn-back" (click)="back()">
+      <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon> {{ 'common.back' | translate }}
+    </button>
+    <span class="spacer"></span>
+    <button class="btn-create" (click)="create()">
+      <lucide-icon [img]="Plus" [size]="14"></lucide-icon> {{ 'npcList.create' | translate }}
+    </button>
+  </div>
+
+  <header class="sbl-header">
+    <h1><lucide-icon [img]="Drama" [size]="22"></lucide-icon> {{ 'npcList.title' | translate }}</h1>
+    <p class="sbl-hint">
+      {{ 'npcList.hint' | translate }}
+    </p>
+  </header>
+
+  <div class="sbl-list">
+    @if (total === 0) {
+      <p class="empty">{{ 'npcList.empty' | translate }}</p>
+    }
+    @for (g of groups; track g.folder) {
+      @if (g.folder) {
+        <h2 class="sbl-folder">
+          <lucide-icon [img]="Folder" [size]="14"></lucide-icon>
+          {{ g.folder }}
+          <span class="sbl-folder-count">{{ g.npcs.length }}</span>
+        </h2>
+      } @else if (groups.length > 1) {
+        <h2 class="sbl-folder sbl-folder--none">{{ 'npcList.unclassified' | translate }}</h2>
+      }
+      @for (n of g.npcs; track n.id) {
+        <button class="sbl-item" (click)="open(n)">
+          <lucide-icon [img]="Drama" [size]="16"></lucide-icon>
+          <span class="sbl-item-name">{{ n.name }}</span>
+          <span class="sbl-del" (click)="remove(n, $event)" [title]="'common.delete' | translate">
+            <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+          </span>
+        </button>
+      }
+    }
+  </div>
+</div>

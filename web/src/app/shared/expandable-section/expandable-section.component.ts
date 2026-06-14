@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { LucideAngularModule, ChevronDown, ChevronUp } from 'lucide-angular';
 
 /**
@@ -12,11 +12,10 @@ import { LucideAngularModule, ChevronDown, ChevronUp } from 'lucide-angular';
  *   </app-expandable-section>
  */
 @Component({
-  selector: 'app-expandable-section',
-  standalone: true,
-  imports: [CommonModule, LucideAngularModule],
-  templateUrl: './expandable-section.component.html',
-  styleUrls: ['./expandable-section.component.scss']
+    selector: 'app-expandable-section',
+    imports: [LucideAngularModule],
+    templateUrl: './expandable-section.component.html',
+    styleUrls: ['./expandable-section.component.scss']
 })
 export class ExpandableSectionComponent {
   readonly ChevronDown = ChevronDown;

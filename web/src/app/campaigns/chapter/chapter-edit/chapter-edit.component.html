@@ -2,132 +2,152 @@
 
   <div class="page-header">
     <div>
-      <h1>{{ chapter?.name || 'Chapitre' }}</h1>
-      <p class="subtitle">Chapitre</p>
+      <h1>{{ chapter?.name || ('chapterEdit.chapter' | translate) }}</h1>
+      <p class="subtitle">{{ 'chapterEdit.chapter' | translate }}</p>
     </div>
     <div class="header-actions">
       <button type="button" class="btn-ai"
-              (click)="toggleChat()"
-              [class.active]="chatOpen"
-              title="Ouvrir l'Assistant IA pour dialoguer autour de ce chapitre">
+        (click)="toggleChat()"
+        [class.active]="chatOpen"
+        [title]="'chapterEdit.aiAssistantTitle' | translate">
         <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
-        Assistant IA
+        {{ 'chapterEdit.aiAssistant' | translate }}
       </button>
-      <button type="button" class="btn-secondary" (click)="cancel()">Annuler</button>
+      <button type="button" class="btn-secondary" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
       <button type="button" class="btn-danger" (click)="delete()">
         <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
-        Supprimer
+        {{ 'common.delete' | translate }}
       </button>
       <button type="button" class="btn-primary" (click)="submit()" [disabled]="form.invalid">
-        Sauvegarder
+        {{ 'common.save' | translate }}
       </button>
     </div>
   </div>
 
   <form [formGroup]="form" (ngSubmit)="submit()" class="edit-form">
 
+    <!-- Conditions de déblocage (scénario) — pour TOUT chapitre : arc HUB (= quête)
+    comme arc linéaire (= chapitre conditionnel). Vide = disponible d'emblée. -->
+    <div class="hub-section">
+      <h2 class="hub-section-title">
+        {{ (parentArc?.type === 'HUB' ? 'chapterEdit.unlockTitleQuest' : 'chapterEdit.unlockTitleChapter') | translate }}
+      </h2>
+      <small class="field-hint">
+        {{ (parentArc?.type === 'HUB' ? 'chapterEdit.unlockHintQuest' : 'chapterEdit.unlockHintChapter') | translate }}
+      </small>
+      <app-prerequisite-editor
+        [prerequisites]="prerequisites"
+        [availableQuests]="availableQuests"
+        [availableFlags]="availableFlagNames"
+        (prerequisitesChange)="onPrerequisitesChange($event)">
+      </app-prerequisite-editor>
+    </div>
+
     <!-- Illustrations (galerie editable, rendu editorial) -->
     <div class="field">
-      <label>Illustrations</label>
+      <label>{{ 'chapterEdit.illustrations' | translate }}</label>
       <app-image-gallery
         [imageIds]="illustrationImageIds"
         [editable]="true"
         [layout]="'EDITORIAL'"
         (imageIdsChange)="illustrationImageIds = $event">
       </app-image-gallery>
-      <small class="field-hint">Portraits, ambiances, scenes marquantes du chapitre.</small>
+      <small class="field-hint">{{ 'chapterEdit.illustrationsHint' | translate }}</small>
     </div>
 
     <!-- Cartes & plans -->
     <div class="field">
-      <label>Cartes &amp; plans</label>
+      <label>{{ 'chapterEdit.maps' | translate }}</label>
       <app-image-gallery
         [imageIds]="mapImageIds"
         [editable]="true"
         [layout]="'MAPS'"
         (imageIdsChange)="mapImageIds = $event">
       </app-image-gallery>
-      <small class="field-hint">Cartes regionales, plans de donjon, schemas utiles a la table.</small>
+      <small class="field-hint">{{ 'chapterEdit.mapsHint' | translate }}</small>
     </div>
 
     <div class="field">
-      <label for="chapter-edit-name">Titre du chapitre *</label>
+      <label for="chapter-edit-name">{{ 'chapterEdit.nameLabel' | translate }}</label>
       <input
         id="chapter-edit-name"
         type="text"
         formControlName="name"
-        placeholder="Ex: Chapitre 1: Les Disparitions"
+        [placeholder]="'chapterEdit.namePlaceholder' | translate"
         [class.invalid]="form.get('name')?.invalid && form.get('name')?.touched"
-      />
+        />
     </div>
 
     <div class="field">
-      <label for="chapter-edit-description">Synopsis du chapitre</label>
+      <label for="chapter-edit-description">{{ 'chapterEdit.synopsisLabel' | translate }}</label>
       <textarea
         id="chapter-edit-description"
         formControlName="description"
-        placeholder="Décrivez brièvement ce qui se passe dans ce chapitre..."
+        [placeholder]="'chapterEdit.synopsisPlaceholder' | translate"
         rows="5">
       </textarea>
     </div>
 
     <div class="field">
-      <label>Icône</label>
+      <label>{{ 'chapterEdit.icon' | translate }}</label>
       <app-icon-picker [options]="campaignIconOptions" [(selected)]="selectedIcon"></app-icon-picker>
     </div>
 
     <div class="field">
-      <label for="chapter-edit-gm-notes">Notes du Maître de Jeu</label>
+      <label for="chapter-edit-gm-notes">{{ 'chapterEdit.gmNotesLabel' | translate }}</label>
       <textarea
         id="chapter-edit-gm-notes"
         formControlName="gmNotes"
-        placeholder="Vos notes privées sur le déroulement du chapitre, les événements clés, les rebondissements..."
+        [placeholder]="'chapterEdit.gmNotesPlaceholder' | translate"
         rows="6">
       </textarea>
-      <small class="field-hint">Ces notes sont privées et ne seront pas exportées vers FoundryVTT.</small>
+      <small class="field-hint">{{ 'chapterEdit.gmNotesHint' | translate }}</small>
     </div>
 
     <div class="field-row">
       <div class="field">
-        <label for="chapter-edit-player-objectives">Objectifs des joueurs</label>
+        <label for="chapter-edit-player-objectives">{{ 'chapterEdit.playerObjectivesLabel' | translate }}</label>
         <textarea
           id="chapter-edit-player-objectives"
           formControlName="playerObjectives"
-          placeholder="Que doivent accomplir les joueurs dans ce chapitre ?"
+          [placeholder]="'chapterEdit.playerObjectivesPlaceholder' | translate"
           rows="4">
         </textarea>
       </div>
       <div class="field">
-        <label for="chapter-edit-narrative-stakes">Enjeux narratifs</label>
+        <label for="chapter-edit-narrative-stakes">{{ 'chapterEdit.narrativeStakesLabel' | translate }}</label>
         <textarea
           id="chapter-edit-narrative-stakes"
           formControlName="narrativeStakes"
-          placeholder="Quels sont les enjeux dramatiques ?"
+          [placeholder]="'chapterEdit.narrativeStakesPlaceholder' | translate"
           rows="4">
         </textarea>
       </div>
     </div>
 
     <!-- ===== Pages Lore associées (B2 cross-context) ===== -->
-    <div class="field" *ngIf="loreId">
-      <label>Pages Lore associées</label>
-      <app-lore-link-picker
-        [value]="relatedPageIds"
-        [availablePages]="availablePages"
-        [loreId]="loreId"
-        (valueChange)="relatedPageIds = $event">
-      </app-lore-link-picker>
-      <small class="field-hint">
-        Liez ce chapitre à des PNJ, lieux ou éléments du Lore qui y apparaissent.
-      </small>
-    </div>
+    @if (loreId) {
+      <div class="field">
+        <label>{{ 'chapterEdit.relatedPages' | translate }}</label>
+        <app-lore-link-picker
+          [value]="relatedPageIds"
+          [availablePages]="availablePages"
+          [loreId]="loreId"
+          (valueChange)="relatedPageIds = $event">
+        </app-lore-link-picker>
+        <small class="field-hint">
+          {{ 'chapterEdit.relatedPagesHint' | translate }}
+        </small>
+      </div>
+    }
 
-    <div class="field" *ngIf="!loreId">
-      <small class="field-hint">
-        💡 Cette campagne n'est associée à aucun univers. Associez-la à un Lore dans l'écran de la campagne
-        pour pouvoir lier ce chapitre à des pages du Lore.
-      </small>
-    </div>
+    @if (!loreId) {
+      <div class="field">
+        <small class="field-hint">
+          {{ 'chapterEdit.noLoreHint' | translate }}
+        </small>
+      </div>
+    }
 
   </form>
 
@@ -139,7 +159,7 @@
   entityType="chapter"
   [entityId]="chapterId"
   [isOpen]="chatOpen"
-  welcomeMessage="Je vois ce chapitre. Demande-moi d'étoffer ses objectifs, ses enjeux ou sa scène d'ouverture."
+  [welcomeMessage]="'chapterEdit.chatWelcome' | translate"
   [quickSuggestions]="chatQuickSuggestions"
   (close)="chatOpen = false">
 </app-ai-chat-drawer>

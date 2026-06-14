@@ -1,0 +1,51 @@
+{
+  "sidebar": {
+    "subtitle": "THE DIGITAL CODEX",
+    "tabLore": "Lore",
+    "tabCampaign": "Campaign",
+    "toolsLabel": "TOOLS",
+    "globalSearch": "Global search",
+    "gameSystems": "RPG systems",
+    "vttExport": "VTT export",
+    "settings": "Settings",
+    "updateAvailable": "Update available",
+    "updateBadge": "NEW",
+    "version": "Version {{version}}"
+  },
+  "secondarySidebar": {
+    "backToCampaignHome": "Back to campaign home",
+    "resizeHandle": "Drag to resize"
+  },
+  "breadcrumb": {
+    "ariaLabel": "Breadcrumb"
+  },
+  "globalSearch": {
+    "placeholder": "Search in LoreMind...",
+    "noResults": "No results",
+    "minChars": "Type at least 2 characters",
+    "hintNavigate": "navigate",
+    "hintSelect": "select",
+    "hintClose": "close",
+    "countSingular": "{{count}} result",
+    "countPlural": "{{count}} results",
+    "enemyLevel": "Lvl. {{level}}",
+    "tags": {
+      "page": "Page",
+      "node": "Folder",
+      "template": "Template",
+      "lore": "Lore",
+      "campaign": "Campaign",
+      "npc": "NPC",
+      "character": "PC",
+      "randomTable": "Random table",
+      "itemCatalog": "Item catalog",
+      "enemy": "Enemy"
+    }
+  },
+  "updateBanner": {
+    "message": "A new version of LoreMind is available (<strong>{{version}}</strong>). Reload to enjoy the latest improvements.",
+    "reload": "Reload",
+    "dismissTitle": "Dismiss (will reappear on next startup)",
+    "dismissAria": "Dismiss"
+  }
+}

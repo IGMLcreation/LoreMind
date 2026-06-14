@@ -30,6 +30,9 @@ public class SceneDTO {
     private String combatDifficulty;
     private String enemies;
 
+    /** IDs des fiches du bestiaire engagées dans la rencontre (weak refs). */
+    private List<String> enemyIds = new ArrayList<>();
+
     /** IDs des pages du Lore liées (weak cross-context references). */
     private List<String> relatedPageIds = new ArrayList<>();
 
@@ -41,4 +44,7 @@ public class SceneDTO {
 
     /** Branches narratives : sorties possibles vers d'autres scènes du même chapitre. */
     private List<SceneBranchDTO> branches = new ArrayList<>();
+
+    /** Pièces du lieu explorable (donjon, crypte…). Vide = scène classique. */
+    private List<RoomDTO> rooms = new ArrayList<>();
 }

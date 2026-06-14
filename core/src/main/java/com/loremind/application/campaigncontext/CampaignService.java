@@ -1,13 +1,15 @@
 package com.loremind.application.campaigncontext;
 
+import com.loremind.application.playcontext.PlaythroughService;
 import com.loremind.domain.campaigncontext.Arc;
 import com.loremind.domain.campaigncontext.Campaign;
 import com.loremind.domain.campaigncontext.Chapter;
 import com.loremind.domain.campaigncontext.ports.ArcRepository;
 import com.loremind.domain.campaigncontext.ports.CampaignRepository;
 import com.loremind.domain.campaigncontext.ports.ChapterRepository;
-import com.loremind.domain.campaigncontext.ports.CharacterRepository;
 import com.loremind.domain.campaigncontext.ports.SceneRepository;
+import com.loremind.domain.playcontext.Playthrough;
+import com.loremind.domain.playcontext.ports.PlaythroughRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,9 +17,11 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Service d'application pour le contexte Campaign.
- * Orchestre la logique métier en utilisant le Port CampaignRepository.
- * Fait partie de la couche Application de l'Architecture Hexagonale.
+ * Service d'application pour le contexte Campaign (scénario).
+ *
+ * <p>Depuis Playthrough : les PJ et les sessions ne sont plus rattachés directement
+ * à la Campagne ; ils dépendent d'un Playthrough (Partie). La cascade de suppression
+ * d'une campagne englobe donc ses Playthroughs (qui à leur tour cascadent).</p>
  */
 @Service
 public class CampaignService {
@@ -26,35 +30,27 @@ public class CampaignService {
     private final ArcRepository arcRepository;
     private final ChapterRepository chapterRepository;
     private final SceneRepository sceneRepository;
-    private final CharacterRepository characterRepository;
+    private final PlaythroughRepository playthroughRepository;
+    private final PlaythroughService playthroughService;
 
     public CampaignService(
             CampaignRepository campaignRepository,
             ArcRepository arcRepository,
             ChapterRepository chapterRepository,
             SceneRepository sceneRepository,
-            CharacterRepository characterRepository) {
+            PlaythroughRepository playthroughRepository,
+            PlaythroughService playthroughService) {
         this.campaignRepository = campaignRepository;
         this.arcRepository = arcRepository;
         this.chapterRepository = chapterRepository;
         this.sceneRepository = sceneRepository;
-        this.characterRepository = characterRepository;
+        this.playthroughRepository = playthroughRepository;
+        this.playthroughService = playthroughService;
     }
 
-    /**
-     * Parameter Object pour la création / mise à jour d'une Campaign.
-     * Évite une signature à rallonge et rend les évolutions futures (theme,
-     * coverImageUrl, etc.) sans casser les appelants.
-     *
-     * <p>{@code loreId} est nullable : une campagne peut exister sans univers associé.</p>
-     */
     public record CampaignData(String name, String description, String loreId, String gameSystemId) {}
 
-    /**
-     * Compte des entités qui seront supprimées en cascade si la campagne est effacée.
-     * Utilisé par l'UI pour afficher un récapitulatif dans le dialogue de confirmation.
-     */
-    public record DeletionImpact(int arcs, int chapters, int scenes, int characters) {}
+    public record DeletionImpact(int arcs, int chapters, int scenes, int playthroughs) {}
 
     public Campaign createCampaign(CampaignData data) {
         Campaign campaign = Campaign.builder()
@@ -64,7 +60,12 @@ public class CampaignService {
                 .gameSystemId(normalizeId(data.gameSystemId()))
                 .arcsCount(0)
                 .build();
-        return campaignRepository.save(campaign);
+        Campaign saved = campaignRepository.save(campaign);
+
+        // Une campagne sans Partie n'a pas de sens jouable : on crée d'office
+        // une "Partie principale" pour que l'utilisateur puisse jouer immédiatement.
+        playthroughService.create(saved.getId(), "Partie principale", null);
+        return saved;
     }
 
     public Optional<Campaign> getCampaignById(String id) {
@@ -89,19 +90,10 @@ public class CampaignService {
         return campaignRepository.save(campaign);
     }
 
-    /**
-     * Normalise un ID entrant : une chaîne vide/blanche est traitée comme "pas de lien".
-     * Utile car les payloads JSON peuvent envoyer "" au lieu de null.
-     */
     private String normalizeId(String id) {
         return (id == null || id.isBlank()) ? null : id;
     }
 
-    /**
-     * Calcule l'impact d'une suppression en cascade : nombre d'arcs, chapitres,
-     * scènes et personnages qui disparaîtront avec la campagne. Utilisé par l'UI
-     * pour afficher "X arcs, Y chapitres, Z scènes seront supprimés".
-     */
     public DeletionImpact getDeletionImpact(String id) {
         List<Arc> arcs = arcRepository.findByCampaignId(id);
         int chapterTotal = 0;
@@ -113,31 +105,27 @@ public class CampaignService {
                 sceneTotal += sceneRepository.findByChapterId(chapter.getId()).size();
             }
         }
-        int characterTotal = characterRepository.findByCampaignId(id).size();
-        return new DeletionImpact(arcs.size(), chapterTotal, sceneTotal, characterTotal);
+        int playthroughTotal = playthroughRepository.findByCampaignId(id).size();
+        return new DeletionImpact(arcs.size(), chapterTotal, sceneTotal, playthroughTotal);
     }
 
-    /**
-     * Supprime la campagne et toutes ses entités dépendantes (arcs → chapitres →
-     * scènes, plus les personnages). L'opération est transactionnelle : soit
-     * tout disparaît, soit rien ne change. Les FKs applicatives n'ayant pas
-     * de contrainte CASCADE au niveau DB, on orchestre la cascade ici.
-     */
     @Transactional
     public void deleteCampaign(String id) {
-        List<Arc> arcs = arcRepository.findByCampaignId(id);
-        for (Arc arc : arcs) {
-            List<Chapter> chapters = chapterRepository.findByArcId(arc.getId());
-            for (Chapter chapter : chapters) {
+        // 1. Cascade des Playthroughs (qui cascadent eux-mêmes sur PJ/sessions/valeurs flags/progressions).
+        for (Playthrough p : playthroughRepository.findByCampaignId(id)) {
+            playthroughService.delete(p.getId());
+        }
+        // 2. Cascade du scénario : arcs → chapitres → scènes
+        //    (Pas de déclarations globales de faits : ils existent implicitement via les
+        //    prérequis FLAG_SET des chapitres, qui partent avec les chapitres.)
+        for (Arc arc : arcRepository.findByCampaignId(id)) {
+            for (Chapter chapter : chapterRepository.findByArcId(arc.getId())) {
                 for (var scene : sceneRepository.findByChapterId(chapter.getId())) {
                     sceneRepository.deleteById(scene.getId());
                 }
                 chapterRepository.deleteById(chapter.getId());
             }
             arcRepository.deleteById(arc.getId());
-        }
-        for (var character : characterRepository.findByCampaignId(id)) {
-            characterRepository.deleteById(character.getId());
         }
         campaignRepository.deleteById(id);
     }

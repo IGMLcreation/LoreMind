@@ -1,0 +1,108 @@
+.srt-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.25rem;
+}
+
+.loading-hint, .empty-hint {
+  color: var(--color-text-muted, #9aa0aa);
+  font-size: 0.85rem;
+  font-style: italic;
+  padding: 0.5rem 0;
+}
+
+.srt-list { display: flex; flex-direction: column; gap: 0.3rem; }
+
+.srt-item {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.03);
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+
+  &:hover { background: rgba(255, 255, 255, 0.08); }
+
+  .srt-item-name { flex: 1; }
+  .srt-item-formula {
+    font-size: 0.72rem;
+    color: var(--color-text-muted, #9aa0aa);
+    background: rgba(255, 255, 255, 0.06);
+    padding: 0.05rem 0.35rem;
+    border-radius: 4px;
+  }
+}
+
+.srt-detail { display: flex; flex-direction: column; gap: 0.6rem; }
+
+.srt-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  align-self: flex-start;
+  padding: 0.2rem 0.4rem;
+  border: none;
+  background: none;
+  color: var(--color-text-muted, #9aa0aa);
+  cursor: pointer;
+  font-size: 0.8rem;
+  &:hover { color: inherit; }
+}
+
+h4 { margin: 0; font-size: 0.95rem; }
+
+.srt-roll {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.5rem 0.9rem;
+  border: none;
+  border-radius: 8px;
+  background: #667eea;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  &:hover { background: #5568d3; }
+}
+
+.srt-result {
+  padding: 0.6rem 0.7rem;
+  border-radius: 8px;
+  background: rgba(102, 126, 234, 0.1);
+  border: 1px solid rgba(102, 126, 234, 0.25);
+
+  .srt-total { font-size: 1rem; }
+  .srt-rolls { color: var(--color-text-muted, #9aa0aa); font-size: 0.8rem; }
+  .srt-detail-text {
+    margin-top: 0.4rem;
+    font-size: 0.85rem;
+    color: var(--color-text-muted, #cfd3da);
+    white-space: pre-wrap;
+  }
+}
+
+.srt-actions { display: flex; gap: 0.4rem; margin-top: 0.6rem; }
+.srt-act {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.8rem;
+  &:hover:not(:disabled) { background: rgba(255, 255, 255, 0.1); }
+  &:disabled { opacity: 0.5; cursor: default; }
+
+  &--ai { border-color: rgba(168, 130, 255, 0.35); color: #c4a8ff; }
+  &--ai:hover:not(:disabled) { background: rgba(168, 130, 255, 0.14); }
+}

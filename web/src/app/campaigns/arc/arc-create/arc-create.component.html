@@ -1,42 +1,58 @@
 <div class="arc-create-page">
 
   <div class="page-header">
-    <h1>Créer un nouvel arc narratif</h1>
+    <h1>{{ 'arcCreate.title' | translate }}</h1>
   </div>
 
   <form [formGroup]="form" (ngSubmit)="submit()" class="arc-form">
 
     <div class="field">
-      <label for="arc-create-name">Nom de l'arc *</label>
+      <label for="arc-create-name">{{ 'arcCreate.nameLabel' | translate }}</label>
       <input
         id="arc-create-name"
         type="text"
         formControlName="name"
-        placeholder="Ex: L'Ombre du Nord"
+        [placeholder]="'arcCreate.namePlaceholder' | translate"
         [class.invalid]="form.get('name')?.invalid && form.get('name')?.touched"
       />
     </div>
 
     <div class="field">
-      <label for="arc-create-description">Description</label>
+      <label>{{ 'arcCreate.structureLabel' | translate }}</label>
+      <div class="arc-type-choice">
+        <label class="arc-type-option" [class.selected]="form.get('type')?.value === 'LINEAR'">
+          <input type="radio" formControlName="type" value="LINEAR" />
+          <span class="arc-type-title">{{ 'arcCreate.linearTitle' | translate }}</span>
+          <span class="arc-type-desc">{{ 'arcCreate.linearDesc' | translate }}</span>
+        </label>
+        <label class="arc-type-option" [class.selected]="form.get('type')?.value === 'HUB'">
+          <input type="radio" formControlName="type" value="HUB" />
+          <span class="arc-type-title">{{ 'arcCreate.hubTitle' | translate }}</span>
+          <span class="arc-type-desc">{{ 'arcCreate.hubDesc' | translate }}</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="arc-create-description">{{ 'common.description' | translate }}</label>
       <textarea
         id="arc-create-description"
         formControlName="description"
-        placeholder="Décrivez l'arc narratif principal..."
+        [placeholder]="'arcCreate.descriptionPlaceholder' | translate"
         rows="5">
       </textarea>
     </div>
 
     <div class="field">
-      <label>Icône</label>
+      <label>{{ 'arcCreate.iconLabel' | translate }}</label>
       <app-icon-picker [options]="campaignIconOptions" [(selected)]="selectedIcon"></app-icon-picker>
     </div>
 
     <div class="form-actions">
       <button type="submit" class="btn-primary" [disabled]="form.invalid">
-        Créer l'arc
+        {{ 'arcCreate.submit' | translate }}
       </button>
-      <button type="button" class="btn-secondary" (click)="cancel()">Annuler</button>
+      <button type="button" class="btn-secondary" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
     </div>
 
   </form>

@@ -1,7 +1,9 @@
 package com.loremind.application.gamesystemcontext;
 
 import com.loremind.domain.gamesystemcontext.GameSystem;
+import com.loremind.domain.gamesystemcontext.RulesImportResult;
 import com.loremind.domain.gamesystemcontext.ports.GameSystemRepository;
+import com.loremind.domain.gamesystemcontext.ports.RulesPdfImporter;
 import com.loremind.domain.shared.template.TemplateField;
 import org.springframework.stereotype.Service;
 
@@ -12,9 +14,37 @@ import java.util.Optional;
 public class GameSystemService {
 
     private final GameSystemRepository gameSystemRepository;
+    private final RulesPdfImporter rulesPdfImporter;
 
-    public GameSystemService(GameSystemRepository gameSystemRepository) {
+    public GameSystemService(GameSystemRepository gameSystemRepository,
+                             RulesPdfImporter rulesPdfImporter) {
         this.gameSystemRepository = gameSystemRepository;
+        this.rulesPdfImporter = rulesPdfImporter;
+    }
+
+    /**
+     * Importe un PDF de règles et renvoie une PROPOSITION de sections (titre →
+     * markdown). Ne persiste rien : l'UI laisse l'utilisateur réviser/éditer
+     * puis enregistrer le GameSystem via {@link #updateGameSystem}/{@link #createGameSystem}.
+     */
+    public RulesImportResult importRulesFromPdf(byte[] pdfBytes, String filename) {
+        return rulesPdfImporter.importRules(pdfBytes, filename);
+    }
+
+    /**
+     * Variante streamée de {@link #importRulesFromPdf} : remonte l'avancement via
+     * callbacks (import long → l'UI affiche une progression). Ne persiste rien.
+     */
+    public void importRulesFromPdfStreaming(
+            byte[] pdfBytes,
+            String filename,
+            java.util.function.Consumer<com.loremind.domain.gamesystemcontext.RulesImportProgress> onProgress,
+            Runnable onHeartbeat,
+            java.util.function.Consumer<String> onStatus,
+            java.util.function.Consumer<RulesImportResult> onDone,
+            java.util.function.Consumer<Throwable> onError) {
+        rulesPdfImporter.importRulesStreaming(
+                pdfBytes, filename, onProgress, onHeartbeat, onStatus, onDone, onError);
     }
 
     /**
@@ -27,6 +57,7 @@ public class GameSystemService {
             String rulesMarkdown,
             List<TemplateField> characterTemplate,
             List<TemplateField> npcTemplate,
+            List<TemplateField> enemyTemplate,
             String author,
             boolean isPublic
     ) {}
@@ -41,6 +72,7 @@ public class GameSystemService {
                 .build();
         gameSystem.replaceCharacterTemplate(data.characterTemplate());
         gameSystem.replaceNpcTemplate(data.npcTemplate());
+        gameSystem.replaceEnemyTemplate(data.enemyTemplate());
         return gameSystemRepository.save(gameSystem);
     }
 
@@ -60,6 +92,7 @@ public class GameSystemService {
         existing.setRulesMarkdown(data.rulesMarkdown());
         existing.replaceCharacterTemplate(data.characterTemplate());
         existing.replaceNpcTemplate(data.npcTemplate());
+        existing.replaceEnemyTemplate(data.enemyTemplate());
         existing.setAuthor(normalize(data.author()));
         existing.setPublic(data.isPublic());
         return gameSystemRepository.save(existing);

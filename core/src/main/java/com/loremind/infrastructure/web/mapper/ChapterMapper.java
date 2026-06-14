@@ -8,15 +8,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Mapper pour convertir entre Chapter (entité de domaine) et ChapterDTO.
+ * Mapper Chapter (domaine) ↔ ChapterDTO (REST).
+ *
+ * <p>Ne touche plus à {@code progressionStatus} ni {@code effectiveStatus} :
+ * ces champs sont propres à un Playthrough et injectés par {@code ChapterStatusEnricher}
+ * quand le controller a un playthroughId.</p>
  */
 @Component
 public class ChapterMapper {
 
+    private final PrerequisiteMapper prerequisiteMapper;
+
+    public ChapterMapper(PrerequisiteMapper prerequisiteMapper) {
+        this.prerequisiteMapper = prerequisiteMapper;
+    }
+
     public ChapterDTO toDTO(Chapter chapter) {
-        if (chapter == null) {
-            return null;
-        }
+        if (chapter == null) return null;
 
         ChapterDTO dto = new ChapterDTO();
         dto.setId(chapter.getId());
@@ -24,6 +32,9 @@ public class ChapterMapper {
         dto.setDescription(chapter.getDescription());
         dto.setArcId(chapter.getArcId());
         dto.setOrder(chapter.getOrder());
+        dto.setPrerequisites(prerequisiteMapper.toDTOList(chapter.getPrerequisites()));
+        // progressionStatus / effectiveStatus : laissés null. Peuplés par ChapterStatusEnricher.enrich(...)
+        // si le client a fourni un playthroughId au controller.
         dto.setIcon(chapter.getIcon());
         dto.setGmNotes(chapter.getGmNotes());
         dto.setPlayerObjectives(chapter.getPlayerObjectives());
@@ -35,9 +46,7 @@ public class ChapterMapper {
     }
 
     public Chapter toDomain(ChapterDTO dto) {
-        if (dto == null) {
-            return null;
-        }
+        if (dto == null) return null;
 
         return Chapter.builder()
                 .id(dto.getId())
@@ -45,6 +54,7 @@ public class ChapterMapper {
                 .description(dto.getDescription())
                 .arcId(dto.getArcId())
                 .order(dto.getOrder())
+                .prerequisites(prerequisiteMapper.toDomainList(dto.getPrerequisites()))
                 .icon(dto.getIcon())
                 .gmNotes(dto.getGmNotes())
                 .playerObjectives(dto.getPlayerObjectives())
@@ -55,10 +65,6 @@ public class ChapterMapper {
                 .build();
     }
 
-    /**
-     * Copie sécurisée d'une liste (gère le cas null).
-     * Ceci est une méthode utilitaire privée pour éviter la duplication de code.
-     */
     private <T> List<T> copyList(List<T> source) {
         return source != null ? new ArrayList<>(source) : new ArrayList<>();
     }

@@ -1,0 +1,144 @@
+<div class="rooms-editor">
+
+  @if (rooms.length === 0) {
+    <p class="rooms-empty">
+      {{ 'roomsEditor.empty' | translate }}
+    </p>
+  }
+
+  @if (rooms.length > 0) {
+    <ul class="room-list">
+      @for (r of rooms; track trackById(i, r); let i = $index) {
+        <li class="room-card">
+          <!-- Header repliable -->
+          <header class="room-head" (click)="toggleExpanded(r.id)">
+            <button type="button" class="room-toggle" type="button">
+              <lucide-icon [img]="isExpanded(r.id) ? ChevronUp : ChevronDown" [size]="16"></lucide-icon>
+            </button>
+            <span class="room-index">#{{ i + 1 }}</span>
+            <input type="text" class="room-name-input"
+              [ngModel]="r.name"
+              (ngModelChange)="patch(r, { name: $event })"
+              (click)="$event.stopPropagation()"
+              [placeholder]="'roomsEditor.roomNamePlaceholder' | translate" />
+            <input type="number" class="room-floor-input"
+              [ngModel]="r.floor"
+              (ngModelChange)="patch(r, { floor: $event === null || $event === '' ? null : +$event })"
+              (click)="$event.stopPropagation()"
+              [placeholder]="'roomsEditor.floorPlaceholder' | translate" [title]="'roomsEditor.floorTitle' | translate" />
+            <div class="room-actions" (click)="$event.stopPropagation()">
+              <button type="button" class="btn-icon" (click)="moveUp(r)" [disabled]="i === 0" [title]="'roomsEditor.moveUp' | translate">↑</button>
+              <button type="button" class="btn-icon" (click)="moveDown(r)" [disabled]="i === rooms.length - 1" [title]="'roomsEditor.moveDown' | translate">↓</button>
+              <button type="button" class="btn-icon-danger" (click)="removeRoom(r)" [title]="'roomsEditor.removeRoom' | translate">
+                <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+              </button>
+            </div>
+          </header>
+          <!-- Corps déplié -->
+          @if (isExpanded(r.id)) {
+            <div class="room-body">
+              <div class="field">
+                <label>{{ 'roomsEditor.descriptionLabel' | translate }}</label>
+                <textarea rows="3"
+                  [ngModel]="r.description"
+                  (ngModelChange)="patch(r, { description: $event })"
+                [placeholder]="'roomsEditor.descriptionPlaceholder' | translate"></textarea>
+              </div>
+              <div class="field">
+                <label>{{ 'roomsEditor.bestiaryLabel' | translate }}</label>
+                <app-enemy-link-picker
+                  [value]="r.enemyIds ?? []"
+                  [availableEnemies]="availableEnemies"
+                  [campaignId]="campaignId"
+                  (valueChange)="patch(r, { enemyIds: $event })">
+                </app-enemy-link-picker>
+              </div>
+              <div class="field-row">
+                <div class="field">
+                  <label>{{ 'roomsEditor.enemiesLabel' | translate }}</label>
+                  <textarea rows="3"
+                    [ngModel]="r.enemies"
+                    (ngModelChange)="patch(r, { enemies: $event })"
+                  [placeholder]="'roomsEditor.enemiesPlaceholder' | translate"></textarea>
+                </div>
+                <div class="field">
+                  <label>{{ 'roomsEditor.lootLabel' | translate }}</label>
+                  <textarea rows="3"
+                    [ngModel]="r.loot"
+                    (ngModelChange)="patch(r, { loot: $event })"
+                  [placeholder]="'roomsEditor.lootPlaceholder' | translate"></textarea>
+                </div>
+              </div>
+              <div class="field-row">
+                <div class="field">
+                  <label>{{ 'roomsEditor.trapsLabel' | translate }}</label>
+                  <textarea rows="2"
+                    [ngModel]="r.traps"
+                    (ngModelChange)="patch(r, { traps: $event })"
+                  [placeholder]="'roomsEditor.trapsPlaceholder' | translate"></textarea>
+                </div>
+                <div class="field">
+                  <label>{{ 'roomsEditor.gmNotesLabel' | translate }}</label>
+                  <textarea rows="2"
+                    [ngModel]="r.gmNotes"
+                    (ngModelChange)="patch(r, { gmNotes: $event })"
+                  [placeholder]="'roomsEditor.gmNotesPlaceholder' | translate"></textarea>
+                </div>
+              </div>
+              <!-- Branches inter-pièces -->
+              <div class="field">
+                <label>
+                  <lucide-icon [img]="GitBranch" [size]="14"></lucide-icon>
+                  {{ 'roomsEditor.exitsLabel' | translate }}
+                </label>
+                @if ((r.branches?.length ?? 0) > 0) {
+                  <ul class="branch-list">
+                    @for (b of r.branches; track b; let bi = $index) {
+                      <li class="branch-row">
+                        <input type="text" class="branch-label"
+                          [ngModel]="b.label"
+                          (ngModelChange)="updateBranch(r, bi, { label: $event })"
+                          [placeholder]="'roomsEditor.branchLabelPlaceholder' | translate" />
+                        <span class="branch-arrow">→</span>
+                        <select class="branch-target"
+                          [ngModel]="b.targetRoomId"
+                          (ngModelChange)="updateBranch(r, bi, { targetRoomId: $event })"
+                          [disabled]="otherRooms(r).length === 0">
+                          @if (otherRooms(r).length === 0) {
+                            <option value="">{{ 'roomsEditor.noOtherRoom' | translate }}</option>
+                          }
+                          @for (o of otherRooms(r); track o) {
+                            <option [value]="o.id">{{ o.name }}</option>
+                          }
+                        </select>
+                        <input type="text" class="branch-condition"
+                          [ngModel]="b.condition"
+                          (ngModelChange)="updateBranch(r, bi, { condition: $event })"
+                          [placeholder]="'roomsEditor.branchConditionPlaceholder' | translate" />
+                        <button type="button" class="btn-icon-danger" (click)="removeBranch(r, bi)">
+                          <lucide-icon [img]="X" [size]="14"></lucide-icon>
+                        </button>
+                      </li>
+                    }
+                  </ul>
+                }
+                <button type="button" class="btn-secondary btn-small"
+                  (click)="addBranch(r)"
+                  [disabled]="otherRooms(r).length === 0">
+                  <lucide-icon [img]="Plus" [size]="13"></lucide-icon>
+                  {{ 'roomsEditor.addExit' | translate }}
+                </button>
+              </div>
+            </div>
+          }
+        </li>
+      }
+    </ul>
+  }
+
+  <button type="button" class="btn-primary" (click)="addRoom()">
+    <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
+    {{ 'roomsEditor.addRoom' | translate }}
+  </button>
+
+</div>

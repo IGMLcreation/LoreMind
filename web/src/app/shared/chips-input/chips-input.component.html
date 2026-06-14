@@ -1,10 +1,12 @@
 <div class="chips-wrapper">
-  <span class="chip" *ngFor="let tag of value; let i = index">
-    {{ tag }}
-    <button type="button" class="chip-remove" (click)="remove(i)" title="Retirer">
-      <lucide-icon [img]="X" [size]="12"></lucide-icon>
-    </button>
-  </span>
+  @for (tag of value; track tag; let i = $index) {
+    <span class="chip">
+      {{ tag }}
+      <button type="button" class="chip-remove" (click)="remove(i)" [title]="'chipsInput.removeTag' | translate">
+        <lucide-icon [img]="X" [size]="12"></lucide-icon>
+      </button>
+    </span>
+  }
   <input
     type="text"
     class="chip-input"

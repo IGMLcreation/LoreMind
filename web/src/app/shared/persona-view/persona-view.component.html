@@ -1,108 +1,131 @@
-<div class="pv" *ngIf="persona">
-
-  <!-- Bandeau / Header -->
-  <div class="pv-banner" *ngIf="persona.headerImageId">
-    <img [src]="contentUrl(persona.headerImageId)" alt="" />
-    <div class="pv-banner-fade"></div>
-  </div>
-
-  <!-- En-tete : portrait + titre -->
-  <div class="pv-hero" [class.no-banner]="!persona.headerImageId">
-    <div class="pv-portrait" *ngIf="persona.portraitImageId">
-      <img [src]="contentUrl(persona.portraitImageId)" alt="" />
-    </div>
-
-    <div class="pv-title-block">
-      <h1 class="pv-name">{{ persona.name }}</h1>
-      <p *ngIf="subtitle" class="pv-subtitle">{{ subtitle }}</p>
-
-      <!-- Badges des NUMBER isoles (rendu compact, evite la grosse card pour 1 valeur) -->
-      <div *ngIf="heroBadges.length" class="pv-hero-badges">
-        <span *ngFor="let b of heroBadges" class="pv-hero-badge">
-          <span class="pv-hero-badge-label">{{ b.label }}</span>
-          <span class="pv-hero-badge-value">{{ b.value }}</span>
-        </span>
+@if (persona) {
+  <div class="pv">
+    <!-- Bandeau / Header -->
+    @if (persona.headerImageId) {
+      <div class="pv-banner">
+        <img [src]="contentUrl(persona.headerImageId)" alt="" />
+        <div class="pv-banner-fade"></div>
+      </div>
+    }
+    <!-- En-tete : portrait + titre -->
+    <div class="pv-hero" [class.no-banner]="!persona.headerImageId">
+      @if (persona.portraitImageId) {
+        <div class="pv-portrait">
+          <img [src]="contentUrl(persona.portraitImageId)" alt="" />
+        </div>
+      }
+      <div class="pv-title-block">
+        <h1 class="pv-name">{{ persona.name }}</h1>
+        @if (subtitle) {
+          <p class="pv-subtitle">{{ subtitle }}</p>
+        }
+        <!-- Badges des NUMBER isoles (rendu compact, evite la grosse card pour 1 valeur) -->
+        @if (heroBadges.length) {
+          <div class="pv-hero-badges">
+            @for (b of heroBadges; track b) {
+              <span class="pv-hero-badge">
+                <span class="pv-hero-badge-label">{{ b.label }}</span>
+                <span class="pv-hero-badge-value">{{ b.value }}</span>
+              </span>
+            }
+          </div>
+        }
       </div>
     </div>
-  </div>
-
-  <!-- Sections rendues dans l'ordre du template -->
-  <div class="pv-sections">
-    <ng-container *ngFor="let s of orderedSections">
-
-      <!-- TEXT -->
-      <section *ngIf="s.kind === 'TEXT'" class="pv-section">
-        <h2 class="pv-section-title">{{ s.name }}</h2>
-        <div class="pv-section-body">
-          <p class="pv-paragraph">
-            {{ firstParagraph(s.value) }}
-          </p>
-          <p *ngIf="restAfterFirstParagraph(s.value)" class="pv-paragraph">
-            {{ restAfterFirstParagraph(s.value) }}
-          </p>
+    <!-- Sections rendues dans l'ordre du template -->
+    <div class="pv-sections">
+      @for (s of orderedSections; track s) {
+        <!-- TEXT -->
+        @if (s.kind === 'TEXT') {
+          <section class="pv-section">
+            <h2 class="pv-section-title">{{ s.name }}</h2>
+            <div class="pv-section-body">
+              <p class="pv-paragraph">
+                {{ firstParagraph(s.value) }}
+              </p>
+              @if (restAfterFirstParagraph(s.value)) {
+                <p class="pv-paragraph">
+                  {{ restAfterFirstParagraph(s.value) }}
+                </p>
+              }
+            </div>
+          </section>
+        }
+        <!-- NUMBER_GROUP : NUMBER consecutifs - table si <=6, sinon liste 2 cols -->
+        @if (s.kind === 'NUMBER_GROUP') {
+          <section class="pv-section pv-section-number">
+            @if (s.entries.length <= 6) {
+              <div class="pv-kv-table" [style.--cols]="s.entries.length">
+                <div class="pv-kv-row pv-kv-row-labels">
+                  @for (e of s.entries; track e) {
+                    <div class="pv-kv-cell">{{ e.label }}</div>
+                  }
+                </div>
+                <div class="pv-kv-row pv-kv-row-values">
+                  @for (e of s.entries; track e) {
+                    <div class="pv-kv-cell">{{ e.value }}</div>
+                  }
+                </div>
+              </div>
+            } @else {
+              <div class="pv-kv-list">
+                @for (e of s.entries; track e) {
+                  <div class="pv-kv-list-row">
+                    <span class="pv-kv-list-label">{{ e.label }}</span>
+                    <span class="pv-kv-list-dots"></span>
+                    <span class="pv-kv-list-value">{{ e.value }}</span>
+                  </div>
+                }
+              </div>
+            }
+          </section>
+        }
+        <!-- KEY_VALUE_LIST : table style Foundry si <=6, sinon liste 2 cols (skills) -->
+        @if (s.kind === 'KEY_VALUE_LIST') {
+          <section class="pv-section pv-section-kv">
+            <h2 class="pv-section-title">{{ s.name }}</h2>
+            @if (s.entries.length <= 6) {
+              <div class="pv-kv-table" [style.--cols]="s.entries.length">
+                <div class="pv-kv-row pv-kv-row-labels">
+                  @for (e of s.entries; track e) {
+                    <div class="pv-kv-cell">{{ e.label }}</div>
+                  }
+                </div>
+                <div class="pv-kv-row pv-kv-row-values">
+                  @for (e of s.entries; track e) {
+                    <div class="pv-kv-cell">{{ e.value || '—' }}</div>
+                  }
+                </div>
+              </div>
+            } @else {
+              <div class="pv-kv-list">
+                @for (e of s.entries; track e) {
+                  <div class="pv-kv-list-row">
+                    <span class="pv-kv-list-label">{{ e.label }}</span>
+                    <span class="pv-kv-list-dots"></span>
+                    <span class="pv-kv-list-value">{{ e.value || '—' }}</span>
+                  </div>
+                }
+              </div>
+            }
+          </section>
+        }
+        <!-- IMAGE : galerie -->
+        @if (s.kind === 'IMAGE') {
+          <section class="pv-section pv-section-images">
+            <h2 class="pv-section-title">{{ s.name }}</h2>
+            <app-image-gallery [imageIds]="s.ids" [layout]="s.layout" [editable]="false">
+            </app-image-gallery>
+          </section>
+        }
+      }
+      <!-- Etat vide -->
+      @if (orderedSections.length === 0) {
+        <div class="pv-empty">
+          <lucide-icon [img]="BookOpen" [size]="32"></lucide-icon>
+          <p>{{ 'personaView.empty' | translate }}</p>
         </div>
-      </section>
-
-      <!-- NUMBER_GROUP : NUMBER consecutifs - table si <=6, sinon liste 2 cols -->
-      <section *ngIf="s.kind === 'NUMBER_GROUP'" class="pv-section pv-section-number">
-        <ng-container *ngIf="s.entries.length <= 6; else numGroupList">
-          <div class="pv-kv-table" [style.--cols]="s.entries.length">
-            <div class="pv-kv-row pv-kv-row-labels">
-              <div class="pv-kv-cell" *ngFor="let e of s.entries">{{ e.label }}</div>
-            </div>
-            <div class="pv-kv-row pv-kv-row-values">
-              <div class="pv-kv-cell" *ngFor="let e of s.entries">{{ e.value }}</div>
-            </div>
-          </div>
-        </ng-container>
-        <ng-template #numGroupList>
-          <div class="pv-kv-list">
-            <div class="pv-kv-list-row" *ngFor="let e of s.entries">
-              <span class="pv-kv-list-label">{{ e.label }}</span>
-              <span class="pv-kv-list-dots"></span>
-              <span class="pv-kv-list-value">{{ e.value }}</span>
-            </div>
-          </div>
-        </ng-template>
-      </section>
-
-      <!-- KEY_VALUE_LIST : table style Foundry si <=6, sinon liste 2 cols (skills) -->
-      <section *ngIf="s.kind === 'KEY_VALUE_LIST'" class="pv-section pv-section-kv">
-        <h2 class="pv-section-title">{{ s.name }}</h2>
-        <ng-container *ngIf="s.entries.length <= 6; else kvList">
-          <div class="pv-kv-table" [style.--cols]="s.entries.length">
-            <div class="pv-kv-row pv-kv-row-labels">
-              <div class="pv-kv-cell" *ngFor="let e of s.entries">{{ e.label }}</div>
-            </div>
-            <div class="pv-kv-row pv-kv-row-values">
-              <div class="pv-kv-cell" *ngFor="let e of s.entries">{{ e.value || '—' }}</div>
-            </div>
-          </div>
-        </ng-container>
-        <ng-template #kvList>
-          <div class="pv-kv-list">
-            <div class="pv-kv-list-row" *ngFor="let e of s.entries">
-              <span class="pv-kv-list-label">{{ e.label }}</span>
-              <span class="pv-kv-list-dots"></span>
-              <span class="pv-kv-list-value">{{ e.value || '—' }}</span>
-            </div>
-          </div>
-        </ng-template>
-      </section>
-
-      <!-- IMAGE : galerie -->
-      <section *ngIf="s.kind === 'IMAGE'" class="pv-section pv-section-images">
-        <h2 class="pv-section-title">{{ s.name }}</h2>
-        <app-image-gallery [imageIds]="s.ids" [layout]="s.layout" [editable]="false">
-        </app-image-gallery>
-      </section>
-
-    </ng-container>
-
-    <!-- Etat vide -->
-    <div *ngIf="orderedSections.length === 0" class="pv-empty">
-      <lucide-icon [img]="BookOpen" [size]="32"></lucide-icon>
-      <p>Cette fiche est encore vide.</p>
+      }
     </div>
   </div>
-</div>
+}

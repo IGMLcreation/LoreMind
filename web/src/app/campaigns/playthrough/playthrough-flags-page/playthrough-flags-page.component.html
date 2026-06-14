@@ -1,0 +1,20 @@
+@if (playthrough) {
+  <div class="flags-page">
+    <header class="page-header">
+      <button type="button" class="btn-secondary" (click)="back()">
+        <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon>
+        {{ 'common.back' | translate }}
+      </button>
+      <div>
+        <h1>{{ 'playthroughFlagsPage.title' | translate:{ name: playthrough.name } }}</h1>
+        <p class="subtitle">
+          {{ 'playthroughFlagsPage.subtitle' | translate }}
+        </p>
+      </div>
+    </header>
+    <app-playthrough-flags-manager
+      [campaignId]="campaignId"
+      [playthroughId]="playthroughId">
+    </app-playthrough-flags-manager>
+  </div>
+}

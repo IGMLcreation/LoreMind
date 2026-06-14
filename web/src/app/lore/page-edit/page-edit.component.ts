@@ -1,9 +1,10 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
-import { LucideAngularModule, Sparkles } from 'lucide-angular';
+import { LucideAngularModule, Sparkles, Plus, Trash2 } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { LoreService } from '../../services/lore.service';
 import { TemplateService } from '../../services/template.service';
 import { PageService } from '../../services/page.service';
@@ -35,14 +36,15 @@ import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog
  *  - Bouton "Assistant IA" branché (Phase 3 Python)
  */
 @Component({
-  selector: 'app-page-edit',
-  standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, LucideAngularModule, ChipsInputComponent, LoreLinkPickerComponent, BreadcrumbComponent, AiChatDrawerComponent, ImageGalleryComponent],
-  templateUrl: './page-edit.component.html',
-  styleUrls: ['./page-edit.component.scss']
+    selector: 'app-page-edit',
+    imports: [FormsModule, RouterLink, LucideAngularModule, TranslatePipe, ChipsInputComponent, LoreLinkPickerComponent, BreadcrumbComponent, AiChatDrawerComponent, ImageGalleryComponent],
+    templateUrl: './page-edit.component.html',
+    styleUrls: ['./page-edit.component.scss']
 })
 export class PageEditComponent implements OnInit, OnDestroy {
   readonly Sparkles = Sparkles;
+  readonly Plus = Plus;
+  readonly Trash2 = Trash2;
 
   loreId = '';
   pageId = '';
@@ -64,6 +66,10 @@ export class PageEditComponent implements OnInit, OnDestroy {
    * la liste ordonnee des IDs d'images uploadees.
    */
   imageValues: Record<string, string[]> = {};
+  /** Valeurs des champs KEY_VALUE_LIST (liste clé/valeur) : fieldName → (label → valeur). */
+  keyValueValues: Record<string, Record<string, string>> = {};
+  /** Valeurs des champs TABLE : fieldName → lignes (colonne → cellule). */
+  tableValues: Record<string, Array<Record<string, string>>> = {};
   /** Étiquettes libres (Phase 5B). */
   tags: string[] = [];
   /** IDs des pages liées (Phase 5B). */
@@ -76,13 +82,9 @@ export class PageEditComponent implements OnInit, OnDestroy {
   /** Phase b5 — drawer chat IA (conversationnel). */
   chatOpen = false;
   /** Action primaire dans le chat : déclenche le one-shot b4 (remplissage automatique). */
-  readonly chatPrimaryAction: ChatPrimaryAction = { label: 'Remplir automatiquement tous les champs' };
+  readonly chatPrimaryAction: ChatPrimaryAction;
   /** Suggestions rapides hardcodées (MVP). */
-  readonly chatQuickSuggestions: string[] = [
-    "Étoffe l'histoire de cette page",
-    'Suggère des liens avec d\'autres pages du Lore',
-    'Propose une intrigue secondaire'
-  ];
+  readonly chatQuickSuggestions: string[];
 
   constructor(
     private route: ActivatedRoute,
@@ -92,8 +94,16 @@ export class PageEditComponent implements OnInit, OnDestroy {
     private pageService: PageService,
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService,
-    private confirmDialog: ConfirmDialogService
-  ) {}
+    private confirmDialog: ConfirmDialogService,
+    private translate: TranslateService
+  ) {
+    this.chatPrimaryAction = { label: this.translate.instant('pageEdit.chatPrimaryAction') };
+    this.chatQuickSuggestions = [
+      this.translate.instant('pageEdit.chatSuggestion1'),
+      this.translate.instant('pageEdit.chatSuggestion2'),
+      this.translate.instant('pageEdit.chatSuggestion3')
+    ];
+  }
 
   ngOnInit(): void {
     this.loreId = this.route.snapshot.paramMap.get('loreId')!;
@@ -170,16 +180,27 @@ export class PageEditComponent implements OnInit, OnDestroy {
     // structure `imageValues: Map<String, List<String>>` a l'etape 5).
     const base: Record<string, string> = {};
     const imageBase: Record<string, string[]> = {};
+    const kvBase: Record<string, Record<string, string>> = {};
+    const tableBase: Record<string, Array<Record<string, string>>> = {};
     for (const f of this.template?.fields ?? []) {
       if (f.type === 'TEXT') {
         base[f.name] = page.values?.[f.name] ?? '';
       } else if (f.type === 'IMAGE') {
         // Initialise la galerie d'images pour ce champ (vide si jamais rempli).
         imageBase[f.name] = [...(page.imageValues?.[f.name] ?? [])];
+      } else if (f.type === 'KEY_VALUE_LIST') {
+        // Toujours initialiser l'objet interne : le ngModel du formulaire
+        // bind directement keyValueValues[field.name][label].
+        kvBase[f.name] = { ...(page.keyValueValues?.[f.name] ?? {}) };
+      } else if (f.type === 'TABLE') {
+        // Copie profonde des lignes : chaque ligne est éditée par ngModel.
+        tableBase[f.name] = (page.tableValues?.[f.name] ?? []).map(row => ({ ...row }));
       }
     }
     this.values = base;
     this.imageValues = imageBase;
+    this.keyValueValues = kvBase;
+    this.tableValues = tableBase;
     this.tags = [...(page.tags ?? [])];
     this.relatedPageIds = [...(page.relatedPageIds ?? [])];
     this.pageTitleService.set(page.title);
@@ -194,6 +215,8 @@ export class PageEditComponent implements OnInit, OnDestroy {
       notes: this.notes,
       values: this.values,
       imageValues: this.imageValues,
+      keyValueValues: this.keyValueValues,
+      tableValues: this.tableValues,
       tags: this.tags,
       relatedPageIds: this.relatedPageIds
     };
@@ -201,6 +224,20 @@ export class PageEditComponent implements OnInit, OnDestroy {
       next: () => this.router.navigate(['/lore', this.loreId, 'pages', this.pageId]),
       error: () => console.error('Erreur lors de la sauvegarde de la page')
     });
+  }
+
+  // --- Champs TABLE (lignes libres) ---------------------------------------
+  // Mutation en place des lignes : recréer le tableau à chaque frappe ferait
+  // perdre le focus de la cellule en cours d'édition.
+
+  addTableRow(fieldName: string, columns: string[] | null | undefined): void {
+    const row: Record<string, string> = {};
+    for (const col of columns ?? []) row[col] = '';
+    (this.tableValues[fieldName] ??= []).push(row);
+  }
+
+  removeTableRow(fieldName: string, rowIndex: number): void {
+    this.tableValues[fieldName]?.splice(rowIndex, 1);
   }
 
   // --- Chat IA conversationnel (Phase b5) --------------------------------
@@ -235,8 +272,8 @@ export class PageEditComponent implements OnInit, OnDestroy {
       error: (err) => {
         this.aiLoading = false;
         this.aiError = err?.status === 502
-          ? "L'assistant IA est injoignable. V\u00e9rifiez que le service Brain tourne."
-          : "\u00c9chec de la g\u00e9n\u00e9ration IA. R\u00e9essayez dans un instant.";
+          ? this.translate.instant('pageEdit.aiUnreachable')
+          : this.translate.instant('pageEdit.aiFailed');
       }
     });
   }
@@ -261,9 +298,9 @@ export class PageEditComponent implements OnInit, OnDestroy {
   delete(): void {
     if (!this.page) return;
     this.confirmDialog.confirm({
-      title: 'Supprimer la page',
-      message: `Supprimer la page "${this.page.title}" ?`,
-      confirmLabel: 'Supprimer',
+      title: this.translate.instant('pageEdit.deleteTitle'),
+      message: this.translate.instant('pageEdit.deleteMessage', { title: this.page.title }),
+      confirmLabel: this.translate.instant('common.delete'),
       variant: 'danger'
     }).then(ok => {
       if (!ok || !this.page) return;

@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { LucideAngularModule, Upload, AlertCircle } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ImageService } from '../../services/image.service';
 import { Image } from '../../services/image.model';
 
@@ -18,11 +19,10 @@ import { Image } from '../../services/image.model';
  *  - Afficher l'etat loading et les erreurs
  */
 @Component({
-  selector: 'app-image-uploader',
-  standalone: true,
-  imports: [CommonModule, LucideAngularModule],
-  templateUrl: './image-uploader.component.html',
-  styleUrls: ['./image-uploader.component.scss']
+    selector: 'app-image-uploader',
+    imports: [LucideAngularModule, TranslatePipe],
+    templateUrl: './image-uploader.component.html',
+    styleUrls: ['./image-uploader.component.scss']
 })
 export class ImageUploaderComponent {
   readonly Upload = Upload;
@@ -42,7 +42,7 @@ export class ImageUploaderComponent {
   private readonly ALLOWED_MIMES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
   private readonly MAX_BYTES = 10 * 1024 * 1024;
 
-  constructor(private imageService: ImageService) {}
+  constructor(private imageService: ImageService, private translate: TranslateService) {}
 
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -75,11 +75,11 @@ export class ImageUploaderComponent {
 
     // Validation cote client (premier filet de securite).
     if (!this.ALLOWED_MIMES.includes(file.type)) {
-      this.errorMessage = 'Format non supporte (JPEG, PNG, WebP, GIF uniquement).';
+      this.errorMessage = this.translate.instant('imageUploader.unsupportedFormat');
       return;
     }
     if (file.size > this.MAX_BYTES) {
-      this.errorMessage = `Fichier trop volumineux (max ${this.MAX_BYTES / 1024 / 1024} Mo).`;
+      this.errorMessage = this.translate.instant('imageUploader.tooLarge', { max: this.MAX_BYTES / 1024 / 1024 });
       return;
     }
 
@@ -92,8 +92,8 @@ export class ImageUploaderComponent {
       error: (err) => {
         this.uploading = false;
         this.errorMessage = err?.status === 413
-          ? 'Fichier refuse par le serveur (trop volumineux).'
-          : 'Echec de l\'upload. Verifiez que le backend et MinIO tournent.';
+          ? this.translate.instant('imageUploader.serverRejected')
+          : this.translate.instant('imageUploader.uploadFailed');
       }
     });
   }

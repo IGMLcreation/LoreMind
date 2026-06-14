@@ -123,8 +123,28 @@ class SceneBranchHint:
 
 
 @dataclass(frozen=True)
+class RoomBranchHint:
+    """Indice d'une sortie entre pièces (donjon). target_room_name déjà résolu côté Core."""
+
+    label: str
+    target_room_name: str
+    condition: str | None = None
+
+
+@dataclass(frozen=True)
+class RoomSummary:
+    """Pièce d'un lieu explorable. Projection plate pour le prompt IA (pas de notes MJ)."""
+
+    name: str
+    floor: int | None = None
+    description: str | None = None
+    enemies: str | None = None
+    branches: list[RoomBranchHint] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
 class SceneSummary:
-    """Résumé d'une scène : nom + description courte + illustrations + branches."""
+    """Résumé d'une scène : nom + description courte + illustrations + branches + pièces."""
 
     name: str
     description: str | None
@@ -133,6 +153,8 @@ class SceneSummary:
     illustration_count: int = 0
     # Connexions narratives sortantes (livre dont vous etes le heros).
     branches: list[SceneBranchHint] = field(default_factory=list)
+    # Pièces du lieu explorable (vide = scène classique).
+    rooms: list[RoomSummary] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -229,3 +251,208 @@ class GameSystemContext:
     system_name: str
     system_description: str | None
     sections: dict[str, str]
+
+
+@dataclass(frozen=True)
+class JournalEntrySummary:
+    """Une entrée du journal d'une Session.
+
+    `source_session_name` n'est renseigné que pour les entrées issues de
+    sessions précédentes (option 3 : continuité narrative entre séances).
+    """
+
+    type: str
+    content: str
+    occurred_at: str | None
+    source_session_name: str | None = None
+
+
+@dataclass(frozen=True)
+class QuestSummary:
+    """Résumé d'une quête (Chapter dans un Arc HUB) pour le system prompt.
+
+    Volontairement sans notes MJ ni statut texte : c'est déjà classé côté Core
+    dans available_quests / in_progress_quests / locked_quest_titles.
+    """
+
+    name: str
+    arc_name: str
+    description: str | None = None
+
+
+@dataclass(frozen=True)
+class SessionContext:
+    """Contexte d'une Session de jeu en cours (Play Context).
+
+    Combine plusieurs niveaux :
+    - `entries` : journal COMPLET de la session courante (cappé ~80 entrées)
+    - `previous_events` : EVENTs marquants des sessions précédentes (continuité)
+    - `available_quests` / `in_progress_quests` : quêtes du Hub ouvertes
+    - `locked_quest_titles` : titres seuls des quêtes verrouillées (anti-spoiler)
+    - `active_flags` : noms des flags de campagne actuellement à true
+    """
+
+    session_name: str
+    active: bool
+    started_at: str | None
+    entries: list[JournalEntrySummary]
+    previous_events: list[JournalEntrySummary]
+    available_quests: list[QuestSummary] = field(default_factory=list)
+    in_progress_quests: list[QuestSummary] = field(default_factory=list)
+    locked_quest_titles: list[str] = field(default_factory=list)
+    active_flags: list[str] = field(default_factory=list)
+
+
+# ─────────────────────── Import de PDF (règles → GameSystem) ───────────────────────
+
+
+@dataclass(frozen=True)
+class ExtractedPage:
+    """Texte extrait d'UNE page de PDF, avec la trace de la méthode utilisée.
+
+    `used_ocr=True` signale que la page n'avait pas de couche texte exploitable
+    (born-digital absent) et a donc été rasterisée puis passée à l'OCR. Permet
+    au CLI/diagnostic de dire à l'utilisateur si son PDF est "texte" ou "scan".
+    """
+
+    index: int  # 0-based
+    text: str
+    used_ocr: bool
+
+
+@dataclass(frozen=True)
+class TocEntry:
+    """Une entrée de la table des matières (bookmarks/outline) du PDF.
+
+    `level` : profondeur 1-based (1 = chapitre, 2 = section…). `page` : 1-based.
+    """
+
+    level: int
+    title: str
+    page: int
+
+
+@dataclass(frozen=True)
+class ExtractedDocument:
+    """Résultat brut de l'extraction d'un PDF : une entrée par page."""
+
+    pages: list[ExtractedPage]
+    # Table des matières (bookmarks PDF). Vide si le PDF n'en a pas — fréquent
+    # pour les scans ; les livres born-digital en ont presque toujours une.
+    toc: list[TocEntry] = field(default_factory=list)
+
+    @property
+    def page_count(self) -> int:
+        return len(self.pages)
+
+    @property
+    def ocr_page_count(self) -> int:
+        return sum(1 for p in self.pages if p.used_ocr)
+
+    @property
+    def full_text(self) -> str:
+        """Concatène le texte de toutes les pages, séparées par un saut double."""
+        return "\n\n".join(p.text for p in self.pages if p.text.strip())
+
+
+@dataclass(frozen=True)
+class RulesImportResult:
+    """Proposition structurée de règles : sections markdown indexées par titre.
+
+    `sections` = {titre H2 → contenu markdown}. C'est une PROPOSITION : rien
+    n'est persisté côté Core tant que l'utilisateur n'a pas validé/édité.
+    `page_count` / `ocr_page_count` remontent au diagnostic d'extraction.
+    """
+
+    sections: dict[str, str]
+    page_count: int
+    ocr_page_count: int
+
+    def to_markdown(self) -> str:
+        """Assemble les sections en un markdown monolithique (## titre + contenu).
+
+        Format aligné sur `GameSystem.rulesMarkdown` côté Core (découpé par H2).
+        """
+        blocks = [f"## {title}\n\n{content.strip()}" for title, content in self.sections.items()]
+        return "\n\n".join(blocks).strip() + "\n"
+
+
+# ─────────────────────── Import de PDF de campagne (arbre arc→chapitre→scène) ──────────────
+
+
+@dataclass(frozen=True)
+class RoomProposal:
+    """Pièce d'un lieu explorable (donjon) proposée pour une scène."""
+
+    name: str
+    description: str
+    enemies: str = ""
+    loot: str = ""
+
+
+@dataclass(frozen=True)
+class SceneProposal:
+    """Scène proposée. `rooms` non vide => donjon/lieu explorable.
+
+    On capture aussi, quand le livre les fournit, le texte d'encadré « à lire aux
+    joueurs » (`player_narration`) et les secrets/développement MJ (`gm_notes`).
+    """
+
+    name: str
+    description: str
+    player_narration: str = ""
+    gm_notes: str = ""
+    rooms: list[RoomProposal] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class ChapterProposal:
+    """Chapitre proposé : nom + synopsis + ses scènes."""
+
+    name: str
+    description: str
+    scenes: list[SceneProposal] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class ArcProposal:
+    """Arc proposé : nom + synopsis + type (LINEAR/HUB) + ses chapitres."""
+
+    name: str
+    description: str
+    arc_type: str = "LINEAR"
+    chapters: list[ChapterProposal] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class NpcImportProposal:
+    """PNJ/créature notable détecté à l'import d'un PDF de campagne.
+
+    PNJ NOMMÉS et créatures uniques (boss) — pas les monstres génériques.
+    `description` = courte fiche (rôle, apparence, motivations, où on le croise).
+    """
+
+    name: str
+    description: str = ""
+
+
+@dataclass(frozen=True)
+class CampaignImportResult:
+    """Proposition d'arborescence narrative extraite d'un PDF de campagne.
+
+    PROPOSITION non persistée : l'UI laisse l'utilisateur réviser/éditer l'arbre
+    avant la création effective des arcs/chapitres/scènes côté Core.
+    """
+
+    arcs: list[ArcProposal]
+    page_count: int
+    ocr_page_count: int
+    # PNJ/créatures notables détectés au fil des morceaux (proposition, à cocher
+    # dans l'écran de revue avant création).
+    npcs: list[NpcImportProposal] = field(default_factory=list)
+
+    def counts(self) -> tuple[int, int, int]:
+        """(nb arcs, nb chapitres, nb scènes) — pour le diagnostic / la progression."""
+        chapters = sum(len(a.chapters) for a in self.arcs)
+        scenes = sum(len(c.scenes) for a in self.arcs for c in a.chapters)
+        return len(self.arcs), chapters, scenes

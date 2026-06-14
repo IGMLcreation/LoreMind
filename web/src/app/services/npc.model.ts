@@ -11,6 +11,10 @@ export interface Npc {
   imageValues?: Record<string, string[]>;
   keyValueValues?: Record<string, Record<string, string>>;
   campaignId: string;
+  /** IDs de Pages de Lore référencées (sa ville, sa faction…). */
+  relatedPageIds?: string[];
+  /** Dossier de classement (ex. « Bard's Gate »). Vide/absent = non classé. */
+  folder?: string | null;
   order?: number;
 }
 
@@ -22,4 +26,6 @@ export interface NpcCreate {
   imageValues?: Record<string, string[]>;
   keyValueValues?: Record<string, Record<string, string>>;
   campaignId: string;
+  relatedPageIds?: string[];
+  folder?: string | null;
 }

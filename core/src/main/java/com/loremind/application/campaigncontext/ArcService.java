@@ -50,6 +50,15 @@ public class ArcService {
         return arcRepository.save(arc);
     }
 
+    /**
+     * Création à partir d'un Arc complet (utilisé par le controller pour faire passer
+     * les nouveaux champs comme type sans démultiplier les paramètres).
+     */
+    public Arc createArc(Arc input) {
+        input.setId(null);
+        return arcRepository.save(input);
+    }
+
     public Optional<Arc> getArcById(String id) {
         return arcRepository.findById(id);
     }

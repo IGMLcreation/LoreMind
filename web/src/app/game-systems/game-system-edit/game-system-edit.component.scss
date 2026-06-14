@@ -95,6 +95,104 @@
   margin: 0 0 1rem;
 }
 
+// --- Import PDF de règles ---------------------------------------------------
+.import-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin: 0 0 1rem;
+}
+
+.btn-import {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
+  background: #1f2937;
+  color: #e5e7eb;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+
+  &:hover:not(:disabled) { background: #273244; border-color: #6c63ff; }
+  &:disabled { opacity: 0.6; cursor: progress; }
+}
+
+.import-hint {
+  color: #6b7280;
+  font-size: 0.8rem;
+}
+
+.import-progress {
+  margin: -0.4rem 0 1rem;
+  padding: 0.7rem 0.85rem;
+  background: #0b1220;
+  border: 1px solid #1f2937;
+  border-radius: 8px;
+}
+
+.import-phase {
+  margin: 0 0 0.5rem;
+  color: #c4b5fd;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.progress-bar {
+  height: 6px;
+  background: #1f2937;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #6c63ff;
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.import-found {
+  margin: 0.55rem 0 0;
+  color: #9ca3af;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+// Message d'attente live (fournisseur saturé → retry, morceau re-découpé…) :
+// ambre pour signaler « ça travaille, mais il se passe quelque chose ».
+.import-status {
+  margin: 0.55rem 0 0;
+  color: #fbbf24;
+  font-size: 0.8rem;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.import-note {
+  margin: -0.4rem 0 1rem;
+  padding: 0.55rem 0.8rem;
+  background: rgba(108, 99, 255, 0.12);
+  border: 1px solid rgba(108, 99, 255, 0.35);
+  border-radius: 8px;
+  color: #c4b5fd;
+  font-size: 0.85rem;
+}
+
+.import-error {
+  margin: -0.4rem 0 1rem;
+  padding: 0.55rem 0.8rem;
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  border-radius: 8px;
+  color: #fca5a5;
+  font-size: 0.85rem;
+}
+
 .section-list {
   display: flex;
   flex-direction: column;

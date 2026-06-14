@@ -1,0 +1,21 @@
+{
+  "campaignTree": {
+    "npcs": "PNJ",
+    "newNpc": "Nouveau PNJ",
+    "newScene": "Nouvelle scène",
+    "newQuest": "Nouvelle quête",
+    "newChapter": "Nouveau chapitre",
+    "randomTables": "Tables aléatoires",
+    "newTable": "Nouvelle table",
+    "notebooks": "Ateliers (IA + PDF)",
+    "itemCatalogs": "Catalogues d'objets",
+    "enemies": "Ennemis",
+    "newEnemy": "Nouvel ennemi",
+    "importPdf": "Importer un PDF",
+    "newArc": "+ Nouvel arc",
+    "allCampaigns": "Toutes les campagnes",
+    "sectionCharacters": "Personnages",
+    "sectionNarration": "Narration",
+    "sectionTools": "Outils"
+  }
+}

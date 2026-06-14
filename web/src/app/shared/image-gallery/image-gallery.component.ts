@@ -1,6 +1,7 @@
 import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { LucideAngularModule, X, Image as ImageIcon, ChevronLeft, ChevronRight } from 'lucide-angular';
+import { TranslatePipe } from '@ngx-translate/core';
 import { ImageService } from '../../services/image.service';
 import { Image } from '../../services/image.model';
 import { ImageLayout } from '../../services/template.model';
@@ -26,11 +27,10 @@ import { ImageUploaderComponent } from '../image-uploader/image-uploader.compone
  *                      (imageIdsChange)="tempIds = $event"></app-image-gallery>
  */
 @Component({
-  selector: 'app-image-gallery',
-  standalone: true,
-  imports: [CommonModule, LucideAngularModule, ImageUploaderComponent],
-  templateUrl: './image-gallery.component.html',
-  styleUrls: ['./image-gallery.component.scss']
+    selector: 'app-image-gallery',
+    imports: [LucideAngularModule, ImageUploaderComponent, TranslatePipe],
+    templateUrl: './image-gallery.component.html',
+    styleUrls: ['./image-gallery.component.scss']
 })
 export class ImageGalleryComponent {
   readonly X = X;

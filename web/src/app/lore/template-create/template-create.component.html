@@ -1,8 +1,8 @@
 <div class="page">
 
   <header class="page-header">
-    <h1>Créer un nouveau Template</h1>
-    <p class="subtitle">Définissez un gabarit personnalisé pour créer des pages cohérentes</p>
+    <h1>{{ 'templateCreate.title' | translate }}</h1>
+    <p class="subtitle">{{ 'templateCreate.subtitle' | translate }}</p>
   </header>
 
   <form [formGroup]="form" (ngSubmit)="submit()" class="template-form">
@@ -11,34 +11,35 @@
     <div class="col-left">
 
       <div class="field">
-        <label for="template-name">Nom du template *</label>
-        <input id="template-name" type="text" formControlName="name" placeholder="Ex: Auberge, Artefact, Monstre..." />
+        <label for="template-name">{{ 'templateCreate.nameLabel' | translate }}</label>
+        <input id="template-name" type="text" formControlName="name" [placeholder]="'templateCreate.namePlaceholder' | translate" />
       </div>
 
       <div class="field">
-        <label for="template-description">Description</label>
-        <textarea id="template-description" formControlName="description" rows="4" placeholder="À quoi sert ce template ?"></textarea>
+        <label for="template-description">{{ 'common.description' | translate }}</label>
+        <textarea id="template-description" formControlName="description" rows="4" [placeholder]="'templateCreate.descriptionPlaceholder' | translate"></textarea>
       </div>
 
       <div class="field">
-        <label for="template-default-node">Dossier par défaut *</label>
+        <label for="template-default-node">{{ 'templateCreate.defaultNodeLabel' | translate }}</label>
 
-        <ng-container *ngIf="nodes.length; else emptyFolders">
+        @if (nodes.length) {
           <select id="template-default-node" formControlName="defaultNodeId">
-            <option value="" disabled>Sélectionnez un dossier</option>
-            <option *ngFor="let node of nodes" [value]="node.id">{{ node.name }}</option>
+            <option value="" disabled>{{ 'templateCreate.nodePlaceholder' | translate }}</option>
+            @for (node of nodes; track node) {
+              <option [value]="node.id">{{ node.name }}</option>
+            }
           </select>
-          <p class="hint">Les pages créées avec ce template seront placées dans ce dossier</p>
-        </ng-container>
-
-        <ng-template #emptyFolders>
+          <p class="hint">{{ 'templateCreate.defaultNodeHint' | translate }}</p>
+        } @else {
           <p class="empty-hint">
-            Aucun dossier dans ce Lore.
+            {{ 'templateCreate.noNodes' | translate }}
             <a [routerLink]="['/lore', loreId, 'nodes', 'create']"
-               [queryParams]="{ returnTo: nodeCreateReturnTo }"
-               (click)="saveDraft()">Créer un dossier</a> d'abord.
+              [queryParams]="{ returnTo: nodeCreateReturnTo }"
+            (click)="saveDraft()">{{ 'templateCreate.createNode' | translate }}</a> {{ 'templateCreate.firstSuffix' | translate }}
           </p>
-        </ng-template>
+        }
+
       </div>
 
     </div>
@@ -46,50 +47,89 @@
     <!-- Colonne droite --------------------------------------------- -->
     <div class="col-right">
 
-      <label class="section-label">Champs du template *</label>
+      <label class="section-label">{{ 'templateCreate.fieldsLabel' | translate }}</label>
 
       <ul class="fields-list">
-        <li class="field-row" *ngFor="let f of fields; let i = index; let first = first; let last = last">
-          <div class="reorder-stack">
-            <button type="button" class="btn-icon btn-reorder"
-                    (click)="moveField(i, -1)"
-                    [disabled]="first"
-                    aria-label="Monter d'un cran" title="Monter">
-              <lucide-icon [img]="ChevronUp" [size]="12"></lucide-icon>
+        @for (f of fields; track f; let i = $index; let first = $first; let last = $last) {
+          <li class="field-row">
+            <div class="reorder-stack">
+              <button type="button" class="btn-icon btn-reorder"
+                (click)="moveField(i, -1)"
+                [disabled]="first"
+                [attr.aria-label]="'templateCreate.moveUp' | translate" [title]="'templateCreate.moveUp' | translate">
+                <lucide-icon [img]="ChevronUp" [size]="12"></lucide-icon>
+              </button>
+              <button type="button" class="btn-icon btn-reorder"
+                (click)="moveField(i, 1)"
+                [disabled]="last"
+                [attr.aria-label]="'templateCreate.moveDown' | translate" [title]="'templateCreate.moveDown' | translate">
+                <lucide-icon [img]="ChevronDown" [size]="12"></lucide-icon>
+              </button>
+            </div>
+            <span class="field-chip"
+              [class.field-chip-image]="f.type === 'IMAGE'"
+              [class.field-chip-kv]="f.type === 'KEY_VALUE_LIST'"
+              [class.field-chip-table]="f.type === 'TABLE'">
+              <lucide-icon [img]="iconFor(f.type)" [size]="12"></lucide-icon>
+              {{ f.name }}
+            </span>
+            <select
+              class="type-select"
+              [ngModel]="f.type"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="setFieldType(i, $event)"
+              [title]="'templateCreate.fieldTypeTitle' | translate">
+              <option value="TEXT">{{ 'templateCreate.typeText' | translate }}</option>
+              <option value="IMAGE">{{ 'templateCreate.typeImage' | translate }}</option>
+              <option value="KEY_VALUE_LIST">{{ 'templateCreate.typeKeyValue' | translate }}</option>
+              <option value="TABLE">{{ 'templateCreate.typeTable' | translate }}</option>
+            </select>
+            @if (f.type === 'IMAGE') {
+              <select
+                class="layout-select"
+                [ngModel]="f.layout ?? 'GALLERY'"
+                [ngModelOptions]="{ standalone: true }"
+                (ngModelChange)="setFieldLayout(i, $event)"
+                [title]="'templateCreate.layoutTitle' | translate">
+                <option value="GALLERY">{{ 'templateCreate.layoutGallery' | translate }}</option>
+                <option value="HERO">{{ 'templateCreate.layoutHero' | translate }}</option>
+                <option value="MASONRY">{{ 'templateCreate.layoutMasonry' | translate }}</option>
+                <option value="CAROUSEL">{{ 'templateCreate.layoutCarousel' | translate }}</option>
+              </select>
+            }
+            <button type="button" class="btn-icon" (click)="removeField(i)" [attr.aria-label]="'common.delete' | translate">
+              <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
             </button>
-            <button type="button" class="btn-icon btn-reorder"
-                    (click)="moveField(i, 1)"
-                    [disabled]="last"
-                    aria-label="Descendre d'un cran" title="Descendre">
-              <lucide-icon [img]="ChevronDown" [size]="12"></lucide-icon>
-            </button>
-          </div>
-          <span class="field-chip" [class.field-chip-image]="f.type === 'IMAGE'">
-            <lucide-icon [img]="f.type === 'IMAGE' ? ImageIcon : Type" [size]="12"></lucide-icon>
-            {{ f.name }}
-          </span>
-          <button type="button"
-                  class="btn-icon btn-type-toggle"
-                  (click)="toggleFieldType(i)"
-                  [attr.aria-label]="'Basculer vers ' + (f.type === 'TEXT' ? 'Image' : 'Texte')"
-                  [title]="f.type === 'TEXT' ? 'Transformer en champ Image' : 'Transformer en champ Texte'">
-            {{ f.type === 'TEXT' ? 'Texte' : 'Image' }}
-          </button>
-          <select *ngIf="f.type === 'IMAGE'"
-                  class="layout-select"
-                  [ngModel]="f.layout ?? 'GALLERY'"
-                  [ngModelOptions]="{ standalone: true }"
-                  (ngModelChange)="setFieldLayout(i, $event)"
-                  title="Mise en page des images">
-            <option value="GALLERY">Grille</option>
-            <option value="HERO">Heros</option>
-            <option value="MASONRY">Mosaique</option>
-            <option value="CAROUSEL">Carrousel</option>
-          </select>
-          <button type="button" class="btn-icon" (click)="removeField(i)" aria-label="Supprimer">
-            <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
-          </button>
-        </li>
+          </li>
+          <!-- Libelles (lignes d'une liste clé/valeur, ou colonnes d'un tableau) -->
+          @if (f.type === 'KEY_VALUE_LIST' || f.type === 'TABLE') {
+            <li class="kv-labels-row">
+              @for (lbl of f.labels ?? []; track $index; let li = $index) {
+                <span class="kv-label-chip">
+                  <input
+                    type="text"
+                    [ngModel]="lbl"
+                    [ngModelOptions]="{ standalone: true }"
+                    (ngModelChange)="updateLabel(f, li, $event)"
+                    [placeholder]="(f.type === 'TABLE' ? 'templateCreate.column' : 'templateCreate.label') | translate"
+                    [attr.aria-label]="(f.type === 'TABLE' ? 'templateCreate.columnN' : 'templateCreate.labelN') | translate:{ n: (li + 1) }" />
+                  <button type="button" class="kv-label-remove" (click)="removeLabel(f, li)" [attr.aria-label]="'common.remove' | translate">
+                    <lucide-icon [img]="X" [size]="11"></lucide-icon>
+                  </button>
+                </span>
+              }
+              <button type="button" class="btn-kv-add-label" (click)="addLabel(f)">
+                <lucide-icon [img]="Plus" [size]="12"></lucide-icon>
+                {{ (f.type === 'TABLE' ? 'templateCreate.column' : 'templateCreate.label') | translate }}
+              </button>
+              @if (!(f.labels ?? []).length) {
+                <span class="kv-labels-hint">
+                  {{ (f.type === 'TABLE' ? 'templateCreate.tableLabelsHint' : 'templateCreate.kvLabelsHint') | translate }}
+                </span>
+              }
+            </li>
+          }
+        }
       </ul>
 
       <div class="field-row add-row">
@@ -97,29 +137,31 @@
           type="text"
           [(ngModel)]="newFieldName"
           [ngModelOptions]="{ standalone: true }"
-          placeholder="+ Ajouter un champ"
+          [placeholder]="'templateCreate.addFieldPlaceholder' | translate"
           (keydown.enter)="$event.preventDefault(); addField()" />
         <select
           class="type-select"
           [(ngModel)]="newFieldType"
           [ngModelOptions]="{ standalone: true }"
-          aria-label="Type du champ">
-          <option value="TEXT">Texte</option>
-          <option value="IMAGE">Image</option>
+          [attr.aria-label]="'templateCreate.fieldTypeTitle' | translate">
+          <option value="TEXT">{{ 'templateCreate.typeText' | translate }}</option>
+          <option value="IMAGE">{{ 'templateCreate.typeImage' | translate }}</option>
+          <option value="KEY_VALUE_LIST">{{ 'templateCreate.typeKeyValue' | translate }}</option>
+          <option value="TABLE">{{ 'templateCreate.typeTable' | translate }}</option>
         </select>
-        <button type="button" class="btn-add" (click)="addField()" title="Ajouter le champ">
+        <button type="button" class="btn-add" (click)="addField()" [title]="'templateCreate.addFieldTitle' | translate">
           <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
         </button>
       </div>
 
-      <p class="hint">Les champs Texte sont editables librement et utilisables par l'IA. Les champs Image hebergent une galerie d'illustrations.</p>
+      <p class="hint">{{ 'templateCreate.fieldsHelp' | translate }}</p>
 
     </div>
 
     <!-- Actions ---------------------------------------------------- -->
     <div class="actions-row">
-      <button type="button" class="btn-secondary" (click)="cancel()">Annuler</button>
-      <button type="submit" class="btn-primary" [disabled]="form.invalid">Créer le template</button>
+      <button type="button" class="btn-secondary" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
+      <button type="submit" class="btn-primary" [disabled]="form.invalid">{{ 'templateCreate.createTemplate' | translate }}</button>
     </div>
 
   </form>

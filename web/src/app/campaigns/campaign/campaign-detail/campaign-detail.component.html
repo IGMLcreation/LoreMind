@@ -1,199 +1,233 @@
-<div class="campaign-detail" *ngIf="campaign">
-
-  <!-- ============ Header : mode lecture ============ -->
-  <div class="detail-header" *ngIf="!editing">
-    <div class="header-texts">
-      <h1>{{ campaign.name }}</h1>
-      <p class="description">{{ campaign.description }}</p>
-      <div class="meta">
-        <span class="badge">{{ campaign.playerCount || 0 }} joueurs</span>
-
-        <!-- Badge "Univers" : lien vers le Lore associé si présent -->
-        <a *ngIf="linkedLore"
-           class="badge badge-lore"
-           [routerLink]="['/lore', linkedLore.id]"
-           title="Ouvrir l'univers associé">
-          <lucide-icon [img]="Globe" [size]="12"></lucide-icon>
-          {{ linkedLore.name }}
-        </a>
-
-        <!-- Campagne liée à un Lore qui n'existe plus (supprimé ailleurs) -->
-        <span *ngIf="campaign.loreId && !linkedLore" class="badge badge-lore-missing" title="L'univers associé est introuvable">
-          <lucide-icon [img]="Globe" [size]="12"></lucide-icon>
-          Univers introuvable
-        </span>
+@if (campaign) {
+  <div class="campaign-detail">
+    <!-- ============ Header : mode lecture ============ -->
+    @if (!editing) {
+      <div class="detail-header">
+        <div class="header-texts">
+          <h1>{{ campaign.name }}</h1>
+          <p class="description">{{ campaign.description }}</p>
+          <div class="meta">
+            <span class="badge">{{ 'campaignDetail.players' | translate:{ n: campaign.playerCount || 0 } }}</span>
+            <!-- Badge "Univers" : lien vers le Lore associé si présent -->
+            @if (linkedLore) {
+              <a
+                class="badge badge-lore"
+                [routerLink]="['/lore', linkedLore.id]"
+                [title]="'campaignDetail.openLinkedLore' | translate">
+                <lucide-icon [img]="Globe" [size]="12"></lucide-icon>
+                {{ linkedLore.name }}
+              </a>
+            }
+            <!-- Campagne liée à un Lore qui n'existe plus (supprimé ailleurs) -->
+            @if (campaign.loreId && !linkedLore) {
+              <span class="badge badge-lore-missing" [title]="'campaignDetail.loreMissingTitle' | translate">
+                <lucide-icon [img]="Globe" [size]="12"></lucide-icon>
+                {{ 'campaignDetail.loreMissing' | translate }}
+              </span>
+            }
+          </div>
+        </div>
+        <div class="header-actions">
+          <button type="button" class="btn-secondary" (click)="startEdit()">
+            <lucide-icon [img]="Pencil" [size]="14"></lucide-icon>
+            {{ 'common.edit' | translate }}
+          </button>
+          <button type="button" class="btn-danger" (click)="deleteCampaign()">
+            <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+            {{ 'common.delete' | translate }}
+          </button>
+        </div>
       </div>
-    </div>
-    <div class="header-actions">
-      <button type="button" class="btn-secondary" (click)="startEdit()">
-        <lucide-icon [img]="Pencil" [size]="14"></lucide-icon>
-        Modifier
-      </button>
-      <button type="button" class="btn-danger" (click)="deleteCampaign()">
-        <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
-        Supprimer
-      </button>
-    </div>
-  </div>
-
-  <!-- ============ Header : mode édition inline ============ -->
-  <div class="detail-header edit-mode" *ngIf="editing">
-    <div class="field">
-      <label>Nom</label>
-      <input type="text" [(ngModel)]="editName" name="editName" required />
-    </div>
-    <div class="field">
-      <label>Description</label>
-      <textarea [(ngModel)]="editDescription" name="editDescription" rows="3"></textarea>
-    </div>
-    <div class="field">
-      <label>Univers associé</label>
-      <select [(ngModel)]="editLoreId" name="editLoreId">
-        <option value="">— Aucun univers (campagne libre) —</option>
-        <option *ngFor="let lore of availableLores" [value]="lore.id">{{ lore.name }}</option>
-      </select>
-    </div>
-    <div class="field">
-      <label>Système de JDR</label>
-      <select *ngIf="!creatingGameSystem"
+    }
+    <!-- ============ Header : mode édition inline ============ -->
+    @if (editing) {
+      <div class="detail-header edit-mode">
+        <div class="field">
+          <label>{{ 'common.name' | translate }}</label>
+          <input type="text" [(ngModel)]="editName" name="editName" required />
+        </div>
+        <div class="field">
+          <label>{{ 'common.description' | translate }}</label>
+          <textarea [(ngModel)]="editDescription" name="editDescription" rows="3"></textarea>
+        </div>
+        <div class="field">
+          <label>{{ 'campaignDetail.loreLabel' | translate }}</label>
+          <select [(ngModel)]="editLoreId" name="editLoreId">
+            <option value="">{{ 'campaignDetail.noLoreOption' | translate }}</option>
+            @for (lore of availableLores; track lore) {
+              <option [value]="lore.id">{{ lore.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="field">
+          <label>{{ 'campaignDetail.gameSystemLabel' | translate }}</label>
+          @if (!creatingGameSystem) {
+            <select
               [(ngModel)]="editGameSystemId"
               name="editGameSystemId"
               (ngModelChange)="onEditGameSystemChange($event)">
-        <option value="">— Aucun (générique) —</option>
-        <option *ngFor="let gs of availableGameSystems" [value]="gs.id">{{ gs.name }}</option>
-        <option [value]="CREATE_GAMESYSTEM_SENTINEL">+ Créer un nouveau système…</option>
-      </select>
-
-      <div *ngIf="creatingGameSystem" class="inline-create">
-        <input
-          type="text"
-          [(ngModel)]="newGameSystemName"
-          name="newGameSystemName"
-          placeholder="Nom du nouveau système (ex: D&D 5e, Nimble, Maison)"
-          (keydown.enter)="$event.preventDefault(); submitCreateGameSystem()"
-          (keydown.escape)="cancelCreateGameSystem()"
-          autofocus
-        />
-        <div class="inline-create-actions">
-          <button type="button" class="btn-inline-primary"
-                  [disabled]="!newGameSystemName.trim() || creatingGameSystemInFlight"
-                  (click)="submitCreateGameSystem()">
-            <lucide-icon [img]="Check" [size]="14"></lucide-icon>
-            Créer
-          </button>
-          <button type="button" class="btn-inline-secondary" (click)="cancelCreateGameSystem()">
-            Annuler
-          </button>
-        </div>
-      </div>
-    </div>
-    <div class="header-actions">
-      <button type="button" class="btn-primary" (click)="saveEdit()" [disabled]="!editName.trim()">
-        Sauvegarder
-      </button>
-      <button type="button" class="btn-secondary" (click)="cancelEdit()">
-        Annuler
-      </button>
-    </div>
-  </div>
-
-  <section class="detail-section personas-section" *ngIf="!editing">
-    <div class="section-header">
-      <h2>Personnages</h2>
-    </div>
-
-    <!-- Sous-section : Personnages joueurs (PJ) -->
-    <div class="persona-subsection">
-      <div class="subsection-header">
-        <h3>
-          <lucide-icon [img]="User" [size]="16"></lucide-icon>
-          Personnages joueurs
-          <span class="count-badge" *ngIf="characters.length > 0">{{ characters.length }}</span>
-        </h3>
-        <button class="btn-add" (click)="createCharacter()">
-          <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
-          Nouveau PJ
-        </button>
-      </div>
-
-      <div class="characters-grid" *ngIf="characters.length > 0">
-        <div class="character-card" *ngFor="let character of characters" (click)="viewCharacter(character)">
-          <lucide-icon [img]="User" [size]="20" class="character-icon"></lucide-icon>
-          <div class="character-info">
-            <span class="character-name">{{ character.name }}</span>
-            <span class="character-snippet">{{ personaSnippet(character) }}</span>
+              <option value="">{{ 'campaignDetail.noGameSystemOption' | translate }}</option>
+              @for (gs of availableGameSystems; track gs) {
+                <option [value]="gs.id">{{ gs.name }}</option>
+              }
+              <option [value]="CREATE_GAMESYSTEM_SENTINEL">{{ 'campaignDetail.createGameSystemOption' | translate }}</option>
+            </select>
+          }
+          @if (creatingGameSystem) {
+            <div class="inline-create">
+              <input
+                type="text"
+                [(ngModel)]="newGameSystemName"
+                name="newGameSystemName"
+                [placeholder]="'campaignDetail.gameSystemNamePlaceholder' | translate"
+                (keydown.enter)="$event.preventDefault(); submitCreateGameSystem()"
+                (keydown.escape)="cancelCreateGameSystem()"
+                autofocus
+                />
+                <div class="inline-create-actions">
+                  <button type="button" class="btn-inline-primary"
+                    [disabled]="!newGameSystemName.trim() || creatingGameSystemInFlight"
+                    (click)="submitCreateGameSystem()">
+                    <lucide-icon [img]="Check" [size]="14"></lucide-icon>
+                    {{ 'common.create' | translate }}
+                  </button>
+                  <button type="button" class="btn-inline-secondary" (click)="cancelCreateGameSystem()">
+                    {{ 'common.cancel' | translate }}
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+          <div class="header-actions">
+            <button type="button" class="btn-primary" (click)="saveEdit()" [disabled]="!editName.trim()">
+              {{ 'common.save' | translate }}
+            </button>
+            <button type="button" class="btn-secondary" (click)="cancelEdit()">
+              {{ 'common.cancel' | translate }}
+            </button>
           </div>
         </div>
-      </div>
-
-      <div class="empty-state empty-state--compact" *ngIf="characters.length === 0">
-        <p>Aucun personnage joueur pour le moment.</p>
-        <button class="btn-add-first" (click)="createCharacter()">
-          <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
-          Créer votre premier PJ
-        </button>
-      </div>
-    </div>
-
-    <!-- Sous-section : Personnages non-joueurs (PNJ) -->
-    <div class="persona-subsection">
-      <div class="subsection-header">
-        <h3>
-          <lucide-icon [img]="Drama" [size]="16"></lucide-icon>
-          Personnages non-joueurs
-          <span class="count-badge" *ngIf="npcs.length > 0">{{ npcs.length }}</span>
-        </h3>
-        <button class="btn-add" (click)="createNpc()">
-          <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
-          Nouveau PNJ
-        </button>
-      </div>
-
-      <div class="characters-grid" *ngIf="npcs.length > 0">
-        <div class="character-card" *ngFor="let npc of npcs" (click)="viewNpc(npc)">
-          <lucide-icon [img]="Drama" [size]="20" class="character-icon character-icon--npc"></lucide-icon>
-          <div class="character-info">
-            <span class="character-name">{{ npc.name }}</span>
-            <span class="character-snippet">{{ personaSnippet(npc) }}</span>
+      }
+      @if (!editing) {
+        <section class="detail-section personas-section">
+          <div class="section-header">
+            <h2>{{ 'campaignDetail.charactersTitle' | translate }}</h2>
           </div>
-        </div>
-      </div>
-
-      <div class="empty-state empty-state--compact" *ngIf="npcs.length === 0">
-        <p>Aucun PNJ pour le moment.</p>
-        <button class="btn-add-first" (click)="createNpc()">
-          <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
-          Créer votre premier PNJ
-        </button>
-      </div>
+          <!-- Les PJ ne sont plus rattachés à la campagne mais à une Partie (Playthrough) :
+          ils se gèrent depuis la page d'une Partie. Ici on ne liste que les PNJ
+          (donnée de scénario, partagée par toutes les Parties). -->
+          <!-- Sous-section : Personnages non-joueurs (PNJ) -->
+          <div class="persona-subsection">
+            <div class="subsection-header">
+              <h3>
+                <lucide-icon [img]="Drama" [size]="16"></lucide-icon>
+                {{ 'campaignDetail.npcTitle' | translate }}
+                @if (npcs.length > 0) {
+                  <span class="count-badge">{{ npcs.length }}</span>
+                }
+              </h3>
+              <button class="btn-add" (click)="createNpc()">
+                <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
+                {{ 'campaignDetail.newNpc' | translate }}
+              </button>
+            </div>
+            @if (npcs.length > 0) {
+              <div class="characters-grid">
+                @for (npc of npcs; track npc) {
+                  <div class="character-card" (click)="viewNpc(npc)">
+                    <lucide-icon [img]="Drama" [size]="20" class="character-icon character-icon--npc"></lucide-icon>
+                    <div class="character-info">
+                      <span class="character-name">{{ npc.name }}</span>
+                      <span class="character-snippet">{{ personaSnippet(npc) }}</span>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+            @if (npcs.length === 0) {
+              <div class="empty-state empty-state--compact">
+                <p>{{ 'campaignDetail.noNpc' | translate }}</p>
+                <button class="btn-add-first" (click)="createNpc()">
+                  <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
+                  {{ 'campaignDetail.createFirstNpc' | translate }}
+                </button>
+              </div>
+            }
+          </div>
+        </section>
+      }
+      @if (!editing) {
+        <section class="detail-section arcs-section">
+          <div class="section-header">
+            <h2>{{ 'campaignDetail.arcsTitle' | translate }}</h2>
+            <div class="section-header-actions">
+              <button class="btn-add" (click)="createArc()">
+                <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
+                {{ 'campaignDetail.newArc' | translate }}
+              </button>
+            </div>
+          </div>
+          @if (arcs.length > 0) {
+            <div class="arcs-grid">
+              @for (arc of arcs; track arc) {
+                <div class="arc-card" (click)="openArc(arc)">
+                  <lucide-icon [img]="Swords" [size]="24" class="arc-icon"></lucide-icon>
+                  <span class="arc-name">{{ arc.name }}</span>
+                  <span class="arc-meta">{{ 'campaignDetail.chapters' | translate:{ n: chapterCountByArc[arc.id!] || 0 } }}</span>
+                </div>
+              }
+            </div>
+          }
+          @if (arcs.length === 0) {
+            <div class="empty-state">
+              <lucide-icon [img]="Swords" [size]="40" class="empty-icon"></lucide-icon>
+              <p>{{ 'campaignDetail.noArc' | translate }}</p>
+              <button class="btn-add-first" (click)="createArc()">
+                <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
+                {{ 'campaignDetail.createFirstArc' | translate }}
+              </button>
+            </div>
+          }
+        </section>
+      }
+      <!-- ============ Parties (Playthroughs) ============ -->
+      @if (!editing) {
+        <section class="detail-section playthroughs-section">
+          <div class="section-header">
+            <h2>
+              <lucide-icon [img]="Dices" [size]="18"></lucide-icon>
+              {{ 'campaignDetail.playthroughsTitle' | translate }}
+            </h2>
+            <button class="btn-add" [disabled]="newPlaythroughInFlight" (click)="createPlaythrough()">
+              <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
+              {{ 'campaignDetail.newPlaythrough' | translate }}
+            </button>
+          </div>
+          @if (playthroughs.length > 0) {
+            <div class="playthroughs-grid">
+              @for (p of playthroughs; track p) {
+                <div class="playthrough-card"
+                  (click)="openPlaythrough(p)">
+                  <lucide-icon [img]="Dices" [size]="22" class="playthrough-icon"></lucide-icon>
+                  <div class="playthrough-info">
+                    <span class="playthrough-name">{{ p.name }}</span>
+                    @if (p.description) {
+                      <span class="playthrough-meta">{{ p.description }}</span>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+          @if (playthroughs.length === 0) {
+            <div class="empty-state empty-state--compact">
+              <p>{{ 'campaignDetail.noPlaythrough' | translate }}</p>
+            </div>
+          }
+        </section>
+      }
+      <!-- Sessions retirées : elles vivent désormais dans une Partie.
+      Les faits narratifs sont définis dans les conditions de chaque quête
+      (chapter-edit > « Conditions de déblocage »). -->
     </div>
-  </section>
-
-  <section class="detail-section arcs-section" *ngIf="!editing">
-    <div class="section-header">
-      <h2>Arcs narratifs</h2>
-      <button class="btn-add" (click)="createArc()">
-        <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
-        Nouvel arc
-      </button>
-    </div>
-
-    <div class="arcs-grid" *ngIf="arcs.length > 0">
-      <div class="arc-card" *ngFor="let arc of arcs" (click)="openArc(arc)">
-        <lucide-icon [img]="Swords" [size]="24" class="arc-icon"></lucide-icon>
-        <span class="arc-name">{{ arc.name }}</span>
-        <span class="arc-meta">{{ chapterCountByArc[arc.id!] || 0 }} chapitres</span>
-      </div>
-    </div>
-
-    <div class="empty-state" *ngIf="arcs.length === 0">
-      <lucide-icon [img]="Swords" [size]="40" class="empty-icon"></lucide-icon>
-      <p>Aucun arc narratif pour le moment.</p>
-      <button class="btn-add-first" (click)="createArc()">
-        <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
-        Créer votre premier arc
-      </button>
-    </div>
-  </section>
-
-</div>
+  }

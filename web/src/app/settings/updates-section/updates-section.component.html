@@ -1,0 +1,265 @@
+<!-- Bloc Mises a jour (canal stable + canal beta Patreon fusionnes) -->
+@if (config.updateCheckEnabled || licenseStatus?.enabled) {
+  <section class="card">
+    <h2>{{ 'updatesSection.title' | translate }}</h2>
+    <p class="hint">{{ 'updatesSection.hint' | translate }}</p>
+    @if (licenseSuccess) {
+      <div class="alert alert-success">
+        <lucide-icon [img]="Check" [size]="16"></lucide-icon>
+        <span>{{ licenseSuccess }}</span>
+      </div>
+    }
+    <!-- ====================================================== -->
+    <!-- Sous-section : canal stable                              -->
+    <!-- ====================================================== -->
+    @if (config.updateCheckEnabled) {
+      <div class="channel-block">
+        <h3 class="channel-title">{{ 'updatesSection.stableChannel' | translate }}</h3>
+        <div class="form-row">
+          <button type="button" class="btn-secondary" (click)="checkUpdates()" [disabled]="updateChecking">
+            <lucide-icon [img]="RefreshCw" [size]="14"></lucide-icon>
+            <span>{{ (updateChecking ? 'updatesSection.checking' : 'updatesSection.checkNow') | translate }}</span>
+          </button>
+        </div>
+        @if (updateStatus && !updateStatus.enabled) {
+          <div class="hint">
+            {{ 'updatesSection.featureNotConfigured' | translate }}
+          </div>
+        }
+        @if (updateStatus?.enabled) {
+          <div>
+            @if (updateStatus?.updateAvailable) {
+              <div class="alert alert-success">
+                <lucide-icon [img]="Download" [size]="16"></lucide-icon>
+                <span>{{ 'updatesSection.updateAvailable' | translate }}</span>
+              </div>
+            }
+            @if (updateStatus?.anyUnknown && !updateStatus?.updateAvailable) {
+              <div class="alert alert-warn">
+                <lucide-icon [img]="Download" [size]="16"></lucide-icon>
+                <span>{{ 'updatesSection.checkImpossible' | translate }}</span>
+              </div>
+            }
+            @if (!updateStatus?.updateAvailable && !updateStatus?.anyUnknown) {
+              <div class="hint">
+                {{ 'updatesSection.upToDate' | translate:{ date: (updateStatus?.checkedAt | date:'short') } }}
+              </div>
+            }
+            @if (updateStatus?.updateAvailable) {
+              <div class="form-row">
+                <button type="button" class="btn-primary" (click)="applyUpdate()" [disabled]="updateApplying">
+                  <lucide-icon [img]="Download" [size]="16"></lucide-icon>
+                  <span>{{ (updateApplying ? 'updatesSection.applying' : 'updatesSection.applyNow') | translate }}</span>
+                </button>
+              </div>
+            }
+            @if (updateMessage) {
+              <div class="alert alert-success">
+                <lucide-icon [img]="Check" [size]="16"></lucide-icon>
+                <span>{{ updateMessage }}</span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+    <!-- ====================================================== -->
+    <!-- Sous-section : canal beta (Patreon)                      -->
+    <!-- ====================================================== -->
+    @if (licenseStatus?.enabled) {
+      <div class="channel-block">
+        <h3 class="channel-title">
+          <lucide-icon [img]="Heart" [size]="16"></lucide-icon>
+          {{ 'updatesSection.betaChannelTitle' | translate }}
+        </h3>
+        <p class="hint" [innerHTML]="'updatesSection.betaChannelIntro' | translate"></p>
+        <!-- Pas de licence installee -->
+        @if (licenseStatus?.status === 'NONE') {
+          <div class="form-row">
+            <button type="button" class="btn-primary" (click)="connectPatreon()">
+              <lucide-icon [img]="Link2" [size]="16"></lucide-icon>
+              <span>{{ 'updatesSection.connectPatreon' | translate }}</span>
+            </button>
+          </div>
+          <p class="hint">{{ 'updatesSection.connectInstructions' | translate }}</p>
+          <div class="form-row">
+            <label for="license-jwt">{{ 'updatesSection.patreonToken' | translate }}</label>
+            <input
+              id="license-jwt"
+              type="text"
+              [(ngModel)]="licenseJwtInput"
+              placeholder="eyJhbGciOiJFZERTQS..."
+              autocomplete="off"
+              >
+          </div>
+          <div class="form-row">
+            <button type="button" class="btn-primary" (click)="installLicense()" [disabled]="!licenseJwtInput.trim()">
+              <lucide-icon [img]="Check" [size]="16"></lucide-icon>
+              <span>{{ 'updatesSection.activateLicense' | translate }}</span>
+            </button>
+          </div>
+          @if (licenseError) {
+            <div class="alert alert-error">
+              <lucide-icon [img]="AlertCircle" [size]="16"></lucide-icon>
+              <span>{{ licenseError }}</span>
+            </div>
+          }
+        }
+        <!-- Licence installee (VALID / GRACE / EXPIRED / UNVERIFIABLE) -->
+        @if (licenseStatus && licenseStatus.status !== 'NONE') {
+          @if (licenseStatus.status === 'VALID') {
+            <div class="alert alert-success">
+              <lucide-icon [img]="Check" [size]="16"></lucide-icon>
+              <span>{{ 'updatesSection.licenseValid' | translate:{ tier: tierLabel(licenseStatus.tierId) } }}</span>
+            </div>
+          }
+          @if (licenseStatus.status === 'GRACE') {
+            <div class="alert alert-warn">
+              <lucide-icon [img]="AlertCircle" [size]="16"></lucide-icon>
+              <span>{{ 'updatesSection.licenseGrace' | translate }}</span>
+            </div>
+          }
+          @if (licenseStatus.status === 'EXPIRED') {
+            <div class="alert alert-error">
+              <lucide-icon [img]="AlertCircle" [size]="16"></lucide-icon>
+              <span>{{ 'updatesSection.licenseExpired' | translate }}</span>
+            </div>
+          }
+          @if (licenseStatus.status === 'UNVERIFIABLE') {
+            <div class="alert alert-error">
+              <lucide-icon [img]="AlertCircle" [size]="16"></lucide-icon>
+              <span>{{ 'updatesSection.licenseUnverifiable' | translate }}</span>
+            </div>
+          }
+          <ul class="license-info">
+            @if (licenseStatus.tierId) {
+              <li [innerHTML]="'updatesSection.infoTier' | translate:{ tier: tierLabel(licenseStatus.tierId) }"></li>
+            }
+            @if (licenseStatus.expiresAt) {
+              <li>
+                <span [innerHTML]="'updatesSection.infoValidity' | translate:{ date: formatDate(licenseStatus.expiresAt) }"></span>
+                @if (daysUntilExpiry !== null && daysUntilExpiry > 0) {
+                  <span>
+                    {{ (daysUntilExpiry > 1 ? 'updatesSection.renewalDays' : 'updatesSection.renewalDay') | translate:{ n: daysUntilExpiry } }}
+                  </span>
+                }
+              </li>
+            }
+            @if (licenseStatus.lastRefreshAttemptAt) {
+              <li>
+                <span [innerHTML]="'updatesSection.infoLastRefresh' | translate:{ date: formatDate(licenseStatus.lastRefreshAttemptAt) }"></span>
+                @if (licenseStatus.lastRefreshSucceeded === true) {
+                  <span class="badge-ok">{{ 'updatesSection.refreshOk' | translate }}</span>
+                }
+                @if (licenseStatus.lastRefreshSucceeded === false) {
+                  <span class="badge-warn">{{ 'updatesSection.refreshFailed' | translate }}</span>
+                }
+              </li>
+            }
+          </ul>
+          <div class="form-row form-row-inline">
+            <label class="checkbox">
+              <input
+                type="checkbox"
+                [checked]="licenseStatus.betaChannelEnabled"
+                (change)="toggleBetaChannel(!licenseStatus.betaChannelEnabled)"
+                [disabled]="licenseStatus.status !== 'VALID' && licenseStatus.status !== 'GRACE'"
+                >
+              <span>{{ 'updatesSection.enableBetaChannel' | translate }}</span>
+            </label>
+          </div>
+          <div class="form-row form-row-actions">
+            <button type="button" class="btn-secondary" (click)="refreshLicense()" [disabled]="licenseLoading">
+              <lucide-icon [img]="RefreshCw" [size]="14"></lucide-icon>
+              <span>{{ (licenseLoading ? 'updatesSection.checking' : 'updatesSection.checkNow') | translate }}</span>
+            </button>
+            <button type="button" class="btn-secondary btn-danger" (click)="disconnectPatreon()">
+              <lucide-icon [img]="Unlink" [size]="14"></lucide-icon>
+              <span>{{ 'updatesSection.disconnectPatreon' | translate }}</span>
+            </button>
+          </div>
+          <!-- Etat du canal beta -->
+          @if (licenseStatus.betaChannelEnabled) {
+            <div class="beta-status">
+              @if (betaChecking) {
+                <div class="hint">{{ 'updatesSection.checkingBetaImages' | translate }}</div>
+              }
+              @if (!betaChecking && betaStatus && !betaStatus.enabled) {
+                <div class="hint">
+                  {{ 'updatesSection.betaUnavailable' | translate:{ reason: betaStatus.disabledReason } }}
+                </div>
+              }
+              @if (!betaChecking && betaStatus?.enabled) {
+                <div>
+                  @if (betaStatus?.anyUnknown) {
+                    <div class="alert alert-warn">
+                      <lucide-icon [img]="AlertCircle" [size]="16"></lucide-icon>
+                      <span>{{ 'updatesSection.betaCheckImpossible' | translate }}</span>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+          <!-- Bascule de canal (stable <-> beta) via sidecar switcher -->
+          @if (channelStatus) {
+            <div class="channel-switch">
+              <div class="channel-current">
+                <span class="channel-label">{{ 'updatesSection.currentChannel' | translate }}</span>
+                <span class="channel-badge"
+                  [class.channel-stable]="channelStatus.currentChannel === 'stable'"
+                  [class.channel-beta]="channelStatus.currentChannel === 'beta'">
+                  {{ (channelStatus.currentChannel === 'beta' ? 'updatesSection.channelBeta' : 'updatesSection.channelStable') | translate }}
+                </span>
+              </div>
+              <!-- Sidecar dispo : boutons d'action -->
+              @if (channelStatus.switcherAvailable) {
+                <!-- On stable -> proposer passage beta (uniquement si licence active) -->
+                @if (channelStatus.currentChannel === 'stable') {
+                  <button
+                    type="button" class="btn-primary"
+                    [disabled]="switchInFlight"
+                    (click)="requestChannelSwitch('beta')">
+                    <lucide-icon [img]="Download" [size]="14"></lucide-icon>
+                    <span>{{ (switchInFlight ? 'updatesSection.switching' : 'updatesSection.switchToBeta') | translate }}</span>
+                  </button>
+                }
+                <!-- On beta -> proposer retour stable -->
+                @if (channelStatus.currentChannel === 'beta') {
+                  <button
+                    type="button" class="btn-secondary"
+                    [disabled]="switchInFlight"
+                    (click)="requestChannelSwitch('stable')">
+                    <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon>
+                    <span>{{ (switchInFlight ? 'updatesSection.switching' : 'updatesSection.switchToStable') | translate }}</span>
+                  </button>
+                }
+                <!-- Switch en cours : on prévient que la page va se rendre injoignable -->
+                @if (switchInFlight) {
+                  <div class="alert alert-warn">
+                    <lucide-icon [img]="RefreshCw" [size]="16"></lucide-icon>
+                    <span>{{ 'updatesSection.switchInProgressNotice' | translate }}</span>
+                  </div>
+                }
+                <!-- Erreur eventuelle remontee par le sidecar -->
+                @if (switchError && !switchInFlight) {
+                  <div class="alert alert-error">
+                    <lucide-icon [img]="AlertCircle" [size]="16"></lucide-icon>
+                    <span>{{ switchError }}</span>
+                  </div>
+                }
+              }
+              <!-- Sidecar PAS dispo : fallback instructions manuelles (vieilles installs) -->
+              @if (!channelStatus.switcherAvailable) {
+                <div class="alert alert-warn">
+                  <lucide-icon [img]="AlertCircle" [size]="16"></lucide-icon>
+                  <span [innerHTML]="'updatesSection.switcherUnavailable' | translate"></span>
+                </div>
+              }
+            </div>
+          }
+        }
+      </div>
+    }
+  </section>
+}

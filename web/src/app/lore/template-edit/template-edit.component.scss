@@ -90,6 +90,70 @@
   gap: 0.5rem;
 }
 
+// Sous-ligne des libellés d'un champ Tableau (KEY_VALUE_LIST).
+.kv-labels-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  // Aligne visuellement sous le chip du champ (décalage = reorder-stack + gap).
+  padding-left: 30px;
+
+  .kv-label-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    background: #1a1a2e;
+    border: 1px solid #4a3a1f;
+    border-radius: 5px;
+    padding: 0.15rem 0.3rem;
+
+    input {
+      width: 90px;
+      background: transparent;
+      border: none;
+      color: #fbd38d;
+      font-size: 0.8rem;
+      padding: 0.2rem 0.3rem;
+
+      &:focus { outline: none; }
+    }
+
+    .kv-label-remove {
+      background: transparent;
+      border: none;
+      color: #6b7280;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      padding: 2px;
+
+      &:hover { color: #f87171; }
+    }
+  }
+
+  .btn-kv-add-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: transparent;
+    border: 1px dashed #4a3a1f;
+    border-radius: 5px;
+    color: #fbd38d;
+    font-size: 0.78rem;
+    padding: 0.3rem 0.55rem;
+    cursor: pointer;
+
+    &:hover { background: rgba(251, 211, 141, 0.08); }
+  }
+
+  .kv-labels-hint {
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-style: italic;
+  }
+}
+
 .field-row {
   display: flex;
   align-items: center;
@@ -126,6 +190,20 @@
       background: #312b5c;
       border-color: #3d3566;
       color: #c7b8ff;
+    }
+
+    // Champ Liste clé/valeur (palette ambre) — prioritaire sur existing/new.
+    &.field-chip-kv {
+      background: #4a3a1f;
+      border-color: #6b5328;
+      color: #fbd38d;
+    }
+
+    // Champ Tableau (palette sarcelle) — prioritaire sur existing/new.
+    &.field-chip-table {
+      background: #134e4a;
+      border-color: #14b8a6;
+      color: #99f6e4;
     }
   }
 

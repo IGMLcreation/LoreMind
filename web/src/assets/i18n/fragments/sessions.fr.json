@@ -1,0 +1,93 @@
+{
+  "sessionDetail": {
+    "backToCampaign": "Retour à la campagne",
+    "renameTitle": "Renommer la session",
+    "statusActive": "En cours",
+    "statusEnded": "Terminée",
+    "startedOn": "Démarrée le {{date}}",
+    "endedOn": "Terminée le {{date}}",
+    "endSession": "Terminer la session",
+    "ctrlEnterHint": "Ctrl + Entrée pour ajouter",
+    "addEntryPlaceholder": "Ajouter une {{type}}…",
+    "journalTitle": "Journal de session",
+    "noEntries": "Aucune entrée pour le moment.",
+    "noEntriesHint": "Saisis une note, un évènement ou un jet ci-dessus pour commencer le journal.",
+    "entryType": {
+      "NOTE": "Note",
+      "EVENT": "Évènement",
+      "DICE_ROLL": "Jet de dés",
+      "PLAYER_ACTION": "Action joueur"
+    },
+    "endConfirm": {
+      "title": "Terminer la session ?",
+      "message": "Marquer la session \"{{name}}\" comme terminée ?",
+      "detail": "Tu pourras toujours consulter son contenu après.",
+      "confirmLabel": "Terminer"
+    },
+    "deleteConfirm": {
+      "title": "Supprimer la session ?",
+      "message": "Supprimer définitivement la session \"{{name}}\" ?",
+      "noEntries": "Aucune entrée de journal pour cette session.",
+      "entriesOne": "1 entrée de journal sera également supprimée.",
+      "entriesMany": "{{n}} entrées de journal seront également supprimées.",
+      "irreversible": "Cette action est irréversible."
+    },
+    "deleteEntryConfirm": {
+      "title": "Supprimer cette entrée ?",
+      "message": "Cette entrée du journal sera définitivement supprimée."
+    }
+  },
+  "sessionReferencePanel": {
+    "tabAi": "IA",
+    "tabDice": "Dés",
+    "tabTables": "Tables",
+    "tabObjects": "Objets",
+    "tabCharacters": "PJ/PNJ",
+    "tabScenes": "Scènes",
+    "playerCharacters": "Personnages joueurs",
+    "nonPlayerCharacters": "Personnages non-joueurs",
+    "emptyCharacters": "Aucun personnage dans cette campagne.",
+    "emptyScenes": "Aucun arc narratif. Construis le scénario de ta campagne pour le retrouver ici."
+  },
+  "sessionDicePanel": {
+    "count": "Nombre",
+    "modifier": "Modificateur",
+    "roll": "Lancer",
+    "lastRolls": "Derniers jets",
+    "clearHistory": "Vider l'historique local",
+    "addToJournal": "Ajouter au journal",
+    "sessionEnded": "Session terminée",
+    "placeholder": "Choisis un dé et lance."
+  },
+  "sessionAiChatPanel": {
+    "welcome": "Pose une question à l'IA pendant la partie.",
+    "welcomeSub": "Elle connaît ton univers, ta campagne, les règles du système et tout ce qui a été noté dans le journal.",
+    "saveReplyTitle": "Ajouter cette réponse au journal",
+    "sessionEnded": "Session terminée",
+    "toJournal": "Au journal",
+    "replying": "L’IA répond…",
+    "inputPlaceholder": "Demande une idée, un rebondissement, une description…",
+    "clearConversation": "Effacer la conversation",
+    "send": "Envoyer",
+    "stop": "Stop",
+    "unknownError": "Erreur inconnue",
+    "aiError": "Erreur IA : {{message}}",
+    "interrupted": "[interrompu]"
+  },
+  "sessionRandomTablesPanel": {
+    "empty": "Aucune table aléatoire dans cette campagne. Crée-en une depuis la sidebar.",
+    "tables": "Tables",
+    "roll": "Lancer",
+    "noEntry": "aucune entrée",
+    "journal": "Journal",
+    "improvising": "…",
+    "aiImprovise": "IA improvise",
+    "noResult": "aucun résultat"
+  },
+  "sessionItemCatalogsPanel": {
+    "empty": "Aucun catalogue d'objets dans cette campagne.",
+    "catalogs": "Catalogues",
+    "noteTitle": "Consigner au journal (ex. achat)",
+    "journal": "Journal"
+  }
+}

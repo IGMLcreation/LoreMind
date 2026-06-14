@@ -86,7 +86,7 @@ public class TemplateFieldListJsonConverter
                         }
                     }
                     List<String> labels = null;
-                    if (type == FieldType.KEY_VALUE_LIST) {
+                    if (type == FieldType.KEY_VALUE_LIST || type == FieldType.TABLE) {
                         JsonNode labelsNode = item.path("labels");
                         if (labelsNode.isArray()) {
                             labels = new ArrayList<>();

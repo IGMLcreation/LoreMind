@@ -17,6 +17,9 @@ public class ArcDTO {
     private String campaignId;
     private int order;
 
+    /** Type structurel : "LINEAR" (défaut) | "HUB". Sérialisé comme String pour faciliter le front. */
+    private String type;
+
     /** Cle d'icone (cf. CAMPAIGN_ICON_OPTIONS cote front). */
     private String icon;
 

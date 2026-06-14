@@ -1,0 +1,8 @@
+{
+  "services": {
+    "importFailed": "Import failed.",
+    "importInterrupted": "The import was interrupted before completion (connection dropped or timed out). Please try again.",
+    "unknownServerError": "Unknown server error.",
+    "networkError": "Network error"
+  }
+}

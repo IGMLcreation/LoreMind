@@ -1,0 +1,102 @@
+{
+  "lore": {
+    "heroTitle": "Vos Univers",
+    "heroSubtitle": "Sélectionnez un lore existant ou créez un nouvel univers",
+    "cardDate": "Il y a 2h",
+    "statPages": "{{n}} pages",
+    "statFolders": "{{n}} dossiers",
+    "newLore": "Nouveau Lore",
+    "newLoreSubtitle": "Créez un nouvel univers",
+    "tip": "💡 Astuce : Utilisez les templates pour structurer votre univers de manière cohérente"
+  },
+  "folderView": {
+    "breadcrumb": "Fil d'Ariane",
+    "summary": "{{folders}} sous-dossier(s) · {{pages}} page(s)",
+    "editTitle": "Modifier le dossier",
+    "deleteTitle": "Supprimer le dossier et tout son contenu",
+    "subfolders": "Sous-dossiers",
+    "newSubfolder": "Nouveau sous-dossier",
+    "noSubfolders": "Aucun sous-dossier.",
+    "pages": "Pages",
+    "newPage": "Nouvelle page",
+    "noPages": "Aucune page dans ce dossier.",
+    "deleteConfirmTitle": "Supprimer le dossier",
+    "deleteConfirmMessage": "Supprimer le dossier « {{name}} » ?",
+    "impact": {
+      "subfolders": "{{n}} sous-dossier",
+      "subfoldersPlural": "{{n}} sous-dossiers",
+      "pages": "{{n}} page",
+      "pagesPlural": "{{n}} pages",
+      "alsoDeletes": "Cette action supprimera aussi : {{items}}.",
+      "irreversible": "Cette action est irréversible."
+    }
+  },
+  "loreCreate": {
+    "title": "Créer un nouveau Lore",
+    "nameLabel": "Nom de l'univers *",
+    "namePlaceholder": "Ex: Royaume des Ombres, Cyberpunk 2157...",
+    "descriptionPlaceholder": "Décrivez brièvement votre univers, son ambiance, son genre...",
+    "infoIntro": "<strong>💡 Astuce :</strong> Votre lore sera créé avec quelques templates par défaut :",
+    "infoNpc": "PNJ - Pour vos personnages",
+    "infoPlace": "Lieu - Pour vos villes et régions",
+    "infoFaction": "Faction - Pour vos organisations",
+    "infoItem": "Objet - Pour vos artefacts",
+    "infoFooter": "Vous pourrez créer vos propres templates ensuite !",
+    "submit": "Créer le lore"
+  },
+  "loreDetail": {
+    "graph": "Graphe",
+    "graphTitle": "Visualiser le graphe des pages et de leurs liens (PNJ inclus)",
+    "editTitle": "Modifier le Lore",
+    "deleteTitle": "Supprimer le Lore",
+    "folders": "Dossiers",
+    "newFolder": "Nouveau dossier",
+    "noFolders": "Aucun dossier pour le moment.",
+    "createFirstFolder": "Créer votre premier dossier",
+    "deleteConfirmTitle": "Supprimer le Lore",
+    "deleteConfirmMessage": "Supprimer définitivement le Lore « {{name}} » ?",
+    "impact": {
+      "folders": "{{n}} dossier",
+      "foldersPlural": "{{n}} dossiers",
+      "pages": "{{n}} page",
+      "pagesPlural": "{{n}} pages",
+      "templates": "{{n}} template",
+      "templatesPlural": "{{n}} templates",
+      "alsoDeletes": "Cette action supprimera aussi : {{items}}.",
+      "detachedCampaigns": "{{n}} campagne sera conservée mais perdra son lien vers cet univers.",
+      "detachedCampaignsPlural": "{{n}} campagnes seront conservées mais perdront leur lien vers cet univers.",
+      "irreversible": "Cette action est irréversible."
+    }
+  },
+  "loreGraph": {
+    "back": "Retour au Lore",
+    "title": "{{name}} — Graphe",
+    "subtitle": "{{pages}} page(s) · {{npcs}} PNJ · {{edges}} lien(s). Cliquez sur un nœud pour l'ouvrir, glissez-le pour réarranger.",
+    "legendPage": "Page de Lore",
+    "legendNpc": "PNJ",
+    "legendLink": "Lien PNJ → page",
+    "empty": "Aucune page dans ce Lore pour l'instant — le graphe se remplira au fur et à mesure.",
+    "hint": "Aucun lien pour l'instant : liez des pages entre elles (« Pages liées » d'une page) ou rattachez un PNJ à des pages de Lore depuis sa fiche."
+  },
+  "loreNodeCreate": {
+    "title": "Créer un nouveau dossier",
+    "subtitle": "Les dossiers permettent d'organiser vos pages par catégorie",
+    "nameLabel": "Nom du dossier *",
+    "namePlaceholder": "Ex: Personnages, Créatures...",
+    "parentLabel": "Dossier parent",
+    "rootOption": "— Racine du Lore —",
+    "parentHint": "Laissez vide pour créer un dossier à la racine du lore",
+    "iconLabel": "Icône",
+    "descriptionPlaceholder": "Décrivez le type de contenu que ce dossier contiendra...",
+    "submit": "Créer le dossier"
+  },
+  "loreNodeEdit": {
+    "title": "Éditer le dossier",
+    "summary": "{{folders}} sous-dossier(s) · {{pages}} page(s)",
+    "nameLabel": "Nom du dossier *",
+    "parentLabel": "Dossier parent",
+    "rootOption": "— Racine du Lore —",
+    "parentHint": "Vous ne pouvez pas choisir un sous-dossier du dossier courant (cycle interdit)",
+    "iconLabel": "Icône"
+  }
+}

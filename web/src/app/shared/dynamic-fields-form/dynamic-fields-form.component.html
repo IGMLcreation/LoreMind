@@ -1,56 +1,64 @@
-<div class="dff" *ngIf="fields?.length; else emptyTpl">
-  <div class="dff-field" *ngFor="let f of fields; trackBy: trackByName">
-    <label>{{ f.name }}</label>
-
-    <ng-container [ngSwitch]="f.type">
-      <textarea
-        *ngSwitchCase="'TEXT'"
-        rows="4"
-        [ngModel]="values[f.name] || ''"
-        (ngModelChange)="onTextChange(f, $event)"
-        [name]="'val-' + f.name"
-        placeholder="Renseignez {{ f.name }}…">
-      </textarea>
-
-      <input
-        *ngSwitchCase="'NUMBER'"
-        type="number"
-        [ngModel]="values[f.name] || ''"
-        (ngModelChange)="onTextChange(f, $event)"
-        [name]="'val-' + f.name"
-        placeholder="0"
-      />
-
-      <app-image-gallery
-        *ngSwitchCase="'IMAGE'"
-        [editable]="true"
-        [layout]="f.layout || 'GALLERY'"
-        [imageIds]="imagesFor(f)"
-        (imageIdsChange)="onImageIdsChange(f, $event)">
-      </app-image-gallery>
-
-      <!-- KEY_VALUE_LIST : grille d'inputs avec labels figes du template -->
-      <div *ngSwitchCase="'KEY_VALUE_LIST'" class="dff-kv-grid">
-        <div class="dff-kv-cell" *ngFor="let lbl of f.labels; trackBy: trackByLabel">
-          <span class="dff-kv-label">{{ lbl }}</span>
-          <input
-            type="text"
-            [ngModel]="kvValue(f, lbl)"
-            (ngModelChange)="onKvChange(f, lbl, $event)"
-            [name]="'kv-' + f.name + '-' + lbl"
-            placeholder="—"
-          />
-        </div>
-        <div *ngIf="!f.labels?.length" class="dff-kv-empty">
-          Aucun label defini dans le template pour ce champ.
-        </div>
+@if (fields?.length) {
+  <div class="dff">
+    @for (f of fields; track trackByName($index, f)) {
+      <div class="dff-field">
+        <label>{{ f.name }}</label>
+        @switch (f.type) {
+          @case ('TEXT') {
+            <textarea
+              rows="4"
+              [ngModel]="values[f.name] || ''"
+              (ngModelChange)="onTextChange(f, $event)"
+              [name]="'val-' + f.name"
+              [placeholder]="'dynamicFieldsForm.textPlaceholder' | translate:{ name: f.name }">
+            </textarea>
+          }
+          @case ('NUMBER') {
+            <input
+              type="number"
+              [ngModel]="values[f.name] || ''"
+              (ngModelChange)="onTextChange(f, $event)"
+              [name]="'val-' + f.name"
+              placeholder="0"
+              />
+          }
+          @case ('IMAGE') {
+            <app-image-gallery
+              [editable]="true"
+              [layout]="f.layout || 'GALLERY'"
+              [imageIds]="imagesFor(f)"
+              (imageIdsChange)="onImageIdsChange(f, $event)">
+            </app-image-gallery>
+          }
+          <!-- KEY_VALUE_LIST : grille d'inputs avec labels figes du template -->
+          @case ('KEY_VALUE_LIST') {
+            <div class="dff-kv-grid">
+              @for (lbl of f.labels; track trackByLabel($index, lbl)) {
+                <div class="dff-kv-cell">
+                  <span class="dff-kv-label">{{ lbl }}</span>
+                  <input
+                    type="text"
+                    [ngModel]="kvValue(f, lbl)"
+                    (ngModelChange)="onKvChange(f, lbl, $event)"
+                    [name]="'kv-' + f.name + '-' + lbl"
+                    placeholder="—"
+                    />
+                </div>
+              }
+              @if (!f.labels?.length) {
+                <div class="dff-kv-empty">
+                  {{ 'dynamicFieldsForm.noLabels' | translate }}
+                </div>
+              }
+            </div>
+          }
+        }
       </div>
-    </ng-container>
+    }
   </div>
-</div>
-
-<ng-template #emptyTpl>
+} @else {
   <div class="dff-empty">
-    Aucun champ defini dans le template de ce systeme. Editez le GameSystem pour ajouter des champs.
+    {{ 'dynamicFieldsForm.noFields' | translate }}
   </div>
-</ng-template>
+}
+

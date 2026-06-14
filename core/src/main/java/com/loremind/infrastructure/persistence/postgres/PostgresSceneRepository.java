@@ -80,6 +80,9 @@ public class PostgresSceneRepository implements SceneRepository {
                 .choicesConsequences(jpaEntity.getChoicesConsequences())
                 .combatDifficulty(jpaEntity.getCombatDifficulty())
                 .enemies(jpaEntity.getEnemies())
+                .enemyIds(jpaEntity.getEnemyIds() != null
+                        ? new ArrayList<>(jpaEntity.getEnemyIds())
+                        : new ArrayList<>())
                 .relatedPageIds(jpaEntity.getRelatedPageIds() != null
                         ? new ArrayList<>(jpaEntity.getRelatedPageIds())
                         : new ArrayList<>())
@@ -91,6 +94,9 @@ public class PostgresSceneRepository implements SceneRepository {
                         : new ArrayList<>())
                 .branches(jpaEntity.getBranches() != null
                         ? new ArrayList<>(jpaEntity.getBranches())
+                        : new ArrayList<>())
+                .rooms(jpaEntity.getRooms() != null
+                        ? new ArrayList<>(jpaEntity.getRooms())
                         : new ArrayList<>())
                 .createdAt(jpaEntity.getCreatedAt())
                 .updatedAt(jpaEntity.getUpdatedAt())
@@ -114,6 +120,9 @@ public class PostgresSceneRepository implements SceneRepository {
                 .choicesConsequences(scene.getChoicesConsequences())
                 .combatDifficulty(scene.getCombatDifficulty())
                 .enemies(scene.getEnemies())
+                .enemyIds(scene.getEnemyIds() != null
+                        ? new ArrayList<>(scene.getEnemyIds())
+                        : new ArrayList<>())
                 .relatedPageIds(scene.getRelatedPageIds() != null
                         ? new ArrayList<>(scene.getRelatedPageIds())
                         : new ArrayList<>())
@@ -125,6 +134,9 @@ public class PostgresSceneRepository implements SceneRepository {
                         : new ArrayList<>())
                 .branches(scene.getBranches() != null
                         ? new ArrayList<>(scene.getBranches())
+                        : new ArrayList<>())
+                .rooms(scene.getRooms() != null
+                        ? new ArrayList<>(scene.getRooms())
                         : new ArrayList<>())
                 .createdAt(scene.getCreatedAt())
                 .updatedAt(scene.getUpdatedAt())

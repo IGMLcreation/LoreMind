@@ -11,6 +11,7 @@ import java.util.Optional;
 
 /**
  * Service d'application pour les fiches de personnages (PJ).
+ * Les PJ appartiennent désormais à un Playthrough (Partie), pas à la Campagne.
  */
 @Service
 public class CharacterService {
@@ -21,11 +22,6 @@ public class CharacterService {
         this.characterRepository = characterRepository;
     }
 
-    /**
-     * Parameter Object pour la création / mise à jour d'un Character.
-     * `order` est fourni par le controller ; si absent, le service le calcule.
-     * Les maps {@code values}/{@code imageValues} peuvent etre null (interpretees vides).
-     */
     public record CharacterData(
             String name,
             String portraitImageId,
@@ -33,14 +29,14 @@ public class CharacterService {
             Map<String, String> values,
             Map<String, List<String>> imageValues,
             Map<String, Map<String, String>> keyValueValues,
-            String campaignId,
+            String playthroughId,
             Integer order
     ) {}
 
     public Character createCharacter(CharacterData data) {
         int order = data.order() != null
                 ? data.order()
-                : nextOrderFor(data.campaignId());
+                : nextOrderFor(data.playthroughId());
         Character character = Character.builder()
                 .name(data.name())
                 .portraitImageId(data.portraitImageId())
@@ -48,7 +44,7 @@ public class CharacterService {
                 .values(data.values() != null ? new HashMap<>(data.values()) : new HashMap<>())
                 .imageValues(data.imageValues() != null ? new HashMap<>(data.imageValues()) : new HashMap<>())
                 .keyValueValues(data.keyValueValues() != null ? new HashMap<>(data.keyValueValues()) : new HashMap<>())
-                .campaignId(data.campaignId())
+                .playthroughId(data.playthroughId())
                 .order(order)
                 .build();
         return characterRepository.save(character);
@@ -58,8 +54,8 @@ public class CharacterService {
         return characterRepository.findById(id);
     }
 
-    public List<Character> getCharactersByCampaignId(String campaignId) {
-        return characterRepository.findByCampaignId(campaignId);
+    public List<Character> getCharactersByPlaythroughId(String playthroughId) {
+        return characterRepository.findByPlaythroughId(playthroughId);
     }
 
     public Character updateCharacter(String id, CharacterData data) {
@@ -74,7 +70,7 @@ public class CharacterService {
         if (data.order() != null) {
             existing.setOrder(data.order());
         }
-        // campaignId n'est pas modifiable après création (cross-campagne move hors scope MVP).
+        // playthroughId immuable après création.
         return characterRepository.save(existing);
     }
 
@@ -82,9 +78,13 @@ public class CharacterService {
         characterRepository.deleteById(id);
     }
 
-    /** Renvoie la prochaine position libre — append en fin de liste. */
-    private int nextOrderFor(String campaignId) {
-        return characterRepository.findByCampaignId(campaignId).stream()
+    public List<Character> searchCharacters(String query) {
+        if (query == null || query.isBlank()) return List.of();
+        return characterRepository.searchByName(query.trim());
+    }
+
+    private int nextOrderFor(String playthroughId) {
+        return characterRepository.findByPlaythroughId(playthroughId).stream()
                 .mapToInt(Character::getOrder)
                 .max()
                 .orElse(-1) + 1;

@@ -1,29 +1,26 @@
-<div
-  class="update-banner"
-  *ngIf="versionChecker.hasUpdate() && !dismissed"
-  role="status"
-  aria-live="polite"
->
-  <div class="banner-content">
-    <lucide-icon [img]="RefreshCw" [size]="16"></lucide-icon>
-    <span>
-      Une nouvelle version de LoreMind est disponible
-      (<strong>{{ versionChecker.remoteVersion() }}</strong>).
-      Recharge pour profiter des dernieres ameliorations.
-    </span>
-  </div>
-  <div class="banner-actions">
-    <button type="button" class="btn-reload" (click)="reload()">
-      Recharger
-    </button>
-    <button
-      type="button"
-      class="btn-dismiss"
-      (click)="dismiss()"
-      title="Fermer (sera reaffiche au prochain demarrage)"
-      aria-label="Fermer"
+@if (versionChecker.hasUpdate() && !dismissed) {
+  <div
+    class="update-banner"
+    role="status"
+    aria-live="polite"
     >
-      <lucide-icon [img]="X" [size]="16"></lucide-icon>
-    </button>
+    <div class="banner-content">
+      <lucide-icon [img]="RefreshCw" [size]="16"></lucide-icon>
+      <span [innerHTML]="'updateBanner.message' | translate:{ version: versionChecker.remoteVersion() }"></span>
+    </div>
+    <div class="banner-actions">
+      <button type="button" class="btn-reload" (click)="reload()">
+        {{ 'updateBanner.reload' | translate }}
+      </button>
+      <button
+        type="button"
+        class="btn-dismiss"
+        (click)="dismiss()"
+        [title]="'updateBanner.dismissTitle' | translate"
+        [attr.aria-label]="'updateBanner.dismissAria' | translate"
+        >
+        <lucide-icon [img]="X" [size]="16"></lucide-icon>
+      </button>
+    </div>
   </div>
-</div>
+}

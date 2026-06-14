@@ -8,18 +8,22 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.12</version>
+        <version>3.5.14</version>
         <relativePath/>
     </parent>
 
     <groupId>com.loremind</groupId>
     <artifactId>loremind-core</artifactId>
-    <version>0.8.6</version>
+    <version>0.14.0-beta</version>
     <name>LoreMind Core</name>
     <description>Backend Core - Architecture Hexagonale</description>
 
     <properties>
         <java.version>17</java.version>
+        <!-- Override de la transitive minio → commons-compress → commons-lang3 3.17.
+             >= 3.18 : corrige CVE-2025-48924 (recursion infinie ClassUtils.getClass).
+             Propriete reconnue par le BOM Spring Boot → s'applique partout. -->
+        <commons-lang3.version>3.20.0</commons-lang3.version>
     </properties>
 
     <dependencies>
@@ -77,33 +81,52 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- MinIO — client S3-compatible pour le stockage d'images (Shared Kernel images). -->
+        <!-- MinIO — client S3-compatible pour le stockage d'images (Shared Kernel images).
+             8.6.x = derniere ligne 8.x (la 9.x change l'API) ; transitives a jour. -->
         <dependency>
             <groupId>io.minio</groupId>
             <artifactId>minio</artifactId>
-            <version>8.5.11</version>
+            <version>8.6.0</version>
+            <exclusions>
+                <!-- OkHttp 5 : l'artefact `okhttp` est un alias multiplateforme dont la
+                     resolution vers les classes JVM passe par les metadonnees Gradle —
+                     que Maven ignore. On exclut l'alias et on declare `okhttp-jvm`
+                     (les vraies classes) explicitement ci-dessous. -->
+                <exclusion>
+                    <groupId>com.squareup.okhttp3</groupId>
+                    <artifactId>okhttp</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp-jvm</artifactId>
+            <version>5.1.0</version>
         </dependency>
 
         <!-- Nimbus JOSE+JWT — verification des JWT Ed25519 (EdDSA) emis par le relais
-             Patreon. Supporte nativement les cles Ed25519 via BouncyCastle. -->
+             Patreon. Supporte nativement les cles Ed25519 via BouncyCastle.
+             >= 10.0.2 : corrige CVE-2025-53864 (DoS par JSON profondement imbrique
+             dans le claim set — surface critique : JWT colle par l'utilisateur). -->
         <dependency>
             <groupId>com.nimbusds</groupId>
             <artifactId>nimbus-jose-jwt</artifactId>
-            <version>9.40</version>
+            <version>10.9.1</version>
         </dependency>
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk18on</artifactId>
-            <version>1.78.1</version>
+            <version>1.84</version>
         </dependency>
         <!-- Google Tink : runtime requis par com.nimbusds.jose.crypto.Ed25519Verifier
              (depuis Nimbus 9.x, la verification EdDSA delegue a Tink.subtle.Ed25519Verify).
              Tink n'est PAS une dependance transitive de nimbus-jose-jwt → il faut
-             l'ajouter explicitement, sinon NoClassDefFoundError au premier verify(). -->
+             l'ajouter explicitement, sinon NoClassDefFoundError au premier verify().
+             >= 1.15 : embarque un protobuf-java corrige (CVE-2024-7254). -->
         <dependency>
             <groupId>com.google.crypto.tink</groupId>
             <artifactId>tink</artifactId>
-            <version>1.14.1</version>
+            <version>1.21.0</version>
         </dependency>
     </dependencies>
 

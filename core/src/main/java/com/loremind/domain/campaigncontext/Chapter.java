@@ -21,6 +21,14 @@ public class Chapter {
     private String arcId;              // Référence vers l'Arc parent
     private int order;                 // Ordre du chapitre dans l'arc
 
+    /**
+     * Conditions de déblocage (combinées en ET). Vide => quête immédiatement AVAILABLE.
+     * Pertinent surtout pour les chapitres d'un Arc HUB ; ignoré pour LINEAR.
+     * Donnée de SCÉNARIO — partagée par toutes les Parties de la campagne.
+     */
+    @Builder.Default
+    private List<Prerequisite> prerequisites = new ArrayList<>();
+
     /** Cle d'icone choisie par l'utilisateur (cf. CAMPAIGN_ICON_OPTIONS cote front). */
     private String icon;
 

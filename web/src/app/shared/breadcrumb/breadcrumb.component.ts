@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { RouterLink } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 
 /**
  * Un niveau dans le fil d'Ariane.
@@ -22,14 +23,12 @@ export interface BreadcrumbItem {
  *   ]"></app-breadcrumb>
  */
 @Component({
-  selector: 'app-breadcrumb',
-  standalone: true,
-  imports: [CommonModule, RouterLink],
-  templateUrl: './breadcrumb.component.html',
-  styleUrls: ['./breadcrumb.component.scss']
+    selector: 'app-breadcrumb',
+    imports: [RouterLink, TranslatePipe],
+    templateUrl: './breadcrumb.component.html',
+    styleUrls: ['./breadcrumb.component.scss']
 })
 export class BreadcrumbComponent {
   @Input() items: BreadcrumbItem[] = [];
 
-  trackByIndex = (i: number) => i;
 }

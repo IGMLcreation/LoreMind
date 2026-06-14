@@ -1,17 +1,18 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router } from '@angular/router';
 import { LucideAngularModule, Dices, Plus, Pencil, Trash2 } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { GameSystemService } from '../services/game-system.service';
+import { LayoutService } from '../services/layout.service';
 import { GameSystem } from '../services/game-system.model';
 import { ConfirmDialogService } from '../shared/confirm-dialog/confirm-dialog.service';
 
 @Component({
-  selector: 'app-game-systems',
-  standalone: true,
-  imports: [CommonModule, LucideAngularModule],
-  templateUrl: './game-systems.component.html',
-  styleUrls: ['./game-systems.component.scss']
+    selector: 'app-game-systems',
+    imports: [LucideAngularModule, TranslatePipe],
+    templateUrl: './game-systems.component.html',
+    styleUrls: ['./game-systems.component.scss']
 })
 export class GameSystemsComponent implements OnInit {
   readonly Dices = Dices;
@@ -24,10 +25,15 @@ export class GameSystemsComponent implements OnInit {
   constructor(
     private router: Router,
     private gameSystemService: GameSystemService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private layoutService: LayoutService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
+    // Page racine : on s'assure de ne pas heriter de la sidebar d'une
+    // section precedente (cf. fix CampaignsComponent / LoreComponent).
+    this.layoutService.hide();
     this.load();
   }
 
@@ -50,10 +56,10 @@ export class GameSystemsComponent implements OnInit {
     event.stopPropagation();
     if (!system.id) return;
     this.confirmDialog.confirm({
-      title: 'Supprimer le système',
-      message: `Supprimer le système "${system.name}" ?`,
-      details: ['Les campagnes qui l\'utilisent ne seront plus associées à aucun système.'],
-      confirmLabel: 'Supprimer',
+      title: this.translate.instant('gameSystems.deleteTitle'),
+      message: this.translate.instant('gameSystems.deleteMessage', { name: system.name }),
+      details: [this.translate.instant('gameSystems.deleteDetail')],
+      confirmLabel: this.translate.instant('common.delete'),
       variant: 'danger'
     }).then(ok => {
       if (!ok || !system.id) return;

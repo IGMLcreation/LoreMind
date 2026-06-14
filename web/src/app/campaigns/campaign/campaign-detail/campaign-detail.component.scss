@@ -1,3 +1,58 @@
+.section-hint {
+  margin: -0.25rem 0 0.85rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted, #666);
+  max-width: 70ch;
+  line-height: 1.4;
+}
+
+// ==== Parties (Playthroughs) ====
+.playthroughs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+
+.playthrough-card {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--color-border, #e2e2e2);
+  border-radius: 10px;
+  background: var(--color-surface, #fff);
+  cursor: pointer;
+  transition: border-color 120ms ease, transform 120ms ease, box-shadow 120ms ease;
+
+  &:hover {
+    border-color: var(--color-primary, #2c6cd6);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+  }
+}
+
+.playthrough-icon { color: var(--color-primary, #2c6cd6); flex: 0 0 auto; }
+
+.playthrough-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.playthrough-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.playthrough-meta {
+  font-size: 0.78rem;
+  color: var(--color-text-muted, #777);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .campaign-detail {
   padding: 2.5rem 2rem;
   display: flex;
@@ -213,6 +268,12 @@
   h2 { color: #d1d5db; font-size: 1rem; font-weight: 600; }
 }
 
+.section-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .btn-add {
   display: flex;
   align-items: center;
@@ -228,6 +289,14 @@
   transition: background 0.2s;
 
   &:hover { background: #5b52e0; }
+
+  // Variante secondaire (ex: "Importer un PDF") : discrète à côté de l'action primaire.
+  &--secondary {
+    background: #1f2937;
+    color: #e5e7eb;
+    border: 1px solid #374151;
+    &:hover { background: #273244; border-color: #6c63ff; }
+  }
 }
 
 .arcs-grid {
@@ -381,4 +450,58 @@
   transition: background 0.2s;
 
   &:hover { background: #5b52e0; }
+}
+
+// ─────────────── Sessions de jeu (Play Context) ───────────────
+.sessions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+
+.session-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #111827;
+  border: 1px solid #1f2937;
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.2s;
+
+  &:hover { border-color: #6c63ff; transform: translateY(-1px); }
+
+  &--active {
+    border-color: #10b981;
+    background: linear-gradient(180deg, #0d1f1a 0%, #111827 100%);
+  }
+
+  .session-icon { color: #6c63ff; flex-shrink: 0; }
+
+  .session-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+  }
+
+  .session-name {
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .session-meta {
+    color: #6b7280;
+    font-size: 0.75rem;
+  }
+
+  .session-status {
+    color: #10b981;
+    font-weight: 600;
+  }
 }

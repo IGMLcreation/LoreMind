@@ -1,7 +1,8 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, ElementRef, EventEmitter, HostListener, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, Lightbulb, Maximize2, MessageSquarePlus, Minimize2, PanelLeftClose, PanelLeftOpen, Pencil, Send, Sparkles, Trash2, Wand2, X } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 import { AiChatService, ChatMessage, ChatUsage, NarrativeEntityType } from '../../services/ai-chat.service';
 import { Conversation, ConversationContext } from '../../services/conversation.model';
@@ -30,11 +31,10 @@ export interface ChatPrimaryAction {
  *    ou la conversation n'a aucune valeur au-dela de l'usage immediat).
  */
 @Component({
-  selector: 'app-ai-chat-drawer',
-  standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, MarkdownPipe],
-  templateUrl: './ai-chat-drawer.component.html',
-  styleUrls: ['./ai-chat-drawer.component.scss'],
+    selector: 'app-ai-chat-drawer',
+    imports: [FormsModule, LucideAngularModule, MarkdownPipe, TranslatePipe],
+    templateUrl: './ai-chat-drawer.component.html',
+    styleUrls: ['./ai-chat-drawer.component.scss']
 })
 export class AiChatDrawerComponent implements OnInit, OnChanges, OnDestroy {
   readonly X = X;
@@ -81,7 +81,7 @@ export class AiChatDrawerComponent implements OnInit, OnChanges, OnDestroy {
   @Input() entityType: NarrativeEntityType | null = null;
   @Input() entityId: string | null = null;
   @Input() isOpen = false;
-  @Input() welcomeMessage = 'Bonjour ! Je peux vous aider a developper cette page. Que souhaitez-vous creer ?';
+  @Input() welcomeMessage = '';
   @Input() quickSuggestions: string[] = [];
   @Input() primaryAction: ChatPrimaryAction | null = null;
   @Input() systemPromptAddon: string | null = null;
@@ -121,13 +121,20 @@ export class AiChatDrawerComponent implements OnInit, OnChanges, OnDestroy {
     private readonly chatService: AiChatService,
     private readonly conversationService: ConversationService,
     private readonly confirmDialog: ConfirmDialogService,
-  ) {}
+    private readonly translate: TranslateService,
+  ) {
+    this.welcomeMessage = this.translate.instant('aiChatDrawer.welcome');
+  }
 
   // --- Jauge de contexte --------------------------------------------------
 
   get usageTotal(): number {
     if (!this.usage) return 0;
     return this.usage.system + this.usage.history + this.usage.current;
+  }
+  /** Vrai si on connaît la fenêtre max (Ollama) → affiche dénominateur + barre. */
+  get usageHasMax(): boolean {
+    return !!this.usage && this.usage.max > 0;
   }
   get usageRatio(): number {
     if (!this.usage || this.usage.max <= 0) return 0;
@@ -307,7 +314,7 @@ export class AiChatDrawerComponent implements OnInit, OnChanges, OnDestroy {
         this.usage = null;
         this.scrollToBottom();
       },
-      error: () => (this.errorMessage = 'Impossible de charger la conversation.'),
+      error: () => (this.errorMessage = this.translate.instant('aiChatDrawer.loadConversationError')),
     });
   }
 
@@ -315,9 +322,9 @@ export class AiChatDrawerComponent implements OnInit, OnChanges, OnDestroy {
     event.stopPropagation();
     if (this.isStreaming) return;
     this.confirmDialog.confirm({
-      title: 'Supprimer la conversation',
-      message: `Supprimer la conversation "${conv.title}" ?`,
-      confirmLabel: 'Supprimer',
+      title: this.translate.instant('aiChatDrawer.deleteConversationTitle'),
+      message: this.translate.instant('aiChatDrawer.deleteConversationMessage', { title: conv.title }),
+      confirmLabel: this.translate.instant('common.delete'),
       variant: 'danger'
     }).then(ok => {
       if (!ok) return;
@@ -407,7 +414,7 @@ export class AiChatDrawerComponent implements OnInit, OnChanges, OnDestroy {
     if (this.currentConversationId) return Promise.resolve(this.currentConversationId);
     const ctx = this.buildContext();
     if (!ctx.loreId && !ctx.campaignId) {
-      this.errorMessage = 'Contexte manquant pour creer une conversation.';
+      this.errorMessage = this.translate.instant('aiChatDrawer.missingContextError');
       return Promise.resolve(null);
     }
     return new Promise((resolve) => {
@@ -419,7 +426,7 @@ export class AiChatDrawerComponent implements OnInit, OnChanges, OnDestroy {
           resolve(conv.id);
         },
         error: () => {
-          this.errorMessage = 'Impossible de creer la conversation.';
+          this.errorMessage = this.translate.instant('aiChatDrawer.createConversationError');
           resolve(null);
         },
       });
@@ -457,7 +464,7 @@ export class AiChatDrawerComponent implements OnInit, OnChanges, OnDestroy {
       },
       error: (err) => {
         this.isStreaming = false;
-        this.errorMessage = err?.message ?? 'Erreur inconnue.';
+        this.errorMessage = err?.message ?? this.translate.instant('aiChatDrawer.unknownError');
         this.currentAssistantText = '';
       },
       complete: () => {

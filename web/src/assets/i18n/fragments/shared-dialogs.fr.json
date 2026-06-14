@@ -1,0 +1,57 @@
+{
+  "confirmDialog": {
+    "defaultTitle": "Confirmation"
+  },
+  "aiChatDrawer": {
+    "title": "Assistant IA",
+    "resizeAria": "Redimensionner le panneau",
+    "resizeTitle": "Glisser pour redimensionner",
+    "conversations": "Conversations",
+    "newConversation": "Nouvelle conversation",
+    "noConversation": "Aucune conversation",
+    "hideList": "Masquer la liste",
+    "showList": "Afficher la liste",
+    "shrink": "Réduire",
+    "shrinkAria": "Réduire le panneau",
+    "expand": "Agrandir",
+    "expandAria": "Agrandir le panneau",
+    "gaugeTitle": "Système : {{system}} · Historique : {{history}} · Courant : {{current}} tokens",
+    "gaugeTitleMax": "Système : {{system}} · Historique : {{history}} · Courant : {{current}} / {{max}} tokens",
+    "gaugeLabel": "Contexte : {{total}} tokens",
+    "gaugeLabelMax": "Contexte : {{total}} / {{max}} tokens",
+    "quickSuggestions": "Suggestions rapides :",
+    "inputPlaceholder": "Posez une question...",
+    "send": "Envoyer",
+    "welcome": "Bonjour ! Je peux vous aider à développer cette page. Que souhaitez-vous créer ?",
+    "loadConversationError": "Impossible de charger la conversation.",
+    "deleteConversationTitle": "Supprimer la conversation",
+    "deleteConversationMessage": "Supprimer la conversation « {{title}} » ?",
+    "missingContextError": "Contexte manquant pour créer une conversation.",
+    "createConversationError": "Impossible de créer la conversation.",
+    "unknownError": "Erreur inconnue."
+  },
+  "imageGallery": {
+    "empty": "Aucune illustration",
+    "illustrationAlt": "Illustration",
+    "mainIllustrationAlt": "Illustration principale",
+    "mapAlt": "Carte",
+    "removeImage": "Retirer cette image",
+    "removeMap": "Retirer cette carte",
+    "lightboxAria": "Image en plein écran",
+    "lightboxAlt": "Image agrandie"
+  },
+  "imageUploader": {
+    "addImage": "Ajouter une image",
+    "uploading": "Upload en cours",
+    "uploadingHint": "Upload en cours...",
+    "dropTitle": "Glisse une image ici",
+    "dropHint": "ou clique pour choisir un fichier (JPEG, PNG, WebP, GIF, max 10 Mo)",
+    "unsupportedFormat": "Format non supporté (JPEG, PNG, WebP, GIF uniquement).",
+    "tooLarge": "Fichier trop volumineux (max {{max}} Mo).",
+    "serverRejected": "Fichier refusé par le serveur (trop volumineux).",
+    "uploadFailed": "Échec de l'upload. Vérifiez que le backend et MinIO tournent."
+  },
+  "singleImagePicker": {
+    "removeImage": "Retirer l'image"
+  }
+}

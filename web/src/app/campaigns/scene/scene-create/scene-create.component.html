@@ -1,43 +1,45 @@
 <div class="scene-create-page">
 
   <div class="page-header">
-    <h1>Créer une nouvelle scène</h1>
-    <p class="chapter-ref" *ngIf="chapterName">Chapitre : {{ chapterName }}</p>
+    <h1>{{ 'sceneCreate.title' | translate }}</h1>
+    @if (chapterName) {
+      <p class="chapter-ref">{{ 'sceneCreate.chapterRef' | translate:{ name: chapterName } }}</p>
+    }
   </div>
 
   <form [formGroup]="form" (ngSubmit)="submit()" class="scene-form">
 
     <div class="field">
-      <label for="scene-create-name">Nom de la scène *</label>
+      <label for="scene-create-name">{{ 'sceneCreate.nameLabel' | translate }}</label>
       <input
         id="scene-create-name"
         type="text"
         formControlName="name"
-        placeholder="Ex: Arrivée au village"
+        [placeholder]="'sceneCreate.namePlaceholder' | translate"
         [class.invalid]="form.get('name')?.invalid && form.get('name')?.touched"
-      />
+        />
     </div>
 
     <div class="field">
-      <label for="scene-create-description">Description</label>
+      <label for="scene-create-description">{{ 'sceneCreate.descriptionLabel' | translate }}</label>
       <textarea
         id="scene-create-description"
         formControlName="description"
-        placeholder="Décrivez la scène, les événements clés, les PNJ présents..."
+        [placeholder]="'sceneCreate.descriptionPlaceholder' | translate"
         rows="6">
       </textarea>
     </div>
 
     <div class="field">
-      <label>Icône</label>
+      <label>{{ 'sceneCreate.iconLabel' | translate }}</label>
       <app-icon-picker [options]="campaignIconOptions" [(selected)]="selectedIcon"></app-icon-picker>
     </div>
 
     <div class="form-actions">
       <button type="submit" class="btn-primary" [disabled]="form.invalid">
-        Créer la scène
+        {{ 'sceneCreate.createButton' | translate }}
       </button>
-      <button type="button" class="btn-secondary" (click)="cancel()">Annuler</button>
+      <button type="button" class="btn-secondary" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
     </div>
 
   </form>

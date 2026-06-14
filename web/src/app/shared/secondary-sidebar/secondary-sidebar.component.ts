@@ -1,19 +1,21 @@
 import { Component, Input, Output, EventEmitter, HostListener, OnDestroy, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { LucideAngularModule, ChevronRight, ChevronDown, PanelLeftClose, PanelLeftOpen, Plus, FolderPlus, FilePlus, LucideIconData } from 'lucide-angular';
+import { TranslatePipe } from '@ngx-translate/core';
+import { LucideAngularModule, ChevronRight, ChevronDown, PanelLeftClose, PanelLeftOpen, Plus, FolderPlus, FilePlus, Home, LucideIconData } from 'lucide-angular';
 import { TreeItem, TreeCreateAction, SidebarAction, BottomPanel, BottomPanelItem, LayoutService } from '../../services/layout.service';
 import { resolveIcon } from '../../lore/lore-icons';
 
 @Component({
-  selector: 'app-secondary-sidebar',
-  standalone: true,
-  imports: [CommonModule, LucideAngularModule],
-  templateUrl: './secondary-sidebar.component.html',
-  styleUrls: ['./secondary-sidebar.component.scss']
+    selector: 'app-secondary-sidebar',
+    imports: [CommonModule, LucideAngularModule, TranslatePipe],
+    templateUrl: './secondary-sidebar.component.html',
+    styleUrls: ['./secondary-sidebar.component.scss']
 })
 export class SecondarySidebarComponent implements OnDestroy {
   @Input() title = '';
+  /** Si défini, le titre est cliquable et navigue vers cette route (accueil de section). */
+  @Input() titleRoute: string | null = null;
   @Input() createActions: SidebarAction[] = [];
   @Input() bottomPanel: BottomPanel | null = null;
   @Output() collapsedChange = new EventEmitter<boolean>();
@@ -28,6 +30,7 @@ export class SecondarySidebarComponent implements OnDestroy {
   readonly Plus = Plus;
   readonly FolderPlus = FolderPlus;
   readonly FilePlus = FilePlus;
+  readonly Home = Home;
 
   isCollapsed = false;
 
@@ -112,6 +115,19 @@ export class SecondarySidebarComponent implements OnDestroy {
 
   runAction(action: SidebarAction): void {
     if (action.route) { this.router.navigate([action.route]); }
+  }
+
+  /** Clic sur le titre cliquable : retour à l'accueil de la section (ex: campagne). */
+  clickTitle(): void {
+    if (this.titleRoute) { this.router.navigate([this.titleRoute]); }
+  }
+
+  /** True si on est déjà sur la route du titre (surligne le titre comme actif). */
+  isTitleActive(): boolean {
+    if (!this.titleRoute) return false;
+    return this.router.isActive(this.titleRoute, {
+      paths: 'exact', queryParams: 'ignored', fragment: 'ignored', matrixParams: 'ignored'
+    });
   }
 
   clickItem(item: TreeItem): void {

@@ -1,12 +1,20 @@
-<nav class="breadcrumb" aria-label="Fil d'Ariane" *ngIf="items.length">
-  <ol>
-    <li *ngFor="let item of items; let last = last; trackBy: trackByIndex"
-        class="breadcrumb-item"
-        [class.current]="last">
-      <a *ngIf="item.route && !last"
-         [routerLink]="item.route"
-         class="breadcrumb-link">{{ item.label }}</a>
-      <span *ngIf="!item.route || last" class="breadcrumb-text">{{ item.label }}</span>
-    </li>
-  </ol>
-</nav>
+@if (items.length) {
+  <nav class="breadcrumb" [attr.aria-label]="'breadcrumb.ariaLabel' | translate">
+    <ol>
+      @for (item of items; track $index; let last = $last) {
+        <li
+          class="breadcrumb-item"
+          [class.current]="last">
+          @if (item.route && !last) {
+            <a
+              [routerLink]="item.route"
+            class="breadcrumb-link">{{ item.label }}</a>
+          }
+          @if (!item.route || last) {
+            <span class="breadcrumb-text">{{ item.label }}</span>
+          }
+        </li>
+      }
+    </ol>
+  </nav>
+}

@@ -1,0 +1,93 @@
+<div class="rte-page">
+  <div class="rte-toolbar">
+    <button class="btn-back" (click)="back()">
+      <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon>
+      {{ 'common.back' | translate }}
+    </button>
+    <span class="spacer"></span>
+    <button class="btn-save" (click)="save()" [disabled]="saving">
+      <lucide-icon [img]="Save" [size]="14"></lucide-icon>
+      {{ (saving ? 'common.saving' : 'common.save') | translate }}
+    </button>
+  </div>
+
+  <h1>{{ (tableId ? 'randomTableEdit.titleEdit' : 'randomTableEdit.titleNew') | translate }}</h1>
+
+  @if (errorMessage) {
+    <div class="error">{{ errorMessage }}</div>
+  }
+
+  <div class="form-row">
+    <label for="rt-name">{{ 'randomTableEdit.nameLabel' | translate }}</label>
+    <input id="rt-name" type="text" [(ngModel)]="name" [placeholder]="'randomTableEdit.namePlaceholder' | translate">
+  </div>
+
+  <div class="form-row">
+    <label for="rt-desc">{{ 'common.description' | translate }}</label>
+    <textarea id="rt-desc" rows="2" [(ngModel)]="description" [placeholder]="'randomTableEdit.descPlaceholder' | translate"></textarea>
+  </div>
+
+  <div class="form-row">
+    <label for="rt-formula">{{ 'randomTableEdit.formulaLabel' | translate }}</label>
+    <input id="rt-formula" type="text" [(ngModel)]="diceFormula" placeholder="1d20, 2d6, d100…"
+      [class.invalid]="diceFormula && !formulaValid">
+    <small class="hint" [class.bad]="diceFormula && !formulaValid">
+      {{ (formulaValid ? 'randomTableEdit.formulaValid' : 'randomTableEdit.formulaExpected') | translate }}
+    </small>
+  </div>
+
+  <!-- Génération IA -->
+  <div class="ai-box">
+    <div class="ai-title">
+      <lucide-icon [img]="Sparkles" [size]="15"></lucide-icon> {{ 'randomTableEdit.aiTitle' | translate }}
+    </div>
+    <p class="ai-hint">{{ 'randomTableEdit.aiHint' | translate }}</p>
+    <textarea rows="2" [(ngModel)]="aiPrompt"
+    [placeholder]="'randomTableEdit.aiPromptPlaceholder' | translate"></textarea>
+    <div class="ai-actions">
+      <button class="btn-ai" (click)="generateWithAI()" [disabled]="generating">
+        <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
+        {{ generating ? ('common.generating' | translate) : ('randomTableEdit.generateWith' | translate:{ formula: diceFormula }) }}
+      </button>
+      @if (aiError) {
+        <span class="ai-error">{{ aiError }}</span>
+      }
+    </div>
+  </div>
+
+  <div class="entries-head">
+    <h2>{{ 'randomTableEdit.entriesTitle' | translate }}</h2>
+    <div class="entries-actions">
+      <button class="btn-mini" (click)="autoRanges()" [title]="'randomTableEdit.autoRangesTitle' | translate">
+        <lucide-icon [img]="Wand2" [size]="13"></lucide-icon> {{ 'randomTableEdit.autoRanges' | translate }}
+      </button>
+      <button class="btn-mini" (click)="addEntry()">
+        <lucide-icon [img]="Plus" [size]="13"></lucide-icon> {{ 'common.add' | translate }}
+      </button>
+    </div>
+  </div>
+
+  <div class="entry-row head">
+    <span class="c-range">{{ 'randomTableEdit.colMin' | translate }}</span>
+    <span class="c-range">{{ 'randomTableEdit.colMax' | translate }}</span>
+    <span class="c-label">{{ 'randomTableEdit.colResult' | translate }}</span>
+    <span class="c-detail">{{ 'randomTableEdit.colDetail' | translate }}</span>
+    <span class="c-del"></span>
+  </div>
+
+  @for (e of entries; track e; let i = $index) {
+    <div class="entry-row">
+      <input class="c-range" type="number" [(ngModel)]="e.minRoll">
+      <input class="c-range" type="number" [(ngModel)]="e.maxRoll">
+      <input class="c-label" type="text" [(ngModel)]="e.label" [placeholder]="'randomTableEdit.colResult' | translate">
+      <input class="c-detail" type="text" [(ngModel)]="e.detail" [placeholder]="'randomTableEdit.detailPlaceholder' | translate">
+      <button class="c-del btn-del" (click)="removeEntry(i)" [title]="'common.delete' | translate">
+        <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+      </button>
+    </div>
+  }
+
+  @if (entries.length === 0) {
+    <p class="empty-hint">{{ 'randomTableEdit.emptyHint' | translate }}</p>
+  }
+</div>

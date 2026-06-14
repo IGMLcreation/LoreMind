@@ -2,27 +2,47 @@
   <div class="nv-toolbar">
     <button class="btn-back" (click)="back()">
       <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon>
-      Retour
+      {{ 'common.back' | translate }}
     </button>
     <span class="spacer"></span>
-    <button class="btn-ai" (click)="toggleChat()" [class.active]="chatOpen" *ngIf="npcId">
-      <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
-      Assistant IA
-    </button>
+    @if (npcId) {
+      <button class="btn-ai" (click)="toggleChat()" [class.active]="chatOpen">
+        <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
+        {{ 'npcView.aiAssistant' | translate }}
+      </button>
+    }
     <button class="btn-edit" (click)="edit()">
       <lucide-icon [img]="Edit3" [size]="14"></lucide-icon>
-      Editer
+      {{ 'common.edit' | translate }}
     </button>
   </div>
 
   <app-persona-view [persona]="npc" [templateFields]="templateFields"></app-persona-view>
+
+  <!-- Pages de Lore liées à ce PNJ (sa ville, sa faction…) -->
+  @if (loreId && (npc?.relatedPageIds?.length ?? 0) > 0) {
+    <section class="nv-lore-links">
+      <h2 class="nv-lore-links-title">
+        <lucide-icon [img]="Link2" [size]="14"></lucide-icon>
+        {{ 'npcView.relatedPages' | translate }}
+      </h2>
+      <div class="nv-lore-chips">
+        @for (pageId of npc!.relatedPageIds; track pageId) {
+          <a class="nv-lore-chip" [routerLink]="['/lore', loreId, 'pages', pageId]">
+            {{ titleOfPage(pageId) }}
+          </a>
+        }
+      </div>
+    </section>
+  }
 </div>
 
-<app-ai-chat-drawer
-  *ngIf="npcId && campaignId"
-  [campaignId]="campaignId"
-  entityType="npc"
-  [entityId]="npcId"
-  [isOpen]="chatOpen"
-  (close)="chatOpen = false">
-</app-ai-chat-drawer>
+@if (npcId && campaignId) {
+  <app-ai-chat-drawer
+    [campaignId]="campaignId"
+    entityType="npc"
+    [entityId]="npcId"
+    [isOpen]="chatOpen"
+    (close)="chatOpen = false">
+  </app-ai-chat-drawer>
+}

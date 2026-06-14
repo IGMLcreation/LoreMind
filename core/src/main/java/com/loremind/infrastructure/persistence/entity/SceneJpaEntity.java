@@ -1,6 +1,8 @@
 package com.loremind.infrastructure.persistence.entity;
 
+import com.loremind.domain.campaigncontext.Room;
 import com.loremind.domain.campaigncontext.SceneBranch;
+import com.loremind.infrastructure.persistence.converter.RoomListJsonConverter;
 import com.loremind.infrastructure.persistence.converter.SceneBranchListJsonConverter;
 import com.loremind.infrastructure.persistence.converter.StringListJsonConverter;
 import jakarta.persistence.*;
@@ -73,6 +75,12 @@ public class SceneJpaEntity {
     @Column(columnDefinition = "TEXT")
     private String enemies;
 
+    /** IDs des fiches du bestiaire liées à la rencontre (JSON, weak refs). */
+    @Column(name = "enemy_ids", columnDefinition = "TEXT")
+    @Convert(converter = StringListJsonConverter.class)
+    @Builder.Default
+    private List<String> enemyIds = new ArrayList<>();
+
     @Column(name = "related_page_ids", columnDefinition = "TEXT")
     @Convert(converter = StringListJsonConverter.class)
     @Builder.Default
@@ -94,6 +102,15 @@ public class SceneJpaEntity {
     @Convert(converter = SceneBranchListJsonConverter.class)
     @Builder.Default
     private List<SceneBranch> branches = new ArrayList<>();
+
+    /**
+     * Pièces explorables de cette scène (donjon, crypte…). Vide = scène classique.
+     * Sérialisé en JSON dans une colonne TEXT.
+     */
+    @Column(name = "rooms", columnDefinition = "TEXT")
+    @Convert(converter = RoomListJsonConverter.class)
+    @Builder.Default
+    private List<Room> rooms = new ArrayList<>();
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

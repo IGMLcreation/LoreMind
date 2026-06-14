@@ -1,0 +1,75 @@
+@if (table) {
+  <div class="rt-page">
+    <div class="rt-toolbar">
+      <button class="btn-back" (click)="back()">
+        <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon>
+        {{ 'common.back' | translate }}
+      </button>
+      <span class="spacer"></span>
+      <button class="btn-edit" (click)="edit()">
+        <lucide-icon [img]="Edit3" [size]="14"></lucide-icon>
+        {{ 'common.edit' | translate }}
+      </button>
+    </div>
+    <header class="rt-header">
+      <h1><lucide-icon [img]="Dices" [size]="22"></lucide-icon> {{ table.name }}</h1>
+      @if (table.description) {
+        <p class="rt-desc">{{ table.description }}</p>
+      }
+      <span class="rt-formula">{{ 'randomTableView.die' | translate }} <code>{{ table.diceFormula }}</code></span>
+    </header>
+    <!-- Zone de jet -->
+    <section class="rt-roll">
+      <button class="btn-roll" (click)="roll()">
+        <lucide-icon [img]="Dices" [size]="18"></lucide-icon>
+        {{ 'randomTableView.roll' | translate:{ formula: table.diceFormula } }}
+      </button>
+      @if (lastRoll) {
+        <div class="rt-result">
+          <span class="rt-total">{{ lastRoll.total }}</span>
+          @if (lastRoll.rolls.length > 1) {
+            <span class="rt-rolls">({{ lastRoll.rolls.join(' + ') }})</span>
+          }
+          <span class="rt-arrow">→</span>
+          @if (matched) {
+            <span class="rt-matched">{{ matched.label }}</span>
+          }
+          @if (!matched) {
+            <span class="rt-nomatch">{{ 'randomTableView.noMatch' | translate }}</span>
+          }
+        </div>
+      }
+    </section>
+    @if (matched?.detail) {
+      <div class="rt-detail">{{ matched?.detail }}</div>
+    }
+    <!-- Liste des entrées -->
+    <section class="rt-entries">
+      @if (table.entries.length === 0) {
+        <div class="rt-empty">
+          {{ 'randomTableView.empty' | translate }}
+        </div>
+      }
+      @if (table.entries.length > 0) {
+        <table>
+          <thead>
+            <tr><th class="col-range">{{ 'randomTableView.colRoll' | translate }}</th><th>{{ 'randomTableView.colResult' | translate }}</th></tr>
+          </thead>
+          <tbody>
+            @for (e of table.entries; track e) {
+              <tr [class.matched]="isMatched(e)">
+                <td class="col-range">{{ rangeLabel(e) }}</td>
+                <td>
+                  <div class="entry-label">{{ e.label }}</div>
+                  @if (e.detail) {
+                    <div class="entry-detail">{{ e.detail }}</div>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </section>
+  </div>
+}

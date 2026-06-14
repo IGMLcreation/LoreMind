@@ -1,0 +1,26 @@
+<div class="flags-manager">
+
+  @if (!loading && rows.length === 0) {
+    <p class="flags-empty">
+      {{ 'playthroughFlagsManager.empty' | translate }}
+    </p>
+  }
+
+  @if (rows.length > 0) {
+    <ul class="flag-list">
+      @for (r of rows; track r) {
+        <li class="flag-row" [class.flag-on]="r.value">
+          <label class="flag-toggle">
+            <input type="checkbox" [checked]="r.value" (change)="toggle(r)" />
+            <span class="flag-toggle-slider"></span>
+          </label>
+          <div class="flag-info">
+            <span class="flag-name">{{ r.name }}</span>
+          </div>
+          <span class="flag-value">{{ (r.value ? 'playthroughFlagsManager.true' : 'playthroughFlagsManager.false') | translate }}</span>
+        </li>
+      }
+    </ul>
+  }
+
+</div>

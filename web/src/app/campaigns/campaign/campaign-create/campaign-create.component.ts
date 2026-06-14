@@ -1,8 +1,9 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, BookCopy, X, Plus, Check } from 'lucide-angular';
+import { TranslatePipe } from '@ngx-translate/core';
 import { LoreService } from '../../../services/lore.service';
 import { Lore } from '../../../services/lore.model';
 import { GameSystemService } from '../../../services/game-system.service';
@@ -21,11 +22,10 @@ export interface CampaignCreatePayload {
 }
 
 @Component({
-  selector: 'app-campaign-create',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, LucideAngularModule],
-  templateUrl: './campaign-create.component.html',
-  styleUrls: ['./campaign-create.component.scss']
+    selector: 'app-campaign-create',
+    imports: [ReactiveFormsModule, FormsModule, LucideAngularModule, TranslatePipe],
+    templateUrl: './campaign-create.component.html',
+    styleUrls: ['./campaign-create.component.scss']
 })
 export class CampaignCreateComponent implements OnInit {
   @Output() close = new EventEmitter<void>();

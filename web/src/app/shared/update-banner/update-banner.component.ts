@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
+import { TranslatePipe } from '@ngx-translate/core';
 import { LucideAngularModule, RefreshCw, X } from 'lucide-angular';
 import { VersionCheckerService } from '../../services/version-checker.service';
 
@@ -9,11 +10,10 @@ import { VersionCheckerService } from '../../services/version-checker.service';
  * ouvert. Propose un reload en un clic.
  */
 @Component({
-  selector: 'app-update-banner',
-  standalone: true,
-  imports: [CommonModule, LucideAngularModule],
-  templateUrl: './update-banner.component.html',
-  styleUrls: ['./update-banner.component.scss']
+    selector: 'app-update-banner',
+    imports: [LucideAngularModule, TranslatePipe],
+    templateUrl: './update-banner.component.html',
+    styleUrls: ['./update-banner.component.scss']
 })
 export class UpdateBannerComponent {
   readonly RefreshCw = RefreshCw;

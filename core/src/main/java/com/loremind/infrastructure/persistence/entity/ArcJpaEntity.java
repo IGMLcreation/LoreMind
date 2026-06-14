@@ -1,7 +1,9 @@
 package com.loremind.infrastructure.persistence.entity;
 
+import com.loremind.domain.campaigncontext.ArcType;
 import com.loremind.infrastructure.persistence.converter.StringListJsonConverter;
 import jakarta.persistence.*;
+import org.hibernate.annotations.ColumnDefault;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -36,6 +38,19 @@ public class ArcJpaEntity {
 
     @Column(name = "\"order\"", nullable = false)
     private int order;
+
+    /**
+     * Type structurel de l'arc (LINEAR par défaut).
+     * Stocké en STRING pour rester lisible en DB et résistant aux refactos d'ordre.
+     */
+    // length + @ColumnDefault (PAS columnDefinition brut) : Hibernate 6.6 recopie
+    // columnDefinition tel quel dans son ALTER ... SET DATA TYPE de migration, et
+    // PostgreSQL refuse DEFAULT à cet endroit (erreur à chaque démarrage).
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 16)
+    @ColumnDefault("'LINEAR'")
+    @Builder.Default
+    private ArcType type = ArcType.LINEAR;
 
     @Column
     private String icon;

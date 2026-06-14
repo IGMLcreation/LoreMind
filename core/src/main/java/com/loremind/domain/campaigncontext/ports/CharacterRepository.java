@@ -14,9 +14,12 @@ public interface CharacterRepository {
 
     Optional<Character> findById(String id);
 
-    List<Character> findByCampaignId(String campaignId);
+    List<Character> findByPlaythroughId(String playthroughId);
 
     void deleteById(String id);
 
     boolean existsById(String id);
+
+    /** Recherche par nom (insensible à la casse) — alimente la recherche globale. */
+    List<Character> searchByName(String query);
 }

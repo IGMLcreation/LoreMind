@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute, Router } from '@angular/router';
 import { LucideAngularModule, ArrowLeft, Edit3, Sparkles } from 'lucide-angular';
+import { TranslatePipe } from '@ngx-translate/core';
 import { CharacterService } from '../../../services/character.service';
 import { CampaignService } from '../../../services/campaign.service';
 import { GameSystemService } from '../../../services/game-system.service';
@@ -13,14 +14,13 @@ import { AiChatDrawerComponent } from '../../../shared/ai-chat-drawer/ai-chat-dr
 
 /**
  * Vue lecture seule "WorldAnvil" d'une fiche PJ.
- * Route : /campaigns/:campaignId/characters/:characterId
+ * Route : /campaigns/:campaignId/playthroughs/:playthroughId/characters/:characterId
  */
 @Component({
-  selector: 'app-character-view',
-  standalone: true,
-  imports: [CommonModule, LucideAngularModule, PersonaViewComponent, AiChatDrawerComponent],
-  templateUrl: './character-view.component.html',
-  styleUrls: ['./character-view.component.scss']
+    selector: 'app-character-view',
+    imports: [LucideAngularModule, TranslatePipe, PersonaViewComponent, AiChatDrawerComponent],
+    templateUrl: './character-view.component.html',
+    styleUrls: ['./character-view.component.scss']
 })
 export class CharacterViewComponent implements OnInit {
   readonly ArrowLeft = ArrowLeft;
@@ -28,6 +28,7 @@ export class CharacterViewComponent implements OnInit {
   readonly Sparkles = Sparkles;
 
   campaignId: string | null = null;
+  playthroughId: string | null = null;
   characterId: string | null = null;
 
   character: Character | null = null;
@@ -48,6 +49,7 @@ export class CharacterViewComponent implements OnInit {
   ngOnInit(): void {
     const params = this.route.snapshot.paramMap;
     this.campaignId = params.get('campaignId');
+    this.playthroughId = params.get('playthroughId');
     this.characterId = params.get('characterId');
     if (this.characterId) {
       this.service.getById(this.characterId).subscribe({
@@ -68,13 +70,15 @@ export class CharacterViewComponent implements OnInit {
   }
 
   edit(): void {
-    if (this.campaignId && this.characterId) {
-      this.router.navigate(['/campaigns', this.campaignId, 'characters', this.characterId, 'edit']);
+    if (this.campaignId && this.playthroughId && this.characterId) {
+      this.router.navigate(['/campaigns', this.campaignId, 'playthroughs', this.playthroughId, 'characters', this.characterId, 'edit']);
     }
   }
 
   back(): void {
-    if (this.campaignId) {
+    if (this.campaignId && this.playthroughId) {
+      this.router.navigate(['/campaigns', this.campaignId, 'playthroughs', this.playthroughId]);
+    } else if (this.campaignId) {
       this.router.navigate(['/campaigns', this.campaignId]);
     } else {
       this.router.navigate(['/campaigns']);

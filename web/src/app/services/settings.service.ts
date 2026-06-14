@@ -6,13 +6,32 @@ import { Observable } from 'rxjs';
  * Reflet de SettingsDTO cote Brain / SettingsController cote Core.
  * `onemin_api_key_set` indique si une cle est configuree, sans la reveler.
  */
+export type LlmProvider = 'ollama' | 'onemin' | 'openrouter' | 'mistral' | 'gemini';
+
 export interface AppSettings {
-  llm_provider: 'ollama' | 'onemin';
+  llm_provider: LlmProvider;
   ollama_base_url: string;
   llm_model: string;
   onemin_model: string;
   onemin_api_key_set: boolean;
+  openrouter_model: string;
+  openrouter_api_key_set: boolean;
+  mistral_model: string;
+  mistral_api_key_set: boolean;
+  gemini_model: string;
+  gemini_api_key_set: boolean;
+  /** Embeddings (RAG des ateliers). */
+  embedding_provider: 'ollama' | 'mistral';
+  ollama_embedding_model: string;
+  mistral_embedding_model: string;
+  auto_pull_embedding_model: boolean;
+  /** Nombre d'extraits récupérés par question (RAG). */
+  rag_top_k: number;
   llm_num_ctx: number;
+  /** Taille cible d'un morceau (tokens) pour l'import de PDF (règles/campagne). */
+  import_chunk_tokens: number;
+  /** Timeout HTTP des appels LLM (secondes). */
+  llm_timeout_seconds: number;
 }
 
 /**
@@ -20,12 +39,25 @@ export interface AppSettings {
  * `onemin_api_key: ''` efface la cle, `null`/absent ne touche a rien.
  */
 export interface AppSettingsUpdate {
-  llm_provider?: 'ollama' | 'onemin';
+  llm_provider?: LlmProvider;
   ollama_base_url?: string;
   llm_model?: string;
   onemin_model?: string;
   onemin_api_key?: string;
+  openrouter_model?: string;
+  openrouter_api_key?: string;
+  mistral_model?: string;
+  mistral_api_key?: string;
+  gemini_model?: string;
+  gemini_api_key?: string;
+  embedding_provider?: 'ollama' | 'mistral';
+  ollama_embedding_model?: string;
+  mistral_embedding_model?: string;
+  auto_pull_embedding_model?: boolean;
+  rag_top_k?: number;
   llm_num_ctx?: number;
+  import_chunk_tokens?: number;
+  llm_timeout_seconds?: number;
 }
 
 /** Metadonnees d'un modele Ollama (issues de /api/show). */
@@ -64,6 +96,21 @@ export class SettingsService {
 
   listOneMinModels(): Observable<{ groups: OneMinModelGroup[] }> {
     return this.http.get<{ groups: OneMinModelGroup[] }>(`${this.apiUrl}/models/onemin`, this.authOptions);
+  }
+
+  /** Catalogue dynamique des modeles OpenRouter (depuis leur API publique). */
+  listOpenRouterModels(): Observable<{ models: OpenRouterModel[] }> {
+    return this.http.get<{ models: OpenRouterModel[] }>(`${this.apiUrl}/models/openrouter`, this.authOptions);
+  }
+
+  /** Catalogue des modeles Mistral (dynamique si cle configuree, repli statique sinon). */
+  listMistralModels(): Observable<{ models: MistralModel[] }> {
+    return this.http.get<{ models: MistralModel[] }>(`${this.apiUrl}/models/mistral`, this.authOptions);
+  }
+
+  /** Catalogue des modeles Gemini (dynamique si cle configuree, repli statique sinon). */
+  listGeminiModels(): Observable<{ models: GeminiModel[] }> {
+    return this.http.get<{ models: GeminiModel[] }>(`${this.apiUrl}/models/gemini`, this.authOptions);
   }
 
   /**
@@ -177,4 +224,24 @@ export interface OllamaPullEvent {
 export interface OneMinModelGroup {
   provider: string;
   models: string[];
+}
+
+/** Un modele OpenRouter (catalogue dynamique). */
+export interface OpenRouterModel {
+  id: string;
+  name: string;
+  /** Fenetre de contexte du modele (tokens). 0 si inconnue. */
+  context_length: number;
+  /** True si le modele est gratuit (id `:free` ou prix nul). */
+  free: boolean;
+}
+
+/** Un modele Mistral (catalogue dynamique ou repli statique). */
+export interface MistralModel {
+  id: string;
+}
+
+/** Un modele Gemini (catalogue dynamique ou repli statique). */
+export interface GeminiModel {
+  id: string;
 }

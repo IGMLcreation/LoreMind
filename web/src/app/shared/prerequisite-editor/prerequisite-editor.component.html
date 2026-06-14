@@ -1,0 +1,87 @@
+<div class="prereq-editor">
+
+  @if (prerequisites.length === 0) {
+    <p class="prereq-editor-empty">
+      {{ 'prerequisiteEditor.empty' | translate }}
+    </p>
+  }
+
+  @if (prerequisites.length > 0) {
+    <ul class="prereq-list">
+      @for (p of prerequisites; track $index; let i = $index) {
+        <li class="prereq-row">
+          @switch (p.kind) {
+            <!-- QUEST_COMPLETED -->
+            @case ('QUEST_COMPLETED') {
+              <span class="prereq-row-label">{{ 'prerequisiteEditor.questCompletedLabel' | translate }}</span>
+              <select class="prereq-input"
+                [ngModel]="asQuestCompleted(p).questId"
+                (ngModelChange)="onQuestIdChange(i, $event)"
+                [ngModelOptions]="{ standalone: true }"
+                [disabled]="availableQuests.length === 0">
+                @if (availableQuests.length === 0) {
+                  <option value="">{{ 'prerequisiteEditor.noOtherQuest' | translate }}</option>
+                }
+                @for (q of availableQuests; track q) {
+                  <option [value]="q.id">{{ q.name }}</option>
+                }
+              </select>
+            }
+            <!-- SESSION_REACHED -->
+            @case ('SESSION_REACHED') {
+              <span class="prereq-row-label">{{ 'prerequisiteEditor.sessionReachedLabel' | translate }}</span>
+              <input type="number"
+                class="prereq-input prereq-input-number"
+                min="1"
+                [ngModel]="asSessionReached(p).minSessionNumber"
+                (ngModelChange)="onMinSessionChange(i, $event)"
+                [ngModelOptions]="{ standalone: true }" />
+            }
+            <!-- FLAG_SET -->
+            @case ('FLAG_SET') {
+              <span class="prereq-row-label">{{ 'prerequisiteEditor.flagSetLabel' | translate }}</span>
+              <input type="text"
+                class="prereq-input"
+                [placeholder]="'prerequisiteEditor.flagNamePlaceholder' | translate"
+                [attr.list]="'prereq-flag-list-' + i"
+                [ngModel]="asFlagSet(p).flagName"
+                (ngModelChange)="onFlagNameChange(i, $event)"
+                [ngModelOptions]="{ standalone: true }" />
+              <datalist [attr.id]="'prereq-flag-list-' + i">
+                @for (f of availableFlags; track f) {
+                  <option [value]="f"></option>
+                }
+              </datalist>
+            }
+          }
+          <button type="button" class="prereq-remove" (click)="removeAt(i)" [title]="'prerequisiteEditor.removePrerequisite' | translate">
+            <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+          </button>
+        </li>
+      }
+    </ul>
+  }
+
+  <div class="prereq-add">
+    <button type="button" class="btn-secondary prereq-add-btn" (click)="toggleAddMenu()">
+      <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
+      {{ 'prerequisiteEditor.addCondition' | translate }}
+      <lucide-icon [img]="ChevronDown" [size]="14"></lucide-icon>
+    </button>
+
+    @if (addMenuOpen) {
+      <div class="prereq-add-menu">
+        <button type="button" (click)="addPrerequisite('QUEST_COMPLETED')">
+          {{ 'prerequisiteEditor.menuAfterQuest' | translate }}
+        </button>
+        <button type="button" (click)="addPrerequisite('SESSION_REACHED')">
+          {{ 'prerequisiteEditor.menuFromSession' | translate }}
+        </button>
+        <button type="button" (click)="addPrerequisite('FLAG_SET')">
+          {{ 'prerequisiteEditor.menuWhenFlag' | translate }}
+        </button>
+      </div>
+    }
+  </div>
+
+</div>

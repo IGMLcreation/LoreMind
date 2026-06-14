@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { LucideAngularModule, X, Image as ImageIcon } from 'lucide-angular';
+import { TranslatePipe } from '@ngx-translate/core';
 import { ImageService } from '../../services/image.service';
 import { Image } from '../../services/image.model';
 import { ImageUploaderComponent } from '../image-uploader/image-uploader.component';
@@ -20,11 +21,10 @@ import { ImageUploaderComponent } from '../image-uploader/image-uploader.compone
  * lien (passe imageId a null). L'image reste accessible via d'autres entites.
  */
 @Component({
-  selector: 'app-single-image-picker',
-  standalone: true,
-  imports: [CommonModule, LucideAngularModule, ImageUploaderComponent],
-  templateUrl: './single-image-picker.component.html',
-  styleUrls: ['./single-image-picker.component.scss']
+    selector: 'app-single-image-picker',
+    imports: [LucideAngularModule, ImageUploaderComponent, TranslatePipe],
+    templateUrl: './single-image-picker.component.html',
+    styleUrls: ['./single-image-picker.component.scss']
 })
 export class SingleImagePickerComponent {
   readonly X = X;

@@ -1,8 +1,9 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { LucideAngularModule, FileText, Sparkles, Plus } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { LoreService } from '../../services/lore.service';
 import { TemplateService } from '../../services/template.service';
 import { PageService } from '../../services/page.service';
@@ -25,11 +26,10 @@ import { AiChatDrawerComponent, ChatPrimaryAction } from '../../shared/ai-chat-d
  * champs dynamiques du template se fait APRÈS création, via l'écran page-edit.
  */
 @Component({
-  selector: 'app-page-create',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, LucideAngularModule, AiChatDrawerComponent],
-  templateUrl: './page-create.component.html',
-  styleUrls: ['./page-create.component.scss']
+    selector: 'app-page-create',
+    imports: [ReactiveFormsModule, RouterModule, LucideAngularModule, TranslatePipe, AiChatDrawerComponent],
+    templateUrl: './page-create.component.html',
+    styleUrls: ['./page-create.component.scss']
 })
 export class PageCreateComponent implements OnInit, OnDestroy {
   readonly FileText = FileText;
@@ -54,13 +54,9 @@ export class PageCreateComponent implements OnInit, OnDestroy {
   /** Erreur de parsing du bloc <values> — affichée sous le drawer. */
   wizardError: string | null = null;
   /** Action primaire du wizard : applique les valeurs extraites et crée la page. */
-  readonly wizardPrimaryAction: ChatPrimaryAction = { label: 'Appliquer et créer la page' };
+  readonly wizardPrimaryAction: ChatPrimaryAction;
   /** Suggestions rapides orientées "affiner le résultat" (mode wizard). */
-  readonly wizardSuggestions: string[] = [
-    'Rends la description plus courte',
-    'Ajoute un trait distinctif marquant',
-    'Donne un ton plus sombre'
-  ];
+  readonly wizardSuggestions: string[];
 
   constructor(
     private fb: FormBuilder,
@@ -70,16 +66,23 @@ export class PageCreateComponent implements OnInit, OnDestroy {
     private templateService: TemplateService,
     private pageService: PageService,
     private layoutService: LayoutService,
-    private pageTitleService: PageTitleService
+    private pageTitleService: PageTitleService,
+    private translate: TranslateService
   ) {
     this.form = this.fb.group({
       title:  ['', Validators.required],
       nodeId: ['', Validators.required]
     });
+    this.wizardPrimaryAction = { label: this.translate.instant('pageCreate.wizardPrimaryAction') };
+    this.wizardSuggestions = [
+      this.translate.instant('pageCreate.wizardSuggestion1'),
+      this.translate.instant('pageCreate.wizardSuggestion2'),
+      this.translate.instant('pageCreate.wizardSuggestion3')
+    ];
   }
 
   ngOnInit(): void {
-    this.pageTitleService.set('Nouvelle page');
+    this.pageTitleService.set(this.translate.instant('pageCreate.pageTitle'));
     this.loreId = this.route.snapshot.paramMap.get('loreId')!;
     this.preselectedNodeId = this.route.snapshot.paramMap.get('nodeId');
 
@@ -249,12 +252,12 @@ export class PageCreateComponent implements OnInit, OnDestroy {
    */
   applyWizardAndCreate(): void {
     if (!this.canSubmit || !this.lastWizardReply) {
-      this.wizardError = "L'assistant n'a pas encore répondu. Décrivez d'abord votre idée.";
+      this.wizardError = this.translate.instant('pageCreate.errorNoReply');
       return;
     }
     const values = this.extractValuesBlock(this.lastWizardReply);
     if (!values) {
-      this.wizardError = "Impossible d'extraire les valeurs. Demandez à l'assistant de proposer à nouveau.";
+      this.wizardError = this.translate.instant('pageCreate.errorNoValues');
       return;
     }
     this.wizardError = null;
@@ -272,10 +275,10 @@ export class PageCreateComponent implements OnInit, OnDestroy {
         const updated = { ...created, values };
         this.pageService.update(created.id!, updated).subscribe({
           next: () => this.router.navigate(['/lore', this.loreId, 'pages', created.id, 'edit']),
-          error: () => this.wizardError = 'Page créée, mais impossible d\'appliquer les valeurs.'
+          error: () => this.wizardError = this.translate.instant('pageCreate.errorApplyValues')
         });
       },
-      error: () => this.wizardError = 'Erreur lors de la création de la page.'
+      error: () => this.wizardError = this.translate.instant('pageCreate.errorCreate')
     });
   }
 
@@ -314,8 +317,8 @@ Les clés du JSON doivent correspondre EXACTEMENT aux noms de champs indiqués. 
   /** Welcome message contextualisé au template choisi. */
   get wizardWelcome(): string {
     const tpl = this.selectedTemplate;
-    if (!tpl) return 'Décrivez ce que vous souhaitez créer.';
-    return `Super, on va créer une page "${tpl.name}" ! Décrivez-la-moi en quelques mots — contexte, rôle, traits marquants — et je proposerai des valeurs pour chaque champ.`;
+    if (!tpl) return this.translate.instant('pageCreate.wizardWelcomeEmpty');
+    return this.translate.instant('pageCreate.wizardWelcome', { name: tpl.name });
   }
 
   /**

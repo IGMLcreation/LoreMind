@@ -2,7 +2,7 @@
   <div class="modal" (click)="$event.stopPropagation()">
 
     <div class="modal-header">
-      <h2>Créer une nouvelle Campagne</h2>
+      <h2>{{ 'campaignCreate.title' | translate }}</h2>
       <button class="btn-close" (click)="onCancel()">
         <lucide-icon [img]="X" [size]="18"></lucide-icon>
       </button>
@@ -11,109 +11,107 @@
     <form [formGroup]="form" (ngSubmit)="submit()">
 
       <div class="field">
-        <label for="campaign-name">Nom de la campagne *</label>
+        <label for="campaign-name">{{ 'campaignCreate.nameLabel' | translate }}</label>
         <input
           id="campaign-name"
           type="text"
           formControlName="name"
-          placeholder="Ex: L'Ombre du Nord, Les Héritiers Oubliés..."
+          [placeholder]="'campaignCreate.namePlaceholder' | translate"
           [class.invalid]="form.get('name')?.invalid && form.get('name')?.touched"
-        />
-      </div>
-
-      <div class="field">
-        <label for="campaign-description">Description / Pitch</label>
-        <textarea
-          id="campaign-description"
-          formControlName="description"
-          placeholder="Résumez l'intrigue principale de votre campagne..."
-          rows="5"
-        ></textarea>
-      </div>
-
-      <div class="field">
-        <label for="campaign-player-count">Nombre de joueurs</label>
-        <input id="campaign-player-count" type="number" formControlName="playerCount" min="1" />
-      </div>
-
-      <div class="field">
-        <label for="campaign-lore">Univers associé</label>
-        <select id="campaign-lore" formControlName="loreId">
-          <option value="">— Aucun univers (campagne libre) —</option>
-          <option *ngFor="let lore of availableLores" [value]="lore.id">{{ lore.name }}</option>
-        </select>
-        <p class="hint">
-          Optionnel. Si associée, vous pourrez lier arcs, chapitres et scènes aux pages du Lore.
-          Laissez vide pour un one-shot ou si vous créerez le Lore plus tard.
-        </p>
-      </div>
-
-      <div class="field">
-        <label for="campaign-game-system">Système de JDR</label>
-        <select *ngIf="!creatingGameSystem" id="campaign-game-system" formControlName="gameSystemId">
-          <option value="">— Aucun (campagne générique) —</option>
-          <option *ngFor="let gs of availableGameSystems" [value]="gs.id">{{ gs.name }}</option>
-          <option [value]="CREATE_GAMESYSTEM_SENTINEL">+ Créer un nouveau système…</option>
-        </select>
-
-        <!-- Mode creation inline : remplace temporairement le select. -->
-        <div *ngIf="creatingGameSystem" class="inline-create">
-          <input
-            type="text"
-            [(ngModel)]="newGameSystemName"
-            [ngModelOptions]="{ standalone: true }"
-            placeholder="Nom du nouveau système (ex: D&D 5e, Nimble, Maison)"
-            (keydown.enter)="$event.preventDefault(); submitCreateGameSystem()"
-            (keydown.escape)="cancelCreateGameSystem()"
-            autofocus
           />
-          <div class="inline-create-actions">
-            <button type="button" class="btn-inline-primary"
-                    [disabled]="!newGameSystemName.trim() || creatingGameSystemInFlight"
-                    (click)="submitCreateGameSystem()">
-              <lucide-icon [img]="Check" [size]="14"></lucide-icon>
-              Créer
-            </button>
-            <button type="button" class="btn-inline-secondary" (click)="cancelCreateGameSystem()">
-              Annuler
-            </button>
-          </div>
-          <p class="hint">
-            Création rapide — vous pourrez ajouter les règles, les templates de fiches PJ/PNJ
-            et le reste depuis la section "Systèmes" plus tard.
-          </p>
         </div>
 
-        <p *ngIf="!creatingGameSystem" class="hint">
-          Optionnel. Si défini, l'IA injectera les règles du système (classes, combat, lore...)
-          dans ses suggestions pour respecter les mécaniques du JDR.
-        </p>
-        <p *ngIf="!creatingGameSystem" class="hint hint-warning">
-          ⚠️ Le système de jeu choisi détermine aussi le <strong>template des fiches de PJ et PNJ</strong>.
-          Le changer plus tard rendra les champs des fiches existantes invisibles
-          (les données restent stockées mais ne s'afficheront qu'en revenant à l'ancien système).
-          Choisissez bien dès le départ si possible.
-        </p>
+        <div class="field">
+          <label for="campaign-description">{{ 'campaignCreate.descriptionLabel' | translate }}</label>
+          <textarea
+            id="campaign-description"
+            formControlName="description"
+            [placeholder]="'campaignCreate.descriptionPlaceholder' | translate"
+            rows="5"
+          ></textarea>
+        </div>
+
+        <div class="field">
+          <label for="campaign-player-count">{{ 'campaignCreate.playerCountLabel' | translate }}</label>
+          <input id="campaign-player-count" type="number" formControlName="playerCount" min="1" />
+        </div>
+
+        <div class="field">
+          <label for="campaign-lore">{{ 'campaignCreate.loreLabel' | translate }}</label>
+          <select id="campaign-lore" formControlName="loreId">
+            <option value="">{{ 'campaignCreate.noLoreOption' | translate }}</option>
+            @for (lore of availableLores; track lore) {
+              <option [value]="lore.id">{{ lore.name }}</option>
+            }
+          </select>
+          <p class="hint">{{ 'campaignCreate.loreHint' | translate }}</p>
+        </div>
+
+        <div class="field">
+          <label for="campaign-game-system">{{ 'campaignCreate.gameSystemLabel' | translate }}</label>
+          @if (!creatingGameSystem) {
+            <select id="campaign-game-system" formControlName="gameSystemId">
+              <option value="">{{ 'campaignCreate.noGameSystemOption' | translate }}</option>
+              @for (gs of availableGameSystems; track gs) {
+                <option [value]="gs.id">{{ gs.name }}</option>
+              }
+              <option [value]="CREATE_GAMESYSTEM_SENTINEL">{{ 'campaignCreate.createGameSystemOption' | translate }}</option>
+            </select>
+          }
+
+          <!-- Mode creation inline : remplace temporairement le select. -->
+          @if (creatingGameSystem) {
+            <div class="inline-create">
+              <input
+                type="text"
+                [(ngModel)]="newGameSystemName"
+                [ngModelOptions]="{ standalone: true }"
+                [placeholder]="'campaignCreate.gameSystemNamePlaceholder' | translate"
+                (keydown.enter)="$event.preventDefault(); submitCreateGameSystem()"
+                (keydown.escape)="cancelCreateGameSystem()"
+                autofocus
+                />
+                <div class="inline-create-actions">
+                  <button type="button" class="btn-inline-primary"
+                    [disabled]="!newGameSystemName.trim() || creatingGameSystemInFlight"
+                    (click)="submitCreateGameSystem()">
+                    <lucide-icon [img]="Check" [size]="14"></lucide-icon>
+                    {{ 'common.create' | translate }}
+                  </button>
+                  <button type="button" class="btn-inline-secondary" (click)="cancelCreateGameSystem()">
+                    {{ 'common.cancel' | translate }}
+                  </button>
+                </div>
+                <p class="hint">{{ 'campaignCreate.gameSystemCreateHint' | translate }}</p>
+              </div>
+            }
+
+            @if (!creatingGameSystem) {
+              <p class="hint">{{ 'campaignCreate.gameSystemHint' | translate }}</p>
+            }
+            @if (!creatingGameSystem) {
+              <p class="hint hint-warning" [innerHTML]="'campaignCreate.gameSystemWarning' | translate"></p>
+            }
+          </div>
+
+          <div class="info-box">
+            <p [innerHTML]="'campaignCreate.orgIntro' | translate"></p>
+            <ul>
+              <li [innerHTML]="'campaignCreate.orgArcs' | translate"></li>
+              <li [innerHTML]="'campaignCreate.orgChapters' | translate"></li>
+              <li [innerHTML]="'campaignCreate.orgScenes' | translate"></li>
+            </ul>
+          </div>
+
+          <div class="modal-actions">
+            <button type="submit" class="btn-primary" [disabled]="form.invalid">
+              <lucide-icon [img]="BookCopy" [size]="16"></lucide-icon>
+              {{ 'campaignCreate.submit' | translate }}
+            </button>
+            <button type="button" class="btn-secondary" (click)="onCancel()">{{ 'common.cancel' | translate }}</button>
+          </div>
+
+        </form>
+
       </div>
-
-      <div class="info-box">
-        <p><strong>💡 Organisation :</strong> Votre campagne sera structurée en :</p>
-        <ul>
-          <li><strong>Arcs</strong> - Les grandes phases narratives</li>
-          <li><strong>Chapitres</strong> - Les segments d'un arc</li>
-          <li><strong>Scènes</strong> - Les moments de jeu individuels</li>
-        </ul>
-      </div>
-
-      <div class="modal-actions">
-        <button type="submit" class="btn-primary" [disabled]="form.invalid">
-          <lucide-icon [img]="BookCopy" [size]="16"></lucide-icon>
-          Créer la campagne
-        </button>
-        <button type="button" class="btn-secondary" (click)="onCancel()">Annuler</button>
-      </div>
-
-    </form>
-
-  </div>
-</div>
+    </div>

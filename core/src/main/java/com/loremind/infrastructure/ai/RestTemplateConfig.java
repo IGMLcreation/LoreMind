@@ -5,6 +5,7 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.boot.web.reactive.function.client.WebClientCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.Duration;
@@ -23,6 +24,7 @@ public class RestTemplateConfig {
     private static final String INTERNAL_SECRET_HEADER = "X-Internal-Secret";
 
     @Bean
+    @Primary
     public RestTemplate brainRestTemplate(
             RestTemplateBuilder builder,
             @Value("${brain.timeout-seconds}") long timeoutSeconds,
@@ -30,6 +32,29 @@ public class RestTemplateConfig {
         return builder
                 .setConnectTimeout(Duration.ofSeconds(10))
                 .setReadTimeout(Duration.ofSeconds(timeoutSeconds))
+                .additionalInterceptors((request, body, execution) -> {
+                    if (internalSecret != null && !internalSecret.isBlank()) {
+                        request.getHeaders().set(INTERNAL_SECRET_HEADER, internalSecret);
+                    }
+                    return execution.execute(request, body);
+                })
+                .build();
+    }
+
+    /**
+     * RestTemplate dédié à l'import de PDF (règles/campagne) au timeout LONG :
+     * l'extraction + la structuration map-reduce d'un livre entier enchaîne de
+     * nombreux appels LLM et dépasse facilement le timeout des appels courts.
+     * Même entête d'auth inter-service que {@link #brainRestTemplate}.
+     */
+    @Bean
+    public RestTemplate brainImportRestTemplate(
+            RestTemplateBuilder builder,
+            @Value("${brain.import-timeout-seconds:600}") long importTimeoutSeconds,
+            @Value("${brain.internal-secret}") String internalSecret) {
+        return builder
+                .setConnectTimeout(Duration.ofSeconds(10))
+                .setReadTimeout(Duration.ofSeconds(importTimeoutSeconds))
                 .additionalInterceptors((request, body, execution) -> {
                     if (internalSecret != null && !internalSecret.isBlank()) {
                         request.getHeaders().set(INTERNAL_SECRET_HEADER, internalSecret);

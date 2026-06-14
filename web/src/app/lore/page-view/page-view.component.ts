@@ -1,8 +1,9 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { LucideAngularModule, Pencil, Trash2 } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { LoreService } from '../../services/lore.service';
 import { TemplateService } from '../../services/template.service';
 import { PageService } from '../../services/page.service';
@@ -27,11 +28,10 @@ import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog
  * Pour modifier → bouton "Modifier" qui navigue vers /lore/:loreId/pages/:pageId/edit.
  */
 @Component({
-  selector: 'app-page-view',
-  standalone: true,
-  imports: [CommonModule, RouterModule, LucideAngularModule, BreadcrumbComponent, ImageGalleryComponent],
-  templateUrl: './page-view.component.html',
-  styleUrls: ['./page-view.component.scss']
+    selector: 'app-page-view',
+    imports: [RouterModule, LucideAngularModule, TranslatePipe, BreadcrumbComponent, ImageGalleryComponent],
+    templateUrl: './page-view.component.html',
+    styleUrls: ['./page-view.component.scss']
 })
 export class PageViewComponent implements OnInit, OnDestroy {
   readonly Pencil = Pencil;
@@ -53,7 +53,8 @@ export class PageViewComponent implements OnInit, OnDestroy {
     private pageService: PageService,
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -115,9 +116,24 @@ export class PageViewComponent implements OnInit, OnDestroy {
     return this.page?.imageValues?.[fieldName] ?? [];
   }
 
+  /** Valeur d'un libellé d'un champ KEY_VALUE_LIST (tableau). */
+  kvValueOf(fieldName: string, label: string): string {
+    return this.page?.keyValueValues?.[fieldName]?.[label] ?? '';
+  }
+
+  /** True si au moins une valeur de la liste clé/valeur est renseignée. */
+  kvHasContent(fieldName: string, labels: string[] | null | undefined): boolean {
+    return (labels ?? []).some(lbl => this.kvValueOf(fieldName, lbl).trim() !== '');
+  }
+
+  /** Lignes d'un champ TABLE (liste vide si jamais rempli). */
+  tableRowsOf(fieldName: string): Array<Record<string, string>> {
+    return this.page?.tableValues?.[fieldName] ?? [];
+  }
+
   /** Helper — résout l'ID d'une page liée en son titre (pour affichage dans les chips). */
   titleOfRelated(pageId: string): string {
-    return this.allPages.find(p => p.id === pageId)?.title ?? '(page supprimée)';
+    return this.allPages.find(p => p.id === pageId)?.title ?? this.translate.instant('pageView.deletedPage');
   }
 
   editMode(): void {
@@ -132,10 +148,10 @@ export class PageViewComponent implements OnInit, OnDestroy {
     if (!this.page) return;
     const page = this.page;
     this.confirmDialog.confirm({
-      title: 'Supprimer la page',
-      message: `Supprimer la page "${page.title}" ?`,
-      details: ['Cette action est irréversible.'],
-      confirmLabel: 'Supprimer',
+      title: this.translate.instant('pageView.deleteTitle'),
+      message: this.translate.instant('pageView.deleteMessage', { title: page.title }),
+      details: [this.translate.instant('pageView.deleteIrreversible')],
+      confirmLabel: this.translate.instant('common.delete'),
       variant: 'danger'
     }).then(ok => {
       if (!ok) return;

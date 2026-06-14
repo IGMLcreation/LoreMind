@@ -1,17 +1,18 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router } from '@angular/router';
 import { LucideAngularModule, Map, Plus } from 'lucide-angular';
+import { TranslatePipe } from '@ngx-translate/core';
 import { CampaignService } from '../services/campaign.service';
+import { LayoutService } from '../services/layout.service';
 import { Campaign } from '../services/campaign.model';
 import { CampaignCreateComponent, CampaignCreatePayload } from './campaign/campaign-create/campaign-create.component';
 
 @Component({
-  selector: 'app-campaigns',
-  standalone: true,
-  imports: [CommonModule, LucideAngularModule, CampaignCreateComponent],
-  templateUrl: './campaigns.component.html',
-  styleUrls: ['./campaigns.component.scss']
+    selector: 'app-campaigns',
+    imports: [LucideAngularModule, CampaignCreateComponent, TranslatePipe],
+    templateUrl: './campaigns.component.html',
+    styleUrls: ['./campaigns.component.scss']
 })
 export class CampaignsComponent implements OnInit {
   readonly Map = Map;
@@ -22,10 +23,15 @@ export class CampaignsComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private campaignService: CampaignService
+    private campaignService: CampaignService,
+    private layoutService: LayoutService
   ) {}
 
   ngOnInit(): void {
+    // Liste racine de la section Campagnes : aucune sidebar secondaire ne
+    // doit subsister (ex: si on arrive depuis une page Lore qui en affichait
+    // une, elle persisterait sans ce hide() — cf. bug rapporte 2026-05-19).
+    this.layoutService.hide();
     this.loadCampaigns();
   }
 

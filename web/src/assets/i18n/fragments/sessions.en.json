@@ -1,0 +1,93 @@
+{
+  "sessionDetail": {
+    "backToCampaign": "Back to campaign",
+    "renameTitle": "Rename session",
+    "statusActive": "In progress",
+    "statusEnded": "Ended",
+    "startedOn": "Started on {{date}}",
+    "endedOn": "Ended on {{date}}",
+    "endSession": "End session",
+    "ctrlEnterHint": "Ctrl + Enter to add",
+    "addEntryPlaceholder": "Add a {{type}}…",
+    "journalTitle": "Session log",
+    "noEntries": "No entries yet.",
+    "noEntriesHint": "Type a note, an event or a roll above to start the log.",
+    "entryType": {
+      "NOTE": "Note",
+      "EVENT": "Event",
+      "DICE_ROLL": "Dice roll",
+      "PLAYER_ACTION": "Player action"
+    },
+    "endConfirm": {
+      "title": "End session?",
+      "message": "Mark session \"{{name}}\" as ended?",
+      "detail": "You can still review its content afterwards.",
+      "confirmLabel": "End"
+    },
+    "deleteConfirm": {
+      "title": "Delete session?",
+      "message": "Permanently delete session \"{{name}}\"?",
+      "noEntries": "No log entries for this session.",
+      "entriesOne": "1 log entry will also be deleted.",
+      "entriesMany": "{{n}} log entries will also be deleted.",
+      "irreversible": "This action is irreversible."
+    },
+    "deleteEntryConfirm": {
+      "title": "Delete this entry?",
+      "message": "This log entry will be permanently deleted."
+    }
+  },
+  "sessionReferencePanel": {
+    "tabAi": "AI",
+    "tabDice": "Dice",
+    "tabTables": "Tables",
+    "tabObjects": "Items",
+    "tabCharacters": "PCs/NPCs",
+    "tabScenes": "Scenes",
+    "playerCharacters": "Player characters",
+    "nonPlayerCharacters": "Non-player characters",
+    "emptyCharacters": "No characters in this campaign.",
+    "emptyScenes": "No narrative arc yet. Build your campaign scenario to find it here."
+  },
+  "sessionDicePanel": {
+    "count": "Count",
+    "modifier": "Modifier",
+    "roll": "Roll",
+    "lastRolls": "Recent rolls",
+    "clearHistory": "Clear local history",
+    "addToJournal": "Add to log",
+    "sessionEnded": "Session ended",
+    "placeholder": "Pick a die and roll."
+  },
+  "sessionAiChatPanel": {
+    "welcome": "Ask the AI a question during the game.",
+    "welcomeSub": "It knows your world, your campaign, the system rules and everything noted in the log.",
+    "saveReplyTitle": "Add this reply to the log",
+    "sessionEnded": "Session ended",
+    "toJournal": "To log",
+    "replying": "The AI is replying…",
+    "inputPlaceholder": "Ask for an idea, a twist, a description…",
+    "clearConversation": "Clear conversation",
+    "send": "Send",
+    "stop": "Stop",
+    "unknownError": "Unknown error",
+    "aiError": "AI error: {{message}}",
+    "interrupted": "[interrupted]"
+  },
+  "sessionRandomTablesPanel": {
+    "empty": "No random table in this campaign. Create one from the sidebar.",
+    "tables": "Tables",
+    "roll": "Roll",
+    "noEntry": "no entry",
+    "journal": "Log",
+    "improvising": "…",
+    "aiImprovise": "AI improvise",
+    "noResult": "no result"
+  },
+  "sessionItemCatalogsPanel": {
+    "empty": "No item catalog in this campaign.",
+    "catalogs": "Catalogs",
+    "noteTitle": "Record in log (e.g. purchase)",
+    "journal": "Log"
+  }
+}

@@ -1,0 +1,76 @@
+<div class="ice-page">
+  <div class="ice-toolbar">
+    <button class="btn-back" (click)="back()">
+      <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon> {{ 'common.back' | translate }}
+    </button>
+    <span class="spacer"></span>
+    <button class="btn-save" (click)="save()" [disabled]="saving">
+      <lucide-icon [img]="Save" [size]="14"></lucide-icon>
+      {{ (saving ? 'common.saving' : 'common.save') | translate }}
+    </button>
+  </div>
+
+  <h1>{{ (catalogId ? 'itemCatalogEdit.editTitle' : 'itemCatalogEdit.createTitle') | translate }}</h1>
+
+  @if (errorMessage) {
+    <div class="error">{{ errorMessage }}</div>
+  }
+
+  <div class="form-row">
+    <label for="ic-name">{{ 'itemCatalogEdit.nameLabel' | translate }}</label>
+    <input id="ic-name" type="text" [(ngModel)]="name" [placeholder]="'itemCatalogEdit.namePlaceholder' | translate">
+  </div>
+
+  <div class="form-row">
+    <label for="ic-desc">{{ 'common.description' | translate }}</label>
+    <textarea id="ic-desc" rows="2" [(ngModel)]="description" [placeholder]="'itemCatalogEdit.descriptionPlaceholder' | translate"></textarea>
+  </div>
+
+  <!-- Génération IA -->
+  <div class="ai-box">
+    <div class="ai-title"><lucide-icon [img]="Sparkles" [size]="15"></lucide-icon> {{ 'itemCatalogEdit.aiTitle' | translate }}</div>
+    <p class="ai-hint">{{ 'itemCatalogEdit.aiHint' | translate }}</p>
+    <textarea rows="2" [(ngModel)]="aiPrompt"
+    [placeholder]="'itemCatalogEdit.aiPlaceholder' | translate"></textarea>
+    <div class="ai-actions">
+      <button class="btn-ai" (click)="generateWithAI()" [disabled]="generating">
+        <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
+        {{ (generating ? 'common.generating' : 'common.generate') | translate }}
+      </button>
+      @if (aiError) {
+        <span class="ai-error">{{ aiError }}</span>
+      }
+    </div>
+  </div>
+
+  <div class="items-head">
+    <h2>{{ 'itemCatalogEdit.itemsTitle' | translate }}</h2>
+    <button class="btn-mini" (click)="addItem()">
+      <lucide-icon [img]="Plus" [size]="13"></lucide-icon> {{ 'common.add' | translate }}
+    </button>
+  </div>
+
+  <div class="item-row head">
+    <span class="c-name">{{ 'common.name' | translate }}</span>
+    <span class="c-price">{{ 'itemCatalogEdit.priceLabel' | translate }}</span>
+    <span class="c-cat">{{ 'itemCatalogEdit.categoryLabel' | translate }}</span>
+    <span class="c-desc">{{ 'common.description' | translate }}</span>
+    <span class="c-del"></span>
+  </div>
+
+  @for (it of items; track it; let i = $index) {
+    <div class="item-row">
+      <input class="c-name" type="text" [(ngModel)]="it.name" [placeholder]="'itemCatalogEdit.itemNamePlaceholder' | translate">
+      <input class="c-price" type="text" [(ngModel)]="it.price" [placeholder]="'itemCatalogEdit.itemPricePlaceholder' | translate">
+      <input class="c-cat" type="text" [(ngModel)]="it.category" [placeholder]="'itemCatalogEdit.itemCategoryPlaceholder' | translate">
+      <input class="c-desc" type="text" [(ngModel)]="it.description" [placeholder]="'itemCatalogEdit.itemDescriptionPlaceholder' | translate">
+      <button class="c-del btn-del" (click)="removeItem(i)" [title]="'common.delete' | translate">
+        <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+      </button>
+    </div>
+  }
+
+  @if (items.length === 0) {
+    <p class="empty-hint">{{ 'itemCatalogEdit.emptyHint' | translate }}</p>
+  }
+</div>

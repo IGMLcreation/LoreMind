@@ -1,0 +1,51 @@
+{
+  "sidebar": {
+    "subtitle": "LE CODEX NUMÉRIQUE",
+    "tabLore": "Lore",
+    "tabCampaign": "Campagne",
+    "toolsLabel": "OUTILS",
+    "globalSearch": "Recherche globale",
+    "gameSystems": "Systèmes de JDR",
+    "vttExport": "Export VTT",
+    "settings": "Paramètres",
+    "updateAvailable": "Mise à jour disponible",
+    "updateBadge": "MAJ",
+    "version": "Version {{version}}"
+  },
+  "secondarySidebar": {
+    "backToCampaignHome": "Retour à l'accueil de la campagne",
+    "resizeHandle": "Glissez pour redimensionner"
+  },
+  "breadcrumb": {
+    "ariaLabel": "Fil d'Ariane"
+  },
+  "globalSearch": {
+    "placeholder": "Rechercher dans LoreMind...",
+    "noResults": "Aucun résultat",
+    "minChars": "Tape au moins 2 caractères",
+    "hintNavigate": "naviguer",
+    "hintSelect": "sélectionner",
+    "hintClose": "fermer",
+    "countSingular": "{{count}} résultat",
+    "countPlural": "{{count}} résultats",
+    "enemyLevel": "Niv. {{level}}",
+    "tags": {
+      "page": "Page",
+      "node": "Dossier",
+      "template": "Template",
+      "lore": "Lore",
+      "campaign": "Campagne",
+      "npc": "PNJ",
+      "character": "PJ",
+      "randomTable": "Table aléatoire",
+      "itemCatalog": "Catalogue d'objets",
+      "enemy": "Ennemi"
+    }
+  },
+  "updateBanner": {
+    "message": "Une nouvelle version de LoreMind est disponible (<strong>{{version}}</strong>). Recharge pour profiter des dernières améliorations.",
+    "reload": "Recharger",
+    "dismissTitle": "Fermer (sera réaffiché au prochain démarrage)",
+    "dismissAria": "Fermer"
+  }
+}

@@ -1,11 +1,14 @@
 import { Component, OnInit, OnDestroy, ElementRef, ViewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { LucideAngularModule, ArrowLeft } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { CampaignService } from '../../../services/campaign.service';
 import { CharacterService } from '../../../services/character.service';
 import { NpcService } from '../../../services/npc.service';
+import { RandomTableService } from '../../../services/random-table.service';
+import { EnemyService } from '../../../services/enemy.service';
 import { LayoutService, GlobalItem } from '../../../services/layout.service';
 import { PageTitleService } from '../../../services/page-title.service';
 import { Campaign, Chapter, Scene } from '../../../services/campaign.model';
@@ -19,11 +22,10 @@ interface GraphEdge { key: string; label: string; x1: number; y1: number; x2: nu
  * Layout custom (BFS par niveaux) en SVG — évite une dépendance lourde type ngx-graph.
  */
 @Component({
-  selector: 'app-chapter-graph',
-  standalone: true,
-  imports: [CommonModule, RouterModule, LucideAngularModule],
-  templateUrl: './chapter-graph.component.html',
-  styleUrls: ['./chapter-graph.component.scss']
+    selector: 'app-chapter-graph',
+    imports: [RouterModule, LucideAngularModule, TranslatePipe],
+    templateUrl: './chapter-graph.component.html',
+    styleUrls: ['./chapter-graph.component.scss']
 })
 export class ChapterGraphComponent implements OnInit, OnDestroy {
   readonly ArrowLeft = ArrowLeft;
@@ -70,8 +72,11 @@ export class ChapterGraphComponent implements OnInit, OnDestroy {
     private campaignService: CampaignService,
     private characterService: CharacterService,
     private npcService: NpcService,
+    private randomTableService: RandomTableService,
+    private enemyService: EnemyService,
     private layoutService: LayoutService,
-    private pageTitleService: PageTitleService
+    private pageTitleService: PageTitleService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -89,11 +94,11 @@ export class ChapterGraphComponent implements OnInit, OnDestroy {
       allCampaigns: this.campaignService.getAllCampaigns(),
       chapter: this.campaignService.getChapterById(this.chapterId),
       scenes: this.campaignService.getScenes(this.chapterId),
-      treeData: loadCampaignTreeData(this.campaignService, this.campaignId, this.characterService, this.npcService)
+      treeData: loadCampaignTreeData(this.campaignService, this.campaignId, this.characterService, this.npcService, this.randomTableService, this.enemyService)
     }).subscribe(({ campaign, allCampaigns, chapter, scenes, treeData }) => {
       this.chapter = chapter;
       this.scenes = scenes;
-      this.pageTitleService.set(`${chapter.name} — Carte`);
+      this.pageTitleService.set(this.translate.instant('chapterGraph.title', { name: chapter.name }));
       this.buildGraph();
 
       const globalItems: GlobalItem[] = allCampaigns.map((c: Campaign) => ({
@@ -101,11 +106,11 @@ export class ChapterGraphComponent implements OnInit, OnDestroy {
       }));
       this.layoutService.show({
         title: campaign.name,
-        items: buildCampaignTree(this.campaignId, treeData),
-        footerLabel: 'Toutes les campagnes',
+        items: buildCampaignTree(this.campaignId, treeData, this.translate),
+        footerLabel: this.translate.instant('chapterGraph.allCampaigns'),
         createActions: [],
         globalItems,
-        globalBackLabel: 'Toutes les campagnes',
+        globalBackLabel: this.translate.instant('chapterGraph.allCampaigns'),
         globalBackRoute: '/campaigns'
       });
     });

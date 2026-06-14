@@ -1,0 +1,24 @@
+.flags-page {
+  padding: 2.5rem 2rem;
+  max-width: 720px;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+
+  h1 {
+    margin: 0 0 0.25rem;
+    font-size: 1.5rem;
+  }
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--color-text-muted, #666);
+  max-width: 60ch;
+  line-height: 1.4;
+}
