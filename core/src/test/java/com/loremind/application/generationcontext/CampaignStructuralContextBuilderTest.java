@@ -11,6 +11,7 @@ import com.loremind.domain.campaigncontext.ports.ArcRepository;
 import com.loremind.domain.campaigncontext.ports.CampaignRepository;
 import com.loremind.domain.campaigncontext.ports.ChapterRepository;
 import com.loremind.domain.campaigncontext.ports.CharacterRepository;
+import com.loremind.domain.campaigncontext.ports.EnemyRepository;
 import com.loremind.domain.campaigncontext.ports.NpcRepository;
 import com.loremind.domain.campaigncontext.ports.SceneRepository;
 import com.loremind.domain.generationcontext.CampaignStructuralContext;
@@ -48,6 +49,8 @@ public class CampaignStructuralContextBuilderTest {
     private CharacterRepository characterRepository;
     @Mock
     private NpcRepository npcRepository;
+    @Mock
+    private EnemyRepository enemyRepository;
 
     @InjectMocks
     private CampaignStructuralContextBuilder builder;
