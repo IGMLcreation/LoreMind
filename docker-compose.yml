@@ -252,7 +252,11 @@ services:
       # API HTTP pour declenchement manuel via le bouton UI (Core -> Watchtower).
       WATCHTOWER_HTTP_API_UPDATE: "true"
       WATCHTOWER_HTTP_API_PERIODIC_POLLS: "true"
-      WATCHTOWER_HTTP_API_TOKEN: "${WATCHTOWER_TOKEN:?set WATCHTOWER_TOKEN in .env (re-run installer)}"
+      # Pas de ":?" ici : Compose interpole TOUT le fichier avant de filtrer
+      # par profile, donc un ":?" planterait le "up" meme quand autoupdate est
+      # inactif. L'installeur genere toujours WATCHTOWER_TOKEN ; defaut vide
+      # pour ne rien casser sur les deploiements sans autoupdate.
+      WATCHTOWER_HTTP_API_TOKEN: "${WATCHTOWER_TOKEN:-}"
       WATCHTOWER_TIMEOUT: 60s
       WATCHTOWER_NOTIFICATIONS_LEVEL: info
       TZ: ${TZ:-Europe/Paris}
