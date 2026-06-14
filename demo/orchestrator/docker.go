@@ -111,7 +111,7 @@ func (d *DockerClient) SpawnTrio(ctx context.Context, sessionID string, cfg *Con
 
 	if err := d.runContainer(ctx, runSpec{
 		Name:  brainName,
-		Image: cfg.Registry + "/ietm64/brain:" + cfg.Tag,
+		Image: cfg.Registry + "/" + cfg.Namespace + "brain:" + cfg.Tag,
 		Env: []string{
 			"INTERNAL_SHARED_SECRET=" + brainSecret,
 			// Pas de provider LLM configure en demo : les features IA echoueront
@@ -129,7 +129,7 @@ func (d *DockerClient) SpawnTrio(ctx context.Context, sessionID string, cfg *Con
 
 	if err := d.runContainer(ctx, runSpec{
 		Name:  coreName,
-		Image: cfg.Registry + "/ietm64/core:" + cfg.Tag,
+		Image: cfg.Registry + "/" + cfg.Namespace + "core:" + cfg.Tag,
 		Env: []string{
 			"SPRING_DATASOURCE_URL=jdbc:postgresql://" + pgName + ":5432/loremind",
 			"SPRING_DATASOURCE_USERNAME=loremind",

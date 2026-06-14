@@ -10,6 +10,7 @@ import (
 // Config centralise les parametres lus depuis les variables d'env au boot.
 type Config struct {
 	Registry           string
+	Namespace          string
 	Tag                string
 	MaxSessions        int
 	SessionTTL         time.Duration
@@ -27,7 +28,12 @@ type Config struct {
 
 func loadConfig() *Config {
 	return &Config{
-		Registry:           envStr("REGISTRY", "git.igmlcreation.fr"),
+		// Aligne sur la nouvelle convention de publication des images
+		// (ghcr.io/igmlcreation/loremind-{core,brain}). L'ancien registre Gitea
+		// (git.igmlcreation.fr/ietm64/*) n'est plus republie : il restait gele
+		// sur une vieille version. Le slash final de Namespace est volontaire.
+		Registry:           envStr("REGISTRY", "ghcr.io"),
+		Namespace:          envStr("IMAGE_NAMESPACE", "igmlcreation/loremind-"),
 		Tag:                envStr("TAG", "latest"),
 		MaxSessions:        envInt("MAX_SESSIONS", 10),
 		SessionTTL:         time.Duration(envInt("SESSION_TTL_MINUTES", 20)) * time.Minute,
