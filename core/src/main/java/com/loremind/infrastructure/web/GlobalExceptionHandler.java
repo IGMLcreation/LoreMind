@@ -11,6 +11,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -69,6 +70,21 @@ public class GlobalExceptionHandler {
                 "error", "Validation failed",
                 "fields", fields
         ));
+    }
+
+    /**
+     * Statut HTTP explicitement choisi par un controller via {@link ResponseStatusException}
+     * (ex: {@code NotebookController} -> 404 si notebook introuvable, 502 si Brain injoignable).
+     * <p>
+     * SANS ce handler, le fallback {@code @ExceptionHandler(Throwable.class)} ci-dessous
+     * interceptait ces exceptions et renvoyait 500 — ecrasant le statut voulu (le
+     * resolver natif de Spring est court-circuite des qu'un advice gere Throwable).
+     */
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<Map<String, String>> handleResponseStatus(ResponseStatusException ex) {
+        String reason = ex.getReason();
+        return ResponseEntity.status(ex.getStatusCode())
+                .body(Map.of("error", reason != null ? reason : ex.getStatusCode().toString()));
     }
 
     /**

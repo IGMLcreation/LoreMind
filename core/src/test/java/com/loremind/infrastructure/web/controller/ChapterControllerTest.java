@@ -7,6 +7,8 @@ import com.loremind.domain.campaigncontext.Chapter;
 import com.loremind.domain.campaigncontext.ports.ArcRepository;
 import com.loremind.domain.campaigncontext.ports.CampaignRepository;
 import com.loremind.domain.campaigncontext.ports.ChapterRepository;
+import com.loremind.domain.playcontext.Playthrough;
+import com.loremind.domain.playcontext.ports.PlaythroughRepository;
 import com.loremind.infrastructure.web.dto.campaigncontext.ChapterDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,13 +36,18 @@ class ChapterControllerTest {
     @Autowired private CampaignRepository campaignRepository;
     @Autowired private ArcRepository arcRepository;
     @Autowired private ChapterRepository chapterRepository;
+    @Autowired private PlaythroughRepository playthroughRepository;
 
     private String arcId;
+    private String playthroughId;
 
     @BeforeEach
     void setUp() {
         String campaignId = campaignRepository.save(Campaign.builder().name("C").description("").build()).getId();
         arcId = arcRepository.save(Arc.builder().campaignId(campaignId).name("A").order(0).build()).getId();
+        // playthroughId REEL (id numerique) : l'enrichissement du statut le parse.
+        playthroughId = playthroughRepository.save(
+                Playthrough.builder().campaignId(campaignId).name("Table").description("").build()).getId();
     }
 
     @Test
@@ -105,5 +112,53 @@ class ChapterControllerTest {
         Chapter saved = chapterRepository.save(Chapter.builder().arcId(arcId).name("X").order(0).build());
         mockMvc.perform(delete("/api/chapters/{id}", saved.getId()))
                 .andExpect(status().isNoContent());
+    }
+
+    // getById avec ?playthroughId= : branche d'enrichissement du statut.
+    // Le playthrough est inexistant -> snapshot vide -> statut NOT_STARTED, mais la branche est couverte.
+    @Test
+    void getById_withPlaythroughId_enrichesStatus() throws Exception {
+        Chapter saved = chapterRepository.save(Chapter.builder().arcId(arcId).name("Ch").order(0).build());
+        mockMvc.perform(get("/api/chapters/{id}", saved.getId()).param("playthroughId", playthroughId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.progressionStatus").value("NOT_STARTED"));
+    }
+
+    // getAll avec ?playthroughId= : branche d'enrichissement sur la liste.
+    @Test
+    void getAll_withPlaythroughId_enrichesStatus() throws Exception {
+        chapterRepository.save(Chapter.builder().arcId(arcId).name("A").order(0).build());
+        mockMvc.perform(get("/api/chapters").param("playthroughId", playthroughId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].progressionStatus").value("NOT_STARTED"));
+    }
+
+    // deletion-impact : chapitre existant -> 200 avec le compte de scènes (0 ici).
+    @Test
+    void deletionImpact_returns200_whenExists() throws Exception {
+        Chapter saved = chapterRepository.save(Chapter.builder().arcId(arcId).name("Ch").order(0).build());
+        mockMvc.perform(get("/api/chapters/{id}/deletion-impact", saved.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.scenes").value(0));
+    }
+
+    // deletion-impact : chapitre inexistant -> 404.
+    @Test
+    void deletionImpact_returns404_whenMissing() throws Exception {
+        mockMvc.perform(get("/api/chapters/{id}/deletion-impact", "999999999"))
+                .andExpect(status().isNotFound());
+    }
+
+    // update sur id inexistant : le service lève IllegalArgumentException -> 400.
+    @Test
+    void update_returns400_whenMissing() throws Exception {
+        ChapterDTO dto = new ChapterDTO();
+        dto.setName("new");
+        dto.setArcId(arcId);
+        dto.setOrder(0);
+        mockMvc.perform(put("/api/chapters/{id}", "999999999")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isBadRequest());
     }
 }
