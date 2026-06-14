@@ -13,7 +13,7 @@
           <lucide-icon [img]="TriangleAlert" [size]="22"></lucide-icon>
         </div>
         <h2>{{ title }}</h2>
-        <button type="button" class="btn-close" (click)="onCancel()" aria-label="Fermer">
+        <button type="button" class="btn-close" (click)="onCancel()" [attr.aria-label]="'common.close' | translate">
           <lucide-icon [img]="X" [size]="18"></lucide-icon>
         </button>
       </div>

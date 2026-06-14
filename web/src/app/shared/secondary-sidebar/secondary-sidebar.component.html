@@ -12,7 +12,7 @@
         type="button"
         class="sidebar-title sidebar-title--link"
         [class.active]="isTitleActive()"
-        title="Retour à l'accueil de la campagne"
+        [title]="'secondarySidebar.backToCampaignHome' | translate"
         (click)="clickTitle()">
         <lucide-icon [img]="Home" [size]="14" class="sidebar-title-icon"></lucide-icon>
         <span class="sidebar-title-text">{{ title }}</span>
@@ -149,6 +149,6 @@
   @if (!isCollapsed) {
     <div class="resize-handle"
       (mousedown)="startResize($event)"
-    title="Glissez pour redimensionner"></div>
+    [title]="'secondarySidebar.resizeHandle' | translate"></div>
   }
 </aside>

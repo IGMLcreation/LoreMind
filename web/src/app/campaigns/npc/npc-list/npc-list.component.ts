@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 
 import { ActivatedRoute, Router } from '@angular/router';
 import { LucideAngularModule, ArrowLeft, Plus, Trash2, Drama, Folder } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NpcService } from '../../../services/npc.service';
 import { CampaignSidebarService } from '../../../services/campaign-sidebar.service';
 import { Npc } from '../../../services/npc.model';
@@ -20,7 +21,7 @@ interface FolderGroup {
  */
 @Component({
     selector: 'app-npc-list',
-    imports: [LucideAngularModule],
+    imports: [LucideAngularModule, TranslatePipe],
     templateUrl: './npc-list.component.html',
     styleUrls: ['./npc-list.component.scss']
 })
@@ -41,7 +42,8 @@ export class NpcListComponent implements OnInit {
     private router: Router,
     private service: NpcService,
     private campaignSidebar: CampaignSidebarService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -92,10 +94,10 @@ export class NpcListComponent implements OnInit {
   remove(n: Npc, ev: Event): void {
     ev.stopPropagation();
     this.confirmDialog.confirm({
-      title: 'Supprimer la fiche',
-      message: `Supprimer la fiche de « ${n.name} » ?`,
-      details: ['Cette action est irréversible.'],
-      confirmLabel: 'Supprimer',
+      title: this.translate.instant('npcList.deleteTitle'),
+      message: this.translate.instant('npcList.deleteMessage', { name: n.name }),
+      details: [this.translate.instant('npcList.irreversible')],
+      confirmLabel: this.translate.instant('common.delete'),
       variant: 'danger'
     }).then(ok => {
       if (!ok) return;

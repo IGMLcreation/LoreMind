@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, Subject } from 'rxjs';
 import { switchMap, takeUntil } from 'rxjs/operators';
 import { LucideAngularModule, Plus, Trash2, Type, Image as ImageIcon, ChevronUp, ChevronDown, ListOrdered, Table as TableIcon, X } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { LoreService } from '../../services/lore.service';
 import { TemplateService } from '../../services/template.service';
 import { PageService } from '../../services/page.service';
@@ -21,7 +22,7 @@ import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog
  */
 @Component({
     selector: 'app-template-edit',
-    imports: [FormsModule, ReactiveFormsModule, LucideAngularModule],
+    imports: [FormsModule, ReactiveFormsModule, LucideAngularModule, TranslatePipe],
     templateUrl: './template-edit.component.html',
     styleUrls: ['./template-edit.component.scss']
 })
@@ -77,7 +78,8 @@ export class TemplateEditComponent implements OnInit, OnDestroy {
     private pageService: PageService,
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private translate: TranslateService
   ) {
     this.form = this.fb.group({
       name:          ['', Validators.required],
@@ -196,9 +198,9 @@ export class TemplateEditComponent implements OnInit, OnDestroy {
 
   delete(): void {
     this.confirmDialog.confirm({
-      title: 'Supprimer le template',
-      message: `Supprimer le template "${this.template?.name}" ?`,
-      confirmLabel: 'Supprimer',
+      title: this.translate.instant('templateEdit.deleteTitle'),
+      message: this.translate.instant('templateEdit.deleteMessage', { name: this.template?.name }),
+      confirmLabel: this.translate.instant('common.delete'),
       variant: 'danger'
     }).then(ok => {
       if (!ok) return;

@@ -2,52 +2,52 @@
   <div class="rte-toolbar">
     <button class="btn-back" (click)="back()">
       <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon>
-      Retour
+      {{ 'common.back' | translate }}
     </button>
     <span class="spacer"></span>
     <button class="btn-save" (click)="save()" [disabled]="saving">
       <lucide-icon [img]="Save" [size]="14"></lucide-icon>
-      {{ saving ? 'Enregistrement…' : 'Enregistrer' }}
+      {{ (saving ? 'common.saving' : 'common.save') | translate }}
     </button>
   </div>
 
-  <h1>{{ tableId ? 'Éditer la table' : 'Nouvelle table aléatoire' }}</h1>
+  <h1>{{ (tableId ? 'randomTableEdit.titleEdit' : 'randomTableEdit.titleNew') | translate }}</h1>
 
   @if (errorMessage) {
     <div class="error">{{ errorMessage }}</div>
   }
 
   <div class="form-row">
-    <label for="rt-name">Nom *</label>
-    <input id="rt-name" type="text" [(ngModel)]="name" placeholder="Ex: Rencontres en forêt">
+    <label for="rt-name">{{ 'randomTableEdit.nameLabel' | translate }}</label>
+    <input id="rt-name" type="text" [(ngModel)]="name" [placeholder]="'randomTableEdit.namePlaceholder' | translate">
   </div>
 
   <div class="form-row">
-    <label for="rt-desc">Description</label>
-    <textarea id="rt-desc" rows="2" [(ngModel)]="description" placeholder="À quoi sert cette table ?"></textarea>
+    <label for="rt-desc">{{ 'common.description' | translate }}</label>
+    <textarea id="rt-desc" rows="2" [(ngModel)]="description" [placeholder]="'randomTableEdit.descPlaceholder' | translate"></textarea>
   </div>
 
   <div class="form-row">
-    <label for="rt-formula">Formule du dé *</label>
+    <label for="rt-formula">{{ 'randomTableEdit.formulaLabel' | translate }}</label>
     <input id="rt-formula" type="text" [(ngModel)]="diceFormula" placeholder="1d20, 2d6, d100…"
       [class.invalid]="diceFormula && !formulaValid">
     <small class="hint" [class.bad]="diceFormula && !formulaValid">
-      {{ formulaValid ? 'Formule valide' : 'Format attendu : NdM (ex. 1d20, 2d6, d100)' }}
+      {{ (formulaValid ? 'randomTableEdit.formulaValid' : 'randomTableEdit.formulaExpected') | translate }}
     </small>
   </div>
 
   <!-- Génération IA -->
   <div class="ai-box">
     <div class="ai-title">
-      <lucide-icon [img]="Sparkles" [size]="15"></lucide-icon> Générer avec l'IA
+      <lucide-icon [img]="Sparkles" [size]="15"></lucide-icon> {{ 'randomTableEdit.aiTitle' | translate }}
     </div>
-    <p class="ai-hint">Décris la table ; l'IA propose les entrées (revois-les avant d'enregistrer). Contextualisé avec ta campagne.</p>
+    <p class="ai-hint">{{ 'randomTableEdit.aiHint' | translate }}</p>
     <textarea rows="2" [(ngModel)]="aiPrompt"
-    placeholder="Ex: rencontres aléatoires dans une forêt hantée, ton sombre"></textarea>
+    [placeholder]="'randomTableEdit.aiPromptPlaceholder' | translate"></textarea>
     <div class="ai-actions">
       <button class="btn-ai" (click)="generateWithAI()" [disabled]="generating">
         <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
-        {{ generating ? 'Génération…' : 'Générer (' + diceFormula + ')' }}
+        {{ generating ? ('common.generating' | translate) : ('randomTableEdit.generateWith' | translate:{ formula: diceFormula }) }}
       </button>
       @if (aiError) {
         <span class="ai-error">{{ aiError }}</span>
@@ -56,22 +56,22 @@
   </div>
 
   <div class="entries-head">
-    <h2>Entrées</h2>
+    <h2>{{ 'randomTableEdit.entriesTitle' | translate }}</h2>
     <div class="entries-actions">
-      <button class="btn-mini" (click)="autoRanges()" title="Répartir les plages sur la formule">
-        <lucide-icon [img]="Wand2" [size]="13"></lucide-icon> Auto-plages
+      <button class="btn-mini" (click)="autoRanges()" [title]="'randomTableEdit.autoRangesTitle' | translate">
+        <lucide-icon [img]="Wand2" [size]="13"></lucide-icon> {{ 'randomTableEdit.autoRanges' | translate }}
       </button>
       <button class="btn-mini" (click)="addEntry()">
-        <lucide-icon [img]="Plus" [size]="13"></lucide-icon> Ajouter
+        <lucide-icon [img]="Plus" [size]="13"></lucide-icon> {{ 'common.add' | translate }}
       </button>
     </div>
   </div>
 
   <div class="entry-row head">
-    <span class="c-range">Min</span>
-    <span class="c-range">Max</span>
-    <span class="c-label">Résultat</span>
-    <span class="c-detail">Détail</span>
+    <span class="c-range">{{ 'randomTableEdit.colMin' | translate }}</span>
+    <span class="c-range">{{ 'randomTableEdit.colMax' | translate }}</span>
+    <span class="c-label">{{ 'randomTableEdit.colResult' | translate }}</span>
+    <span class="c-detail">{{ 'randomTableEdit.colDetail' | translate }}</span>
     <span class="c-del"></span>
   </div>
 
@@ -79,15 +79,15 @@
     <div class="entry-row">
       <input class="c-range" type="number" [(ngModel)]="e.minRoll">
       <input class="c-range" type="number" [(ngModel)]="e.maxRoll">
-      <input class="c-label" type="text" [(ngModel)]="e.label" placeholder="Résultat">
-      <input class="c-detail" type="text" [(ngModel)]="e.detail" placeholder="Détail (optionnel)">
-      <button class="c-del btn-del" (click)="removeEntry(i)" title="Supprimer">
+      <input class="c-label" type="text" [(ngModel)]="e.label" [placeholder]="'randomTableEdit.colResult' | translate">
+      <input class="c-detail" type="text" [(ngModel)]="e.detail" [placeholder]="'randomTableEdit.detailPlaceholder' | translate">
+      <button class="c-del btn-del" (click)="removeEntry(i)" [title]="'common.delete' | translate">
         <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
       </button>
     </div>
   }
 
   @if (entries.length === 0) {
-    <p class="empty-hint">Aucune entrée — clique « Ajouter ».</p>
+    <p class="empty-hint">{{ 'randomTableEdit.emptyHint' | translate }}</p>
   }
 </div>

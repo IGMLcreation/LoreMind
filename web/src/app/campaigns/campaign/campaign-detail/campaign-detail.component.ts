@@ -3,6 +3,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, Swords, Plus, Globe, Pencil, Trash2, Dices, Drama, Check, Play, Upload, Sparkles } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError, switchMap, filter, map } from 'rxjs/operators';
@@ -28,7 +29,7 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
 
 @Component({
     selector: 'app-campaign-detail',
-    imports: [FormsModule, LucideAngularModule, RouterLink],
+    imports: [FormsModule, LucideAngularModule, RouterLink, TranslatePipe],
     templateUrl: './campaign-detail.component.html',
     styleUrls: ['./campaign-detail.component.scss']
 })
@@ -101,7 +102,8 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
     private playthroughService: PlaythroughService,
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -216,7 +218,7 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   createPlaythrough(): void {
     if (!this.campaign || this.newPlaythroughInFlight) return;
     this.newPlaythroughInFlight = true;
-    const defaultName = `Nouvelle partie ${this.playthroughs.length + 1}`;
+    const defaultName = this.translate.instant('campaignDetail.defaultPlaythroughName', { n: this.playthroughs.length + 1 });
     this.playthroughService.create({
       campaignId: this.campaign.id!,
       name: defaultName
@@ -275,7 +277,7 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   }
 
   private showLayout(allCampaigns: Campaign[], data: CampaignTreeData): void {
-    this.layoutService.show(buildCampaignSidebarConfig(this.campaign!, allCampaigns, data, this.campaign!.id!));
+    this.layoutService.show(buildCampaignSidebarConfig(this.campaign!, allCampaigns, data, this.campaign!.id!, this.translate));
   }
 
   // ─────────────── Édition / suppression de la Campagne ───────────────
@@ -352,16 +354,14 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
     if (gameSystemChanged && hasSheets) {
       const count = this.npcs.length;
       this.confirmDialog.confirm({
-        title: 'Changer le systeme de jeu ?',
-        message:
-          `Vous etes sur le point de changer le systeme de jeu de cette campagne. ` +
-          `Cela change egalement le template des fiches de PJ et PNJ.`,
+        title: this.translate.instant('campaignDetail.gameSystemChange.title'),
+        message: this.translate.instant('campaignDetail.gameSystemChange.message'),
         details: [
-          `${count} fiche(s) existante(s) sont liees au template du systeme actuel.`,
-          `Leurs champs ne s'afficheront plus avec le nouveau systeme.`,
-          `Les donnees restent stockees : revenir a l'ancien systeme les rendra a nouveau visibles.`
+          this.translate.instant('campaignDetail.gameSystemChange.detailSheets', { n: count }),
+          this.translate.instant('campaignDetail.gameSystemChange.detailFields'),
+          this.translate.instant('campaignDetail.gameSystemChange.detailStored')
         ],
-        confirmLabel: 'Changer quand meme',
+        confirmLabel: this.translate.instant('campaignDetail.gameSystemChange.confirm'),
         variant: 'warning'
       }).then(ok => { if (ok) this.persistEdit(newGameSystemId); });
       return;
@@ -400,20 +400,20 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
     this.campaignService.getCampaignDeletionImpact(campaign.id!).subscribe({
       next: impact => {
         const parts: string[] = [];
-        if (impact.arcs > 0) parts.push(`${impact.arcs} arc${impact.arcs > 1 ? 's' : ''}`);
-        if (impact.chapters > 0) parts.push(`${impact.chapters} chapitre${impact.chapters > 1 ? 's' : ''}`);
-        if (impact.scenes > 0) parts.push(`${impact.scenes} scène${impact.scenes > 1 ? 's' : ''}`);
-        if (impact.playthroughs > 0) parts.push(`${impact.playthroughs} partie${impact.playthroughs > 1 ? 's' : ''} (avec ses PJ, sessions, faits)`);
+        if (impact.arcs > 0) parts.push(this.translate.instant(impact.arcs > 1 ? 'campaignDetail.delete.arcsPlural' : 'campaignDetail.delete.arcs', { n: impact.arcs }));
+        if (impact.chapters > 0) parts.push(this.translate.instant(impact.chapters > 1 ? 'campaignDetail.delete.chaptersPlural' : 'campaignDetail.delete.chapters', { n: impact.chapters }));
+        if (impact.scenes > 0) parts.push(this.translate.instant(impact.scenes > 1 ? 'campaignDetail.delete.scenesPlural' : 'campaignDetail.delete.scenes', { n: impact.scenes }));
+        if (impact.playthroughs > 0) parts.push(this.translate.instant(impact.playthroughs > 1 ? 'campaignDetail.delete.playthroughsPlural' : 'campaignDetail.delete.playthroughs', { n: impact.playthroughs }));
 
         const details: string[] = [];
-        if (parts.length) details.push(`Sera aussi supprime : ${parts.join(', ')}.`);
-        details.push('Cette action est irreversible.');
+        if (parts.length) details.push(this.translate.instant('campaignDetail.delete.alsoDeletes', { items: parts.join(', ') }));
+        details.push(this.translate.instant('campaignDetail.delete.irreversible'));
 
         this.confirmDialog.confirm({
-          title: 'Supprimer la campagne ?',
-          message: `Supprimer definitivement la campagne "${campaign.name}" ?`,
+          title: this.translate.instant('campaignDetail.delete.title'),
+          message: this.translate.instant('campaignDetail.delete.message', { name: campaign.name }),
+          confirmLabel: this.translate.instant('common.delete'),
           details,
-          confirmLabel: 'Supprimer',
           variant: 'danger'
         }).then(ok => {
           if (!ok) return;

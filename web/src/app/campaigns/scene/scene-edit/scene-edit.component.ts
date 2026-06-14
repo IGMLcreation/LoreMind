@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { LucideAngularModule, Trash2, Sparkles } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { CampaignService } from '../../../services/campaign.service';
 import { CharacterService } from '../../../services/character.service';
 import { NpcService } from '../../../services/npc.service';
@@ -33,7 +34,7 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  */
 @Component({
     selector: 'app-scene-edit',
-    imports: [ReactiveFormsModule, LucideAngularModule, ExpandableSectionComponent, LoreLinkPickerComponent, EnemyLinkPickerComponent, AiChatDrawerComponent, ImageGalleryComponent, IconPickerComponent, RoomsEditorComponent],
+    imports: [ReactiveFormsModule, LucideAngularModule, ExpandableSectionComponent, LoreLinkPickerComponent, EnemyLinkPickerComponent, AiChatDrawerComponent, ImageGalleryComponent, IconPickerComponent, RoomsEditorComponent, TranslatePipe],
     templateUrl: './scene-edit.component.html',
     styleUrls: ['./scene-edit.component.scss']
 })
@@ -45,11 +46,13 @@ export class SceneEditComponent implements OnInit, OnDestroy {
 
   /** État drawer chat IA (b5.7 — intégration Campagne). */
   chatOpen = false;
-  readonly chatQuickSuggestions = [
-    'Propose une ambiance sensorielle immersive pour cette scène',
-    'Suggère une narration d\'ouverture à lire aux joueurs',
-    'Imagine 2 choix avec conséquences marquantes'
-  ];
+  get chatQuickSuggestions(): string[] {
+    return [
+      this.translate.instant('sceneEdit.chatSuggestion1'),
+      this.translate.instant('sceneEdit.chatSuggestion2'),
+      this.translate.instant('sceneEdit.chatSuggestion3')
+    ];
+  }
 
   toggleChat(): void { this.chatOpen = !this.chatOpen; }
 
@@ -91,7 +94,8 @@ export class SceneEditComponent implements OnInit, OnDestroy {
     private pageService: PageService,
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private translate: TranslateService
   ) {
     this.form = this.fb.group({
       name:                 ['', Validators.required],
@@ -174,7 +178,7 @@ export class SceneEditComponent implements OnInit, OnDestroy {
         enemies:              scene.enemies ?? ''
       });
 
-      this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId));
+      this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId, this.translate));
     });
   }
 
@@ -208,10 +212,10 @@ export class SceneEditComponent implements OnInit, OnDestroy {
 
   delete(): void {
     this.confirmDialog.confirm({
-      title: 'Supprimer la scène',
-      message: `Supprimer la scène "${this.scene?.name}" ?`,
-      details: ['Cette action est irréversible.'],
-      confirmLabel: 'Supprimer',
+      title: this.translate.instant('sceneEdit.deleteTitle'),
+      message: this.translate.instant('sceneEdit.deleteMessage', { name: this.scene?.name }),
+      details: [this.translate.instant('sceneEdit.deleteIrreversible')],
+      confirmLabel: this.translate.instant('common.delete'),
       variant: 'danger'
     }).then(ok => {
       if (!ok) return;

@@ -1,45 +1,45 @@
 <div class="chapter-create-page">
 
   <div class="page-header">
-    <h1>{{ isHub ? 'Créer une nouvelle quête' : 'Créer un nouveau chapitre' }}</h1>
+    <h1>{{ (isHub ? 'chapterCreate.titleQuest' : 'chapterCreate.titleChapter') | translate }}</h1>
     @if (arcName) {
-      <p class="arc-ref">{{ isHub ? 'Hub' : 'Arc' }} : {{ arcName }}</p>
+      <p class="arc-ref">{{ (isHub ? 'chapterCreate.hub' : 'chapterCreate.arc') | translate }} : {{ arcName }}</p>
     }
   </div>
 
   <form [formGroup]="form" (ngSubmit)="submit()" class="chapter-form">
 
     <div class="field">
-      <label for="chapter-create-name">{{ isHub ? 'Nom de la quête *' : 'Nom du chapitre *' }}</label>
+      <label for="chapter-create-name">{{ (isHub ? 'chapterCreate.nameQuestLabel' : 'chapterCreate.nameChapterLabel') | translate }}</label>
       <input
         id="chapter-create-name"
         type="text"
         formControlName="name"
-        [placeholder]="isHub ? 'Ex: Sauver le marchand disparu' : 'Ex: Chapitre 1: Les Disparitions'"
+        [placeholder]="(isHub ? 'chapterCreate.namePlaceholderQuest' : 'chapterCreate.namePlaceholderChapter') | translate"
         [class.invalid]="form.get('name')?.invalid && form.get('name')?.touched"
         />
     </div>
 
     <div class="field">
-      <label for="chapter-create-description">Description</label>
+      <label for="chapter-create-description">{{ 'common.description' | translate }}</label>
       <textarea
         id="chapter-create-description"
         formControlName="description"
-        [placeholder]="isHub ? 'Décrivez cette quête...' : 'Décrivez ce chapitre...'"
+        [placeholder]="(isHub ? 'chapterCreate.descPlaceholderQuest' : 'chapterCreate.descPlaceholderChapter') | translate"
         rows="5">
       </textarea>
     </div>
 
     <div class="field">
-      <label>Icône</label>
+      <label>{{ 'chapterCreate.icon' | translate }}</label>
       <app-icon-picker [options]="campaignIconOptions" [(selected)]="selectedIcon"></app-icon-picker>
     </div>
 
     <div class="form-actions">
       <button type="submit" class="btn-primary" [disabled]="form.invalid">
-        {{ isHub ? 'Créer la quête' : 'Créer le chapitre' }}
+        {{ (isHub ? 'chapterCreate.createQuest' : 'chapterCreate.createChapter') | translate }}
       </button>
-      <button type="button" class="btn-secondary" (click)="cancel()">Annuler</button>
+      <button type="button" class="btn-secondary" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
     </div>
 
   </form>

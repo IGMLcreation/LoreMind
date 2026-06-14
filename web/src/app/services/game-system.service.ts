@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
 import { GameSystem, GameSystemCreate, RulesImportResponse, RulesImportStreamEvent } from './game-system.model';
 
 /**
@@ -10,7 +11,7 @@ import { GameSystem, GameSystemCreate, RulesImportResponse, RulesImportStreamEve
 export class GameSystemService {
   private apiUrl = '/api/game-systems';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private translate: TranslateService) {}
 
   getAll(): Observable<GameSystem[]> {
     return this.http.get<GameSystem[]>(this.apiUrl);
@@ -101,7 +102,7 @@ export class GameSystemService {
     const dispatch = () => {
       const name = currentEvent ?? 'message';
       if (name === 'error') {
-        let message = 'Échec de l\'import.';
+        let message = this.translate.instant('services.importFailed');
         try { message = (JSON.parse(currentData) as { message?: string }).message ?? message; } catch { /* garde le défaut */ }
         terminated = true;
         subscriber.error(new Error(message));
@@ -151,7 +152,7 @@ export class GameSystemService {
       if (currentEvent !== null || currentData !== '') dispatch();
       if (!terminated) {
         subscriber.error(new Error(
-          'L\'import s\'est interrompu avant la fin (connexion coupée ou délai dépassé). Réessayez.'));
+          this.translate.instant('services.importInterrupted')));
       }
     } catch (err) {
       if (!terminated) subscriber.error(err);

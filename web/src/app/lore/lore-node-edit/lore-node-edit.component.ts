@@ -4,6 +4,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { LucideAngularModule, LucideIconData } from 'lucide-angular';
+import { TranslatePipe } from '@ngx-translate/core';
 import { LoreService } from '../../services/lore.service';
 import { TemplateService } from '../../services/template.service';
 import { PageService } from '../../services/page.service';
@@ -32,7 +33,7 @@ import { LORE_ICON_OPTIONS, IconOption } from '../lore-icons';
  */
 @Component({
     selector: 'app-lore-node-edit',
-    imports: [ReactiveFormsModule, LucideAngularModule],
+    imports: [ReactiveFormsModule, LucideAngularModule, TranslatePipe],
     templateUrl: './lore-node-edit.component.html',
     styleUrls: ['./lore-node-edit.component.scss']
 })

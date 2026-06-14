@@ -3,6 +3,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { LucideAngularModule, ArrowLeft, Edit3 } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { EnemyService } from '../../../services/enemy.service';
 import { CampaignService } from '../../../services/campaign.service';
 import { GameSystemService } from '../../../services/game-system.service';
@@ -17,7 +18,7 @@ import { PersonaViewComponent } from '../../../shared/persona-view/persona-view.
  */
 @Component({
     selector: 'app-enemy-view',
-    imports: [LucideAngularModule, PersonaViewComponent],
+    imports: [LucideAngularModule, TranslatePipe, PersonaViewComponent],
     templateUrl: './enemy-view.component.html',
     styleUrls: ['./enemy-view.component.scss']
 })
@@ -39,7 +40,8 @@ export class EnemyViewComponent implements OnInit, OnDestroy {
     private service: EnemyService,
     private campaignService: CampaignService,
     private gameSystemService: GameSystemService,
-    private campaignSidebar: CampaignSidebarService
+    private campaignSidebar: CampaignSidebarService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -78,7 +80,7 @@ export class EnemyViewComponent implements OnInit, OnDestroy {
   /** Sous-titre de la fiche : niveau + dossier (« Niveau 8 · Démons »). */
   get subtitle(): string {
     const parts: string[] = [];
-    if (this.enemy?.level) parts.push(`Niveau ${this.enemy.level}`);
+    if (this.enemy?.level) parts.push(this.translate.instant('enemyView.levelLong', { level: this.enemy.level }));
     if (this.enemy?.folder) parts.push(this.enemy.folder);
     return parts.join(' · ');
   }

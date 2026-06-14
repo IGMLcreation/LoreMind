@@ -3,12 +3,12 @@
   <div class="ne-header">
     <button class="btn-back" (click)="back()">
       <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon>
-      Retour aux ennemis
+      {{ 'enemyEdit.backToEnemies' | translate }}
     </button>
     <div class="header-row">
       <h1>
         <lucide-icon [img]="Skull" [size]="22"></lucide-icon>
-        {{ enemyId ? 'Éditer l\'ennemi' : 'Nouvel ennemi' }}
+        {{ (enemyId ? 'enemyEdit.titleEdit' : 'enemyEdit.titleNew') | translate }}
       </h1>
     </div>
   </div>
@@ -16,36 +16,36 @@
   <div class="ne-form">
 
     <div class="field">
-      <label for="enemy-name">Nom de l'ennemi *</label>
+      <label for="enemy-name">{{ 'enemyEdit.nameLabel' | translate }}</label>
       <input
         id="enemy-name"
         type="text"
         [(ngModel)]="name"
         name="name"
-        placeholder="Ex: Balor, Gobelin chef de guerre, Liche…"
+        [placeholder]="'enemyEdit.namePlaceholder' | translate"
         />
       </div>
 
       <div class="field-row image-row">
         <div class="field">
-          <label for="enemy-level">Niveau / FP</label>
+          <label for="enemy-level">{{ 'enemyEdit.level' | translate }}</label>
           <input
             id="enemy-level"
             type="text"
             [(ngModel)]="level"
             name="level"
-            placeholder="Ex: 5, FP 8, Boss…"
+            [placeholder]="'enemyEdit.levelPlaceholder' | translate"
             />
         </div>
         <div class="field">
-          <label for="enemy-folder">Dossier</label>
+          <label for="enemy-folder">{{ 'enemyEdit.folder' | translate }}</label>
           <input
             id="enemy-folder"
             type="text"
             [(ngModel)]="folder"
             name="folder"
             list="enemy-folders"
-            placeholder="Ex: Démons, Humanoïdes… (vide = non classé)"
+            [placeholder]="'enemyEdit.folderPlaceholder' | translate"
             />
             <datalist id="enemy-folders">
               @for (f of existingFolders; track f) {
@@ -57,20 +57,20 @@
 
         <div class="field-row image-row">
           <div class="field portrait-field">
-            <label>Portrait</label>
+            <label>{{ 'enemyEdit.portrait' | translate }}</label>
             <app-single-image-picker
               [imageId]="portraitImageId"
               aspectRatio="1 / 1"
-              hint="Carre conseille (400×400)."
+              [hint]="'enemyEdit.portraitHint' | translate"
               (imageIdChange)="portraitImageId = $event">
             </app-single-image-picker>
           </div>
           <div class="field header-field">
-            <label>Bandeau / Header</label>
+            <label>{{ 'enemyEdit.header' | translate }}</label>
             <app-single-image-picker
               [imageId]="headerImageId"
               aspectRatio="3 / 1"
-              hint="Format paysage conseille (1200×400)."
+              [hint]="'enemyEdit.headerHint' | translate"
               (imageIdChange)="headerImageId = $event">
             </app-single-image-picker>
           </div>
@@ -91,9 +91,9 @@
         <div class="actions">
           <button type="button" class="btn-primary" [disabled]="!name.trim()" (click)="submit()">
             <lucide-icon [img]="Save" [size]="16"></lucide-icon>
-            {{ enemyId ? 'Enregistrer' : 'Créer' }}
+            {{ (enemyId ? 'common.save' : 'common.create') | translate }}
           </button>
-          <button type="button" class="btn-secondary" (click)="back()">Annuler</button>
+          <button type="button" class="btn-secondary" (click)="back()">{{ 'common.cancel' | translate }}</button>
           <span class="spacer"></span>
           @if (enemyId) {
             <button
@@ -101,7 +101,7 @@
               class="btn-danger"
               (click)="deleteEnemy()">
               <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
-              Supprimer
+              {{ 'common.delete' | translate }}
             </button>
           }
         </div>

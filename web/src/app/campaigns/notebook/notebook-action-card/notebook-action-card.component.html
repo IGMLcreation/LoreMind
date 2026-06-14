@@ -13,7 +13,7 @@
   @if (status !== 'created' && needsArc) {
     <div class="nac-targets">
       <label>
-        Arc
+        {{ 'notebookActionCard.arc' | translate }}
         <select [(ngModel)]="selectedArcId" (ngModelChange)="syncChapter()">
           @for (a of arcs; track a) {
             <option [value]="a.id">{{ a.name }}</option>
@@ -22,7 +22,7 @@
       </label>
       @if (needsChapter) {
         <label>
-          Chapitre
+          {{ 'notebookActionCard.chapter' | translate }}
           <select [(ngModel)]="selectedChapterId">
             @for (c of targetChapters; track c) {
               <option [value]="c.id">{{ c.name }}</option>
@@ -35,7 +35,7 @@
 
   @if (needsArc && arcs.length === 0) {
     <p class="nac-warn">
-      Crée d'abord un arc {{ needsChapter ? 'et un chapitre ' : '' }}dans la campagne pour pouvoir y rattacher cet élément.
+      {{ (needsChapter ? 'notebookActionCard.warnArcChapter' : 'notebookActionCard.warnArc') | translate }}
     </p>
   }
 
@@ -43,12 +43,12 @@
     @if (status !== 'created') {
       <button class="nac-create" (click)="create()" [disabled]="!canCreate">
         <lucide-icon [img]="Plus" [size]="13"></lucide-icon>
-        {{ status === 'creating' ? 'Création…' : 'Créer dans la campagne' }}
+        {{ (status === 'creating' ? 'notebookActionCard.creating' : 'notebookActionCard.createInCampaign') | translate }}
       </button>
     }
     @if (status === 'created') {
       <button class="nac-open" (click)="openCreated()">
-        <lucide-icon [img]="Check" [size]="13"></lucide-icon> Créé — ouvrir
+        <lucide-icon [img]="Check" [size]="13"></lucide-icon> {{ 'notebookActionCard.createdOpen' | translate }}
         <lucide-icon [img]="ExternalLink" [size]="12"></lucide-icon>
       </button>
     }

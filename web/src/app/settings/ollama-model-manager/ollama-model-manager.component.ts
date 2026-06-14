@@ -3,6 +3,7 @@ import { Subscription } from 'rxjs';
 
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, Check, AlertCircle, Download, Trash2, X } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { SettingsService, OllamaPullEvent } from '../../services/settings.service';
 import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 
@@ -19,7 +20,7 @@ import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog
  */
 @Component({
     selector: 'app-ollama-model-manager',
-    imports: [FormsModule, LucideAngularModule],
+    imports: [FormsModule, LucideAngularModule, TranslatePipe],
     templateUrl: './ollama-model-manager.component.html',
     // Reutilise la feuille de style de l'ecran Parametres (modal, suggestions,
     // progress-bar, installed-models) pour un rendu strictement identique.
@@ -76,7 +77,8 @@ export class OllamaModelManagerComponent implements OnDestroy {
 
   constructor(
     private settingsService: SettingsService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private translate: TranslateService
   ) {}
 
   ngOnDestroy(): void {
@@ -105,13 +107,13 @@ export class OllamaModelManagerComponent implements OnDestroy {
     if (!name || this.pullInProgress) return;
     this.resetPullState();
     this.pullInProgress = true;
-    this.pullStatus = 'connexion...';
+    this.pullStatus = this.translate.instant('ollamaModelManager.connecting');
     this.errorMessage = '';
 
     this.pullSubscription = this.settingsService.pullOllamaModel(name).subscribe({
       next: (event: OllamaPullEvent) => {
         if (event.error) {
-          this.errorMessage = `Echec : ${event.error}`;
+          this.errorMessage = this.translate.instant('ollamaModelManager.pullEventError', { error: event.error });
           this.pullInProgress = false;
           return;
         }
@@ -123,7 +125,7 @@ export class OllamaModelManagerComponent implements OnDestroy {
         if (event.status === 'success') this.pullSucceeded = true;
       },
       error: (err) => {
-        this.errorMessage = this.extractError(err, `Echec du telechargement de ${name}.`);
+        this.errorMessage = this.extractError(err, this.translate.instant('ollamaModelManager.pullFailed', { name }));
         this.pullInProgress = false;
       },
       complete: () => {
@@ -132,11 +134,11 @@ export class OllamaModelManagerComponent implements OnDestroy {
           // Stream ferme sans 'success' final = connexion coupee
           // (timeout proxy, perte reseau, ...). Le modele est probablement
           // partiellement telecharge ; Ollama gardera les couches deja DL.
-          this.errorMessage = `Telechargement de ${name} interrompu avant la fin. Relancez pour reprendre.`;
+          this.errorMessage = this.translate.instant('ollamaModelManager.pullInterrupted', { name });
           this.modelsChanged.emit();
           return;
         }
-        this.successMessage = `Modele ${name} telecharge.`;
+        this.successMessage = this.translate.instant('ollamaModelManager.pullDone', { name });
         this.modelsChanged.emit();
         this.modelPulled.emit(name);
         // Petite tempo avant de fermer pour que le user voie "success".
@@ -151,7 +153,7 @@ export class OllamaModelManagerComponent implements OnDestroy {
       this.pullSubscription = null;
     }
     this.pullInProgress = false;
-    this.pullStatus = 'annule';
+    this.pullStatus = this.translate.instant('ollamaModelManager.cancelled');
   }
 
   private resetPullState(): void {
@@ -183,10 +185,10 @@ export class OllamaModelManagerComponent implements OnDestroy {
 
   deleteModel(name: string): void {
     this.confirmDialog.confirm({
-      title: 'Supprimer le modele',
-      message: `Supprimer le modele '${name}' ?`,
-      details: ['L\'espace disque sera libere.'],
-      confirmLabel: 'Supprimer',
+      title: this.translate.instant('ollamaModelManager.deleteTitle'),
+      message: this.translate.instant('ollamaModelManager.deleteMessage', { name }),
+      details: [this.translate.instant('ollamaModelManager.deleteDetail')],
+      confirmLabel: this.translate.instant('common.delete'),
       variant: 'danger'
     }).then(ok => {
       if (!ok) return;
@@ -195,13 +197,13 @@ export class OllamaModelManagerComponent implements OnDestroy {
       this.settingsService.deleteOllamaModel(name).subscribe({
         next: () => {
           this.deletingModel = null;
-          this.successMessage = `Modele ${name} supprime.`;
+          this.successMessage = this.translate.instant('ollamaModelManager.deleteDone', { name });
           this.modelsChanged.emit();
           this.modelDeleted.emit(name);
         },
         error: (err) => {
           this.deletingModel = null;
-          this.errorMessage = this.extractError(err, `Echec de la suppression de ${name}.`);
+          this.errorMessage = this.extractError(err, this.translate.instant('ollamaModelManager.deleteFailed', { name }));
         }
       });
     });

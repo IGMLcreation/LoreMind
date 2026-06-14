@@ -9,17 +9,17 @@
         </div>
         <div class="header-actions">
           <button type="button" class="btn-secondary" (click)="openGraph()"
-            title="Visualiser le graphe des pages et de leurs liens (PNJ inclus)">
+            [title]="'loreDetail.graphTitle' | translate">
             <lucide-icon [img]="Network" [size]="14"></lucide-icon>
-            Graphe
+            {{ 'loreDetail.graph' | translate }}
           </button>
-          <button type="button" class="btn-secondary" (click)="startEdit()" title="Modifier le Lore">
+          <button type="button" class="btn-secondary" (click)="startEdit()" [title]="'loreDetail.editTitle' | translate">
             <lucide-icon [img]="Pencil" [size]="14"></lucide-icon>
-            Modifier
+            {{ 'common.edit' | translate }}
           </button>
-          <button type="button" class="btn-danger" (click)="deleteLore()" title="Supprimer le Lore">
+          <button type="button" class="btn-danger" (click)="deleteLore()" [title]="'loreDetail.deleteTitle' | translate">
             <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
-            Supprimer
+            {{ 'common.delete' | translate }}
           </button>
         </div>
       </div>
@@ -28,19 +28,19 @@
     @if (editing) {
       <div class="detail-header edit-mode">
         <div class="field">
-          <label for="lore-detail-edit-name">Nom</label>
+          <label for="lore-detail-edit-name">{{ 'common.name' | translate }}</label>
           <input id="lore-detail-edit-name" type="text" [(ngModel)]="editName" name="editName" required />
         </div>
         <div class="field">
-          <label for="lore-detail-edit-description">Description</label>
+          <label for="lore-detail-edit-description">{{ 'common.description' | translate }}</label>
           <textarea id="lore-detail-edit-description" [(ngModel)]="editDescription" name="editDescription" rows="3"></textarea>
         </div>
         <div class="header-actions">
           <button type="button" class="btn-primary" (click)="saveEdit()" [disabled]="!editName.trim()">
-            Sauvegarder
+            {{ 'common.save' | translate }}
           </button>
           <button type="button" class="btn-secondary" (click)="cancelEdit()">
-            Annuler
+            {{ 'common.cancel' | translate }}
           </button>
         </div>
       </div>
@@ -49,10 +49,10 @@
     @if (!editing) {
       <section class="detail-section nodes-section">
         <div class="section-header">
-          <h2>Dossiers</h2>
+          <h2>{{ 'loreDetail.folders' | translate }}</h2>
           <button class="btn-add" (click)="navigateToCreateNode()">
             <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
-            Nouveau dossier
+            {{ 'loreDetail.newFolder' | translate }}
           </button>
         </div>
         <!-- rootNodes : uniquement les dossiers racine (pas les sous-dossiers,
@@ -70,10 +70,10 @@
         @if (rootNodes.length === 0) {
           <div class="empty-state">
             <lucide-icon [img]="Folder" [size]="40" class="empty-icon"></lucide-icon>
-            <p>Aucun dossier pour le moment.</p>
+            <p>{{ 'loreDetail.noFolders' | translate }}</p>
             <button class="btn-add-first" (click)="navigateToCreateNode()">
               <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
-              Créer votre premier dossier
+              {{ 'loreDetail.createFirstFolder' | translate }}
             </button>
           </div>
         }

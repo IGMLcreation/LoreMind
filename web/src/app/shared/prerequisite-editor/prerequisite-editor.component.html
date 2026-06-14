@@ -2,7 +2,7 @@
 
   @if (prerequisites.length === 0) {
     <p class="prereq-editor-empty">
-      Aucune condition — la quête est immédiatement disponible.
+      {{ 'prerequisiteEditor.empty' | translate }}
     </p>
   }
 
@@ -13,14 +13,14 @@
           @switch (p.kind) {
             <!-- QUEST_COMPLETED -->
             @case ('QUEST_COMPLETED') {
-              <span class="prereq-row-label">Quête terminée :</span>
+              <span class="prereq-row-label">{{ 'prerequisiteEditor.questCompletedLabel' | translate }}</span>
               <select class="prereq-input"
                 [ngModel]="asQuestCompleted(p).questId"
                 (ngModelChange)="onQuestIdChange(i, $event)"
                 [ngModelOptions]="{ standalone: true }"
                 [disabled]="availableQuests.length === 0">
                 @if (availableQuests.length === 0) {
-                  <option value="">(aucune autre quête)</option>
+                  <option value="">{{ 'prerequisiteEditor.noOtherQuest' | translate }}</option>
                 }
                 @for (q of availableQuests; track q) {
                   <option [value]="q.id">{{ q.name }}</option>
@@ -29,7 +29,7 @@
             }
             <!-- SESSION_REACHED -->
             @case ('SESSION_REACHED') {
-              <span class="prereq-row-label">À partir de la session :</span>
+              <span class="prereq-row-label">{{ 'prerequisiteEditor.sessionReachedLabel' | translate }}</span>
               <input type="number"
                 class="prereq-input prereq-input-number"
                 min="1"
@@ -39,10 +39,10 @@
             }
             <!-- FLAG_SET -->
             @case ('FLAG_SET') {
-              <span class="prereq-row-label">Quand le fait est vrai :</span>
+              <span class="prereq-row-label">{{ 'prerequisiteEditor.flagSetLabel' | translate }}</span>
               <input type="text"
                 class="prereq-input"
-                placeholder="nom_du_fait"
+                [placeholder]="'prerequisiteEditor.flagNamePlaceholder' | translate"
                 [attr.list]="'prereq-flag-list-' + i"
                 [ngModel]="asFlagSet(p).flagName"
                 (ngModelChange)="onFlagNameChange(i, $event)"
@@ -54,7 +54,7 @@
               </datalist>
             }
           }
-          <button type="button" class="prereq-remove" (click)="removeAt(i)" title="Retirer ce prérequis">
+          <button type="button" class="prereq-remove" (click)="removeAt(i)" [title]="'prerequisiteEditor.removePrerequisite' | translate">
             <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
           </button>
         </li>
@@ -65,20 +65,20 @@
   <div class="prereq-add">
     <button type="button" class="btn-secondary prereq-add-btn" (click)="toggleAddMenu()">
       <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
-      Ajouter une condition
+      {{ 'prerequisiteEditor.addCondition' | translate }}
       <lucide-icon [img]="ChevronDown" [size]="14"></lucide-icon>
     </button>
 
     @if (addMenuOpen) {
       <div class="prereq-add-menu">
         <button type="button" (click)="addPrerequisite('QUEST_COMPLETED')">
-          Après une autre quête
+          {{ 'prerequisiteEditor.menuAfterQuest' | translate }}
         </button>
         <button type="button" (click)="addPrerequisite('SESSION_REACHED')">
-          À partir d'une session
+          {{ 'prerequisiteEditor.menuFromSession' | translate }}
         </button>
         <button type="button" (click)="addPrerequisite('FLAG_SET')">
-          Quand un fait est vrai
+          {{ 'prerequisiteEditor.menuWhenFlag' | translate }}
         </button>
       </div>
     }

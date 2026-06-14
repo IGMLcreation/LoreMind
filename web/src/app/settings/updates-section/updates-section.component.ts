@@ -3,6 +3,7 @@ import { interval, switchMap, Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, ArrowLeft, RefreshCw, Check, AlertCircle, Download, Heart, Link2, Unlink } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { UpdatesService, UpdateStatus } from '../../services/updates.service';
 import { ConfigService } from '../../services/config.service';
 import { LicenseService, LicenseStatusDTO, BetaStatusDTO, ChannelStatusDTO, ChannelName } from '../../services/license.service';
@@ -22,7 +23,7 @@ import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog
  */
 @Component({
     selector: 'app-settings-updates-section',
-    imports: [CommonModule, FormsModule, LucideAngularModule],
+    imports: [CommonModule, FormsModule, LucideAngularModule, TranslatePipe],
     templateUrl: './updates-section.component.html',
     // Reutilise la feuille de style de l'ecran Parametres : les blocs deplaces
     // gardent exactement le meme rendu (cards, alerts, channel-switch, …).
@@ -72,7 +73,8 @@ export class UpdatesSectionComponent implements OnInit, OnDestroy {
     private updatesService: UpdatesService,
     public config: ConfigService,
     private licenseService: LicenseService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -112,7 +114,7 @@ export class UpdatesSectionComponent implements OnInit, OnDestroy {
     this.licenseService.getConnectUrl().subscribe({
       next: (r) => {
         if (!r?.url) {
-          this.licenseError = 'Impossible de generer l\'URL de connexion. Verifie ta config.';
+          this.licenseError = this.translate.instant('updatesSection.connectUrlError');
           return;
         }
         window.open(r.url, '_blank', 'noopener');
@@ -123,7 +125,7 @@ export class UpdatesSectionComponent implements OnInit, OnDestroy {
   installLicense(): void {
     const jwt = this.licenseJwtInput.trim();
     if (!jwt) {
-      this.licenseError = 'Colle d\'abord le token recu apres connexion Patreon.';
+      this.licenseError = this.translate.instant('updatesSection.pasteTokenFirst');
       return;
     }
     this.licenseError = '';
@@ -134,7 +136,7 @@ export class UpdatesSectionComponent implements OnInit, OnDestroy {
       }
       this.licenseStatus = res as LicenseStatusDTO;
       this.licenseJwtInput = '';
-      this.licenseSuccess = 'Compte Patreon connecte. L\'acces beta est actif.';
+      this.licenseSuccess = this.translate.instant('updatesSection.patreonConnectedSuccess');
       if (this.licenseStatus.betaChannelEnabled) {
         this.checkBeta();
       }
@@ -154,17 +156,17 @@ export class UpdatesSectionComponent implements OnInit, OnDestroy {
 
   disconnectPatreon(): void {
     this.confirmDialog.confirm({
-      title: 'Deconnecter Patreon',
-      message: 'Deconnecter ton compte Patreon ?',
-      details: ['Tu perdras l\'acces au canal beta.'],
-      confirmLabel: 'Deconnecter',
+      title: this.translate.instant('updatesSection.disconnectTitle'),
+      message: this.translate.instant('updatesSection.disconnectMessage'),
+      details: [this.translate.instant('updatesSection.disconnectDetail')],
+      confirmLabel: this.translate.instant('updatesSection.disconnectConfirm'),
       variant: 'warning'
     }).then(ok => {
       if (!ok) return;
       this.licenseService.disconnect().subscribe(() => {
         this.licenseStatus = null;
         this.betaStatus = null;
-        this.licenseSuccess = 'Compte Patreon deconnecte.';
+        this.licenseSuccess = this.translate.instant('updatesSection.patreonDisconnected');
         this.loadLicense();
       });
     });
@@ -216,17 +218,21 @@ export class UpdatesSectionComponent implements OnInit, OnDestroy {
    */
   requestChannelSwitch(target: ChannelName): void {
     const confirmMessage = target === 'beta'
-      ? 'Basculer LoreMind sur le canal beta ? Les containers core/brain/web vont etre recrees avec les images beta. L\'application sera indisponible 10-30 secondes.'
-      : 'Repasser LoreMind sur le canal stable ? Les containers core/brain/web vont etre recrees avec les images stables. L\'application sera indisponible 10-30 secondes.';
+      ? this.translate.instant('updatesSection.switchToBetaMessage')
+      : this.translate.instant('updatesSection.switchToStableMessage');
 
     this.confirmDialog.confirm({
-      title: target === 'beta' ? 'Passer en beta ?' : 'Repasser en stable ?',
+      title: target === 'beta'
+        ? this.translate.instant('updatesSection.switchToBetaTitle')
+        : this.translate.instant('updatesSection.switchToStableTitle'),
       message: confirmMessage,
       details: [
-        'Les donnees (DB, images) sont preservees.',
-        'Tu pourras refaire le chemin inverse a tout moment depuis cet ecran.'
+        this.translate.instant('updatesSection.switchDetailData'),
+        this.translate.instant('updatesSection.switchDetailReversible')
       ],
-      confirmLabel: target === 'beta' ? 'Passer en beta' : 'Repasser en stable',
+      confirmLabel: target === 'beta'
+        ? this.translate.instant('updatesSection.switchToBetaConfirm')
+        : this.translate.instant('updatesSection.switchToStableConfirm'),
       variant: 'warning'
     }).then(ok => {
       if (!ok) return;
@@ -269,7 +275,7 @@ export class UpdatesSectionComponent implements OnInit, OnDestroy {
         this.stopSwitchPolling();
         this.switchInFlight = false;
       } else if (last.status === 'ERROR') {
-        this.switchError = last.message || 'Echec du switch';
+        this.switchError = last.message || this.translate.instant('updatesSection.switchFailed');
         this.stopSwitchPolling();
         this.switchInFlight = false;
       }
@@ -336,10 +342,10 @@ export class UpdatesSectionComponent implements OnInit, OnDestroy {
 
   applyUpdate(): void {
     this.confirmDialog.confirm({
-      title: 'Mettre a jour',
-      message: 'Telecharger et redemarrer les conteneurs maintenant ?',
-      details: ['L\'app sera indisponible quelques secondes.'],
-      confirmLabel: 'Mettre à jour',
+      title: this.translate.instant('updatesSection.applyTitle'),
+      message: this.translate.instant('updatesSection.applyMessage'),
+      details: [this.translate.instant('updatesSection.applyDetail')],
+      confirmLabel: this.translate.instant('updatesSection.applyConfirm'),
       variant: 'warning'
     }).then(ok => {
       if (!ok) return;
@@ -351,11 +357,11 @@ export class UpdatesSectionComponent implements OnInit, OnDestroy {
           // Le redemarrage de core peut couper la connexion avant la reponse —
           // dans ce cas r vaut null (gere par catchError dans le service).
           this.updateMessage = r?.message
-            ?? 'Mise a jour declenchee. Rechargez la page dans 30s.';
+            ?? this.translate.instant('updatesSection.applyTriggered');
         },
         error: () => {
           this.updateApplying = false;
-          this.updateMessage = 'Mise a jour declenchee. Rechargez la page dans 30s.';
+          this.updateMessage = this.translate.instant('updatesSection.applyTriggered');
         }
       });
     });

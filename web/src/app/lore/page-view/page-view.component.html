@@ -4,16 +4,16 @@
     <header class="view-header">
       <div>
         <h1>{{ page.title }}</h1>
-        <p class="view-subtitle">{{ template?.name || 'Page' }}</p>
+        <p class="view-subtitle">{{ template?.name || ('pageView.pageFallback' | translate) }}</p>
       </div>
       <div class="view-actions">
         <button type="button" class="btn-primary" (click)="editMode()">
           <lucide-icon [img]="Pencil" [size]="14"></lucide-icon>
-          Modifier
+          {{ 'common.edit' | translate }}
         </button>
-        <button type="button" class="btn-danger" (click)="deletePage()" title="Supprimer la page">
+        <button type="button" class="btn-danger" (click)="deletePage()" [title]="'pageView.deleteTitle' | translate">
           <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
-          Supprimer
+          {{ 'common.delete' | translate }}
         </button>
       </div>
     </header>
@@ -27,7 +27,7 @@
             @if (valueOf(field.name)) {
               <p class="view-section-body">{{ valueOf(field.name) }}</p>
             } @else {
-              <p class="view-section-empty">Non renseigné</p>
+              <p class="view-section-empty">{{ 'pageView.notFilled' | translate }}</p>
             }
           </section>
         }
@@ -53,7 +53,7 @@
                 }
               </div>
             } @else {
-              <p class="view-section-empty">Non renseigné</p>
+              <p class="view-section-empty">{{ 'pageView.notFilled' | translate }}</p>
             }
           </section>
         }
@@ -80,7 +80,7 @@
                 </tbody>
               </table>
             } @else {
-              <p class="view-section-empty">Non renseigné</p>
+              <p class="view-section-empty">{{ 'pageView.notFilled' | translate }}</p>
             }
           </section>
         }
@@ -89,7 +89,7 @@
     <!-- Tags -->
     @if ((page.tags?.length ?? 0) > 0) {
       <section class="view-section">
-        <h2 class="view-section-title">Tags</h2>
+        <h2 class="view-section-title">{{ 'pageView.tags' | translate }}</h2>
         <div class="view-chips">
           @for (tag of page.tags; track tag) {
             <span class="view-chip view-chip--tag">{{ tag }}</span>
@@ -100,7 +100,7 @@
     <!-- Pages liées -->
     @if ((page.relatedPageIds?.length ?? 0) > 0) {
       <section class="view-section">
-        <h2 class="view-section-title">Pages liées</h2>
+        <h2 class="view-section-title">{{ 'pageView.relatedPages' | translate }}</h2>
         <div class="view-chips">
           @for (relId of page.relatedPageIds; track relId) {
             <a class="view-chip"
@@ -116,7 +116,7 @@
       <section class="view-section view-section--private">
         <h2 class="view-section-title">
           <span class="view-section-icon">🔒</span>
-          Notes privées
+          {{ 'pageView.privateNotes' | translate }}
         </h2>
         <p class="view-section-body">{{ page.notes }}</p>
       </section>

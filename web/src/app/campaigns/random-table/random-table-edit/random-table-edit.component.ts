@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LucideAngularModule, ArrowLeft, Save, Plus, Trash2, Wand2, Sparkles } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { RandomTableService } from '../../../services/random-table.service';
 import { CampaignSidebarService } from '../../../services/campaign-sidebar.service';
 import { RandomTable, RandomTableEntry, RandomTableCreate } from '../../../services/random-table.model';
@@ -15,7 +16,7 @@ import { DiceUtils } from '../../../shared/dice.utils';
  */
 @Component({
     selector: 'app-random-table-edit',
-    imports: [FormsModule, LucideAngularModule],
+    imports: [FormsModule, LucideAngularModule, TranslatePipe],
     templateUrl: './random-table-edit.component.html',
     styleUrls: ['./random-table-edit.component.scss']
 })
@@ -47,7 +48,8 @@ export class RandomTableEditComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private service: RandomTableService,
-    private campaignSidebar: CampaignSidebarService
+    private campaignSidebar: CampaignSidebarService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -105,8 +107,8 @@ export class RandomTableEditComponent implements OnInit {
   /** Génère la table via l'IA et préremplit le formulaire (l'utilisateur révise avant d'enregistrer). */
   generateWithAI(): void {
     if (!this.campaignId) return;
-    if (!this.aiPrompt.trim()) { this.aiError = 'Décris la table à générer.'; return; }
-    if (!this.formulaValid) { this.aiError = 'Choisis d\'abord une formule de dé valide.'; return; }
+    if (!this.aiPrompt.trim()) { this.aiError = this.translate.instant('randomTableEdit.aiErrorPrompt'); return; }
+    if (!this.formulaValid) { this.aiError = this.translate.instant('randomTableEdit.aiErrorFormula'); return; }
     this.generating = true;
     this.aiError = '';
     this.service.generate(this.campaignId, this.aiPrompt.trim(), this.diceFormula.trim()).subscribe({
@@ -118,15 +120,15 @@ export class RandomTableEditComponent implements OnInit {
       },
       error: (err) => {
         this.generating = false;
-        this.aiError = err?.error?.message || 'Échec de la génération IA. Réessaie ou reformule.';
+        this.aiError = err?.error?.message || this.translate.instant('randomTableEdit.aiErrorGenerate');
       }
     });
   }
 
   save(): void {
     if (!this.campaignId) return;
-    if (!this.name.trim()) { this.errorMessage = 'Le nom est requis.'; return; }
-    if (!this.formulaValid) { this.errorMessage = 'Formule de dé invalide (ex. 1d20, 2d6, d100).'; return; }
+    if (!this.name.trim()) { this.errorMessage = this.translate.instant('randomTableEdit.errorNameRequired'); return; }
+    if (!this.formulaValid) { this.errorMessage = this.translate.instant('randomTableEdit.errorFormulaInvalid'); return; }
     this.saving = true;
     this.errorMessage = '';
 
@@ -174,7 +176,7 @@ export class RandomTableEditComponent implements OnInit {
 
   private fail(err: unknown): void {
     this.saving = false;
-    this.errorMessage = 'Échec de l\'enregistrement.';
+    this.errorMessage = this.translate.instant('randomTableEdit.errorSaveFailed');
     console.error('RandomTable save failed', err);
   }
 

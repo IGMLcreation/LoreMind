@@ -4,48 +4,48 @@
     <header class="page-header">
       <div>
         <h1>{{ page.title }}</h1>
-        <p class="subtitle">{{ template?.name || 'Page' }}</p>
+        <p class="subtitle">{{ template?.name || ('pageEdit.pageFallback' | translate) }}</p>
       </div>
       <div class="header-actions">
         <button type="button" class="btn-ai"
           (click)="toggleChat()"
           [disabled]="aiLoading"
           [class.active]="chatOpen"
-          title="Ouvrir l'Assistant IA (chat ou remplissage automatique)">
+          [title]="'pageEdit.aiTitle' | translate">
           <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
-          {{ aiLoading ? 'Génération…' : 'Assistant IA' }}
+          {{ (aiLoading ? 'pageEdit.generating' : 'pageEdit.aiAssistant') | translate }}
         </button>
-        <button type="button" class="btn-secondary" [routerLink]="['/lore', loreId, 'pages', pageId]">Annuler</button>
-        <button type="button" class="btn-danger" (click)="delete()">Supprimer</button>
+        <button type="button" class="btn-secondary" [routerLink]="['/lore', loreId, 'pages', pageId]">{{ 'common.cancel' | translate }}</button>
+        <button type="button" class="btn-danger" (click)="delete()">{{ 'common.delete' | translate }}</button>
         <button type="button" class="btn-primary" (click)="save()" [disabled]="!title.trim()">
-          Sauvegarder
+          {{ 'common.save' | translate }}
         </button>
       </div>
     </header>
     @if (aiError) {
       <div class="ai-error-banner" role="alert">
         <span>{{ aiError }}</span>
-        <button type="button" class="ai-error-dismiss" (click)="aiError = null" aria-label="Fermer">×</button>
+        <button type="button" class="ai-error-dismiss" (click)="aiError = null" [attr.aria-label]="'common.close' | translate">×</button>
       </div>
     }
     <form class="edit-form">
       <!-- Identité ----------------------------------------------------- -->
       <div class="field">
-        <label>Nom</label>
+        <label>{{ 'common.name' | translate }}</label>
         <input type="text" [(ngModel)]="title" name="title" required />
       </div>
       <div class="field">
-        <label>Dossier</label>
+        <label>{{ 'pageEdit.folder' | translate }}</label>
         <select [(ngModel)]="nodeId" name="nodeId">
           @for (node of nodes; track node) {
             <option [value]="node.id">{{ node.name }}</option>
           }
         </select>
-        <p class="hint">Déplacez cette page dans un autre dossier</p>
+        <p class="hint">{{ 'pageEdit.folderHint' | translate }}</p>
       </div>
       <!-- Champs dynamiques du template -------------------------------- -->
       @if (template?.fields?.length) {
-        <h2 class="section-title">Champs</h2>
+        <h2 class="section-title">{{ 'pageEdit.fields' | translate }}</h2>
         @for (field of template!.fields; track field) {
           <!-- Champ TEXT : textarea editable -->
           @if (field.type === 'TEXT') {
@@ -55,7 +55,7 @@
                 [(ngModel)]="values[field.name]"
                 [name]="'value_' + field.name"
                 rows="4"
-                [placeholder]="'Valeur pour ' + field.name + '...'">
+                [placeholder]="'pageEdit.valuePlaceholder' | translate:{ field: field.name }">
               </textarea>
             </div>
           }
@@ -87,7 +87,7 @@
                   </div>
                 }
                 @if (!(field.labels ?? []).length) {
-                  <p class="kv-empty">Aucun libellé défini dans le template pour ce champ.</p>
+                  <p class="kv-empty">{{ 'pageEdit.noLabels' | translate }}</p>
                 }
               </div>
             </div>
@@ -122,7 +122,7 @@
                           <td class="table-edit-actions-col">
                             <button type="button" class="btn-row-delete"
                               (click)="removeTableRow(field.name, ri)"
-                              [attr.aria-label]="'Supprimer la ligne ' + (ri + 1)" title="Supprimer la ligne">
+                              [attr.aria-label]="'pageEdit.deleteRowN' | translate:{ n: (ri + 1) }" [title]="'pageEdit.deleteRow' | translate">
                               <lucide-icon [img]="Trash2" [size]="13"></lucide-icon>
                             </button>
                           </td>
@@ -132,28 +132,28 @@
                   </table>
                   <button type="button" class="btn-row-add" (click)="addTableRow(field.name, field.labels)">
                     <lucide-icon [img]="Plus" [size]="13"></lucide-icon>
-                    Ajouter une ligne
+                    {{ 'pageEdit.addRow' | translate }}
                   </button>
                 </div>
               } @else {
-                <p class="kv-empty">Aucune colonne définie dans le template pour ce tableau.</p>
+                <p class="kv-empty">{{ 'pageEdit.noColumns' | translate }}</p>
               }
             </div>
           }
         }
       }
       <!-- Tags --------------------------------------------------------- -->
-      <h2 class="section-title">Tags</h2>
+      <h2 class="section-title">{{ 'pageEdit.tags' | translate }}</h2>
       <div class="field">
         <app-chips-input
           [value]="tags"
           (valueChange)="tags = $event"
-          placeholder="Ajouter un tag (Entrée pour valider)...">
+          [placeholder]="'pageEdit.tagsPlaceholder' | translate">
         </app-chips-input>
-        <p class="hint">Mots-clés libres pour classer et retrouver cette page</p>
+        <p class="hint">{{ 'pageEdit.tagsHint' | translate }}</p>
       </div>
       <!-- Liens vers d'autres pages ----------------------------------- -->
-      <h2 class="section-title">Pages liées</h2>
+      <h2 class="section-title">{{ 'pageEdit.relatedPages' | translate }}</h2>
       <div class="field">
         <app-lore-link-picker
           [value]="relatedPageIds"
@@ -162,18 +162,18 @@
           [loreId]="loreId"
           (valueChange)="relatedPageIds = $event">
         </app-lore-link-picker>
-        <p class="hint">Cliquez sur un lien pour ouvrir la page associée</p>
+        <p class="hint">{{ 'pageEdit.relatedPagesHint' | translate }}</p>
       </div>
       <!-- Notes privées ----------------------------------------------- -->
-      <h2 class="section-title">Notes privées</h2>
+      <h2 class="section-title">{{ 'pageEdit.privateNotes' | translate }}</h2>
       <div class="field">
         <textarea
           [(ngModel)]="notes"
           name="notes"
           rows="4"
-          placeholder="Notes personnelles (non exportées vers FoundryVTT)">
+          [placeholder]="'pageEdit.privateNotesPlaceholder' | translate">
         </textarea>
-        <p class="hint">Visibles uniquement par vous. Utiles pour préparer vos sessions.</p>
+        <p class="hint">{{ 'pageEdit.privateNotesHint' | translate }}</p>
       </div>
     </form>
   </div>

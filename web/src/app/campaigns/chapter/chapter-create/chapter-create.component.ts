@@ -4,6 +4,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { LucideAngularModule } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { CampaignService } from '../../../services/campaign.service';
 import { CharacterService } from '../../../services/character.service';
 import { NpcService } from '../../../services/npc.service';
@@ -20,7 +21,7 @@ import { CAMPAIGN_ICON_OPTIONS } from '../../campaign-icons';
  */
 @Component({
     selector: 'app-chapter-create',
-    imports: [ReactiveFormsModule, LucideAngularModule, IconPickerComponent],
+    imports: [ReactiveFormsModule, LucideAngularModule, IconPickerComponent, TranslatePipe],
     templateUrl: './chapter-create.component.html',
     styleUrls: ['./chapter-create.component.scss']
 })
@@ -45,7 +46,8 @@ export class ChapterCreateComponent implements OnInit, OnDestroy {
     private npcService: NpcService,
     private randomTableService: RandomTableService,
     private enemyService: EnemyService,
-    private layoutService: LayoutService
+    private layoutService: LayoutService,
+    private translate: TranslateService
   ) {
     this.form = this.fb.group({
       name:        ['', Validators.required],
@@ -70,7 +72,7 @@ export class ChapterCreateComponent implements OnInit, OnDestroy {
       this.isHub = currentArc?.type === 'HUB';
       this.existingChapterCount = treeData.chaptersByArc[this.arcId]?.length ?? 0;
 
-      this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId));
+      this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId, this.translate));
     });
   }
 

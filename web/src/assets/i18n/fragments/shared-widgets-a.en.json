@@ -1,0 +1,26 @@
+{
+  "chipsInput": {
+    "placeholder": "Add...",
+    "removeTag": "Remove"
+  },
+  "dynamicFieldsForm": {
+    "textPlaceholder": "Enter {{name}}…",
+    "noLabels": "No labels defined in the template for this field.",
+    "noFields": "No fields defined in this system's template. Edit the GameSystem to add fields."
+  },
+  "loreLinkPicker": {
+    "searchPlaceholder": "Search for a page to link...",
+    "openInNewTab": "Open in a new tab",
+    "removeLink": "Remove link",
+    "noMatch": "No matching page"
+  },
+  "enemyLinkPicker": {
+    "searchPlaceholder": "Search for an enemy from the bestiary...",
+    "openInNewTab": "Open the sheet in a new tab",
+    "removeLink": "Remove link",
+    "noMatch": "No matching enemy"
+  },
+  "personaView": {
+    "empty": "This sheet is still empty."
+  }
+}

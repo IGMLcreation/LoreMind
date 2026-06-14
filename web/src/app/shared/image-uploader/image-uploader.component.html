@@ -1,12 +1,12 @@
 <!-- Mode compact : bouton "+ ajouter" carre, utilise dans les galeries. -->
 @if (compact) {
-  <label class="upload-compact" [class.loading]="uploading" [title]="errorMessage || 'Ajouter une image'">
+  <label class="upload-compact" [class.loading]="uploading" [title]="errorMessage || ('imageUploader.addImage' | translate)">
     @if (!uploading) {
       <lucide-icon [img]="Upload" [size]="18"></lucide-icon>
-      <span>Ajouter</span>
+      <span>{{ 'common.add' | translate }}</span>
     } @else {
-      <div class="upload-spinner" aria-label="Upload en cours"></div>
-      <p class="upload-zone-hint">Upload en cours...</p>
+      <div class="upload-spinner" [attr.aria-label]="'imageUploader.uploading' | translate"></div>
+      <p class="upload-zone-hint">{{ 'imageUploader.uploadingHint' | translate }}</p>
     }
     <input type="file"
       accept="image/jpeg,image/png,image/webp,image/gif"
@@ -29,11 +29,11 @@
     (drop)="onDrop($event)">
     @if (!uploading) {
       <lucide-icon [img]="Upload" [size]="32"></lucide-icon>
-      <p class="upload-zone-title">Glisse une image ici</p>
-      <p class="upload-zone-hint">ou clique pour choisir un fichier (JPEG, PNG, WebP, GIF, max 10 Mo)</p>
+      <p class="upload-zone-title">{{ 'imageUploader.dropTitle' | translate }}</p>
+      <p class="upload-zone-hint">{{ 'imageUploader.dropHint' | translate }}</p>
     } @else {
-      <div class="upload-spinner" aria-label="Upload en cours"></div>
-      <p class="upload-zone-hint">Upload en cours...</p>
+      <div class="upload-spinner" [attr.aria-label]="'imageUploader.uploading' | translate"></div>
+      <p class="upload-zone-hint">{{ 'imageUploader.uploadingHint' | translate }}</p>
     }
     <input type="file"
       accept="image/jpeg,image/png,image/webp,image/gif"

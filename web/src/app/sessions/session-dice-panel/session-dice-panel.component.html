@@ -15,26 +15,26 @@
 
     <div class="dice-inputs">
       <label class="input-group">
-        <span>Nombre</span>
+        <span>{{ 'sessionDicePanel.count' | translate }}</span>
         <input type="number" min="1" max="20" [(ngModel)]="count" />
       </label>
       <label class="input-group">
-        <span>Modificateur</span>
+        <span>{{ 'sessionDicePanel.modifier' | translate }}</span>
         <input type="number" [(ngModel)]="modifier" />
       </label>
     </div>
 
     <button type="button" class="btn-primary btn-roll" (click)="roll()">
       <lucide-icon [img]="Dices" [size]="16"></lucide-icon>
-      Lancer {{ count }}d{{ selectedFace }}{{ modifier === 0 ? '' : (modifier > 0 ? '+' + modifier : modifier) }}
+      {{ 'sessionDicePanel.roll' | translate }} {{ count }}d{{ selectedFace }}{{ modifier === 0 ? '' : (modifier > 0 ? '+' + modifier : modifier) }}
     </button>
   </div>
 
   @if (history.length > 0) {
     <div class="dice-history">
       <div class="history-header">
-        <span>Derniers jets</span>
-        <button type="button" class="btn-link" (click)="clearHistory()" title="Vider l'historique local">
+        <span>{{ 'sessionDicePanel.lastRolls' | translate }}</span>
+        <button type="button" class="btn-link" (click)="clearHistory()" [title]="'sessionDicePanel.clearHistory' | translate">
           <lucide-icon [img]="Trash2" [size]="12"></lucide-icon>
         </button>
       </div>
@@ -51,7 +51,7 @@
             <button type="button"
               class="btn-icon"
               [disabled]="!canAddToJournal"
-              [title]="canAddToJournal ? 'Ajouter au journal' : 'Session terminée'"
+              [title]="(canAddToJournal ? 'sessionDicePanel.addToJournal' : 'sessionDicePanel.sessionEnded') | translate"
               (click)="addToJournal(r)">
               <lucide-icon [img]="BookmarkPlus" [size]="12"></lucide-icon>
             </button>
@@ -63,7 +63,7 @@
 
   @if (history.length === 0) {
     <p class="placeholder-hint">
-      Choisis un dé et lance.
+      {{ 'sessionDicePanel.placeholder' | translate }}
     </p>
   }
 

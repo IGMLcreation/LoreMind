@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { LucideAngularModule, Trash2, Sparkles } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { CampaignService } from '../../../services/campaign.service';
 import { CharacterService } from '../../../services/character.service';
 import { NpcService } from '../../../services/npc.service';
@@ -41,7 +42,8 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
     AiChatDrawerComponent,
     ImageGalleryComponent,
     IconPickerComponent,
-    PrerequisiteEditorComponent
+    PrerequisiteEditorComponent,
+    TranslatePipe
 ],
     templateUrl: './chapter-edit.component.html',
     styleUrls: ['./chapter-edit.component.scss']
@@ -53,11 +55,7 @@ export class ChapterEditComponent implements OnInit, OnDestroy {
   selectedIcon: string | null = null;
 
   chatOpen = false;
-  readonly chatQuickSuggestions = [
-    'Propose des objectifs clairs pour les joueurs dans ce chapitre',
-    'Imagine 2 tensions narratives qui relancent l\'intérêt en milieu de chapitre',
-    'Suggère une scène d\'ouverture marquante'
-  ];
+  readonly chatQuickSuggestions: string[];
 
   toggleChat(): void { this.chatOpen = !this.chatOpen; }
 
@@ -98,7 +96,8 @@ export class ChapterEditComponent implements OnInit, OnDestroy {
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService,
     private confirmDialog: ConfirmDialogService,
-    private campaignFlagService: CampaignFlagService
+    private campaignFlagService: CampaignFlagService,
+    private translate: TranslateService
   ) {
     this.form = this.fb.group({
       name:             ['', Validators.required],
@@ -107,6 +106,11 @@ export class ChapterEditComponent implements OnInit, OnDestroy {
       playerObjectives: [''],
       narrativeStakes:  ['']
     });
+    this.chatQuickSuggestions = [
+      this.translate.instant('chapterEdit.chatSuggestion1'),
+      this.translate.instant('chapterEdit.chatSuggestion2'),
+      this.translate.instant('chapterEdit.chatSuggestion3')
+    ];
   }
 
   ngOnInit(): void {
@@ -169,7 +173,7 @@ export class ChapterEditComponent implements OnInit, OnDestroy {
         narrativeStakes:  chapter.narrativeStakes ?? ''
       });
 
-      this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId));
+      this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId, this.translate));
     });
   }
 
@@ -200,10 +204,10 @@ export class ChapterEditComponent implements OnInit, OnDestroy {
 
   delete(): void {
     this.confirmDialog.confirm({
-      title: 'Supprimer le chapitre',
-      message: `Supprimer le chapitre "${this.chapter?.name}" ?`,
-      details: ['Cette action est irréversible.'],
-      confirmLabel: 'Supprimer',
+      title: this.translate.instant('chapterEdit.deleteTitle'),
+      message: this.translate.instant('chapterEdit.deleteMessage', { name: this.chapter?.name }),
+      details: [this.translate.instant('chapterEdit.irreversible')],
+      confirmLabel: this.translate.instant('common.delete'),
       variant: 'danger'
     }).then(ok => {
       if (!ok) return;

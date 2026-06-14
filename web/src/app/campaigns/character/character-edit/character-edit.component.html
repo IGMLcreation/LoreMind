@@ -3,12 +3,12 @@
   <div class="ce-header">
     <button class="btn-back" (click)="back()">
       <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon>
-      Retour à la campagne
+      {{ 'characterEdit.backToCampaign' | translate }}
     </button>
     <div class="header-row">
       <h1>
         <lucide-icon [img]="User" [size]="22"></lucide-icon>
-        {{ characterId ? 'Éditer la fiche' : 'Nouveau personnage' }}
+        {{ (characterId ? 'characterEdit.titleEdit' : 'characterEdit.titleNew') | translate }}
       </h1>
       @if (characterId) {
         <button
@@ -16,9 +16,9 @@
           class="btn-ai"
           (click)="toggleChat()"
           [class.active]="chatOpen"
-          title="Ouvrir l'Assistant IA pour dialoguer autour de ce PJ">
+          [title]="'characterEdit.aiAssistantTitle' | translate">
           <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
-          Assistant IA
+          {{ 'characterEdit.aiAssistant' | translate }}
         </button>
       }
     </div>
@@ -27,32 +27,32 @@
   <div class="ce-form">
 
     <div class="field">
-      <label for="character-name">Nom du personnage *</label>
+      <label for="character-name">{{ 'characterEdit.nameLabel' | translate }}</label>
       <input
         id="character-name"
         type="text"
         [(ngModel)]="name"
         name="name"
-        placeholder="Ex: Thorin le Grand-Hache, Lyra l'Errante..."
+        [placeholder]="'characterEdit.namePlaceholder' | translate"
         />
       </div>
 
       <div class="field-row image-row">
         <div class="field portrait-field">
-          <label>Portrait</label>
+          <label>{{ 'characterEdit.portrait' | translate }}</label>
           <app-single-image-picker
             [imageId]="portraitImageId"
             aspectRatio="1 / 1"
-            hint="Carre conseille (400×400)."
+            [hint]="'characterEdit.portraitHint' | translate"
             (imageIdChange)="portraitImageId = $event">
           </app-single-image-picker>
         </div>
         <div class="field header-field">
-          <label>Bandeau / Header</label>
+          <label>{{ 'characterEdit.header' | translate }}</label>
           <app-single-image-picker
             [imageId]="headerImageId"
             aspectRatio="3 / 1"
-            hint="Format paysage conseille (1200×400)."
+            [hint]="'characterEdit.headerHint' | translate"
             (imageIdChange)="headerImageId = $event">
           </app-single-image-picker>
         </div>
@@ -73,9 +73,9 @@
       <div class="actions">
         <button type="button" class="btn-primary" [disabled]="!name.trim()" (click)="submit()">
           <lucide-icon [img]="Save" [size]="16"></lucide-icon>
-          {{ characterId ? 'Enregistrer' : 'Créer' }}
+          {{ (characterId ? 'common.save' : 'common.create') | translate }}
         </button>
-        <button type="button" class="btn-secondary" (click)="back()">Annuler</button>
+        <button type="button" class="btn-secondary" (click)="back()">{{ 'common.cancel' | translate }}</button>
         <span class="spacer"></span>
         @if (characterId) {
           <button
@@ -83,7 +83,7 @@
             class="btn-danger"
             (click)="deleteCharacter()">
             <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
-            Supprimer
+            {{ 'common.delete' | translate }}
           </button>
         }
       </div>
@@ -98,7 +98,7 @@
       entityType="character"
       [entityId]="characterId"
       [isOpen]="chatOpen"
-      welcomeMessage="Je vois cette fiche de personnage. Demande-moi de proposer stats, backstory, équipement ou objectifs personnels."
+      [welcomeMessage]="'characterEdit.chatWelcome' | translate"
       [quickSuggestions]="chatQuickSuggestions"
       (close)="chatOpen = false">
     </app-ai-chat-drawer>

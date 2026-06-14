@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 import { TemplateField } from '../../services/template.model';
 import { ImageGalleryComponent } from '../image-gallery/image-gallery.component';
 
@@ -17,7 +18,7 @@ import { ImageGalleryComponent } from '../image-gallery/image-gallery.component'
  */
 @Component({
     selector: 'app-dynamic-fields-form',
-    imports: [FormsModule, ImageGalleryComponent],
+    imports: [FormsModule, ImageGalleryComponent, TranslatePipe],
     templateUrl: './dynamic-fields-form.component.html',
     styleUrls: ['./dynamic-fields-form.component.scss']
 })

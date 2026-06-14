@@ -3,6 +3,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { LucideAngularModule, ArrowLeft, Edit3, Sparkles, Link2 } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NpcService } from '../../../services/npc.service';
 import { CampaignService } from '../../../services/campaign.service';
 import { GameSystemService } from '../../../services/game-system.service';
@@ -20,7 +21,7 @@ import { AiChatDrawerComponent } from '../../../shared/ai-chat-drawer/ai-chat-dr
  */
 @Component({
     selector: 'app-npc-view',
-    imports: [LucideAngularModule, RouterLink, PersonaViewComponent, AiChatDrawerComponent],
+    imports: [LucideAngularModule, TranslatePipe, RouterLink, PersonaViewComponent, AiChatDrawerComponent],
     templateUrl: './npc-view.component.html',
     styleUrls: ['./npc-view.component.scss']
 })
@@ -52,7 +53,8 @@ export class NpcViewComponent implements OnInit, OnDestroy {
     private campaignService: CampaignService,
     private gameSystemService: GameSystemService,
     private pageService: PageService,
-    private campaignSidebar: CampaignSidebarService
+    private campaignSidebar: CampaignSidebarService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -103,7 +105,7 @@ export class NpcViewComponent implements OnInit, OnDestroy {
 
   /** Titre d'une page de lore liée (pour les chips). */
   titleOfPage(pageId: string): string {
-    return this.lorePagesById.get(pageId)?.title ?? '(page supprimée)';
+    return this.lorePagesById.get(pageId)?.title ?? this.translate.instant('npcView.deletedPage');
   }
 
   edit(): void {

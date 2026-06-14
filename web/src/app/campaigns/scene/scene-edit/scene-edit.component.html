@@ -2,24 +2,24 @@
 
   <div class="page-header">
     <div>
-      <h1>{{ scene?.name || 'Scène' }}</h1>
-      <p class="subtitle">Scène</p>
+      <h1>{{ scene?.name || ('sceneEdit.defaultTitle' | translate) }}</h1>
+      <p class="subtitle">{{ 'sceneEdit.subtitle' | translate }}</p>
     </div>
     <div class="header-actions">
       <button type="button" class="btn-ai"
         (click)="toggleChat()"
         [class.active]="chatOpen"
-        title="Ouvrir l'Assistant IA pour dialoguer autour de cette scène">
+        [title]="'sceneEdit.aiAssistantTitle' | translate">
         <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
-        Assistant IA
+        {{ 'sceneEdit.aiAssistant' | translate }}
       </button>
-      <button type="button" class="btn-secondary" (click)="cancel()">Annuler</button>
+      <button type="button" class="btn-secondary" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
       <button type="button" class="btn-danger" (click)="delete()">
         <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
-        Supprimer
+        {{ 'common.delete' | translate }}
       </button>
       <button type="button" class="btn-primary" (click)="submit()" [disabled]="form.invalid">
-        Sauvegarder
+        {{ 'common.save' | translate }}
       </button>
     </div>
   </div>
@@ -28,119 +28,118 @@
 
     <!-- Illustrations (galerie editable, rendu editorial) -->
     <div class="field">
-      <label>Illustrations</label>
+      <label>{{ 'sceneEdit.illustrationsLabel' | translate }}</label>
       <app-image-gallery
         [imageIds]="illustrationImageIds"
         [editable]="true"
         [layout]="'EDITORIAL'"
         (imageIdsChange)="illustrationImageIds = $event">
       </app-image-gallery>
-      <small class="field-hint">Portraits des PNJ, ambiance visuelle, scenes evocatrices...</small>
+      <small class="field-hint">{{ 'sceneEdit.illustrationsHint' | translate }}</small>
     </div>
 
     <!-- Cartes & plans (galerie editable, rendu maps) -->
     <div class="field">
-      <label>Cartes &amp; plans</label>
+      <label>{{ 'sceneEdit.mapsLabel' | translate }}</label>
       <app-image-gallery
         [imageIds]="mapImageIds"
         [editable]="true"
         [layout]="'MAPS'"
         (imageIdsChange)="mapImageIds = $event">
       </app-image-gallery>
-      <small class="field-hint">Plans du lieu, cartes tactiques, schemas utilisables a la table.</small>
+      <small class="field-hint">{{ 'sceneEdit.mapsHint' | translate }}</small>
     </div>
 
     <div class="field">
-      <label for="scene-edit-name">Titre de la scène *</label>
+      <label for="scene-edit-name">{{ 'sceneEdit.nameLabel' | translate }}</label>
       <input
         id="scene-edit-name"
         type="text"
         formControlName="name"
-        placeholder="Ex: Arrivée au village"
+        [placeholder]="'sceneEdit.namePlaceholder' | translate"
         [class.invalid]="form.get('name')?.invalid && form.get('name')?.touched"
         />
     </div>
 
     <div class="field">
-      <label for="scene-edit-description">Description courte *</label>
+      <label for="scene-edit-description">{{ 'sceneEdit.descriptionLabel' | translate }}</label>
       <textarea
         id="scene-edit-description"
         formControlName="description"
-        placeholder="Résumé en une ou deux phrases de ce qui se passe..."
+        [placeholder]="'sceneEdit.descriptionPlaceholder' | translate"
         rows="3">
       </textarea>
     </div>
 
     <div class="field">
-      <label>Icône</label>
+      <label>{{ 'sceneEdit.iconLabel' | translate }}</label>
       <app-icon-picker [options]="campaignIconOptions" [(selected)]="selectedIcon"></app-icon-picker>
     </div>
 
     <!-- Section : Contexte et ambiance -->
-    <app-expandable-section title="Contexte et ambiance" icon="📍" [initiallyOpen]="true">
+    <app-expandable-section [title]="'sceneEdit.contextSectionTitle' | translate" icon="📍" [initiallyOpen]="true">
       <div class="field-row">
         <div class="field">
-          <label for="scene-edit-location">Lieu</label>
-          <input id="scene-edit-location" type="text" formControlName="location" placeholder="Ex: Taverne du Dragon d'Or" />
+          <label for="scene-edit-location">{{ 'sceneEdit.locationLabel' | translate }}</label>
+          <input id="scene-edit-location" type="text" formControlName="location" [placeholder]="'sceneEdit.locationPlaceholder' | translate" />
         </div>
         <div class="field">
-          <label for="scene-edit-timing">Moment</label>
-          <input id="scene-edit-timing" type="text" formControlName="timing" placeholder="Ex: Soir, à la tombée de la nuit" />
+          <label for="scene-edit-timing">{{ 'sceneEdit.timingLabel' | translate }}</label>
+          <input id="scene-edit-timing" type="text" formControlName="timing" [placeholder]="'sceneEdit.timingPlaceholder' | translate" />
         </div>
       </div>
       <div class="field">
-        <label for="scene-edit-atmosphere">Ambiance et atmosphère</label>
+        <label for="scene-edit-atmosphere">{{ 'sceneEdit.atmosphereLabel' | translate }}</label>
         <textarea
           id="scene-edit-atmosphere"
           formControlName="atmosphere"
-          placeholder="Décrivez l'ambiance générale de la scène (sons, odeurs, lumière, émotions...)"
+          [placeholder]="'sceneEdit.atmospherePlaceholder' | translate"
           rows="4">
         </textarea>
       </div>
     </app-expandable-section>
 
     <!-- Section : Narration pour les joueurs -->
-    <app-expandable-section title="Narration pour les joueurs" icon="📖">
+    <app-expandable-section [title]="'sceneEdit.narrationSectionTitle' | translate" icon="📖">
       <div class="field">
         <textarea
           formControlName="playerNarration"
-          placeholder="Le texte que vous lirez aux joueurs pour planter le décor de cette scène..."
+          [placeholder]="'sceneEdit.narrationPlaceholder' | translate"
           rows="6">
         </textarea>
-        <small class="field-hint">Ce texte peut être lu directement à vos joueurs.</small>
+        <small class="field-hint">{{ 'sceneEdit.narrationHint' | translate }}</small>
       </div>
     </app-expandable-section>
 
     <!-- Section : Notes et secrets du MJ (privé) -->
-    <app-expandable-section title="Notes et secrets du MJ" icon="🔒" variant="private">
+    <app-expandable-section [title]="'sceneEdit.gmNotesSectionTitle' | translate" icon="🔒" variant="private">
       <div class="field">
         <textarea
           formControlName="gmSecretNotes"
-          placeholder="Informations cachées, indices, éléments secrets que les joueurs ne doivent pas connaître..."
+          [placeholder]="'sceneEdit.gmNotesPlaceholder' | translate"
           rows="5">
         </textarea>
-        <small class="field-hint">Ces notes sont privées et visibles uniquement par le MJ.</small>
+        <small class="field-hint">{{ 'sceneEdit.gmNotesHint' | translate }}</small>
       </div>
     </app-expandable-section>
 
     <!-- Section : Choix et conséquences -->
-    <app-expandable-section title="Choix et conséquences" icon="🔀">
+    <app-expandable-section [title]="'sceneEdit.choicesSectionTitle' | translate" icon="🔀">
       <div class="field">
         <textarea
           formControlName="choicesConsequences"
-          placeholder="Décrivez les différentes options qui s'offrent aux joueurs et leurs conséquences..."
+          [placeholder]="'sceneEdit.choicesPlaceholder' | translate"
           rows="5">
         </textarea>
       </div>
     </app-expandable-section>
 
     <!-- Section : Branches narratives (graphe intra-chapitre) -->
-    <app-expandable-section title="Branches narratives" icon="🌿">
+    <app-expandable-section [title]="'sceneEdit.branchesSectionTitle' | translate" icon="🌿">
       @if (siblingScenes.length === 0) {
         <div class="branches-hint">
           <small class="field-hint">
-            💡 Il faut au moins une autre scène dans ce chapitre pour créer des branches.
-            Créez d'abord d'autres scènes, puis revenez ici pour les connecter.
+            {{ 'sceneEdit.branchesNoSibling' | translate }}
           </small>
         </div>
       }
@@ -150,18 +149,18 @@
           @for (branch of branches; track $index; let i = $index) {
             <div class="branch-item">
               <div class="field">
-                <label>Libellé du choix</label>
+                <label>{{ 'sceneEdit.branchLabelLabel' | translate }}</label>
                 <input
                   type="text"
                   [value]="branch.label"
                   (input)="updateBranchLabel(i, $any($event.target).value)"
-                  placeholder="Ex: Si les joueurs attaquent le garde" />
+                  [placeholder]="'sceneEdit.branchLabelPlaceholder' | translate" />
               </div>
               <div class="field">
-                <label>Scène de destination *</label>
+                <label>{{ 'sceneEdit.branchTargetLabel' | translate }}</label>
                 <select
                   (change)="updateBranchTarget(i, $any($event.target).value)">
-                  <option value="" [selected]="!branch.targetSceneId">— Choisir une scène —</option>
+                  <option value="" [selected]="!branch.targetSceneId">{{ 'sceneEdit.branchTargetPlaceholder' | translate }}</option>
                   @for (s of siblingScenes; track s) {
                     <option
                       [value]="s.id"
@@ -170,39 +169,38 @@
                 </select>
               </div>
               <div class="field">
-                <label>Condition MJ (optionnel)</label>
+                <label>{{ 'sceneEdit.branchConditionLabel' | translate }}</label>
                 <input
                   type="text"
                   [value]="branch.condition || ''"
                   (input)="updateBranchCondition(i, $any($event.target).value)"
-                  placeholder="Ex: Jet de Persuasion DD 15 réussi" />
+                  [placeholder]="'sceneEdit.branchConditionPlaceholder' | translate" />
               </div>
               <button type="button" class="btn-remove-branch" (click)="removeBranch(i)"
-                title="Supprimer cette branche">
+                [title]="'sceneEdit.branchRemoveTitle' | translate">
                 <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
-                Retirer
+                {{ 'sceneEdit.branchRemove' | translate }}
               </button>
             </div>
           }
           <button type="button" class="btn-add-branch" (click)="addBranch()">
-            + Ajouter une branche
+            {{ 'sceneEdit.branchAdd' | translate }}
           </button>
           <small class="field-hint">
-            Chaque branche représente une "sortie" possible depuis cette scène selon l'action des joueurs.
-            Les cibles sont limitées aux scènes du même chapitre.
+            {{ 'sceneEdit.branchesHint' | translate }}
           </small>
         </div>
       }
     </app-expandable-section>
 
     <!-- Section : Combat ou rencontre -->
-    <app-expandable-section title="Combat ou rencontre" icon="⚔️">
+    <app-expandable-section [title]="'sceneEdit.combatSectionTitle' | translate" icon="⚔️">
       <div class="field">
-        <label for="scene-edit-combat-difficulty">Difficulté estimée</label>
-        <input id="scene-edit-combat-difficulty" type="text" formControlName="combatDifficulty" placeholder="Ex: Moyenne, 3 gobelins niveau 2" />
+        <label for="scene-edit-combat-difficulty">{{ 'sceneEdit.combatDifficultyLabel' | translate }}</label>
+        <input id="scene-edit-combat-difficulty" type="text" formControlName="combatDifficulty" [placeholder]="'sceneEdit.combatDifficultyPlaceholder' | translate" />
       </div>
       <div class="field">
-        <label>Ennemis du bestiaire</label>
+        <label>{{ 'sceneEdit.bestiaryEnemiesLabel' | translate }}</label>
         <app-enemy-link-picker
           [value]="enemyIds"
           [availableEnemies]="availableEnemies"
@@ -210,15 +208,15 @@
           (valueChange)="enemyIds = $event">
         </app-enemy-link-picker>
         <small class="field-hint">
-          Référencez des fiches de votre bestiaire — cliquez sur un chip pour ouvrir la fiche.
+          {{ 'sceneEdit.bestiaryEnemiesHint' | translate }}
         </small>
       </div>
       <div class="field">
-        <label for="scene-edit-enemies">Ennemis et créatures (texte libre)</label>
+        <label for="scene-edit-enemies">{{ 'sceneEdit.enemiesLabel' | translate }}</label>
         <textarea
           id="scene-edit-enemies"
           formControlName="enemies"
-          placeholder="Liste des ennemis présents dans cette scène..."
+          [placeholder]="'sceneEdit.enemiesPlaceholder' | translate"
           rows="4">
         </textarea>
       </div>
@@ -226,7 +224,7 @@
 
     <!-- Section : Pages Lore associées (B2 cross-context) -->
     @if (loreId) {
-      <app-expandable-section title="Pages Lore associées" icon="🔗">
+      <app-expandable-section [title]="'sceneEdit.loreSectionTitle' | translate" icon="🔗">
         <div class="field">
           <app-lore-link-picker
             [value]="relatedPageIds"
@@ -235,7 +233,7 @@
             (valueChange)="relatedPageIds = $event">
           </app-lore-link-picker>
           <small class="field-hint">
-            Épinglez ici le lieu, les PNJ ou créatures de cette scène. Cliquez sur un chip pour ouvrir la page.
+            {{ 'sceneEdit.loreHint' | translate }}
           </small>
         </div>
       </app-expandable-section>
@@ -244,17 +242,15 @@
     @if (!loreId) {
       <div class="field">
         <small class="field-hint">
-          💡 Cette campagne n'est associée à aucun univers. Associez-la à un Lore dans l'écran de la campagne
-          pour pouvoir épingler des pages du Lore à cette scène.
+          {{ 'sceneEdit.noLoreHint' | translate }}
         </small>
       </div>
     }
 
     <!-- Lieu explorable : pièces / donjon -->
-    <app-expandable-section title="Lieu explorable (donjon, crypte…)" icon="🏰" [initiallyOpen]="rooms.length > 0">
+    <app-expandable-section [title]="'sceneEdit.dungeonSectionTitle' | translate" icon="🏰" [initiallyOpen]="rooms.length > 0">
       <small class="field-hint">
-        Si cette scène représente un lieu à parcourir pièce par pièce, ajoutez-les ici.
-        La scène bascule alors en mode « donjon » côté affichage.
+        {{ 'sceneEdit.dungeonHint' | translate }}
       </small>
       <app-rooms-editor
         [rooms]="rooms"
@@ -274,7 +270,7 @@
   entityType="scene"
   [entityId]="sceneId"
   [isOpen]="chatOpen"
-  welcomeMessage="Je vois cette scène. Demande-moi d'enrichir son ambiance, sa narration ou ses choix."
+  [welcomeMessage]="'sceneEdit.chatWelcome' | translate"
   [quickSuggestions]="chatQuickSuggestions"
   (close)="chatOpen = false">
 </app-ai-chat-drawer>

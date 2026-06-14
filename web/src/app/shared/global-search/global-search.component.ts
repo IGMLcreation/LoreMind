@@ -2,6 +2,7 @@ import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } fro
 
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { BehaviorSubject, Subject, forkJoin, of } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, switchMap, takeUntil } from 'rxjs/operators';
 import { LucideAngularModule, Search, BookOpen, Folder, Users, FileText, Scroll, Drama, User, Dices, Package, Skull } from 'lucide-angular';
@@ -39,7 +40,7 @@ interface SearchResult {
  */
 @Component({
     selector: 'app-global-search',
-    imports: [FormsModule, LucideAngularModule],
+    imports: [FormsModule, LucideAngularModule, TranslatePipe],
     templateUrl: './global-search.component.html',
     styleUrls: ['./global-search.component.scss']
 })
@@ -78,7 +79,8 @@ export class GlobalSearchComponent implements OnInit, OnDestroy {
     private characterService: CharacterService,
     private randomTableService: RandomTableService,
     private itemCatalogService: ItemCatalogService,
-    private enemyService: EnemyService
+    private enemyService: EnemyService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -147,7 +149,7 @@ export class GlobalSearchComponent implements OnInit, OnDestroy {
       kind: 'page' as ResultKind,
       title: p.title,
       subtitle: p.notes ? this.firstLine(p.notes) : '',
-      tag: 'Page',
+      tag: this.translate.instant('globalSearch.tags.page'),
       route: ['/lore', p.loreId, 'pages', p.id]
     }));
     const nodeResults: SearchResult[] = nodes.map(n => ({
@@ -155,7 +157,7 @@ export class GlobalSearchComponent implements OnInit, OnDestroy {
       kind: 'node' as ResultKind,
       title: n.name,
       subtitle: '',
-      tag: 'Dossier',
+      tag: this.translate.instant('globalSearch.tags.node'),
       route: ['/lore', n.loreId, 'folders', n.id]
     }));
     const templateResults: SearchResult[] = templates.map(t => ({
@@ -163,7 +165,7 @@ export class GlobalSearchComponent implements OnInit, OnDestroy {
       kind: 'template' as ResultKind,
       title: t.name,
       subtitle: t.description ?? '',
-      tag: 'Template',
+      tag: this.translate.instant('globalSearch.tags.template'),
       route: ['/lore', t.loreId, 'templates', t.id]
     }));
     const loreResults: SearchResult[] = lores.map(l => ({
@@ -171,7 +173,7 @@ export class GlobalSearchComponent implements OnInit, OnDestroy {
       kind: 'lore' as ResultKind,
       title: l.name,
       subtitle: l.description ?? '',
-      tag: 'Lore',
+      tag: this.translate.instant('globalSearch.tags.lore'),
       route: ['/lore', l.id]
     }));
     const campaignResults: SearchResult[] = campaigns.map(c => ({
@@ -179,7 +181,7 @@ export class GlobalSearchComponent implements OnInit, OnDestroy {
       kind: 'campaign' as ResultKind,
       title: c.name,
       subtitle: c.description ?? '',
-      tag: 'Campagne',
+      tag: this.translate.instant('globalSearch.tags.campaign'),
       route: ['/campaigns', c.id]
     }));
     const npcResults: SearchResult[] = npcs.map(n => ({
@@ -187,7 +189,7 @@ export class GlobalSearchComponent implements OnInit, OnDestroy {
       kind: 'npc' as ResultKind,
       title: n.name,
       subtitle: (n.folder ?? '') as string,
-      tag: 'PNJ',
+      tag: this.translate.instant('globalSearch.tags.npc'),
       route: ['/campaigns', n.campaignId, 'npcs', n.id]
     }));
     const characterResults: SearchResult[] = characters.map(c => ({
@@ -195,7 +197,7 @@ export class GlobalSearchComponent implements OnInit, OnDestroy {
       kind: 'character' as ResultKind,
       title: c.name,
       subtitle: '',
-      tag: 'PJ',
+      tag: this.translate.instant('globalSearch.tags.character'),
       route: ['/campaigns', c.campaignId, 'playthroughs', c.playthroughId, 'characters', c.id]
     }));
     const tableResults: SearchResult[] = tables.map(t => ({
@@ -203,7 +205,7 @@ export class GlobalSearchComponent implements OnInit, OnDestroy {
       kind: 'random-table' as ResultKind,
       title: t.name,
       subtitle: t.description ?? '',
-      tag: 'Table aléatoire',
+      tag: this.translate.instant('globalSearch.tags.randomTable'),
       route: ['/campaigns', t.campaignId, 'random-tables', t.id]
     }));
     const catalogResults: SearchResult[] = catalogs.map(c => ({
@@ -211,15 +213,15 @@ export class GlobalSearchComponent implements OnInit, OnDestroy {
       kind: 'item-catalog' as ResultKind,
       title: c.name,
       subtitle: c.description ?? '',
-      tag: 'Catalogue d\'objets',
+      tag: this.translate.instant('globalSearch.tags.itemCatalog'),
       route: ['/campaigns', c.campaignId, 'item-catalogs', c.id]
     }));
     const enemyResults: SearchResult[] = enemies.map(e => ({
       id: e.id,
       kind: 'enemy' as ResultKind,
       title: e.name,
-      subtitle: [e.level ? `Niv. ${e.level}` : '', e.folder ?? ''].filter(Boolean).join(' · '),
-      tag: 'Ennemi',
+      subtitle: [e.level ? this.translate.instant('globalSearch.enemyLevel', { level: e.level }) : '', e.folder ?? ''].filter(Boolean).join(' · '),
+      tag: this.translate.instant('globalSearch.tags.enemy'),
       route: ['/campaigns', e.campaignId, 'enemies', e.id]
     }));
     return [

@@ -10,11 +10,11 @@
             [href]="pageUrl(p.id!)"
             target="_blank"
             rel="noopener"
-            title="Ouvrir dans un nouvel onglet">
+            [title]="'loreLinkPicker.openInNewTab' | translate">
             <lucide-icon [img]="Link2" [size]="12"></lucide-icon>
             {{ p.title }}
           </a>
-          <button type="button" class="chip-remove" (click)="remove(p.id!)" title="Retirer le lien">
+          <button type="button" class="chip-remove" (click)="remove(p.id!)" [title]="'loreLinkPicker.removeLink' | translate">
             <lucide-icon [img]="X" [size]="12"></lucide-icon>
           </button>
         </span>
@@ -27,7 +27,7 @@
     <input
       type="text"
       class="search-input"
-      placeholder="Rechercher une page à lier..."
+      [placeholder]="'loreLinkPicker.searchPlaceholder' | translate"
       [(ngModel)]="query"
       (focus)="dropdownOpen = true"
       (blur)="onBlur()" />
@@ -44,7 +44,7 @@
 
     @if (dropdownOpen && query && suggestions.length === 0) {
       <p class="empty-hint">
-        Aucune page ne correspond
+        {{ 'loreLinkPicker.noMatch' | translate }}
       </p>
     }
   </div>

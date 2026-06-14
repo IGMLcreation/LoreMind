@@ -1,0 +1,26 @@
+{
+  "chipsInput": {
+    "placeholder": "Ajouter...",
+    "removeTag": "Retirer"
+  },
+  "dynamicFieldsForm": {
+    "textPlaceholder": "Renseignez {{name}}…",
+    "noLabels": "Aucun label défini dans le template pour ce champ.",
+    "noFields": "Aucun champ défini dans le template de ce système. Éditez le GameSystem pour ajouter des champs."
+  },
+  "loreLinkPicker": {
+    "searchPlaceholder": "Rechercher une page à lier...",
+    "openInNewTab": "Ouvrir dans un nouvel onglet",
+    "removeLink": "Retirer le lien",
+    "noMatch": "Aucune page ne correspond"
+  },
+  "enemyLinkPicker": {
+    "searchPlaceholder": "Rechercher un ennemi du bestiaire...",
+    "openInNewTab": "Ouvrir la fiche dans un nouvel onglet",
+    "removeLink": "Retirer le lien",
+    "noMatch": "Aucun ennemi ne correspond"
+  },
+  "personaView": {
+    "empty": "Cette fiche est encore vide."
+  }
+}

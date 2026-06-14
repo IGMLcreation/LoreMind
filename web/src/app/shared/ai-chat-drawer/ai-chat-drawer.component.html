@@ -4,7 +4,7 @@
   [class.is-resizing]="isResizing"
   [class.is-wide]="isWide"
   [style.width.px]="effectiveWidth"
-  aria-label="Assistant IA">
+  [attr.aria-label]="'aiChatDrawer.title' | translate">
 
   <!-- Poignee de redimensionnement (desactivee en mode wide) -->
   @if (!isWide) {
@@ -13,23 +13,23 @@
       (mousedown)="onResizeStart($event)"
       role="separator"
       aria-orientation="vertical"
-      aria-label="Redimensionner le panneau"
-    title="Glisser pour redimensionner"></div>
+      [attr.aria-label]="'aiChatDrawer.resizeAria' | translate"
+    [title]="'aiChatDrawer.resizeTitle' | translate"></div>
   }
 
 
   <!-- Sidebar conversations (mode persistent uniquement) -->
   @if (persistent && sidebarOpen) {
-    <section class="conv-sidebar" aria-label="Conversations">
+    <section class="conv-sidebar" [attr.aria-label]="'aiChatDrawer.conversations' | translate">
       <div class="conv-sidebar-header">
-        <span class="conv-sidebar-title">Conversations</span>
-        <button type="button" class="conv-new-btn" (click)="startNewConversation()" [disabled]="isStreaming" title="Nouvelle conversation">
+        <span class="conv-sidebar-title">{{ 'aiChatDrawer.conversations' | translate }}</span>
+        <button type="button" class="conv-new-btn" (click)="startNewConversation()" [disabled]="isStreaming" [title]="'aiChatDrawer.newConversation' | translate">
           <lucide-icon [img]="MessageSquarePlus" [size]="16"></lucide-icon>
         </button>
       </div>
       <ul class="conv-list">
         @if (conversations.length === 0) {
-          <li class="conv-empty">Aucune conversation</li>
+          <li class="conv-empty">{{ 'aiChatDrawer.noConversation' | translate }}</li>
         }
         @for (c of conversations; track c) {
           <li
@@ -42,7 +42,7 @@
               class="conv-item-del"
               (click)="deleteConversation(c, $event)"
               [disabled]="isStreaming"
-              title="Supprimer">
+              [title]="'common.delete' | translate">
               <lucide-icon [img]="Trash2" [size]="12"></lucide-icon>
             </button>
           </li>
@@ -59,8 +59,8 @@
           type="button"
           class="sidebar-toggle"
           (click)="toggleSidebar()"
-          [attr.aria-label]="sidebarOpen ? 'Masquer la liste' : 'Afficher la liste'"
-          [title]="sidebarOpen ? 'Masquer la liste' : 'Afficher la liste'">
+          [attr.aria-label]="(sidebarOpen ? 'aiChatDrawer.hideList' : 'aiChatDrawer.showList') | translate"
+          [title]="(sidebarOpen ? 'aiChatDrawer.hideList' : 'aiChatDrawer.showList') | translate">
           <lucide-icon [img]="sidebarOpen ? PanelLeftClose : PanelLeftOpen" [size]="16"></lucide-icon>
         </button>
       }
@@ -68,8 +68,8 @@
       <div class="header-title-wrap">
         @if (persistent && currentConversationId) {
           @if (!editingTitle) {
-            <h2 class="header-title" [title]="currentTitle">{{ currentTitle || 'Nouvelle conversation' }}</h2>
-            <button type="button" class="rename-btn" (click)="startRenameTitle()" title="Renommer" aria-label="Renommer">
+            <h2 class="header-title" [title]="currentTitle">{{ currentTitle || ('aiChatDrawer.newConversation' | translate) }}</h2>
+            <button type="button" class="rename-btn" (click)="startRenameTitle()" [title]="'common.rename' | translate" [attr.aria-label]="'common.rename' | translate">
               <lucide-icon [img]="Pencil" [size]="12"></lucide-icon>
             </button>
           } @else {
@@ -83,7 +83,7 @@
               autofocus />
             }
           } @else {
-            <h2 class="header-title">Assistant IA</h2>
+            <h2 class="header-title">{{ 'aiChatDrawer.title' | translate }}</h2>
           }
         </div>
 
@@ -91,19 +91,19 @@
           type="button"
           class="wide-toggle-btn"
           (click)="toggleWide()"
-          [attr.aria-label]="isWide ? 'Reduire le panneau' : 'Agrandir le panneau'"
-          [title]="isWide ? 'Reduire' : 'Agrandir'">
+          [attr.aria-label]="(isWide ? 'aiChatDrawer.shrinkAria' : 'aiChatDrawer.expandAria') | translate"
+          [title]="(isWide ? 'aiChatDrawer.shrink' : 'aiChatDrawer.expand') | translate">
           <lucide-icon [img]="isWide ? Minimize2 : Maximize2" [size]="16"></lucide-icon>
         </button>
 
-        <button type="button" class="close-btn" (click)="onClose()" aria-label="Fermer">
+        <button type="button" class="close-btn" (click)="onClose()" [attr.aria-label]="'common.close' | translate">
           <lucide-icon [img]="X" [size]="18"></lucide-icon>
         </button>
       </header>
 
       @if (usage) {
         <div class="context-gauge" [attr.data-level]="usageLevel"
-          [attr.title]="'System: ' + usage.system + ' · Historique: ' + usage.history + ' · Courant: ' + usage.current + (usageHasMax ? ' / ' + usage.max : '') + ' tokens'">
+          [attr.title]="(usageHasMax ? 'aiChatDrawer.gaugeTitleMax' : 'aiChatDrawer.gaugeTitle') | translate:{ system: usage.system, history: usage.history, current: usage.current, max: usage.max }">
           <!-- Barre seulement si on connaît le plafond (Ollama). Cloud : compteur seul. -->
           @if (usageHasMax) {
             <div class="gauge-bar">
@@ -111,9 +111,11 @@
             </div>
           }
           <div class="gauge-label">
-            <span class="gauge-text">Contexte : {{ usageTotal }}@if (usageHasMax) {
-              / {{ usage.max }}
-            } tokens</span>
+            <span class="gauge-text">@if (usageHasMax) {
+              {{ 'aiChatDrawer.gaugeLabelMax' | translate:{ total: usageTotal, max: usage.max } }}
+            } @else {
+              {{ 'aiChatDrawer.gaugeLabel' | translate:{ total: usageTotal } }}
+            }</span>
             @if (usageHasMax) {
               <span class="gauge-percent">{{ usagePercent }}%</span>
             }
@@ -172,7 +174,7 @@
 
       @if (quickSuggestions.length) {
         <div class="quick-suggestions">
-          <p class="quick-label">Suggestions rapides :</p>
+          <p class="quick-label">{{ 'aiChatDrawer.quickSuggestions' | translate }}</p>
           <div class="quick-list">
             @for (s of quickSuggestions; track s) {
               <button
@@ -193,10 +195,10 @@
           type="text"
           [(ngModel)]="input"
           name="chatInput"
-          placeholder="Posez une question..."
+          [placeholder]="'aiChatDrawer.inputPlaceholder' | translate"
           [disabled]="isStreaming"
           autocomplete="off" />
-          <button type="submit" class="send-btn" [disabled]="!input.trim() || isStreaming" aria-label="Envoyer">
+          <button type="submit" class="send-btn" [disabled]="!input.trim() || isStreaming" [attr.aria-label]="'aiChatDrawer.send' | translate">
             <lucide-icon [img]="Send" [size]="16"></lucide-icon>
           </button>
         </form>

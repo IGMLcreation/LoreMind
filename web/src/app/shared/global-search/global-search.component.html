@@ -7,7 +7,7 @@
           #searchInput
           type="text"
           class="gs-input"
-          placeholder="Rechercher dans LoreMind..."
+          [placeholder]="'globalSearch.placeholder' | translate"
           [ngModel]="query"
           (ngModelChange)="onQueryChange($event)" />
         <span class="gs-kbd">ESC</span>
@@ -34,23 +34,23 @@
       }
       @if (!loading && query.trim().length >= 2 && results.length === 0) {
         <div class="gs-empty">
-          Aucun résultat
+          {{ 'globalSearch.noResults' | translate }}
         </div>
       }
       @if (query.trim().length < 2) {
         <div class="gs-empty">
-          Tape au moins 2 caractères
+          {{ 'globalSearch.minChars' | translate }}
         </div>
       }
       <div class="gs-footer">
         <div class="gs-hints">
-          <span><kbd>↑</kbd><kbd>↓</kbd> naviguer</span>
-          <span><kbd>↵</kbd> sélectionner</span>
-          <span><kbd>ESC</kbd> fermer</span>
+          <span><kbd>↑</kbd><kbd>↓</kbd> {{ 'globalSearch.hintNavigate' | translate }}</span>
+          <span><kbd>↵</kbd> {{ 'globalSearch.hintSelect' | translate }}</span>
+          <span><kbd>ESC</kbd> {{ 'globalSearch.hintClose' | translate }}</span>
         </div>
         @if (results.length > 0) {
           <span class="gs-count">
-            {{ results.length }} résultat{{ results.length > 1 ? 's' : '' }}
+            {{ (results.length > 1 ? 'globalSearch.countPlural' : 'globalSearch.countSingular') | translate:{ count: results.length } }}
           </span>
         }
       </div>

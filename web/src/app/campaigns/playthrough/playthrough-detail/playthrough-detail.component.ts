@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { LucideAngularModule, ArrowLeft, Play, Flag, Users, Trash2, Pencil, Plus } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { CampaignService } from '../../../services/campaign.service';
 import { CharacterService } from '../../../services/character.service';
 import { NpcService } from '../../../services/npc.service';
@@ -26,7 +27,7 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  */
 @Component({
     selector: 'app-playthrough-detail',
-    imports: [RouterModule, LucideAngularModule],
+    imports: [RouterModule, LucideAngularModule, TranslatePipe],
     templateUrl: './playthrough-detail.component.html',
     styleUrls: ['./playthrough-detail.component.scss']
 })
@@ -62,7 +63,8 @@ export class PlaythroughDetailComponent implements OnInit, OnDestroy {
     private sessionService: SessionService,
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -92,7 +94,7 @@ export class PlaythroughDetailComponent implements OnInit, OnDestroy {
       this.characters = characters;
       this.activeOnThis = activeOnThis;
       this.pageTitleService.set(`${playthrough.name} — ${campaign.name}`);
-      this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId));
+      this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId, this.translate));
     });
   }
 
@@ -127,18 +129,18 @@ export class PlaythroughDetailComponent implements OnInit, OnDestroy {
     this.playthroughService.deletionImpact(this.playthroughId).subscribe({
       next: impact => {
         const parts: string[] = [];
-        if (impact.sessions > 0) parts.push(`${impact.sessions} session(s)`);
-        if (impact.characters > 0) parts.push(`${impact.characters} PJ`);
-        if (impact.flags > 0) parts.push(`${impact.flags} fait(s)`);
-        if (impact.progressions > 0) parts.push(`${impact.progressions} progression(s) de quête`);
+        if (impact.sessions > 0) parts.push(this.translate.instant('playthroughDetail.impactSessions', { n: impact.sessions }));
+        if (impact.characters > 0) parts.push(this.translate.instant('playthroughDetail.impactCharacters', { n: impact.characters }));
+        if (impact.flags > 0) parts.push(this.translate.instant('playthroughDetail.impactFlags', { n: impact.flags }));
+        if (impact.progressions > 0) parts.push(this.translate.instant('playthroughDetail.impactProgressions', { n: impact.progressions }));
         const details: string[] = [];
-        if (parts.length) details.push(`Cette action supprimera aussi : ${parts.join(', ')}.`);
-        details.push('Cette action est irréversible.');
+        if (parts.length) details.push(this.translate.instant('playthroughDetail.deleteCascade', { parts: parts.join(', ') }));
+        details.push(this.translate.instant('playthroughDetail.irreversible'));
         this.confirmDialog.confirm({
-          title: 'Supprimer la Partie',
-          message: `Supprimer "${this.playthrough?.name}" ?`,
+          title: this.translate.instant('playthroughDetail.deleteTitle'),
+          message: this.translate.instant('playthroughDetail.deleteMessage', { name: this.playthrough?.name }),
           details,
-          confirmLabel: 'Supprimer',
+          confirmLabel: this.translate.instant('common.delete'),
           variant: 'danger'
         }).then(ok => {
           if (!ok) return;

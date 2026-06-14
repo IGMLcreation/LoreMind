@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 
 import { ActivatedRoute, Router } from '@angular/router';
 import { LucideAngularModule, ArrowLeft, Edit3, Dices } from 'lucide-angular';
+import { TranslatePipe } from '@ngx-translate/core';
 import { RandomTableService } from '../../../services/random-table.service';
 import { CampaignSidebarService } from '../../../services/campaign-sidebar.service';
 import { RandomTable, RandomTableEntry } from '../../../services/random-table.model';
@@ -14,7 +15,7 @@ import { DiceUtils, DiceRoll } from '../../../shared/dice.utils';
  */
 @Component({
     selector: 'app-random-table-view',
-    imports: [LucideAngularModule],
+    imports: [LucideAngularModule, TranslatePipe],
     templateUrl: './random-table-view.component.html',
     styleUrls: ['./random-table-view.component.scss']
 })

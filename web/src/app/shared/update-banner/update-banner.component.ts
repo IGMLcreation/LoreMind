@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 
+import { TranslatePipe } from '@ngx-translate/core';
 import { LucideAngularModule, RefreshCw, X } from 'lucide-angular';
 import { VersionCheckerService } from '../../services/version-checker.service';
 
@@ -10,7 +11,7 @@ import { VersionCheckerService } from '../../services/version-checker.service';
  */
 @Component({
     selector: 'app-update-banner',
-    imports: [LucideAngularModule],
+    imports: [LucideAngularModule, TranslatePipe],
     templateUrl: './update-banner.component.html',
     styleUrls: ['./update-banner.component.scss']
 })

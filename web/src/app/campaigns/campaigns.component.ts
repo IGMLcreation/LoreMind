@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 
 import { Router } from '@angular/router';
 import { LucideAngularModule, Map, Plus } from 'lucide-angular';
+import { TranslatePipe } from '@ngx-translate/core';
 import { CampaignService } from '../services/campaign.service';
 import { LayoutService } from '../services/layout.service';
 import { Campaign } from '../services/campaign.model';
@@ -9,7 +10,7 @@ import { CampaignCreateComponent, CampaignCreatePayload } from './campaign/campa
 
 @Component({
     selector: 'app-campaigns',
-    imports: [LucideAngularModule, CampaignCreateComponent],
+    imports: [LucideAngularModule, CampaignCreateComponent, TranslatePipe],
     templateUrl: './campaigns.component.html',
     styleUrls: ['./campaigns.component.scss']
 })

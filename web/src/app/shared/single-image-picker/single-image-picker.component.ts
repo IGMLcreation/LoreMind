@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 import { LucideAngularModule, X, Image as ImageIcon } from 'lucide-angular';
+import { TranslatePipe } from '@ngx-translate/core';
 import { ImageService } from '../../services/image.service';
 import { Image } from '../../services/image.model';
 import { ImageUploaderComponent } from '../image-uploader/image-uploader.component';
@@ -21,7 +22,7 @@ import { ImageUploaderComponent } from '../image-uploader/image-uploader.compone
  */
 @Component({
     selector: 'app-single-image-picker',
-    imports: [LucideAngularModule, ImageUploaderComponent],
+    imports: [LucideAngularModule, ImageUploaderComponent, TranslatePipe],
     templateUrl: './single-image-picker.component.html',
     styleUrls: ['./single-image-picker.component.scss']
 })

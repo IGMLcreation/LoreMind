@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { forkJoin, Subscription } from 'rxjs';
 import { CampaignService } from './campaign.service';
 import { CharacterService } from './character.service';
@@ -30,7 +31,8 @@ export class CampaignSidebarService {
     private npcService: NpcService,
     private randomTableService: RandomTableService,
     private enemyService: EnemyService,
-    private layoutService: LayoutService
+    private layoutService: LayoutService,
+    private translate: TranslateService
   ) {}
 
   /**
@@ -51,7 +53,7 @@ export class CampaignSidebarService {
         this.enemyService
       )
     }).subscribe(({ campaign, allCampaigns, treeData }) => {
-      this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, campaignId));
+      this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, campaignId, this.translate));
     });
   }
 }

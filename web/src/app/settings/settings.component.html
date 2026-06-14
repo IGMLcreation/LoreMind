@@ -3,10 +3,18 @@
   <header class="page-header">
     <button class="btn-back" (click)="goBack()">
       <lucide-icon [img]="ArrowLeft" [size]="16"></lucide-icon>
-      <span>Retour</span>
+      <span>{{ 'common.back' | translate }}</span>
     </button>
-    <h1>Parametres</h1>
+    <h1>{{ 'settings.title' | translate }}</h1>
   </header>
+
+  <section class="card">
+    <h2>{{ 'settings.language.title' | translate }}</h2>
+    <p class="hint">{{ 'settings.language.hint' | translate }}</p>
+    <div class="form-row">
+      <app-language-switcher></app-language-switcher>
+    </div>
+  </section>
 
   @if (errorMessage) {
     <div class="alert alert-error">
@@ -23,30 +31,30 @@
 
   @if (settings) {
     <section class="card">
-      <h2>Moteur IA</h2>
-      <p class="hint">Choix du fournisseur de modele de langage utilise par le chat et la generation de pages.</p>
+      <h2>{{ 'settings.ai.title' | translate }}</h2>
+      <p class="hint">{{ 'settings.ai.hint' | translate }}</p>
       <div class="form-row">
-        <label>Fournisseur</label>
+        <label>{{ 'settings.ai.provider' | translate }}</label>
         <div class="radio-group">
           <label class="radio">
             <input type="radio" name="provider" value="ollama" [(ngModel)]="settings.llm_provider">
-            <span>Ollama (local)</span>
+            <span>{{ 'settings.ai.providerOllama' | translate }}</span>
           </label>
           <label class="radio">
             <input type="radio" name="provider" value="onemin" [(ngModel)]="settings.llm_provider">
-            <span>1min.ai (cloud)</span>
+            <span>{{ 'settings.ai.providerOnemin' | translate }}</span>
           </label>
           <label class="radio">
             <input type="radio" name="provider" value="openrouter" [(ngModel)]="settings.llm_provider">
-            <span>OpenRouter (cloud)</span>
+            <span>{{ 'settings.ai.providerOpenrouter' | translate }}</span>
           </label>
           <label class="radio">
             <input type="radio" name="provider" value="mistral" [(ngModel)]="settings.llm_provider">
-            <span>Mistral (cloud)</span>
+            <span>{{ 'settings.ai.providerMistral' | translate }}</span>
           </label>
           <label class="radio">
             <input type="radio" name="provider" value="gemini" [(ngModel)]="settings.llm_provider">
-            <span>Gemini (cloud)</span>
+            <span>{{ 'settings.ai.providerGemini' | translate }}</span>
           </label>
         </div>
       </div>
@@ -56,13 +64,13 @@
   <!-- Bloc Ollama -->
   @if (settings && settings.llm_provider === 'ollama') {
     <section class="card">
-      <h2>Configuration Ollama</h2>
+      <h2>{{ 'settings.ollama.title' | translate }}</h2>
       <div class="form-row">
-        <label for="ollama-url">URL du serveur Ollama</label>
+        <label for="ollama-url">{{ 'settings.ollama.url' | translate }}</label>
         <input id="ollama-url" type="text" [(ngModel)]="settings.ollama_base_url" placeholder="http://localhost:11434">
       </div>
       <div class="form-row">
-        <label for="ollama-model">Modele</label>
+        <label for="ollama-model">{{ 'settings.ollama.model' | translate }}</label>
         <div class="inline-select">
           <select id="ollama-model" [(ngModel)]="settings.llm_model" (ngModelChange)="fetchOllamaModelInfo()">
             @if (ollamaModels.length === 0) {
@@ -74,15 +82,15 @@
           </select>
           <button type="button" class="btn-secondary" (click)="refreshModels()" [disabled]="loadingModels">
             <lucide-icon [img]="RefreshCw" [size]="14"></lucide-icon>
-            <span>{{ loadingModels ? 'Chargement...' : 'Actualiser' }}</span>
+            <span>{{ (loadingModels ? 'common.loading' : 'common.refresh') | translate }}</span>
           </button>
           <button type="button" class="btn-secondary" (click)="modelManager.openPullDialog()">
             <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
-            <span>Telecharger</span>
+            <span>{{ 'common.download' | translate }}</span>
           </button>
         </div>
         @if (ollamaModels.length === 0) {
-          <p class="hint">Aucun modele detecte. Verifie que Ollama tourne et que l'URL est correcte.</p>
+          <p class="hint">{{ 'settings.ollama.noModels' | translate }}</p>
         }
       </div>
       <!-- Gestion des modeles installes (liste + suppression + dialog de pull) -->
@@ -99,23 +107,23 @@
   <!-- Bloc 1min.ai -->
   @if (settings && settings.llm_provider === 'onemin') {
     <section class="card">
-      <h2>Configuration 1min.ai</h2>
+      <h2>{{ 'settings.onemin.title' | translate }}</h2>
       <div class="form-row">
-        <label for="onemin-key">Cle API</label>
+        <label for="onemin-key">{{ 'settings.apiKey.label' | translate }}</label>
         <input
           id="onemin-key"
           type="password"
           [(ngModel)]="oneminApiKeyInput"
-          [placeholder]="settings.onemin_api_key_set ? 'Cle configuree (laisser vide pour ne pas changer)' : 'Saisir votre cle API'">
+          [placeholder]="(settings.onemin_api_key_set ? 'settings.apiKey.placeholderSet' : 'settings.apiKey.placeholderOnemin') | translate">
           @if (settings.onemin_api_key_set) {
             <label class="checkbox">
               <input type="checkbox" [(ngModel)]="clearApiKey">
-              <span>Effacer la cle enregistree</span>
+              <span>{{ 'settings.apiKey.clear' | translate }}</span>
             </label>
           }
         </div>
         <div class="form-row">
-          <label for="onemin-provider">Fournisseur</label>
+          <label for="onemin-provider">{{ 'settings.provider' | translate }}</label>
           <select id="onemin-provider" [(ngModel)]="oneminProvider" (ngModelChange)="onProviderChange()">
             @for (g of oneminGroups; track g) {
               <option [value]="g.provider">{{ g.provider }}</option>
@@ -123,7 +131,7 @@
           </select>
         </div>
         <div class="form-row">
-          <label for="onemin-model">Modele</label>
+          <label for="onemin-model">{{ 'settings.model' | translate }}</label>
           <select id="onemin-model" [(ngModel)]="settings.onemin_model">
             @for (m of currentProviderModels; track m) {
               <option [value]="m">{{ m }}</option>
@@ -136,38 +144,33 @@
     <!-- Bloc OpenRouter -->
     @if (settings && settings.llm_provider === 'openrouter') {
       <section class="card">
-        <h2>Configuration OpenRouter</h2>
+        <h2>{{ 'settings.openrouter.title' | translate }}</h2>
         <div class="form-row">
-          <label for="openrouter-key">Cle API</label>
+          <label for="openrouter-key">{{ 'settings.apiKey.label' | translate }}</label>
           <input
             id="openrouter-key"
             type="password"
             [(ngModel)]="openrouterApiKeyInput"
-            [placeholder]="settings.openrouter_api_key_set ? 'Cle configuree (laisser vide pour ne pas changer)' : 'Saisir votre cle API (sk-or-...)'">
+            [placeholder]="(settings.openrouter_api_key_set ? 'settings.apiKey.placeholderSet' : 'settings.apiKey.placeholderOpenrouter') | translate">
             @if (settings.openrouter_api_key_set) {
               <label class="checkbox">
                 <input type="checkbox" [(ngModel)]="clearOpenrouterKey">
-                <span>Effacer la cle enregistree</span>
+                <span>{{ 'settings.apiKey.clear' | translate }}</span>
               </label>
             }
           </div>
           <div class="form-row">
-            <label for="openrouter-model">Modele</label>
+            <label for="openrouter-model">{{ 'settings.model' | translate }}</label>
             <label class="checkbox">
               <input type="checkbox" [(ngModel)]="openrouterFreeOnly">
-              <span>Gratuits seulement</span>
+              <span>{{ 'settings.openrouter.freeOnly' | translate }}</span>
             </label>
             <select id="openrouter-model" [(ngModel)]="settings.openrouter_model">
               @for (o of openrouterSelectOptions; track o) {
                 <option [value]="o.id">{{ o.label }}</option>
               }
             </select>
-            <p class="hint">
-              Liste chargee automatiquement depuis OpenRouter. Pour rester <strong>gratuit</strong> :
-              un modele marque <code>· gratuit</code> ou le routeur <code>openrouter/free</code>
-              (choisit un modele gratuit tout seul). Pour les imports, prefere un gratuit a
-              <strong>grand contexte</strong> (valeur « ctx »).
-            </p>
+            <p class="hint" [innerHTML]="'settings.openrouter.hint' | translate"></p>
           </div>
         </section>
       }
@@ -175,33 +178,29 @@
       <!-- Bloc Mistral -->
       @if (settings && settings.llm_provider === 'mistral') {
         <section class="card">
-          <h2>Configuration Mistral</h2>
+          <h2>{{ 'settings.mistral.title' | translate }}</h2>
           <div class="form-row">
-            <label for="mistral-key">Cle API</label>
+            <label for="mistral-key">{{ 'settings.apiKey.label' | translate }}</label>
             <input
               id="mistral-key"
               type="password"
               [(ngModel)]="mistralApiKeyInput"
-              [placeholder]="settings.mistral_api_key_set ? 'Cle configuree (laisser vide pour ne pas changer)' : 'Saisir votre cle API Mistral'">
+              [placeholder]="(settings.mistral_api_key_set ? 'settings.apiKey.placeholderSet' : 'settings.apiKey.placeholderMistral') | translate">
               @if (settings.mistral_api_key_set) {
                 <label class="checkbox">
                   <input type="checkbox" [(ngModel)]="clearMistralKey">
-                  <span>Effacer la cle enregistree</span>
+                  <span>{{ 'settings.apiKey.clear' | translate }}</span>
                 </label>
               }
             </div>
             <div class="form-row">
-              <label for="mistral-model">Modele</label>
+              <label for="mistral-model">{{ 'settings.model' | translate }}</label>
               <select id="mistral-model" [(ngModel)]="settings.mistral_model">
                 @for (o of mistralSelectOptions; track o) {
                   <option [value]="o.id">{{ o.label }}</option>
                 }
               </select>
-              <p class="hint">
-                Cle gratuite sur <code>console.mistral.ai</code> (tier « Experiment », sans CB).
-                Pour les imports, prefere <code>mistral-large-latest</code> (128k contexte, fidele
-                et bon en francais) ou <code>mistral-small-latest</code> (plus rapide).
-              </p>
+              <p class="hint" [innerHTML]="'settings.mistral.hint' | translate"></p>
             </div>
           </section>
         }
@@ -209,34 +208,29 @@
         <!-- Bloc Gemini -->
         @if (settings && settings.llm_provider === 'gemini') {
           <section class="card">
-            <h2>Configuration Gemini</h2>
+            <h2>{{ 'settings.gemini.title' | translate }}</h2>
             <div class="form-row">
-              <label for="gemini-key">Cle API</label>
+              <label for="gemini-key">{{ 'settings.apiKey.label' | translate }}</label>
               <input
                 id="gemini-key"
                 type="password"
                 [(ngModel)]="geminiApiKeyInput"
-                [placeholder]="settings.gemini_api_key_set ? 'Cle configuree (laisser vide pour ne pas changer)' : 'Saisir votre cle API Gemini'">
+                [placeholder]="(settings.gemini_api_key_set ? 'settings.apiKey.placeholderSet' : 'settings.apiKey.placeholderGemini') | translate">
                 @if (settings.gemini_api_key_set) {
                   <label class="checkbox">
                     <input type="checkbox" [(ngModel)]="clearGeminiKey">
-                    <span>Effacer la cle enregistree</span>
+                    <span>{{ 'settings.apiKey.clear' | translate }}</span>
                   </label>
                 }
               </div>
               <div class="form-row">
-                <label for="gemini-model">Modele</label>
+                <label for="gemini-model">{{ 'settings.model' | translate }}</label>
                 <select id="gemini-model" [(ngModel)]="settings.gemini_model">
                   @for (o of geminiSelectOptions; track o) {
                     <option [value]="o.id">{{ o.label }}</option>
                   }
                 </select>
-                <p class="hint">
-                  Cle gratuite sur <code>aistudio.google.com</code> (sans CB). Ideal pour les imports :
-                  <code>gemini-2.0-flash</code> a un <strong>contexte ~1M</strong> → un livre entier tient
-                  en 1-2 appels (plus de morceaux perdus). Pense a monter la <strong>taille des morceaux</strong>
-                  d'import pour en profiter.
-                </p>
+                <p class="hint" [innerHTML]="'settings.gemini.hint' | translate"></p>
               </div>
             </section>
           }
@@ -244,21 +238,18 @@
           <!-- Bloc Embeddings (Atelier RAG) : indépendant du modèle de CHAT ci-dessus. -->
           @if (settings) {
             <section class="card">
-              <h2>Embeddings (Atelier RAG)</h2>
-              <p class="hint">
-                Modèle utilisé pour <strong>indexer les sources PDF</strong> des ateliers et y faire
-                de la recherche. C'est un modèle <strong>séparé</strong> du modèle de chat ci-dessus.
-              </p>
+              <h2>{{ 'settings.embeddings.title' | translate }}</h2>
+              <p class="hint" [innerHTML]="'settings.embeddings.hint' | translate"></p>
               <div class="form-row">
-                <label>Fournisseur d'embeddings</label>
+                <label>{{ 'settings.embeddings.provider' | translate }}</label>
                 <div class="radio-group">
                   <label class="radio">
                     <input type="radio" name="embprovider" value="ollama" [(ngModel)]="settings.embedding_provider">
-                    <span>Ollama (local, gratuit)</span>
+                    <span>{{ 'settings.embeddings.providerOllama' | translate }}</span>
                   </label>
                   <label class="radio">
                     <input type="radio" name="embprovider" value="mistral" [(ngModel)]="settings.embedding_provider">
-                    <span>Mistral (cloud, EU)</span>
+                    <span>{{ 'settings.embeddings.providerMistral' | translate }}</span>
                   </label>
                 </div>
               </div>
@@ -266,57 +257,46 @@
               @if (settings.embedding_provider === 'ollama') {
                 <div>
                   <div class="form-row">
-                    <label for="emb-ollama-model">Modèle d'embedding Ollama</label>
+                    <label for="emb-ollama-model">{{ 'settings.embeddings.ollamaModel' | translate }}</label>
                     <input id="emb-ollama-model" type="text" [(ngModel)]="settings.ollama_embedding_model"
                       placeholder="nomic-embed-text">
-                      <p class="hint">
-                        Recommandé : <code>nomic-embed-text</code> (léger). Gratuit et illimité (local).
-                      </p>
+                      <p class="hint" [innerHTML]="'settings.embeddings.ollamaModelHint' | translate"></p>
                     </div>
                     <div class="form-row">
                       <label class="checkbox">
                         <input type="checkbox" [(ngModel)]="settings.auto_pull_embedding_model">
-                        <span>Installer automatiquement le modèle au démarrage s'il manque</span>
+                        <span>{{ 'settings.embeddings.autoPull' | translate }}</span>
                       </label>
                     </div>
                   </div>
                 }
                 <div class="form-row">
-                  <label for="rag-topk">Extraits récupérés par question (couverture RAG)</label>
+                  <label for="rag-topk">{{ 'settings.embeddings.topK' | translate }}</label>
                   <input id="rag-topk" type="number" min="3" max="200" [(ngModel)]="settings.rag_top_k">
-                  <p class="hint">
-                    Plus haut = l'IA voit plus de passages par question (mieux pour les questions
-                    larges « liste les… »), mais prompt plus long. Défaut 8. Avec un modèle
-                    <strong>gros-contexte</strong> (Gemini), tu peux monter à <strong>50-150</strong> pour
-                    une couverture quasi « document entier ». Pour les questions exhaustives, préfère
-                    le bouton <strong>« Analyse approfondie »</strong> de l'atelier.
-                  </p>
+                  <p class="hint" [innerHTML]="'settings.embeddings.topKHint' | translate"></p>
                 </div>
                 <!-- Mistral embeddings -->
                 @if (settings.embedding_provider === 'mistral') {
                   <div>
                     <div class="form-row">
                       <label for="emb-mistral-key">
-                        Clé API Mistral
+                        {{ 'settings.embeddings.mistralKey' | translate }}
                         @if (settings.mistral_api_key_set) {
-                          <span class="key-state">✓ configurée</span>
+                          <span class="key-state">{{ 'settings.apiKey.configured' | translate }}</span>
                         }
                       </label>
                       <input id="emb-mistral-key" type="password" [(ngModel)]="mistralApiKeyInput"
-                        [placeholder]="settings.mistral_api_key_set ? 'Clé configurée (laisser vide pour ne pas changer)' : 'Saisir votre clé API Mistral'">
+                        [placeholder]="(settings.mistral_api_key_set ? 'settings.apiKey.placeholderSet' : 'settings.apiKey.placeholderMistral') | translate">
                         @if (settings.mistral_api_key_set) {
                           <label class="checkbox">
                             <input type="checkbox" [(ngModel)]="clearMistralKey">
-                            <span>Effacer la clé enregistrée</span>
+                            <span>{{ 'settings.apiKey.clear' | translate }}</span>
                           </label>
                         }
-                        <p class="hint">
-                          C'est la <strong>même clé</strong> que pour le chat Mistral (une seule clé partagée).
-                          Soumis au rate limit du tier gratuit.
-                        </p>
+                        <p class="hint" [innerHTML]="'settings.embeddings.mistralKeyHint' | translate"></p>
                       </div>
                       <div class="form-row">
-                        <label for="emb-mistral-model">Modèle d'embedding Mistral</label>
+                        <label for="emb-mistral-model">{{ 'settings.embeddings.mistralModel' | translate }}</label>
                         <input id="emb-mistral-model" type="text" [(ngModel)]="settings.mistral_embedding_model"
                           placeholder="mistral-embed">
                         </div>
@@ -330,16 +310,16 @@
                 on utilise ce que le modele accepte, et la jauge du chat s'affiche sans max. -->
                 @if (settings && settings.llm_provider === 'ollama') {
                   <section class="card">
-                    <h2>Fenetre de contexte</h2>
+                    <h2>{{ 'settings.context.title' | translate }}</h2>
                     <!-- Ollama : slider borne par le max du modele -->
                     @if (settings.llm_provider === 'ollama') {
                       <div class="form-row">
                         <label for="llm-num-ctx">
-                          Tokens alloues au modele
+                          {{ 'settings.context.tokens' | translate }}
                           <span class="ctx-value">{{ settings.llm_num_ctx | number }}</span>
                           @if (ollamaModelMaxContext > 0) {
                             <span class="ctx-max">
-                              / {{ ollamaModelMaxContext | number }} max
+                              {{ 'settings.context.max' | translate:{ max: (ollamaModelMaxContext | number) } }}
                             </span>
                           }
                         </label>
@@ -352,17 +332,10 @@
                           [(ngModel)]="settings.llm_num_ctx"
                           class="ctx-slider">
                           @if (ollamaModelMaxContext > 0) {
-                            <p class="hint">
-                              Le modele <strong>{{ settings.llm_model }}</strong> accepte jusqu'a
-                              {{ ollamaModelMaxContext | number }} tokens. Plus la valeur est elevee, plus
-                              l'IA peut tenir d'historique et de contexte — au prix de VRAM et de latence.
-                            </p>
+                            <p class="hint" [innerHTML]="'settings.context.hintKnown' | translate:{ model: settings.llm_model, max: (ollamaModelMaxContext | number) }"></p>
                           }
                           @if (ollamaModelMaxContext === 0) {
-                            <p class="hint">
-                              Impossible de determiner la fenetre max du modele (Ollama injoignable ou modele
-                              inconnu). Slider borne a {{ CTX_FALLBACK_MAX | number }} par securite.
-                            </p>
+                            <p class="hint" [innerHTML]="'settings.context.hintUnknown' | translate:{ max: (CTX_FALLBACK_MAX | number) }"></p>
                           }
                         </div>
                       }
@@ -372,39 +345,26 @@
                   <!-- Bloc Import de PDF -->
                   @if (settings) {
                     <section class="card">
-                      <h2>Import de PDF</h2>
+                      <h2>{{ 'settings.pdf.title' | translate }}</h2>
                       <div class="form-row">
-                        <label for="import-chunk-tokens">Taille des morceaux a l'import (tokens)</label>
+                        <label for="import-chunk-tokens">{{ 'settings.pdf.chunkTokens' | translate }}</label>
                         <input
                           id="import-chunk-tokens"
                           type="number"
                           min="2000"
                           step="1000"
                           [(ngModel)]="settings.import_chunk_tokens">
-                          <p class="hint">
-                            Lors de l'import d'un PDF (regles ou campagne), le texte est decoupe en morceaux
-                            de cette taille avant d'etre analyse par l'IA. <strong>Plus gros = moins de morceaux</strong>,
-                            donc plus rapide et moins de fragmentation/doublons — mais le morceau doit tenir dans
-                            la fenetre du modele.
-                            <br />
-                            Repere : ~10 000 pour Ollama (16k de contexte) ; jusqu'a ~100 000 pour un modele a
-                            grand contexte (ex : GPT-5 mini, 400k) afin de traiter un livre entier en une seule passe.
-                            Attention : un gros morceau = generation plus longue (voir le timeout ci-dessous).
-                          </p>
+                          <p class="hint" [innerHTML]="'settings.pdf.chunkTokensHint' | translate"></p>
                         </div>
                         <div class="form-row">
-                          <label for="llm-timeout">Timeout des appels IA (secondes)</label>
+                          <label for="llm-timeout">{{ 'settings.pdf.timeout' | translate }}</label>
                           <input
                             id="llm-timeout"
                             type="number"
                             min="30"
                             step="30"
                             [(ngModel)]="settings.llm_timeout_seconds">
-                            <p class="hint">
-                              Delai max d'attente d'une reponse du modele. Si un import lourd echoue avec
-                              « delai depasse » (timeout), <strong>augmentez cette valeur</strong> (ex : 600)
-                              ou reduisez la taille des morceaux ci-dessus. Defaut : 300 s.
-                            </p>
+                            <p class="hint" [innerHTML]="'settings.pdf.timeoutHint' | translate"></p>
                           </div>
                         </section>
                       }
@@ -416,7 +376,7 @@
                         <div class="actions">
                           <button class="btn-primary" (click)="save()" [disabled]="saving">
                             <lucide-icon [img]="Save" [size]="16"></lucide-icon>
-                            <span>{{ saving ? 'Sauvegarde...' : 'Sauvegarder' }}</span>
+                            <span>{{ (saving ? 'common.saving' : 'common.save') | translate }}</span>
                           </button>
                         </div>
                       }

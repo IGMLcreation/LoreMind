@@ -1,0 +1,102 @@
+{
+  "lore": {
+    "heroTitle": "Your Worlds",
+    "heroSubtitle": "Select an existing lore or create a new world",
+    "cardDate": "2h ago",
+    "statPages": "{{n}} pages",
+    "statFolders": "{{n}} folders",
+    "newLore": "New Lore",
+    "newLoreSubtitle": "Create a new world",
+    "tip": "💡 Tip: Use templates to structure your world consistently"
+  },
+  "folderView": {
+    "breadcrumb": "Breadcrumb",
+    "summary": "{{folders}} subfolder(s) · {{pages}} page(s)",
+    "editTitle": "Edit folder",
+    "deleteTitle": "Delete the folder and all its contents",
+    "subfolders": "Subfolders",
+    "newSubfolder": "New subfolder",
+    "noSubfolders": "No subfolders.",
+    "pages": "Pages",
+    "newPage": "New page",
+    "noPages": "No pages in this folder.",
+    "deleteConfirmTitle": "Delete folder",
+    "deleteConfirmMessage": "Delete the folder \"{{name}}\"?",
+    "impact": {
+      "subfolders": "{{n}} subfolder",
+      "subfoldersPlural": "{{n}} subfolders",
+      "pages": "{{n}} page",
+      "pagesPlural": "{{n}} pages",
+      "alsoDeletes": "This action will also delete: {{items}}.",
+      "irreversible": "This action is irreversible."
+    }
+  },
+  "loreCreate": {
+    "title": "Create a new Lore",
+    "nameLabel": "World name *",
+    "namePlaceholder": "e.g. Realm of Shadows, Cyberpunk 2157...",
+    "descriptionPlaceholder": "Briefly describe your world, its mood, its genre...",
+    "infoIntro": "<strong>💡 Tip:</strong> Your lore will be created with a few default templates:",
+    "infoNpc": "NPC - For your characters",
+    "infoPlace": "Place - For your cities and regions",
+    "infoFaction": "Faction - For your organizations",
+    "infoItem": "Item - For your artifacts",
+    "infoFooter": "You'll be able to create your own templates afterwards!",
+    "submit": "Create lore"
+  },
+  "loreDetail": {
+    "graph": "Graph",
+    "graphTitle": "View the graph of pages and their links (NPCs included)",
+    "editTitle": "Edit Lore",
+    "deleteTitle": "Delete Lore",
+    "folders": "Folders",
+    "newFolder": "New folder",
+    "noFolders": "No folders yet.",
+    "createFirstFolder": "Create your first folder",
+    "deleteConfirmTitle": "Delete Lore",
+    "deleteConfirmMessage": "Permanently delete the Lore \"{{name}}\"?",
+    "impact": {
+      "folders": "{{n}} folder",
+      "foldersPlural": "{{n}} folders",
+      "pages": "{{n}} page",
+      "pagesPlural": "{{n}} pages",
+      "templates": "{{n}} template",
+      "templatesPlural": "{{n}} templates",
+      "alsoDeletes": "This action will also delete: {{items}}.",
+      "detachedCampaigns": "{{n}} campaign will be kept but will lose its link to this world.",
+      "detachedCampaignsPlural": "{{n}} campaigns will be kept but will lose their link to this world.",
+      "irreversible": "This action is irreversible."
+    }
+  },
+  "loreGraph": {
+    "back": "Back to Lore",
+    "title": "{{name}} — Graph",
+    "subtitle": "{{pages}} page(s) · {{npcs}} NPC · {{edges}} link(s). Click a node to open it, drag it to rearrange.",
+    "legendPage": "Lore page",
+    "legendNpc": "NPC",
+    "legendLink": "NPC → page link",
+    "empty": "No pages in this Lore yet — the graph will fill in as you go.",
+    "hint": "No links yet: link pages together (a page's \"Related pages\") or attach an NPC to Lore pages from its sheet."
+  },
+  "loreNodeCreate": {
+    "title": "Create a new folder",
+    "subtitle": "Folders let you organize your pages by category",
+    "nameLabel": "Folder name *",
+    "namePlaceholder": "e.g. Characters, Creatures...",
+    "parentLabel": "Parent folder",
+    "rootOption": "— Lore root —",
+    "parentHint": "Leave empty to create a folder at the lore root",
+    "iconLabel": "Icon",
+    "descriptionPlaceholder": "Describe the type of content this folder will contain...",
+    "submit": "Create folder"
+  },
+  "loreNodeEdit": {
+    "title": "Edit folder",
+    "summary": "{{folders}} subfolder(s) · {{pages}} page(s)",
+    "nameLabel": "Folder name *",
+    "parentLabel": "Parent folder",
+    "rootOption": "— Lore root —",
+    "parentHint": "You cannot select a subfolder of the current folder (cycles are forbidden)",
+    "iconLabel": "Icon"
+  }
+}

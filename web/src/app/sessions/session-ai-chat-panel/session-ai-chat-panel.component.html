@@ -5,9 +5,9 @@
     @if (messages.length === 0 && !currentAssistantText && !error) {
       <div class="welcome-hint">
         <lucide-icon [img]="Sparkles" [size]="18"></lucide-icon>
-        <p>Pose une question à l'IA pendant la partie.</p>
+        <p>{{ 'sessionAiChatPanel.welcome' | translate }}</p>
         <p class="welcome-sub">
-          Elle connaît ton univers, ta campagne, les règles du système et tout ce qui a été noté dans le journal.
+          {{ 'sessionAiChatPanel.welcomeSub' | translate }}
         </p>
       </div>
     }
@@ -20,10 +20,10 @@
             type="button"
             class="msg-action"
             [disabled]="!canSaveToJournal"
-            [title]="canSaveToJournal ? 'Ajouter cette réponse au journal' : 'Session terminée'"
+            [title]="(canSaveToJournal ? 'sessionAiChatPanel.saveReplyTitle' : 'sessionAiChatPanel.sessionEnded') | translate"
             (click)="onSaveToJournal(m.content)">
             <lucide-icon [img]="BookmarkPlus" [size]="12"></lucide-icon>
-            Au journal
+            {{ 'sessionAiChatPanel.toJournal' | translate }}
           </button>
         }
       </div>
@@ -47,7 +47,7 @@
       [(ngModel)]="input"
       name="aiChatInput"
       rows="2"
-      [placeholder]="isStreaming ? 'L’IA répond…' : 'Demande une idée, un rebondissement, une description…'"
+      [placeholder]="(isStreaming ? 'sessionAiChatPanel.replying' : 'sessionAiChatPanel.inputPlaceholder') | translate"
       [disabled]="isStreaming"
     (keydown.control.enter)="send()"></textarea>
 
@@ -56,7 +56,7 @@
         class="btn-link"
         [disabled]="messages.length === 0 && !currentAssistantText"
         (click)="clearConversation()"
-        title="Effacer la conversation">
+        [title]="'sessionAiChatPanel.clearConversation' | translate">
         <lucide-icon [img]="Trash2" [size]="12"></lucide-icon>
       </button>
 
@@ -67,7 +67,7 @@
           [disabled]="!input.trim()"
           (click)="send()">
           <lucide-icon [img]="Send" [size]="14"></lucide-icon>
-          Envoyer
+          {{ 'sessionAiChatPanel.send' | translate }}
         </button>
       }
 
@@ -77,7 +77,7 @@
           class="btn-secondary btn-send"
           (click)="cancelStream()">
           <lucide-icon [img]="Square" [size]="14"></lucide-icon>
-          Stop
+          {{ 'sessionAiChatPanel.stop' | translate }}
         </button>
       }
     </div>

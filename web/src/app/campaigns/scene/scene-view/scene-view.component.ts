@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { LucideAngularModule, Pencil, Trash2 } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { resolveCampaignIcon } from '../../campaign-icons';
 import { CampaignService } from '../../../services/campaign.service';
 import { CharacterService } from '../../../services/character.service';
@@ -26,7 +27,7 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  */
 @Component({
     selector: 'app-scene-view',
-    imports: [RouterModule, LucideAngularModule, ImageGalleryComponent],
+    imports: [RouterModule, LucideAngularModule, ImageGalleryComponent, TranslatePipe],
     templateUrl: './scene-view.component.html',
     styleUrls: ['./scene-view.component.scss']
 })
@@ -57,7 +58,8 @@ export class SceneViewComponent implements OnInit, OnDestroy {
     private pageService: PageService,
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -98,12 +100,12 @@ export class SceneViewComponent implements OnInit, OnDestroy {
       this.availableEnemies = treeData.enemies ?? [];
       this.pageTitleService.set(scene.name);
 
-      this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId));
+      this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId, this.translate));
     });
   }
 
   titleOfRelated(pageId: string): string {
-    return this.availablePages.find(p => p.id === pageId)?.title ?? '(page supprimée)';
+    return this.availablePages.find(p => p.id === pageId)?.title ?? this.translate.instant('sceneView.deletedPage');
   }
 
   /** Fiches du bestiaire liées à la rencontre (IDs orphelins ignorés). */
@@ -128,7 +130,7 @@ export class SceneViewComponent implements OnInit, OnDestroy {
 
   /** Résout le nom d'une pièce cible (pour afficher les sorties inter-pièces). */
   roomNameById(scene: Scene | null, roomId: string): string {
-    return scene?.rooms?.find(r => r.id === roomId)?.name ?? '(pièce supprimée)';
+    return scene?.rooms?.find(r => r.id === roomId)?.name ?? this.translate.instant('sceneView.deletedRoom');
   }
 
   editMode(): void {
@@ -143,10 +145,10 @@ export class SceneViewComponent implements OnInit, OnDestroy {
     if (!this.scene) return;
     const scene = this.scene;
     this.confirmDialog.confirm({
-      title: 'Supprimer la scène',
-      message: `Supprimer la scène "${scene.name}" ?`,
-      details: ['Cette action est irréversible.'],
-      confirmLabel: 'Supprimer',
+      title: this.translate.instant('sceneView.deleteTitle'),
+      message: this.translate.instant('sceneView.deleteMessage', { name: scene.name }),
+      details: [this.translate.instant('sceneView.deleteIrreversible')],
+      confirmLabel: this.translate.instant('common.delete'),
       variant: 'danger'
     }).then(ok => {
       if (!ok) return;

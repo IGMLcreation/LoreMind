@@ -3,6 +3,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { LucideAngularModule, LucideIconData, Folder, FileText, Pencil, Trash2, Plus, ChevronRight } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { LoreService } from '../../services/lore.service';
 import { TemplateService } from '../../services/template.service';
 import { PageService } from '../../services/page.service';
@@ -24,7 +25,7 @@ import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog
  */
 @Component({
     selector: 'app-folder-view',
-    imports: [LucideAngularModule],
+    imports: [LucideAngularModule, TranslatePipe],
     templateUrl: './folder-view.component.html',
     styleUrls: ['./folder-view.component.scss']
 })
@@ -53,7 +54,8 @@ export class FolderViewComponent implements OnInit, OnDestroy {
     private pageService: PageService,
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -146,20 +148,24 @@ export class FolderViewComponent implements OnInit, OnDestroy {
     this.loreService.getLoreNodeDeletionImpact(this.folderId).subscribe({
       next: impact => {
         const parts: string[] = [];
-        if (impact.folders > 0) parts.push(`${impact.folders} sous-dossier${impact.folders > 1 ? 's' : ''}`);
-        if (impact.pages > 0) parts.push(`${impact.pages} page${impact.pages > 1 ? 's' : ''}`);
+        if (impact.folders > 0) parts.push(this.translate.instant(
+          impact.folders > 1 ? 'folderView.impact.subfoldersPlural' : 'folderView.impact.subfolders',
+          { n: impact.folders }));
+        if (impact.pages > 0) parts.push(this.translate.instant(
+          impact.pages > 1 ? 'folderView.impact.pagesPlural' : 'folderView.impact.pages',
+          { n: impact.pages }));
 
         const details: string[] = [];
         if (parts.length) {
-          details.push(`Cette action supprimera aussi : ${parts.join(', ')}.`);
+          details.push(this.translate.instant('folderView.impact.alsoDeletes', { items: parts.join(', ') }));
         }
-        details.push('Cette action est irréversible.');
+        details.push(this.translate.instant('folderView.impact.irreversible'));
 
         this.confirmDialog.confirm({
-          title: 'Supprimer le dossier',
-          message: `Supprimer le dossier "${node.name}" ?`,
+          title: this.translate.instant('folderView.deleteConfirmTitle'),
+          message: this.translate.instant('folderView.deleteConfirmMessage', { name: node.name }),
           details,
-          confirmLabel: 'Supprimer',
+          confirmLabel: this.translate.instant('common.delete'),
           variant: 'danger'
         }).then(ok => {
           if (!ok) return;

@@ -1,5 +1,5 @@
 @if (items.length) {
-  <nav class="breadcrumb" aria-label="Fil d'Ariane">
+  <nav class="breadcrumb" [attr.aria-label]="'breadcrumb.ariaLabel' | translate">
     <ol>
       @for (item of items; track $index; let last = $last) {
         <li

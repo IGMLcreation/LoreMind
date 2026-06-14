@@ -3,6 +3,7 @@ import { Component, OnInit, OnDestroy, ElementRef, ViewChild } from '@angular/co
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { LucideAngularModule, ArrowLeft, Network } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { LoreService } from '../../services/lore.service';
 import { TemplateService } from '../../services/template.service';
 import { PageService } from '../../services/page.service';
@@ -45,7 +46,7 @@ interface GraphEdge {
  */
 @Component({
     selector: 'app-lore-graph',
-    imports: [RouterModule, LucideAngularModule],
+    imports: [RouterModule, LucideAngularModule, TranslatePipe],
     templateUrl: './lore-graph.component.html',
     styleUrls: ['./lore-graph.component.scss']
 })
@@ -86,7 +87,8 @@ export class LoreGraphComponent implements OnInit, OnDestroy {
     private pageService: PageService,
     private npcService: NpcService,
     private layoutService: LayoutService,
-    private pageTitleService: PageTitleService
+    private pageTitleService: PageTitleService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -97,7 +99,7 @@ export class LoreGraphComponent implements OnInit, OnDestroy {
     }).subscribe(({ sidebar, npcs }) => {
       this.lore = sidebar.lore;
       this.layoutService.show(buildLoreSidebarConfig(sidebar));
-      this.pageTitleService.set(`${sidebar.lore.name} — Graphe`);
+      this.pageTitleService.set(this.translate.instant('loreGraph.title', { name: sidebar.lore.name }));
       this.buildGraph(sidebar.pages, npcs);
     });
   }

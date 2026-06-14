@@ -3,38 +3,38 @@
     <header class="page-header">
       <div>
         <h1>{{ template.name }}</h1>
-        <p class="subtitle">Template</p>
+        <p class="subtitle">{{ 'templateEdit.subtitle' | translate }}</p>
       </div>
       <div class="header-actions">
-        <button type="button" class="btn-danger" (click)="delete()">Supprimer</button>
-        <button type="button" class="btn-primary" (click)="save()" [disabled]="form.invalid">Sauvegarder</button>
+        <button type="button" class="btn-danger" (click)="delete()">{{ 'common.delete' | translate }}</button>
+        <button type="button" class="btn-primary" (click)="save()" [disabled]="form.invalid">{{ 'common.save' | translate }}</button>
       </div>
     </header>
     <form [formGroup]="form" class="template-form">
       <!-- Colonne gauche ---------------------------------------------- -->
       <div class="col-left">
         <div class="field">
-          <label for="template-edit-name">Nom</label>
+          <label for="template-edit-name">{{ 'common.name' | translate }}</label>
           <input id="template-edit-name" type="text" formControlName="name" />
         </div>
         <div class="field">
-          <label for="template-edit-default-node">Dossier par défaut</label>
+          <label for="template-edit-default-node">{{ 'templateEdit.defaultNodeLabel' | translate }}</label>
           <select id="template-edit-default-node" formControlName="defaultNodeId">
-            <option value="">-- Aucun --</option>
+            <option value="">{{ 'templateEdit.noneOption' | translate }}</option>
             @for (node of nodes; track node) {
               <option [value]="node.id">{{ node.name }}</option>
             }
           </select>
-          <p class="hint">Les pages créées avec ce template seront placées dans ce dossier par défaut</p>
+          <p class="hint">{{ 'templateEdit.defaultNodeHint' | translate }}</p>
         </div>
         <div class="field">
-          <label for="template-edit-description">Description</label>
+          <label for="template-edit-description">{{ 'common.description' | translate }}</label>
           <textarea id="template-edit-description" formControlName="description" rows="6"></textarea>
         </div>
       </div>
       <!-- Colonne droite --------------------------------------------- -->
       <div class="col-right">
-        <label class="section-label">Champs du template</label>
+        <label class="section-label">{{ 'templateEdit.fieldsLabel' | translate }}</label>
         <ul class="fields-list">
           @for (f of fields; track f; let i = $index; let first = $first; let last = $last) {
             <li class="field-row">
@@ -42,13 +42,13 @@
                 <button type="button" class="btn-icon-ghost btn-reorder"
                   (click)="moveField(i, -1)"
                   [disabled]="first"
-                  aria-label="Monter d'un cran" title="Monter">
+                  [attr.aria-label]="'templateEdit.moveUp' | translate" [title]="'templateEdit.moveUp' | translate">
                   <lucide-icon [img]="ChevronUp" [size]="12"></lucide-icon>
                 </button>
                 <button type="button" class="btn-icon-ghost btn-reorder"
                   (click)="moveField(i, 1)"
                   [disabled]="last"
-                  aria-label="Descendre d'un cran" title="Descendre">
+                  [attr.aria-label]="'templateEdit.moveDown' | translate" [title]="'templateEdit.moveDown' | translate">
                   <lucide-icon [img]="ChevronDown" [size]="12"></lucide-icon>
                 </button>
               </div>
@@ -66,11 +66,11 @@
                 [ngModel]="f.type"
                 [ngModelOptions]="{ standalone: true }"
                 (ngModelChange)="setFieldType(i, $event)"
-                title="Type du champ">
-                <option value="TEXT">Texte</option>
-                <option value="IMAGE">Image</option>
-                <option value="KEY_VALUE_LIST">Liste clé/valeur</option>
-                <option value="TABLE">Tableau</option>
+                [title]="'templateEdit.fieldTypeTitle' | translate">
+                <option value="TEXT">{{ 'templateEdit.typeText' | translate }}</option>
+                <option value="IMAGE">{{ 'templateEdit.typeImage' | translate }}</option>
+                <option value="KEY_VALUE_LIST">{{ 'templateEdit.typeKeyValue' | translate }}</option>
+                <option value="TABLE">{{ 'templateEdit.typeTable' | translate }}</option>
               </select>
               @if (f.type === 'IMAGE') {
                 <select
@@ -78,14 +78,14 @@
                   [ngModel]="f.layout ?? 'GALLERY'"
                   [ngModelOptions]="{ standalone: true }"
                   (ngModelChange)="setFieldLayout(i, $event)"
-                  title="Mise en page des images">
-                  <option value="GALLERY">Grille</option>
-                  <option value="HERO">Heros</option>
-                  <option value="MASONRY">Mosaique</option>
-                  <option value="CAROUSEL">Carrousel</option>
+                  [title]="'templateEdit.layoutTitle' | translate">
+                  <option value="GALLERY">{{ 'templateEdit.layoutGallery' | translate }}</option>
+                  <option value="HERO">{{ 'templateEdit.layoutHero' | translate }}</option>
+                  <option value="MASONRY">{{ 'templateEdit.layoutMasonry' | translate }}</option>
+                  <option value="CAROUSEL">{{ 'templateEdit.layoutCarousel' | translate }}</option>
                 </select>
               }
-              <button type="button" class="btn-icon-danger" (click)="removeField(i)" aria-label="Supprimer">
+              <button type="button" class="btn-icon-danger" (click)="removeField(i)" [attr.aria-label]="'common.delete' | translate">
                 <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
               </button>
             </li>
@@ -99,22 +99,20 @@
                       [ngModel]="lbl"
                       [ngModelOptions]="{ standalone: true }"
                       (ngModelChange)="updateLabel(f, li, $event)"
-                      [placeholder]="f.type === 'TABLE' ? 'Colonne' : 'Libellé'"
-                      [attr.aria-label]="(f.type === 'TABLE' ? 'Colonne ' : 'Libellé ') + (li + 1)" />
-                    <button type="button" class="kv-label-remove" (click)="removeLabel(f, li)" aria-label="Retirer">
+                      [placeholder]="(f.type === 'TABLE' ? 'templateEdit.column' : 'templateEdit.label') | translate"
+                      [attr.aria-label]="(f.type === 'TABLE' ? 'templateEdit.columnN' : 'templateEdit.labelN') | translate:{ n: (li + 1) }" />
+                    <button type="button" class="kv-label-remove" (click)="removeLabel(f, li)" [attr.aria-label]="'common.remove' | translate">
                       <lucide-icon [img]="X" [size]="11"></lucide-icon>
                     </button>
                   </span>
                 }
                 <button type="button" class="btn-kv-add-label" (click)="addLabel(f)">
                   <lucide-icon [img]="Plus" [size]="12"></lucide-icon>
-                  {{ f.type === 'TABLE' ? 'Colonne' : 'Libellé' }}
+                  {{ (f.type === 'TABLE' ? 'templateEdit.column' : 'templateEdit.label') | translate }}
                 </button>
                 @if (!(f.labels ?? []).length) {
                   <span class="kv-labels-hint">
-                    {{ f.type === 'TABLE'
-                      ? 'Ajoutez les colonnes du tableau (ex : Objet, Prix, Description…)'
-                      : 'Ajoutez les libellés des lignes (ex : FOR, DEX, CON…)' }}
+                    {{ (f.type === 'TABLE' ? 'templateEdit.tableLabelsHint' : 'templateEdit.kvLabelsHint') | translate }}
                   </span>
                 }
               </li>
@@ -126,23 +124,23 @@
             type="text"
             [(ngModel)]="newFieldName"
             [ngModelOptions]="{ standalone: true }"
-            placeholder="+ Ajouter un champ"
+            [placeholder]="'templateEdit.addFieldPlaceholder' | translate"
             (keydown.enter)="$event.preventDefault(); addField()" />
           <select
             class="type-select"
             [(ngModel)]="newFieldType"
             [ngModelOptions]="{ standalone: true }"
-            aria-label="Type du champ">
-            <option value="TEXT">Texte</option>
-            <option value="IMAGE">Image</option>
-            <option value="KEY_VALUE_LIST">Liste clé/valeur</option>
-            <option value="TABLE">Tableau</option>
+            [attr.aria-label]="'templateEdit.fieldTypeTitle' | translate">
+            <option value="TEXT">{{ 'templateEdit.typeText' | translate }}</option>
+            <option value="IMAGE">{{ 'templateEdit.typeImage' | translate }}</option>
+            <option value="KEY_VALUE_LIST">{{ 'templateEdit.typeKeyValue' | translate }}</option>
+            <option value="TABLE">{{ 'templateEdit.typeTable' | translate }}</option>
           </select>
-          <button type="button" class="btn-add" (click)="addField()" title="Ajouter le champ">
+          <button type="button" class="btn-add" (click)="addField()" [title]="'templateEdit.addFieldTitle' | translate">
             <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
           </button>
         </div>
-        <p class="hint">Texte = libre + generable par l'IA. Image = galerie. Liste clé/valeur = paires libellé/valeur (stats). Tableau = colonnes fixes + lignes ajoutées librement (boutique, inventaire…).</p>
+        <p class="hint">{{ 'templateEdit.fieldsHelp' | translate }}</p>
       </div>
     </form>
   </div>

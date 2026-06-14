@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 import { LucideAngularModule, Dices, BookmarkPlus, Trash2 } from 'lucide-angular';
 
 /** Faces de dés supportées par le roller. */
@@ -26,7 +27,7 @@ export interface DiceRollResult {
  */
 @Component({
     selector: 'app-session-dice-panel',
-    imports: [FormsModule, LucideAngularModule],
+    imports: [FormsModule, LucideAngularModule, TranslatePipe],
     templateUrl: './session-dice-panel.component.html',
     styleUrls: ['./session-dice-panel.component.scss']
 })

@@ -1,13 +1,14 @@
 import { Component, Input, Output, EventEmitter, HostListener, OnDestroy, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 import { LucideAngularModule, ChevronRight, ChevronDown, PanelLeftClose, PanelLeftOpen, Plus, FolderPlus, FilePlus, Home, LucideIconData } from 'lucide-angular';
 import { TreeItem, TreeCreateAction, SidebarAction, BottomPanel, BottomPanelItem, LayoutService } from '../../services/layout.service';
 import { resolveIcon } from '../../lore/lore-icons';
 
 @Component({
     selector: 'app-secondary-sidebar',
-    imports: [CommonModule, LucideAngularModule],
+    imports: [CommonModule, LucideAngularModule, TranslatePipe],
     templateUrl: './secondary-sidebar.component.html',
     styleUrls: ['./secondary-sidebar.component.scss']
 })

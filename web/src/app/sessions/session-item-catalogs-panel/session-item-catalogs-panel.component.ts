@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 
+import { TranslatePipe } from '@ngx-translate/core';
 import { LucideAngularModule, Package, BookmarkPlus, ChevronLeft } from 'lucide-angular';
 import { catchError, of } from 'rxjs';
 import { ItemCatalogService } from '../../services/item-catalog.service';
@@ -13,7 +14,7 @@ interface ItemGroup { category: string; items: CatalogItem[]; }
  */
 @Component({
     selector: 'app-session-item-catalogs-panel',
-    imports: [LucideAngularModule],
+    imports: [LucideAngularModule, TranslatePipe],
     templateUrl: './session-item-catalogs-panel.component.html',
     styleUrls: ['./session-item-catalogs-panel.component.scss']
 })

@@ -2,8 +2,8 @@
 
   <div class="campaigns-hero">
     <lucide-icon [img]="Map" [size]="56" class="hero-icon"></lucide-icon>
-    <h1>Vos Campagnes</h1>
-    <p class="hero-subtitle">Rejoignez une campagne ou créez-en de nouvelles</p>
+    <h1>{{ 'campaigns.heroTitle' | translate }}</h1>
+    <p class="hero-subtitle">{{ 'campaigns.heroSubtitle' | translate }}</p>
   </div>
 
   <div class="campaigns-grid">
@@ -11,14 +11,14 @@
     @for (campaign of campaigns; track campaign) {
       <div class="campaign-card" (click)="navigateToDetail(campaign.id!)">
         <div class="card-header">
-          <span class="status-badge en-cours">En cours</span>
-          <span class="card-date">{{ campaign.playerCount }} joueurs</span>
+          <span class="status-badge en-cours">{{ 'campaigns.statusInProgress' | translate }}</span>
+          <span class="card-date">{{ 'campaigns.players' | translate:{ n: campaign.playerCount || 0 } }}</span>
         </div>
         <h2>{{ campaign.name }}</h2>
         <p class="card-description">{{ campaign.description }}</p>
         <div class="card-stats">
-          <span>⚔️ {{ campaign.arcCount || 0 }} arcs</span>
-          <span>📖 {{ campaign.chapterCount || 0 }} chapitres</span>
+          <span>⚔️ {{ 'campaigns.arcs' | translate:{ n: campaign.arcCount || 0 } }}</span>
+          <span>📖 {{ 'campaigns.chapters' | translate:{ n: campaign.chapterCount || 0 } }}</span>
         </div>
       </div>
     }
@@ -27,13 +27,13 @@
       <div class="new-icon">
         <lucide-icon [img]="Plus" [size]="20"></lucide-icon>
       </div>
-      <h2>Nouvelle Campagne</h2>
-      <p class="card-description">Créez une nouvelle aventure</p>
+      <h2>{{ 'campaigns.newCampaign' | translate }}</h2>
+      <p class="card-description">{{ 'campaigns.newCampaignSubtitle' | translate }}</p>
     </div>
 
   </div>
 
-  <p class="tip">💡 Astuce : Organisez vos arcs et chapitres pour ne rien oublier de vos aventures</p>
+  <p class="tip">{{ 'campaigns.tip' | translate }}</p>
 
 </div>
 

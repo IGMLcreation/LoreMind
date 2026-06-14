@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   LucideAngularModule, LucideIconData,
   Dices, ArrowLeft, Square, Trash2, Pencil, Check,
@@ -29,7 +30,7 @@ import { DiceRollResult } from '../session-dice-panel/session-dice-panel.compone
  */
 @Component({
     selector: 'app-session-detail',
-    imports: [CommonModule, FormsModule, LucideAngularModule, RouterLink, SessionReferencePanelComponent],
+    imports: [CommonModule, FormsModule, LucideAngularModule, TranslatePipe, RouterLink, SessionReferencePanelComponent],
     templateUrl: './session-detail.component.html',
     styleUrls: ['./session-detail.component.scss']
 })
@@ -80,8 +81,21 @@ export class SessionDetailComponent implements OnInit, OnDestroy {
     private entryService: SessionEntryService,
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private translate: TranslateService
   ) {}
+
+  /** Libellé traduit d'un type d'entrée (le modèle partagé reste en FR pour la donnée). */
+  typeLabel(type: EntryType): string {
+    return this.translate.instant('sessionDetail.entryType.' + type);
+  }
+
+  /** Placeholder de la zone de saisie, dépendant du type sélectionné. */
+  newEntryPlaceholder(): string {
+    return this.translate.instant('sessionDetail.addEntryPlaceholder', {
+      type: this.typeLabel(this.newEntryType).toLowerCase()
+    });
+  }
 
   ngOnInit(): void {
     this.layoutService.hide();
@@ -144,10 +158,10 @@ export class SessionDetailComponent implements OnInit, OnDestroy {
     if (!this.session || !this.session.active) return;
     const session = this.session;
     this.confirmDialog.confirm({
-      title: 'Terminer la session ?',
-      message: `Marquer la session "${session.name}" comme terminée ?`,
-      details: ['Tu pourras toujours consulter son contenu après.'],
-      confirmLabel: 'Terminer',
+      title: this.translate.instant('sessionDetail.endConfirm.title'),
+      message: this.translate.instant('sessionDetail.endConfirm.message', { name: session.name }),
+      details: [this.translate.instant('sessionDetail.endConfirm.detail')],
+      confirmLabel: this.translate.instant('sessionDetail.endConfirm.confirmLabel'),
       variant: 'warning'
     }).then(ok => {
       if (!ok) return;
@@ -162,17 +176,20 @@ export class SessionDetailComponent implements OnInit, OnDestroy {
     if (!this.session) return;
     const session = this.session;
     const entryCount = this.entries.length;
+    const entriesDetail = entryCount === 0
+      ? this.translate.instant('sessionDetail.deleteConfirm.noEntries')
+      : entryCount === 1
+        ? this.translate.instant('sessionDetail.deleteConfirm.entriesOne')
+        : this.translate.instant('sessionDetail.deleteConfirm.entriesMany', { n: entryCount });
     const details = [
-      entryCount > 0
-        ? `${entryCount} entrée${entryCount > 1 ? 's' : ''} de journal sera également supprimée.`
-        : 'Aucune entrée de journal pour cette session.',
-      'Cette action est irréversible.'
+      entriesDetail,
+      this.translate.instant('sessionDetail.deleteConfirm.irreversible')
     ];
     this.confirmDialog.confirm({
-      title: 'Supprimer la session ?',
-      message: `Supprimer définitivement la session "${session.name}" ?`,
+      title: this.translate.instant('sessionDetail.deleteConfirm.title'),
+      message: this.translate.instant('sessionDetail.deleteConfirm.message', { name: session.name }),
       details,
-      confirmLabel: 'Supprimer',
+      confirmLabel: this.translate.instant('common.delete'),
       variant: 'danger'
     }).then(ok => {
       if (!ok) return;
@@ -284,9 +301,9 @@ export class SessionDetailComponent implements OnInit, OnDestroy {
     if (!this.session) return;
     const session = this.session;
     this.confirmDialog.confirm({
-      title: 'Supprimer cette entrée ?',
-      message: 'Cette entrée du journal sera définitivement supprimée.',
-      confirmLabel: 'Supprimer',
+      title: this.translate.instant('sessionDetail.deleteEntryConfirm.title'),
+      message: this.translate.instant('sessionDetail.deleteEntryConfirm.message'),
+      confirmLabel: this.translate.instant('common.delete'),
       variant: 'danger'
     }).then(ok => {
       if (!ok) return;

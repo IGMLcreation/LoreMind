@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, Save, ArrowLeft, User, Trash2, Sparkles } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { CharacterService } from '../../../services/character.service';
 import { CampaignService } from '../../../services/campaign.service';
 import { GameSystemService } from '../../../services/game-system.service';
@@ -26,7 +27,7 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  */
 @Component({
     selector: 'app-character-edit',
-    imports: [FormsModule, LucideAngularModule, AiChatDrawerComponent, DynamicFieldsFormComponent, SingleImagePickerComponent],
+    imports: [FormsModule, LucideAngularModule, TranslatePipe, AiChatDrawerComponent, DynamicFieldsFormComponent, SingleImagePickerComponent],
     templateUrl: './character-edit.component.html',
     styleUrls: ['./character-edit.component.scss']
 })
@@ -38,11 +39,13 @@ export class CharacterEditComponent implements OnInit {
   readonly Sparkles = Sparkles;
 
   chatOpen = false;
-  readonly chatQuickSuggestions = [
-    'Propose une backstory coherente avec l\'univers',
-    'Suggere 3 objectifs personnels pour ce personnage',
-    'Aide-moi a equilibrer les stats de combat'
-  ];
+  get chatQuickSuggestions(): string[] {
+    return [
+      this.translate.instant('characterEdit.chatSuggestion1'),
+      this.translate.instant('characterEdit.chatSuggestion2'),
+      this.translate.instant('characterEdit.chatSuggestion3')
+    ];
+  }
 
   toggleChat(): void { this.chatOpen = !this.chatOpen; }
 
@@ -67,7 +70,8 @@ export class CharacterEditComponent implements OnInit {
     private campaignService: CampaignService,
     private gameSystemService: GameSystemService,
     private campaignSidebar: CampaignSidebarService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -144,10 +148,10 @@ export class CharacterEditComponent implements OnInit {
   deleteCharacter(): void {
     if (!this.characterId) return;
     this.confirmDialog.confirm({
-      title: 'Supprimer la fiche ?',
-      message: `Supprimer la fiche de "${this.name}" ?`,
-      details: ['Cette action est irreversible.'],
-      confirmLabel: 'Supprimer',
+      title: this.translate.instant('characterEdit.deleteTitle'),
+      message: this.translate.instant('characterEdit.deleteMessage', { name: this.name }),
+      details: [this.translate.instant('characterEdit.irreversible')],
+      confirmLabel: this.translate.instant('common.delete'),
       variant: 'danger'
     }).then(ok => {
       if (!ok || !this.characterId) return;

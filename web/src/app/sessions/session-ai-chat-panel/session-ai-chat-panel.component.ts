@@ -4,6 +4,7 @@ import {
 } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   LucideAngularModule, Send, Sparkles, Trash2, BookmarkPlus, Square
 } from 'lucide-angular';
@@ -23,7 +24,7 @@ import { AiChatService, ChatMessage } from '../../services/ai-chat.service';
  */
 @Component({
     selector: 'app-session-ai-chat-panel',
-    imports: [FormsModule, LucideAngularModule],
+    imports: [FormsModule, LucideAngularModule, TranslatePipe],
     templateUrl: './session-ai-chat-panel.component.html',
     styleUrls: ['./session-ai-chat-panel.component.scss']
 })
@@ -50,7 +51,7 @@ export class SessionAiChatPanelComponent implements OnChanges, OnDestroy {
 
   private streamSub: Subscription | null = null;
 
-  constructor(private aiChat: AiChatService) {}
+  constructor(private aiChat: AiChatService, private translate: TranslateService) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     // Reset complet si on change de session (changement d'instance jouée).
@@ -87,8 +88,8 @@ export class SessionAiChatPanelComponent implements OnChanges, OnDestroy {
         }
       },
       error: (err: unknown) => {
-        const message = err instanceof Error ? err.message : 'Erreur inconnue';
-        this.error = `Erreur IA : ${message}`;
+        const message = err instanceof Error ? err.message : this.translate.instant('sessionAiChatPanel.unknownError');
+        this.error = this.translate.instant('sessionAiChatPanel.aiError', { message });
         this.isStreaming = false;
         this.streamSub = null;
       },
@@ -115,7 +116,7 @@ export class SessionAiChatPanelComponent implements OnChanges, OnDestroy {
     }
     // On garde ce qui a déjà été streamé : utile si l'IA partait dans le mur.
     if (this.currentAssistantText.trim()) {
-      this.messages = [...this.messages, { role: 'assistant', content: this.currentAssistantText + ' [interrompu]' }];
+      this.messages = [...this.messages, { role: 'assistant', content: this.currentAssistantText + ' ' + this.translate.instant('sessionAiChatPanel.interrupted') }];
     }
     this.currentAssistantText = '';
     this.isStreaming = false;

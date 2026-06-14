@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
 import { ConfirmDialogVariant } from './confirm-dialog.component';
 
 export interface ConfirmDialogOptions {
@@ -31,6 +32,8 @@ export class ConfirmDialogService {
   readonly state$ = new BehaviorSubject<ConfirmDialogState>(CLOSED_STATE);
   private resolver: ((value: boolean) => void) | null = null;
 
+  constructor(private translate: TranslateService) {}
+
   confirm(opts: ConfirmDialogOptions): Promise<boolean> {
     // Si un dialog precedent est encore ouvert, on le resout en "false"
     // avant d'en ouvrir un nouveau pour eviter une fuite de Promise.
@@ -40,11 +43,11 @@ export class ConfirmDialogService {
     }
     this.state$.next({
       open: true,
-      title: opts.title ?? 'Confirmation',
+      title: opts.title ?? this.translate.instant('confirmDialog.defaultTitle'),
       message: opts.message,
       details: opts.details ?? [],
-      confirmLabel: opts.confirmLabel ?? 'Confirmer',
-      cancelLabel: opts.cancelLabel ?? 'Annuler',
+      confirmLabel: opts.confirmLabel ?? this.translate.instant('common.confirm'),
+      cancelLabel: opts.cancelLabel ?? this.translate.instant('common.cancel'),
       variant: opts.variant ?? 'warning'
     });
     return new Promise<boolean>((resolve) => { this.resolver = resolve; });

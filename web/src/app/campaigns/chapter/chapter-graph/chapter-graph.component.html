@@ -2,18 +2,18 @@
 
   <div class="page-header">
     <div>
-      <h1>{{ chapter?.name || 'Chapitre' }} — Carte</h1>
-      <p class="subtitle">Organigramme des scènes et de leurs branches narratives</p>
+      <h1>{{ 'chapterGraph.title' | translate:{ name: chapter?.name || ('chapterGraph.chapter' | translate) } }}</h1>
+      <p class="subtitle">{{ 'chapterGraph.subtitle' | translate }}</p>
     </div>
     <button type="button" class="btn-secondary" (click)="back()">
       <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon>
-      Retour au chapitre
+      {{ 'chapterGraph.back' | translate }}
     </button>
   </div>
 
   @if (scenes.length === 0) {
     <div class="graph-empty">
-      <p>Ce chapitre n'a aucune scène. Créez-en pour voir apparaître la carte.</p>
+      <p>{{ 'chapterGraph.empty' | translate }}</p>
     </div>
   }
 
@@ -72,7 +72,7 @@
         </g>
       </svg>
       <small class="graph-hint">
-        💡 Cliquez sur une scène pour l'ouvrir, ou glissez-la pour réorganiser la carte. Les scènes non reliées au point d'entrée (scène d'ordre 1) apparaissent en bas.
+        {{ 'chapterGraph.hint' | translate }}
       </small>
     </div>
   }

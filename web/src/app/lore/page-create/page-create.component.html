@@ -1,21 +1,21 @@
 <div class="page">
 
   <header class="page-header">
-    <h1>Créer une nouvelle Page</h1>
-    <p class="subtitle">Créez une page à partir d'un template existant</p>
+    <h1>{{ 'pageCreate.title' | translate }}</h1>
+    <p class="subtitle">{{ 'pageCreate.subtitle' | translate }}</p>
   </header>
 
   <form [formGroup]="form" (ngSubmit)="submit()" class="page-form">
 
     <!-- Titre -->
     <div class="field">
-      <label for="page-title">Titre de la page *</label>
-      <input id="page-title" type="text" formControlName="title" placeholder="Ex: Maître Eldrin, La Cité d'Argent..." />
+      <label for="page-title">{{ 'pageCreate.pageTitleLabel' | translate }}</label>
+      <input id="page-title" type="text" formControlName="title" [placeholder]="'pageCreate.pageTitlePlaceholder' | translate" />
     </div>
 
     <!-- Template -->
     <div class="field">
-      <label>Template *</label>
+      <label>{{ 'pageCreate.templateLabel' | translate }}</label>
 
       @if (templates.length) {
         <div class="templates-grid">
@@ -39,20 +39,20 @@
             [routerLink]="['/lore', loreId, 'templates', 'create']"
             [queryParams]="{ returnTo: 'page-create' }"
             (click)="saveDraft()"
-            title="Créer un nouveau template pour ce Lore">
+            [title]="'pageCreate.createTemplateTitle' | translate">
             <div class="template-card-head">
               <lucide-icon [img]="Plus" [size]="16"></lucide-icon>
-              <span class="template-name">Créer un template</span>
+              <span class="template-name">{{ 'pageCreate.createTemplate' | translate }}</span>
             </div>
             <p class="template-description">
-              Vous reviendrez ici automatiquement, votre saisie sera conservée.
+              {{ 'pageCreate.createTemplateHint' | translate }}
             </p>
           </a>
         </div>
       } @else {
         <p class="empty-hint">
-          Aucun template défini pour ce Lore.
-          <a [routerLink]="['/lore', loreId, 'templates', 'create']" [queryParams]="{ returnTo: 'page-create' }" (click)="saveDraft()">Créer un template</a> d'abord.
+          {{ 'pageCreate.noTemplates' | translate }}
+          <a [routerLink]="['/lore', loreId, 'templates', 'create']" [queryParams]="{ returnTo: 'page-create' }" (click)="saveDraft()">{{ 'pageCreate.createTemplate' | translate }}</a> {{ 'pageCreate.firstSuffix' | translate }}
         </p>
       }
 
@@ -60,30 +60,27 @@
 
     <!-- Dossier de destination -->
     <div class="field">
-      <label for="page-node">Dossier de destination *</label>
+      <label for="page-node">{{ 'pageCreate.nodeLabel' | translate }}</label>
 
       @if (nodes.length) {
         <select id="page-node" formControlName="nodeId">
-          <option value="" disabled>Sélectionnez un dossier</option>
+          <option value="" disabled>{{ 'pageCreate.nodePlaceholder' | translate }}</option>
           @for (node of nodes; track node) {
             <option [value]="node.id">{{ node.name }}</option>
           }
         </select>
-        <p class="hint">La page sera créée dans ce dossier</p>
+        <p class="hint">{{ 'pageCreate.nodeHint' | translate }}</p>
       } @else {
         <p class="empty-hint">
-          Aucun dossier dans ce Lore.
-          <a [routerLink]="['/lore', loreId, 'nodes', 'create']" [queryParams]="{ returnTo: 'page-create' }" (click)="saveDraft()">Créer un dossier</a> d'abord.
+          {{ 'pageCreate.noNodes' | translate }}
+          <a [routerLink]="['/lore', loreId, 'nodes', 'create']" [queryParams]="{ returnTo: 'page-create' }" (click)="saveDraft()">{{ 'pageCreate.createNode' | translate }}</a> {{ 'pageCreate.firstSuffix' | translate }}
         </p>
       }
 
     </div>
 
     <!-- Aide contextuelle -->
-    <div class="info-box">
-      💡 Option 1 : <strong>Créer la page</strong> vide, puis remplir les champs manuellement.<br>
-      💡 Option 2 : <strong>Créer avec l'IA</strong> pour dialoguer avec un assistant qui pré-remplira les champs.
-    </div>
+    <div class="info-box" [innerHTML]="'pageCreate.infoBox' | translate"></div>
 
     <!-- Erreur wizard (parsing &lt;values&gt; ou échec HTTP) -->
     @if (wizardError) {
@@ -92,13 +89,13 @@
 
     <!-- Actions -->
     <div class="actions-row">
-      <button type="button" class="btn-secondary" (click)="cancel()">Annuler</button>
+      <button type="button" class="btn-secondary" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
       <button type="button" class="btn-ai" (click)="openWizard()" [disabled]="!canSubmit"
-        title="Ouvrir l'assistant IA pour pré-remplir les champs">
+        [title]="'pageCreate.aiTitle' | translate">
         <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
-        Créer avec l'IA
+        {{ 'pageCreate.createWithAi' | translate }}
       </button>
-      <button type="submit" class="btn-primary" [disabled]="!canSubmit">Créer la page</button>
+      <button type="submit" class="btn-primary" [disabled]="!canSubmit">{{ 'pageCreate.createPage' | translate }}</button>
     </div>
 
   </form>

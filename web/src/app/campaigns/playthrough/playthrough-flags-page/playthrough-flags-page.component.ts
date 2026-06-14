@@ -3,6 +3,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { LucideAngularModule, ArrowLeft } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { CampaignService } from '../../../services/campaign.service';
 import { CharacterService } from '../../../services/character.service';
 import { NpcService } from '../../../services/npc.service';
@@ -21,7 +22,7 @@ import { PlaythroughFlagsManagerComponent } from '../../../shared/playthrough-fl
  */
 @Component({
     selector: 'app-playthrough-flags-page',
-    imports: [RouterModule, LucideAngularModule, PlaythroughFlagsManagerComponent],
+    imports: [RouterModule, LucideAngularModule, PlaythroughFlagsManagerComponent, TranslatePipe],
     templateUrl: './playthrough-flags-page.component.html',
     styleUrls: ['./playthrough-flags-page.component.scss']
 })
@@ -42,7 +43,8 @@ export class PlaythroughFlagsPageComponent implements OnInit, OnDestroy {
     private enemyService: EnemyService,
     private playthroughService: PlaythroughService,
     private layoutService: LayoutService,
-    private pageTitleService: PageTitleService
+    private pageTitleService: PageTitleService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -65,8 +67,8 @@ export class PlaythroughFlagsPageComponent implements OnInit, OnDestroy {
       playthrough: this.playthroughService.getById(this.playthroughId)
     }).subscribe(({ campaign, allCampaigns, treeData, playthrough }) => {
       this.playthrough = playthrough;
-      this.pageTitleService.set(`${playthrough.name} — Faits`);
-      this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId));
+      this.pageTitleService.set(this.translate.instant('playthroughFlagsPage.pageTitle', { name: playthrough.name }));
+      this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId, this.translate));
     });
   }
 

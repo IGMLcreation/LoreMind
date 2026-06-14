@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 
 import { ActivatedRoute, Router } from '@angular/router';
 import { LucideAngularModule, ArrowLeft, Edit3, Sparkles } from 'lucide-angular';
+import { TranslatePipe } from '@ngx-translate/core';
 import { CharacterService } from '../../../services/character.service';
 import { CampaignService } from '../../../services/campaign.service';
 import { GameSystemService } from '../../../services/game-system.service';
@@ -17,7 +18,7 @@ import { AiChatDrawerComponent } from '../../../shared/ai-chat-drawer/ai-chat-dr
  */
 @Component({
     selector: 'app-character-view',
-    imports: [LucideAngularModule, PersonaViewComponent, AiChatDrawerComponent],
+    imports: [LucideAngularModule, TranslatePipe, PersonaViewComponent, AiChatDrawerComponent],
     templateUrl: './character-view.component.html',
     styleUrls: ['./character-view.component.scss']
 })

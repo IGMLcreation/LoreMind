@@ -1,7 +1,7 @@
 @if (node) {
   <div class="folder-view">
     <!-- Fil d'Ariane : Lore → ancêtres → dossier courant -->
-    <nav class="breadcrumb" aria-label="Fil d'Ariane">
+    <nav class="breadcrumb" [attr.aria-label]="'folderView.breadcrumb' | translate">
       @if (lore) {
         <button type="button" class="crumb" (click)="navigateToLoreRoot()">
           {{ lore.name }}
@@ -24,27 +24,27 @@
           {{ node.name }}
         </h1>
         <p class="description">
-          {{ subfolders.length }} sous-dossier(s) · {{ pages.length }} page(s)
+          {{ 'folderView.summary' | translate:{ folders: subfolders.length, pages: pages.length } }}
         </p>
       </div>
       <div class="header-actions">
-        <button type="button" class="btn-secondary" (click)="navigateToEdit()" title="Modifier le dossier">
+        <button type="button" class="btn-secondary" (click)="navigateToEdit()" [title]="'folderView.editTitle' | translate">
           <lucide-icon [img]="Pencil" [size]="14"></lucide-icon>
-          Modifier
+          {{ 'common.edit' | translate }}
         </button>
-        <button type="button" class="btn-danger" (click)="delete()" title="Supprimer le dossier et tout son contenu">
+        <button type="button" class="btn-danger" (click)="delete()" [title]="'folderView.deleteTitle' | translate">
           <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
-          Supprimer
+          {{ 'common.delete' | translate }}
         </button>
       </div>
     </div>
     <!-- Sous-dossiers -->
     <section class="detail-section">
       <div class="section-header">
-        <h2>Sous-dossiers</h2>
+        <h2>{{ 'folderView.subfolders' | translate }}</h2>
         <button class="btn-add" (click)="navigateToCreateSubfolder()">
           <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
-          Nouveau sous-dossier
+          {{ 'folderView.newSubfolder' | translate }}
         </button>
       </div>
       @if (subfolders.length > 0) {
@@ -59,17 +59,17 @@
       }
       @if (subfolders.length === 0) {
         <div class="empty-state">
-          <p>Aucun sous-dossier.</p>
+          <p>{{ 'folderView.noSubfolders' | translate }}</p>
         </div>
       }
     </section>
     <!-- Pages -->
     <section class="detail-section">
       <div class="section-header">
-        <h2>Pages</h2>
+        <h2>{{ 'folderView.pages' | translate }}</h2>
         <button class="btn-add" (click)="navigateToCreatePage()">
           <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
-          Nouvelle page
+          {{ 'folderView.newPage' | translate }}
         </button>
       </div>
       @if (pages.length > 0) {
@@ -84,7 +84,7 @@
       }
       @if (pages.length === 0) {
         <div class="empty-state">
-          <p>Aucune page dans ce dossier.</p>
+          <p>{{ 'folderView.noPages' | translate }}</p>
         </div>
       }
     </section>

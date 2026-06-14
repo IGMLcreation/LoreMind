@@ -1,0 +1,57 @@
+{
+  "confirmDialog": {
+    "defaultTitle": "Confirmation"
+  },
+  "aiChatDrawer": {
+    "title": "AI Assistant",
+    "resizeAria": "Resize the panel",
+    "resizeTitle": "Drag to resize",
+    "conversations": "Conversations",
+    "newConversation": "New conversation",
+    "noConversation": "No conversation",
+    "hideList": "Hide list",
+    "showList": "Show list",
+    "shrink": "Shrink",
+    "shrinkAria": "Shrink the panel",
+    "expand": "Expand",
+    "expandAria": "Expand the panel",
+    "gaugeTitle": "System: {{system}} · History: {{history}} · Current: {{current}} tokens",
+    "gaugeTitleMax": "System: {{system}} · History: {{history}} · Current: {{current}} / {{max}} tokens",
+    "gaugeLabel": "Context: {{total}} tokens",
+    "gaugeLabelMax": "Context: {{total}} / {{max}} tokens",
+    "quickSuggestions": "Quick suggestions:",
+    "inputPlaceholder": "Ask a question...",
+    "send": "Send",
+    "welcome": "Hello! I can help you develop this page. What would you like to create?",
+    "loadConversationError": "Unable to load the conversation.",
+    "deleteConversationTitle": "Delete conversation",
+    "deleteConversationMessage": "Delete the conversation \"{{title}}\"?",
+    "missingContextError": "Missing context to create a conversation.",
+    "createConversationError": "Unable to create the conversation.",
+    "unknownError": "Unknown error."
+  },
+  "imageGallery": {
+    "empty": "No illustration",
+    "illustrationAlt": "Illustration",
+    "mainIllustrationAlt": "Main illustration",
+    "mapAlt": "Map",
+    "removeImage": "Remove this image",
+    "removeMap": "Remove this map",
+    "lightboxAria": "Full-screen image",
+    "lightboxAlt": "Enlarged image"
+  },
+  "imageUploader": {
+    "addImage": "Add an image",
+    "uploading": "Uploading",
+    "uploadingHint": "Uploading...",
+    "dropTitle": "Drop an image here",
+    "dropHint": "or click to choose a file (JPEG, PNG, WebP, GIF, max 10 MB)",
+    "unsupportedFormat": "Unsupported format (JPEG, PNG, WebP, GIF only).",
+    "tooLarge": "File too large (max {{max}} MB).",
+    "serverRejected": "File rejected by the server (too large).",
+    "uploadFailed": "Upload failed. Check that the backend and MinIO are running."
+  },
+  "singleImagePicker": {
+    "removeImage": "Remove the image"
+  }
+}

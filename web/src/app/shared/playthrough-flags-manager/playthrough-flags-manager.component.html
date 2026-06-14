@@ -2,8 +2,7 @@
 
   @if (!loading && rows.length === 0) {
     <p class="flags-empty">
-      Aucun fait référencé. Ajoutez une condition « Quand un fait est vrai » sur
-      au moins une quête pour qu'il apparaisse ici.
+      {{ 'playthroughFlagsManager.empty' | translate }}
     </p>
   }
 
@@ -18,7 +17,7 @@
           <div class="flag-info">
             <span class="flag-name">{{ r.name }}</span>
           </div>
-          <span class="flag-value">{{ r.value ? 'vrai' : 'faux' }}</span>
+          <span class="flag-value">{{ (r.value ? 'playthroughFlagsManager.true' : 'playthroughFlagsManager.false') | translate }}</span>
         </li>
       }
     </ul>

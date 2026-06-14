@@ -8,16 +8,16 @@
           }
           {{ scene.name }}
         </h1>
-        <p class="view-subtitle">Scène</p>
+        <p class="view-subtitle">{{ 'sceneView.subtitle' | translate }}</p>
       </div>
       <div class="view-actions">
         <button type="button" class="btn-primary" (click)="editMode()">
           <lucide-icon [img]="Pencil" [size]="14"></lucide-icon>
-          Modifier
+          {{ 'common.edit' | translate }}
         </button>
-        <button type="button" class="btn-danger" (click)="deleteScene()" title="Supprimer la scène">
+        <button type="button" class="btn-danger" (click)="deleteScene()" [title]="'sceneView.deleteTitleAttr' | translate">
           <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
-          Supprimer
+          {{ 'common.delete' | translate }}
         </button>
       </div>
     </header>
@@ -30,17 +30,17 @@
     <!-- Cartes & plans -->
     @if ((scene.mapImageIds?.length ?? 0) > 0) {
       <section class="view-section">
-        <h2 class="view-section-title"><span class="view-section-icon">🗺️</span> Cartes & plans</h2>
+        <h2 class="view-section-title"><span class="view-section-icon">🗺️</span> {{ 'sceneView.mapsSectionTitle' | translate }}</h2>
         <app-image-gallery [imageIds]="scene.mapImageIds ?? []" [layout]="'MAPS'"></app-image-gallery>
       </section>
     }
     <!-- Description courte -->
     <section class="view-section">
-      <h2 class="view-section-title"><span class="view-section-icon">📝</span> Description</h2>
+      <h2 class="view-section-title"><span class="view-section-icon">📝</span> {{ 'sceneView.descriptionSectionTitle' | translate }}</h2>
       @if (scene.description?.trim()) {
         <p class="view-section-body">{{ scene.description }}</p>
       } @else {
-        <p class="view-section-empty">Non renseigné</p>
+        <p class="view-section-empty">{{ 'sceneView.empty' | translate }}</p>
       }
     </section>
     <!-- Contexte et ambiance -->
@@ -48,13 +48,13 @@
       <div class="view-row">
         @if (scene.location?.trim()) {
           <section class="view-section">
-            <h2 class="view-section-title"><span class="view-section-icon">📍</span> Lieu</h2>
+            <h2 class="view-section-title"><span class="view-section-icon">📍</span> {{ 'sceneView.locationSectionTitle' | translate }}</h2>
             <p class="view-section-body">{{ scene.location }}</p>
           </section>
         }
         @if (scene.timing?.trim()) {
           <section class="view-section">
-            <h2 class="view-section-title"><span class="view-section-icon">⏰</span> Moment</h2>
+            <h2 class="view-section-title"><span class="view-section-icon">⏰</span> {{ 'sceneView.timingSectionTitle' | translate }}</h2>
             <p class="view-section-body">{{ scene.timing }}</p>
           </section>
         }
@@ -62,21 +62,21 @@
     }
     @if (scene.atmosphere?.trim()) {
       <section class="view-section">
-        <h2 class="view-section-title"><span class="view-section-icon">🌫️</span> Ambiance et atmosphère</h2>
+        <h2 class="view-section-title"><span class="view-section-icon">🌫️</span> {{ 'sceneView.atmosphereSectionTitle' | translate }}</h2>
         <p class="view-section-body">{{ scene.atmosphere }}</p>
       </section>
     }
     <!-- Narration pour les joueurs -->
     @if (scene.playerNarration?.trim()) {
       <section class="view-section">
-        <h2 class="view-section-title"><span class="view-section-icon">📖</span> Narration pour les joueurs</h2>
+        <h2 class="view-section-title"><span class="view-section-icon">📖</span> {{ 'sceneView.narrationSectionTitle' | translate }}</h2>
         <p class="view-section-body">{{ scene.playerNarration }}</p>
       </section>
     }
     <!-- Choix et conséquences -->
     @if (scene.choicesConsequences?.trim()) {
       <section class="view-section">
-        <h2 class="view-section-title"><span class="view-section-icon">🔀</span> Choix et conséquences</h2>
+        <h2 class="view-section-title"><span class="view-section-icon">🔀</span> {{ 'sceneView.choicesSectionTitle' | translate }}</h2>
         <p class="view-section-body">{{ scene.choicesConsequences }}</p>
       </section>
     }
@@ -84,13 +84,13 @@
     @if (scene.combatDifficulty?.trim() || scene.enemies?.trim() || linkedEnemies.length > 0) {
       @if (scene.combatDifficulty?.trim()) {
         <section class="view-section">
-          <h2 class="view-section-title"><span class="view-section-icon">⚔️</span> Difficulté estimée</h2>
+          <h2 class="view-section-title"><span class="view-section-icon">⚔️</span> {{ 'sceneView.combatDifficultySectionTitle' | translate }}</h2>
           <p class="view-section-body">{{ scene.combatDifficulty }}</p>
         </section>
       }
       @if (scene.enemies?.trim() || linkedEnemies.length > 0) {
         <section class="view-section">
-          <h2 class="view-section-title"><span class="view-section-icon">🐲</span> Ennemis et créatures</h2>
+          <h2 class="view-section-title"><span class="view-section-icon">🐲</span> {{ 'sceneView.enemiesSectionTitle' | translate }}</h2>
           @if (linkedEnemies.length > 0) {
             <div class="view-chips">
               @for (e of linkedEnemies; track e.id) {
@@ -112,7 +112,7 @@
       <section class="view-section view-section--private">
         <h2 class="view-section-title">
           <span class="view-section-icon">🔒</span>
-          Notes et secrets du MJ
+          {{ 'sceneView.gmNotesSectionTitle' | translate }}
         </h2>
         <p class="view-section-body">{{ scene.gmSecretNotes }}</p>
       </section>
@@ -120,7 +120,7 @@
     <!-- Pages Lore liées -->
     @if (loreId && (scene.relatedPageIds?.length ?? 0) > 0) {
       <section class="view-section">
-        <h2 class="view-section-title"><span class="view-section-icon">🔗</span> Pages Lore associées</h2>
+        <h2 class="view-section-title"><span class="view-section-icon">🔗</span> {{ 'sceneView.loreSectionTitle' | translate }}</h2>
         <div class="view-chips">
           @for (relId of scene.relatedPageIds; track relId) {
             <a class="view-chip"
@@ -134,7 +134,7 @@
     <!-- Lieu explorable : pièces (mode donjon) -->
     @if ((scene.rooms?.length ?? 0) > 0) {
       <section class="view-section">
-        <h2 class="view-section-title"><span class="view-section-icon">🏰</span> Pièces du lieu</h2>
+        <h2 class="view-section-title"><span class="view-section-icon">🏰</span> {{ 'sceneView.roomsSectionTitle' | translate }}</h2>
         <div class="rooms-readonly">
           @for (r of scene.rooms; track r; let i = $index) {
             <article class="room-readonly">
@@ -143,7 +143,7 @@
                 <span class="room-readonly-name">{{ r.name }}</span>
                 @if (r.floor !== null && r.floor !== undefined) {
                   <span class="room-readonly-floor">
-                    Étage {{ r.floor }}
+                    {{ 'sceneView.roomFloor' | translate:{ floor: r.floor } }}
                   </span>
                 }
               </header>
@@ -153,7 +153,7 @@
               <div class="room-readonly-grid">
                 @if (r.enemies?.trim() || roomLinkedEnemies(r).length > 0) {
                   <div>
-                    <strong>⚔️ Ennemis</strong>
+                    <strong>{{ 'sceneView.roomEnemies' | translate }}</strong>
                     @if (roomLinkedEnemies(r).length > 0) {
                       <div class="view-chips">
                         @for (e of roomLinkedEnemies(r); track e.id) {
@@ -171,32 +171,32 @@
                 }
                 @if (r.loot?.trim()) {
                   <div>
-                    <strong>💰 Loot</strong>
+                    <strong>{{ 'sceneView.roomLoot' | translate }}</strong>
                     <p>{{ r.loot }}</p>
                   </div>
                 }
                 @if (r.traps?.trim()) {
                   <div>
-                    <strong>⚠️ Pièges</strong>
+                    <strong>{{ 'sceneView.roomTraps' | translate }}</strong>
                     <p>{{ r.traps }}</p>
                   </div>
                 }
                 @if (r.gmNotes?.trim()) {
                   <div class="room-readonly-private">
-                    <strong>🔒 Notes MJ</strong>
+                    <strong>{{ 'sceneView.roomGmNotes' | translate }}</strong>
                     <p>{{ r.gmNotes }}</p>
                   </div>
                 }
               </div>
               @if ((r.branches?.length ?? 0) > 0) {
                 <div class="room-readonly-branches">
-                  <strong>→ Sorties</strong>
+                  <strong>{{ 'sceneView.roomExits' | translate }}</strong>
                   <ul>
                     @for (b of r.branches; track b) {
                       <li>
                         <em>{{ b.label }}</em> → {{ roomNameById(scene, b.targetRoomId) }}
                         @if (b.condition?.trim()) {
-                          <span class="branch-cond">(si : {{ b.condition }})</span>
+                          <span class="branch-cond">{{ 'sceneView.roomExitCondition' | translate:{ condition: b.condition } }}</span>
                         }
                       </li>
                     }

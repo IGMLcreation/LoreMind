@@ -10,12 +10,12 @@
               (click)="openLightbox(heroId)"
               role="button"
               tabindex="0">
-              <img [src]="urlFor(heroId)" [alt]="'Illustration principale'" loading="lazy" />
+              <img [src]="urlFor(heroId)" [alt]="'imageGallery.mainIllustrationAlt' | translate" loading="lazy" />
               @if (editable) {
                 <button type="button"
                   class="gallery-remove"
                   (click)="remove(heroId, $event)"
-                  aria-label="Retirer cette image">
+                  [attr.aria-label]="'imageGallery.removeImage' | translate">
                   <lucide-icon [img]="X" [size]="14"></lucide-icon>
                 </button>
               }
@@ -28,12 +28,12 @@
                   (click)="openLightbox(id)"
                   role="button"
                   tabindex="0">
-                  <img [src]="urlFor(id)" [alt]="'Illustration ' + id" loading="lazy" />
+                  <img [src]="urlFor(id)" [alt]="'imageGallery.illustrationAlt' | translate" loading="lazy" />
                   @if (editable) {
                     <button type="button"
                       class="gallery-remove"
                       (click)="remove(id, $event)"
-                      aria-label="Retirer cette image">
+                      [attr.aria-label]="'imageGallery.removeImage' | translate">
                       <lucide-icon [img]="X" [size]="14"></lucide-icon>
                     </button>
                   }
@@ -54,7 +54,7 @@
       } @else {
         <div class="gallery-empty">
           <lucide-icon [img]="ImageIcon" [size]="20"></lucide-icon>
-          <span>Aucune illustration</span>
+          <span>{{ 'imageGallery.empty' | translate }}</span>
         </div>
       }
     }
@@ -67,12 +67,12 @@
               (click)="openLightbox(id)"
               role="button"
               tabindex="0">
-              <img [src]="urlFor(id)" [alt]="'Illustration ' + id" loading="lazy" />
+              <img [src]="urlFor(id)" [alt]="'imageGallery.illustrationAlt' | translate" loading="lazy" />
               @if (editable) {
                 <button type="button"
                   class="gallery-remove"
                   (click)="remove(id, $event)"
-                  aria-label="Retirer cette image">
+                  [attr.aria-label]="'imageGallery.removeImage' | translate">
                   <lucide-icon [img]="X" [size]="14"></lucide-icon>
                 </button>
               }
@@ -87,7 +87,7 @@
       } @else {
         <div class="gallery-empty">
           <lucide-icon [img]="ImageIcon" [size]="20"></lucide-icon>
-          <span>Aucune illustration</span>
+          <span>{{ 'imageGallery.empty' | translate }}</span>
         </div>
       }
     }
@@ -99,7 +99,7 @@
             <button type="button"
               class="carousel-nav carousel-prev"
               (click)="scrollCarousel(-1)"
-              aria-label="Precedent">
+              [attr.aria-label]="'common.previous' | translate">
               <lucide-icon [img]="ChevronLeft" [size]="20"></lucide-icon>
             </button>
           }
@@ -109,12 +109,12 @@
                 (click)="openLightbox(id)"
                 role="button"
                 tabindex="0">
-                <img [src]="urlFor(id)" [alt]="'Illustration ' + id" loading="lazy" />
+                <img [src]="urlFor(id)" [alt]="'imageGallery.illustrationAlt' | translate" loading="lazy" />
                 @if (editable) {
                   <button type="button"
                     class="gallery-remove"
                     (click)="remove(id, $event)"
-                    aria-label="Retirer cette image">
+                    [attr.aria-label]="'imageGallery.removeImage' | translate">
                     <lucide-icon [img]="X" [size]="14"></lucide-icon>
                   </button>
                 }
@@ -130,7 +130,7 @@
             <button type="button"
               class="carousel-nav carousel-next"
               (click)="scrollCarousel(1)"
-              aria-label="Suivant">
+              [attr.aria-label]="'common.next' | translate">
               <lucide-icon [img]="ChevronRight" [size]="20"></lucide-icon>
             </button>
           }
@@ -138,7 +138,7 @@
       } @else {
         <div class="gallery-empty">
           <lucide-icon [img]="ImageIcon" [size]="20"></lucide-icon>
-          <span>Aucune illustration</span>
+          <span>{{ 'imageGallery.empty' | translate }}</span>
         </div>
       }
     }
@@ -153,12 +153,12 @@
               (click)="openLightbox(id)"
               role="button"
               tabindex="0">
-              <img [src]="urlFor(id)" [alt]="'Illustration ' + id" loading="lazy" />
+              <img [src]="urlFor(id)" [alt]="'imageGallery.illustrationAlt' | translate" loading="lazy" />
               @if (editable) {
                 <button type="button"
                   class="gallery-remove"
                   (click)="remove(id, $event)"
-                  aria-label="Retirer cette image">
+                  [attr.aria-label]="'imageGallery.removeImage' | translate">
                   <lucide-icon [img]="X" [size]="14"></lucide-icon>
                 </button>
               }
@@ -173,7 +173,7 @@
       } @else {
         <div class="gallery-empty">
           <lucide-icon [img]="ImageIcon" [size]="20"></lucide-icon>
-          <span>Aucune illustration</span>
+          <span>{{ 'imageGallery.empty' | translate }}</span>
         </div>
       }
     }
@@ -187,12 +187,12 @@
               (click)="openLightbox(id)"
               role="button"
               tabindex="0">
-              <img [src]="urlFor(id)" [alt]="'Carte ' + id" loading="lazy" />
+              <img [src]="urlFor(id)" [alt]="'imageGallery.mapAlt' | translate" loading="lazy" />
               @if (editable) {
                 <button type="button"
                   class="gallery-remove"
                   (click)="remove(id, $event)"
-                  aria-label="Retirer cette carte">
+                  [attr.aria-label]="'imageGallery.removeMap' | translate">
                   <lucide-icon [img]="X" [size]="14"></lucide-icon>
                 </button>
               }
@@ -207,7 +207,7 @@
       } @else {
         <div class="gallery-empty">
           <lucide-icon [img]="ImageIcon" [size]="20"></lucide-icon>
-          <span>Aucune illustration</span>
+          <span>{{ 'imageGallery.empty' | translate }}</span>
         </div>
       }
     }
@@ -220,12 +220,12 @@
               (click)="openLightbox(id)"
               role="button"
               tabindex="0">
-              <img [src]="urlFor(id)" [alt]="'Illustration ' + id" loading="lazy" />
+              <img [src]="urlFor(id)" [alt]="'imageGallery.illustrationAlt' | translate" loading="lazy" />
               @if (editable) {
                 <button type="button"
                   class="gallery-remove"
                   (click)="remove(id, $event)"
-                  aria-label="Retirer cette image">
+                  [attr.aria-label]="'imageGallery.removeImage' | translate">
                   <lucide-icon [img]="X" [size]="14"></lucide-icon>
                 </button>
               }
@@ -238,7 +238,7 @@
       } @else {
         <div class="gallery-empty">
           <lucide-icon [img]="ImageIcon" [size]="20"></lucide-icon>
-          <span>Aucune illustration</span>
+          <span>{{ 'imageGallery.empty' | translate }}</span>
         </div>
       }
     }
@@ -252,9 +252,9 @@
   <div class="lightbox-backdrop"
     (click)="closeLightbox()"
     role="dialog"
-    aria-label="Image en plein ecran">
-    <img [src]="urlFor(lightboxId)" alt="Image agrandie" class="lightbox-image" />
-    <button type="button" class="lightbox-close" (click)="closeLightbox()" aria-label="Fermer">
+    [attr.aria-label]="'imageGallery.lightboxAria' | translate">
+    <img [src]="urlFor(lightboxId)" [alt]="'imageGallery.lightboxAlt' | translate" class="lightbox-image" />
+    <button type="button" class="lightbox-close" (click)="closeLightbox()" [attr.aria-label]="'common.close' | translate">
       <lucide-icon [img]="X" [size]="24"></lucide-icon>
     </button>
   </div>

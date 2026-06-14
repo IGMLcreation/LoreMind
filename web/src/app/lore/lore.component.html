@@ -2,8 +2,8 @@
 
   <div class="lore-hero">
     <lucide-icon [img]="BookOpen" [size]="56" class="hero-icon"></lucide-icon>
-    <h1>Vos Univers</h1>
-    <p class="hero-subtitle">Sélectionnez un lore existant ou créez un nouvel univers</p>
+    <h1>{{ 'lore.heroTitle' | translate }}</h1>
+    <p class="hero-subtitle">{{ 'lore.heroSubtitle' | translate }}</p>
   </div>
 
   <div class="lore-grid">
@@ -12,13 +12,13 @@
       <div class="lore-card" (click)="navigateToDetail(lore.id!)">
         <div class="card-header">
           <lucide-icon [img]="Folder" [size]="20" class="card-icon"></lucide-icon>
-          <span class="card-date">Il y a 2h</span>
+          <span class="card-date">{{ 'lore.cardDate' | translate }}</span>
         </div>
         <h2>{{ lore.name }}</h2>
         <p class="card-description">{{ lore.description }}</p>
         <div class="card-stats">
-          <span>📄 {{ lore.pageCount || 0 }} pages</span>
-          <span>🌳 {{ lore.nodeCount || 0 }} dossiers</span>
+          <span>📄 {{ 'lore.statPages' | translate:{ n: (lore.pageCount || 0) } }}</span>
+          <span>🌳 {{ 'lore.statFolders' | translate:{ n: (lore.nodeCount || 0) } }}</span>
         </div>
       </div>
     }
@@ -27,13 +27,13 @@
       <div class="new-icon">
         <lucide-icon [img]="Plus" [size]="20"></lucide-icon>
       </div>
-      <h2>Nouveau Lore</h2>
-      <p class="card-description">Créez un nouvel univers</p>
+      <h2>{{ 'lore.newLore' | translate }}</h2>
+      <p class="card-description">{{ 'lore.newLoreSubtitle' | translate }}</p>
     </div>
 
   </div>
 
-  <p class="tip">💡 Astuce : Utilisez les templates pour structurer votre univers de manière cohérente</p>
+  <p class="tip">{{ 'lore.tip' | translate }}</p>
 
 </div>
 

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
 import {
   CampaignImportApplyResult,
   CampaignImportProposal,
@@ -16,7 +17,7 @@ import {
  */
 @Injectable({ providedIn: 'root' })
 export class CampaignImportService {
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private translate: TranslateService) {}
 
   importStructureStream(campaignId: string, file: File): Observable<CampaignImportStreamEvent> {
     return new Observable<CampaignImportStreamEvent>((subscriber) => {
@@ -70,7 +71,7 @@ export class CampaignImportService {
     const dispatch = () => {
       const name = currentEvent ?? 'message';
       if (name === 'error') {
-        let message = 'Échec de l\'import.';
+        let message = this.translate.instant('services.importFailed');
         try { message = (JSON.parse(currentData) as { message?: string }).message ?? message; } catch { /* défaut */ }
         terminated = true;
         subscriber.error(new Error(message));
@@ -120,7 +121,7 @@ export class CampaignImportService {
       if (currentEvent !== null || currentData !== '') dispatch();
       if (!terminated) {
         subscriber.error(new Error(
-          'L\'import s\'est interrompu avant la fin (connexion coupée ou délai dépassé). Réessayez.'));
+          this.translate.instant('services.importInterrupted')));
       }
     } catch (err) {
       if (!terminated) subscriber.error(err);

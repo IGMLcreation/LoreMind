@@ -10,11 +10,11 @@
             [href]="enemyUrl(e.id!)"
             target="_blank"
             rel="noopener"
-            title="Ouvrir la fiche dans un nouvel onglet">
+            [title]="'enemyLinkPicker.openInNewTab' | translate">
             <lucide-icon [img]="Skull" [size]="12"></lucide-icon>
             {{ label(e) }}
           </a>
-          <button type="button" class="chip-remove" (click)="remove(e.id!)" title="Retirer le lien">
+          <button type="button" class="chip-remove" (click)="remove(e.id!)" [title]="'enemyLinkPicker.removeLink' | translate">
             <lucide-icon [img]="X" [size]="12"></lucide-icon>
           </button>
         </span>
@@ -27,7 +27,7 @@
     <input
       type="text"
       class="search-input"
-      placeholder="Rechercher un ennemi du bestiaire..."
+      [placeholder]="'enemyLinkPicker.searchPlaceholder' | translate"
       [(ngModel)]="query"
       (focus)="dropdownOpen = true"
       (blur)="onBlur()" />
@@ -44,7 +44,7 @@
 
     @if (dropdownOpen && query && suggestions.length === 0) {
       <p class="empty-hint">
-        Aucun ennemi ne correspond
+        {{ 'enemyLinkPicker.noMatch' | translate }}
       </p>
     }
   </div>

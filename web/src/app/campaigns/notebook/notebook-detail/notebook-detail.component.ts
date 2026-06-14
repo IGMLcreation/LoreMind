@@ -16,6 +16,7 @@ import { loadCampaignTreeData } from '../../campaign-tree.helper';
 import { NotebookActionCardComponent } from '../notebook-action-card/notebook-action-card.component';
 import { MarkdownPipe } from '../../../shared/markdown.pipe';
 import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 /**
  * Atelier (workspace) : sources indexées (gauche) + chat ancré RAG (droite).
@@ -23,7 +24,7 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  */
 @Component({
     selector: 'app-notebook-detail',
-    imports: [FormsModule, LucideAngularModule, NotebookActionCardComponent, MarkdownPipe],
+    imports: [FormsModule, LucideAngularModule, NotebookActionCardComponent, MarkdownPipe, TranslatePipe],
     templateUrl: './notebook-detail.component.html',
     styleUrls: ['./notebook-detail.component.scss']
 })
@@ -68,7 +69,8 @@ export class NotebookDetailComponent implements OnInit {
     private characterService: CharacterService,
     private npcService: NpcService,
     private enemyService: EnemyService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -208,7 +210,7 @@ export class NotebookDetailComponent implements OnInit {
       next: () => { this.uploading = false; this.reloadSources(); },
       error: (err) => {
         this.uploading = false;
-        this.uploadError = err?.error?.message || 'Échec de l\'indexation. Réessaie ou vérifie le modèle d\'embedding.';
+        this.uploadError = err?.error?.message || this.translate.instant('notebookDetail.uploadError');
         this.reloadSources();
       }
     });
@@ -232,10 +234,10 @@ export class NotebookDetailComponent implements OnInit {
   clearChat(): void {
     if (this.sending || this.messages.length === 0) return;
     this.confirmDialog.confirm({
-      title: 'Vider la conversation',
-      message: 'Repartir d\'une conversation vierge ?',
-      details: ['Le fil actuel est archivé (pas supprimé) : il restera consultable via « Archives ».'],
-      confirmLabel: 'Vider',
+      title: this.translate.instant('notebookDetail.clearTitle'),
+      message: this.translate.instant('notebookDetail.clearMessage'),
+      details: [this.translate.instant('notebookDetail.clearDetail')],
+      confirmLabel: this.translate.instant('notebookDetail.clear'),
       variant: 'danger'
     }).then(ok => {
       if (!ok) return;
@@ -287,10 +289,11 @@ export class NotebookDetailComponent implements OnInit {
   /** Libellé d'une archive : date du clear + nb d'échanges. */
   archiveLabel(a: NotebookArchive): string {
     const date = new Date(a.archivedAt);
+    const locale = this.translate.getCurrentLang() === 'en' ? 'en-US' : 'fr-FR';
     const when = isNaN(date.getTime())
       ? a.archivedAt
-      : date.toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
-    return `${when} · ${a.messages.length} message(s)`;
+      : date.toLocaleString(locale, { dateStyle: 'short', timeStyle: 'short' });
+    return this.translate.instant('notebookDetail.archiveLabel', { when, n: a.messages.length });
   }
 
   // --- Chat ---

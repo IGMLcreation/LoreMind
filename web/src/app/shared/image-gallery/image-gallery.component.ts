@@ -1,6 +1,7 @@
 import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 
 import { LucideAngularModule, X, Image as ImageIcon, ChevronLeft, ChevronRight } from 'lucide-angular';
+import { TranslatePipe } from '@ngx-translate/core';
 import { ImageService } from '../../services/image.service';
 import { Image } from '../../services/image.model';
 import { ImageLayout } from '../../services/template.model';
@@ -27,7 +28,7 @@ import { ImageUploaderComponent } from '../image-uploader/image-uploader.compone
  */
 @Component({
     selector: 'app-image-gallery',
-    imports: [LucideAngularModule, ImageUploaderComponent],
+    imports: [LucideAngularModule, ImageUploaderComponent, TranslatePipe],
     templateUrl: './image-gallery.component.html',
     styleUrls: ['./image-gallery.component.scss']
 })

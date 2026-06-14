@@ -3,6 +3,7 @@ import { Component, OnInit, OnDestroy, ElementRef, ViewChild } from '@angular/co
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { LucideAngularModule, ArrowLeft } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { CampaignService } from '../../../services/campaign.service';
 import { CharacterService } from '../../../services/character.service';
 import { NpcService } from '../../../services/npc.service';
@@ -22,7 +23,7 @@ interface GraphEdge { key: string; label: string; x1: number; y1: number; x2: nu
  */
 @Component({
     selector: 'app-chapter-graph',
-    imports: [RouterModule, LucideAngularModule],
+    imports: [RouterModule, LucideAngularModule, TranslatePipe],
     templateUrl: './chapter-graph.component.html',
     styleUrls: ['./chapter-graph.component.scss']
 })
@@ -74,7 +75,8 @@ export class ChapterGraphComponent implements OnInit, OnDestroy {
     private randomTableService: RandomTableService,
     private enemyService: EnemyService,
     private layoutService: LayoutService,
-    private pageTitleService: PageTitleService
+    private pageTitleService: PageTitleService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -96,7 +98,7 @@ export class ChapterGraphComponent implements OnInit, OnDestroy {
     }).subscribe(({ campaign, allCampaigns, chapter, scenes, treeData }) => {
       this.chapter = chapter;
       this.scenes = scenes;
-      this.pageTitleService.set(`${chapter.name} — Carte`);
+      this.pageTitleService.set(this.translate.instant('chapterGraph.title', { name: chapter.name }));
       this.buildGraph();
 
       const globalItems: GlobalItem[] = allCampaigns.map((c: Campaign) => ({
@@ -104,11 +106,11 @@ export class ChapterGraphComponent implements OnInit, OnDestroy {
       }));
       this.layoutService.show({
         title: campaign.name,
-        items: buildCampaignTree(this.campaignId, treeData),
-        footerLabel: 'Toutes les campagnes',
+        items: buildCampaignTree(this.campaignId, treeData, this.translate),
+        footerLabel: this.translate.instant('chapterGraph.allCampaigns'),
         createActions: [],
         globalItems,
-        globalBackLabel: 'Toutes les campagnes',
+        globalBackLabel: this.translate.instant('chapterGraph.allCampaigns'),
         globalBackRoute: '/campaigns'
       });
     });

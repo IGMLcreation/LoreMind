@@ -3,28 +3,27 @@
     <header class="graph-header">
       <button type="button" class="btn-back" (click)="back()">
         <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon>
-        Retour au Lore
+        {{ 'loreGraph.back' | translate }}
       </button>
       <div class="graph-title">
         <h1>
           <lucide-icon [img]="Network" [size]="20"></lucide-icon>
-          {{ lore.name }} — Graphe
+          {{ 'loreGraph.title' | translate:{ name: lore.name } }}
         </h1>
         <p class="graph-subtitle">
-          {{ nodes.length - npcCount }} page(s) · {{ npcCount }} PNJ · {{ edgeCount }} lien(s).
-          Cliquez sur un nœud pour l'ouvrir, glissez-le pour réarranger.
+          {{ 'loreGraph.subtitle' | translate:{ pages: (nodes.length - npcCount), npcs: npcCount, edges: edgeCount } }}
         </p>
       </div>
       <div class="graph-legend">
-        <span class="legend-item"><span class="legend-dot legend-dot--page"></span> Page de Lore</span>
-        <span class="legend-item"><span class="legend-dot legend-dot--npc"></span> PNJ</span>
-        <span class="legend-item"><span class="legend-line legend-line--npc"></span> Lien PNJ → page</span>
+        <span class="legend-item"><span class="legend-dot legend-dot--page"></span> {{ 'loreGraph.legendPage' | translate }}</span>
+        <span class="legend-item"><span class="legend-dot legend-dot--npc"></span> {{ 'loreGraph.legendNpc' | translate }}</span>
+        <span class="legend-item"><span class="legend-line legend-line--npc"></span> {{ 'loreGraph.legendLink' | translate }}</span>
       </div>
     </header>
 
     @if (nodes.length === 0) {
       <div class="graph-empty">
-        Aucune page dans ce Lore pour l'instant — le graphe se remplira au fur et à mesure.
+        {{ 'loreGraph.empty' | translate }}
       </div>
     } @else {
       <div class="graph-scroll">
@@ -62,8 +61,7 @@
       </div>
       @if (edgeCount === 0) {
         <p class="graph-hint">
-          Aucun lien pour l'instant : liez des pages entre elles (« Pages liées » d'une page)
-          ou rattachez un PNJ à des pages de Lore depuis sa fiche.
+          {{ 'loreGraph.hint' | translate }}
         </p>
       }
     }

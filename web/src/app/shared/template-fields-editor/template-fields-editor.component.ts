@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, Plus, Trash2, ArrowUp, ArrowDown, Type, Image as ImageIcon, Hash, ListOrdered, X } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { TemplateField, FieldType, ImageLayout } from '../../services/template.model';
 
 /**
@@ -16,7 +17,7 @@ import { TemplateField, FieldType, ImageLayout } from '../../services/template.m
  */
 @Component({
     selector: 'app-template-fields-editor',
-    imports: [FormsModule, LucideAngularModule],
+    imports: [FormsModule, LucideAngularModule, TranslatePipe],
     templateUrl: './template-fields-editor.component.html',
     styleUrls: ['./template-fields-editor.component.scss']
 })
@@ -37,27 +38,33 @@ export class TemplateFieldsEditorComponent {
   /** Suggestions de noms de champs (chips ajout rapide). */
   @Input() suggestions: string[] = [];
 
-  /** Label de la section (ex: "Champs de la fiche PJ"). */
-  @Input() label = 'Champs du template';
+  /** Label de la section (ex: "Champs de la fiche PJ"). Si vide, un libellé par défaut traduit est affiché. */
+  @Input() label = '';
 
   /** Hint affichee sous le label. */
   @Input() hint?: string;
 
   @Output() fieldsChange = new EventEmitter<TemplateField[]>();
 
-  readonly typeOptions: { value: FieldType; label: string }[] = [
-    { value: 'TEXT', label: 'Texte' },
-    { value: 'NUMBER', label: 'Nombre' },
-    { value: 'IMAGE', label: 'Image(s)' },
-    { value: 'KEY_VALUE_LIST', label: 'Liste cle/valeur' }
-  ];
+  constructor(private translate: TranslateService) {}
 
-  readonly layoutOptions: { value: ImageLayout; label: string }[] = [
-    { value: 'GALLERY', label: 'Galerie' },
-    { value: 'HERO', label: 'Bandeau' },
-    { value: 'MASONRY', label: 'Mosaique' },
-    { value: 'CAROUSEL', label: 'Carrousel' }
-  ];
+  get typeOptions(): { value: FieldType; label: string }[] {
+    return [
+      { value: 'TEXT', label: this.translate.instant('templateFieldsEditor.typeText') },
+      { value: 'NUMBER', label: this.translate.instant('templateFieldsEditor.typeNumber') },
+      { value: 'IMAGE', label: this.translate.instant('templateFieldsEditor.typeImage') },
+      { value: 'KEY_VALUE_LIST', label: this.translate.instant('templateFieldsEditor.typeKeyValue') }
+    ];
+  }
+
+  get layoutOptions(): { value: ImageLayout; label: string }[] {
+    return [
+      { value: 'GALLERY', label: this.translate.instant('templateFieldsEditor.layoutGallery') },
+      { value: 'HERO', label: this.translate.instant('templateFieldsEditor.layoutHero') },
+      { value: 'MASONRY', label: this.translate.instant('templateFieldsEditor.layoutMasonry') },
+      { value: 'CAROUSEL', label: this.translate.instant('templateFieldsEditor.layoutCarousel') }
+    ];
+  }
 
   isDuplicate(field: TemplateField, index: number): boolean {
     if (!field.name?.trim()) return false;

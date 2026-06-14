@@ -6,22 +6,18 @@
     >
     <div class="banner-content">
       <lucide-icon [img]="RefreshCw" [size]="16"></lucide-icon>
-      <span>
-        Une nouvelle version de LoreMind est disponible
-        (<strong>{{ versionChecker.remoteVersion() }}</strong>).
-        Recharge pour profiter des dernieres ameliorations.
-      </span>
+      <span [innerHTML]="'updateBanner.message' | translate:{ version: versionChecker.remoteVersion() }"></span>
     </div>
     <div class="banner-actions">
       <button type="button" class="btn-reload" (click)="reload()">
-        Recharger
+        {{ 'updateBanner.reload' | translate }}
       </button>
       <button
         type="button"
         class="btn-dismiss"
         (click)="dismiss()"
-        title="Fermer (sera reaffiche au prochain demarrage)"
-        aria-label="Fermer"
+        [title]="'updateBanner.dismissTitle' | translate"
+        [attr.aria-label]="'updateBanner.dismissAria' | translate"
         >
         <lucide-icon [img]="X" [size]="16"></lucide-icon>
       </button>

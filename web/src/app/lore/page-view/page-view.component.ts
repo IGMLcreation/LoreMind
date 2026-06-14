@@ -3,6 +3,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { LucideAngularModule, Pencil, Trash2 } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { LoreService } from '../../services/lore.service';
 import { TemplateService } from '../../services/template.service';
 import { PageService } from '../../services/page.service';
@@ -28,7 +29,7 @@ import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog
  */
 @Component({
     selector: 'app-page-view',
-    imports: [RouterModule, LucideAngularModule, BreadcrumbComponent, ImageGalleryComponent],
+    imports: [RouterModule, LucideAngularModule, TranslatePipe, BreadcrumbComponent, ImageGalleryComponent],
     templateUrl: './page-view.component.html',
     styleUrls: ['./page-view.component.scss']
 })
@@ -52,7 +53,8 @@ export class PageViewComponent implements OnInit, OnDestroy {
     private pageService: PageService,
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -131,7 +133,7 @@ export class PageViewComponent implements OnInit, OnDestroy {
 
   /** Helper — résout l'ID d'une page liée en son titre (pour affichage dans les chips). */
   titleOfRelated(pageId: string): string {
-    return this.allPages.find(p => p.id === pageId)?.title ?? '(page supprimée)';
+    return this.allPages.find(p => p.id === pageId)?.title ?? this.translate.instant('pageView.deletedPage');
   }
 
   editMode(): void {
@@ -146,10 +148,10 @@ export class PageViewComponent implements OnInit, OnDestroy {
     if (!this.page) return;
     const page = this.page;
     this.confirmDialog.confirm({
-      title: 'Supprimer la page',
-      message: `Supprimer la page "${page.title}" ?`,
-      details: ['Cette action est irréversible.'],
-      confirmLabel: 'Supprimer',
+      title: this.translate.instant('pageView.deleteTitle'),
+      message: this.translate.instant('pageView.deleteMessage', { title: page.title }),
+      details: [this.translate.instant('pageView.deleteIrreversible')],
+      confirmLabel: this.translate.instant('common.delete'),
       variant: 'danger'
     }).then(ok => {
       if (!ok) return;

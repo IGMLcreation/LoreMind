@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 
 import { LucideAngularModule, Lock, Circle, Play, CheckCircle2, LucideIconData } from 'lucide-angular';
+import { TranslateService } from '@ngx-translate/core';
 import { QuestStatus } from '../../services/campaign.model';
 
 /**
@@ -19,6 +20,8 @@ export class QuestStatusBadgeComponent {
   /** Variante visuelle compacte (sans label) — utile pour les listes denses. */
   @Input() compact = false;
 
+  constructor(private translate: TranslateService) {}
+
   get icon(): LucideIconData {
     switch (this.status) {
       case 'LOCKED':      return Lock;
@@ -31,11 +34,11 @@ export class QuestStatusBadgeComponent {
 
   get label(): string {
     switch (this.status) {
-      case 'LOCKED':      return 'Verrouillée';
-      case 'IN_PROGRESS': return 'En cours';
-      case 'COMPLETED':   return 'Terminée';
+      case 'LOCKED':      return this.translate.instant('questStatusBadge.locked');
+      case 'IN_PROGRESS': return this.translate.instant('questStatusBadge.inProgress');
+      case 'COMPLETED':   return this.translate.instant('questStatusBadge.completed');
       case 'AVAILABLE':
-      default:            return 'Disponible';
+      default:            return this.translate.instant('questStatusBadge.available');
     }
   }
 

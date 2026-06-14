@@ -3,6 +3,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LucideAngularModule, Folder, Plus, Pencil, Trash2, Network } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { LoreService } from '../../services/lore.service';
 import { TemplateService } from '../../services/template.service';
 import { PageService } from '../../services/page.service';
@@ -14,7 +15,7 @@ import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog
 
 @Component({
     selector: 'app-lore-detail',
-    imports: [FormsModule, LucideAngularModule],
+    imports: [FormsModule, LucideAngularModule, TranslatePipe],
     templateUrl: './lore-detail.component.html',
     styleUrls: ['./lore-detail.component.scss']
 })
@@ -44,7 +45,8 @@ export class LoreDetailComponent implements OnInit, OnDestroy {
     private pageService: PageService,
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -130,27 +132,32 @@ export class LoreDetailComponent implements OnInit, OnDestroy {
     this.loreService.getLoreDeletionImpact(lore.id!).subscribe({
       next: impact => {
         const deleted: string[] = [];
-        if (impact.folders > 0) deleted.push(`${impact.folders} dossier${impact.folders > 1 ? 's' : ''}`);
-        if (impact.pages > 0) deleted.push(`${impact.pages} page${impact.pages > 1 ? 's' : ''}`);
-        if (impact.templates > 0) deleted.push(`${impact.templates} template${impact.templates > 1 ? 's' : ''}`);
+        if (impact.folders > 0) deleted.push(this.translate.instant(
+          impact.folders > 1 ? 'loreDetail.impact.foldersPlural' : 'loreDetail.impact.folders',
+          { n: impact.folders }));
+        if (impact.pages > 0) deleted.push(this.translate.instant(
+          impact.pages > 1 ? 'loreDetail.impact.pagesPlural' : 'loreDetail.impact.pages',
+          { n: impact.pages }));
+        if (impact.templates > 0) deleted.push(this.translate.instant(
+          impact.templates > 1 ? 'loreDetail.impact.templatesPlural' : 'loreDetail.impact.templates',
+          { n: impact.templates }));
 
         const details: string[] = [];
         if (deleted.length) {
-          details.push(`Cette action supprimera aussi : ${deleted.join(', ')}.`);
+          details.push(this.translate.instant('loreDetail.impact.alsoDeletes', { items: deleted.join(', ') }));
         }
         if (impact.detachedCampaigns > 0) {
-          details.push(
-            `${impact.detachedCampaigns} campagne${impact.detachedCampaigns > 1 ? 's' : ''} ${impact.detachedCampaigns > 1 ? 'seront conservées' : 'sera conservée'} ` +
-            `mais ${impact.detachedCampaigns > 1 ? 'perdront' : 'perdra'} leur lien vers cet univers.`
-          );
+          details.push(this.translate.instant(
+            impact.detachedCampaigns > 1 ? 'loreDetail.impact.detachedCampaignsPlural' : 'loreDetail.impact.detachedCampaigns',
+            { n: impact.detachedCampaigns }));
         }
-        details.push('Cette action est irréversible.');
+        details.push(this.translate.instant('loreDetail.impact.irreversible'));
 
         this.confirmDialog.confirm({
-          title: 'Supprimer le Lore',
-          message: `Supprimer définitivement le Lore "${lore.name}" ?`,
+          title: this.translate.instant('loreDetail.deleteConfirmTitle'),
+          message: this.translate.instant('loreDetail.deleteConfirmMessage', { name: lore.name }),
           details,
-          confirmLabel: 'Supprimer',
+          confirmLabel: this.translate.instant('common.delete'),
           variant: 'danger'
         }).then(ok => {
           if (!ok) return;

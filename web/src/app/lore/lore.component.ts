@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 
 import { Router } from '@angular/router';
 import { LucideAngularModule, BookOpen, Folder, Plus } from 'lucide-angular';
+import { TranslatePipe } from '@ngx-translate/core';
 import { LoreService } from '../services/lore.service';
 import { LayoutService } from '../services/layout.service';
 import { Lore } from '../services/lore.model';
@@ -9,7 +10,7 @@ import { LoreCreateComponent } from './lore-create/lore-create.component';
 
 @Component({
     selector: 'app-lore',
-    imports: [LucideAngularModule, LoreCreateComponent],
+    imports: [LucideAngularModule, TranslatePipe, LoreCreateComponent],
     templateUrl: './lore.component.html',
     styleUrls: ['./lore.component.scss']
 })

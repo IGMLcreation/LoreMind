@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { LucideAngularModule, Pencil, Network, Trash2, Lock } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { resolveCampaignIcon } from '../../campaign-icons';
 import { CampaignService } from '../../../services/campaign.service';
 import { CharacterService } from '../../../services/character.service';
@@ -25,7 +26,7 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  */
 @Component({
     selector: 'app-chapter-view',
-    imports: [RouterModule, LucideAngularModule, ImageGalleryComponent],
+    imports: [RouterModule, LucideAngularModule, ImageGalleryComponent, TranslatePipe],
     templateUrl: './chapter-view.component.html',
     styleUrls: ['./chapter-view.component.scss']
 })
@@ -57,7 +58,8 @@ export class ChapterViewComponent implements OnInit, OnDestroy {
     private pageService: PageService,
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -101,23 +103,26 @@ export class ChapterViewComponent implements OnInit, OnDestroy {
           list.forEach(c => { if (c.id) this.allChaptersById[c.id] = c; })
       );
 
-      this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId));
+      this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId, this.translate));
     });
   }
 
   describePrerequisite(p: Prerequisite): string {
     switch (p.kind) {
       case 'QUEST_COMPLETED':
-        return `Quête « ${this.allChaptersById[p.questId]?.name ?? '?'} » terminée`;
+        return this.translate.instant('chapterView.prereqQuestCompleted', {
+          name: this.allChaptersById[p.questId]?.name ?? '?'
+        });
       case 'SESSION_REACHED':
-        return `Session ${p.minSessionNumber} atteinte`;
+        return this.translate.instant('chapterView.prereqSessionReached', { n: p.minSessionNumber });
       case 'FLAG_SET':
-        return `Fait : ${p.flagName}`;
+        return this.translate.instant('chapterView.prereqFlagSet', { flag: p.flagName });
     }
   }
 
   titleOfRelated(pageId: string): string {
-    return this.availablePages.find(p => p.id === pageId)?.title ?? '(page supprimée)';
+    return this.availablePages.find(p => p.id === pageId)?.title
+      ?? this.translate.instant('chapterView.deletedPage');
   }
 
   editMode(): void {
@@ -143,15 +148,16 @@ export class ChapterViewComponent implements OnInit, OnDestroy {
       next: impact => {
         const details: string[] = [];
         if (impact.scenes > 0) {
-          details.push(`Cette action supprimera aussi : ${impact.scenes} scène${impact.scenes > 1 ? 's' : ''}.`);
+          const key = impact.scenes > 1 ? 'chapterView.deleteScenesPlural' : 'chapterView.deleteScenes';
+          details.push(this.translate.instant(key, { n: impact.scenes }));
         }
-        details.push('Cette action est irréversible.');
+        details.push(this.translate.instant('chapterView.irreversible'));
 
         this.confirmDialog.confirm({
-          title: 'Supprimer le chapitre',
-          message: `Supprimer le chapitre "${chapter.name}" ?`,
+          title: this.translate.instant('chapterView.deleteChapterTitle'),
+          message: this.translate.instant('chapterView.deleteChapterMessage', { name: chapter.name }),
           details,
-          confirmLabel: 'Supprimer',
+          confirmLabel: this.translate.instant('common.delete'),
           variant: 'danger'
         }).then(ok => {
           if (!ok) return;

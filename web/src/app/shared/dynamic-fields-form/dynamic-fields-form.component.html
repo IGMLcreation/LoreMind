@@ -10,7 +10,7 @@
               [ngModel]="values[f.name] || ''"
               (ngModelChange)="onTextChange(f, $event)"
               [name]="'val-' + f.name"
-              placeholder="Renseignez {{ f.name }}…">
+              [placeholder]="'dynamicFieldsForm.textPlaceholder' | translate:{ name: f.name }">
             </textarea>
           }
           @case ('NUMBER') {
@@ -47,7 +47,7 @@
               }
               @if (!f.labels?.length) {
                 <div class="dff-kv-empty">
-                  Aucun label defini dans le template pour ce champ.
+                  {{ 'dynamicFieldsForm.noLabels' | translate }}
                 </div>
               }
             </div>
@@ -58,7 +58,7 @@
   </div>
 } @else {
   <div class="dff-empty">
-    Aucun champ defini dans le template de ce systeme. Editez le GameSystem pour ajouter des champs.
+    {{ 'dynamicFieldsForm.noFields' | translate }}
   </div>
 }
 

@@ -1,6 +1,6 @@
 <div class="sic-panel">
   @if (loading) {
-    <p class="loading-hint">Chargement…</p>
+    <p class="loading-hint">{{ 'common.loading' | translate }}</p>
   }
 
   <!-- Liste des catalogues -->
@@ -8,7 +8,7 @@
     <div class="sic-list">
       @if (catalogs.length === 0) {
         <p class="empty-hint">
-          Aucun catalogue d'objets dans cette campagne.
+          {{ 'sessionItemCatalogsPanel.empty' | translate }}
         </p>
       }
       @for (c of catalogs; track c) {
@@ -25,7 +25,7 @@
   @if (selected) {
     <div class="sic-detail">
       <button type="button" class="sic-back" (click)="backToList()">
-        <lucide-icon [img]="ChevronLeft" [size]="13"></lucide-icon> Catalogues
+        <lucide-icon [img]="ChevronLeft" [size]="13"></lucide-icon> {{ 'sessionItemCatalogsPanel.catalogs' | translate }}
       </button>
       <h4>{{ selected.name }}</h4>
       @for (g of groups; track g) {
@@ -45,8 +45,8 @@
                 <div class="sic-obj-desc">{{ it.description }}</div>
               }
               <button type="button" class="sic-note" (click)="note(it)" [disabled]="!canAddToJournal"
-                title="Consigner au journal (ex. achat)">
-                <lucide-icon [img]="BookmarkPlus" [size]="12"></lucide-icon> Journal
+                [title]="'sessionItemCatalogsPanel.noteTitle' | translate">
+                <lucide-icon [img]="BookmarkPlus" [size]="12"></lucide-icon> {{ 'sessionItemCatalogsPanel.journal' | translate }}
               </button>
             </div>
           }

@@ -5,15 +5,15 @@
       <span class="logo-icon">✦</span>
       <span class="logo-text">LoreMind</span>
     </div>
-    <p class="logo-subtitle">THE DIGITAL CODEX</p>
+    <p class="logo-subtitle">{{ 'sidebar.subtitle' | translate }}</p>
   </div>
 
   <div class="nav-toggle">
     <button class="toggle-btn" [class.active]="currentRoute.startsWith('/lore')" (click)="navigateTo('/lore')">
-      Lore
+      {{ 'sidebar.tabLore' | translate }}
     </button>
     <button class="toggle-btn" [class.active]="currentRoute.startsWith('/campaigns')" (click)="navigateTo('/campaigns')">
-      Campagne
+      {{ 'sidebar.tabCampaign' | translate }}
     </button>
   </div>
 
@@ -42,35 +42,35 @@
   }
 
   <div class="tools-section">
-    <p class="tools-label">OUTILS</p>
+    <p class="tools-label">{{ 'sidebar.toolsLabel' | translate }}</p>
     <button class="tool-btn" (click)="openSearch()">
       <lucide-icon [img]="Search" [size]="16"></lucide-icon>
-      <span>Recherche globale</span>
+      <span>{{ 'sidebar.globalSearch' | translate }}</span>
       <span class="tool-kbd">Ctrl+K</span>
     </button>
     <button class="tool-btn" [class.active]="currentRoute.startsWith('/game-systems')" (click)="navigateTo('/game-systems')">
       <lucide-icon [img]="Dices" [size]="16"></lucide-icon>
-      <span>Systèmes de JDR</span>
+      <span>{{ 'sidebar.gameSystems' | translate }}</span>
     </button>
     @if (!config.demoMode) {
       <button class="tool-btn">
         <lucide-icon [img]="Download" [size]="16"></lucide-icon>
-        <span>Export VTT</span>
+        <span>{{ 'sidebar.vttExport' | translate }}</span>
       </button>
     }
     @if (!config.demoMode) {
       <button class="tool-btn" [class.active]="currentRoute.startsWith('/settings')" (click)="navigateTo('/settings')">
         <lucide-icon [img]="Settings" [size]="16"></lucide-icon>
-        <span>Paramètres</span>
+        <span>{{ 'sidebar.settings' | translate }}</span>
         @if (updateAvailable$ | async) {
-          <span class="update-badge" title="Mise a jour disponible">MAJ</span>
+          <span class="update-badge" [title]="'sidebar.updateAvailable' | translate">{{ 'sidebar.updateBadge' | translate }}</span>
         }
       </button>
     }
   </div>
 
   <div class="sidebar-footer">
-    <span class="version">Version {{ appVersion }}</span>
+    <span class="version">{{ 'sidebar.version' | translate:{ version: appVersion } }}</span>
   </div>
 
 </aside>

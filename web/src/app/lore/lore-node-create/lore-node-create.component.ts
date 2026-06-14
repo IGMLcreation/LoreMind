@@ -3,6 +3,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LucideAngularModule, LucideIconData } from 'lucide-angular';
+import { TranslatePipe } from '@ngx-translate/core';
 import { LoreService } from '../../services/lore.service';
 import { TemplateService } from '../../services/template.service';
 import { PageService } from '../../services/page.service';
@@ -14,7 +15,7 @@ import { LORE_ICON_OPTIONS, IconOption, resolveIcon } from '../lore-icons';
 
 @Component({
     selector: 'app-lore-node-create',
-    imports: [ReactiveFormsModule, LucideAngularModule],
+    imports: [ReactiveFormsModule, LucideAngularModule, TranslatePipe],
     templateUrl: './lore-node-create.component.html',
     styleUrls: ['./lore-node-create.component.scss']
 })

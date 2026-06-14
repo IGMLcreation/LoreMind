@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 
 import { Router } from '@angular/router';
 import { LucideAngularModule, Dices, Plus, Pencil, Trash2 } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { GameSystemService } from '../services/game-system.service';
 import { LayoutService } from '../services/layout.service';
 import { GameSystem } from '../services/game-system.model';
@@ -9,7 +10,7 @@ import { ConfirmDialogService } from '../shared/confirm-dialog/confirm-dialog.se
 
 @Component({
     selector: 'app-game-systems',
-    imports: [LucideAngularModule],
+    imports: [LucideAngularModule, TranslatePipe],
     templateUrl: './game-systems.component.html',
     styleUrls: ['./game-systems.component.scss']
 })
@@ -25,7 +26,8 @@ export class GameSystemsComponent implements OnInit {
     private router: Router,
     private gameSystemService: GameSystemService,
     private confirmDialog: ConfirmDialogService,
-    private layoutService: LayoutService
+    private layoutService: LayoutService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -54,10 +56,10 @@ export class GameSystemsComponent implements OnInit {
     event.stopPropagation();
     if (!system.id) return;
     this.confirmDialog.confirm({
-      title: 'Supprimer le système',
-      message: `Supprimer le système "${system.name}" ?`,
-      details: ['Les campagnes qui l\'utilisent ne seront plus associées à aucun système.'],
-      confirmLabel: 'Supprimer',
+      title: this.translate.instant('gameSystems.deleteTitle'),
+      message: this.translate.instant('gameSystems.deleteMessage', { name: system.name }),
+      details: [this.translate.instant('gameSystems.deleteDetail')],
+      confirmLabel: this.translate.instant('common.delete'),
       variant: 'danger'
     }).then(ok => {
       if (!ok || !system.id) return;

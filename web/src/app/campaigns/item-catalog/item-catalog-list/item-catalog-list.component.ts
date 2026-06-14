@@ -6,6 +6,7 @@ import { ItemCatalogService } from '../../../services/item-catalog.service';
 import { CampaignSidebarService } from '../../../services/campaign-sidebar.service';
 import { ItemCatalog } from '../../../services/item-catalog.model';
 import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 /**
  * Liste des catalogues d'objets d'une campagne + création.
@@ -13,7 +14,7 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  */
 @Component({
     selector: 'app-item-catalog-list',
-    imports: [LucideAngularModule],
+    imports: [LucideAngularModule, TranslatePipe],
     templateUrl: './item-catalog-list.component.html',
     styleUrls: ['./item-catalog-list.component.scss']
 })
@@ -31,7 +32,8 @@ export class ItemCatalogListComponent implements OnInit {
     private router: Router,
     private service: ItemCatalogService,
     private campaignSidebar: CampaignSidebarService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -60,9 +62,9 @@ export class ItemCatalogListComponent implements OnInit {
   remove(c: ItemCatalog, ev: Event): void {
     ev.stopPropagation();
     this.confirmDialog.confirm({
-      title: 'Supprimer le catalogue',
-      message: `Supprimer « ${c.name} » ?`,
-      confirmLabel: 'Supprimer',
+      title: this.translate.instant('itemCatalogList.deleteTitle'),
+      message: this.translate.instant('itemCatalogList.deleteMessage', { name: c.name }),
+      confirmLabel: this.translate.instant('common.delete'),
       variant: 'danger'
     }).then(ok => {
       if (!ok) return;

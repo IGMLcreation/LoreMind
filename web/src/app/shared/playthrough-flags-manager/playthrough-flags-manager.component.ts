@@ -2,6 +2,7 @@ import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/cor
 
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
+import { TranslatePipe } from '@ngx-translate/core';
 import { CampaignFlagService } from '../../services/campaign-flag.service';
 import { PlaythroughFlagService } from '../../services/playthrough-flag.service';
 import { forkJoin } from 'rxjs';
@@ -15,7 +16,7 @@ import { forkJoin } from 'rxjs';
  */
 @Component({
     selector: 'app-playthrough-flags-manager',
-    imports: [FormsModule, LucideAngularModule],
+    imports: [FormsModule, LucideAngularModule, TranslatePipe],
     templateUrl: './playthrough-flags-manager.component.html',
     styleUrls: ['./playthrough-flags-manager.component.scss']
 })

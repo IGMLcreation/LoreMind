@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, Plus, Trash2, ChevronDown } from 'lucide-angular';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Chapter, Prerequisite } from '../../services/campaign.model';
 
 /**
@@ -13,7 +14,7 @@ import { Chapter, Prerequisite } from '../../services/campaign.model';
  */
 @Component({
     selector: 'app-prerequisite-editor',
-    imports: [FormsModule, LucideAngularModule],
+    imports: [FormsModule, LucideAngularModule, TranslatePipe],
     templateUrl: './prerequisite-editor.component.html',
     styleUrls: ['./prerequisite-editor.component.scss']
 })

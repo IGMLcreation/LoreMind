@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, Save, ArrowLeft, Skull, Trash2 } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { EnemyService } from '../../../services/enemy.service';
 import { CampaignService } from '../../../services/campaign.service';
 import { GameSystemService } from '../../../services/game-system.service';
@@ -19,7 +20,7 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  */
 @Component({
     selector: 'app-enemy-edit',
-    imports: [FormsModule, LucideAngularModule, DynamicFieldsFormComponent, SingleImagePickerComponent],
+    imports: [FormsModule, LucideAngularModule, TranslatePipe, DynamicFieldsFormComponent, SingleImagePickerComponent],
     templateUrl: './enemy-edit.component.html',
     styleUrls: ['./enemy-edit.component.scss']
 })
@@ -52,7 +53,8 @@ export class EnemyEditComponent implements OnInit {
     private campaignService: CampaignService,
     private gameSystemService: GameSystemService,
     private campaignSidebar: CampaignSidebarService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -143,10 +145,10 @@ export class EnemyEditComponent implements OnInit {
   deleteEnemy(): void {
     if (!this.enemyId) return;
     this.confirmDialog.confirm({
-      title: 'Supprimer la fiche ?',
-      message: `Supprimer la fiche de "${this.name}" ?`,
-      details: ['Cette action est irreversible.'],
-      confirmLabel: 'Supprimer',
+      title: this.translate.instant('enemyEdit.deleteTitle'),
+      message: this.translate.instant('enemyEdit.deleteMessage', { name: this.name }),
+      details: [this.translate.instant('enemyEdit.irreversible')],
+      confirmLabel: this.translate.instant('common.delete'),
       variant: 'danger'
     }).then(ok => {
       if (!ok || !this.enemyId) return;

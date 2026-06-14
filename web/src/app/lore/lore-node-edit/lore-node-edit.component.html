@@ -2,39 +2,39 @@
   <div class="page">
     <header class="page-header">
       <div>
-        <h1>Éditer le dossier</h1>
+        <h1>{{ 'loreNodeEdit.title' | translate }}</h1>
         <p class="subtitle">
-          {{ childFolderCount }} sous-dossier(s) · {{ pageCount }} page(s)
+          {{ 'loreNodeEdit.summary' | translate:{ folders: childFolderCount, pages: pageCount } }}
         </p>
       </div>
       <div class="header-actions">
-        <button type="button" class="btn-secondary" (click)="cancel()">Annuler</button>
+        <button type="button" class="btn-secondary" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
         <button
           type="submit"
           class="btn-primary"
           [disabled]="form.invalid"
           (click)="save()">
-          Sauvegarder
+          {{ 'common.save' | translate }}
         </button>
       </div>
     </header>
     <form [formGroup]="form" class="edit-form">
       <div class="field">
-        <label>Nom du dossier *</label>
+        <label>{{ 'loreNodeEdit.nameLabel' | translate }}</label>
         <input type="text" formControlName="name" />
       </div>
       <div class="field">
-        <label>Dossier parent <span class="optional">(optionnel)</span></label>
+        <label>{{ 'loreNodeEdit.parentLabel' | translate }} <span class="optional">{{ 'common.optional' | translate }}</span></label>
         <select formControlName="parentId">
-          <option value="">— Racine du Lore —</option>
+          <option value="">{{ 'loreNodeEdit.rootOption' | translate }}</option>
           @for (parent of availableParents; track parent) {
             <option [value]="parent.id">{{ parent.name }}</option>
           }
         </select>
-        <p class="hint">Vous ne pouvez pas choisir un sous-dossier du dossier courant (cycle interdit)</p>
+        <p class="hint">{{ 'loreNodeEdit.parentHint' | translate }}</p>
       </div>
       <div class="field">
-        <label>Icône</label>
+        <label>{{ 'loreNodeEdit.iconLabel' | translate }}</label>
         <div class="icon-grid">
           @for (option of iconOptions; track option) {
             <button

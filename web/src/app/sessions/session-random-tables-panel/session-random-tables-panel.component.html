@@ -1,6 +1,6 @@
 <div class="srt-panel">
   @if (loading) {
-    <p class="loading-hint">Chargement…</p>
+    <p class="loading-hint">{{ 'common.loading' | translate }}</p>
   }
 
   <!-- Liste des tables -->
@@ -8,7 +8,7 @@
     <div class="srt-list">
       @if (tables.length === 0) {
         <p class="empty-hint">
-          Aucune table aléatoire dans cette campagne. Crée-en une depuis la sidebar.
+          {{ 'sessionRandomTablesPanel.empty' | translate }}
         </p>
       }
       @for (t of tables; track t) {
@@ -25,12 +25,12 @@
   @if (selected) {
     <div class="srt-detail">
       <button type="button" class="srt-back" (click)="backToList()">
-        <lucide-icon [img]="ChevronLeft" [size]="13"></lucide-icon> Tables
+        <lucide-icon [img]="ChevronLeft" [size]="13"></lucide-icon> {{ 'sessionRandomTablesPanel.tables' | translate }}
       </button>
       <h4>{{ selected.name }}</h4>
       <button type="button" class="srt-roll" (click)="roll()">
         <lucide-icon [img]="Dices" [size]="15"></lucide-icon>
-        Lancer {{ selected.diceFormula }}
+        {{ 'sessionRandomTablesPanel.roll' | translate }} {{ selected.diceFormula }}
       </button>
       @if (lastRoll) {
         <div class="srt-result">
@@ -44,7 +44,7 @@
               <strong>{{ matched.label }}</strong>
             }
             @if (!matched) {
-              <em>aucune entrée</em>
+              <em>{{ 'sessionRandomTablesPanel.noEntry' | translate }}</em>
             }
           </div>
           @if (matched?.detail) {
@@ -52,12 +52,12 @@
           }
           <div class="srt-actions">
             <button type="button" class="srt-act" (click)="addToJournal()" [disabled]="!canAddToJournal">
-              <lucide-icon [img]="BookmarkPlus" [size]="13"></lucide-icon> Journal
+              <lucide-icon [img]="BookmarkPlus" [size]="13"></lucide-icon> {{ 'sessionRandomTablesPanel.journal' | translate }}
             </button>
             <button type="button" class="srt-act srt-act--ai" (click)="improvise()"
               [disabled]="!matched || improvising || !canAddToJournal">
               <lucide-icon [img]="Sparkles" [size]="13"></lucide-icon>
-              {{ improvising ? '…' : 'IA improvise' }}
+              {{ improvising ? ('sessionRandomTablesPanel.improvising' | translate) : ('sessionRandomTablesPanel.aiImprovise' | translate) }}
             </button>
           </div>
         </div>

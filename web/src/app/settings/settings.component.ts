@@ -3,10 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LucideAngularModule, ArrowLeft, RefreshCw, Save, Check, AlertCircle, Plus } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { SettingsService, AppSettings, AppSettingsUpdate, OneMinModelGroup, OpenRouterModel, MistralModel, GeminiModel } from '../services/settings.service';
 import { LayoutService } from '../services/layout.service';
 import { UpdatesSectionComponent } from './updates-section/updates-section.component';
 import { OllamaModelManagerComponent } from './ollama-model-manager/ollama-model-manager.component';
+import { LanguageSwitcherComponent } from '../shared/language-switcher/language-switcher.component';
 
 /**
  * Ecran de parametrage du LLM utilise par le Brain.
@@ -24,7 +26,7 @@ import { OllamaModelManagerComponent } from './ollama-model-manager/ollama-model
  */
 @Component({
     selector: 'app-settings',
-    imports: [CommonModule, FormsModule, LucideAngularModule, UpdatesSectionComponent, OllamaModelManagerComponent],
+    imports: [CommonModule, FormsModule, LucideAngularModule, TranslatePipe, UpdatesSectionComponent, OllamaModelManagerComponent, LanguageSwitcherComponent],
     templateUrl: './settings.component.html',
     styleUrls: ['./settings.component.scss']
 })
@@ -93,7 +95,8 @@ export class SettingsComponent implements OnInit {
   constructor(
     private settingsService: SettingsService,
     private router: Router,
-    private layoutService: LayoutService
+    private layoutService: LayoutService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -110,7 +113,7 @@ export class SettingsComponent implements OnInit {
         this.refreshModels();
         this.fetchOllamaModelInfo();
       },
-      error: (err) => this.errorMessage = this.extractError(err, 'Impossible de charger les parametres.')
+      error: (err) => this.errorMessage = this.extractError(err, this.translate.instant('settings.messages.loadError'))
     });
   }
 
@@ -315,11 +318,11 @@ export class SettingsComponent implements OnInit {
         this.clearMistralKey = false;
         this.geminiApiKeyInput = '';
         this.clearGeminiKey = false;
-        this.successMessage = 'Parametres sauvegardes.';
+        this.successMessage = this.translate.instant('settings.messages.saveSuccess');
         this.saving = false;
       },
       error: (err) => {
-        this.errorMessage = this.extractError(err, 'Echec de la sauvegarde.');
+        this.errorMessage = this.extractError(err, this.translate.instant('settings.messages.saveError'));
         this.saving = false;
       }
     });

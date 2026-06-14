@@ -1,0 +1,95 @@
+{
+  "characterEdit": {
+    "backToCampaign": "Back to campaign",
+    "titleEdit": "Edit character sheet",
+    "titleNew": "New character",
+    "aiAssistant": "AI Assistant",
+    "aiAssistantTitle": "Open the AI Assistant to brainstorm about this PC",
+    "nameLabel": "Character name *",
+    "namePlaceholder": "E.g. Thorin Great-Axe, Lyra the Wanderer...",
+    "portrait": "Portrait",
+    "portraitHint": "Square recommended (400×400).",
+    "header": "Banner / Header",
+    "headerHint": "Landscape format recommended (1200×400).",
+    "chatWelcome": "I can see this character sheet. Ask me to suggest stats, backstory, equipment or personal goals.",
+    "chatSuggestion1": "Suggest a backstory consistent with the setting",
+    "chatSuggestion2": "Suggest 3 personal goals for this character",
+    "chatSuggestion3": "Help me balance the combat stats",
+    "deleteTitle": "Delete this sheet?",
+    "deleteMessage": "Delete the sheet for \"{{name}}\"?",
+    "irreversible": "This action is irreversible."
+  },
+  "characterView": {
+    "aiAssistant": "AI Assistant"
+  },
+  "npcEdit": {
+    "backToCampaign": "Back to campaign",
+    "titleEdit": "Edit NPC",
+    "titleNew": "New NPC",
+    "aiAssistant": "AI Assistant",
+    "aiAssistantTitle": "Open the AI Assistant to brainstorm about this NPC",
+    "nameLabel": "NPC name *",
+    "namePlaceholder": "E.g. Borin the blacksmith, Lady Elara, Kael the innkeeper...",
+    "folder": "Folder",
+    "folderPlaceholder": "E.g. Bard's Gate, The Pipers faction… (leave empty = unfiled)",
+    "portrait": "Portrait",
+    "portraitHint": "Square recommended (400×400).",
+    "header": "Banner / Header",
+    "headerHint": "Landscape format recommended (1200×400).",
+    "relatedPages": "Linked Lore pages",
+    "relatedPagesHint": "Link this NPC to pages of the setting (their town, faction, region…). These links appear in the Lore graph.",
+    "chatWelcome": "I can see this NPC sheet. Ask me to suggest appearance, motivations, secrets, or signature lines.",
+    "chatSuggestion1": "Suggest a striking appearance and posture",
+    "chatSuggestion2": "Suggest 2 motivations and a secret for this NPC",
+    "chatSuggestion3": "Imagine 3 signature lines that characterize them",
+    "deleteTitle": "Delete this sheet?",
+    "deleteMessage": "Delete the sheet for \"{{name}}\"?",
+    "irreversible": "This action is irreversible."
+  },
+  "npcList": {
+    "create": "New NPC",
+    "title": "NPCs",
+    "hint": "All the non-player characters in the campaign, organized by folder. The \"Folder\" field of each sheet drives the classification.",
+    "empty": "No NPCs yet.",
+    "unclassified": "Unfiled",
+    "deleteTitle": "Delete sheet",
+    "deleteMessage": "Delete the sheet for \"{{name}}\"?",
+    "irreversible": "This action is irreversible."
+  },
+  "npcView": {
+    "aiAssistant": "AI Assistant",
+    "relatedPages": "Linked Lore pages",
+    "deletedPage": "(deleted page)"
+  },
+  "enemyEdit": {
+    "backToEnemies": "Back to enemies",
+    "titleEdit": "Edit enemy",
+    "titleNew": "New enemy",
+    "nameLabel": "Enemy name *",
+    "namePlaceholder": "E.g. Balor, Goblin warchief, Lich…",
+    "level": "Level / CR",
+    "levelPlaceholder": "E.g. 5, CR 8, Boss…",
+    "folder": "Folder",
+    "folderPlaceholder": "E.g. Demons, Humanoids… (empty = unfiled)",
+    "portrait": "Portrait",
+    "portraitHint": "Square recommended (400×400).",
+    "header": "Banner / Header",
+    "headerHint": "Landscape format recommended (1200×400).",
+    "deleteTitle": "Delete this sheet?",
+    "deleteMessage": "Delete the sheet for \"{{name}}\"?",
+    "irreversible": "This action is irreversible."
+  },
+  "enemyList": {
+    "create": "New enemy",
+    "title": "Enemies",
+    "hint": "The campaign bestiary: monsters and creatures with their sheet (driven by the game system's Enemy template), organized by folder (Demons, Humanoids…).",
+    "empty": "No enemies yet.",
+    "unclassified": "Unfiled",
+    "levelShort": "Lvl {{level}}",
+    "deleteTitle": "Delete enemy",
+    "deleteMessage": "Delete \"{{name}}\"?"
+  },
+  "enemyView": {
+    "levelLong": "Level {{level}}"
+  }
+}

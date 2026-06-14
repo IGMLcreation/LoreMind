@@ -9,17 +9,17 @@
           {{ arc.name }}
         </h1>
         <p class="view-subtitle">
-          {{ arc.type === 'HUB' ? 'Arc en hub (quêtes non linéaires)' : 'Arc narratif' }}
+          {{ (arc.type === 'HUB' ? 'arcView.subtitleHub' : 'arcView.subtitleLinear') | translate }}
         </p>
       </div>
       <div class="view-actions">
         <button type="button" class="btn-primary" (click)="editMode()">
           <lucide-icon [img]="Pencil" [size]="14"></lucide-icon>
-          Modifier
+          {{ 'common.edit' | translate }}
         </button>
-        <button type="button" class="btn-danger" (click)="deleteArc()" title="Supprimer l'arc et tout son contenu">
+        <button type="button" class="btn-danger" (click)="deleteArc()" [title]="'arcView.deleteTitle' | translate">
           <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
-          Supprimer
+          {{ 'common.delete' | translate }}
         </button>
       </div>
     </header>
@@ -32,7 +32,7 @@
     <!-- Cartes & plans -->
     @if ((arc.mapImageIds?.length ?? 0) > 0) {
       <section class="view-section">
-        <h2 class="view-section-title"><span class="view-section-icon">🗺️</span> Cartes & plans</h2>
+        <h2 class="view-section-title"><span class="view-section-icon">🗺️</span> {{ 'arcView.mapsTitle' | translate }}</h2>
         <app-image-gallery [imageIds]="arc.mapImageIds ?? []" [layout]="'MAPS'"></app-image-gallery>
       </section>
     }
@@ -40,10 +40,10 @@
     Le statut effectif et les actions de jeu vivent dans l'écran d'une Partie. -->
     @if (arc.type === 'HUB') {
       <section class="view-section">
-        <h2 class="view-section-title"><span class="view-section-icon">🗺️</span> Quêtes du hub (scénario)</h2>
+        <h2 class="view-section-title"><span class="view-section-icon">🗺️</span> {{ 'arcView.hubQuestsTitle' | translate }}</h2>
         @if (hubQuests.length === 0) {
           <p class="view-section-empty">
-            Aucune quête pour ce hub. Créez-en une pour démarrer.
+            {{ 'arcView.hubQuestsEmpty' | translate }}
           </p>
         }
         @if (hubQuests.length > 0) {
@@ -66,7 +66,7 @@
                 @if ((q.prerequisites?.length ?? 0) > 0) {
                   <div class="hub-quest-card-locked-hint">
                     <lucide-icon [img]="AlertCircle" [size]="13"></lucide-icon>
-                    <span>{{ q.prerequisites!.length }} condition(s) de déblocage</span>
+                    <span>{{ 'arcView.unlockConditions' | translate:{ n: q.prerequisites!.length } }}</span>
                     <ul class="hub-quest-card-prereq-list">
                       @for (p of q.prerequisites; track p) {
                         <li>{{ describePrerequisite(p) }}</li>
@@ -81,45 +81,45 @@
       </section>
     }
     <section class="view-section">
-      <h2 class="view-section-title"><span class="view-section-icon">📜</span> Synopsis</h2>
+      <h2 class="view-section-title"><span class="view-section-icon">📜</span> {{ 'arcView.synopsisTitle' | translate }}</h2>
       @if (arc.description?.trim()) {
         <p class="view-section-body">{{ arc.description }}</p>
       } @else {
-        <p class="view-section-empty">Non renseigné</p>
+        <p class="view-section-empty">{{ 'arcView.notProvided' | translate }}</p>
       }
     </section>
     <div class="view-row">
       <section class="view-section">
-        <h2 class="view-section-title"><span class="view-section-icon">✨</span> Thèmes principaux</h2>
+        <h2 class="view-section-title"><span class="view-section-icon">✨</span> {{ 'arcView.themesTitle' | translate }}</h2>
         @if (arc.themes?.trim()) {
           <p class="view-section-body">{{ arc.themes }}</p>
         } @else {
-          <p class="view-section-empty">Non renseigné</p>
+          <p class="view-section-empty">{{ 'arcView.notProvided' | translate }}</p>
         }
       </section>
       <section class="view-section">
-        <h2 class="view-section-title"><span class="view-section-icon">⚖️</span> Enjeux globaux</h2>
+        <h2 class="view-section-title"><span class="view-section-icon">⚖️</span> {{ 'arcView.stakesTitle' | translate }}</h2>
         @if (arc.stakes?.trim()) {
           <p class="view-section-body">{{ arc.stakes }}</p>
         } @else {
-          <p class="view-section-empty">Non renseigné</p>
+          <p class="view-section-empty">{{ 'arcView.notProvided' | translate }}</p>
         }
       </section>
     </div>
     <section class="view-section">
-      <h2 class="view-section-title"><span class="view-section-icon">🎁</span> Récompenses et progression</h2>
+      <h2 class="view-section-title"><span class="view-section-icon">🎁</span> {{ 'arcView.rewardsTitle' | translate }}</h2>
       @if (arc.rewards?.trim()) {
         <p class="view-section-body">{{ arc.rewards }}</p>
       } @else {
-        <p class="view-section-empty">Non renseigné</p>
+        <p class="view-section-empty">{{ 'arcView.notProvided' | translate }}</p>
       }
     </section>
     <section class="view-section">
-      <h2 class="view-section-title"><span class="view-section-icon">🎬</span> Dénouement prévu</h2>
+      <h2 class="view-section-title"><span class="view-section-icon">🎬</span> {{ 'arcView.resolutionTitle' | translate }}</h2>
       @if (arc.resolution?.trim()) {
         <p class="view-section-body">{{ arc.resolution }}</p>
       } @else {
-        <p class="view-section-empty">Non renseigné</p>
+        <p class="view-section-empty">{{ 'arcView.notProvided' | translate }}</p>
       }
     </section>
     <!-- Notes MJ (bloc privé rouge discret) -->
@@ -127,7 +127,7 @@
       <section class="view-section view-section--private">
         <h2 class="view-section-title">
           <span class="view-section-icon">🔒</span>
-          Notes et planification du MJ
+          {{ 'arcView.gmNotesTitle' | translate }}
         </h2>
         <p class="view-section-body">{{ arc.gmNotes }}</p>
       </section>
@@ -135,7 +135,7 @@
     <!-- Pages Lore liées (chips cliquables) -->
     @if (loreId && (arc.relatedPageIds?.length ?? 0) > 0) {
       <section class="view-section">
-        <h2 class="view-section-title"><span class="view-section-icon">🔗</span> Pages Lore associées</h2>
+        <h2 class="view-section-title"><span class="view-section-icon">🔗</span> {{ 'arcView.relatedPagesTitle' | translate }}</h2>
         <div class="view-chips">
           @for (relId of arc.relatedPageIds; track relId) {
             <a class="view-chip"

@@ -1,6 +1,7 @@
 import { Injectable, NgZone } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
 import { Notebook, NotebookArchive, NotebookDetail, NotebookSource, NotebookChatEvent } from './notebook.model';
 
 /**
@@ -11,7 +12,7 @@ import { Notebook, NotebookArchive, NotebookDetail, NotebookSource, NotebookChat
 export class NotebookService {
   private readonly apiUrl = '/api/notebooks';
 
-  constructor(private http: HttpClient, private zone: NgZone) {}
+  constructor(private http: HttpClient, private zone: NgZone, private translate: TranslateService) {}
 
   listByCampaign(campaignId: string): Observable<Notebook[]> {
     return this.http.get<Notebook[]>(`${this.apiUrl}/campaign/${campaignId}`);
@@ -143,7 +144,7 @@ export class NotebookService {
           this.zone.run(() => subscriber.complete());
         } catch (err) {
           if ((err as Error).name !== 'AbortError') {
-            emit({ type: 'error', message: (err as Error).message || 'Erreur réseau' });
+            emit({ type: 'error', message: (err as Error).message || this.translate.instant('services.networkError') });
           }
           this.zone.run(() => subscriber.complete());
         }

@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, Plus, Trash2, ChevronDown, ChevronUp, GitBranch, X } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { Room, RoomBranch } from '../../services/campaign.model';
 import { Enemy } from '../../services/enemy.model';
 import { EnemyLinkPickerComponent } from '../enemy-link-picker/enemy-link-picker.component';
@@ -17,7 +18,7 @@ import { EnemyLinkPickerComponent } from '../enemy-link-picker/enemy-link-picker
  */
 @Component({
     selector: 'app-rooms-editor',
-    imports: [FormsModule, LucideAngularModule, EnemyLinkPickerComponent],
+    imports: [FormsModule, LucideAngularModule, EnemyLinkPickerComponent, TranslatePipe],
     templateUrl: './rooms-editor.component.html',
     styleUrls: ['./rooms-editor.component.scss']
 })
@@ -29,6 +30,8 @@ export class RoomsEditorComponent {
   /** ID de la campagne (URLs des chips du picker d'ennemis). */
   @Input() campaignId = '';
   @Output() roomsChange = new EventEmitter<Room[]>();
+
+  constructor(private translate: TranslateService) {}
 
   readonly Plus = Plus;
   readonly Trash2 = Trash2;
@@ -57,7 +60,7 @@ export class RoomsEditorComponent {
       : 0;
     const newRoom: Room = {
       id: this.newId(),
-      name: `Salle ${this.rooms.length + 1}`,
+      name: this.translate.instant('roomsEditor.defaultRoomName', { n: this.rooms.length + 1 }),
       order: nextOrder,
       branches: []
     };
@@ -89,7 +92,7 @@ export class RoomsEditorComponent {
   addBranch(room: Room): void {
     const others = this.rooms.filter(r => r.id !== room.id);
     const branch: RoomBranch = {
-      label: 'Porte',
+      label: this.translate.instant('roomsEditor.defaultBranchLabel'),
       targetRoomId: others[0]?.id ?? '',
       condition: ''
     };

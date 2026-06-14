@@ -2,7 +2,7 @@
   <div class="session-detail">
     <a class="back-link" [routerLink]="campaignId ? ['/campaigns', campaignId] : ['/campaigns']">
       <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon>
-      Retour à la campagne
+      {{ 'sessionDetail.backToCampaign' | translate }}
     </a>
     <div class="detail-header">
       <div class="header-texts">
@@ -12,7 +12,7 @@
               <lucide-icon [img]="Dices" [size]="24"></lucide-icon>
               {{ session.name }}
             </h1>
-            <button type="button" class="btn-icon" (click)="startRename()" title="Renommer la session">
+            <button type="button" class="btn-icon" (click)="startRename()" [title]="'sessionDetail.renameTitle' | translate">
               <lucide-icon [img]="Pencil" [size]="14"></lucide-icon>
             </button>
           </div>
@@ -25,22 +25,22 @@
               (keydown.enter)="saveRename()"
               (keydown.escape)="cancelRename()"
               autofocus />
-            <button type="button" class="btn-icon" (click)="saveRename()" [disabled]="!editName.trim()" title="Valider">
+            <button type="button" class="btn-icon" (click)="saveRename()" [disabled]="!editName.trim()" [title]="'common.validate' | translate">
               <lucide-icon [img]="Check" [size]="14"></lucide-icon>
             </button>
-            <button type="button" class="btn-icon" (click)="cancelRename()" title="Annuler">
-              Annuler
+            <button type="button" class="btn-icon" (click)="cancelRename()" [title]="'common.cancel' | translate">
+              {{ 'common.cancel' | translate }}
             </button>
           </div>
         }
         <div class="meta">
           <span class="badge" [class.badge-active]="session.active">
-            {{ session.active ? 'En cours' : 'Terminée' }}
+            {{ (session.active ? 'sessionDetail.statusActive' : 'sessionDetail.statusEnded') | translate }}
           </span>
-          <span class="badge badge-muted">Démarrée le {{ session.startedAt | date:'dd/MM/yyyy HH:mm' }}</span>
+          <span class="badge badge-muted">{{ 'sessionDetail.startedOn' | translate:{ date: (session.startedAt | date:'dd/MM/yyyy HH:mm') } }}</span>
           @if (session.endedAt) {
             <span class="badge badge-muted">
-              Terminée le {{ session.endedAt | date:'dd/MM/yyyy HH:mm' }}
+              {{ 'sessionDetail.endedOn' | translate:{ date: (session.endedAt | date:'dd/MM/yyyy HH:mm') } }}
             </span>
           }
         </div>
@@ -49,12 +49,12 @@
         @if (session.active) {
           <button type="button" class="btn-secondary" (click)="endSession()">
             <lucide-icon [img]="Square" [size]="14"></lucide-icon>
-            Terminer la session
+            {{ 'sessionDetail.endSession' | translate }}
           </button>
         }
         <button type="button" class="btn-danger" (click)="deleteSession()">
           <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
-          Supprimer
+          {{ 'common.delete' | translate }}
         </button>
       </div>
     </div>
@@ -74,7 +74,7 @@
                   [style.--type-color]="entryTypeMeta[type].color"
                   (click)="newEntryType = type">
                   <lucide-icon [img]="typeIcons[type]" [size]="14"></lucide-icon>
-                  {{ entryTypeMeta[type].label }}
+                  {{ typeLabel(type) }}
                 </button>
               }
             </div>
@@ -82,29 +82,29 @@
               [(ngModel)]="newEntryContent"
               name="newEntryContent"
               rows="3"
-              [placeholder]="'Ajouter une ' + entryTypeMeta[newEntryType].label.toLowerCase() + '…'"
+              [placeholder]="newEntryPlaceholder()"
             (keydown.control.enter)="submitNewEntry()"></textarea>
             <div class="entry-input-footer">
-              <span class="hint">Ctrl + Entrée pour ajouter</span>
+              <span class="hint">{{ 'sessionDetail.ctrlEnterHint' | translate }}</span>
               <button type="button"
                 class="btn-primary"
                 [disabled]="!newEntryContent.trim() || submittingEntry"
                 (click)="submitNewEntry()">
                 <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
-                Ajouter
+                {{ 'common.add' | translate }}
               </button>
             </div>
           </section>
         }
         <!-- Timeline -->
         <section class="detail-section timeline-section">
-          <h2>Journal de session</h2>
+          <h2>{{ 'sessionDetail.journalTitle' | translate }}</h2>
           @if (entries.length === 0) {
             <div class="empty-state">
-              <p>Aucune entrée pour le moment.</p>
+              <p>{{ 'sessionDetail.noEntries' | translate }}</p>
               @if (session.active) {
                 <p class="hint">
-                  Saisis une note, un évènement ou un jet ci-dessus pour commencer le journal.
+                  {{ 'sessionDetail.noEntriesHint' | translate }}
                 </p>
               }
             </div>
@@ -121,13 +121,13 @@
                     <!-- Mode lecture -->
                     @if (editingEntryId !== entry.id) {
                       <div class="entry-header">
-                        <span class="entry-type">{{ entryTypeMeta[entry.type].label }}</span>
+                        <span class="entry-type">{{ typeLabel(entry.type) }}</span>
                         <span class="entry-time">{{ entry.occurredAt | date:'HH:mm — dd/MM/yyyy' }}</span>
                         <div class="entry-actions">
-                          <button type="button" class="btn-icon" (click)="startEditEntry(entry)" title="Modifier">
+                          <button type="button" class="btn-icon" (click)="startEditEntry(entry)" [title]="'common.edit' | translate">
                             <lucide-icon [img]="Pencil" [size]="12"></lucide-icon>
                           </button>
-                          <button type="button" class="btn-icon btn-icon--danger" (click)="deleteEntry(entry)" title="Supprimer">
+                          <button type="button" class="btn-icon btn-icon--danger" (click)="deleteEntry(entry)" [title]="'common.delete' | translate">
                             <lucide-icon [img]="Trash2" [size]="12"></lucide-icon>
                           </button>
                         </div>
@@ -145,7 +145,7 @@
                             [style.--type-color]="entryTypeMeta[type].color"
                             (click)="editEntryType = type">
                             <lucide-icon [img]="typeIcons[type]" [size]="12"></lucide-icon>
-                            {{ entryTypeMeta[type].label }}
+                            {{ typeLabel(type) }}
                           </button>
                         }
                       </div>
@@ -158,14 +158,14 @@
                       <div class="entry-input-footer">
                         <button type="button" class="btn-secondary btn-sm" (click)="cancelEditEntry()">
                           <lucide-icon [img]="X" [size]="12"></lucide-icon>
-                          Annuler
+                          {{ 'common.cancel' | translate }}
                         </button>
                         <button type="button"
                           class="btn-primary btn-sm"
                           [disabled]="!editEntryContent.trim()"
                           (click)="saveEditEntry(entry)">
                           <lucide-icon [img]="Check" [size]="12"></lucide-icon>
-                          Sauvegarder
+                          {{ 'common.save' | translate }}
                         </button>
                       </div>
                     }

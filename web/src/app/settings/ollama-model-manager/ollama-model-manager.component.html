@@ -15,7 +15,7 @@
 <!-- Liste des modeles installes avec bouton supprimer -->
 @if (models.length > 0) {
   <div class="form-row">
-    <label>Modeles installes</label>
+    <label>{{ 'ollamaModelManager.installedModels' | translate }}</label>
     <ul class="installed-models">
       @for (m of models; track m) {
         <li>
@@ -23,7 +23,7 @@
           <button type="button" class="btn-icon btn-danger"
             (click)="deleteModel(m)"
             [disabled]="deletingModel === m"
-            [title]="'Supprimer ' + m">
+            [title]="'ollamaModelManager.deleteModelTitle' | translate:{ name: m }">
             <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
           </button>
         </li>
@@ -37,27 +37,26 @@
   <div class="modal-overlay" (click)="closePullDialog()">
     <div class="modal-content" (click)="$event.stopPropagation()">
       <header class="modal-header">
-        <h3>Telecharger un modele Ollama</h3>
-        <button type="button" class="btn-icon" (click)="closePullDialog()" [disabled]="pullInProgress" title="Fermer">
+        <h3>{{ 'ollamaModelManager.pullDialogTitle' | translate }}</h3>
+        <button type="button" class="btn-icon" (click)="closePullDialog()" [disabled]="pullInProgress" [title]="'common.close' | translate">
           <lucide-icon [img]="X" [size]="18"></lucide-icon>
         </button>
       </header>
       <div class="modal-body">
         @if (!pullInProgress) {
           <div>
-            <label for="pull-name">Nom du modele</label>
+            <label for="pull-name">{{ 'ollamaModelManager.modelNameLabel' | translate }}</label>
             <input id="pull-name" type="text" [(ngModel)]="pullModelName"
               placeholder="ex: gemma4:e4b" autocomplete="off"
               (keydown.enter)="startPull()">
-            <p class="hint">Suggestions :</p>
+            <p class="hint">{{ 'ollamaModelManager.suggestions' | translate }}</p>
             <div class="suggestions">
               @for (s of pullSuggestions; track s) {
                 <button type="button"
                 class="suggestion-chip" (click)="selectSuggestion(s)">{{ s }}</button>
               }
             </div>
-            <p class="hint" style="margin-top: 0.75rem;">
-              La liste complete est sur <a href="https://ollama.com/library" target="_blank" rel="noopener">ollama.com/library</a>.
+            <p class="hint" style="margin-top: 0.75rem;" [innerHTML]="'ollamaModelManager.libraryHint' | translate">
             </p>
           </div>
         }
@@ -76,7 +75,7 @@
             }
             @if (pullTotal === 0) {
               <div class="progress-text">
-                Preparation...
+                {{ 'ollamaModelManager.preparing' | translate }}
               </div>
             }
           </div>
@@ -86,13 +85,13 @@
         @if (pullInProgress) {
           <button type="button" class="btn-secondary"
             (click)="cancelPull()">
-            Annuler
+            {{ 'common.cancel' | translate }}
           </button>
         }
         @if (!pullInProgress) {
           <button type="button" class="btn-secondary"
             (click)="closePullDialog()">
-            Fermer
+            {{ 'common.close' | translate }}
           </button>
         }
         @if (!pullInProgress) {
@@ -100,7 +99,7 @@
             (click)="startPull()"
             [disabled]="pullInProgress || !pullModelName.trim()">
             <lucide-icon [img]="Download" [size]="14"></lucide-icon>
-            <span>Telecharger</span>
+            <span>{{ 'common.download' | translate }}</span>
           </button>
         }
       </footer>

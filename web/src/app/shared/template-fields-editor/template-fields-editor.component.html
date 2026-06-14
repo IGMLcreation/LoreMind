@@ -1,6 +1,6 @@
 <div class="tfe">
   <div class="tfe-header">
-    <h3 class="tfe-label">{{ label }}</h3>
+    <h3 class="tfe-label">{{ label || ('templateFieldsEditor.defaultLabel' | translate) }}</h3>
     @if (hint) {
       <p class="tfe-hint">{{ hint }}</p>
     }
@@ -11,10 +11,10 @@
       <div class="tfe-item">
         <div class="tfe-row" [class.invalid]="isDuplicate(f, i) || !f.name.trim()">
           <div class="tfe-row-controls">
-            <button type="button" class="btn-arrow" (click)="moveUp(i)" [disabled]="i === 0" title="Monter">
+            <button type="button" class="btn-arrow" (click)="moveUp(i)" [disabled]="i === 0" [title]="'templateFieldsEditor.moveUp' | translate">
               <lucide-icon [img]="ArrowUp" [size]="14"></lucide-icon>
             </button>
-            <button type="button" class="btn-arrow" (click)="moveDown(i)" [disabled]="i === fields.length - 1" title="Descendre">
+            <button type="button" class="btn-arrow" (click)="moveDown(i)" [disabled]="i === fields.length - 1" [title]="'templateFieldsEditor.moveDown' | translate">
               <lucide-icon [img]="ArrowDown" [size]="14"></lucide-icon>
             </button>
           </div>
@@ -24,7 +24,7 @@
             [(ngModel)]="f.name"
             [name]="'name-' + i"
             (ngModelChange)="onFieldChanged()"
-            placeholder="Nom du champ (ex: Histoire, PV...)"
+            [placeholder]="'templateFieldsEditor.fieldNamePlaceholder' | translate"
             />
           <select
             class="tfe-type"
@@ -46,7 +46,7 @@
               }
             </select>
           }
-          <button type="button" class="btn-remove" (click)="remove(i)" title="Supprimer ce champ">
+          <button type="button" class="btn-remove" (click)="remove(i)" [title]="'templateFieldsEditor.removeField' | translate">
             <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
           </button>
         </div>
@@ -55,15 +55,15 @@
           <div class="tfe-labels">
             <div class="tfe-labels-header">
               <lucide-icon [img]="ListOrdered" [size]="12"></lucide-icon>
-              <span>Labels (cles fixes pour toutes les fiches)</span>
+              <span>{{ 'templateFieldsEditor.labelsHeader' | translate }}</span>
             </div>
             <div class="tfe-labels-list">
               @for (lbl of f.labels; track $index; let li = $index) {
                 <div class="tfe-label-row">
-                  <button type="button" class="btn-arrow-mini" (click)="moveLabelUp(f, li)" [disabled]="li === 0" title="Monter">
+                  <button type="button" class="btn-arrow-mini" (click)="moveLabelUp(f, li)" [disabled]="li === 0" [title]="'templateFieldsEditor.moveUp' | translate">
                     <lucide-icon [img]="ArrowUp" [size]="11"></lucide-icon>
                   </button>
-                  <button type="button" class="btn-arrow-mini" (click)="moveLabelDown(f, li)" [disabled]="li === (f.labels?.length || 0) - 1" title="Descendre">
+                  <button type="button" class="btn-arrow-mini" (click)="moveLabelDown(f, li)" [disabled]="li === (f.labels?.length || 0) - 1" [title]="'templateFieldsEditor.moveDown' | translate">
                     <lucide-icon [img]="ArrowDown" [size]="11"></lucide-icon>
                   </button>
                   <input
@@ -72,9 +72,9 @@
                     [ngModel]="lbl"
                     (ngModelChange)="updateLabelAt(f, li, $event)"
                     [name]="'lbl-' + i + '-' + li"
-                    placeholder="Ex: FOR, DEX..."
+                    [placeholder]="'templateFieldsEditor.labelPlaceholder' | translate"
                     />
-                  <button type="button" class="btn-remove-mini" (click)="removeLabel(f, li)" title="Retirer ce label">
+                  <button type="button" class="btn-remove-mini" (click)="removeLabel(f, li)" [title]="'templateFieldsEditor.removeLabel' | translate">
                     <lucide-icon [img]="X" [size]="11"></lucide-icon>
                   </button>
                 </div>
@@ -82,7 +82,7 @@
             </div>
             <button type="button" class="chip chip-mini" (click)="addLabel(f)">
               <lucide-icon [img]="Plus" [size]="11"></lucide-icon>
-              Ajouter un label
+              {{ 'templateFieldsEditor.addLabel' | translate }}
             </button>
           </div>
         }
@@ -91,13 +91,13 @@
 
     @if (fields.length === 0) {
       <div class="tfe-empty">
-        Aucun champ pour l'instant — ajoutez-en avec les boutons ci-dessous.
+        {{ 'templateFieldsEditor.empty' | translate }}
       </div>
     }
   </div>
 
   <div class="tfe-add">
-    <span class="tfe-add-label">Ajouter :</span>
+    <span class="tfe-add-label">{{ 'templateFieldsEditor.addPrefix' | translate }}</span>
     @for (s of suggestions; track s) {
       <button
         type="button"
@@ -111,19 +111,19 @@
     }
     <button type="button" class="chip chip-custom" (click)="addBlank('TEXT')">
       <lucide-icon [img]="Type" [size]="12"></lucide-icon>
-      Texte
+      {{ 'templateFieldsEditor.typeText' | translate }}
     </button>
     <button type="button" class="chip chip-custom" (click)="addBlank('NUMBER')">
       <lucide-icon [img]="Hash" [size]="12"></lucide-icon>
-      Nombre
+      {{ 'templateFieldsEditor.typeNumber' | translate }}
     </button>
     <button type="button" class="chip chip-custom" (click)="addBlank('IMAGE')">
       <lucide-icon [img]="ImageIcon" [size]="12"></lucide-icon>
-      Image(s)
+      {{ 'templateFieldsEditor.typeImage' | translate }}
     </button>
     <button type="button" class="chip chip-custom" (click)="addBlank('KEY_VALUE_LIST')">
       <lucide-icon [img]="ListOrdered" [size]="12"></lucide-icon>
-      Liste cle/valeur
+      {{ 'templateFieldsEditor.typeKeyValue' | translate }}
     </button>
   </div>
 </div>

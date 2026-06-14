@@ -5,6 +5,7 @@ import { LucideAngularModule, ArrowLeft, Edit3, Package } from 'lucide-angular';
 import { ItemCatalogService } from '../../../services/item-catalog.service';
 import { CampaignSidebarService } from '../../../services/campaign-sidebar.service';
 import { ItemCatalog, CatalogItem } from '../../../services/item-catalog.model';
+import { TranslatePipe } from '@ngx-translate/core';
 
 interface ItemGroup { category: string; items: CatalogItem[]; }
 
@@ -14,7 +15,7 @@ interface ItemGroup { category: string; items: CatalogItem[]; }
  */
 @Component({
     selector: 'app-item-catalog-view',
-    imports: [LucideAngularModule],
+    imports: [LucideAngularModule, TranslatePipe],
     templateUrl: './item-catalog-view.component.html',
     styleUrls: ['./item-catalog-view.component.scss']
 })

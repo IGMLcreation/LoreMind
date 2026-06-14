@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 
 import { RouterLink } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 
 /**
  * Un niveau dans le fil d'Ariane.
@@ -23,7 +24,7 @@ export interface BreadcrumbItem {
  */
 @Component({
     selector: 'app-breadcrumb',
-    imports: [RouterLink],
+    imports: [RouterLink, TranslatePipe],
     templateUrl: './breadcrumb.component.html',
     styleUrls: ['./breadcrumb.component.scss']
 })

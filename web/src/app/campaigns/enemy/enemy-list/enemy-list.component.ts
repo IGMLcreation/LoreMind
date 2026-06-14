@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 
 import { ActivatedRoute, Router } from '@angular/router';
 import { LucideAngularModule, ArrowLeft, Plus, Trash2, Skull, Folder } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { EnemyService } from '../../../services/enemy.service';
 import { CampaignSidebarService } from '../../../services/campaign-sidebar.service';
 import { Enemy } from '../../../services/enemy.model';
@@ -19,7 +20,7 @@ interface FolderGroup {
  */
 @Component({
     selector: 'app-enemy-list',
-    imports: [LucideAngularModule],
+    imports: [LucideAngularModule, TranslatePipe],
     templateUrl: './enemy-list.component.html',
     styleUrls: ['./enemy-list.component.scss']
 })
@@ -40,7 +41,8 @@ export class EnemyListComponent implements OnInit {
     private router: Router,
     private service: EnemyService,
     private campaignSidebar: CampaignSidebarService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -91,9 +93,9 @@ export class EnemyListComponent implements OnInit {
   remove(e: Enemy, ev: Event): void {
     ev.stopPropagation();
     this.confirmDialog.confirm({
-      title: 'Supprimer l\'ennemi',
-      message: `Supprimer « ${e.name} » ?`,
-      confirmLabel: 'Supprimer',
+      title: this.translate.instant('enemyList.deleteTitle'),
+      message: this.translate.instant('enemyList.deleteMessage', { name: e.name }),
+      confirmLabel: this.translate.instant('common.delete'),
       variant: 'danger'
     }).then(ok => {
       if (!ok) return;

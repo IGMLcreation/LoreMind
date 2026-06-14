@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { Router } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 import { LucideAngularModule, Search, Download, Settings, ArrowLeft, Dices } from 'lucide-angular';
 import { LayoutService } from '../services/layout.service';
 import { GlobalSearchService } from '../services/global-search.service';
@@ -12,7 +13,7 @@ import packageJson from '../../../package.json';
 
 @Component({
     selector: 'app-sidebar',
-    imports: [AsyncPipe, LucideAngularModule],
+    imports: [AsyncPipe, LucideAngularModule, TranslatePipe],
     templateUrl: './sidebar.component.html',
     styleUrls: ['./sidebar.component.scss']
 })

@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { LucideAngularModule, Trash2, Sparkles } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { CampaignService } from '../../../services/campaign.service';
 import { CharacterService } from '../../../services/character.service';
 import { NpcService } from '../../../services/npc.service';
@@ -34,7 +35,7 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  */
 @Component({
     selector: 'app-arc-edit',
-    imports: [ReactiveFormsModule, LucideAngularModule, LoreLinkPickerComponent, AiChatDrawerComponent, ImageGalleryComponent, IconPickerComponent],
+    imports: [ReactiveFormsModule, LucideAngularModule, LoreLinkPickerComponent, AiChatDrawerComponent, ImageGalleryComponent, IconPickerComponent, TranslatePipe],
     templateUrl: './arc-edit.component.html',
     styleUrls: ['./arc-edit.component.scss']
 })
@@ -46,11 +47,13 @@ export class ArcEditComponent implements OnInit, OnDestroy {
 
   /** État drawer chat IA (b5.7 — intégration Campagne). */
   chatOpen = false;
-  readonly chatQuickSuggestions = [
-    'Propose 3 thèmes majeurs pour cet arc',
-    'Imagine des enjeux qui mettent la pression sur les joueurs',
-    'Suggère un dénouement en deux actes'
-  ];
+  get chatQuickSuggestions(): string[] {
+    return [
+      this.translate.instant('arcEdit.chatSuggestion1'),
+      this.translate.instant('arcEdit.chatSuggestion2'),
+      this.translate.instant('arcEdit.chatSuggestion3')
+    ];
+  }
 
   toggleChat(): void { this.chatOpen = !this.chatOpen; }
 
@@ -83,7 +86,8 @@ export class ArcEditComponent implements OnInit, OnDestroy {
     private pageService: PageService,
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private translate: TranslateService
   ) {
     this.form = this.fb.group({
       name:        ['', Validators.required],
@@ -149,7 +153,7 @@ export class ArcEditComponent implements OnInit, OnDestroy {
         resolution:  arc.resolution ?? ''
       });
 
-      this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId));
+      this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId, this.translate));
     });
   }
 
@@ -178,10 +182,10 @@ export class ArcEditComponent implements OnInit, OnDestroy {
 
   delete(): void {
     this.confirmDialog.confirm({
-      title: 'Supprimer l\'arc',
-      message: `Supprimer l'arc "${this.arc?.name}" ?`,
-      details: ['Cette action est irréversible.'],
-      confirmLabel: 'Supprimer',
+      title: this.translate.instant('arcEdit.deleteTitle'),
+      message: this.translate.instant('arcEdit.deleteMessage', { name: this.arc?.name }),
+      details: [this.translate.instant('arcEdit.irreversible')],
+      confirmLabel: this.translate.instant('common.delete'),
       variant: 'danger'
     }).then(ok => {
       if (!ok) return;

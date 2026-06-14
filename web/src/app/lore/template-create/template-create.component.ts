@@ -3,6 +3,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { LucideAngularModule, Plus, Trash2, Type, Image as ImageIcon, ChevronUp, ChevronDown, ListOrdered, Table as TableIcon, X } from 'lucide-angular';
+import { TranslatePipe } from '@ngx-translate/core';
 import { LoreService } from '../../services/lore.service';
 import { TemplateService } from '../../services/template.service';
 import { PageService } from '../../services/page.service';
@@ -20,7 +21,7 @@ import { popReturnTo } from '../return-stack.helper';
  */
 @Component({
     selector: 'app-template-create',
-    imports: [FormsModule, ReactiveFormsModule, RouterModule, LucideAngularModule],
+    imports: [FormsModule, ReactiveFormsModule, RouterModule, LucideAngularModule, TranslatePipe],
     templateUrl: './template-create.component.html',
     styleUrls: ['./template-create.component.scss']
 })

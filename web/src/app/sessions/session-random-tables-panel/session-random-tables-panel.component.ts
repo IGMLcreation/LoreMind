@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { LucideAngularModule, Dices, BookmarkPlus, Sparkles, ChevronLeft } from 'lucide-angular';
 import { catchError, of } from 'rxjs';
 import { RandomTableService } from '../../services/random-table.service';
@@ -18,7 +19,7 @@ import { DiceRollResult } from '../session-dice-panel/session-dice-panel.compone
  */
 @Component({
     selector: 'app-session-random-tables-panel',
-    imports: [LucideAngularModule],
+    imports: [LucideAngularModule, TranslatePipe],
     templateUrl: './session-random-tables-panel.component.html',
     styleUrls: ['./session-random-tables-panel.component.scss']
 })
@@ -41,7 +42,7 @@ export class SessionRandomTablesPanelComponent implements OnInit {
   matched: RandomTableEntry | null = null;
   improvising = false;
 
-  constructor(private service: RandomTableService) {}
+  constructor(private service: RandomTableService, private translate: TranslateService) {}
 
   ngOnInit(): void {
     if (!this.campaignId) return;
@@ -79,7 +80,7 @@ export class SessionRandomTablesPanelComponent implements OnInit {
   /** Consigne le tirage au journal (entrée DICE_ROLL via la sortie `rolled`). */
   addToJournal(): void {
     if (!this.canAddToJournal || !this.selected || !this.lastRoll) return;
-    const label = this.matched?.label ?? 'aucun résultat';
+    const label = this.matched?.label ?? this.translate.instant('sessionRandomTablesPanel.noResult');
     const result: DiceRollResult = {
       notation: this.selected.diceFormula,
       rolls: this.lastRoll.rolls,

@@ -2,10 +2,12 @@ import { Component, OnInit } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 import { LucideAngularModule, ArrowLeft, Save, Plus, Trash2, Sparkles } from 'lucide-angular';
 import { ItemCatalogService } from '../../../services/item-catalog.service';
 import { CampaignSidebarService } from '../../../services/campaign-sidebar.service';
 import { ItemCatalog, CatalogItem, ItemCatalogCreate } from '../../../services/item-catalog.model';
+import { TranslatePipe } from '@ngx-translate/core';
 
 /**
  * Création/édition d'un catalogue d'objets (boutique, butin…).
@@ -14,7 +16,7 @@ import { ItemCatalog, CatalogItem, ItemCatalogCreate } from '../../../services/i
  */
 @Component({
     selector: 'app-item-catalog-edit',
-    imports: [FormsModule, LucideAngularModule],
+    imports: [FormsModule, LucideAngularModule, TranslatePipe],
     templateUrl: './item-catalog-edit.component.html',
     styleUrls: ['./item-catalog-edit.component.scss']
 })
@@ -43,7 +45,8 @@ export class ItemCatalogEditComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private service: ItemCatalogService,
-    private campaignSidebar: CampaignSidebarService
+    private campaignSidebar: CampaignSidebarService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -76,7 +79,7 @@ export class ItemCatalogEditComponent implements OnInit {
 
   generateWithAI(): void {
     if (!this.campaignId) return;
-    if (!this.aiPrompt.trim()) { this.aiError = 'Décris le catalogue à générer.'; return; }
+    if (!this.aiPrompt.trim()) { this.aiError = this.translate.instant('itemCatalogEdit.aiPromptRequired'); return; }
     this.generating = true;
     this.aiError = '';
     this.service.generate(this.campaignId, this.aiPrompt.trim()).subscribe({
@@ -88,14 +91,14 @@ export class ItemCatalogEditComponent implements OnInit {
       },
       error: (err) => {
         this.generating = false;
-        this.aiError = err?.error?.message || 'Échec de la génération IA. Réessaie ou reformule.';
+        this.aiError = err?.error?.message || this.translate.instant('itemCatalogEdit.aiError');
       }
     });
   }
 
   save(): void {
     if (!this.campaignId) return;
-    if (!this.name.trim()) { this.errorMessage = 'Le nom est requis.'; return; }
+    if (!this.name.trim()) { this.errorMessage = this.translate.instant('itemCatalogEdit.nameRequired'); return; }
     this.saving = true;
     this.errorMessage = '';
 
@@ -141,7 +144,7 @@ export class ItemCatalogEditComponent implements OnInit {
 
   private fail(err: unknown): void {
     this.saving = false;
-    this.errorMessage = 'Échec de l\'enregistrement.';
+    this.errorMessage = this.translate.instant('itemCatalogEdit.saveError');
     console.error('ItemCatalog save failed', err);
   }
 

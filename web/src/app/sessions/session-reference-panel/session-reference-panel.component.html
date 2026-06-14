@@ -6,42 +6,42 @@
       [class.ref-tab--active]="activeTab === 'ai'"
       (click)="selectTab('ai')">
       <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
-      IA
+      {{ 'sessionReferencePanel.tabAi' | translate }}
     </button>
     <button type="button"
       class="ref-tab"
       [class.ref-tab--active]="activeTab === 'dice'"
       (click)="selectTab('dice')">
       <lucide-icon [img]="Dices" [size]="14"></lucide-icon>
-      Dés
+      {{ 'sessionReferencePanel.tabDice' | translate }}
     </button>
     <button type="button"
       class="ref-tab"
       [class.ref-tab--active]="activeTab === 'tables'"
       (click)="selectTab('tables')">
       <lucide-icon [img]="Table2" [size]="14"></lucide-icon>
-      Tables
+      {{ 'sessionReferencePanel.tabTables' | translate }}
     </button>
     <button type="button"
       class="ref-tab"
       [class.ref-tab--active]="activeTab === 'objects'"
       (click)="selectTab('objects')">
       <lucide-icon [img]="Package" [size]="14"></lucide-icon>
-      Objets
+      {{ 'sessionReferencePanel.tabObjects' | translate }}
     </button>
     <button type="button"
       class="ref-tab"
       [class.ref-tab--active]="activeTab === 'characters'"
       (click)="selectTab('characters')">
       <lucide-icon [img]="User" [size]="14"></lucide-icon>
-      PJ/PNJ
+      {{ 'sessionReferencePanel.tabCharacters' | translate }}
     </button>
     <button type="button"
       class="ref-tab"
       [class.ref-tab--active]="activeTab === 'scenes'"
       (click)="selectTab('scenes')">
       <lucide-icon [img]="Swords" [size]="14"></lucide-icon>
-      Scènes
+      {{ 'sessionReferencePanel.tabScenes' | translate }}
     </button>
   </nav>
 
@@ -87,7 +87,7 @@
     @if (activeTab === 'characters') {
       <div class="ref-list">
         @if (loadingChars) {
-          <p class="loading-hint">Chargement…</p>
+          <p class="loading-hint">{{ 'common.loading' | translate }}</p>
         }
         @if (!loadingChars) {
           <div>
@@ -95,7 +95,7 @@
               <div class="ref-group">
                 <h4>
                   <lucide-icon [img]="User" [size]="13"></lucide-icon>
-                  Personnages joueurs
+                  {{ 'sessionReferencePanel.playerCharacters' | translate }}
                 </h4>
                 @for (c of characters; track c) {
                   <button
@@ -112,7 +112,7 @@
               <div class="ref-group">
                 <h4>
                   <lucide-icon [img]="Drama" [size]="13"></lucide-icon>
-                  Personnages non-joueurs
+                  {{ 'sessionReferencePanel.nonPlayerCharacters' | translate }}
                 </h4>
                 @for (n of npcs; track n) {
                   <button
@@ -127,7 +127,7 @@
             }
             @if (characters.length === 0 && npcs.length === 0) {
               <p class="empty-hint">
-                Aucun personnage dans cette campagne.
+                {{ 'sessionReferencePanel.emptyCharacters' | translate }}
               </p>
             }
           </div>
@@ -139,12 +139,12 @@
     @if (activeTab === 'scenes') {
       <div class="ref-list">
         @if (loadingTree) {
-          <p class="loading-hint">Chargement…</p>
+          <p class="loading-hint">{{ 'common.loading' | translate }}</p>
         }
         @if (!loadingTree && treeData) {
           @if (treeData.arcs.length === 0) {
             <p class="empty-hint">
-              Aucun arc narratif. Construis le scénario de ta campagne pour le retrouver ici.
+              {{ 'sessionReferencePanel.emptyScenes' | translate }}
             </p>
           }
           @for (arc of treeData.arcs; track arc) {

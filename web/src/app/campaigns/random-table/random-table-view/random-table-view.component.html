@@ -3,12 +3,12 @@
     <div class="rt-toolbar">
       <button class="btn-back" (click)="back()">
         <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon>
-        Retour
+        {{ 'common.back' | translate }}
       </button>
       <span class="spacer"></span>
       <button class="btn-edit" (click)="edit()">
         <lucide-icon [img]="Edit3" [size]="14"></lucide-icon>
-        Éditer
+        {{ 'common.edit' | translate }}
       </button>
     </div>
     <header class="rt-header">
@@ -16,13 +16,13 @@
       @if (table.description) {
         <p class="rt-desc">{{ table.description }}</p>
       }
-      <span class="rt-formula">Dé : <code>{{ table.diceFormula }}</code></span>
+      <span class="rt-formula">{{ 'randomTableView.die' | translate }} <code>{{ table.diceFormula }}</code></span>
     </header>
     <!-- Zone de jet -->
     <section class="rt-roll">
       <button class="btn-roll" (click)="roll()">
         <lucide-icon [img]="Dices" [size]="18"></lucide-icon>
-        Lancer {{ table.diceFormula }}
+        {{ 'randomTableView.roll' | translate:{ formula: table.diceFormula } }}
       </button>
       @if (lastRoll) {
         <div class="rt-result">
@@ -35,7 +35,7 @@
             <span class="rt-matched">{{ matched.label }}</span>
           }
           @if (!matched) {
-            <span class="rt-nomatch">Aucune entrée pour ce résultat</span>
+            <span class="rt-nomatch">{{ 'randomTableView.noMatch' | translate }}</span>
           }
         </div>
       }
@@ -47,13 +47,13 @@
     <section class="rt-entries">
       @if (table.entries.length === 0) {
         <div class="rt-empty">
-          Aucune entrée — édite la table pour en ajouter.
+          {{ 'randomTableView.empty' | translate }}
         </div>
       }
       @if (table.entries.length > 0) {
         <table>
           <thead>
-            <tr><th class="col-range">Jet</th><th>Résultat</th></tr>
+            <tr><th class="col-range">{{ 'randomTableView.colRoll' | translate }}</th><th>{{ 'randomTableView.colResult' | translate }}</th></tr>
           </thead>
           <tbody>
             @for (e of table.entries; track e) {

@@ -2,6 +2,7 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, X, Skull } from 'lucide-angular';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Enemy } from '../../services/enemy.model';
 
 /**
@@ -21,7 +22,7 @@ import { Enemy } from '../../services/enemy.model';
  */
 @Component({
     selector: 'app-enemy-link-picker',
-    imports: [FormsModule, LucideAngularModule],
+    imports: [FormsModule, LucideAngularModule, TranslatePipe],
     templateUrl: './enemy-link-picker.component.html',
     styleUrls: ['./enemy-link-picker.component.scss']
 })

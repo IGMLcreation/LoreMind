@@ -2,10 +2,11 @@ import { Component, EventEmitter, Output } from '@angular/core';
 
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { LucideAngularModule, BookCopy, X } from 'lucide-angular';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
     selector: 'app-lore-create',
-    imports: [ReactiveFormsModule, LucideAngularModule],
+    imports: [ReactiveFormsModule, LucideAngularModule, TranslatePipe],
     templateUrl: './lore-create.component.html',
     styleUrls: ['./lore-create.component.scss']
 })

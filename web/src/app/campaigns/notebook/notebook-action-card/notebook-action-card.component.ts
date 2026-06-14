@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { LucideAngularModule, Plus, Check, Drama, Clapperboard, BookText, GitBranch, Dices, ExternalLink } from 'lucide-angular';
 import { CampaignService } from '../../../services/campaign.service';
 import { NpcService } from '../../../services/npc.service';
@@ -15,7 +16,7 @@ import { NotebookAction } from '../../../services/notebook-action.model';
  */
 @Component({
     selector: 'app-notebook-action-card',
-    imports: [FormsModule, LucideAngularModule],
+    imports: [FormsModule, LucideAngularModule, TranslatePipe],
     templateUrl: './notebook-action-card.component.html',
     styleUrls: ['./notebook-action-card.component.scss']
 })
@@ -42,7 +43,8 @@ export class NotebookActionCardComponent implements OnInit {
     private campaignService: CampaignService,
     private npcService: NpcService,
     private tableService: RandomTableService,
-    private router: Router
+    private router: Router,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -52,11 +54,11 @@ export class NotebookActionCardComponent implements OnInit {
 
   get typeLabel(): string {
     switch (this.action.type) {
-      case 'npc': return 'PNJ';
-      case 'scene': return 'Scène';
-      case 'chapter': return 'Chapitre';
-      case 'arc': return 'Arc';
-      case 'table': return 'Table aléatoire';
+      case 'npc': return this.translate.instant('notebookActionCard.typeNpc');
+      case 'scene': return this.translate.instant('notebookActionCard.typeScene');
+      case 'chapter': return this.translate.instant('notebookActionCard.typeChapter');
+      case 'arc': return this.translate.instant('notebookActionCard.typeArc');
+      case 'table': return this.translate.instant('notebookActionCard.typeTable');
       default: return this.action.type;
     }
   }
@@ -200,7 +202,7 @@ export class NotebookActionCardComponent implements OnInit {
 
   private fail(err: unknown): void {
     this.status = 'error';
-    this.errorMsg = (err as { error?: { message?: string } })?.error?.message || 'Échec de la création.';
+    this.errorMsg = (err as { error?: { message?: string } })?.error?.message || this.translate.instant('notebookActionCard.createError');
   }
 
   openCreated(): void {

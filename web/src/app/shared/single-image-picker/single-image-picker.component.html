@@ -2,7 +2,7 @@
   <div class="sip-frame" [style.aspectRatio]="aspectRatio">
     @if (imageId) {
       <img [src]="contentUrl(imageId)" alt="" />
-      <button type="button" class="sip-remove" (click)="remove()" title="Retirer l'image">
+      <button type="button" class="sip-remove" (click)="remove()" [title]="'singleImagePicker.removeImage' | translate">
         <lucide-icon [img]="X" [size]="14"></lucide-icon>
       </button>
     } @else {

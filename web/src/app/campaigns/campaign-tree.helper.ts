@@ -1,5 +1,6 @@
 import { Observable, forkJoin, of } from 'rxjs';
 import { switchMap, map } from 'rxjs/operators';
+import { TranslateService } from '@ngx-translate/core';
 import { CampaignService } from '../services/campaign.service';
 import { CharacterService } from '../services/character.service';
 import { NpcService } from '../services/npc.service';
@@ -92,7 +93,7 @@ export function loadCampaignTreeData(
   );
 }
 
-export function buildCampaignTree(campaignId: string, data: CampaignTreeData): TreeItem[] {
+export function buildCampaignTree(campaignId: string, data: CampaignTreeData, translate: TranslateService): TreeItem[] {
   // Tri FR avec `numeric: true` pour que "1. Intro", "2. Voyage", "10. Final" soient
   // classés 1, 2, 10 (et pas 1, 10, 2). `sensitivity: 'base'` ignore la casse.
   const byName = (a: { name: string }, b: { name: string }) =>
@@ -140,7 +141,7 @@ export function buildCampaignTree(campaignId: string, data: CampaignTreeData): T
 
   const npcsNode: TreeItem = {
     id: 'npcs-root',
-    label: 'PNJ',
+    label: translate.instant('campaignTree.npcs'),
     iconKey: 'c-drama',
     children: npcChildren,
     meta: sortedNpcs.length ? String(sortedNpcs.length) : undefined,
@@ -149,10 +150,10 @@ export function buildCampaignTree(campaignId: string, data: CampaignTreeData): T
     route: `/campaigns/${campaignId}/npcs`,
     // Porte le header de section "Personnages" (les PJ ayant migré vers la Partie).
     // Le filet au-dessus est masqué par CSS si c'est le tout premier item de la sidebar.
-    sectionHeaderBefore: 'Personnages',
+    sectionHeaderBefore: translate.instant('campaignTree.sectionCharacters'),
     createActions: [{
       id: 'new-npc',
-      label: 'Nouveau PNJ',
+      label: translate.instant('campaignTree.newNpc'),
       route: `/campaigns/${campaignId}/npcs/create`,
       actionIcon: 'plus'
     }]
@@ -216,7 +217,7 @@ export function buildCampaignTree(campaignId: string, data: CampaignTreeData): T
         route: `/campaigns/${campaignId}/arcs/${arc.id}/chapters/${ch.id}`,
         createActions: [{
           id: `new-scene-${ch.id}`,
-          label: 'Nouvelle scène',
+          label: translate.instant('campaignTree.newScene'),
           route: `/campaigns/${campaignId}/arcs/${arc.id}/chapters/${ch.id}/scenes/create`,
           actionIcon: 'plus'
         }]
@@ -228,12 +229,12 @@ export function buildCampaignTree(campaignId: string, data: CampaignTreeData): T
       iconKey: arc.icon ?? undefined,
       children: chapterItems,
       route: `/campaigns/${campaignId}/arcs/${arc.id}`,
-      sectionHeaderBefore: idx === 0 ? 'Narration' : undefined,
+      sectionHeaderBefore: idx === 0 ? translate.instant('campaignTree.sectionNarration') : undefined,
 
       createActions: [{
         id: `new-chapter-${arc.id}`,
         // Dans un arc hub, un "chapitre" est présenté comme une "quête".
-        label: arc.type === 'HUB' ? 'Nouvelle quête' : 'Nouveau chapitre',
+        label: arc.type === 'HUB' ? translate.instant('campaignTree.newQuest') : translate.instant('campaignTree.newChapter'),
         route: `/campaigns/${campaignId}/arcs/${arc.id}/chapters/create`,
         actionIcon: 'plus'
       }]
@@ -250,14 +251,14 @@ export function buildCampaignTree(campaignId: string, data: CampaignTreeData): T
 
   const tablesNode: TreeItem = {
     id: 'random-tables-root',
-    label: 'Tables aléatoires',
+    label: translate.instant('campaignTree.randomTables'),
     iconKey: 'dice',
     children: tableItems,
     meta: tableItems.length ? String(tableItems.length) : undefined,
-    sectionHeaderBefore: 'Outils',
+    sectionHeaderBefore: translate.instant('campaignTree.sectionTools'),
     createActions: [{
       id: 'new-random-table',
-      label: 'Nouvelle table',
+      label: translate.instant('campaignTree.newTable'),
       route: `/campaigns/${campaignId}/random-tables/create`,
       actionIcon: 'plus'
     }]
@@ -266,7 +267,7 @@ export function buildCampaignTree(campaignId: string, data: CampaignTreeData): T
   // Lien simple vers les ateliers (la liste se charge sur sa page — pas de fetch ici).
   const notebooksNode: TreeItem = {
     id: 'notebooks-root',
-    label: 'Ateliers (IA + PDF)',
+    label: translate.instant('campaignTree.notebooks'),
     iconKey: 'book-open',
     route: `/campaigns/${campaignId}/notebooks`
   };
@@ -274,7 +275,7 @@ export function buildCampaignTree(campaignId: string, data: CampaignTreeData): T
   // Catalogues d'objets (boutiques, butins…) → page de liste (outil).
   const catalogsNode: TreeItem = {
     id: 'item-catalogs-root',
-    label: 'Catalogues d\'objets',
+    label: translate.instant('campaignTree.itemCatalogs'),
     iconKey: 'package',
     route: `/campaigns/${campaignId}/item-catalogs`
   };
@@ -284,14 +285,14 @@ export function buildCampaignTree(campaignId: string, data: CampaignTreeData): T
   // Libellé → page de liste ; chevron → arbre dépliable (dossiers → fiches).
   const enemiesNode: TreeItem = {
     id: 'enemies-root',
-    label: 'Ennemis',
+    label: translate.instant('campaignTree.enemies'),
     iconKey: 'skull',
     children: enemyChildren,
     meta: sortedEnemies.length ? String(sortedEnemies.length) : undefined,
     route: `/campaigns/${campaignId}/enemies`,
     createActions: [{
       id: 'new-enemy',
-      label: 'Nouvel ennemi',
+      label: translate.instant('campaignTree.newEnemy'),
       route: `/campaigns/${campaignId}/enemies/create`,
       actionIcon: 'plus'
     }]
@@ -300,7 +301,7 @@ export function buildCampaignTree(campaignId: string, data: CampaignTreeData): T
   // Importer un PDF de campagne → arborescence (outil, comme tables & ateliers).
   const importNode: TreeItem = {
     id: 'import-pdf-root',
-    label: 'Importer un PDF',
+    label: translate.instant('campaignTree.importPdf'),
     iconKey: 'file-up',
     route: `/campaigns/${campaignId}/import`
   };
@@ -322,7 +323,8 @@ export function buildCampaignSidebarConfig(
   campaign: Campaign,
   allCampaigns: Campaign[],
   treeData: CampaignTreeData,
-  campaignId: string
+  campaignId: string,
+  translate: TranslateService
 ): SecondarySidebarConfig {
   const globalItems: GlobalItem[] = allCampaigns.map(c => ({
     id: c.id!, name: c.name, route: `/campaigns/${c.id}`
@@ -331,13 +333,13 @@ export function buildCampaignSidebarConfig(
     title: campaign.name,
     // Titre cliquable → accueil de la campagne (raccourci depuis n'importe quelle sous-page).
     titleRoute: `/campaigns/${campaignId}`,
-    items: buildCampaignTree(campaignId, treeData),
-    footerLabel: 'Toutes les campagnes',
+    items: buildCampaignTree(campaignId, treeData, translate),
+    footerLabel: translate.instant('campaignTree.allCampaigns'),
     createActions: [
-      { id: 'create-arc', label: '+ Nouvel arc', variant: 'primary', route: `/campaigns/${campaignId}/arcs/create` }
+      { id: 'create-arc', label: translate.instant('campaignTree.newArc'), variant: 'primary', route: `/campaigns/${campaignId}/arcs/create` }
     ],
     globalItems,
-    globalBackLabel: 'Toutes les campagnes',
+    globalBackLabel: translate.instant('campaignTree.allCampaigns'),
     globalBackRoute: '/campaigns'
   };
 }

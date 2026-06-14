@@ -2,7 +2,7 @@
   @for (tag of value; track tag; let i = $index) {
     <span class="chip">
       {{ tag }}
-      <button type="button" class="chip-remove" (click)="remove(i)" title="Retirer">
+      <button type="button" class="chip-remove" (click)="remove(i)" [title]="'chipsInput.removeTag' | translate">
         <lucide-icon [img]="X" [size]="12"></lucide-icon>
       </button>
     </span>

@@ -4,6 +4,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { LucideAngularModule, BookOpen } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { CampaignService } from '../../../services/campaign.service';
 import { CharacterService } from '../../../services/character.service';
 import { NpcService } from '../../../services/npc.service';
@@ -21,7 +22,7 @@ import { CAMPAIGN_ICON_OPTIONS } from '../../campaign-icons';
  */
 @Component({
     selector: 'app-arc-create',
-    imports: [ReactiveFormsModule, LucideAngularModule, IconPickerComponent],
+    imports: [ReactiveFormsModule, LucideAngularModule, IconPickerComponent, TranslatePipe],
     templateUrl: './arc-create.component.html',
     styleUrls: ['./arc-create.component.scss']
 })
@@ -43,7 +44,8 @@ export class ArcCreateComponent implements OnInit, OnDestroy {
     private npcService: NpcService,
     private randomTableService: RandomTableService,
     private enemyService: EnemyService,
-    private layoutService: LayoutService
+    private layoutService: LayoutService,
+    private translate: TranslateService
   ) {
     this.form = this.fb.group({
       name:        ['', Validators.required],
@@ -66,7 +68,7 @@ export class ArcCreateComponent implements OnInit, OnDestroy {
     }).subscribe(({ campaign, allCampaigns, treeData }) => {
       this.existingArcCount = treeData.arcs.length;
 
-      this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId));
+      this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId, this.translate));
     });
   }
 

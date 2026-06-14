@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { LucideAngularModule, Sparkles, Plus, Trash2 } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { LoreService } from '../../services/lore.service';
 import { TemplateService } from '../../services/template.service';
 import { PageService } from '../../services/page.service';
@@ -36,7 +37,7 @@ import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog
  */
 @Component({
     selector: 'app-page-edit',
-    imports: [FormsModule, RouterLink, LucideAngularModule, ChipsInputComponent, LoreLinkPickerComponent, BreadcrumbComponent, AiChatDrawerComponent, ImageGalleryComponent],
+    imports: [FormsModule, RouterLink, LucideAngularModule, TranslatePipe, ChipsInputComponent, LoreLinkPickerComponent, BreadcrumbComponent, AiChatDrawerComponent, ImageGalleryComponent],
     templateUrl: './page-edit.component.html',
     styleUrls: ['./page-edit.component.scss']
 })
@@ -81,13 +82,9 @@ export class PageEditComponent implements OnInit, OnDestroy {
   /** Phase b5 — drawer chat IA (conversationnel). */
   chatOpen = false;
   /** Action primaire dans le chat : déclenche le one-shot b4 (remplissage automatique). */
-  readonly chatPrimaryAction: ChatPrimaryAction = { label: 'Remplir automatiquement tous les champs' };
+  readonly chatPrimaryAction: ChatPrimaryAction;
   /** Suggestions rapides hardcodées (MVP). */
-  readonly chatQuickSuggestions: string[] = [
-    "Étoffe l'histoire de cette page",
-    'Suggère des liens avec d\'autres pages du Lore',
-    'Propose une intrigue secondaire'
-  ];
+  readonly chatQuickSuggestions: string[];
 
   constructor(
     private route: ActivatedRoute,
@@ -97,8 +94,16 @@ export class PageEditComponent implements OnInit, OnDestroy {
     private pageService: PageService,
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService,
-    private confirmDialog: ConfirmDialogService
-  ) {}
+    private confirmDialog: ConfirmDialogService,
+    private translate: TranslateService
+  ) {
+    this.chatPrimaryAction = { label: this.translate.instant('pageEdit.chatPrimaryAction') };
+    this.chatQuickSuggestions = [
+      this.translate.instant('pageEdit.chatSuggestion1'),
+      this.translate.instant('pageEdit.chatSuggestion2'),
+      this.translate.instant('pageEdit.chatSuggestion3')
+    ];
+  }
 
   ngOnInit(): void {
     this.loreId = this.route.snapshot.paramMap.get('loreId')!;
@@ -267,8 +272,8 @@ export class PageEditComponent implements OnInit, OnDestroy {
       error: (err) => {
         this.aiLoading = false;
         this.aiError = err?.status === 502
-          ? "L'assistant IA est injoignable. V\u00e9rifiez que le service Brain tourne."
-          : "\u00c9chec de la g\u00e9n\u00e9ration IA. R\u00e9essayez dans un instant.";
+          ? this.translate.instant('pageEdit.aiUnreachable')
+          : this.translate.instant('pageEdit.aiFailed');
       }
     });
   }
@@ -293,9 +298,9 @@ export class PageEditComponent implements OnInit, OnDestroy {
   delete(): void {
     if (!this.page) return;
     this.confirmDialog.confirm({
-      title: 'Supprimer la page',
-      message: `Supprimer la page "${this.page.title}" ?`,
-      confirmLabel: 'Supprimer',
+      title: this.translate.instant('pageEdit.deleteTitle'),
+      message: this.translate.instant('pageEdit.deleteMessage', { title: this.page.title }),
+      confirmLabel: this.translate.instant('common.delete'),
       variant: 'danger'
     }).then(ok => {
       if (!ok || !this.page) return;

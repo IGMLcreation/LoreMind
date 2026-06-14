@@ -7,6 +7,7 @@ import { NotebookService } from '../../../services/notebook.service';
 import { CampaignSidebarService } from '../../../services/campaign-sidebar.service';
 import { Notebook } from '../../../services/notebook.model';
 import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 /**
  * Liste des ateliers (notebooks) d'une campagne + création.
@@ -14,7 +15,7 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  */
 @Component({
     selector: 'app-notebook-list',
-    imports: [FormsModule, LucideAngularModule],
+    imports: [FormsModule, LucideAngularModule, TranslatePipe],
     templateUrl: './notebook-list.component.html',
     styleUrls: ['./notebook-list.component.scss']
 })
@@ -34,7 +35,8 @@ export class NotebookListComponent implements OnInit {
     private router: Router,
     private service: NotebookService,
     private campaignSidebar: CampaignSidebarService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -55,7 +57,7 @@ export class NotebookListComponent implements OnInit {
   create(): void {
     if (this.creating) return;
     this.creating = true;
-    this.service.create(this.campaignId, this.newName.trim() || 'Nouvel atelier').subscribe({
+    this.service.create(this.campaignId, this.newName.trim() || this.translate.instant('notebookList.defaultName')).subscribe({
       next: (nb) => this.router.navigate(['/campaigns', this.campaignId, 'notebooks', nb.id]),
       error: () => this.creating = false
     });
@@ -68,9 +70,9 @@ export class NotebookListComponent implements OnInit {
   remove(nb: Notebook, ev: Event): void {
     ev.stopPropagation();
     this.confirmDialog.confirm({
-      title: 'Supprimer l\'atelier',
-      message: `Supprimer « ${nb.name} » et ses sources indexées ?`,
-      confirmLabel: 'Supprimer',
+      title: this.translate.instant('notebookList.deleteTitle'),
+      message: this.translate.instant('notebookList.deleteMessage', { name: nb.name }),
+      confirmLabel: this.translate.instant('common.delete'),
       variant: 'danger'
     }).then(ok => {
       if (!ok) return;

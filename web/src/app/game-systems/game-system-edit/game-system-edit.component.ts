@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, Save, ArrowLeft, Dices, Plus, Trash2, ChevronDown, ChevronRight, Upload } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { GameSystemService } from '../../services/game-system.service';
 import { TemplateField } from '../../services/template.model';
 import { TemplateFieldsEditorComponent } from '../../shared/template-fields-editor/template-fields-editor.component';
@@ -44,7 +45,7 @@ const ENEMY_FIELD_SUGGESTIONS = ['Stats', 'Attaques', 'Capacités', 'Faiblesses'
 
 @Component({
     selector: 'app-game-system-edit',
-    imports: [FormsModule, LucideAngularModule, TemplateFieldsEditorComponent],
+    imports: [FormsModule, LucideAngularModule, TranslatePipe, TemplateFieldsEditorComponent],
     templateUrl: './game-system-edit.component.html',
     styleUrls: ['./game-system-edit.component.scss']
 })
@@ -95,7 +96,8 @@ export class GameSystemEditComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private service: GameSystemService
+    private service: GameSystemService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -148,7 +150,7 @@ export class GameSystemEditComponent implements OnInit {
     this.importing = true;
     this.importNote = null;
     this.importError = null;
-    this.importPhase = 'Extraction du texte…';
+    this.importPhase = this.translate.instant('gameSystemEdit.importExtracting');
     this.importProgress = null;
     this.importFound = [];
     this.importStatus = null;
@@ -160,10 +162,10 @@ export class GameSystemEditComponent implements OnInit {
           this.importStatus = null;
           if (ev.total === 0) {
             // Phase d'extraction (total encore inconnu).
-            this.importPhase = 'Extraction du texte…';
+            this.importPhase = this.translate.instant('gameSystemEdit.importExtracting');
             this.importProgress = null;
           } else {
-            this.importPhase = `Analyse des règles… (${ev.current}/${ev.total})`;
+            this.importPhase = this.translate.instant('gameSystemEdit.importAnalyzing', { current: ev.current, total: ev.total });
             this.importProgress = { current: ev.current, total: ev.total };
             for (const t of ev.newSectionTitles) {
               if (!this.importFound.includes(t)) this.importFound.push(t);
@@ -178,8 +180,8 @@ export class GameSystemEditComponent implements OnInit {
       error: (err: Error) => {
         this.resetImportProgress();
         this.importError = err?.message
-          ? `Échec de l'import : ${err.message}`
-          : "Échec de l'import du PDF.";
+          ? this.translate.instant('gameSystemEdit.importFailedReason', { reason: err.message })
+          : this.translate.instant('gameSystemEdit.importFailed');
       }
     });
   }
@@ -188,13 +190,17 @@ export class GameSystemEditComponent implements OnInit {
     this.resetImportProgress();
     const added = this.mergeImportedSections(sections);
     if (added === 0) {
-      this.importError = "Aucune règle exploitable n'a été extraite de ce PDF "
-        + "(scan sans OCR, ou contenu non reconnu).";
+      this.importError = this.translate.instant('gameSystemEdit.importNoRules');
       return;
     }
-    const ocr = ocrPageCount > 0 ? ` (dont ${ocrPageCount} page(s) via OCR)` : '';
-    this.importNote = `${added} section(s) proposée(s) depuis ${pageCount} page(s)${ocr}. `
-      + `Relisez et ajustez ci-dessous avant d'enregistrer.`;
+    const ocr = ocrPageCount > 0
+      ? this.translate.instant('gameSystemEdit.importOcrSuffix', { count: ocrPageCount })
+      : '';
+    this.importNote = this.translate.instant('gameSystemEdit.importNote', {
+      added,
+      pages: pageCount,
+      ocr
+    });
   }
 
   private resetImportProgress(): void {

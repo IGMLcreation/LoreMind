@@ -2,6 +2,7 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, X, Link2 } from 'lucide-angular';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Page } from '../../services/page.model';
 
 /**
@@ -26,7 +27,7 @@ import { Page } from '../../services/page.model';
  */
 @Component({
     selector: 'app-lore-link-picker',
-    imports: [FormsModule, LucideAngularModule],
+    imports: [FormsModule, LucideAngularModule, TranslatePipe],
     templateUrl: './lore-link-picker.component.html',
     styleUrls: ['./lore-link-picker.component.scss']
 })

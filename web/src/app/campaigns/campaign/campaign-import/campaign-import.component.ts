@@ -6,6 +6,7 @@ import {
   LucideAngularModule, ArrowLeft, Upload, Plus, Trash2,
   ChevronDown, ChevronRight, Swords, BookOpen, MapPin, Check
 } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { CampaignImportService } from '../../../services/campaign-import.service';
 import { CampaignService } from '../../../services/campaign.service';
 import { CharacterService } from '../../../services/character.service';
@@ -53,7 +54,7 @@ interface NpcNode { name: string; description: string; selected: boolean; existi
  */
 @Component({
     selector: 'app-campaign-import',
-    imports: [FormsModule, LucideAngularModule],
+    imports: [FormsModule, LucideAngularModule, TranslatePipe],
     templateUrl: './campaign-import.component.html',
     styleUrls: ['./campaign-import.component.scss']
 })
@@ -109,12 +110,13 @@ export class CampaignImportComponent implements OnInit {
     private randomTableService: RandomTableService,
     private enemyService: EnemyService,
     private campaignSidebar: CampaignSidebarService,
-    private pageTitle: PageTitleService
+    private pageTitle: PageTitleService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
     this.campaignId = this.route.snapshot.paramMap.get('campaignId')!;
-    this.pageTitle.set('Importer une campagne');
+    this.pageTitle.set(this.translate.instant('campaignImport.pageTitle'));
     this.campaignSidebar.show(this.campaignId);
 
     // Pré-chargement de l'arborescence existante (pour fusionner à la revue).
@@ -138,7 +140,7 @@ export class CampaignImportComponent implements OnInit {
     this.reviewing = false;
     this.importError = null;
     this.applyError = null;
-    this.importPhase = 'Extraction du texte…';
+    this.importPhase = this.translate.instant('campaignImport.phaseExtracting');
     this.importProgress = null;
     this.importStatus = null;
     this.importCounts = null;
@@ -150,10 +152,10 @@ export class CampaignImportComponent implements OnInit {
           // Un morceau vient d'aboutir : le message d'attente est obsolète.
           this.importStatus = null;
           if (ev.total === 0) {
-            this.importPhase = 'Extraction du texte…';
+            this.importPhase = this.translate.instant('campaignImport.phaseExtracting');
             this.importProgress = null;
           } else {
-            this.importPhase = `Analyse de la campagne… (${ev.current}/${ev.total})`;
+            this.importPhase = this.translate.instant('campaignImport.phaseAnalyzing', { current: ev.current, total: ev.total });
             this.importProgress = { current: ev.current, total: ev.total };
             this.importCounts = {
               arcs: ev.arcCount, chapters: ev.chapterCount,
@@ -168,7 +170,7 @@ export class CampaignImportComponent implements OnInit {
           this.importProgress = null;
           this.importStatus = null;
           if ((ev.arcs ?? []).length === 0 && (ev.npcs ?? []).length === 0) {
-            this.importError = "Aucune structure narrative détectée dans ce PDF.";
+            this.importError = this.translate.instant('campaignImport.errorNoStructure');
             this.reviewing = false;
           } else {
             this.tree = this.buildMergedTree(ev.arcs ?? []);
@@ -181,7 +183,9 @@ export class CampaignImportComponent implements OnInit {
         this.importing = false;
         this.importPhase = '';
         this.importProgress = null;
-        this.importError = err?.message ? `Échec de l'import : ${err.message}` : "Échec de l'import du PDF.";
+        this.importError = err?.message
+          ? this.translate.instant('campaignImport.errorImportDetail', { message: err.message })
+          : this.translate.instant('campaignImport.errorImport');
       }
     });
   }
@@ -413,7 +417,7 @@ export class CampaignImportComponent implements OnInit {
       next: () => this.router.navigate(['/campaigns', this.campaignId]),
       error: () => {
         this.applying = false;
-        this.applyError = "Échec de la création. La campagne existe-t-elle toujours ?";
+        this.applyError = this.translate.instant('campaignImport.errorApply');
       }
     });
   }

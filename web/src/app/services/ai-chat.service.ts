@@ -1,5 +1,6 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
 
 /**
  * Un message d'une conversation IA (vue front).
@@ -45,6 +46,7 @@ export type NarrativeEntityType = 'arc' | 'chapter' | 'scene' | 'character' | 'n
 
 @Injectable({ providedIn: 'root' })
 export class AiChatService {
+  private readonly translate = inject(TranslateService);
   private readonly loreEndpoint = '/api/ai/chat/stream';
   private readonly campaignEndpoint = '/api/ai/chat/stream-campaign';
   private readonly sessionEndpoint = '/api/ai/chat/stream-session';
@@ -237,9 +239,9 @@ export class AiChatService {
   private safeParseMessage(json: string): string {
     try {
       const obj = JSON.parse(json) as { message?: string };
-      return obj.message ?? 'Erreur inconnue côté serveur.';
+      return obj.message ?? this.translate.instant('services.unknownServerError');
     } catch {
-      return json || 'Erreur inconnue côté serveur.';
+      return json || this.translate.instant('services.unknownServerError');
     }
   }
 }

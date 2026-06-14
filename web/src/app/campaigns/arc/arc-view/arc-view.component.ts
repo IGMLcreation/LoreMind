@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { LucideAngularModule, Pencil, Trash2, AlertCircle } from 'lucide-angular';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { resolveCampaignIcon } from '../../campaign-icons';
 import { CampaignService } from '../../../services/campaign.service';
 import { CharacterService } from '../../../services/character.service';
@@ -26,7 +27,7 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  */
 @Component({
     selector: 'app-arc-view',
-    imports: [RouterModule, LucideAngularModule, ImageGalleryComponent],
+    imports: [RouterModule, LucideAngularModule, ImageGalleryComponent, TranslatePipe],
     templateUrl: './arc-view.component.html',
     styleUrls: ['./arc-view.component.scss']
 })
@@ -65,7 +66,8 @@ export class ArcViewComponent implements OnInit, OnDestroy {
     private pageService: PageService,
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -111,7 +113,7 @@ export class ArcViewComponent implements OnInit, OnDestroy {
           list.forEach(c => { if (c.id) this.allChaptersById[c.id] = c; })
       );
 
-      this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId));
+      this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId, this.translate));
     });
   }
 
@@ -119,11 +121,11 @@ export class ArcViewComponent implements OnInit, OnDestroy {
   describePrerequisite(p: Prerequisite): string {
     switch (p.kind) {
       case 'QUEST_COMPLETED':
-        return `Quête « ${this.allChaptersById[p.questId]?.name ?? '?'} » terminée`;
+        return this.translate.instant('arcView.prereqQuestCompleted', { name: this.allChaptersById[p.questId]?.name ?? '?' });
       case 'SESSION_REACHED':
-        return `Session ${p.minSessionNumber} atteinte`;
+        return this.translate.instant('arcView.prereqSessionReached', { n: p.minSessionNumber });
       case 'FLAG_SET':
-        return `Fait : ${p.flagName}`;
+        return this.translate.instant('arcView.prereqFlagSet', { flag: p.flagName });
     }
   }
 
@@ -135,7 +137,7 @@ export class ArcViewComponent implements OnInit, OnDestroy {
   }
 
   titleOfRelated(pageId: string): string {
-    return this.availablePages.find(p => p.id === pageId)?.title ?? '(page supprimée)';
+    return this.availablePages.find(p => p.id === pageId)?.title ?? this.translate.instant('arcView.deletedPage');
   }
 
   editMode(): void {
@@ -153,20 +155,24 @@ export class ArcViewComponent implements OnInit, OnDestroy {
     this.campaignService.getArcDeletionImpact(arc.id!).subscribe({
       next: impact => {
         const parts: string[] = [];
-        if (impact.chapters > 0) parts.push(`${impact.chapters} chapitre${impact.chapters > 1 ? 's' : ''}`);
-        if (impact.scenes > 0) parts.push(`${impact.scenes} scène${impact.scenes > 1 ? 's' : ''}`);
+        if (impact.chapters > 0) {
+          parts.push(this.translate.instant(impact.chapters > 1 ? 'arcView.chaptersPlural' : 'arcView.chaptersSingular', { n: impact.chapters }));
+        }
+        if (impact.scenes > 0) {
+          parts.push(this.translate.instant(impact.scenes > 1 ? 'arcView.scenesPlural' : 'arcView.scenesSingular', { n: impact.scenes }));
+        }
 
         const details: string[] = [];
         if (parts.length) {
-          details.push(`Cette action supprimera aussi : ${parts.join(', ')}.`);
+          details.push(this.translate.instant('arcView.deleteCascade', { parts: parts.join(', ') }));
         }
-        details.push('Cette action est irréversible.');
+        details.push(this.translate.instant('arcView.irreversible'));
 
         this.confirmDialog.confirm({
-          title: 'Supprimer l\'arc',
-          message: `Supprimer l'arc "${arc.name}" ?`,
+          title: this.translate.instant('arcView.deleteConfirmTitle'),
+          message: this.translate.instant('arcView.deleteConfirmMessage', { name: arc.name }),
           details,
-          confirmLabel: 'Supprimer',
+          confirmLabel: this.translate.instant('common.delete'),
           variant: 'danger'
         }).then(ok => {
           if (!ok) return;
