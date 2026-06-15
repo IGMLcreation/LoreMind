@@ -8,7 +8,8 @@ from pydantic import BaseModel, Field
 from app.api.deps import get_llm_provider
 from app.application.llm_json import load_json_object
 from app.application.llm_retry import generate_with_retry
-from app.core.language import get_user_language, language_name
+from app.application.prompts import tables as prompts
+from app.core.language import get_user_language
 from app.domain.ports import LLMProvider, LLMProviderError
 
 router = APIRouter()
@@ -59,22 +60,8 @@ async def generate_random_table(
     if rng is None:
         raise HTTPException(status_code=422, detail="Formule de dé invalide (ex. 1d20, 2d6, d100).")
     lo, hi = rng
-    context_block = f"\nContexte de la campagne :\n{body.context.strip()}\n" if body.context.strip() else ""
-    prompt = (
-        "Tu es un assistant de jeu de rôle. Génère une TABLE ALÉATOIRE évocatrice.\n"
-        f"Dé : {body.dice_formula} (résultats possibles de {lo} à {hi}).\n"
-        f"Sujet : {body.description.strip()}\n"
-        f"{context_block}\n"
-        "Règles IMPÉRATIVES :\n"
-        "- Réponds UNIQUEMENT par un objet JSON valide, sans texte autour.\n"
-        '- Format : {"name": "...", "description": "...", "entries": '
-        '[{"min_roll": N, "max_roll": M, "label": "résultat court", "detail": "1-2 phrases"}]}\n'
-        f"- Les plages (min_roll..max_roll) doivent COUVRIR EXACTEMENT {lo}..{hi}, "
-        "sans trou ni chevauchement, dans l'ordre croissant.\n"
-        "- Des résultats variés, cohérents avec le sujet (et le contexte s'il est fourni).\n"
-        f"- En {language_name(language)}. 'label' = résultat bref ; 'detail' = description/effet concret.\n"
-        "Renvoie maintenant le JSON."
-    )
+    prompt = prompts.random_table_prompt(
+        body.description, body.dice_formula, lo, hi, body.context, language)
     try:
         raw = await generate_with_retry(llm, prompt, output_format="json", temperature=0.7)
     except LLMProviderError as exc:
@@ -129,15 +116,8 @@ async def improvise_table_roll(
     language: Annotated[str, Depends(get_user_language)],
 ) -> ImproviseRollResponseDTO:
     """Brode un court récit (2-3 phrases) sur un résultat tiré, pour lancer la scène."""
-    detail = f" ({body.result_detail.strip()})" if body.result_detail.strip() else ""
-    context_block = f"\nContexte : {body.context.strip()}" if body.context.strip() else ""
-    prompt = (
-        "Tu es le Maître du Jeu. Les joueurs viennent de tirer sur la table "
-        f"« {body.table_name.strip()} » et ont obtenu : « {body.result_label.strip()} »{detail}."
-        f"{context_block}\n\n"
-        "Décris en 2-3 phrases vivantes et immédiates ce qui se passe, pour lancer la scène. "
-        f"Pas de méta, pas d'options : juste la narration, en {language_name(language)}."
-    )
+    prompt = prompts.improvise_roll_prompt(
+        body.table_name, body.result_label, body.result_detail, body.context, language)
     try:
         raw = await llm.generate(prompt, temperature=0.8)
     except LLMProviderError as exc:
@@ -173,20 +153,7 @@ async def generate_item_catalog(
     language: Annotated[str, Depends(get_user_language)],
 ) -> GenerateCatalogResponseDTO:
     """Génère un catalogue d'objets (boutique, butin…) — nom, prix, catégorie, description."""
-    context_block = f"\nContexte de la campagne :\n{body.context.strip()}\n" if body.context.strip() else ""
-    prompt = (
-        "Tu es un assistant de jeu de rôle. Génère un CATALOGUE D'OBJETS (boutique, butin, trésor…).\n"
-        f"Sujet : {body.description.strip()}\n"
-        f"{context_block}\n"
-        "Règles IMPÉRATIVES :\n"
-        "- Réponds UNIQUEMENT par un objet JSON valide, sans texte autour.\n"
-        '- Format : {"name": "...", "description": "...", "items": '
-        '[{"name": "Objet", "price": "ex. 50 po", "category": "ex. Armes", "description": "effet/détails"}]}\n'
-        "- Des objets variés et cohérents avec le sujet (et le contexte s'il est fourni).\n"
-        "- 'price' = prix court dans la monnaie du jeu ; 'category' = regroupement (Armes, Potions…) ; "
-        f"'description' = effet/détails en une phrase. En {language_name(language)}.\n"
-        "Renvoie maintenant le JSON."
-    )
+    prompt = prompts.item_catalog_prompt(body.description, body.context, language)
     try:
         raw = await generate_with_retry(llm, prompt, output_format="json", temperature=0.7)
     except LLMProviderError as exc:

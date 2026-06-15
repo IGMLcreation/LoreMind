@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import logging
 
+from app.application.prompts import query_rewrite as prompts
 from app.domain.models import ChatMessage
 
 logger = logging.getLogger(__name__)
@@ -22,22 +23,6 @@ _MAX_HISTORY = 6
 # Garde-fou : une « question » réécrite anormalement longue est suspecte (le
 # modèle a divagué) → on retombe sur la question brute.
 _MAX_REWRITE_CHARS = 400
-
-_REWRITE_PROMPT = """Voici la fin d'une conversation entre un Maître de Jeu et son assistant.
-Réécris le DERNIER message de l'utilisateur en une question AUTONOME et complète :
-remplace les pronoms et références implicites (« il », « ses », « ce lieu », « et pour
-les autres ? ») par ce qu'ils désignent dans la conversation.
-
-Règles :
-- Réponds UNIQUEMENT par la question réécrite, sans guillemets ni préfixe.
-- Conserve la langue et l'intention d'origine. N'ajoute RIEN qui n'est pas demandé.
-- Si le dernier message est déjà autonome, recopie-le tel quel.
-
---- CONVERSATION ---
-{conversation}
---- FIN ---
-
-Question autonome :"""
 
 
 async def standalone_question(llm, messages: list[ChatMessage]) -> str:
@@ -56,7 +41,7 @@ async def standalone_question(llm, messages: list[ChatMessage]) -> str:
     conversation = "\n".join(f"{m.role.upper()}: {m.content.strip()}" for m in recent)
     try:
         raw = await llm.generate(
-            _REWRITE_PROMPT.format(conversation=conversation), temperature=0.0)
+            prompts.REWRITE_PROMPT.format(conversation=conversation), temperature=0.0)
     except Exception as exc:  # noqa: BLE001 — la recherche dégradée vaut mieux que pas de réponse
         logger.warning("Réécriture de question ignorée (échec LLM) : %s", exc)
         return last_user

@@ -31,7 +31,8 @@ from app.domain.models import (
     QuestSummary,
     SessionContext,
 )
-from app.core.language import DEFAULT as _DEFAULT_LANG, language_name
+from app.application.prompts import chat as prompts
+from app.core.language import DEFAULT as _DEFAULT_LANG
 from app.domain.ports import LLMChatProvider
 
 
@@ -39,23 +40,6 @@ from app.domain.ports import LLMChatProvider
 # Plus élevée que le one-shot (0.4) car on veut de la variété d'idées,
 # mais sans partir en délire halluciné (1.0+).
 _DEFAULT_TEMPERATURE = 0.7
-
-
-def _base_system(language: str) -> str:
-    """System prompt de base, avec la langue de réponse pilotée par l'utilisateur."""
-    return f"""Tu es un assistant d'écriture pour un Maître de Jeu de JDR.
-Tu dialogues avec le MJ pour l'aider à enrichir son univers et ses campagnes.
-
-Règles de ton :
-- Réponds en {language_name(language)}, ton chaleureux et créatif.
-- Sois concis : listes à puces courtes plutôt que longs paragraphes.
-- Propose des idées qui s'intègrent dans le contexte existant ci-dessous.
-
-Règles de cohérence (IMPORTANT) :
-- Tu PEUX et DOIS inventer des éléments originaux (personnages, lieux, objets, intrigues, créatures, scènes) — c'est ton rôle d'assistant créatif.
-- Tu ne peux PAS faire référence à un élément du MJ (du Lore, des arcs, chapitres ou scènes) comme s'il existait déjà, SAUF s'il apparaît EXACTEMENT (même orthographe) dans l'une des sections de contexte ci-dessous.
-- Si l'utilisateur mentionne un nom que tu ne vois pas dans le contexte, ne fais surtout pas semblant de le connaître : dis clairement "Je ne vois pas [nom] dans le contexte actuel, veux-tu qu'on le crée ?" plutôt que d'inventer des détails à son sujet.
-- Évite les précisions inventées qu'on ne peut pas vérifier : dates exactes, chiffres de population, hiérarchies politiques complexes, généalogies détaillées. Préfère des formulations ouvertes que le MJ validera ("il y a longtemps", "de nombreux", "la haute noblesse")."""
 
 
 class ChatUseCase:
@@ -124,7 +108,7 @@ class ChatUseCase:
         session: SessionContext | None = None,
         language: str = _DEFAULT_LANG,
     ) -> str:
-        sections = [_base_system(language)]
+        sections = [prompts.base_system(language)]
         if lore is not None:
             sections.append(self._format_lore(lore))
         if campaign is not None:

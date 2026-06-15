@@ -11,6 +11,7 @@ from __future__ import annotations
 import logging
 
 from app.application.llm_json import load_json_object
+from app.application.prompts import rerank as prompts
 
 logger = logging.getLogger(__name__)
 
@@ -22,16 +23,6 @@ POOL_MAX = 24
 # Un extrait long n'a pas besoin d'être noté en entier : tronquer borne le
 # prompt sans changer le jugement de pertinence.
 _EXCERPT_CHARS = 600
-
-_RERANK_PROMPT = """Tu évalues la PERTINENCE d'extraits d'un document pour répondre à une question.
-Note chaque extrait de 0 (sans rapport) à 10 (répond directement), indépendamment des autres.
-
-QUESTION : {question}
-
-{passages}
-
-Réponds UNIQUEMENT par un objet JSON : {{"scores": [note_extrait_1, note_extrait_2, ...]}}
-Le tableau doit contenir EXACTEMENT {count} notes, dans l'ordre des extraits."""
 
 
 def pool_size(top_k: int) -> int:
@@ -52,7 +43,7 @@ async def rerank(llm, question: str, passages: list[dict], top_k: int) -> list[d
         f"--- EXTRAIT {i + 1} ---\n{(p.get('text') or '')[:_EXCERPT_CHARS]}"
         for i, p in enumerate(passages)
     )
-    prompt = _RERANK_PROMPT.format(
+    prompt = prompts.RERANK_PROMPT.format(
         question=question, passages=numbered, count=len(passages))
     try:
         raw = await llm.generate(prompt, temperature=0.0)
