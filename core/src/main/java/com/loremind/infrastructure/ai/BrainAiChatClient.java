@@ -4,6 +4,7 @@ import com.loremind.domain.generationcontext.ChatRequest;
 import com.loremind.domain.generationcontext.ChatUsage;
 import com.loremind.domain.generationcontext.ports.AiChatProvider;
 import com.loremind.domain.generationcontext.ports.AiProviderException;
+import com.loremind.infrastructure.web.config.UserLanguageHolder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
@@ -64,6 +65,7 @@ public class BrainAiChatClient implements AiChatProvider {
 
         Flux<ServerSentEvent<String>> flux = webClient.post()
                 .uri(CHAT_STREAM_PATH)
+                .header(UserLanguageHolder.HEADER, UserLanguageHolder.get())
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.TEXT_EVENT_STREAM)
                 .bodyValue(payload)

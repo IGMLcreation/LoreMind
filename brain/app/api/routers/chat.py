@@ -18,6 +18,7 @@ from app.api.chat_mapping import (
 from app.api.deps import get_chat_use_case
 from app.application.chat import ChatUseCase
 from app.core.config import get_settings
+from app.core.language import get_user_language
 from app.domain.models import ChatMessage
 from app.domain.ports import LLMProviderError
 
@@ -44,6 +45,7 @@ def _count_tokens(text: str | None) -> int:
 async def chat_stream(
     body: ChatStreamRequestDTO,
     use_case: Annotated[ChatUseCase, Depends(get_chat_use_case)],
+    language: Annotated[str, Depends(get_user_language)],
 ) -> StreamingResponse:
     """Chat streamé (Server-Sent Events) avec Structural Context.
 
@@ -82,6 +84,7 @@ async def chat_stream(
         narrative_entity=narrative_entity,
         game_system_context=game_system_context,
         session_context=session_context,
+        language=language,
     )
     # Dernier message = "current" (souvent user), le reste = historique accumulé.
     current_msg = messages[-1] if messages else None
@@ -109,6 +112,7 @@ async def chat_stream(
                 narrative_entity=narrative_entity,
                 game_system_context=game_system_context,
                 session_context=session_context,
+                language=language,
             ):
                 # json.dumps avec ensure_ascii=False pour préserver les accents
                 yield f"data: {json.dumps({'token': token}, ensure_ascii=False)}\n\n"

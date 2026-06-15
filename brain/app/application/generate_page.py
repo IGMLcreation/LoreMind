@@ -8,6 +8,7 @@ permet de tester ce use case avec un FakeLLMProvider, sans Ollama qui tourne.
 """
 import json
 
+from app.core.language import DEFAULT as _DEFAULT_LANG, language_name
 from app.domain.models import PageGenerationContext, PageGenerationResult
 from app.domain.ports import LLMProvider, LLMProviderError
 
@@ -18,13 +19,15 @@ from app.domain.ports import LLMProvider, LLMProviderError
 _DEFAULT_TEMPERATURE = 0.4
 
 
-_SYSTEM_INSTRUCTIONS = """Tu es un assistant d'écriture pour un Maître de Jeu de JDR.
+def _system_instructions(language: str) -> str:
+    """Consignes système, avec la langue des valeurs générées pilotée par l'utilisateur."""
+    return f"""Tu es un assistant d'écriture pour un Maître de Jeu de JDR.
 Tu vas générer le contenu d'une page appartenant à un univers fictionnel.
 
 Règles impératives de ta réponse :
 - Tu réponds UNIQUEMENT par un objet JSON valide.
 - Les clés du JSON correspondent EXACTEMENT aux noms de champs demandés.
-- Les valeurs sont des chaînes de texte en français, riches et évocatrices.
+- Les valeurs sont des chaînes de texte en {language_name(language)}, riches et évocatrices.
 - Aucun markdown, aucune explication, aucun commentaire autour du JSON.
 
 Règles de cohérence (IMPORTANT) :
@@ -42,8 +45,9 @@ class GeneratePageUseCase:
     async def execute(
         self,
         context: PageGenerationContext,
+        language: str = _DEFAULT_LANG,
     ) -> PageGenerationResult:
-        prompt = self._build_prompt(context)
+        prompt = self._build_prompt(context, language)
         raw = await self._llm.generate(
             prompt,
             output_format="json",
@@ -53,7 +57,7 @@ class GeneratePageUseCase:
         return PageGenerationResult(values=values)
 
     @staticmethod
-    def _build_prompt(context: PageGenerationContext) -> str:
+    def _build_prompt(context: PageGenerationContext, language: str = _DEFAULT_LANG) -> str:
         fields_block = "\n".join(f'- "{field}"' for field in context.template_fields)
         lore_desc_line = (
             f"\nDescription de l'univers : {context.lore_description}"
@@ -62,7 +66,7 @@ class GeneratePageUseCase:
         )
 
         return (
-            f"{_SYSTEM_INSTRUCTIONS}\n\n"
+            f"{_system_instructions(language)}\n\n"
             f"Univers : {context.lore_name}"
             f"{lore_desc_line}\n"
             f"Catégorie (dossier) : {context.folder_name}\n"

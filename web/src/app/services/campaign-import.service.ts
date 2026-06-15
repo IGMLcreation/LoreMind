@@ -7,6 +7,7 @@ import {
   CampaignImportProposal,
   CampaignImportStreamEvent
 } from './campaign-import.model';
+import { LanguageService } from './language.service';
 
 /**
  * Service HTTP pour l'import d'un PDF de campagne.
@@ -17,7 +18,7 @@ import {
  */
 @Injectable({ providedIn: 'root' })
 export class CampaignImportService {
-  constructor(private http: HttpClient, private translate: TranslateService) {}
+  constructor(private http: HttpClient, private translate: TranslateService, private language: LanguageService) {}
 
   importStructureStream(campaignId: string, file: File): Observable<CampaignImportStreamEvent> {
     return new Observable<CampaignImportStreamEvent>((subscriber) => {
@@ -27,7 +28,7 @@ export class CampaignImportService {
 
       fetch(`/api/campaigns/${campaignId}/import-structure/stream`, {
         method: 'POST',
-        headers: { 'Accept': 'text/event-stream' },
+        headers: { 'Accept': 'text/event-stream', 'X-User-Language': this.language.current },
         body: form,
         signal: controller.signal
       })

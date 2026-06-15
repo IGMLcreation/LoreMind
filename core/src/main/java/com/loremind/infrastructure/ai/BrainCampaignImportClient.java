@@ -11,6 +11,7 @@ import com.loremind.domain.campaigncontext.CampaignImportProposal.RoomProposal;
 import com.loremind.domain.campaigncontext.CampaignImportProposal.SceneProposal;
 import com.loremind.domain.campaigncontext.ports.CampaignImportException;
 import com.loremind.domain.campaigncontext.ports.CampaignPdfImporter;
+import com.loremind.infrastructure.web.config.UserLanguageHolder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.ByteArrayResource;
@@ -71,6 +72,7 @@ public class BrainCampaignImportClient implements CampaignPdfImporter {
 
         Flux<ServerSentEvent<String>> flux = webClient.post()
                 .uri(IMPORT_CAMPAIGN_STREAM_PATH)
+                .header(UserLanguageHolder.HEADER, UserLanguageHolder.get())
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .accept(MediaType.TEXT_EVENT_STREAM)
                 .body(BodyInserters.fromMultipartData(parts.build()))

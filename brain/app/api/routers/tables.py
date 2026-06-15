@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from app.api.deps import get_llm_provider
 from app.application.llm_json import load_json_object
 from app.application.llm_retry import generate_with_retry
+from app.core.language import get_user_language, language_name
 from app.domain.ports import LLMProvider, LLMProviderError
 
 router = APIRouter()
@@ -51,6 +52,7 @@ class GenerateTableResponseDTO(BaseModel):
 async def generate_random_table(
     body: GenerateTableRequestDTO,
     llm: Annotated[LLMProvider, Depends(get_llm_provider)],
+    language: Annotated[str, Depends(get_user_language)],
 ) -> GenerateTableResponseDTO:
     """Génère une table aléatoire (entrées par plage) couvrant la formule de dé."""
     rng = _dice_total_range(body.dice_formula)
@@ -70,7 +72,7 @@ async def generate_random_table(
         f"- Les plages (min_roll..max_roll) doivent COUVRIR EXACTEMENT {lo}..{hi}, "
         "sans trou ni chevauchement, dans l'ordre croissant.\n"
         "- Des résultats variés, cohérents avec le sujet (et le contexte s'il est fourni).\n"
-        "- En français. 'label' = résultat bref ; 'detail' = description/effet concret.\n"
+        f"- En {language_name(language)}. 'label' = résultat bref ; 'detail' = description/effet concret.\n"
         "Renvoie maintenant le JSON."
     )
     try:
@@ -124,6 +126,7 @@ class ImproviseRollResponseDTO(BaseModel):
 async def improvise_table_roll(
     body: ImproviseRollRequestDTO,
     llm: Annotated[LLMProvider, Depends(get_llm_provider)],
+    language: Annotated[str, Depends(get_user_language)],
 ) -> ImproviseRollResponseDTO:
     """Brode un court récit (2-3 phrases) sur un résultat tiré, pour lancer la scène."""
     detail = f" ({body.result_detail.strip()})" if body.result_detail.strip() else ""
@@ -133,7 +136,7 @@ async def improvise_table_roll(
         f"« {body.table_name.strip()} » et ont obtenu : « {body.result_label.strip()} »{detail}."
         f"{context_block}\n\n"
         "Décris en 2-3 phrases vivantes et immédiates ce qui se passe, pour lancer la scène. "
-        "Pas de méta, pas d'options : juste la narration, en français."
+        f"Pas de méta, pas d'options : juste la narration, en {language_name(language)}."
     )
     try:
         raw = await llm.generate(prompt, temperature=0.8)
@@ -167,6 +170,7 @@ class GenerateCatalogResponseDTO(BaseModel):
 async def generate_item_catalog(
     body: GenerateCatalogRequestDTO,
     llm: Annotated[LLMProvider, Depends(get_llm_provider)],
+    language: Annotated[str, Depends(get_user_language)],
 ) -> GenerateCatalogResponseDTO:
     """Génère un catalogue d'objets (boutique, butin…) — nom, prix, catégorie, description."""
     context_block = f"\nContexte de la campagne :\n{body.context.strip()}\n" if body.context.strip() else ""
@@ -180,7 +184,7 @@ async def generate_item_catalog(
         '[{"name": "Objet", "price": "ex. 50 po", "category": "ex. Armes", "description": "effet/détails"}]}\n'
         "- Des objets variés et cohérents avec le sujet (et le contexte s'il est fourni).\n"
         "- 'price' = prix court dans la monnaie du jeu ; 'category' = regroupement (Armes, Potions…) ; "
-        "'description' = effet/détails en une phrase. En français.\n"
+        f"'description' = effet/détails en une phrase. En {language_name(language)}.\n"
         "Renvoie maintenant le JSON."
     )
     try:

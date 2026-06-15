@@ -3,6 +3,7 @@ package com.loremind.infrastructure.ai;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loremind.domain.campaigncontext.ports.CampaignPdfAdvisor;
+import com.loremind.infrastructure.web.config.UserLanguageHolder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.ByteArrayResource;
@@ -65,6 +66,7 @@ public class BrainCampaignAdaptClient implements CampaignPdfAdvisor {
 
         Flux<ServerSentEvent<String>> flux = webClient.post()
                 .uri(ADAPT_PATH)
+                .header(UserLanguageHolder.HEADER, UserLanguageHolder.get())
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .accept(MediaType.TEXT_EVENT_STREAM)
                 .body(BodyInserters.fromMultipartData(parts.build()))

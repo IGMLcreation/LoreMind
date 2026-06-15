@@ -2,6 +2,7 @@ package com.loremind.infrastructure.ai;
 
 import com.loremind.domain.conversationcontext.ConversationMessage;
 import com.loremind.domain.conversationcontext.ports.ConversationTitleGenerator;
+import com.loremind.infrastructure.web.config.UserLanguageHolder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -50,6 +51,7 @@ public class BrainConversationTitleClient implements ConversationTitleGenerator 
             @SuppressWarnings("unchecked")
             Map<String, Object> resp = webClient.post()
                     .uri(PATH)
+                    .header(UserLanguageHolder.HEADER, UserLanguageHolder.get())
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(payload)
                     .retrieve()

@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { Notebook, NotebookArchive, NotebookDetail, NotebookSource, NotebookChatEvent } from './notebook.model';
+import { LanguageService } from './language.service';
 
 /**
  * Service des notebooks (atelier RAG) : CRUD, upload/indexation de sources,
@@ -12,7 +13,7 @@ import { Notebook, NotebookArchive, NotebookDetail, NotebookSource, NotebookChat
 export class NotebookService {
   private readonly apiUrl = '/api/notebooks';
 
-  constructor(private http: HttpClient, private zone: NgZone, private translate: TranslateService) {}
+  constructor(private http: HttpClient, private zone: NgZone, private translate: TranslateService, private language: LanguageService) {}
 
   listByCampaign(campaignId: string): Observable<Notebook[]> {
     return this.http.get<Notebook[]>(`${this.apiUrl}/campaign/${campaignId}`);
@@ -73,7 +74,7 @@ export class NotebookService {
         try {
           const response = await fetch(`${this.apiUrl}/${notebookId}/chat/stream`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
+            headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream', 'X-User-Language': this.language.current },
             credentials: 'include',
             body: JSON.stringify({
               message, deep,

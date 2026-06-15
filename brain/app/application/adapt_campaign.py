@@ -13,6 +13,7 @@ from __future__ import annotations
 import logging
 from typing import AsyncIterator
 
+from app.core.language import DEFAULT as _DEFAULT_LANG, language_name
 from app.domain.models import ChatMessage
 from app.domain.ports import LLMChatProvider, PdfExtractionError, PdfTextExtractor
 
@@ -27,8 +28,11 @@ _SYSTEM_PREFIX = (
     "contenu d'un PDF (aventure, donjon, supplément) à CETTE campagne précise."
 )
 
-_SYSTEM_SUFFIX = (
-    "Produis des CONSEILS D'ADAPTATION concrets, actionnables et en FRANÇAIS, "
+
+def _system_suffix(language: str) -> str:
+    """Consignes de sortie, avec la langue des conseils pilotée par l'utilisateur."""
+    return (
+    f"Produis des CONSEILS D'ADAPTATION concrets, actionnables et en {language_name(language).upper()}, "
     "en markdown structuré (titres ##, listes). Couvre notamment :\n"
     "- **Où l'insérer** : à quel(s) arc(s)/chapitre(s) EXISTANT(s) rattacher ce "
     "contenu, dans quel ordre, et — si l'arc est un hub — sous quelles conditions de déblocage.\n"
@@ -64,6 +68,7 @@ class AdaptCampaignUseCase:
         pdf_bytes: bytes,
         brief: str,
         messages: list[ChatMessage],
+        language: str = _DEFAULT_LANG,
     ) -> AsyncIterator[str]:
         """Conversationnel : le PDF + la campagne sont le CONTEXTE (system prompt),
         `messages` est l'échange (demande initiale, puis feedbacks de l'utilisateur)."""
@@ -92,7 +97,7 @@ class AdaptCampaignUseCase:
             f"{brief.strip() or '(campagne encore vide)'}\n\n"
             "--- CONTENU DU PDF À ADAPTER ---\n"
             f"{pdf_text}{trunc_note}\n\n"
-            f"{_SYSTEM_SUFFIX}\n\n"
+            f"{_system_suffix(language)}\n\n"
             "Tu es en CONVERSATION : à chaque message de l'utilisateur, ajuste, corrige "
             "ou propose des alternatives en gardant tout ce contexte à l'esprit."
         )

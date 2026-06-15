@@ -6,6 +6,7 @@ import com.loremind.domain.gamesystemcontext.RulesImportProgress;
 import com.loremind.domain.gamesystemcontext.RulesImportResult;
 import com.loremind.domain.gamesystemcontext.ports.RulesImportException;
 import com.loremind.domain.gamesystemcontext.ports.RulesPdfImporter;
+import com.loremind.infrastructure.web.config.UserLanguageHolder;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -125,6 +126,7 @@ public class BrainRulesImportClient implements RulesPdfImporter {
 
         Flux<ServerSentEvent<String>> flux = webClient.post()
                 .uri(IMPORT_RULES_STREAM_PATH)
+                .header(UserLanguageHolder.HEADER, UserLanguageHolder.get())
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .accept(MediaType.TEXT_EVENT_STREAM)
                 .body(BodyInserters.fromMultipartData(parts.build()))

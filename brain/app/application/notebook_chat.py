@@ -11,6 +11,7 @@ from typing import AsyncIterator
 from app.application.notebook_rag import NotebookRagUseCase
 from app.application.query_rewrite import standalone_question
 from app.application.rerank import pool_size, rerank
+from app.core.language import DEFAULT as _DEFAULT_LANG, language_name
 from app.domain.models import ChatMessage
 from app.domain.ports import LLMChatProvider
 
@@ -91,7 +92,7 @@ quêtes parallèles.)
 {{"type": "table", "name": "Nom", "diceFormula": "1d8", "entries": [{{"minRoll":1,"maxRoll":4,"label":"...","detail":"..."}}]}}
 ```
 
-Réponds en français, de façon utile et concise. Mets le texte explicatif AVANT les blocs d'action."""
+Réponds en {language_name}, de façon utile et concise. Mets le texte explicatif AVANT les blocs d'action."""
 
 
 class NotebookChatUseCase:
@@ -109,6 +110,7 @@ class NotebookChatUseCase:
         messages: list[ChatMessage],
         context: str = "",
         top_k: int = 6,
+        language: str = _DEFAULT_LANG,
     ) -> AsyncIterator[dict]:
         """Yield des évènements : {type:'sources', sources:[…]} (une fois, avant la
         réponse — transparence sur les passages utilisés), puis {type:'token', token}."""
@@ -144,7 +146,8 @@ class NotebookChatUseCase:
             if context.strip() else "--- TA CAMPAGNE ---\n(aucune donnée de campagne)\n--- FIN CAMPAGNE ---\n\n"
         )
         system_prompt = _SYSTEM_PROMPT.format(
-            context_block=context_block, sources_block=sources_block)
+            context_block=context_block, sources_block=sources_block,
+            language_name=language_name(language))
         async for token in self._llm.stream_chat(messages, system_prompt=system_prompt):
             yield {"type": "token", "token": token}
 

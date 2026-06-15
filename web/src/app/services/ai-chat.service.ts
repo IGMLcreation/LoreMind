@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
+import { LanguageService } from './language.service';
 
 /**
  * Un message d'une conversation IA (vue front).
@@ -47,6 +48,7 @@ export type NarrativeEntityType = 'arc' | 'chapter' | 'scene' | 'character' | 'n
 @Injectable({ providedIn: 'root' })
 export class AiChatService {
   private readonly translate = inject(TranslateService);
+  private readonly language = inject(LanguageService);
   private readonly loreEndpoint = '/api/ai/chat/stream';
   private readonly campaignEndpoint = '/api/ai/chat/stream-campaign';
   private readonly sessionEndpoint = '/api/ai/chat/stream-session';
@@ -110,7 +112,8 @@ export class AiChatService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'text/event-stream'
+          'Accept': 'text/event-stream',
+          'X-User-Language': this.language.current
         },
         body: JSON.stringify(body),
         signal: controller.signal

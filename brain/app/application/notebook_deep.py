@@ -21,6 +21,7 @@ import tiktoken
 
 from app.application.llm_retry import generate_with_retry
 from app.application.query_rewrite import standalone_question
+from app.core.language import DEFAULT as _DEFAULT_LANG, language_name
 from app.domain.models import ChatMessage
 from app.domain.ports import LLMChatProvider, LLMProvider, LLMProviderError
 from app.infrastructure import vector_store
@@ -82,7 +83,7 @@ complète — mais POSSIBLEMENT VIDE si rien d'utile n'y figure), (2) le context
 {notes_block}
 --- FIN DES NOTES ---
 
-Réponds en français."""
+Réponds en {language_name}."""
 
 
 class NotebookDeepUseCase:
@@ -109,6 +110,7 @@ class NotebookDeepUseCase:
         messages: list[ChatMessage],
         context: str = "",
         history_limit: int = 8,
+        language: str = _DEFAULT_LANG,
     ) -> AsyncIterator[dict]:
         """Yield des évènements : {type:'progress',current,total}, {type:'token',token},
         {type:'done'}. (Les erreurs LLM des lots sont tolérées : lot ignoré.)
@@ -175,7 +177,9 @@ class NotebookDeepUseCase:
             f"--- TA CAMPAGNE (structure, PNJ, univers) ---\n{context.strip()}\n--- FIN CAMPAGNE ---\n\n"
             if context.strip() else ""
         )
-        system_prompt = _REDUCE_SYSTEM.format(context_block=context_block, notes_block=notes_block)
+        system_prompt = _REDUCE_SYSTEM.format(
+            context_block=context_block, notes_block=notes_block,
+            language_name=language_name(language))
         # Historique récent pour la cohérence des relances ; on garantit que le
         # dernier message est bien la question courante.
         reduce_messages = messages[-history_limit:] if messages else [ChatMessage(role="user", content=question)]

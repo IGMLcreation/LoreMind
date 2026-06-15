@@ -26,6 +26,7 @@ from app.application.import_status import (
 from app.application.llm_json import load_json_object, looks_like_truncated_json
 from app.application.llm_retry import generate_with_retry
 from app.application.streaming import with_heartbeat
+from app.core.language import DEFAULT as _DEFAULT_LANG, language_name
 
 # Repli anti-troncature : si la SORTIE d'un morceau est coupée (le modèle ne peut
 # pas tout réécrire en une réponse), on retraite ce morceau en 2 moitiés. Borné en
@@ -88,7 +89,7 @@ Règles impératives :
 - INTERDIT : des clés génériques comme "title", "content", "sections", "thought" ou "notes" ; des objets imbriqués ; tout commentaire sur ta démarche ou ton raisonnement.
 - Utilise EN PRIORITÉ ces titres canoniques quand le contenu y correspond :
 {canonical}
-- Si un contenu ne rentre dans aucun, crée un titre clair et concis (en français).
+- Si un contenu ne rentre dans aucun, crée un titre clair et concis (en {language_name}).
 - Reproduis FIDÈLEMENT les règles : tu peux nettoyer la coupure des lignes, recoller les mots coupés
   par un tiret en fin de ligne, retirer les en-têtes/pieds de page et numéros de page parasites.
 - N'INVENTE AUCUNE règle, ne résume pas abusivement : tu réorganises, tu ne réécris pas le fond.
@@ -117,7 +118,7 @@ Règles impératives :
   par paragraphe : un extrait contient typiquement 1 à 6 sections.
 - Titres : EN PRIORITÉ parmi :
 {canonical}
-  sinon un titre court et clair en français.
+  sinon un titre court et clair en {language_name}.
 - Pages de garde, sommaires, crédits : n'en fais pas des sections. Si l'extrait n'est que ça,
   renvoie {{"sections": []}}."""
 
@@ -293,7 +294,7 @@ class ImportRulesUseCase:
         self._chunk_target_tokens = chunk_target_tokens
         self._segment_only = segment_only
 
-    async def execute(self, pdf_bytes: bytes) -> RulesImportResult:
+    async def execute(self, pdf_bytes: bytes, language: str = _DEFAULT_LANG) -> RulesImportResult:
         """Variante non-streamée : traite tout puis renvoie le résultat complet."""
         doc = self._extractor.extract(pdf_bytes)
         chunks = chunk_text(doc.full_text, self._chunk_target_tokens)
@@ -303,14 +304,14 @@ class ImportRulesUseCase:
         )
         merger = _SectionMerger()
         for i, chunk in enumerate(chunks):
-            merger.add(await self._map_chunk(chunk, index=i, total=len(chunks)))
+            merger.add(await self._map_chunk(chunk, index=i, total=len(chunks), language=language))
         return RulesImportResult(
             sections=merger.result(),
             page_count=doc.page_count,
             ocr_page_count=doc.ocr_page_count,
         )
 
-    async def stream(self, pdf_bytes: bytes):
+    async def stream(self, pdf_bytes: bytes, language: str = _DEFAULT_LANG):
         """Variante streamée : yield des évènements d'avancement au fil de l'eau.
 
         Évènements (dicts) : {"type": "extracting"}, puis
@@ -353,7 +354,7 @@ class ImportRulesUseCase:
                 try:
                     sections: dict[str, str] | None = None
                     async for kind, payload in with_heartbeat(
-                        self._map_chunk(chunk, index=i, total=total),
+                        self._map_chunk(chunk, index=i, total=total, language=language),
                         status_queue=status_queue,
                     ):
                         if kind == "heartbeat":
@@ -408,11 +409,14 @@ class ImportRulesUseCase:
 
     # --- MAP : un morceau → sections -----------------------------------------
 
-    async def _map_chunk(self, chunk: str, *, index: int, total: int) -> dict[str, str]:
-        return await self._extract_sections(chunk, index=index, total=total, depth=0)
+    async def _map_chunk(self, chunk: str, *, index: int, total: int,
+                         language: str = _DEFAULT_LANG) -> dict[str, str]:
+        return await self._extract_sections(
+            chunk, index=index, total=total, depth=0, language=language)
 
     async def _extract_sections(
-        self, text: str, *, index: int, total: int, depth: int
+        self, text: str, *, index: int, total: int, depth: int,
+        language: str = _DEFAULT_LANG,
     ) -> dict[str, str]:
         """Extrait les sections d'un texte. Si la SORTIE est tronquée, retraite le
         texte en DEUX moitiés (chacune produit une réponse complète) et fusionne —
@@ -421,7 +425,8 @@ class ImportRulesUseCase:
         schema = _ANCHORS_SCHEMA if self._segment_only else _SECTIONS_SCHEMA
         prompt = (
             system.format(
-                canonical="\n".join(f"  - {s}" for s in _CANONICAL_SECTIONS)
+                canonical="\n".join(f"  - {s}" for s in _CANONICAL_SECTIONS),
+                language_name=language_name(language),
             )
             + f"\n\n--- EXTRAIT {index + 1}/{total} ---\n{text}\n\n"
             "Renvoie maintenant le JSON des sections."
@@ -444,8 +449,8 @@ class ImportRulesUseCase:
             notify_status(
                 f"Le modèle est trop lent sur le morceau {index + 1} : "
                 "re-découpage en 2 moitiés plus digestes…")
-            a = await self._extract_sections(left, index=index, total=total, depth=depth + 1)
-            b = await self._extract_sections(right, index=index, total=total, depth=depth + 1)
+            a = await self._extract_sections(left, index=index, total=total, depth=depth + 1, language=language)
+            b = await self._extract_sections(right, index=index, total=total, depth=depth + 1, language=language)
             return _combine_sections(a, b)
         if self._segment_only:
             sections, truncated = self._parse_anchors(raw, text, index=index)
@@ -461,8 +466,8 @@ class ImportRulesUseCase:
                 notify_status(
                     f"Réponse du modèle coupée sur le morceau {index + 1} : "
                     "re-découpage en 2 moitiés plus digestes…")
-                a = await self._extract_sections(left, index=index, total=total, depth=depth + 1)
-                b = await self._extract_sections(right, index=index, total=total, depth=depth + 1)
+                a = await self._extract_sections(left, index=index, total=total, depth=depth + 1, language=language)
+                b = await self._extract_sections(right, index=index, total=total, depth=depth + 1, language=language)
                 return _combine_sections(a, b)
         if truncated:
             logger.warning(
