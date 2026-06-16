@@ -1,66 +1,68 @@
 # LoreMind
 
-> Application web auto-hébergeable pour MJ qui veulent centraliser leur univers, leurs campagnes et leurs personnages — avec un assistant IA contextuel.
+**English** · [Français](README.fr.md)
 
-[![Licence: AGPL v3](https://img.shields.io/badge/Licence-AGPL%20v3-blue.svg)](LICENSE)
-[![Documentation](https://img.shields.io/badge/docs-loremind--docs-green)](https://loremind-docs.igmlcreation.fr/)
-[![Démo](https://img.shields.io/badge/d%C3%A9mo-en%20ligne-orange)](https://loremind-demo.igmlcreation.fr/)
-[![Patreon](https://img.shields.io/badge/Patreon-soutenir-red)](https://www.patreon.com/c/IGMLCreation)
-[![Discord](https://img.shields.io/badge/Discord-rejoindre-5865F2)](https://discord.gg/cPpFzCjEzQ)
+> A self-hostable web app for game masters who want to centralize their world, campaigns and characters — with a context-aware AI assistant.
 
-## Découvrir LoreMind en vidéo
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](LICENSE)
+[![Documentation](https://img.shields.io/badge/docs-loremind--docs-green)](https://loremind-docs.igmlcreation.fr/en/)
+[![Demo](https://img.shields.io/badge/demo-online-orange)](https://loremind-demo.igmlcreation.fr/)
+[![Patreon](https://img.shields.io/badge/Patreon-support-red)](https://www.patreon.com/c/IGMLCreation)
+[![Discord](https://img.shields.io/badge/Discord-join-5865F2)](https://discord.gg/cPpFzCjEzQ)
 
-[![Présentation LoreMind](https://img.youtube.com/vi/llJkmlotbB8/maxresdefault.jpg)](https://www.youtube.com/watch?v=llJkmlotbB8)
+## See LoreMind in action
 
-![Tableau de bord](https://raw.githubusercontent.com/IGMLcreation/loremind-docs/main/static/img/screenshots/dashboard.png)
+[![LoreMind overview](https://img.youtube.com/vi/llJkmlotbB8/maxresdefault.jpg)](https://www.youtube.com/watch?v=llJkmlotbB8)
 
-## Ce que ça fait
+![Dashboard](https://raw.githubusercontent.com/IGMLcreation/loremind-docs/main/static/img/screenshots/dashboard.png)
 
-LoreMind regroupe ce qu'un MJ utilise habituellement éparpillé entre plusieurs outils. L'application s'articule autour de trois modules principaux, augmentés par un assistant IA qui exploite tout votre contenu.
+## What it does
+
+LoreMind brings together what a game master usually scatters across several tools. The app is built around three core modules, augmented by an AI assistant that draws on all of your content.
 
 ### Lore
 
-Construire votre univers avec une arborescence de pages templatées : lieux, factions, PNJ, événements, organisations... Chaque type de page suit un template configurable, ce qui garantit la cohérence et facilite la navigation dans des univers riches.
+Build your world with a tree of templated pages: locations, factions, NPCs, events, organizations... Each page type follows a configurable template, which keeps things consistent and makes navigating rich worlds easy.
 
 ### Game System
 
-Stocker les règles de votre système de jeu (D&D, Nimble, créations maison...) et définir les modèles de fiches de personnages associés. Les règles indexées peuvent être injectées dans le contexte de l'IA pour des réponses fidèles à votre système.
+Store the rules of your game system (D&D, Nimble, homebrew...) and define the matching character sheet templates. Indexed rules can be injected into the AI's context for answers that stay true to your system.
 
 ### Campaign
 
-Structurer vos campagnes en Arcs → Chapitres → Scènes avec séparation claire du contenu MJ et du contenu joueurs. Gérer les PJ et PNJ via des fiches dynamiques basées sur les templates du game system retenu.
+Structure your campaigns as Arcs → Chapters → Scenes, with a clear split between GM-only and player-facing content. Manage PCs and NPCs through dynamic sheets based on your chosen game system's templates.
 
-### Assistant IA
+### AI Assistant
 
-Un assistant contextuel qui pioche dans votre Lore, vos règles et vos campagnes pour répondre à vos questions, suggérer du contenu cohérent, ou rebondir sur une situation improvisée en table.
+A context-aware assistant that pulls from your Lore, rules and campaigns to answer your questions, suggest consistent content, or improvise around an unexpected situation at the table.
 
-L'IA s'exécute **en local via [Ollama](https://ollama.com/)** ou via **[1min.ai](https://1min.ai/)**. D'autres moteurs seront supportés à l'avenir.
+The AI runs **locally via [Ollama](https://ollama.com/)** or via **[1min.ai](https://1min.ai/)**. More engines will be supported in the future.
 
 ## Documentation
 
-Toute la documentation (installation, configuration, prise en main) est sur **[loremind-docs.igmlcreation.fr](https://loremind-docs.igmlcreation.fr/)**.
+The full documentation (installation, configuration, getting started) lives at **[loremind-docs.igmlcreation.fr/en](https://loremind-docs.igmlcreation.fr/en/)**.
 
-## Démo en ligne
+## Live demo
 
-Une instance de démonstration est disponible sur **[loremind-demo.igmlcreation.fr](https://loremind-demo.igmlcreation.fr/)**.
+A demo instance is available at **[loremind-demo.igmlcreation.fr](https://loremind-demo.igmlcreation.fr/)**.
 
-Quelques limites à connaître :
-- 10 utilisateurs maximum simultanés (instances isolées)
-- Session limitée à 20 minutes avant réinitialisation
-- Partie IA non incluse dans la démo (nécessite Ollama ou 1min.ai côté serveur)
+A few limitations to be aware of:
+- 10 concurrent users maximum (isolated instances)
+- Sessions limited to 20 minutes before reset
+- The AI part is not included in the demo (requires Ollama or 1min.ai server-side)
 
-## Soutenir le projet
+## Support the project
 
-LoreMind est **et restera gratuit en auto-hébergement**. Le développement avance plus vite avec votre soutien :
+LoreMind is **and will remain free when self-hosted**. Development moves faster with your support:
 
-- **[Patreon](https://www.patreon.com/c/IGMLCreation)** — accès anticipé aux features, vote sur la roadmap, devlogs exclusifs
-- **[Discord](https://discord.gg/cPpFzCjEzQ)** — annonces, support, retours utilisateurs
+- **[Patreon](https://www.patreon.com/c/IGMLCreation)** — early access to features, roadmap voting, exclusive devlogs
+- **[Discord](https://discord.gg/cPpFzCjEzQ)** — announcements, support, user feedback
 
-## Licence
+## License
 
-LoreMind est distribué sous licence **[GNU AGPL v3](LICENSE)**.
+LoreMind is distributed under the **[GNU AGPL v3](LICENSE)** license.
 
-En pratique :
-- Vous pouvez l'utiliser gratuitement, l'héberger, la modifier, la redistribuer.
-- Si vous modifiez le code et que vous exposez l'application modifiée sur un réseau (même en SaaS privé), vous devez rendre vos modifications publiques sous la même licence.
-- Les univers (Lore) et campagnes que vous créez avec LoreMind **vous appartiennent entièrement** — la licence ne couvre que le code de l'application.
+In practice:
+- You can use it for free, host it, modify it, and redistribute it.
+- If you modify the code and expose the modified app over a network (even as a private SaaS), you must make your changes public under the same license.
+- The worlds (Lore) and campaigns you create with LoreMind **belong entirely to you** — the license only covers the application's code.

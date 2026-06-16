@@ -13,6 +13,8 @@ from __future__ import annotations
 import logging
 from typing import AsyncIterator
 
+from app.application.prompts import adapt_campaign as prompts
+from app.core.language import DEFAULT as _DEFAULT_LANG
 from app.domain.models import ChatMessage
 from app.domain.ports import LLMChatProvider, PdfExtractionError, PdfTextExtractor
 
@@ -20,27 +22,6 @@ logger = logging.getLogger(__name__)
 
 # Plus créatif que l'import (tâche de structuration) : ici on conseille/adapte.
 _TEMPERATURE = 0.7
-
-_SYSTEM_PREFIX = (
-    "Tu es un assistant pour Maître de Jeu de jeu de rôle. L'utilisateur a une "
-    "campagne EXISTANTE (décrite plus bas) et souhaite ADAPTER et INTÉGRER le "
-    "contenu d'un PDF (aventure, donjon, supplément) à CETTE campagne précise."
-)
-
-_SYSTEM_SUFFIX = (
-    "Produis des CONSEILS D'ADAPTATION concrets, actionnables et en FRANÇAIS, "
-    "en markdown structuré (titres ##, listes). Couvre notamment :\n"
-    "- **Où l'insérer** : à quel(s) arc(s)/chapitre(s) EXISTANT(s) rattacher ce "
-    "contenu, dans quel ordre, et — si l'arc est un hub — sous quelles conditions de déblocage.\n"
-    "- **Reskins / liens PNJ** : quels PNJ EXISTANTS de la campagne peuvent incarner "
-    "ou remplacer les personnages clés du PDF.\n"
-    "- **Adaptation à l'univers** : comment transposer lieux, factions, noms propres et "
-    "ton vers l'univers de l'utilisateur plutôt que le cadre d'origine du PDF.\n"
-    "- **Doublons / conflits** : ce qui recoupe l'existant et comment le réconcilier.\n"
-    "- **Ajustements de ton et de difficulté**.\n\n"
-    "Réfère-toi TOUJOURS aux éléments existants par leur NOM. Ne réécris PAS le PDF en "
-    "entier : donne des recommandations. Si une information manque, propose des options."
-)
 
 
 class AdaptCampaignUseCase:
@@ -64,6 +45,7 @@ class AdaptCampaignUseCase:
         pdf_bytes: bytes,
         brief: str,
         messages: list[ChatMessage],
+        language: str = _DEFAULT_LANG,
     ) -> AsyncIterator[str]:
         """Conversationnel : le PDF + la campagne sont le CONTEXTE (system prompt),
         `messages` est l'échange (demande initiale, puis feedbacks de l'utilisateur)."""
@@ -87,12 +69,12 @@ class AdaptCampaignUseCase:
         )
         # Concaténation (pas .format) : brief/PDF peuvent contenir des { } littéraux.
         system_prompt = (
-            f"{_SYSTEM_PREFIX}\n\n"
+            f"{prompts.SYSTEM_PREFIX}\n\n"
             "--- CAMPAGNE EXISTANTE DE L'UTILISATEUR ---\n"
             f"{brief.strip() or '(campagne encore vide)'}\n\n"
             "--- CONTENU DU PDF À ADAPTER ---\n"
             f"{pdf_text}{trunc_note}\n\n"
-            f"{_SYSTEM_SUFFIX}\n\n"
+            f"{prompts.system_suffix(language)}\n\n"
             "Tu es en CONVERSATION : à chaque message de l'utilisateur, ajuste, corrige "
             "ou propose des alternatives en gardant tout ce contexte à l'esprit."
         )

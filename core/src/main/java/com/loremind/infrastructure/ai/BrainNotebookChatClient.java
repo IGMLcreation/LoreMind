@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loremind.domain.campaigncontext.ports.NotebookChatStreamer;
 import com.loremind.domain.campaigncontext.ports.NotebookException;
+import com.loremind.infrastructure.web.config.UserLanguageHolder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
@@ -66,6 +67,7 @@ public class BrainNotebookChatClient implements NotebookChatStreamer {
 
         Flux<ServerSentEvent<String>> flux = webClient.post()
                 .uri(deep ? DEEP_PATH : PATH)
+                .header(UserLanguageHolder.HEADER, UserLanguageHolder.get())
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.TEXT_EVENT_STREAM)
                 .bodyValue(payload)

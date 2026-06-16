@@ -9,6 +9,7 @@ import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 import { ConfigService } from './app/services/config.service';
 import { LanguageService } from './app/services/language.service';
 import { sessionExpiredInterceptor } from './app/interceptors/session-expired.interceptor';
+import { languageInterceptor } from './app/interceptors/language.interceptor';
 
 // withPreloading(PreloadAllModules) : une fois l'app initiale rendue, Angular
 // telecharge en arriere-plan tous les chunks lazy-loades. Consequence : la
@@ -18,7 +19,7 @@ import { sessionExpiredInterceptor } from './app/interceptors/session-expired.in
 bootstrapApplication(AppComponent, {
   providers: [
     provideZoneChangeDetection(),provideRouter(routes, withPreloading(PreloadAllModules)),
-    provideHttpClient(withInterceptors([sessionExpiredInterceptor])),
+    provideHttpClient(withInterceptors([sessionExpiredInterceptor, languageInterceptor])),
     provideTranslateService({
       loader: provideTranslateHttpLoader({
         prefix: 'assets/i18n/',

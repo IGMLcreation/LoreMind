@@ -25,7 +25,9 @@ from app.application.import_status import (
 )
 from app.application.llm_json import load_json_object, looks_like_truncated_json
 from app.application.llm_retry import generate_with_retry
+from app.application.prompts import import_rules as prompts
 from app.application.streaming import with_heartbeat
+from app.core.language import DEFAULT as _DEFAULT_LANG, language_name
 
 # Repli anti-troncature : si la SORTIE d'un morceau est coupée (le modèle ne peut
 # pas tout réécrire en une réponse), on retraite ce morceau en 2 moitiés. Borné en
@@ -57,43 +59,6 @@ _SECTIONS_SCHEMA: dict = {
     "additionalProperties": {"type": "string"},
 }
 
-# Taxonomie canonique suggérée au modèle pour homogénéiser les titres entre
-# morceaux (sinon "Combat" / "Le combat" / "Règles de combat" se dispersent).
-# Le modèle reste libre d'en créer d'autres si rien ne correspond.
-_CANONICAL_SECTIONS = [
-    "Règles générales",
-    "Création de personnage",
-    "Caractéristiques et tests",
-    "Compétences",
-    "Combat",
-    "Magie et sorts",
-    "Équipement et objets",
-    "États et conditions",
-    "Repos et récupération",
-    "Progression et niveaux",
-    "Conseils au Maître de Jeu",
-]
-
-_MAP_SYSTEM = """Tu es un assistant qui réorganise un livre de règles de jeu de rôle.
-On te donne un EXTRAIT brut d'un PDF de règles (texte parfois mal coupé par la mise en page).
-
-Ta tâche : répartir le contenu de cet extrait dans des SECTIONS THÉMATIQUES.
-
-Format EXACT attendu — un objet JSON plat {{titre de section: contenu markdown}} :
-{{"Combat": "## Initiative\\n\\nChaque participant lance 1d20...", "Magie et sorts": "## Sorts\\n\\n..."}}
-
-Règles impératives :
-- Tu réponds UNIQUEMENT par cet objet JSON, sans texte avant ni après.
-- Les CLÉS sont des titres de section (texte court). Les VALEURS sont le contenu de la règle en markdown (chaîne de caractères, jamais un objet ou une liste).
-- INTERDIT : des clés génériques comme "title", "content", "sections", "thought" ou "notes" ; des objets imbriqués ; tout commentaire sur ta démarche ou ton raisonnement.
-- Utilise EN PRIORITÉ ces titres canoniques quand le contenu y correspond :
-{canonical}
-- Si un contenu ne rentre dans aucun, crée un titre clair et concis (en français).
-- Reproduis FIDÈLEMENT les règles : tu peux nettoyer la coupure des lignes, recoller les mots coupés
-  par un tiret en fin de ligne, retirer les en-têtes/pieds de page et numéros de page parasites.
-- N'INVENTE AUCUNE règle, ne résume pas abusivement : tu réorganises, tu ne réécris pas le fond.
-- Ignore les pages de garde, sommaires, crédits, pages vides (renvoie {{}} si l'extrait n'a aucune règle)."""
-
 # --- Mode SEGMENTATION (modèles locaux) --------------------------------------
 # Réécrire tout le texte en JSON impose une SORTIE ≈ taille de l'ENTRÉE : à
 # ~100 tokens/s en local, un livre = des dizaines de minutes et des troncatures
@@ -101,25 +66,6 @@ Règles impératives :
 # premiers mots exacts) — ~200 tokens quel que soit le morceau — et c'est NOUS
 # qui découpons le texte original. ~50× plus rapide, fidélité parfaite du
 # contenu (texte source intact), plus de troncature possible.
-
-_SEGMENT_SYSTEM = """Tu analyses un EXTRAIT brut d'un livre de règles de jeu de rôle.
-Ta tâche : repérer où COMMENCENT les sections thématiques. Tu ne réécris RIEN.
-
-Format EXACT attendu :
-{{"sections": [{{"titre": "Combat", "debut": "Le combat se déroule en tours de"}}, ...]}}
-
-Règles impératives :
-- "debut" = les 5 à 10 PREMIERS MOTS du passage où la section commence, COPIÉS À L'IDENTIQUE
-  depuis l'extrait (même orthographe, même ponctuation, même langue). JAMAIS un résumé.
-- La PREMIÈRE entrée commence aux tout premiers mots de l'extrait (même si le contenu
-  poursuit une section entamée avant cet extrait).
-- Les entrées suivent l'ordre du texte. Vise des sections LARGES (un thème), pas un titre
-  par paragraphe : un extrait contient typiquement 1 à 6 sections.
-- Titres : EN PRIORITÉ parmi :
-{canonical}
-  sinon un titre court et clair en français.
-- Pages de garde, sommaires, crédits : n'en fais pas des sections. Si l'extrait n'est que ça,
-  renvoie {{"sections": []}}."""
 
 # Schéma passé à Ollama (structured outputs) : un objet {"sections": [...]}.
 # Racine objet (pas tableau) car l'extraction côté Brain repère le premier {…}.
@@ -293,7 +239,7 @@ class ImportRulesUseCase:
         self._chunk_target_tokens = chunk_target_tokens
         self._segment_only = segment_only
 
-    async def execute(self, pdf_bytes: bytes) -> RulesImportResult:
+    async def execute(self, pdf_bytes: bytes, language: str = _DEFAULT_LANG) -> RulesImportResult:
         """Variante non-streamée : traite tout puis renvoie le résultat complet."""
         doc = self._extractor.extract(pdf_bytes)
         chunks = chunk_text(doc.full_text, self._chunk_target_tokens)
@@ -303,14 +249,14 @@ class ImportRulesUseCase:
         )
         merger = _SectionMerger()
         for i, chunk in enumerate(chunks):
-            merger.add(await self._map_chunk(chunk, index=i, total=len(chunks)))
+            merger.add(await self._map_chunk(chunk, index=i, total=len(chunks), language=language))
         return RulesImportResult(
             sections=merger.result(),
             page_count=doc.page_count,
             ocr_page_count=doc.ocr_page_count,
         )
 
-    async def stream(self, pdf_bytes: bytes):
+    async def stream(self, pdf_bytes: bytes, language: str = _DEFAULT_LANG):
         """Variante streamée : yield des évènements d'avancement au fil de l'eau.
 
         Évènements (dicts) : {"type": "extracting"}, puis
@@ -353,7 +299,7 @@ class ImportRulesUseCase:
                 try:
                     sections: dict[str, str] | None = None
                     async for kind, payload in with_heartbeat(
-                        self._map_chunk(chunk, index=i, total=total),
+                        self._map_chunk(chunk, index=i, total=total, language=language),
                         status_queue=status_queue,
                     ):
                         if kind == "heartbeat":
@@ -408,20 +354,24 @@ class ImportRulesUseCase:
 
     # --- MAP : un morceau → sections -----------------------------------------
 
-    async def _map_chunk(self, chunk: str, *, index: int, total: int) -> dict[str, str]:
-        return await self._extract_sections(chunk, index=index, total=total, depth=0)
+    async def _map_chunk(self, chunk: str, *, index: int, total: int,
+                         language: str = _DEFAULT_LANG) -> dict[str, str]:
+        return await self._extract_sections(
+            chunk, index=index, total=total, depth=0, language=language)
 
     async def _extract_sections(
-        self, text: str, *, index: int, total: int, depth: int
+        self, text: str, *, index: int, total: int, depth: int,
+        language: str = _DEFAULT_LANG,
     ) -> dict[str, str]:
         """Extrait les sections d'un texte. Si la SORTIE est tronquée, retraite le
         texte en DEUX moitiés (chacune produit une réponse complète) et fusionne —
         ainsi aucune section n'est perdue, quel que soit le plafond de sortie."""
-        system = _SEGMENT_SYSTEM if self._segment_only else _MAP_SYSTEM
+        system = prompts.SEGMENT_SYSTEM if self._segment_only else prompts.MAP_SYSTEM
         schema = _ANCHORS_SCHEMA if self._segment_only else _SECTIONS_SCHEMA
         prompt = (
             system.format(
-                canonical="\n".join(f"  - {s}" for s in _CANONICAL_SECTIONS)
+                canonical="\n".join(f"  - {s}" for s in prompts.CANONICAL_SECTIONS),
+                language_name=language_name(language),
             )
             + f"\n\n--- EXTRAIT {index + 1}/{total} ---\n{text}\n\n"
             "Renvoie maintenant le JSON des sections."
@@ -444,8 +394,8 @@ class ImportRulesUseCase:
             notify_status(
                 f"Le modèle est trop lent sur le morceau {index + 1} : "
                 "re-découpage en 2 moitiés plus digestes…")
-            a = await self._extract_sections(left, index=index, total=total, depth=depth + 1)
-            b = await self._extract_sections(right, index=index, total=total, depth=depth + 1)
+            a = await self._extract_sections(left, index=index, total=total, depth=depth + 1, language=language)
+            b = await self._extract_sections(right, index=index, total=total, depth=depth + 1, language=language)
             return _combine_sections(a, b)
         if self._segment_only:
             sections, truncated = self._parse_anchors(raw, text, index=index)
@@ -461,8 +411,8 @@ class ImportRulesUseCase:
                 notify_status(
                     f"Réponse du modèle coupée sur le morceau {index + 1} : "
                     "re-découpage en 2 moitiés plus digestes…")
-                a = await self._extract_sections(left, index=index, total=total, depth=depth + 1)
-                b = await self._extract_sections(right, index=index, total=total, depth=depth + 1)
+                a = await self._extract_sections(left, index=index, total=total, depth=depth + 1, language=language)
+                b = await self._extract_sections(right, index=index, total=total, depth=depth + 1, language=language)
                 return _combine_sections(a, b)
         if truncated:
             logger.warning(

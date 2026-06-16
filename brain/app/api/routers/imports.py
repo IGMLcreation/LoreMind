@@ -16,6 +16,7 @@ from app.api.deps import (
 from app.application.adapt_campaign import AdaptCampaignUseCase
 from app.application.import_campaign import ImportCampaignUseCase
 from app.application.import_rules import ImportRulesUseCase
+from app.core.language import get_user_language
 from app.domain.models import ChatMessage
 from app.domain.ports import LLMProviderError, PdfExtractionError
 
@@ -40,6 +41,7 @@ class RulesImportResponseDTO(BaseModel):
 @router.post("/import/rules", response_model=RulesImportResponseDTO)
 async def import_rules(
     use_case: Annotated[ImportRulesUseCase, Depends(get_import_rules_use_case)],
+    language: Annotated[str, Depends(get_user_language)],
     file: UploadFile = File(...),
 ) -> RulesImportResponseDTO:
     """Import d'un PDF de règles → sections markdown structurées (proposition).
@@ -58,7 +60,7 @@ async def import_rules(
         )
 
     try:
-        result = await use_case.execute(content)
+        result = await use_case.execute(content, language=language)
     except PdfExtractionError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except LLMProviderError as exc:
@@ -74,6 +76,7 @@ async def import_rules(
 @router.post("/import/rules/stream")
 async def import_rules_stream(
     use_case: Annotated[ImportRulesUseCase, Depends(get_import_rules_use_case)],
+    language: Annotated[str, Depends(get_user_language)],
     file: UploadFile = File(...),
 ) -> StreamingResponse:
     """Import streamé : émet l'avancement (SSE) puis le résultat final.
@@ -93,7 +96,7 @@ async def import_rules_stream(
             yield sse_event("error", {"message": upload_error})
             return
         try:
-            async for ev in use_case.stream(content):
+            async for ev in use_case.stream(content, language=language):
                 event_type = ev.pop("type")
                 yield sse_event(event_type, ev)
         except PdfExtractionError as exc:
@@ -146,6 +149,7 @@ async def import_campaign_stream(
 @router.post("/adapt/campaign/stream")
 async def adapt_campaign_stream(
     use_case: Annotated[AdaptCampaignUseCase, Depends(get_adapt_campaign_use_case)],
+    language: Annotated[str, Depends(get_user_language)],
     file: UploadFile = File(...),
     brief: str = Form(""),
     messages: str = Form("[]"),
@@ -173,7 +177,7 @@ async def adapt_campaign_stream(
             yield sse_event("error", {"message": upload_error})
             return
         try:
-            async for token in use_case.stream(content, brief, convo):
+            async for token in use_case.stream(content, brief, convo, language=language):
                 yield sse_event("token", {"token": token})
             yield sse_event("done", {})
         except PdfExtractionError as exc:

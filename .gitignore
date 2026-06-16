@@ -109,3 +109,10 @@ docker-compose.override.yml
 relay/
 scripts/bump-version.mjs
 brain/data/notebooks/5.json
+
+# ============================================================================
+# Documentation reservee aux patrons (repo Gitea PRIVE separe, clone
+# localement). NE DOIT JAMAIS partir dans le repo LoreMind public.
+# Contient le site premium (sources) + son Worker de gate dans gate/.
+# ============================================================================
+docusaurus/loremind-patreon/

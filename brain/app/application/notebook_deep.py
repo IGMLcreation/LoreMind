@@ -20,7 +20,9 @@ from typing import AsyncIterator
 import tiktoken
 
 from app.application.llm_retry import generate_with_retry
+from app.application.prompts import notebook as prompts
 from app.application.query_rewrite import standalone_question
+from app.core.language import DEFAULT as _DEFAULT_LANG, language_name
 from app.domain.models import ChatMessage
 from app.domain.ports import LLMChatProvider, LLMProvider, LLMProviderError
 from app.infrastructure import vector_store
@@ -36,53 +38,12 @@ _MAP_TEMPERATURE = 0.2
 # à la question par embedding, et seuls les lots plausiblement pertinents sont
 # relus. Sélection volontairement CONSERVATRICE (on préfère relire un lot de
 # trop que rater une mention) ; désactivable via deep_summary_filter=False.
-_SUMMARY_PROMPT = """Résume l'EXTRAIT ci-dessous en 4 à 8 puces factuelles : lieux, PNJ et
-créatures nommés, objets notables, évènements, règles particulières. Pas d'analyse, pas
-d'introduction — uniquement les puces, pour servir d'index de recherche.
-
---- EXTRAIT ---
-{excerpt}
---- FIN EXTRAIT ---
-
-Résumé :"""
 
 # Un lot est gardé si son score est proche du meilleur (marge) OU bon dans
 # l'absolu ; et on garde toujours au moins _MIN_KEPT lots.
 _SELECT_MARGIN = 0.10
 _SELECT_FLOOR = 0.5
 _MIN_KEPT = 3
-
-_MAP_PROMPT = """Voici un EXTRAIT d'un document. Extrais UNIQUEMENT les informations
-pertinentes pour répondre à la question ci-dessous. Conserve les détails utiles et
-indique les numéros de page (format « p. X »). Si l'extrait ne contient RIEN de
-pertinent, réponds EXACTEMENT « {no_match} » et rien d'autre.
-
-QUESTION : {question}
-
---- EXTRAIT ---
-{excerpt}
---- FIN EXTRAIT ---
-
-Informations pertinentes (ou « {no_match} ») :"""
-
-_REDUCE_SYSTEM = """Tu es l'assistant-MJ d'un jeu de rôle. Tu réponds à la demande du MJ en
-t'appuyant sur TROIS sources : (1) des NOTES extraites de l'ENSEMBLE du document source (vue
-complète — mais POSSIBLEMENT VIDE si rien d'utile n'y figure), (2) le contexte de sa CAMPAGNE,
-(3) la conversation ci-dessous.
-
-- Si les notes contiennent des éléments utiles : exploite-les et CITE les pages (« p. X »).
-- Si les notes sont VIDES ou pauvres (cas fréquent d'une demande CRÉATIVE portant sur des
-  éléments INVENTÉS par le MJ) : ne te bloque surtout PAS. Aide-le quand même en t'appuyant
-  sur sa CAMPAGNE, la CONVERSATION et ta connaissance du genre — propose des adaptations
-  concrètes (arcs, chapitres, scènes, PNJ), structurées et jouables.
-- Sois concret et utile. N'affirme rien de FAUX sur le contenu du document.
-
-{context_block}
---- NOTES EXTRAITES DE TOUT LE DOCUMENT ---
-{notes_block}
---- FIN DES NOTES ---
-
-Réponds en français."""
 
 
 class NotebookDeepUseCase:
@@ -109,6 +70,7 @@ class NotebookDeepUseCase:
         messages: list[ChatMessage],
         context: str = "",
         history_limit: int = 8,
+        language: str = _DEFAULT_LANG,
     ) -> AsyncIterator[dict]:
         """Yield des évènements : {type:'progress',current,total}, {type:'token',token},
         {type:'done'}. (Les erreurs LLM des lots sont tolérées : lot ignoré.)
@@ -175,7 +137,9 @@ class NotebookDeepUseCase:
             f"--- TA CAMPAGNE (structure, PNJ, univers) ---\n{context.strip()}\n--- FIN CAMPAGNE ---\n\n"
             if context.strip() else ""
         )
-        system_prompt = _REDUCE_SYSTEM.format(context_block=context_block, notes_block=notes_block)
+        system_prompt = prompts.REDUCE_SYSTEM.format(
+            context_block=context_block, notes_block=notes_block,
+            language_name=language_name(language))
         # Historique récent pour la cohérence des relances ; on garantit que le
         # dernier message est bien la question courante.
         reduce_messages = messages[-history_limit:] if messages else [ChatMessage(role="user", content=question)]
@@ -251,7 +215,7 @@ class NotebookDeepUseCase:
     async def _summarize_batch(self, batch: list[dict]) -> str:
         excerpt = "\n\n".join(c.get("text", "").strip() for c in batch)
         raw = await generate_with_retry(
-            self._llm, _SUMMARY_PROMPT.format(excerpt=excerpt), temperature=_MAP_TEMPERATURE)
+            self._llm, prompts.SUMMARY_PROMPT.format(excerpt=excerpt), temperature=_MAP_TEMPERATURE)
         return (raw or "").strip()
 
     async def _map_batch(self, question: str, batch: list[dict]) -> str:
@@ -260,7 +224,7 @@ class NotebookDeepUseCase:
             f"(p. {c['page']}) {c['text'].strip()}" if c.get("page") else c["text"].strip()
             for c in batch
         )
-        prompt = _MAP_PROMPT.format(no_match=_NO_MATCH, question=question, excerpt=excerpt)
+        prompt = prompts.MAP_PROMPT.format(no_match=_NO_MATCH, question=question, excerpt=excerpt)
         raw = await generate_with_retry(self._llm, prompt, temperature=_MAP_TEMPERATURE)
         answer = raw.strip()
         if answer and answer.upper().rstrip(".") != _NO_MATCH:

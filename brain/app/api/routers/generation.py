@@ -6,7 +6,9 @@ from pydantic import BaseModel, Field
 
 from app.api.deps import get_generate_page_use_case, get_llm_provider
 from app.application.generate_page import GeneratePageUseCase
+from app.application.prompts import conversation_title as title_prompts
 from app.core.config import Settings, get_settings
+from app.core.language import get_user_language
 from app.domain.models import PageGenerationContext
 from app.domain.ports import LLMProvider, LLMProviderError
 
@@ -60,6 +62,7 @@ async def generate_page(
     use_case: Annotated[
         GeneratePageUseCase, Depends(get_generate_page_use_case)
     ],
+    language: Annotated[str, Depends(get_user_language)],
 ) -> GeneratePageResponseDTO:
     """Endpoint métier : contexte LoreMind → valeurs structurées par champ.
 
@@ -76,7 +79,7 @@ async def generate_page(
     )
 
     try:
-        result = await use_case.execute(context)
+        result = await use_case.execute(context, language=language)
     except LLMProviderError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
@@ -101,18 +104,11 @@ class SummarizeTitleResponseDTO(BaseModel):
     title: str
 
 
-_TITLE_SYSTEM_PROMPT = (
-    "Tu generes un titre court (4 a 7 mots max) qui resume le sujet de la "
-    "conversation ci-dessous. Reponds UNIQUEMENT par le titre, sans guillemets, "
-    "sans ponctuation finale, sans prefixe type 'Titre :'. Le titre doit etre "
-    "en francais et capturer le sujet metier (pas 'Conversation IA')."
-)
-
-
 @router.post("/summarize/conversation-title", response_model=SummarizeTitleResponseDTO)
 async def summarize_conversation_title(
     body: SummarizeTitleRequestDTO,
     llm: Annotated[LLMProvider, Depends(get_llm_provider)],
+    language: Annotated[str, Depends(get_user_language)],
 ) -> SummarizeTitleResponseDTO:
     """Genere un titre court a partir des premiers echanges de la conversation.
 
@@ -123,7 +119,7 @@ async def summarize_conversation_title(
         raise HTTPException(status_code=422, detail="Au moins un message requis")
 
     transcript = "\n".join(f"{m.role.upper()}: {m.content}" for m in body.messages[:6])
-    prompt = f"{_TITLE_SYSTEM_PROMPT}\n\nConversation :\n{transcript}\n\nTitre :"
+    prompt = f"{title_prompts.title_system_prompt(language)}\n\nConversation :\n{transcript}\n\nTitre :"
     try:
         raw = await llm.generate(prompt)
     except LLMProviderError as exc:
@@ -133,5 +129,5 @@ async def summarize_conversation_title(
     if len(title) > 80:
         title = title[:80].rstrip()
     if not title:
-        title = "Nouvelle conversation"
+        title = title_prompts.TITLE_FALLBACK.get(language, title_prompts.TITLE_FALLBACK["fr"])
     return SummarizeTitleResponseDTO(title=title)

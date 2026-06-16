@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { GameSystem, GameSystemCreate, RulesImportResponse, RulesImportStreamEvent } from './game-system.model';
+import { LanguageService } from './language.service';
 
 /**
  * Service HTTP pour les GameSystems (systèmes de JDR).
@@ -11,7 +12,7 @@ import { GameSystem, GameSystemCreate, RulesImportResponse, RulesImportStreamEve
 export class GameSystemService {
   private apiUrl = '/api/game-systems';
 
-  constructor(private http: HttpClient, private translate: TranslateService) {}
+  constructor(private http: HttpClient, private translate: TranslateService, private language: LanguageService) {}
 
   getAll(): Observable<GameSystem[]> {
     return this.http.get<GameSystem[]>(this.apiUrl);
@@ -63,7 +64,7 @@ export class GameSystemService {
 
       fetch(`${this.apiUrl}/import-rules/stream`, {
         method: 'POST',
-        headers: { 'Accept': 'text/event-stream' },
+        headers: { 'Accept': 'text/event-stream', 'X-User-Language': this.language.current },
         body: form,
         signal: controller.signal
       })

@@ -10,6 +10,9 @@ import java.util.List;
  */
 public interface ConversationTitleGenerator {
 
-    /** Renvoie un titre en francais (4-7 mots max). Jamais null ni vide. */
+    /**
+     * Renvoie un titre court (4-7 mots max), dans la langue de l'utilisateur
+     * (relayee au Brain via l'entete X-User-Language). Jamais null ni vide.
+     */
     String generate(List<ConversationMessage> firstMessages);
 }

@@ -1,5 +1,6 @@
 package com.loremind.infrastructure.ai;
 
+import com.loremind.infrastructure.web.config.UserLanguageHolder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.boot.web.reactive.function.client.WebClientCustomizer;
@@ -17,6 +18,12 @@ import java.time.Duration;
  * <p>
  * Sans cette entete, le Brain refuse la requete (401) — defense contre
  * l'acces direct au Brain depuis un attaquant qui atteindrait son port.
+ * <p>
+ * Relaie aussi l'entete X-User-Language (langue choisie dans l'UI, capturee par
+ * {@link com.loremind.infrastructure.web.config.UserLanguageFilter}) pour que le
+ * Brain redige ses reponses IA dans la langue de l'utilisateur. Lu depuis le
+ * ThreadLocal au moment de l'execution de la requete (thread servlet) — d'ou
+ * l'usage d'un interceptor (et non d'un defaultHeader fige au demarrage).
  */
 @Configuration
 public class RestTemplateConfig {
@@ -36,6 +43,7 @@ public class RestTemplateConfig {
                     if (internalSecret != null && !internalSecret.isBlank()) {
                         request.getHeaders().set(INTERNAL_SECRET_HEADER, internalSecret);
                     }
+                    request.getHeaders().set(UserLanguageHolder.HEADER, UserLanguageHolder.get());
                     return execution.execute(request, body);
                 })
                 .build();
@@ -59,6 +67,7 @@ public class RestTemplateConfig {
                     if (internalSecret != null && !internalSecret.isBlank()) {
                         request.getHeaders().set(INTERNAL_SECRET_HEADER, internalSecret);
                     }
+                    request.getHeaders().set(UserLanguageHolder.HEADER, UserLanguageHolder.get());
                     return execution.execute(request, body);
                 })
                 .build();

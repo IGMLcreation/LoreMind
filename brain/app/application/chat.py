@@ -31,6 +31,8 @@ from app.domain.models import (
     QuestSummary,
     SessionContext,
 )
+from app.application.prompts import chat as prompts
+from app.core.language import DEFAULT as _DEFAULT_LANG
 from app.domain.ports import LLMChatProvider
 
 
@@ -38,21 +40,6 @@ from app.domain.ports import LLMChatProvider
 # Plus élevée que le one-shot (0.4) car on veut de la variété d'idées,
 # mais sans partir en délire halluciné (1.0+).
 _DEFAULT_TEMPERATURE = 0.7
-
-
-_BASE_SYSTEM = """Tu es un assistant d'écriture pour un Maître de Jeu de JDR.
-Tu dialogues avec le MJ pour l'aider à enrichir son univers et ses campagnes.
-
-Règles de ton :
-- Réponds en français, ton chaleureux et créatif.
-- Sois concis : listes à puces courtes plutôt que longs paragraphes.
-- Propose des idées qui s'intègrent dans le contexte existant ci-dessous.
-
-Règles de cohérence (IMPORTANT) :
-- Tu PEUX et DOIS inventer des éléments originaux (personnages, lieux, objets, intrigues, créatures, scènes) — c'est ton rôle d'assistant créatif.
-- Tu ne peux PAS faire référence à un élément du MJ (du Lore, des arcs, chapitres ou scènes) comme s'il existait déjà, SAUF s'il apparaît EXACTEMENT (même orthographe) dans l'une des sections de contexte ci-dessous.
-- Si l'utilisateur mentionne un nom que tu ne vois pas dans le contexte, ne fais surtout pas semblant de le connaître : dis clairement "Je ne vois pas [nom] dans le contexte actuel, veux-tu qu'on le crée ?" plutôt que d'inventer des détails à son sujet.
-- Évite les précisions inventées qu'on ne peut pas vérifier : dates exactes, chiffres de population, hiérarchies politiques complexes, généalogies détaillées. Préfère des formulations ouvertes que le MJ validera ("il y a longtemps", "de nombreux", "la haute noblesse")."""
 
 
 class ChatUseCase:
@@ -71,16 +58,18 @@ class ChatUseCase:
         narrative_entity: NarrativeEntityContext | None = None,
         game_system_context: GameSystemContext | None = None,
         session_context: SessionContext | None = None,
+        language: str = _DEFAULT_LANG,
     ) -> AsyncIterator[str]:
         """Streame les tokens de la réponse assistant pour le dernier message user.
 
         Les contextes sont tous optionnels, mais au moins l'un des deux
         "niveaux haut" (lore_context ou campaign_context) doit être fourni
         pour que le prompt ait du sens. Le controller (main.py) applique
-        cette règle à la frontière HTTP.
+        cette règle à la frontière HTTP. `language` pilote la langue de réponse.
         """
         system_prompt = self._build_system_prompt(
-            lore_context, page_context, campaign_context, narrative_entity, game_system_context, session_context
+            lore_context, page_context, campaign_context, narrative_entity,
+            game_system_context, session_context, language,
         )
         async for token in self._llm.stream_chat(
             messages,
@@ -97,12 +86,14 @@ class ChatUseCase:
         narrative_entity: NarrativeEntityContext | None = None,
         game_system_context: GameSystemContext | None = None,
         session_context: SessionContext | None = None,
+        language: str = _DEFAULT_LANG,
     ) -> str:
         """Version publique — utilisée par le controller HTTP pour compter
         les tokens du system prompt avant de streamer (jauge de contexte).
         """
         return self._build_system_prompt(
-            lore_context, page_context, campaign_context, narrative_entity, game_system_context, session_context
+            lore_context, page_context, campaign_context, narrative_entity,
+            game_system_context, session_context, language,
         )
 
     # --- Construction du system prompt --------------------------------------
@@ -115,8 +106,9 @@ class ChatUseCase:
         narrative: NarrativeEntityContext | None,
         game_system: GameSystemContext | None = None,
         session: SessionContext | None = None,
+        language: str = _DEFAULT_LANG,
     ) -> str:
-        sections = [_BASE_SYSTEM]
+        sections = [prompts.base_system(language)]
         if lore is not None:
             sections.append(self._format_lore(lore))
         if campaign is not None:

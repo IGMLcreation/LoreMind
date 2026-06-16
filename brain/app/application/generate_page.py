@@ -8,29 +8,18 @@ permet de tester ce use case avec un FakeLLMProvider, sans Ollama qui tourne.
 """
 import json
 
+from app.application.prompts import generate_page as prompts
 from app.domain.models import PageGenerationContext, PageGenerationResult
 from app.domain.ports import LLMProvider, LLMProviderError
+
+# Langue de repli quand le router n'en fournit pas (appel direct / vieux client).
+from app.core.language import DEFAULT as _DEFAULT_LANG
 
 
 # Température basse : remplissage de champs = tâche factuelle, peu créative.
 # Une valeur trop haute (par défaut Ollama = 0.8) encourage l'IA à broder
 # et à inventer des références à des PNJ/lieux/événements inexistants.
 _DEFAULT_TEMPERATURE = 0.4
-
-
-_SYSTEM_INSTRUCTIONS = """Tu es un assistant d'écriture pour un Maître de Jeu de JDR.
-Tu vas générer le contenu d'une page appartenant à un univers fictionnel.
-
-Règles impératives de ta réponse :
-- Tu réponds UNIQUEMENT par un objet JSON valide.
-- Les clés du JSON correspondent EXACTEMENT aux noms de champs demandés.
-- Les valeurs sont des chaînes de texte en français, riches et évocatrices.
-- Aucun markdown, aucune explication, aucun commentaire autour du JSON.
-
-Règles de cohérence (IMPORTANT) :
-- Tu PEUX inventer des détails originaux pour CETTE page : apparence, traits de caractère, anecdotes, histoire personnelle.
-- Tu ne dois PAS faire référence à d'autres personnages, lieux, organisations ou événements comme s'ils existaient déjà dans l'univers, sauf si le contexte ci-dessous les mentionne explicitement.
-- Si un champ appelle une précision externe (date, nom d'un roi, ville voisine, guerre passée), reste volontairement vague : "il y a de nombreuses années", "un bourg voisin", "une époque troublée". Le MJ préfère combler lui-même les blancs plutôt que trouver des faits inventés contradictoires avec son univers."""
 
 
 class GeneratePageUseCase:
@@ -42,8 +31,9 @@ class GeneratePageUseCase:
     async def execute(
         self,
         context: PageGenerationContext,
+        language: str = _DEFAULT_LANG,
     ) -> PageGenerationResult:
-        prompt = self._build_prompt(context)
+        prompt = self._build_prompt(context, language)
         raw = await self._llm.generate(
             prompt,
             output_format="json",
@@ -53,7 +43,7 @@ class GeneratePageUseCase:
         return PageGenerationResult(values=values)
 
     @staticmethod
-    def _build_prompt(context: PageGenerationContext) -> str:
+    def _build_prompt(context: PageGenerationContext, language: str = _DEFAULT_LANG) -> str:
         fields_block = "\n".join(f'- "{field}"' for field in context.template_fields)
         lore_desc_line = (
             f"\nDescription de l'univers : {context.lore_description}"
@@ -62,7 +52,7 @@ class GeneratePageUseCase:
         )
 
         return (
-            f"{_SYSTEM_INSTRUCTIONS}\n\n"
+            f"{prompts.system_instructions(language)}\n\n"
             f"Univers : {context.lore_name}"
             f"{lore_desc_line}\n"
             f"Catégorie (dossier) : {context.folder_name}\n"

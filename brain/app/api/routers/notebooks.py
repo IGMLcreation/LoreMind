@@ -17,6 +17,7 @@ from app.application.notebook_chat import NotebookChatUseCase
 from app.application.notebook_deep import NotebookDeepUseCase
 from app.application.notebook_rag import NotebookRagUseCase
 from app.core.config import Settings, get_settings
+from app.core.language import get_user_language
 from app.domain.models import ChatMessage
 from app.domain.ports import LLMProviderError, PdfExtractionError
 from app.infrastructure import vector_store
@@ -77,6 +78,7 @@ async def chat_notebook_stream(
     body: NotebookChatRequestDTO,
     use_case: Annotated[NotebookChatUseCase, Depends(get_notebook_chat_use_case)],
     settings: Annotated[Settings, Depends(get_settings)],
+    language: Annotated[str, Depends(get_user_language)],
 ) -> StreamingResponse:
     """Chat ANCRÉ sur les sources (RAG) : récupère les passages pertinents puis
     streame la réponse. Évènements SSE : `token` {token}, `done` {}, `error` {message}."""
@@ -85,7 +87,7 @@ async def chat_notebook_stream(
 
     async def event_stream() -> AsyncIterator[str]:
         try:
-            async for ev in use_case.stream(body.source_ids, messages, context=body.context, top_k=top_k):
+            async for ev in use_case.stream(body.source_ids, messages, context=body.context, top_k=top_k, language=language):
                 if ev["type"] == "token":
                     if ev.get("token"):
                         yield sse_event("token", {"token": ev["token"]})
@@ -107,6 +109,7 @@ async def chat_notebook_stream(
 async def chat_notebook_deep_stream(
     body: NotebookChatRequestDTO,
     use_case: Annotated[NotebookDeepUseCase, Depends(get_notebook_deep_use_case)],
+    language: Annotated[str, Depends(get_user_language)],
 ) -> StreamingResponse:
     """Analyse APPROFONDIE (map-reduce sur tout le document). Évènements SSE :
     `progress` {current,total} pendant la lecture, puis `token` {token}, puis `done`."""
@@ -118,7 +121,7 @@ async def chat_notebook_deep_stream(
             yield sse_event("error", {"message": "Question vide."})
             return
         try:
-            async for ev in use_case.stream(body.source_ids, messages, context=body.context):
+            async for ev in use_case.stream(body.source_ids, messages, context=body.context, language=language):
                 ev_type = ev.pop("type")
                 yield sse_event(ev_type, ev)
         except (LLMProviderError, EmbeddingError) as exc:
