@@ -22,6 +22,14 @@ name: Desktop installers
 on:
   push:
     tags: ['v*']
+  # Declenchement MANUEL depuis l'onglet Actions ("Run workflow"). Utile quand un
+  # tag a ete pousse AVANT que le workflow existe sur GitHub (ne se redeclenche
+  # pas tout seul), ou pour rejouer un build. Saisir la version SANS le "v".
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version a builder (doit correspondre a un tag existant, ex: 0.15.0 ou 0.15.0-beta)"
+        required: true
 
 permissions:
   contents: write   # requis pour creer la Release et y attacher le .msi
@@ -30,7 +38,12 @@ jobs:
   windows:
     runs-on: windows-latest
     steps:
+      # En declenchement manuel, on checkout le TAG correspondant a la version
+      # saisie (sinon checkout prendrait la branche par defaut). En push de tag,
+      # on prend la ref poussee.
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version) || github.ref }}
 
       # Apporte jpackage (lanceur d'empaquetage natif) dans le PATH.
       - name: Set up JDK 21
@@ -57,24 +70,37 @@ jobs:
         shell: pwsh
         run: choco install wixtoolset -y --no-progress
 
-      # Version de l'installeur = version du tag (numerique, sans suffixe -beta).
-      - name: Derive version from tag
+      # Version de l'installeur = version du tag (push) OU de l'input (manuel).
+      # Sorties : version (numerique X.Y.Z pour le MSI), tag (vX.Y.Z[-beta]),
+      # isbeta (true/false) — independant du nom de ref (qui est une branche en manuel).
+      - name: Derive version
         id: ver
         shell: pwsh
         run: |
-          $full = "${{ github.ref_name }}" -replace '^v',''   # ex: 0.15.0-beta.1
-          $num  = ($full -split '-')[0]                        # ex: 0.15.0
-          "version=$num" >> $env:GITHUB_OUTPUT
+          if ('${{ github.event_name }}' -eq 'workflow_dispatch') {
+            $raw = '${{ inputs.version }}'
+          } else {
+            $raw = '${{ github.ref_name }}'
+          }
+          $raw = $raw -replace '^v',''            # 0.15.0  ou  0.15.0-beta
+          $num = ($raw -split '-')[0]             # 0.15.0
+          $isbeta = if ($raw -like '*-beta*') { 'true' } else { 'false' }
+          "version=$num"   >> $env:GITHUB_OUTPUT
+          "tag=v$raw"      >> $env:GITHUB_OUTPUT
+          "isbeta=$isbeta" >> $env:GITHUB_OUTPUT
 
       - name: Build Windows installer
         shell: pwsh
         run: .\installers\desktop\build-windows.ps1 -Version ${{ steps.ver.outputs.version }}
 
       # STABLE uniquement : Release GitHub publique avec le .msi.
+      # tag_name explicite : en declenchement manuel, github.ref est une branche,
+      # donc on cible le tag derive (la release est attachee au bon tag).
       - name: Publish installer to GitHub Release (stable)
-        if: ${{ !contains(github.ref_name, '-beta') }}
+        if: ${{ steps.ver.outputs.isbeta == 'false' }}
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.ver.outputs.tag }}
           files: core/target/dist-out/*.msi
           fail_on_unmatched_files: true
           generate_release_notes: true
@@ -82,7 +108,7 @@ jobs:
       # BETA uniquement : artefact PRIVE (pas de release publique). A recuperer
       # via l'onglet Actions puis a joindre a un post Patreon gate par palier.
       - name: Upload installer as private artifact (beta)
-        if: ${{ contains(github.ref_name, '-beta') }}
+        if: ${{ steps.ver.outputs.isbeta == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: loremind-beta-${{ steps.ver.outputs.version }}-msi
