@@ -1,0 +1,94 @@
+name: Desktop installers
+
+# Produit les installeurs de BUREAU (.msi Windows pour l'instant) et les publie
+# en tant qu'assets d'une GitHub Release, sur tag `v*`.
+#
+# Complementaire au pipeline Gitea Actions (.gitea/workflows/release.yml) qui,
+# lui, build et pousse les IMAGES Docker. Ici on est sur GitHub car jpackage et
+# PyInstaller ne savent PAS cross-compiler : le .msi DOIT etre construit sur un
+# runner Windows, et GitHub en fournit gratuitement (windows-latest).
+#
+# Prerequis : le depot Gitea doit etre mirrore vers GitHub (push mirror, tags
+# inclus) pour que le tag declenche ce workflow.
+#
+# Tag stable  vX.Y.Z       -> GitHub Release PUBLIQUE avec le .msi attache.
+# Tag beta    vX.Y.Z-beta* -> AUCUNE publication publique. Le .msi est depose en
+#                             ARTEFACT PRIVE du run (telechargeable seulement par
+#                             toi via l'onglet Actions) ; tu le joins ensuite a un
+#                             post Patreon reserve a un palier. Patreon = la
+#                             barriere d'acces (equivalent du registry prive +
+#                             relais pour les images Docker beta).
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write   # requis pour creer la Release et y attacher le .msi
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Apporte jpackage (lanceur d'empaquetage natif) dans le PATH.
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Python 3.12 = meme version que l'image Docker du Brain (coherence runtime).
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # jpackage genere le MSI via WiX Toolset v3 (candle.exe/light.exe). WiX 4+
+      # ne convient pas (outils renommes). Le paquet choco `wixtoolset` est la
+      # ligne 3.x et s'ajoute au PATH.
+      - name: Install WiX Toolset 3
+        shell: pwsh
+        run: choco install wixtoolset -y --no-progress
+
+      # Version de l'installeur = version du tag (numerique, sans suffixe -beta).
+      - name: Derive version from tag
+        id: ver
+        shell: pwsh
+        run: |
+          $full = "${{ github.ref_name }}" -replace '^v',''   # ex: 0.15.0-beta.1
+          $num  = ($full -split '-')[0]                        # ex: 0.15.0
+          "version=$num" >> $env:GITHUB_OUTPUT
+
+      - name: Build Windows installer
+        shell: pwsh
+        run: .\installers\desktop\build-windows.ps1 -Version ${{ steps.ver.outputs.version }}
+
+      # STABLE uniquement : Release GitHub publique avec le .msi.
+      - name: Publish installer to GitHub Release (stable)
+        if: ${{ !contains(github.ref_name, '-beta') }}
+        uses: softprops/action-gh-release@v2
+        with:
+          files: core/target/dist-out/*.msi
+          fail_on_unmatched_files: true
+          generate_release_notes: true
+
+      # BETA uniquement : artefact PRIVE (pas de release publique). A recuperer
+      # via l'onglet Actions puis a joindre a un post Patreon gate par palier.
+      - name: Upload installer as private artifact (beta)
+        if: ${{ contains(github.ref_name, '-beta') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: loremind-beta-${{ steps.ver.outputs.version }}-msi
+          path: core/target/dist-out/*.msi
+          retention-days: 90
+
+  # TODO (plus tard) : job `linux` sur ubuntu-latest produisant un AppImage
+  # (jpackage --type app-image + appimagetool) + PyInstaller Linux du Brain,
+  # attache a la MEME release. Reutilise la meme matrice / les memes etapes.

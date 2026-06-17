@@ -5,6 +5,7 @@ import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -14,8 +15,13 @@ import org.springframework.context.annotation.Configuration;
  * Expose un bean MinioClient singleton injecte dans MinioImageStorageAdapter.
  * S'assure au demarrage que le bucket configure existe (filet de securite :
  * normalement docker-compose/minio-init l'a deja cree).
+ * <p>
+ * Desactive en mode local-first ({@code storage.backend=filesystem}) : aucun
+ * client MinIO n'est alors instancie, donc aucune tentative de connexion au
+ * boot. Defaut = actif (propriete absente ou {@code minio}).
  */
 @Configuration
+@ConditionalOnProperty(name = "storage.backend", havingValue = "minio", matchIfMissing = true)
 public class MinioConfig {
 
     @Value("${minio.endpoint}")

@@ -14,7 +14,7 @@
 
     <groupId>com.loremind</groupId>
     <artifactId>loremind-core</artifactId>
-    <version>0.14.0-beta</version>
+    <version>0.15.0</version>
     <name>LoreMind Core</name>
     <description>Backend Core - Architecture Hexagonale</description>
 
@@ -60,11 +60,31 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- H2 Database pour les tests -->
+        <!-- Flyway : migrations de schema versionnees (remplace ddl-auto=update).
+             Un SEUL jeu de migrations en SQL PostgreSQL sert les deux bases :
+             - Postgres (Docker/serveur) nativement ;
+             - H2 (mode local-first) via MODE=PostgreSQL dans l'URL JDBC.
+             flyway-database-postgresql : module requis depuis Flyway 10 (DBs
+             externalisees du core). H2 reste supporte par flyway-core. -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
+
+        <!-- H2 Database :
+             - tests (toujours) ;
+             - RUNTIME du profil "local" (mode local-first / jpackage) : base
+               fichier embarquee a la place de Postgres, donc le driver doit etre
+               sur le classpath d'execution. Scope runtime (jamais compile contre)
+               => present a l'execution + tests, ~2,5 Mo inutilises cote Docker. -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
-            <scope>test</scope>
+            <scope>runtime</scope>
         </dependency>
 
         <!-- Lombok (réduit le code boilerplate) -->
@@ -179,4 +199,50 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!-- =================================================================
+             Profil "desktop" : build local-first (application de bureau).
+             Active avec : mvn -Pdesktop package
+             Embarque le build Angular dans le jar (classpath:/static/) pour que
+             le Core serve lui-meme le front (cf. LocalWebConfig, profil Spring
+             "local"). Le build Docker normal (sans ce profil) reste une API pure :
+             le front y est servi par le conteneur nginx, donc rien n'est copie.
+             ================================================================= -->
+        <profile>
+            <id>desktop</id>
+            <properties>
+                <!-- Sortie du `ng build` (builder browser) : web/dist/web. -->
+                <frontend.dist>${project.basedir}/../web/dist/web</frontend.dist>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>copy-frontend</id>
+                                <!-- Avant le repackage Spring Boot : on injecte le
+                                     front dans les classes compilees -> embarque
+                                     dans le fat jar sous /static. -->
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>copy-resources</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${project.build.outputDirectory}/static</outputDirectory>
+                                    <resources>
+                                        <resource>
+                                            <directory>${frontend.dist}</directory>
+                                        </resource>
+                                    </resources>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

@@ -45,6 +45,12 @@ env/
 .coverage
 htmlcov/
 
+# Artefacts du build bureau (cf. installers/desktop)
+.venv-build/
+brain/build/
+brain/dist-embed/
+*.spec
+
 # ============================================================================
 # Angular / Node (Web)
 # ============================================================================
@@ -116,3 +122,4 @@ brain/data/notebooks/5.json
 # Contient le site premium (sources) + son Worker de gate dans gate/.
 # ============================================================================
 docusaurus/loremind-patreon/
+installers/desktop/README.md

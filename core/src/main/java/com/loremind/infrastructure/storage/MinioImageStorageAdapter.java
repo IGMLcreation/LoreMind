@@ -7,6 +7,7 @@ import io.minio.PutObjectArgs;
 import io.minio.RemoveObjectArgs;
 import io.minio.errors.ErrorResponseException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
@@ -17,8 +18,13 @@ import java.util.UUID;
  * MinIO (compatible S3) comme backend de stockage d'objets.
  * <p>
  * Le domaine ne sait rien de MinIO : il manipule juste des cles opaques.
+ * <p>
+ * Backend par defaut ({@code storage.backend=minio} ou propriete absente).
+ * Le mode local-first le remplace par {@link FilesystemImageStorageAdapter}
+ * via {@code storage.backend=filesystem}.
  */
 @Component
+@ConditionalOnProperty(name = "storage.backend", havingValue = "minio", matchIfMissing = true)
 public class MinioImageStorageAdapter implements ImageStorage {
 
     private final MinioClient minioClient;

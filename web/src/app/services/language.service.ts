@@ -22,7 +22,13 @@ export interface AppLanguage {
   flag: string;
 }
 
-const STORAGE_KEY = 'loremind.lang';
+/**
+ * Clé localStorage du choix de langue (par appareil). Exportée pour que le
+ * languageInterceptor lise la langue SANS injecter LanguageService/TranslateService
+ * (sinon dépendance circulaire au démarrage : le chargement initial de la langue
+ * de repli passe par l'intercepteur pendant la construction de TranslateService).
+ */
+export const STORAGE_KEY = 'loremind.lang';
 
 @Injectable({ providedIn: 'root' })
 export class LanguageService {

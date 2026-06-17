@@ -40,26 +40,33 @@ public class LicenseService {
     private final LicenseRelay relay;
     private final long gracePeriodSeconds;
     private final long refreshBeforeExpirySeconds;
+    private final boolean licensingEnabled;
 
     public LicenseService(
             LicenseRepository repository,
             JwtVerifier jwtVerifier,
             LicenseRelay relay,
             @Value("${licensing.grace-period-days:14}") int gracePeriodDays,
-            @Value("${licensing.refresh-before-expiry-days:2}") int refreshBeforeExpiryDays) {
+            @Value("${licensing.refresh-before-expiry-days:2}") int refreshBeforeExpiryDays,
+            @Value("${licensing.enabled:true}") boolean licensingEnabled) {
         this.repository = repository;
         this.jwtVerifier = jwtVerifier;
         this.relay = relay;
         this.gracePeriodSeconds = (long) gracePeriodDays * 86_400L;
         this.refreshBeforeExpirySeconds = (long) refreshBeforeExpiryDays * 86_400L;
+        this.licensingEnabled = licensingEnabled;
     }
 
     /**
-     * @return true si le verifier est configure (cle publique presente).
-     *         L'UI peut masquer toute la section Patreon si false.
+     * @return true si le licensing Patreon est actif : il faut a la fois que la
+     *         feature soit activee ({@code licensing.enabled}, faux en mode
+     *         bureau/local ou le gating par image Docker n'a aucun sens) ET que
+     *         le verifier soit configure (cle publique presente). Faux => l'UI
+     *         masque toute la section Patreon, le daemon de refresh est no-op,
+     *         et le canal beta est desactive.
      */
     public boolean isLicensingEnabled() {
-        return jwtVerifier.isConfigured();
+        return licensingEnabled && jwtVerifier.isConfigured();
     }
 
     /**
