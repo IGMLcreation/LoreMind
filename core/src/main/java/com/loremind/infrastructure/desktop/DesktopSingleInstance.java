@@ -80,9 +80,9 @@ public final class DesktopSingleInstance {
         }
     }
 
-    /** Ouvre le navigateur par defaut sur l'URL de l'application locale. */
+    /** Ouvre le navigateur par defaut sur l'URL de l'application locale (port reel). */
     public static void openAppInBrowser() {
-        openUrl("http://localhost:" + System.getProperty("server.port", "8080") + "/");
+        openUrl("http://localhost:" + DesktopUserConfig.runningPort() + "/");
     }
 
     /** Ouvre le navigateur par defaut sur une URL quelconque (sans dependance AWT). */
@@ -102,6 +102,45 @@ public final class DesktopSingleInstance {
         } catch (IOException e) {
             System.err.println("[Desktop] Impossible d'ouvrir le navigateur sur " + url
                     + " : " + e.getMessage() + ". Ouvrez-le manuellement.");
+        }
+    }
+
+    /** Ouvre un dossier dans le gestionnaire de fichiers du systeme. */
+    public static void openFolder(Path dir) {
+        try {
+            Files.createDirectories(dir);
+            String os = System.getProperty("os.name", "").toLowerCase();
+            ProcessBuilder pb;
+            if (os.contains("win")) {
+                pb = new ProcessBuilder("explorer.exe", dir.toString());
+            } else if (os.contains("mac")) {
+                pb = new ProcessBuilder("open", dir.toString());
+            } else {
+                pb = new ProcessBuilder("xdg-open", dir.toString());
+            }
+            pb.start();
+        } catch (IOException e) {
+            System.err.println("[Desktop] Ouverture du dossier impossible : " + e.getMessage());
+        }
+    }
+
+    /** Ouvre un fichier texte dans l'editeur par defaut (Bloc-notes sous Windows). */
+    public static void openInEditor(Path file) {
+        try {
+            String os = System.getProperty("os.name", "").toLowerCase();
+            ProcessBuilder pb;
+            if (os.contains("win")) {
+                // notepad : toujours present, ouvre proprement un .properties
+                // (dont l'association par defaut n'est pas garantie).
+                pb = new ProcessBuilder("notepad.exe", file.toString());
+            } else if (os.contains("mac")) {
+                pb = new ProcessBuilder("open", "-t", file.toString());
+            } else {
+                pb = new ProcessBuilder("xdg-open", file.toString());
+            }
+            pb.start();
+        } catch (IOException e) {
+            System.err.println("[Desktop] Ouverture du fichier impossible : " + e.getMessage());
         }
     }
 

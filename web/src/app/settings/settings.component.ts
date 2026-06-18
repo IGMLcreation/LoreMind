@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LucideAngularModule, ArrowLeft, RefreshCw, Save, Check, AlertCircle, Plus } from 'lucide-angular';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { SettingsService, AppSettings, AppSettingsUpdate, OneMinModelGroup, OpenRouterModel, MistralModel, GeminiModel } from '../services/settings.service';
+import { SettingsService, AppSettings, AppSettingsUpdate, OneMinModelGroup, OpenRouterModel, MistralModel, GeminiModel, ImportResult } from '../services/settings.service';
 import { LayoutService } from '../services/layout.service';
 import { UpdatesSectionComponent } from './updates-section/updates-section.component';
 import { OllamaModelManagerComponent } from './ollama-model-manager/ollama-model-manager.component';
@@ -330,6 +330,60 @@ export class SettingsComponent implements OnInit {
 
   goBack(): void {
     this.router.navigate(['/lore']);
+  }
+
+  // --- Sauvegarde / Restauration des donnees --------------------------------
+
+  exporting = false;
+  importing = false;
+  dataMessage = '';
+  dataError = '';
+
+  /** Telecharge l'export complet (zip) via un lien temporaire. */
+  exportData(): void {
+    this.exporting = true;
+    this.dataMessage = '';
+    this.dataError = '';
+    this.settingsService.exportData().subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'loremind-export.zip';
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: (err) => {
+        this.dataError = this.extractError(err, this.translate.instant('settings.data.exportError'));
+        this.exporting = false;
+      }
+    });
+  }
+
+  /** Déclenché par le sélecteur de fichier : importe le zip choisi (fusion). */
+  onImportFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = ''; // permet de re-sélectionner le même fichier
+    if (!file) return;
+
+    if (!confirm(this.translate.instant('settings.data.importConfirm'))) return;
+
+    this.importing = true;
+    this.dataMessage = '';
+    this.dataError = '';
+    this.settingsService.importData(file).subscribe({
+      next: (result: ImportResult) => {
+        const total = Object.values(result.created).reduce((a, b) => a + b, 0);
+        this.dataMessage = this.translate.instant('settings.data.importSuccess', { count: total });
+        this.importing = false;
+      },
+      error: (err) => {
+        this.dataError = this.extractError(err, this.translate.instant('settings.data.importError'));
+        this.importing = false;
+      }
+    });
   }
 
   private extractError(err: any, fallback: string): string {

@@ -1,6 +1,7 @@
 package com.loremind;
 
 import com.loremind.infrastructure.desktop.DesktopSingleInstance;
+import com.loremind.infrastructure.desktop.DesktopUserConfig;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -30,6 +31,12 @@ public class LoreMindApplication {
             // ce qui leverait HeadlessException — on le desactive ici. En mode
             // serveur/Docker, on reste en headless (defaut), aucun impact.
             app.setHeadless(false);
+            // Config utilisateur editable (~/.loremind/loremind.properties) : creee
+            // au 1er lancement (port + identifiants admin). Puis resolution du port :
+            // celui configure s'il est libre, sinon un port libre (evite l'echec de
+            // demarrage si 8080 est deja pris). Publie server.port + ~/.loremind/.port.
+            DesktopUserConfig.ensureExists();
+            DesktopUserConfig.resolveAndPublishPort();
         }
         app.run(args);
     }

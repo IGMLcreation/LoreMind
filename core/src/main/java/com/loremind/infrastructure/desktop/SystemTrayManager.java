@@ -69,6 +69,22 @@ public class SystemTrayManager {
 
             popup.addSeparator();
 
+            // Reglages : ouvre loremind.properties (port, identifiants admin) dans
+            // l'editeur. Les changements prennent effet au prochain demarrage.
+            MenuItem editConfig = new MenuItem("Modifier la configuration (port, identifiants…)");
+            editConfig.addActionListener(e -> {
+                DesktopUserConfig.ensureExists();
+                DesktopSingleInstance.openInEditor(DesktopUserConfig.getConfigFile());
+            });
+            popup.add(editConfig);
+
+            // Acces au dossier de donnees (~/.loremind : base, images, config…).
+            MenuItem openFolder = new MenuItem("Ouvrir le dossier LoreMind");
+            openFolder.addActionListener(e -> DesktopSingleInstance.openFolder(DesktopUserConfig.getHomeDir()));
+            popup.add(openFolder);
+
+            popup.addSeparator();
+
             MenuItem quit = new MenuItem("Quitter LoreMind");
             quit.addActionListener(e -> quit());
             popup.add(quit);

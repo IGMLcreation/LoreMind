@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 
 /**
@@ -56,6 +57,18 @@ public class FilesystemImageStorageAdapter implements ImageStorage {
             return storageKey;
         } catch (IOException e) {
             throw new UncheckedIOException("Echec de l'ecriture de l'image sur disque : " + target, e);
+        }
+    }
+
+    @Override
+    public void store(String storageKey, String contentType, InputStream data, long sizeBytes) {
+        Path target = resolveKey(storageKey);
+        try {
+            Files.createDirectories(target.getParent());
+            // Ecrase si la cle existe deja (contrat de store-avec-cle).
+            Files.copy(data, target, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Echec de l'ecriture de l'image sur disque (cle imposee) : " + target, e);
         }
     }
 

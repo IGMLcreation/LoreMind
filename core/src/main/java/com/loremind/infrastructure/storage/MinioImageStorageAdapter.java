@@ -55,6 +55,22 @@ public class MinioImageStorageAdapter implements ImageStorage {
     }
 
     @Override
+    public void store(String storageKey, String contentType, InputStream data, long sizeBytes) {
+        try {
+            minioClient.putObject(
+                    PutObjectArgs.builder()
+                            .bucket(bucket)
+                            .object(storageKey)
+                            .stream(data, sizeBytes, -1)
+                            .contentType(contentType)
+                            .build()
+            );
+        } catch (Exception e) {
+            throw new RuntimeException("Echec du store MinIO (cle imposee) : " + e.getMessage(), e);
+        }
+    }
+
+    @Override
     public InputStream download(String storageKey) {
         try {
             return minioClient.getObject(

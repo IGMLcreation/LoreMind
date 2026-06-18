@@ -26,6 +26,21 @@ public interface ImageStorage {
      */
     String upload(String filename, String contentType, InputStream data, long sizeBytes);
 
+    /**
+     * Stocke un flux binaire SOUS UNE CLE IMPOSEE (pas de generation).
+     * <p>
+     * Utilise par l'import de contenu pour reinjecter une image sous sa cle
+     * d'origine, garantissant que les references {@code storageKey} portees par
+     * les entites restent valides apres un transfert inter-instance.
+     * Ecrase si la cle existe deja.
+     *
+     * @param storageKey  cle opaque exacte sous laquelle stocker (ex: images/UUID.ext)
+     * @param contentType MIME type
+     * @param data        flux binaire a stocker
+     * @param sizeBytes   taille en octets (requis par certains backends comme S3)
+     */
+    void store(String storageKey, String contentType, InputStream data, long sizeBytes);
+
     /** Recupere le flux binaire associe a une cle, ou null si inexistante. */
     InputStream download(String storageKey);
 

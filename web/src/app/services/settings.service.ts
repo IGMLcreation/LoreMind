@@ -66,6 +66,13 @@ export interface OllamaModelInfo {
   context_length: number;
 }
 
+/** Resultat d'un import de donnees (compteurs par type + images). */
+export interface ImportResult {
+  created: Record<string, number>;
+  imagesUploaded: number;
+  imagesReused: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class SettingsService {
   private readonly apiUrl = '/api/settings';
@@ -83,6 +90,21 @@ export class SettingsService {
 
   updateSettings(patch: AppSettingsUpdate): Observable<AppSettings> {
     return this.http.put<AppSettings>(this.apiUrl, patch, this.authOptions);
+  }
+
+  // --- Export / Import des donnees (sauvegarde & transfert d'instance) -------
+
+  /** Telecharge l'export complet du contenu (zip : data.json + images). */
+  exportData(): Observable<Blob> {
+    return this.http.get('/api/admin/data/export',
+      { withCredentials: true, responseType: 'blob' });
+  }
+
+  /** Importe un zip d'export en mode FUSION (ajoute, ne remplace pas). */
+  importData(file: File): Observable<ImportResult> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<ImportResult>('/api/admin/data/import', form, this.authOptions);
   }
 
   listOllamaModels(): Observable<{ models: string[] }> {

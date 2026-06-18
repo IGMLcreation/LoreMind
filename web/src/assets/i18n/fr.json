@@ -50,6 +50,18 @@
   },
   "settings": {
     "title": "Paramètres",
+    "data": {
+      "title": "Sauvegarde des données",
+      "hint": "Exportez tout votre contenu (systèmes de jeu, lores, campagnes + images) dans un fichier, pour le sauvegarder ou le transférer vers une autre instance. L'import <strong>ajoute</strong> le contenu sans supprimer l'existant.",
+      "exportBtn": "Exporter les données",
+      "exporting": "Export en cours…",
+      "importBtn": "Importer un fichier",
+      "importing": "Import en cours…",
+      "importConfirm": "Importer ce fichier ? Le contenu sera ajouté à votre instance (rien n'est supprimé).",
+      "importSuccess": "Import réussi : {{count}} élément(s) ajouté(s).",
+      "exportError": "Échec de l'export.",
+      "importError": "Échec de l'import (fichier invalide ?)."
+    },
     "language": {
       "title": "Langue de l'interface",
       "hint": "Choix de la langue d'affichage de l'application. Le changement est immédiat et mémorisé sur cet appareil."

@@ -50,6 +50,18 @@
   },
   "settings": {
     "title": "Settings",
+    "data": {
+      "title": "Data backup",
+      "hint": "Export all your content (game systems, lores, campaigns + images) to a file, to back it up or move it to another instance. Importing <strong>adds</strong> the content without deleting what's already there.",
+      "exportBtn": "Export data",
+      "exporting": "Exporting…",
+      "importBtn": "Import a file",
+      "importing": "Importing…",
+      "importConfirm": "Import this file? Its content will be added to your instance (nothing is deleted).",
+      "importSuccess": "Import successful: {{count}} item(s) added.",
+      "exportError": "Export failed.",
+      "importError": "Import failed (invalid file?)."
+    },
     "language": {
       "title": "Interface language",
       "hint": "Choose the application display language. The change is applied instantly and remembered on this device."

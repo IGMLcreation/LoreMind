@@ -112,7 +112,7 @@
         <label for="onemin-key">{{ 'settings.apiKey.label' | translate }}</label>
         <input
           id="onemin-key"
-          type="password"
+          type="password" autocomplete="new-password" data-1p-ignore data-lpignore="true" data-bwignore
           [(ngModel)]="oneminApiKeyInput"
           [placeholder]="(settings.onemin_api_key_set ? 'settings.apiKey.placeholderSet' : 'settings.apiKey.placeholderOnemin') | translate">
           @if (settings.onemin_api_key_set) {
@@ -149,7 +149,7 @@
           <label for="openrouter-key">{{ 'settings.apiKey.label' | translate }}</label>
           <input
             id="openrouter-key"
-            type="password"
+            type="password" autocomplete="new-password" data-1p-ignore data-lpignore="true" data-bwignore
             [(ngModel)]="openrouterApiKeyInput"
             [placeholder]="(settings.openrouter_api_key_set ? 'settings.apiKey.placeholderSet' : 'settings.apiKey.placeholderOpenrouter') | translate">
             @if (settings.openrouter_api_key_set) {
@@ -183,7 +183,7 @@
             <label for="mistral-key">{{ 'settings.apiKey.label' | translate }}</label>
             <input
               id="mistral-key"
-              type="password"
+              type="password" autocomplete="new-password" data-1p-ignore data-lpignore="true" data-bwignore
               [(ngModel)]="mistralApiKeyInput"
               [placeholder]="(settings.mistral_api_key_set ? 'settings.apiKey.placeholderSet' : 'settings.apiKey.placeholderMistral') | translate">
               @if (settings.mistral_api_key_set) {
@@ -213,7 +213,7 @@
               <label for="gemini-key">{{ 'settings.apiKey.label' | translate }}</label>
               <input
                 id="gemini-key"
-                type="password"
+                type="password" autocomplete="new-password" data-1p-ignore data-lpignore="true" data-bwignore
                 [(ngModel)]="geminiApiKeyInput"
                 [placeholder]="(settings.gemini_api_key_set ? 'settings.apiKey.placeholderSet' : 'settings.apiKey.placeholderGemini') | translate">
                 @if (settings.gemini_api_key_set) {
@@ -285,7 +285,7 @@
                           <span class="key-state">{{ 'settings.apiKey.configured' | translate }}</span>
                         }
                       </label>
-                      <input id="emb-mistral-key" type="password" [(ngModel)]="mistralApiKeyInput"
+                      <input id="emb-mistral-key" type="password" autocomplete="new-password" data-1p-ignore data-lpignore="true" data-bwignore [(ngModel)]="mistralApiKeyInput"
                         [placeholder]="(settings.mistral_api_key_set ? 'settings.apiKey.placeholderSet' : 'settings.apiKey.placeholderMistral') | translate">
                         @if (settings.mistral_api_key_set) {
                           <label class="checkbox">
@@ -371,6 +371,33 @@
 
                       <!-- Mises a jour conteneurs + licence Patreon + canal beta (sous-composant) -->
                       <app-settings-updates-section></app-settings-updates-section>
+
+                      <!-- Sauvegarde / Restauration des donnees (export & import) -->
+                      <section class="card">
+                        <h2>{{ 'settings.data.title' | translate }}</h2>
+                        <p class="hint" [innerHTML]="'settings.data.hint' | translate"></p>
+                        <div class="actions">
+                          <button type="button" class="btn-secondary" (click)="exportData()" [disabled]="exporting || importing">
+                            <span>{{ (exporting ? 'settings.data.exporting' : 'settings.data.exportBtn') | translate }}</span>
+                          </button>
+                          <button type="button" class="btn-secondary" (click)="importInput.click()" [disabled]="exporting || importing">
+                            <span>{{ (importing ? 'settings.data.importing' : 'settings.data.importBtn') | translate }}</span>
+                          </button>
+                          <input #importInput type="file" accept=".zip,application/zip" hidden (change)="onImportFileSelected($event)">
+                        </div>
+                        @if (dataError) {
+                          <div class="alert alert-error">
+                            <lucide-icon [img]="AlertCircle" [size]="16"></lucide-icon>
+                            <span>{{ dataError }}</span>
+                          </div>
+                        }
+                        @if (dataMessage) {
+                          <div class="alert alert-success">
+                            <lucide-icon [img]="Check" [size]="16"></lucide-icon>
+                            <span>{{ dataMessage }}</span>
+                          </div>
+                        }
+                      </section>
 
                       @if (settings) {
                         <div class="actions">
