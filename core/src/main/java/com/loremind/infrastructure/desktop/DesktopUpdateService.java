@@ -50,8 +50,8 @@ public class DesktopUpdateService {
             @Value("${desktop.update.releases-api-url:https://api.github.com/repos/IGMLcreation/LoreMind/releases/latest}") String releasesApiUrl,
             @Nullable BuildProperties buildProperties) {
         this.http = builder
-                .setConnectTimeout(Duration.ofSeconds(5))
-                .setReadTimeout(Duration.ofSeconds(10))
+                .connectTimeout(Duration.ofSeconds(5))
+                .readTimeout(Duration.ofSeconds(10))
                 .build();
         this.enabled = enabled;
         this.releasesApiUrl = releasesApiUrl;

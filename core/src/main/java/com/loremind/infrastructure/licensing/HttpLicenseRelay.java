@@ -40,8 +40,8 @@ public class HttpLicenseRelay implements LicenseRelay {
             RestTemplateBuilder builder,
             @Value("${licensing.relay.base-url:}") String baseUrl) {
         this.http = builder
-                .setConnectTimeout(Duration.ofSeconds(5))
-                .setReadTimeout(Duration.ofSeconds(15))
+                .connectTimeout(Duration.ofSeconds(5))
+                .readTimeout(Duration.ofSeconds(15))
                 .build();
         this.baseUrl = stripTrailingSlash(baseUrl);
     }

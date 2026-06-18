@@ -37,8 +37,8 @@ public class RestTemplateConfig {
             @Value("${brain.timeout-seconds}") long timeoutSeconds,
             @Value("${brain.internal-secret}") String internalSecret) {
         return builder
-                .setConnectTimeout(Duration.ofSeconds(10))
-                .setReadTimeout(Duration.ofSeconds(timeoutSeconds))
+                .connectTimeout(Duration.ofSeconds(10))
+                .readTimeout(Duration.ofSeconds(timeoutSeconds))
                 .additionalInterceptors((request, body, execution) -> {
                     if (internalSecret != null && !internalSecret.isBlank()) {
                         request.getHeaders().set(INTERNAL_SECRET_HEADER, internalSecret);
@@ -61,8 +61,8 @@ public class RestTemplateConfig {
             @Value("${brain.import-timeout-seconds:600}") long importTimeoutSeconds,
             @Value("${brain.internal-secret}") String internalSecret) {
         return builder
-                .setConnectTimeout(Duration.ofSeconds(10))
-                .setReadTimeout(Duration.ofSeconds(importTimeoutSeconds))
+                .connectTimeout(Duration.ofSeconds(10))
+                .readTimeout(Duration.ofSeconds(importTimeoutSeconds))
                 .additionalInterceptors((request, body, execution) -> {
                     if (internalSecret != null && !internalSecret.isBlank()) {
                         request.getHeaders().set(INTERNAL_SECRET_HEADER, internalSecret);

@@ -240,6 +240,11 @@ export class PageEditComponent implements OnInit, OnDestroy {
     this.tableValues[fieldName]?.splice(rowIndex, 1);
   }
 
+  /** Lignes du tableau d'un champ — toujours un tableau (jamais undefined) pour le `@for`. */
+  tableRows(fieldName: string): Array<Record<string, string>> {
+    return this.tableValues[fieldName] ?? [];
+  }
+
   // --- Chat IA conversationnel (Phase b5) --------------------------------
 
   toggleChat(): void {

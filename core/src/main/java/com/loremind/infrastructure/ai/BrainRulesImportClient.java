@@ -225,7 +225,7 @@ public class BrainRulesImportClient implements RulesPdfImporter {
     private Map<String, String> toStringMap(JsonNode object) {
         Map<String, String> out = new LinkedHashMap<>();
         if (object != null && object.isObject()) {
-            object.fields().forEachRemaining(e -> out.put(e.getKey(), e.getValue().asText()));
+            object.properties().forEach(e -> out.put(e.getKey(), e.getValue().asText()));
         }
         return out;
     }

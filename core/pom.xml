@@ -14,7 +14,7 @@
 
     <groupId>com.loremind</groupId>
     <artifactId>loremind-core</artifactId>
-    <version>0.16.2</version>
+    <version>0.16.3</version>
     <name>LoreMind Core</name>
     <description>Backend Core - Architecture Hexagonale</description>
 
@@ -152,6 +152,45 @@
 
     <build>
         <plugins>
+            <!-- Declare EXPLICITEMENT le processor d'annotations Lombok : sinon javac
+                 avertit que l'annotation processing implicite (processeur trouve sur le
+                 classpath sans etre declare) sera desactivee dans un futur JDK. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+            <!-- Expose le chemin du jar mockito-core dans la propriete
+                 ${org.mockito:mockito-core:jar}, consommee par surefire ci-dessous. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>properties</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Charge Mockito comme un VRAI -javaagent (au lieu de l'auto-attachement
+                 dynamique de byte-buddy, qui imprime un avertissement et sera interdit
+                 dans un futur JDK). `@{argLine}` preserve l'argLine pose par JaCoCo. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>@{argLine} -javaagent:${org.mockito:mockito-core:jar} -Xshare:off</argLine>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>

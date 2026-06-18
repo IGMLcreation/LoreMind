@@ -17,6 +17,12 @@ export default defineConfig({
   reporter: process.env['CI'] ? [['html', { open: 'never' }], ['list']] : 'html',
   use: {
     baseURL,
+    // Locale FR épinglée : l'app résout sa langue via celle du navigateur
+    // (LanguageService.resolveInitialLang → getBrowserLang()). Sans ça, le
+    // Chromium de Playwright démarre en en-US → l'UI passe en anglais → tous les
+    // tests, écrits pour les libellés français, échouent (vert sur une machine en
+    // locale FR, rouge en CI Linux en-US). On fixe donc le français, déterministe.
+    locale: 'fr-FR',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',

@@ -42,7 +42,7 @@ test.describe('GameSystem edit', () => {
     await page.getByLabel(/^Nom/i).fill(newName);
     await page.getByLabel(/Description courte/i).fill(newDescription);
 
-    await page.getByRole('button', { name: /^Enregistrer$/i }).click();
+    await page.getByRole('button', { name: /^Sauvegarder$/i }).click();
 
     // Retour a la liste apres save.
     await expect(page).toHaveURL(/\/game-systems$/);
@@ -57,7 +57,7 @@ test.describe('GameSystem edit', () => {
     await expect(page.getByLabel(/^Nom/i)).toHaveValue(gs.name);
 
     const nameField = page.getByLabel(/^Nom/i);
-    const saveBtn = page.getByRole('button', { name: /^Enregistrer$/i });
+    const saveBtn = page.getByRole('button', { name: /^Sauvegarder$/i });
 
     await expect(saveBtn).toBeEnabled();
     await nameField.fill('');

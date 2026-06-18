@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
@@ -36,7 +36,7 @@ class UpdatesControllerDemoModeTest {
             .encodeToString("test-admin:test-admin-password".getBytes(StandardCharsets.UTF_8));
 
     @Autowired private MockMvc mockMvc;
-    @MockBean private UpdateCheckService updates;
+    @MockitoBean private UpdateCheckService updates;
 
     @Test
     void check_returns403_inDemoMode() throws Exception {

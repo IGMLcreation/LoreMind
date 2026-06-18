@@ -74,8 +74,8 @@ public class UpdateCheckService {
             LicenseService licenseService,
             @Nullable BuildProperties buildProperties) {
         this.http = builder
-                .setConnectTimeout(Duration.ofSeconds(5))
-                .setReadTimeout(Duration.ofSeconds(15))
+                .connectTimeout(Duration.ofSeconds(5))
+                .readTimeout(Duration.ofSeconds(15))
                 .build();
         this.registry = normalizeRegistry(registry);
         this.images = parseImages(imagesCsv);

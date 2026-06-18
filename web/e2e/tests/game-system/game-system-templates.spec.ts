@@ -44,7 +44,7 @@ test.describe('GameSystem template fields editor (PJ / PNJ)', () => {
     await expect(row.locator('.tfe-name')).toHaveValue('Histoire');
 
     // Save → retour a la liste.
-    await page.getByRole('button', { name: /^Enregistrer$/i }).click();
+    await page.getByRole('button', { name: /^Sauvegarder$/i }).click();
     await expect(page).toHaveURL(/\/game-systems$/);
 
     // Verification API : le champ est bien dans characterTemplate.
@@ -88,7 +88,7 @@ test.describe('GameSystem template fields editor (PJ / PNJ)', () => {
     await expect(tfe(page, 'PJ').locator('.tfe-item').first().locator('.tfe-name')).toHaveValue('Histoire');
     await expect(tfe(page, 'PNJ').locator('.tfe-item').first().locator('.tfe-name')).toHaveValue('Motivation');
 
-    await page.getByRole('button', { name: /^Enregistrer$/i }).click();
+    await page.getByRole('button', { name: /^Sauvegarder$/i }).click();
     await expect(page).toHaveURL(/\/game-systems$/);
 
     const persisted = await request.get(`/api/game-systems/${gs.id}`).then((r) => r.json());

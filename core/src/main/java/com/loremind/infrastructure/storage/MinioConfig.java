@@ -4,6 +4,8 @@ import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -23,6 +25,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @ConditionalOnProperty(name = "storage.backend", havingValue = "minio", matchIfMissing = true)
 public class MinioConfig {
+
+    private static final Logger log = LoggerFactory.getLogger(MinioConfig.class);
 
     @Value("${minio.endpoint}")
     private String endpoint;
@@ -66,12 +70,11 @@ public class MinioConfig {
             boolean exists = client.bucketExists(BucketExistsArgs.builder().bucket(bucket).build());
             if (!exists) {
                 client.makeBucket(MakeBucketArgs.builder().bucket(bucket).build());
-                System.out.println("[MinIO] Bucket '" + bucket + "' cree.");
+                log.info("[MinIO] Bucket '{}' cree.", bucket);
             }
         } catch (Exception e) {
-            System.err.println("[MinIO] Initialisation impossible (endpoint=" + endpoint
-                    + "). Les uploads d'images echoueront tant que MinIO n'est pas joignable. "
-                    + "Cause : " + e.getMessage());
+            log.warn("[MinIO] Initialisation impossible (endpoint={}). Les uploads d'images "
+                    + "echoueront tant que MinIO n'est pas joignable. Cause : {}", endpoint, e.getMessage());
         }
     }
 }

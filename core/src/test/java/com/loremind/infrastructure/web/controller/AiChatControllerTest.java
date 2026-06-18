@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -53,10 +53,10 @@ class AiChatControllerTest {
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
 
-    @MockBean private StreamChatForLoreUseCase loreUseCase;
-    @MockBean private StreamChatForCampaignUseCase campaignUseCase;
-    @MockBean private StreamChatForSessionUseCase sessionUseCase;
-    @MockBean(name = "applicationTaskExecutor") private TaskExecutor taskExecutor;
+    @MockitoBean private StreamChatForLoreUseCase loreUseCase;
+    @MockitoBean private StreamChatForCampaignUseCase campaignUseCase;
+    @MockitoBean private StreamChatForSessionUseCase sessionUseCase;
+    @MockitoBean(name = "applicationTaskExecutor") private TaskExecutor taskExecutor;
 
     @BeforeEach
     void setUp() {

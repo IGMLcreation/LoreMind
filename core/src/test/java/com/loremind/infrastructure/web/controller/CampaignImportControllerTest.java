@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -58,8 +58,8 @@ class CampaignImportControllerTest {
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
 
-    @MockBean private CampaignImportService campaignImportService;
-    @MockBean(name = "applicationTaskExecutor") private TaskExecutor taskExecutor;
+    @MockitoBean private CampaignImportService campaignImportService;
+    @MockitoBean(name = "applicationTaskExecutor") private TaskExecutor taskExecutor;
 
     private static final String CAMPAIGN_ID = "camp-1";
 

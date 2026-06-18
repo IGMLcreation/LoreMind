@@ -35,7 +35,7 @@ test.describe('NPC edit', () => {
 
     await page.getByLabel(/Nom du PNJ/i).fill(newName);
 
-    await page.getByRole('button', { name: /^Enregistrer$/i }).click();
+    await page.getByRole('button', { name: /^Sauvegarder$/i }).click();
 
     // Retour à la campagne après save
     await expect(page).toHaveURL(new RegExp(`/campaigns/${campaign.id}$`));
@@ -48,7 +48,7 @@ test.describe('NPC edit', () => {
     await page.goto(`/campaigns/${campaign.id}/npcs/${npc.id}/edit`);
 
     const nameField = page.getByLabel(/Nom du PNJ/i);
-    const saveBtn = page.getByRole('button', { name: /^Enregistrer$/i });
+    const saveBtn = page.getByRole('button', { name: /^Sauvegarder$/i });
 
     await expect(saveBtn).toBeEnabled();
     await nameField.fill('');

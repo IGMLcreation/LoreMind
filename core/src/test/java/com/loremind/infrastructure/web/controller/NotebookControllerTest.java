@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -59,9 +59,9 @@ class NotebookControllerTest {
     @Autowired private NotebookRepository notebookRepository;
     @Autowired private CampaignRepository campaignRepository;
 
-    @MockBean private NotebookIndexer indexer;
-    @MockBean private NotebookChatStreamer chatStreamer;
-    @MockBean(name = "applicationTaskExecutor") private TaskExecutor taskExecutor;
+    @MockitoBean private NotebookIndexer indexer;
+    @MockitoBean private NotebookChatStreamer chatStreamer;
+    @MockitoBean(name = "applicationTaskExecutor") private TaskExecutor taskExecutor;
 
     private String campaignId;
 

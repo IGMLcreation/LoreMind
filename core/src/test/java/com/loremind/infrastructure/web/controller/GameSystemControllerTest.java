@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -52,8 +52,8 @@ class GameSystemControllerTest {
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
 
-    @MockBean private RulesPdfImporter rulesPdfImporter;
-    @MockBean(name = "applicationTaskExecutor") private TaskExecutor taskExecutor;
+    @MockitoBean private RulesPdfImporter rulesPdfImporter;
+    @MockitoBean(name = "applicationTaskExecutor") private TaskExecutor taskExecutor;
 
     @BeforeEach
     void setUp() {

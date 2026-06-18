@@ -7,6 +7,7 @@ import com.loremind.domain.licensing.RegistryCredentials;
 import com.loremind.domain.licensing.ports.DockerConfigWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -25,6 +26,8 @@ import java.util.Optional;
  * la plupart du temps.
  */
 @Component
+// Desactivable (ex: tests) : sans cette propriete (prod), le daemon tourne.
+@ConditionalOnProperty(name = "licensing.refresh.enabled", matchIfMissing = true)
 public class LicenseRefreshDaemon {
 
     private static final Logger log = LoggerFactory.getLogger(LicenseRefreshDaemon.class);

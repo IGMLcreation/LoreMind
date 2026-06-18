@@ -108,7 +108,7 @@
                       </tr>
                     </thead>
                     <tbody>
-                      @for (row of tableValues[field.name] ?? []; track $index; let ri = $index) {
+                      @for (row of tableRows(field.name); track $index; let ri = $index) {
                         <tr>
                           @for (col of field.labels; track $index) {
                             <td>

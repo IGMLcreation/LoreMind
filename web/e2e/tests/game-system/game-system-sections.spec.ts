@@ -38,7 +38,7 @@ test.describe('GameSystem rule sections editor', () => {
     await card.locator('.section-content').fill(sectionContent);
 
     // Save + retour a la liste.
-    await page.getByRole('button', { name: /^Enregistrer$/i }).click();
+    await page.getByRole('button', { name: /^Sauvegarder$/i }).click();
     await expect(page).toHaveURL(/\/game-systems$/);
 
     // Verification cote API : le markdown contient bien la section + son contenu.

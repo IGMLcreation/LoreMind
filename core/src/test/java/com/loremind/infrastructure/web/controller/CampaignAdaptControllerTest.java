@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
@@ -42,8 +42,8 @@ class CampaignAdaptControllerTest {
 
     @Autowired private MockMvc mockMvc;
 
-    @MockBean private CampaignAdaptService campaignAdaptService;
-    @MockBean(name = "applicationTaskExecutor") private TaskExecutor taskExecutor;
+    @MockitoBean private CampaignAdaptService campaignAdaptService;
+    @MockitoBean(name = "applicationTaskExecutor") private TaskExecutor taskExecutor;
 
     @BeforeEach
     void setUp() {
