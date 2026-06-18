@@ -123,3 +123,8 @@ brain/data/notebooks/5.json
 # ============================================================================
 docusaurus/loremind-patreon/
 installers/desktop/README.md
+
+# Rapports de couverture de tests
+web/coverage/
+brain/htmlcov/
+brain/.coverage

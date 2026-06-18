@@ -329,7 +329,16 @@ export class GameSystemEditComponent implements OnInit {
     const valid = this.sections.filter(s => s.title.trim() || s.content.trim());
     if (valid.length === 0) return null;
     return valid
-      .map(s => `## ${s.title.trim() || 'Sans titre'}\n${s.content.trim()}`)
+      .map(s => {
+        // Le "## " est RESERVE aux titres de section (parseMarkdown decoupe dessus,
+        // tout comme le parser Java cote backend). Or le contenu genere par l'IA
+        // contient souvent des sous-titres "## " : sans rien faire, ils seraient
+        // re-interpretes comme de nouvelles sections au rechargement -> explosion
+        // de sections + sections vides. On les retrograde donc en "### " (un niveau
+        // plus bas) pour garder un round-trip stable. (### / #### ne collisionnent pas.)
+        const content = s.content.trim().replace(/^##[ \t]+/gm, '### ');
+        return `## ${s.title.trim() || 'Sans titre'}\n${content}`;
+      })
       .join('\n\n');
   }
 }

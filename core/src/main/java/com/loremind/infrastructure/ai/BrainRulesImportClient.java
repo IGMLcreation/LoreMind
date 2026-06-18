@@ -10,7 +10,6 @@ import com.loremind.infrastructure.web.config.UserLanguageHolder;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -26,7 +25,6 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -56,7 +54,7 @@ public class BrainRulesImportClient implements RulesPdfImporter {
 
     private final RestTemplate restTemplate;
     private final WebClient webClient;
-    private final ObjectMapper objectMapper;
+    private final BrainSseImportSupport sse;
     private final String baseUrl;
     private final long importTimeoutSeconds;
 
@@ -68,7 +66,7 @@ public class BrainRulesImportClient implements RulesPdfImporter {
             @Value("${brain.import-timeout-seconds:600}") long importTimeoutSeconds) {
         this.restTemplate = restTemplate;
         this.webClient = webClientBuilder.baseUrl(baseUrl).build();
-        this.objectMapper = objectMapper;
+        this.sse = new BrainSseImportSupport(objectMapper);
         this.baseUrl = baseUrl;
         this.importTimeoutSeconds = importTimeoutSeconds;
     }
@@ -81,7 +79,7 @@ public class BrainRulesImportClient implements RulesPdfImporter {
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-        body.add("file", filePart(pdfBytes, filename));
+        body.add("file", sse.filePart(pdfBytes, filename, "rules.pdf"));
         HttpEntity<MultiValueMap<String, Object>> entity = new HttpEntity<>(body, headers);
 
         try {
@@ -121,7 +119,7 @@ public class BrainRulesImportClient implements RulesPdfImporter {
             Consumer<Throwable> onError) {
 
         MultipartBodyBuilder parts = new MultipartBodyBuilder();
-        parts.part("file", filePart(pdfBytes, filename))
+        parts.part("file", sse.filePart(pdfBytes, filename, "rules.pdf"))
                 .filename(filename == null || filename.isBlank() ? "rules.pdf" : filename);
 
         Flux<ServerSentEvent<String>> flux = webClient.post()
@@ -139,33 +137,16 @@ public class BrainRulesImportClient implements RulesPdfImporter {
         int[] ocrPageCount = {0};
         boolean[] terminated = {false};
 
-        try {
-            flux
-                .timeout(Duration.ofSeconds(importTimeoutSeconds))
-                .doOnNext(sse -> handleEvent(
-                        sse, pageCount, ocrPageCount, terminated,
-                        onProgress, onHeartbeat, onStatus, onDone, onError))
-                .blockLast();
-            // Flux terminé sans event done/error (ex: connexion coupée) → on signale.
-            if (!terminated[0]) {
-                onError.accept(new RulesImportException(
-                        "Le flux d'import s'est interrompu avant la fin."));
-            }
-        } catch (Exception e) {
-            if (!terminated[0]) {
-                // On EXPOSE la cause réelle (type + message) : sans ça, l'UI n'a qu'un
-                // message générique et le diagnostic est impossible (timeout WebClient,
-                // connexion coupée, réponse non-2xx du Brain, etc.).
-                String cause = e.getClass().getSimpleName()
-                        + (e.getMessage() != null ? " — " + e.getMessage() : "");
-                onError.accept(new RulesImportException(
-                        "Erreur lors du streaming d'import depuis le Brain : " + cause, e));
-            }
-        }
+        sse.runStream(
+                flux, importTimeoutSeconds, terminated,
+                event -> handleEvent(
+                        event, pageCount, ocrPageCount, terminated,
+                        onProgress, onHeartbeat, onStatus, onDone, onError),
+                onError, RulesImportException::new);
     }
 
     private void handleEvent(
-            ServerSentEvent<String> sse,
+            ServerSentEvent<String> ssEvent,
             int[] pageCount,
             int[] ocrPageCount,
             boolean[] terminated,
@@ -175,8 +156,8 @@ public class BrainRulesImportClient implements RulesPdfImporter {
             Consumer<RulesImportResult> onDone,
             Consumer<Throwable> onError) {
 
-        String event = sse.event();
-        String data = sse.data() == null ? "" : sse.data();
+        String event = ssEvent.event();
+        String data = ssEvent.data() == null ? "" : ssEvent.data();
 
         if ("heartbeat".equals(event)) {
             // Keep-alive du Brain pendant un appel LLM long : à PROPAGER jusqu'au
@@ -188,23 +169,17 @@ public class BrainRulesImportClient implements RulesPdfImporter {
         if ("status".equals(event)) {
             // Message d'attente lisible (retry sur fournisseur saturé, morceau
             // re-découpé…) : affiché par l'UI au lieu de n'exister qu'en logs.
-            onStatus.accept(readMessage(data));
+            onStatus.accept(sse.readMessage(data));
             return;
         }
         if ("chunk_failed".equals(event)) {
-            JsonNode node = readJson(data);
-            String msg = node != null && node.hasNonNull("message")
-                    ? node.get("message").asText() : "";
-            int current = node != null ? node.path("current").asInt() : 0;
-            int total = node != null ? node.path("total").asInt() : 0;
-            onStatus.accept("Morceau " + current + "/" + total + " ignoré"
-                    + (msg.isEmpty() ? "." : " : " + msg));
+            onStatus.accept(sse.chunkFailedStatus(data));
             return;
         }
         if ("error".equals(event)) {
             terminated[0] = true;
             onError.accept(new RulesImportException(
-                    "Le Brain a signalé une erreur : " + readMessage(data)));
+                    "Le Brain a signalé une erreur : " + sse.readMessage(data)));
             return;
         }
         if ("extracting".equals(event)) {
@@ -213,7 +188,7 @@ public class BrainRulesImportClient implements RulesPdfImporter {
             return;
         }
 
-        JsonNode node = readJson(data);
+        JsonNode node = sse.readJson(data);
         if (node == null) return;
 
         if ("start".equals(event)) {
@@ -238,32 +213,6 @@ public class BrainRulesImportClient implements RulesPdfImporter {
     }
 
     // --- Helpers -------------------------------------------------------------
-
-    /** ByteArrayResource avec nom de fichier : sans nom, l'upload n'est pas vu comme un fichier. */
-    private ByteArrayResource filePart(byte[] pdfBytes, String filename) {
-        return new ByteArrayResource(pdfBytes) {
-            @Override
-            public String getFilename() {
-                return (filename == null || filename.isBlank()) ? "rules.pdf" : filename;
-            }
-        };
-    }
-
-    private JsonNode readJson(String data) {
-        try {
-            return objectMapper.readTree(data);
-        } catch (Exception e) {
-            return null; // morceau de flux non-JSON inattendu : on l'ignore.
-        }
-    }
-
-    private String readMessage(String data) {
-        JsonNode node = readJson(data);
-        if (node != null && node.hasNonNull("message")) {
-            return node.get("message").asText();
-        }
-        return data;
-    }
 
     private List<String> toStringList(JsonNode array) {
         List<String> out = new ArrayList<>();

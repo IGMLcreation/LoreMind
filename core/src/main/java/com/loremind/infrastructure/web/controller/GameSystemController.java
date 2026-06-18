@@ -5,10 +5,8 @@ import com.loremind.application.gamesystemcontext.GameSystemService;
 import com.loremind.domain.gamesystemcontext.GameSystem;
 import com.loremind.domain.gamesystemcontext.RulesImportResult;
 import com.loremind.domain.gamesystemcontext.ports.RulesImportException;
-import com.loremind.domain.shared.template.TemplateField;
 import com.loremind.infrastructure.web.dto.gamesystemcontext.GameSystemDTO;
 import com.loremind.infrastructure.web.dto.gamesystemcontext.RulesImportResponseDTO;
-import com.loremind.infrastructure.web.dto.shared.TemplateFieldDTO;
 import com.loremind.infrastructure.web.mapper.GameSystemMapper;
 import com.loremind.infrastructure.web.mapper.TemplateFieldMapper;
 import org.slf4j.Logger;
@@ -23,7 +21,6 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -261,18 +258,11 @@ public class GameSystemController {
                 dto.getName(),
                 dto.getDescription(),
                 dto.getRulesMarkdown(),
-                toDomainFields(dto.getCharacterTemplate()),
-                toDomainFields(dto.getNpcTemplate()),
-                toDomainFields(dto.getEnemyTemplate()),
+                templateFieldMapper.toDomainList(dto.getCharacterTemplate()),
+                templateFieldMapper.toDomainList(dto.getNpcTemplate()),
+                templateFieldMapper.toDomainList(dto.getEnemyTemplate()),
                 dto.getAuthor(),
                 dto.isPublic()
         );
-    }
-
-    private List<TemplateField> toDomainFields(List<TemplateFieldDTO> dtos) {
-        if (dtos == null) return new ArrayList<>();
-        List<TemplateField> out = new ArrayList<>(dtos.size());
-        for (TemplateFieldDTO d : dtos) out.add(templateFieldMapper.toDomain(d));
-        return out;
     }
 }

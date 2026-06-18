@@ -1,9 +1,6 @@
 package com.loremind.infrastructure.transfer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.loremind.domain.campaigncontext.Prerequisite;
-import com.loremind.domain.campaigncontext.SceneBranch;
-import com.loremind.domain.images.ports.ImageStorage;
 import com.loremind.infrastructure.persistence.converter.PrerequisiteListJsonConverter;
 import com.loremind.infrastructure.persistence.entity.*;
 import com.loremind.infrastructure.persistence.jpa.*;
@@ -11,7 +8,6 @@ import com.loremind.infrastructure.transfer.dto.ContentExport;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -65,8 +61,7 @@ public class ImportService {
     private final EnemyJpaRepository enemyRepo;
     private final ItemCatalogJpaRepository itemCatalogRepo;
     private final RandomTableJpaRepository randomTableRepo;
-    private final ImageJpaRepository imageRepo;
-    private final ImageStorage imageStorage;
+    private final ImageImporter imageImporter;
     private final ObjectMapper objectMapper;
 
     public ImportService(GameSystemJpaRepository gameSystemRepo,
@@ -83,8 +78,7 @@ public class ImportService {
                          EnemyJpaRepository enemyRepo,
                          ItemCatalogJpaRepository itemCatalogRepo,
                          RandomTableJpaRepository randomTableRepo,
-                         ImageJpaRepository imageRepo,
-                         ImageStorage imageStorage,
+                         ImageImporter imageImporter,
                          ObjectMapper objectMapper) {
         this.gameSystemRepo = gameSystemRepo;
         this.loreRepo = loreRepo;
@@ -100,42 +94,20 @@ public class ImportService {
         this.enemyRepo = enemyRepo;
         this.itemCatalogRepo = itemCatalogRepo;
         this.randomTableRepo = randomTableRepo;
-        this.imageRepo = imageRepo;
-        this.imageStorage = imageStorage;
+        this.imageImporter = imageImporter;
         this.objectMapper = objectMapper;
     }
 
     @Transactional
     public ImportResult importZip(InputStream zipStream) {
         // 1. Parse du zip.
-        ContentExport export = null;
-        Map<String, byte[]> imageBinaries = new LinkedHashMap<>(); // storageKey -> binaire
-        try (ZipInputStream zip = new ZipInputStream(zipStream)) {
-            ZipEntry entry;
-            while ((entry = zip.getNextEntry()) != null) {
-                String name = entry.getName();
-                if ("data.json".equals(name)) {
-                    export = objectMapper.readValue(readAll(zip), ContentExport.class);
-                } else if (name.startsWith("images/") && !entry.isDirectory()) {
-                    // La cle de stockage est le chemin sans le prefixe "images/" du zip,
-                    // c'est-a-dire EXACTEMENT le storageKey d'origine ("images/UUID.ext").
-                    String storageKey = name.substring("images/".length());
-                    imageBinaries.put(storageKey, readAll(zip));
-                }
-                // manifest.json : ignore a l'import (info seulement).
-                zip.closeEntry();
-            }
-        } catch (IOException e) {
-            throw new UncheckedIOException("Echec de lecture du zip d'import", e);
-        }
-        if (export == null) {
-            throw new IllegalArgumentException("Archive invalide : data.json introuvable");
-        }
+        ParsedArchive archive = parseArchive(zipStream);
+        ContentExport export = archive.export();
 
         ImportResult.Builder result = new ImportResult.Builder();
 
         // 2. Reecriture des images (cle preservee).
-        importImages(export, imageBinaries, result);
+        imageImporter.importImages(export, archive.imageBinaries(), result);
 
         // 3. Insertion top-down + maps de remapping.
         Map<Long, Long> gameSystemMap = new HashMap<>();
@@ -184,7 +156,7 @@ public class ImportService {
             e.setName(d.name());
             e.setIcon(d.icon());
             e.setParentId(d.parentId()); // remappe plus bas
-            e.setLoreId(remapRequired(loreMap, d.loreId()));
+            e.setLoreId(IdRemapper.remapId(loreMap, d.loreId()));
             LoreNodeJpaEntity saved = loreNodeRepo.save(e);
             loreNodeMap.put(d.id(), saved.getId());
             if (d.parentId() != null) loreNodesToFix.add(saved);
@@ -195,7 +167,7 @@ public class ImportService {
         List<ContentExport.TemplateDto> templatesWithDefaultNode = new ArrayList<>();
         for (ContentExport.TemplateDto d : nullSafe(export.templates())) {
             TemplateJpaEntity e = new TemplateJpaEntity();
-            e.setLoreId(remapRequired(loreMap, d.loreId()));
+            e.setLoreId(IdRemapper.remapId(loreMap, d.loreId()));
             e.setName(d.name());
             e.setDescription(d.description());
             e.setDefaultNodeId(d.defaultNodeId()); // remappe plus bas
@@ -208,9 +180,9 @@ public class ImportService {
         // -- Page (relatedPageIds remappe en 2e passe)
         for (ContentExport.PageDto d : nullSafe(export.pages())) {
             PageJpaEntity e = new PageJpaEntity();
-            e.setLoreId(remapRequired(loreMap, d.loreId()));
-            e.setNodeId(remapRequired(loreNodeMap, d.nodeId()));
-            e.setTemplateId(remapNullable(templateMap, d.templateId()));
+            e.setLoreId(IdRemapper.remapId(loreMap, d.loreId()));
+            e.setNodeId(IdRemapper.remapId(loreNodeMap, d.nodeId()));
+            e.setTemplateId(IdRemapper.remapId(templateMap, d.templateId()));
             e.setTitle(d.title());
             e.setValues(d.values());
             e.setImageValues(d.imageValues());
@@ -240,9 +212,9 @@ public class ImportService {
             ArcJpaEntity e = new ArcJpaEntity();
             e.setName(d.name());
             e.setDescription(d.description());
-            e.setCampaignId(remapRequired(campaignMap, d.campaignId()));
+            e.setCampaignId(IdRemapper.remapId(campaignMap, d.campaignId()));
             e.setOrder(d.order());
-            e.setType(parseArcType(d.type()));
+            e.setType(IdRemapper.parseArcType(d.type()));
             e.setIcon(d.icon());
             e.setThemes(d.themes());
             e.setStakes(d.stakes());
@@ -263,7 +235,7 @@ public class ImportService {
             e.setName(d.name());
             e.setDescription(d.description());
             e.setIcon(d.icon());
-            e.setCampaignId(remapRequired(campaignMap, d.campaignId()));
+            e.setCampaignId(IdRemapper.remapId(campaignMap, d.campaignId()));
             e.setOrder(d.order());
             List<CatalogItemJpaEntity> items = new ArrayList<>();
             for (ContentExport.CatalogItemDto i : nullSafe(d.items())) {
@@ -292,7 +264,7 @@ public class ImportService {
             e.setDescription(d.description());
             e.setDiceFormula(d.diceFormula());
             e.setIcon(d.icon());
-            e.setCampaignId(remapRequired(campaignMap, d.campaignId()));
+            e.setCampaignId(IdRemapper.remapId(campaignMap, d.campaignId()));
             e.setOrder(d.order());
             List<RandomTableEntryJpaEntity> entries = new ArrayList<>();
             for (ContentExport.RandomTableEntryDto en : nullSafe(d.entries())) {
@@ -318,7 +290,7 @@ public class ImportService {
             ChapterJpaEntity e = new ChapterJpaEntity();
             e.setName(d.name());
             e.setDescription(d.description());
-            e.setArcId(remapRequired(arcMap, d.arcId()));
+            e.setArcId(IdRemapper.remapId(arcMap, d.arcId()));
             e.setOrder(d.order());
             e.setPrerequisites(PREREQ_CONVERTER.convertToEntityAttribute(d.prerequisitesJson())); // remappe plus bas
             e.setIcon(d.icon());
@@ -341,7 +313,7 @@ public class ImportService {
             e.setValues(d.values());
             e.setImageValues(d.imageValues());
             e.setKeyValueValues(d.keyValueValues());
-            e.setCampaignId(remapRequired(campaignMap, d.campaignId()));
+            e.setCampaignId(IdRemapper.remapId(campaignMap, d.campaignId()));
             e.setRelatedPageIds(d.relatedPageIds()); // remappe plus bas
             e.setFolder(d.folder());
             e.setOrder(d.order());
@@ -360,7 +332,7 @@ public class ImportService {
             e.setValues(d.values());
             e.setImageValues(d.imageValues());
             e.setKeyValueValues(d.keyValueValues());
-            e.setCampaignId(remapRequired(campaignMap, d.campaignId()));
+            e.setCampaignId(IdRemapper.remapId(campaignMap, d.campaignId()));
             e.setOrder(d.order());
             enemyMap.put(d.id(), enemyRepo.save(e).getId());
         }
@@ -375,7 +347,7 @@ public class ImportService {
             e.setValues(d.values());
             e.setImageValues(d.imageValues());
             e.setKeyValueValues(d.keyValueValues());
-            e.setCampaignId(remapNullable(campaignMap, d.campaignId()));
+            e.setCampaignId(IdRemapper.remapId(campaignMap, d.campaignId()));
             e.setPlaythroughId(null); // Playthrough hors perimetre d'export
             e.setOrder(d.order());
             characterMap.put(d.id(), characterRepo.save(e).getId());
@@ -387,7 +359,7 @@ public class ImportService {
             SceneJpaEntity e = new SceneJpaEntity();
             e.setName(d.name());
             e.setDescription(d.description());
-            e.setChapterId(remapRequired(chapterMap, d.chapterId()));
+            e.setChapterId(IdRemapper.remapId(chapterMap, d.chapterId()));
             e.setOrder(d.order());
             e.setIcon(d.icon());
             e.setLocation(d.location());
@@ -434,8 +406,8 @@ public class ImportService {
         // Campaign.loreId & gameSystemId (refs faibles String -> remap via maps Long).
         for (Long newCampaignId : campaignMap.values()) {
             campaignRepo.findById(newCampaignId).ifPresent(c -> {
-                String newLore = remapStringId(loreMap, c.getLoreId());
-                String newGs = remapStringId(gameSystemMap, c.getGameSystemId());
+                String newLore = IdRemapper.remapStringId(loreMap, c.getLoreId());
+                String newGs = IdRemapper.remapStringId(gameSystemMap, c.getGameSystemId());
                 c.setLoreId(newLore);
                 c.setGameSystemId(newGs);
                 campaignRepo.save(c);
@@ -445,7 +417,7 @@ public class ImportService {
         // Page.relatedPageIds
         for (Long newPageId : pageMap.values()) {
             pageRepo.findById(newPageId).ifPresent(p -> {
-                p.setRelatedPageIds(remapStringList(pageMap, p.getRelatedPageIds()));
+                p.setRelatedPageIds(IdRemapper.remapStringList(pageMap, p.getRelatedPageIds()));
                 pageRepo.save(p);
             });
         }
@@ -453,7 +425,7 @@ public class ImportService {
         // Arc.relatedPageIds
         for (Long newArcId : arcMap.values()) {
             arcRepo.findById(newArcId).ifPresent(a -> {
-                a.setRelatedPageIds(remapStringList(pageMap, a.getRelatedPageIds()));
+                a.setRelatedPageIds(IdRemapper.remapStringList(pageMap, a.getRelatedPageIds()));
                 arcRepo.save(a);
             });
         }
@@ -461,8 +433,8 @@ public class ImportService {
         // Chapter.relatedPageIds + prerequisites(QuestCompleted -> map Chapter)
         for (Long newChapterId : chapterMap.values()) {
             chapterRepo.findById(newChapterId).ifPresent(c -> {
-                c.setRelatedPageIds(remapStringList(pageMap, c.getRelatedPageIds()));
-                c.setPrerequisites(remapPrerequisites(chapterMap, c.getPrerequisites()));
+                c.setRelatedPageIds(IdRemapper.remapStringList(pageMap, c.getRelatedPageIds()));
+                c.setPrerequisites(IdRemapper.remapPrerequisites(chapterMap, c.getPrerequisites()));
                 chapterRepo.save(c);
             });
         }
@@ -470,7 +442,7 @@ public class ImportService {
         // Npc.relatedPageIds
         for (Long newNpcId : npcMap.values()) {
             npcRepo.findById(newNpcId).ifPresent(n -> {
-                n.setRelatedPageIds(remapStringList(pageMap, n.getRelatedPageIds()));
+                n.setRelatedPageIds(IdRemapper.remapStringList(pageMap, n.getRelatedPageIds()));
                 npcRepo.save(n);
             });
         }
@@ -478,9 +450,9 @@ public class ImportService {
         // Scene.relatedPageIds + enemyIds(map Enemy) + branches.targetSceneId(map Scene)
         for (Long newSceneId : sceneMap.values()) {
             sceneRepo.findById(newSceneId).ifPresent(s -> {
-                s.setRelatedPageIds(remapStringList(pageMap, s.getRelatedPageIds()));
-                s.setEnemyIds(remapStringList(enemyMap, s.getEnemyIds()));
-                s.setBranches(remapBranches(sceneMap, s.getBranches()));
+                s.setRelatedPageIds(IdRemapper.remapStringList(pageMap, s.getRelatedPageIds()));
+                s.setEnemyIds(IdRemapper.remapStringList(enemyMap, s.getEnemyIds()));
+                s.setBranches(IdRemapper.remapBranches(sceneMap, s.getBranches()));
                 sceneRepo.save(s);
             });
         }
@@ -488,104 +460,40 @@ public class ImportService {
         return result.build();
     }
 
-    // ----- Images -----
+    // ----- Lecture de l'archive -----
 
-    private void importImages(ContentExport export,
-                              Map<String, byte[]> imageBinaries,
-                              ImportResult.Builder result) {
-        // Index des metadonnees d'image par cle (depuis le data.json).
-        Map<String, ContentExport.ImageDto> metaByKey = new HashMap<>();
-        for (ContentExport.ImageDto img : nullSafe(export.images())) {
-            if (img.storageKey() != null) metaByKey.put(img.storageKey(), img);
-        }
+    /** Contenu déballé d'un zip d'import : le {@code data.json} parsé + les binaires d'images. */
+    private record ParsedArchive(ContentExport export, Map<String, byte[]> imageBinaries) {
+    }
 
-        for (Map.Entry<String, byte[]> bin : imageBinaries.entrySet()) {
-            String storageKey = bin.getKey();
-            byte[] data = bin.getValue();
-            if (imageRepo.findByStorageKey(storageKey).isPresent()) {
-                // Image deja presente : on reutilise, pas de reupload (eviter doublon).
-                result.imageReused();
-                continue;
+    /**
+     * Déballe le zip : {@code data.json → ContentExport} et {@code images/<clé> → binaire}
+     * (le {@code manifest.json} est ignoré, info seulement). Lève si {@code data.json} manque.
+     */
+    private ParsedArchive parseArchive(InputStream zipStream) {
+        ContentExport export = null;
+        Map<String, byte[]> imageBinaries = new LinkedHashMap<>(); // storageKey -> binaire
+        try (ZipInputStream zip = new ZipInputStream(zipStream)) {
+            ZipEntry entry;
+            while ((entry = zip.getNextEntry()) != null) {
+                String name = entry.getName();
+                if ("data.json".equals(name)) {
+                    export = objectMapper.readValue(readAll(zip), ContentExport.class);
+                } else if (name.startsWith("images/") && !entry.isDirectory()) {
+                    // La cle de stockage est le chemin sans le prefixe "images/" du zip,
+                    // c'est-a-dire EXACTEMENT le storageKey d'origine ("images/UUID.ext").
+                    String storageKey = name.substring("images/".length());
+                    imageBinaries.put(storageKey, readAll(zip));
+                }
+                zip.closeEntry();
             }
-            ContentExport.ImageDto meta = metaByKey.get(storageKey);
-            String contentType = meta != null && meta.contentType() != null
-                    ? meta.contentType() : guessContentType(storageKey);
-            long size = meta != null ? meta.sizeBytes() : data.length;
-
-            imageStorage.store(storageKey, contentType, new ByteArrayInputStream(data), data.length);
-
-            ImageJpaEntity e = new ImageJpaEntity();
-            e.setFilename(meta != null && meta.filename() != null
-                    ? meta.filename() : fileNameOf(storageKey));
-            e.setContentType(contentType);
-            e.setSizeBytes(size);
-            e.setStorageKey(storageKey);
-            imageRepo.save(e);
-            result.imageUploaded();
+        } catch (IOException e) {
+            throw new UncheckedIOException("Echec de lecture du zip d'import", e);
         }
-    }
-
-    // ----- Helpers de remapping -----
-
-    /** Remap obligatoire d'une FK Long : si absente de la map, on garde l'ancienne valeur. */
-    private Long remapRequired(Map<Long, Long> map, Long oldId) {
-        if (oldId == null) return null;
-        return map.getOrDefault(oldId, oldId);
-    }
-
-    /** Remap d'une FK Long nullable : null reste null. */
-    private Long remapNullable(Map<Long, Long> map, Long oldId) {
-        if (oldId == null) return null;
-        return map.getOrDefault(oldId, oldId);
-    }
-
-    /** Remap d'un id stocke en String ("oldLong" -> "newLong") via une map Long. */
-    private String remapStringId(Map<Long, Long> map, String oldId) {
-        if (oldId == null || oldId.isBlank()) return oldId;
-        try {
-            Long newId = map.get(Long.parseLong(oldId.trim()));
-            return newId != null ? String.valueOf(newId) : oldId;
-        } catch (NumberFormatException ex) {
-            return oldId; // pas un Long : on laisse tel quel
+        if (export == null) {
+            throw new IllegalArgumentException("Archive invalide : data.json introuvable");
         }
-    }
-
-    private List<String> remapStringList(Map<Long, Long> map, List<String> ids) {
-        if (ids == null) return null;
-        List<String> out = new ArrayList<>(ids.size());
-        for (String id : ids) out.add(remapStringId(map, id));
-        return out;
-    }
-
-    private List<Prerequisite> remapPrerequisites(Map<Long, Long> chapterMap, List<Prerequisite> prereqs) {
-        if (prereqs == null) return null;
-        List<Prerequisite> out = new ArrayList<>(prereqs.size());
-        for (Prerequisite p : prereqs) {
-            if (p instanceof Prerequisite.QuestCompleted qc) {
-                out.add(new Prerequisite.QuestCompleted(remapStringId(chapterMap, qc.questId())));
-            } else {
-                out.add(p); // FlagSet / SessionReached : inchanges
-            }
-        }
-        return out;
-    }
-
-    private List<SceneBranch> remapBranches(Map<Long, Long> sceneMap, List<SceneBranch> branches) {
-        if (branches == null) return null;
-        List<SceneBranch> out = new ArrayList<>(branches.size());
-        for (SceneBranch b : branches) {
-            out.add(new SceneBranch(b.label(), remapStringId(sceneMap, b.targetSceneId()), b.condition()));
-        }
-        return out;
-    }
-
-    private com.loremind.domain.campaigncontext.ArcType parseArcType(String type) {
-        if (type == null) return com.loremind.domain.campaigncontext.ArcType.LINEAR;
-        try {
-            return com.loremind.domain.campaigncontext.ArcType.valueOf(type);
-        } catch (IllegalArgumentException ex) {
-            return com.loremind.domain.campaigncontext.ArcType.LINEAR;
-        }
+        return new ParsedArchive(export, imageBinaries);
     }
 
     // ----- Helpers divers -----
@@ -598,19 +506,5 @@ public class ImportService {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         in.transferTo(buffer);
         return buffer.toByteArray();
-    }
-
-    private static String fileNameOf(String storageKey) {
-        int slash = storageKey.lastIndexOf('/');
-        return slash >= 0 ? storageKey.substring(slash + 1) : storageKey;
-    }
-
-    private static String guessContentType(String storageKey) {
-        String lower = storageKey.toLowerCase();
-        if (lower.endsWith(".png")) return "image/png";
-        if (lower.endsWith(".gif")) return "image/gif";
-        if (lower.endsWith(".webp")) return "image/webp";
-        if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
-        return "application/octet-stream";
     }
 }

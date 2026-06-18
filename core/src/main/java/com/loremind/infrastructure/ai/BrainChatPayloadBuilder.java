@@ -108,9 +108,7 @@ public class BrainChatPayloadBuilder {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("name", q.name());
         map.put("arc_name", q.arcName());
-        if (q.description() != null && !q.description().isBlank()) {
-            map.put("description", q.description());
-        }
+        putIfText(map, "description", q.description());
         return map;
     }
 
@@ -121,18 +119,14 @@ public class BrainChatPayloadBuilder {
         if (e.occurredAt() != null) {
             map.put("occurred_at", e.occurredAt().toString());
         }
-        if (e.sourceSessionName() != null && !e.sourceSessionName().isBlank()) {
-            map.put("source_session_name", e.sourceSessionName());
-        }
+        putIfText(map, "source_session_name", e.sourceSessionName());
         return map;
     }
 
     private Map<String, Object> gameSystemContextToMap(GameSystemContext gs) {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("system_name", gs.systemName());
-        if (gs.systemDescription() != null && !gs.systemDescription().isBlank()) {
-            map.put("system_description", gs.systemDescription());
-        }
+        putIfText(map, "system_description", gs.systemDescription());
         map.put("sections", gs.sections() != null ? gs.sections() : Map.of());
         return map;
     }
@@ -211,18 +205,14 @@ public class BrainChatPayloadBuilder {
     private Map<String, Object> characterSummaryToMap(CharacterSummary c) {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("name", c.name());
-        if (c.snippet() != null && !c.snippet().isBlank()) {
-            map.put("snippet", c.snippet());
-        }
+        putIfText(map, "snippet", c.snippet());
         return map;
     }
 
     private Map<String, Object> npcSummaryToMap(NpcSummary n) {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("name", n.name());
-        if (n.snippet() != null && !n.snippet().isBlank()) {
-            map.put("snippet", n.snippet());
-        }
+        putIfText(map, "snippet", n.snippet());
         return map;
     }
 
@@ -300,9 +290,7 @@ public class BrainChatPayloadBuilder {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("label", b.label());
         map.put("target_scene_name", b.targetSceneName());
-        if (b.condition() != null && !b.condition().isBlank()) {
-            map.put("condition", b.condition());
-        }
+        putIfText(map, "condition", b.condition());
         return map;
     }
 
@@ -310,14 +298,14 @@ public class BrainChatPayloadBuilder {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("name", r.name());
         if (r.floor() != null) map.put("floor", r.floor());
-        if (r.description() != null && !r.description().isBlank()) map.put("description", r.description());
-        if (r.enemies() != null && !r.enemies().isBlank()) map.put("enemies", r.enemies());
+        putIfText(map, "description", r.description());
+        putIfText(map, "enemies", r.enemies());
         if (r.branches() != null && !r.branches().isEmpty()) {
             map.put("branches", r.branches().stream().map(b -> {
                 Map<String, Object> bm = new LinkedHashMap<>();
                 bm.put("label", b.label());
                 bm.put("target_room_name", b.targetRoomName());
-                if (b.condition() != null && !b.condition().isBlank()) bm.put("condition", b.condition());
+                putIfText(bm, "condition", b.condition());
                 return bm;
             }).collect(Collectors.toList()));
         }
@@ -330,5 +318,16 @@ public class BrainChatPayloadBuilder {
         map.put("title", ne.title());
         map.put("fields", ne.fields());
         return map;
+    }
+
+    /**
+     * Ajoute {@code key → value} uniquement si {@code value} est une chaîne non
+     * nulle et non blanche. Centralise l'omission des champs Optional « texte »
+     * pour s'aligner sur le schéma Pydantic du Brain (champ absent si vide).
+     */
+    private static void putIfText(Map<String, Object> map, String key, String value) {
+        if (value != null && !value.isBlank()) {
+            map.put(key, value);
+        }
     }
 }

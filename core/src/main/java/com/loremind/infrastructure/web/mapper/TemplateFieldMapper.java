@@ -60,4 +60,20 @@ public class TemplateFieldMapper {
         }
         return new TemplateField(dto.getName(), type, layout, labels);
     }
+
+    /** Mappe une liste de champs domaine → DTO ({@code null} → liste vide). */
+    public List<TemplateFieldDTO> toDTOList(List<TemplateField> fields) {
+        if (fields == null) return new ArrayList<>();
+        List<TemplateFieldDTO> out = new ArrayList<>(fields.size());
+        for (TemplateField f : fields) out.add(toDTO(f));
+        return out;
+    }
+
+    /** Mappe une liste de champs DTO → domaine ({@code null} → liste vide). */
+    public List<TemplateField> toDomainList(List<TemplateFieldDTO> dtos) {
+        if (dtos == null) return new ArrayList<>();
+        List<TemplateField> out = new ArrayList<>(dtos.size());
+        for (TemplateFieldDTO d : dtos) out.add(toDomain(d));
+        return out;
+    }
 }

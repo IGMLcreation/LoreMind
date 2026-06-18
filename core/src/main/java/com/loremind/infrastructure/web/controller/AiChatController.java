@@ -9,6 +9,7 @@ import com.loremind.infrastructure.web.dto.generationcontext.ChatMessageDTO;
 import com.loremind.infrastructure.web.dto.generationcontext.ChatStreamCampaignRequestDTO;
 import com.loremind.infrastructure.web.dto.generationcontext.ChatStreamRequestDTO;
 import com.loremind.infrastructure.web.dto.generationcontext.ChatStreamSessionRequestDTO;
+import com.loremind.infrastructure.web.sse.SseJson;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.http.MediaType;
@@ -162,7 +163,7 @@ public class AiChatController {
     private void sendToken(SseEmitter emitter, String token) {
         try {
             emitter.send(SseEmitter.event()
-                    .data("{\"token\":" + jsonEscape(token) + "}"));
+                    .data("{\"token\":" + SseJson.escape(token) + "}"));
         } catch (IOException e) {
             emitter.completeWithError(e);
         }
@@ -182,7 +183,7 @@ public class AiChatController {
             String message = error.getMessage() != null ? error.getMessage() : error.getClass().getSimpleName();
             emitter.send(SseEmitter.event()
                     .name("error")
-                    .data("{\"message\":" + jsonEscape(message) + "}"));
+                    .data("{\"message\":" + SseJson.escape(message) + "}"));
             emitter.complete();
         } catch (IOException ioe) {
             emitter.completeWithError(ioe);
@@ -190,31 +191,6 @@ public class AiChatController {
     }
 
     // --- Utilitaires --------------------------------------------------------
-
-    /** Encadre une chaîne de guillemets et échappe les caractères JSON dangereux. */
-    private String jsonEscape(String raw) {
-        if (raw == null) return "\"\"";
-        StringBuilder sb = new StringBuilder(raw.length() + 2);
-        sb.append('"');
-        for (int i = 0; i < raw.length(); i++) {
-            char c = raw.charAt(i);
-            switch (c) {
-                case '"':  sb.append("\\\""); break;
-                case '\\': sb.append("\\\\"); break;
-                case '\n': sb.append("\\n"); break;
-                case '\r': sb.append("\\r"); break;
-                case '\t': sb.append("\\t"); break;
-                default:
-                    if (c < 0x20) {
-                        sb.append(String.format("\\u%04x", (int) c));
-                    } else {
-                        sb.append(c);
-                    }
-            }
-        }
-        sb.append('"');
-        return sb.toString();
-    }
 
     private List<ChatMessage> toDomainMessages(List<ChatMessageDTO> dtos) {
         if (dtos == null) return List.of();

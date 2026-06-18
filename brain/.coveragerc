@@ -1,0 +1,15 @@
+# Configuration de couverture (coverage.py / pytest-cov).
+# Rapport HTML (équivalent JaCoCo) : pytest --cov=app --cov-report=html → htmlcov/
+# Plancher anti-régression appliqué en CI : --cov-fail-under=50
+[run]
+source = app
+branch = false
+
+[report]
+show_missing = true
+skip_covered = false
+# Lignes jamais comptées comme « à couvrir ».
+exclude_lines =
+    pragma: no cover
+    if __name__ == .__main__.:
+    raise NotImplementedError

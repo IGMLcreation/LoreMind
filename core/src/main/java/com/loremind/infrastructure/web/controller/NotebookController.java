@@ -5,6 +5,7 @@ import com.loremind.domain.campaigncontext.Notebook;
 import com.loremind.domain.campaigncontext.NotebookSource;
 import com.loremind.domain.campaigncontext.ports.NotebookChatStreamer;
 import com.loremind.domain.campaigncontext.ports.NotebookException;
+import com.loremind.infrastructure.web.sse.SseJson;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.http.HttpStatus;
@@ -211,7 +212,7 @@ public class NotebookController {
 
     private void sendToken(SseEmitter emitter, String token) {
         try {
-            emitter.send(SseEmitter.event().name("token").data("{\"token\":" + jsonEscape(token) + "}"));
+            emitter.send(SseEmitter.event().name("token").data("{\"token\":" + SseJson.escape(token) + "}"));
         } catch (IOException | IllegalStateException e) {
             // flux fermé/expiré : on cesse d'écrire
         }
@@ -247,30 +248,11 @@ public class NotebookController {
     private void fail(SseEmitter emitter, Throwable error) {
         try {
             String message = error.getMessage() != null ? error.getMessage() : error.getClass().getSimpleName();
-            emitter.send(SseEmitter.event().name("error").data("{\"message\":" + jsonEscape(message) + "}"));
+            emitter.send(SseEmitter.event().name("error").data("{\"message\":" + SseJson.escape(message) + "}"));
             emitter.complete();
         } catch (IOException | IllegalStateException e) {
             // flux déjà fermé/expiré : rien à envoyer
         }
-    }
-
-    private String jsonEscape(String raw) {
-        if (raw == null) return "\"\"";
-        StringBuilder sb = new StringBuilder(raw.length() + 2).append('"');
-        for (int i = 0; i < raw.length(); i++) {
-            char c = raw.charAt(i);
-            switch (c) {
-                case '"':  sb.append("\\\""); break;
-                case '\\': sb.append("\\\\"); break;
-                case '\n': sb.append("\\n"); break;
-                case '\r': sb.append("\\r"); break;
-                case '\t': sb.append("\\t"); break;
-                default:
-                    if (c < 0x20) sb.append(String.format("\\u%04x", (int) c));
-                    else sb.append(c);
-            }
-        }
-        return sb.append('"').toString();
     }
 
     public record CreateRequest(String campaignId, String name) {}

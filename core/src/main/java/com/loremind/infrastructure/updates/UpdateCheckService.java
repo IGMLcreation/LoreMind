@@ -25,7 +25,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -114,32 +113,9 @@ public class UpdateCheckService {
             return new UpdateStatus(true, false, true, null, statuses, Instant.now());
         }
 
-        List<ImageStatus> statuses = new ArrayList<>();
-        boolean anyUpdate = false;
-        boolean anyUnknown = false;
-        for (String image : images) {
-            String latest = null;
-            try {
-                latest = fetchLatestSemverTag(registry, image, null);
-            } catch (Exception e) {
-                log.warn("Tags fetch failed for {}: {}", image, e.getMessage());
-            }
-            ImageStatusKind kind;
-            if (latest == null) {
-                kind = ImageStatusKind.UNKNOWN;
-                anyUnknown = true;
-            } else {
-                int cmp = compareSemver(currentVersion, latest);
-                if (cmp >= 0) {
-                    kind = ImageStatusKind.UP_TO_DATE;
-                } else {
-                    kind = ImageStatusKind.UPDATE_AVAILABLE;
-                    anyUpdate = true;
-                }
-            }
-            statuses.add(new ImageStatus(image, currentVersion, latest, kind));
-        }
-        return new UpdateStatus(true, anyUpdate, anyUnknown, currentVersion, statuses, Instant.now());
+        ImagesEvaluation ev = evaluateImages(images, registry, null);
+        return new UpdateStatus(true, ev.anyUpdate(), ev.anyUnknown(),
+                currentVersion, ev.statuses(), Instant.now());
     }
 
     /**
@@ -169,21 +145,37 @@ public class UpdateCheckService {
                 (creds.get().username() + ":" + creds.get().password()).getBytes(StandardCharsets.UTF_8));
         String betaRegistry = normalizeRegistry(creds.get().registry());
 
+        ImagesEvaluation ev = evaluateImages(betaImages, betaRegistry, basicAuth);
+        return new BetaStatus(true, ev.anyUpdate(), ev.anyUnknown(),
+                ev.statuses(), Instant.now(), null);
+    }
+
+    /** Résultat de l'évaluation d'une liste d'images : statuts + drapeaux agrégés. */
+    private record ImagesEvaluation(List<ImageStatus> statuses, boolean anyUpdate, boolean anyUnknown) {
+    }
+
+    /**
+     * Boucle commune à {@link #check()} et {@link #checkBeta()} : pour chaque image,
+     * récupère le tag semver le plus haut et le compare à la version courante.
+     * Une image dont les tags sont injoignables ou non semver → {@code UNKNOWN}.
+     */
+    private ImagesEvaluation evaluateImages(List<String> imageList, String registryUrl,
+                                            @Nullable String authHeader) {
         List<ImageStatus> statuses = new ArrayList<>();
         boolean anyUpdate = false;
         boolean anyUnknown = false;
-        for (String image : betaImages) {
+        for (String image : imageList) {
             String latest = null;
             try {
-                latest = fetchLatestSemverTag(betaRegistry, image, basicAuth);
+                latest = fetchLatestSemverTag(registryUrl, image, authHeader);
             } catch (Exception e) {
-                log.warn("Beta tags fetch failed for {}: {}", image, e.getMessage());
+                log.warn("Tags fetch failed for {}: {}", image, e.getMessage());
             }
             ImageStatusKind kind;
             if (latest == null) {
                 kind = ImageStatusKind.UNKNOWN;
                 anyUnknown = true;
-            } else if (currentVersion != null && compareSemver(currentVersion, latest) >= 0) {
+            } else if (currentVersion != null && SemverComparator.compareSemver(currentVersion, latest) >= 0) {
                 kind = ImageStatusKind.UP_TO_DATE;
             } else {
                 kind = ImageStatusKind.UPDATE_AVAILABLE;
@@ -191,7 +183,7 @@ public class UpdateCheckService {
             }
             statuses.add(new ImageStatus(image, currentVersion, latest, kind));
         }
-        return new BetaStatus(true, anyUpdate, anyUnknown, statuses, Instant.now(), null);
+        return new ImagesEvaluation(statuses, anyUpdate, anyUnknown);
     }
 
     public void apply() {
@@ -209,6 +201,10 @@ public class UpdateCheckService {
 
     // -----------------------------------------------------------------------
     // Registry HTTP API v2 - tags listing + auth bearer
+    //
+    // NB : le RestTemplate (champ `http`) reste porté par ce service — les tests
+    // l'injectent par réflexion. Le parsing semver et le parsing du challenge
+    // WWW-Authenticate sont, eux, externalisés (SemverComparator, WwwAuthenticate).
     // -----------------------------------------------------------------------
 
     /**
@@ -244,76 +240,13 @@ public class UpdateCheckService {
             body = tagsCall(url, bearerHeaders);
         }
         if (body == null || body.tags == null || body.tags.isEmpty()) return null;
-        return findMaxSemver(body.tags);
+        return SemverComparator.findMaxSemver(body.tags);
     }
 
     private TagsListResponse tagsCall(String url, HttpHeaders headers) {
         ResponseEntity<TagsListResponse> resp = http.exchange(
                 url, HttpMethod.GET, new HttpEntity<>(headers), TagsListResponse.class);
         return resp.getBody();
-    }
-
-    /**
-     * Parcourt la liste des tags, garde uniquement ceux qui parsent en semver
-     * (1 a 3 chiffres separes par des points, optionnel prefix "v"), retourne le max.
-     * Pre-release / build metadata sont strippes pour la comparaison.
-     */
-    @Nullable
-    static String findMaxSemver(List<String> tags) {
-        String maxTag = null;
-        int[] maxParts = null;
-        for (String t : tags) {
-            if (t == null || t.isBlank()) continue;
-            int[] parts = parseSemver(t);
-            if (parts == null) continue;
-            if (maxParts == null || compareParts(parts, maxParts) > 0) {
-                maxParts = parts;
-                maxTag = t;
-            }
-        }
-        return maxTag;
-    }
-
-    /** @return [major, minor, patch] ou null si non parsable. */
-    @Nullable
-    static int[] parseSemver(String tag) {
-        if (tag == null) return null;
-        String s = tag.trim();
-        if (s.isEmpty()) return null;
-        if (s.startsWith("v") || s.startsWith("V")) s = s.substring(1);
-        int dashIdx = s.indexOf('-');
-        if (dashIdx > 0) s = s.substring(0, dashIdx);
-        int plusIdx = s.indexOf('+');
-        if (plusIdx > 0) s = s.substring(0, plusIdx);
-        String[] parts = s.split("\\.");
-        if (parts.length < 1 || parts.length > 3) return null;
-        int[] result = new int[]{0, 0, 0};
-        for (int i = 0; i < parts.length; i++) {
-            try {
-                int v = Integer.parseInt(parts[i]);
-                if (v < 0) return null;
-                result[i] = v;
-            } catch (NumberFormatException e) {
-                return null;
-            }
-        }
-        return result;
-    }
-
-    /** Compare deux versions semver brutes (sans prefix). Negatif si a < b. */
-    static int compareSemver(String a, String b) {
-        int[] aParts = parseSemver(a);
-        int[] bParts = parseSemver(b);
-        if (aParts == null || bParts == null) return 0;
-        return compareParts(aParts, bParts);
-    }
-
-    private static int compareParts(int[] a, int[] b) {
-        for (int i = 0; i < 3; i++) {
-            int diff = Integer.compare(a[i], b[i]);
-            if (diff != 0) return diff;
-        }
-        return 0;
     }
 
     /**
@@ -326,7 +259,7 @@ public class UpdateCheckService {
         if (wwwAuth == null) return null;
         String prefix = "Bearer ";
         if (!wwwAuth.regionMatches(true, 0, prefix, 0, prefix.length())) return null;
-        Map<String, String> params = parseAuthParams(wwwAuth.substring(prefix.length()));
+        Map<String, String> params = WwwAuthenticate.parseParams(wwwAuth.substring(prefix.length()));
         String realm = params.get("realm");
         if (realm == null) return null;
         StringBuilder url = new StringBuilder(realm);
@@ -357,34 +290,6 @@ public class UpdateCheckService {
             log.warn("Bearer token request failed: {}", e.getMessage());
             return null;
         }
-    }
-
-    /** Parser minimaliste pour {@code key="value", key2="value2"}. */
-    private static Map<String, String> parseAuthParams(String s) {
-        Map<String, String> out = new HashMap<>();
-        int i = 0;
-        int n = s.length();
-        while (i < n) {
-            while (i < n && (s.charAt(i) == ',' || s.charAt(i) == ' ')) i++;
-            int eq = s.indexOf('=', i);
-            if (eq < 0) break;
-            String key = s.substring(i, eq).trim();
-            int valStart = eq + 1;
-            String val;
-            if (valStart < n && s.charAt(valStart) == '"') {
-                int valEnd = s.indexOf('"', valStart + 1);
-                if (valEnd < 0) break;
-                val = s.substring(valStart + 1, valEnd);
-                i = valEnd + 1;
-            } else {
-                int valEnd = s.indexOf(',', valStart);
-                if (valEnd < 0) valEnd = n;
-                val = s.substring(valStart, valEnd).trim();
-                i = valEnd;
-            }
-            out.put(key, val);
-        }
-        return out;
     }
 
     private static String normalizeRegistry(String value) {

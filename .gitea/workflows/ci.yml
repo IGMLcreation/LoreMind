@@ -1,0 +1,62 @@
+name: Tests unitaires
+
+# Gate de qualité : lance les 3 suites unitaires (Java / Python / Angular) à
+# chaque push sur main et sur chaque PR. Une suite rouge fait échouer la CI
+# (et, via la branch protection Gitea, peut bloquer le merge).
+# Le build/push des images (release.yml) dépend AUSSI de ces tests via `needs`.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  core:
+    name: Core (Java · mvn test + JaCoCo)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      # `mvn test` exécute aussi jacoco:report + jacoco:check (plancher 60%).
+      - name: mvn test
+        working-directory: core
+        run: mvn -B test
+
+  brain:
+    name: Brain (Python · pytest + couverture)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: brain/requirements-dev.txt
+      - name: Install deps (test)
+        working-directory: brain
+        run: pip install -r requirements-dev.txt
+      - name: pytest (+ plancher couverture 50%)
+        working-directory: brain
+        run: pytest --cov=app --cov-report=term-missing --cov-fail-under=50
+
+  web:
+    name: Web (Angular · vitest + couverture)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: npm ci
+        working-directory: web
+        run: npm ci --no-audit --no-fund
+      # vitest run --coverage applique les seuils définis dans vitest.config.ts.
+      - name: vitest (+ seuils couverture)
+        working-directory: web
+        run: npm run test:unit:coverage

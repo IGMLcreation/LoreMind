@@ -14,7 +14,6 @@ import com.loremind.domain.campaigncontext.ports.CampaignPdfImporter;
 import com.loremind.infrastructure.web.config.UserLanguageHolder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.http.codec.ServerSentEvent;
@@ -23,7 +22,6 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -43,7 +41,7 @@ public class BrainCampaignImportClient implements CampaignPdfImporter {
             new ParameterizedTypeReference<>() {};
 
     private final WebClient webClient;
-    private final ObjectMapper objectMapper;
+    private final BrainSseImportSupport sse;
     private final long importTimeoutSeconds;
 
     public BrainCampaignImportClient(
@@ -52,7 +50,7 @@ public class BrainCampaignImportClient implements CampaignPdfImporter {
             @Value("${brain.base-url}") String baseUrl,
             @Value("${brain.import-timeout-seconds:600}") long importTimeoutSeconds) {
         this.webClient = webClientBuilder.baseUrl(baseUrl).build();
-        this.objectMapper = objectMapper;
+        this.sse = new BrainSseImportSupport(objectMapper);
         this.importTimeoutSeconds = importTimeoutSeconds;
     }
 
@@ -67,7 +65,7 @@ public class BrainCampaignImportClient implements CampaignPdfImporter {
             Consumer<Throwable> onError) {
 
         MultipartBodyBuilder parts = new MultipartBodyBuilder();
-        parts.part("file", filePart(pdfBytes, filename))
+        parts.part("file", sse.filePart(pdfBytes, filename, "campaign.pdf"))
                 .filename(filename == null || filename.isBlank() ? "campaign.pdf" : filename);
 
         Flux<ServerSentEvent<String>> flux = webClient.post()
@@ -83,31 +81,16 @@ public class BrainCampaignImportClient implements CampaignPdfImporter {
         int[] ocrPageCount = {0};
         boolean[] terminated = {false};
 
-        try {
-            flux
-                .timeout(Duration.ofSeconds(importTimeoutSeconds))
-                .doOnNext(sse -> handleEvent(
-                        sse, pageCount, ocrPageCount, terminated,
-                        onProgress, onHeartbeat, onStatus, onDone, onError))
-                .blockLast();
-            if (!terminated[0]) {
-                onError.accept(new CampaignImportException(
-                        "Le flux d'import s'est interrompu avant la fin."));
-            }
-        } catch (Exception e) {
-            if (!terminated[0]) {
-                // On EXPOSE la cause réelle (type + message) : sans ça, le diagnostic
-                // est impossible (timeout WebClient, connexion coupée, réponse non-2xx…).
-                String cause = e.getClass().getSimpleName()
-                        + (e.getMessage() != null ? " — " + e.getMessage() : "");
-                onError.accept(new CampaignImportException(
-                        "Erreur lors du streaming d'import depuis le Brain : " + cause, e));
-            }
-        }
+        sse.runStream(
+                flux, importTimeoutSeconds, terminated,
+                event -> handleEvent(
+                        event, pageCount, ocrPageCount, terminated,
+                        onProgress, onHeartbeat, onStatus, onDone, onError),
+                onError, CampaignImportException::new);
     }
 
     private void handleEvent(
-            ServerSentEvent<String> sse,
+            ServerSentEvent<String> ssEvent,
             int[] pageCount,
             int[] ocrPageCount,
             boolean[] terminated,
@@ -117,8 +100,8 @@ public class BrainCampaignImportClient implements CampaignPdfImporter {
             Consumer<CampaignImportProposal> onDone,
             Consumer<Throwable> onError) {
 
-        String event = sse.event();
-        String data = sse.data() == null ? "" : sse.data();
+        String event = ssEvent.event();
+        String data = ssEvent.data() == null ? "" : ssEvent.data();
 
         if ("heartbeat".equals(event)) {
             // Keep-alive du Brain pendant un appel LLM long : à PROPAGER jusqu'au
@@ -129,23 +112,17 @@ public class BrainCampaignImportClient implements CampaignPdfImporter {
         if ("status".equals(event)) {
             // Message d'attente lisible (retry sur fournisseur saturé, morceau
             // re-découpé…) : affiché par l'UI au lieu de n'exister qu'en logs.
-            onStatus.accept(readMessage(data));
+            onStatus.accept(sse.readMessage(data));
             return;
         }
         if ("chunk_failed".equals(event)) {
-            JsonNode node = readJson(data);
-            String msg = node != null && node.hasNonNull("message")
-                    ? node.get("message").asText() : "";
-            int current = node != null ? node.path("current").asInt() : 0;
-            int total = node != null ? node.path("total").asInt() : 0;
-            onStatus.accept("Morceau " + current + "/" + total + " ignoré"
-                    + (msg.isEmpty() ? "." : " : " + msg));
+            onStatus.accept(sse.chunkFailedStatus(data));
             return;
         }
         if ("error".equals(event)) {
             terminated[0] = true;
             onError.accept(new CampaignImportException(
-                    "Le Brain a signalé une erreur : " + readMessage(data)));
+                    "Le Brain a signalé une erreur : " + sse.readMessage(data)));
             return;
         }
         if ("extracting".equals(event)) {
@@ -153,7 +130,7 @@ public class BrainCampaignImportClient implements CampaignPdfImporter {
             return;
         }
 
-        JsonNode node = readJson(data);
+        JsonNode node = sse.readJson(data);
         if (node == null) return;
 
         if ("start".equals(event)) {
@@ -246,33 +223,8 @@ public class BrainCampaignImportClient implements CampaignPdfImporter {
 
     // --- Helpers -------------------------------------------------------------
 
-    private ByteArrayResource filePart(byte[] pdfBytes, String filename) {
-        return new ByteArrayResource(pdfBytes) {
-            @Override
-            public String getFilename() {
-                return (filename == null || filename.isBlank()) ? "campaign.pdf" : filename;
-            }
-        };
-    }
-
     private static String text(JsonNode node, String field) {
         JsonNode v = node.path(field);
         return v.isMissingNode() || v.isNull() ? "" : v.asText();
-    }
-
-    private JsonNode readJson(String data) {
-        try {
-            return objectMapper.readTree(data);
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    private String readMessage(String data) {
-        JsonNode node = readJson(data);
-        if (node != null && node.hasNonNull("message")) {
-            return node.get("message").asText();
-        }
-        return data;
     }
 }

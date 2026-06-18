@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { Notebook, NotebookArchive, NotebookDetail, NotebookSource, NotebookChatEvent } from './notebook.model';
 import { LanguageService } from './language.service';
+import { parseSseStream } from '../shared/sse.util';
 
 /**
  * Service des notebooks (atelier RAG) : CRUD, upload/indexation de sources,
@@ -88,20 +89,13 @@ export class NotebookService {
             this.zone.run(() => subscriber.complete());
             return;
           }
-          const reader = response.body.getReader();
-          const decoder = new TextDecoder('utf-8');
-          let buffer = '';
-          let currentEvent: string | null = null;
-          let currentData = '';
-
-          const dispatch = () => {
-            const name = currentEvent ?? 'message';
-            if (name === 'token') {
-              try { emit({ type: 'token', value: (JSON.parse(currentData) as { token?: string }).token ?? '' }); }
+          await parseSseStream(response.body, ({ event, data }) => {
+            if (event === 'token') {
+              try { emit({ type: 'token', value: (JSON.parse(data) as { token?: string }).token ?? '' }); }
               catch { /* ignore */ }
-            } else if (name === 'sources') {
+            } else if (event === 'sources') {
               try {
-                const o = JSON.parse(currentData) as { sources?: { source_id?: string; page?: number | null; score?: number }[] };
+                const o = JSON.parse(data) as { sources?: { source_id?: string; page?: number | null; score?: number }[] };
                 emit({
                   type: 'sources',
                   sources: (o.sources ?? []).map(s => ({
@@ -109,39 +103,19 @@ export class NotebookService {
                   }))
                 });
               } catch { /* ignore */ }
-            } else if (name === 'progress') {
+            } else if (event === 'progress') {
               try {
-                const o = JSON.parse(currentData) as { current?: number; total?: number };
+                const o = JSON.parse(data) as { current?: number; total?: number };
                 emit({ type: 'progress', current: o.current ?? 0, total: o.total ?? 0 });
               } catch { /* ignore */ }
-            } else if (name === 'done') {
+            } else if (event === 'done') {
               emit({ type: 'done' });
-            } else if (name === 'error') {
+            } else if (event === 'error') {
               let msg = 'Erreur du chat.';
-              try { msg = (JSON.parse(currentData) as { message?: string }).message ?? msg; } catch { /* garde */ }
+              try { msg = (JSON.parse(data) as { message?: string }).message ?? msg; } catch { /* garde */ }
               emit({ type: 'error', message: msg });
             }
-            currentEvent = null;
-            currentData = '';
-          };
-
-          while (true) {
-            const { value, done } = await reader.read();
-            if (done) break;
-            buffer += decoder.decode(value, { stream: true });
-            let idx: number;
-            while ((idx = buffer.indexOf('\n')) >= 0) {
-              const line = buffer.slice(0, idx).replace(/\r$/, '');
-              buffer = buffer.slice(idx + 1);
-              if (line === '') { if (currentEvent !== null || currentData !== '') dispatch(); continue; }
-              if (line.startsWith('event:')) currentEvent = line.slice(6).trim();
-              else if (line.startsWith('data:')) {
-                const chunk = line.slice(5).replace(/^ /, '');
-                currentData = currentData ? `${currentData}\n${chunk}` : chunk;
-              }
-            }
-          }
-          if (currentEvent !== null || currentData !== '') dispatch();
+          });
           this.zone.run(() => subscriber.complete());
         } catch (err) {
           if ((err as Error).name !== 'AbortError') {

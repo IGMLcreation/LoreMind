@@ -1,6 +1,5 @@
 package com.loremind.infrastructure.updates;
 
-import com.loremind.application.licensing.LicenseService;
 import com.loremind.infrastructure.updates.UpdateCheckService.ImageStatus;
 import com.loremind.infrastructure.updates.UpdateCheckService.ImageStatusKind;
 import com.loremind.infrastructure.updates.UpdateCheckService.TagsListResponse;
@@ -194,52 +193,6 @@ public class UpdateCheckServiceTest {
         }
     }
 
-    // -----------------------------------------------------------------
-    // Utilitaires semver
-    // -----------------------------------------------------------------
-
-    @Test
-    void parseSemver_acceptsCommonFormats() {
-        assertArrayEquals(new int[]{0, 8, 0}, UpdateCheckService.parseSemver("0.8.0"));
-        assertArrayEquals(new int[]{0, 8, 0}, UpdateCheckService.parseSemver("v0.8.0"));
-        assertArrayEquals(new int[]{1, 0, 0}, UpdateCheckService.parseSemver("1.0.0"));
-        assertArrayEquals(new int[]{0, 8, 0}, UpdateCheckService.parseSemver("0.8.0-beta.1"));
-        assertArrayEquals(new int[]{0, 8, 0}, UpdateCheckService.parseSemver("0.8.0+build.42"));
-    }
-
-    @Test
-    void parseSemver_rejectsInvalid() {
-        assertNull(UpdateCheckService.parseSemver(null));
-        assertNull(UpdateCheckService.parseSemver(""));
-        assertNull(UpdateCheckService.parseSemver("latest"));
-        assertNull(UpdateCheckService.parseSemver("stable"));
-        assertNull(UpdateCheckService.parseSemver("0.8.0.1.2"));
-        assertNull(UpdateCheckService.parseSemver("0.x.0"));
-    }
-
-    @Test
-    void compareSemver_basic() {
-        assertTrue(UpdateCheckService.compareSemver("0.7.2", "0.8.0") < 0);
-        assertTrue(UpdateCheckService.compareSemver("0.8.0", "0.7.2") > 0);
-        assertEquals(0, UpdateCheckService.compareSemver("0.8.0", "0.8.0"));
-        assertEquals(0, UpdateCheckService.compareSemver("v0.8.0", "0.8.0"));
-        assertTrue(UpdateCheckService.compareSemver("0.8.0", "0.10.0") < 0);
-        assertTrue(UpdateCheckService.compareSemver("1.0.0", "0.99.99") > 0);
-    }
-
-    @Test
-    void findMaxSemver_picksHighest() {
-        assertEquals("0.8.0", UpdateCheckService.findMaxSemver(
-                List.of("0.7.0", "0.7.1", "0.7.2", "0.8.0", "latest")));
-        assertEquals("0.10.0", UpdateCheckService.findMaxSemver(
-                List.of("0.8.0", "0.10.0", "0.9.5")));
-        assertEquals("v1.0.0", UpdateCheckService.findMaxSemver(
-                List.of("v0.8.0", "v1.0.0", "latest")));
-    }
-
-    @Test
-    void findMaxSemver_returnsNullWhenNoValidTag() {
-        assertNull(UpdateCheckService.findMaxSemver(List.of("latest", "stable", "main")));
-        assertNull(UpdateCheckService.findMaxSemver(List.of()));
-    }
+    // NB : les utilitaires semver (parseSemver / findMaxSemver / compareSemver) sont
+    // désormais dans SemverComparator et testés par SemverComparatorTest.
 }

@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, Subscriber } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { LanguageService } from './language.service';
+import { parseSseStream, sseFetch } from '../shared/sse.util';
 
 /**
  * Un message d'une conversation IA (vue front).
@@ -105,108 +106,43 @@ export class AiChatService {
 
   /** Plumbing SSE mutualisé entre les endpoints (Lore / Campaign / Session). */
   private streamSse(endpoint: string, body: Record<string, unknown>): Observable<ChatStreamEvent> {
-    return new Observable<ChatStreamEvent>((subscriber) => {
-      const controller = new AbortController();
-
-      fetch(endpoint, {
+    return sseFetch<ChatStreamEvent>(
+      endpoint,
+      {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'text/event-stream',
           'X-User-Language': this.language.current
         },
-        body: JSON.stringify(body),
-        signal: controller.signal
-      })
-        .then(async (response) => {
-          if (!response.ok || !response.body) {
-            subscriber.error(new Error(`HTTP ${response.status}`));
-            return;
-          }
-          await this.consumeSseStream(response.body, subscriber);
-        })
-        .catch((err) => {
-          if (controller.signal.aborted) return; // annulation volontaire, silencieuse
-          subscriber.error(err);
-        });
-
-      return () => controller.abort();
-    });
+        body: JSON.stringify(body)
+      },
+      (responseBody, subscriber) => this.consumeSseStream(responseBody, subscriber)
+    );
   }
 
-  /**
-   * Consomme un ReadableStream SSE ligne par ligne.
-   * Format attendu (un événement = un bloc séparé par `\n\n`) :
-   *   event: done          (optionnel, défaut = 'message')
-   *   data: {...}          (une ou plusieurs lignes, concaténées avec '\n')
-   *   <ligne vide>         (séparateur d'événements)
-   */
+  /** Mappe les événements SSE bruts vers les `ChatStreamEvent` typés. */
   private async consumeSseStream(
     body: ReadableStream<Uint8Array>,
-    subscriber: { next: (e: ChatStreamEvent) => void; error: (e: unknown) => void; complete: () => void }
+    subscriber: Subscriber<ChatStreamEvent>
   ): Promise<void> {
-    const reader = body.getReader();
-    const decoder = new TextDecoder('utf-8');
-    let buffer = '';
-
-    // Événement SSE en cours de construction (accumulé entre lignes vides).
-    let currentEvent: string | null = null;
-    let currentData = '';
-
-    const dispatchCurrentEvent = () => {
-      const eventName = currentEvent ?? 'message';
-      // DEBUG jauge de contexte — à retirer une fois stabilisé.
-      if (eventName !== 'message') {
-        console.log('[AiChatService] SSE event:', eventName, 'data:', currentData);
-      }
-      if (eventName === 'error') {
-        const message = this.safeParseMessage(currentData);
-        subscriber.error(new Error(message));
-      } else if (eventName === 'done') {
-        subscriber.next({ type: 'done' });
-        subscriber.complete();
-      } else if (eventName === 'usage') {
-        const usage = this.safeParseUsage(currentData);
-        if (usage) subscriber.next({ type: 'usage', usage });
-      } else {
-        // Événement 'message' (défaut) : JSON {"token": "..."}
-        const token = this.safeParseToken(currentData);
-        if (token) subscriber.next({ type: 'token', value: token });
-      }
-      currentEvent = null;
-      currentData = '';
-    };
-
     try {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-
-        // On découpe par lignes ; la dernière (potentiellement incomplète) reste dans buffer.
-        let newlineIdx: number;
-        while ((newlineIdx = buffer.indexOf('\n')) >= 0) {
-          const line = buffer.slice(0, newlineIdx).replace(/\r$/, '');
-          buffer = buffer.slice(newlineIdx + 1);
-
-          if (line === '') {
-            // Ligne vide = fin d'un événement SSE : on dispatch ce qu'on a accumulé.
-            if (currentEvent !== null || currentData !== '') {
-              dispatchCurrentEvent();
-            }
-            continue;
-          }
-          if (line.startsWith('event:')) {
-            currentEvent = line.slice(6).trim();
-          } else if (line.startsWith('data:')) {
-            const chunk = line.slice(5).replace(/^ /, '');
-            currentData = currentData ? `${currentData}\n${chunk}` : chunk;
-          }
-          // Autres champs SSE (id:, retry:) ignorés pour le MVP.
+      await parseSseStream(body, ({ event, data }) => {
+        if (event === 'error') {
+          subscriber.error(new Error(this.safeParseMessage(data)));
+        } else if (event === 'done') {
+          subscriber.next({ type: 'done' });
+          subscriber.complete();
+        } else if (event === 'usage') {
+          const usage = this.safeParseUsage(data);
+          if (usage) subscriber.next({ type: 'usage', usage });
+        } else {
+          // Événement 'message' (défaut) : JSON {"token": "..."}
+          const token = this.safeParseToken(data);
+          if (token) subscriber.next({ type: 'token', value: token });
         }
-      }
+      });
       // Fin de stream côté réseau sans event: done explicite → on complete quand même.
-      if (currentEvent !== null || currentData !== '') dispatchCurrentEvent();
       subscriber.complete();
     } catch (err) {
       subscriber.error(err);
