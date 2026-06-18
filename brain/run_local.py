@@ -16,7 +16,21 @@ ailleurs, sous ~/.loremind/brain, pour y ecrire le dossier data/).
 import os
 import sys
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+_HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, _HERE)
+
+# OCR : si un Tesseract est bundlé à côté (mode desktop), on y pointe pytesseract
+# AVANT que l'app n'importe le pdf_extractor (qui détecte la version au chargement).
+# tessdata (fra+eng) est embarqué dans tesseract/tessdata. Sans ce bloc, l'OCR
+# reste désactivé en dégradation gracieuse (PDF born-digital OK, scans signalés).
+_TESS = os.path.join(_HERE, "tesseract", "tesseract.exe")
+if os.path.exists(_TESS):
+    os.environ.setdefault("TESSDATA_PREFIX", os.path.join(_HERE, "tesseract"))
+    try:
+        import pytesseract
+        pytesseract.pytesseract.tesseract_cmd = _TESS
+    except ImportError:
+        pass
 
 import uvicorn  # noqa: E402
 

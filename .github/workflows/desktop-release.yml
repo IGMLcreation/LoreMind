@@ -70,6 +70,13 @@ jobs:
         shell: pwsh
         run: choco install wixtoolset -y --no-progress
 
+      # Tesseract OCR : non preinstalle sur windows-latest. Requis pour que
+      # build-windows.ps1 embarque l'OCR des PDF scannes (sinon il skip en
+      # degradation gracieuse). Installe dans %ProgramFiles%\Tesseract-OCR.
+      - name: Install Tesseract OCR
+        shell: pwsh
+        run: choco install tesseract -y --no-progress
+
       # Version de l'installeur = version du tag (push) OU de l'input (manuel).
       # Sorties : version (numerique X.Y.Z pour le MSI), tag (vX.Y.Z[-beta]),
       # isbeta (true/false) — independant du nom de ref (qui est une branche en manuel).

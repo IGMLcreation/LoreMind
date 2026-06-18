@@ -137,6 +137,27 @@ if (-not $SkipBrain) {
     Copy-Item (Join-Path $BrainDir 'app')          (Join-Path $BrainEmbed 'app') -Recurse
     Copy-Item (Join-Path $BrainDir 'run_local.py') (Join-Path $BrainEmbed 'run_local.py')
 
+    # e) Tesseract (OCR des PDF scannes). Pas de zip portable officiel : on COPIE
+    #    l'install UB-Mannheim (tesseract.exe + DLL), prerequis a installer une
+    #    fois via `choco install tesseract`. Langues fra+eng tirees de tessdata_fast
+    #    (leger, coherent). Si Tesseract n'est pas installe -> skip gracieux :
+    #    l'app reste fonctionnelle, seul l'OCR des scans manquera (cf. run_local.py
+    #    + pdf_extractor.py qui detectent l'absence et degradent proprement).
+    $tessSrc = Join-Path $env:ProgramFiles 'Tesseract-OCR'
+    if (Test-Path (Join-Path $tessSrc 'tesseract.exe')) {
+        $tessDst = Join-Path $BrainEmbed 'tesseract'
+        Copy-Item $tessSrc $tessDst -Recurse
+        New-Item -ItemType Directory -Force -Path (Join-Path $tessDst 'tessdata') | Out-Null
+        foreach ($lang in @('fra','eng')) {
+            Invoke-WebRequest -UseBasicParsing `
+                -Uri "https://github.com/tesseract-ocr/tessdata_fast/raw/main/$lang.traineddata" `
+                -OutFile (Join-Path $tessDst "tessdata\$lang.traineddata")
+        }
+        Write-Ok "Tesseract bundle (OCR des scans actif)"
+    } else {
+        Write-Host "  !! Tesseract introuvable ($tessSrc) -> OCR des scans NON bundle (degradation gracieuse). Pour l'activer : choco install tesseract" -ForegroundColor Yellow
+    }
+
     Write-Ok "Brain prepare (brain/dist-embed : python embeddable + deps + sources)"
 } else { Write-Step "Brain : saute (--SkipBrain)" }
 
@@ -183,6 +204,13 @@ New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 # ne contient de virgule) sont bindes en List<String> par Spring.
 $brainCmd = '$APPDIR\brain\python\python.exe,$APPDIR\brain\run_local.py'
 
+# --win-upgrade-uuid : UUID STABLE du produit. Permet a Windows Installer de
+# reconnaitre qu'une nouvelle version est une MISE A JOUR du meme produit -> upgrade
+# en place propre (pas besoin de desinstaller avant, pas de doublon). Les donnees
+# (base H2, images) vivent de toute facon dans ~/.loremind, HORS du dossier
+# d'installation, donc jamais touchees par l'installeur.
+# /!\ NE JAMAIS CHANGER cet UUID : le modifier casserait la chaine d'upgrade.
+#
 # Note : pas de --win-console (app de bureau). Les logs Spring/Brain peuvent
 # etre rediriges vers un fichier via une option ulterieure si besoin de debug.
 jpackage `
@@ -197,6 +225,7 @@ jpackage `
     --java-options '-Dspring.profiles.active=local' `
     --java-options "-Dbrain.sidecar.command=$brainCmd" `
     --win-per-user-install `
+    --win-upgrade-uuid 'a7c4e1d2-9b3f-4e6a-8d05-1f2c3b4a5e6d' `
     --win-menu --win-menu-group 'LoreMind' `
     --win-shortcut --win-dir-chooser
 
