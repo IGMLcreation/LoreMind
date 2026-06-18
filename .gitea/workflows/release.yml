@@ -29,7 +29,9 @@ jobs:
           cache: maven
       - name: Core — mvn test (+ JaCoCo check)
         working-directory: core
-        run: mvn -B test
+        run: |
+          chmod +x ./mvnw
+          ./mvnw -B test
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v5

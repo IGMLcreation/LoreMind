@@ -21,10 +21,14 @@ jobs:
           distribution: temurin
           java-version: '17'
           cache: maven
+      # Maven wrapper (./mvnw) : le runner Gitea n'a pas `mvn` préinstallé et
+      # setup-java n'installe que le JDK → le wrapper bootstrappe Maven lui-même.
       # `mvn test` exécute aussi jacoco:report + jacoco:check (plancher 60%).
-      - name: mvn test
+      - name: mvn test (via wrapper)
         working-directory: core
-        run: mvn -B test
+        run: |
+          chmod +x ./mvnw
+          ./mvnw -B test
 
   brain:
     name: Brain (Python · pytest + couverture)
