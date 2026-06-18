@@ -14,6 +14,22 @@ jobs:
   core:
     name: Core (Java · mvn test + JaCoCo)
     runs-on: ubuntu-latest
+    # Les tests Core utilisent une VRAIE base PostgreSQL (cf.
+    # src/test/resources/application.properties, ddl-auto=create-drop).
+    # On en fournit une en service container. Sur Gitea (job en conteneur),
+    # le service est joignable par son NOM d'hôte `postgres`.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: loremind_test
+          POSTGRES_USER: loremind_test
+          POSTGRES_PASSWORD: loremind_test
+        options: >-
+          --health-cmd "pg_isready -U loremind_test -d loremind_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -26,6 +42,10 @@ jobs:
       # `mvn test` exécute aussi jacoco:report + jacoco:check (plancher 60%).
       - name: mvn test (via wrapper)
         working-directory: core
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/loremind_test
+          SPRING_DATASOURCE_USERNAME: loremind_test
+          SPRING_DATASOURCE_PASSWORD: loremind_test
         run: |
           chmod +x ./mvnw
           ./mvnw -B test
