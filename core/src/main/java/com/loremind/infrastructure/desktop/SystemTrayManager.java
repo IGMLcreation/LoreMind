@@ -20,6 +20,9 @@ import java.awt.RenderingHints;
 import java.awt.SystemTray;
 import java.awt.TrayIcon;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.io.InputStream;
+import javax.imageio.ImageIO;
 
 /**
  * Icone dans la zone de notification (barre des taches) en mode bureau
@@ -63,7 +66,7 @@ public class SystemTrayManager {
         try {
             popup = new PopupMenu();
 
-            MenuItem open = new MenuItem("Ouvrir LoreMind");
+            MenuItem open = new MenuItem("Ouvrir DM Loremind");
             open.addActionListener(e -> DesktopSingleInstance.openAppInBrowser());
             popup.add(open);
 
@@ -79,17 +82,17 @@ public class SystemTrayManager {
             popup.add(editConfig);
 
             // Acces au dossier de donnees (~/.loremind : base, images, config…).
-            MenuItem openFolder = new MenuItem("Ouvrir le dossier LoreMind");
+            MenuItem openFolder = new MenuItem("Ouvrir le dossier DM Loremind");
             openFolder.addActionListener(e -> DesktopSingleInstance.openFolder(DesktopUserConfig.getHomeDir()));
             popup.add(openFolder);
 
             popup.addSeparator();
 
-            MenuItem quit = new MenuItem("Quitter LoreMind");
+            MenuItem quit = new MenuItem("Quitter DM Loremind");
             quit.addActionListener(e -> quit());
             popup.add(quit);
 
-            trayIcon = new TrayIcon(createIcon(), "LoreMind", popup);
+            trayIcon = new TrayIcon(createIcon(), "DM Loremind", popup);
             trayIcon.setImageAutoSize(true);
             // Double-clic sur l'icone : ouvre l'application dans le navigateur.
             trayIcon.addActionListener(e -> DesktopSingleInstance.openAppInBrowser());
@@ -122,7 +125,7 @@ public class SystemTrayManager {
             popup.insertSeparator(1);
 
             trayIcon.displayMessage(
-                    "LoreMind — mise a jour disponible",
+                    "DM Loremind — mise a jour disponible",
                     "Version " + info.latestVersion() + " disponible (vous avez " + info.currentVersion()
                             + "). Menu de l'icone → Telecharger.",
                     TrayIcon.MessageType.INFO);
@@ -151,19 +154,35 @@ public class SystemTrayManager {
     }
 
     /**
-     * Genere une petite icone (carre arrondi violet « L ») sans dependre d'un
-     * fichier image — robuste quel que soit l'empaquetage.
+     * Icone du systray : charge l'image de marque {@code /tray-icon.png} depuis le
+     * classpath (embarquee dans le jar). Repli sur une icone dessinee si le fichier
+     * est absent ou illisible — l'application reste fonctionnelle dans tous les cas.
      */
     private Image createIcon() {
+        try (InputStream in = getClass().getResourceAsStream("/tray-icon.png")) {
+            if (in != null) {
+                BufferedImage loaded = ImageIO.read(in);
+                if (loaded != null) {
+                    return loaded;
+                }
+            }
+        } catch (IOException e) {
+            // ignore : on retombe sur l'icone dessinee ci-dessous
+        }
+        return drawFallbackIcon();
+    }
+
+    /** Icone de repli (carre arrondi violet « DM ») si l'image embarquee manque. */
+    private Image drawFallbackIcon() {
         int size = 16;
         BufferedImage img = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = img.createGraphics();
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g.setColor(new Color(0x8B, 0x5C, 0xF6)); // violet de marque LoreMind
+        g.setColor(new Color(0x8B, 0x5C, 0xF6)); // violet de marque
         g.fillRoundRect(0, 0, size, size, 5, 5);
         g.setColor(Color.WHITE);
-        g.setFont(new Font("SansSerif", Font.BOLD, 12));
-        g.drawString("L", 4, 13);
+        g.setFont(new Font("SansSerif", Font.BOLD, 9));
+        g.drawString("DM", 1, 12);
         g.dispose();
         return img;
     }

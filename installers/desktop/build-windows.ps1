@@ -57,6 +57,7 @@ $BrainDir = Join-Path $RepoRoot 'brain'
 $CoreDir  = Join-Path $RepoRoot 'core'
 $StageDir = Join-Path $CoreDir 'target\dist-input'   # charge utile jpackage
 $OutDir   = Join-Path $CoreDir 'target\dist-out'     # .msi produit
+$IconFile = Join-Path $PSScriptRoot 'app-icon.ico'   # icone de l'app (.msi + raccourcis)
 
 # --- Version (numerique pour MSI) ------------------------------------------
 if (-not $Version) {
@@ -213,11 +214,21 @@ $brainCmd = '$APPDIR\brain\python\python.exe,$APPDIR\brain\run_local.py'
 #
 # Note : pas de --win-console (app de bureau). Les logs Spring/Brain peuvent
 # etre rediriges vers un fichier via une option ulterieure si besoin de debug.
+# Icone de l'application (.msi, raccourcis bureau/menu). Doit etre un .ico Windows
+# multi-resolution (16/32/48/256). Absente -> jpackage retomberait sur l'icone Java
+# par defaut : on echoue tot avec un message clair plutot que de livrer ca.
+if (-not (Test-Path $IconFile)) {
+    Write-Err "Icone manquante : $IconFile"
+    Write-Err "Depose l'icone de l'app (image DM, .ico multi-resolution) a cet emplacement."
+    exit 1
+}
+
 jpackage `
     --type msi `
-    --name LoreMind `
+    --name 'DM Loremind' `
     --app-version $Version `
     --vendor 'IGML Creation' `
+    --icon $IconFile `
     --input $StageDir `
     --main-jar loremind-core.jar `
     --main-class org.springframework.boot.loader.launch.JarLauncher `
@@ -226,7 +237,7 @@ jpackage `
     --java-options "-Dbrain.sidecar.command=$brainCmd" `
     --win-per-user-install `
     --win-upgrade-uuid 'a7c4e1d2-9b3f-4e6a-8d05-1f2c3b4a5e6d' `
-    --win-menu --win-menu-group 'LoreMind' `
+    --win-menu --win-menu-group 'DM Loremind' `
     --win-shortcut --win-dir-chooser
 
 if ($LASTEXITCODE -ne 0) {
