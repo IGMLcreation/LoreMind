@@ -236,6 +236,10 @@ jobs:
           echo "isbeta=$isbeta" >> "$GITHUB_OUTPUT"
 
       - name: Build Linux AppImage
+        env:
+          # Authentifie l'appel API GitHub (resolution python-build-standalone) :
+          # evite le rate limit 60/h anonyme des runners partages.
+          GITHUB_TOKEN: ${{ github.token }}
         run: bash ./installers/desktop/build-linux.sh --version ${{ steps.ver.outputs.version }}
 
       # STABLE uniquement : attache l'AppImage a la release publique (meme tag que

@@ -95,10 +95,29 @@ if [[ $SKIP_BRAIN -eq 0 ]]; then
   # a) Resoudre l'asset install_only linux-gnu pour $PY_MINOR dans la derniere
   #    release PBS (la date du tag change a chaque release -> on la decouvre).
   step "  Resolution de l'archive python-build-standalone"
-  asset_url="$(curl -fsSL https://api.github.com/repos/astral-sh/python-build-standalone/releases/latest \
-    | grep -oE "https://[^\"]*cpython-${PY_MINOR//./\\.}\.[0-9]+\+[0-9]+-x86_64-unknown-linux-gnu-install_only\.tar\.gz" \
-    | head -1)"
-  [[ -z "$asset_url" ]] && { err "Archive python-build-standalone introuvable pour $PY_MINOR."; exit 1; }
+  # URL EPINGLEE de secours (pas d'API) : version figee comme le build Windows,
+  # utilisee si la resolution dynamique echoue (rate limit, API HS, regex sans match).
+  PY_PIN='3.12.8'
+  PBS_DATE='20241219'
+  pbs_fallback="https://github.com/astral-sh/python-build-standalone/releases/download/${PBS_DATE}/cpython-${PY_PIN}+${PBS_DATE}-x86_64-unknown-linux-gnu-install_only.tar.gz"
+
+  # Appel API AUTHENTIFIE si un token est dispo (le runner partage est rate-limite
+  # a 60 req/h en anonyme -> 403 ; avec token : 1000/h). Tolerant : tout echec
+  # bascule sur l'URL epinglee (pas d'abort silencieux du a set -e).
+  auth=()
+  [[ -n "${GITHUB_TOKEN:-}" ]] && auth=(-H "Authorization: Bearer ${GITHUB_TOKEN}")
+  api_json="$(curl -fsSL "${auth[@]}" \
+    https://api.github.com/repos/astral-sh/python-build-standalone/releases/latest 2>/dev/null || true)"
+  # NB: dans browser_download_url, le '+' (version+date) est URL-encode en %2B
+  # -> on accepte les deux. On vise le x86_64 BASELINE (pas _v2/_v3/_v4, qui
+  # exigent un CPU plus recent) et install_only (pas _stripped).
+  asset_url="$(printf '%s' "$api_json" \
+    | grep -m1 -oE "https://[^\"]*cpython-${PY_MINOR//./\\.}\.[0-9]+(%2B|\+)[0-9]+-x86_64-unknown-linux-gnu-install_only\.tar\.gz" \
+    || true)"
+  if [[ -z "$asset_url" ]]; then
+    echo "  (resolution API indisponible -> URL epinglee de secours)"
+    asset_url="$pbs_fallback"
+  fi
   echo "  Telechargement $asset_url"
   curl -fsSL "$asset_url" -o "$BRAIN_EMBED/python.tar.gz"
   # L'archive install_only s'extrait en un dossier 'python/' (bin/python3, lib/...).
