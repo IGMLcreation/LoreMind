@@ -23,7 +23,11 @@ sys.path.insert(0, _HERE)
 # AVANT que l'app n'importe le pdf_extractor (qui détecte la version au chargement).
 # tessdata (fra+eng) est embarqué dans tesseract/tessdata. Sans ce bloc, l'OCR
 # reste désactivé en dégradation gracieuse (PDF born-digital OK, scans signalés).
-_TESS = os.path.join(_HERE, "tesseract", "tesseract.exe")
+# Binaire selon l'OS : tesseract.exe (Windows embeddable) ou tesseract (Linux/Mac).
+# Si aucun Tesseract n'est bundlé (cas Linux/AppImage par défaut), le bloc est
+# sauté et pytesseract retombe sur le tesseract SYSTÈME du PATH (ex. apt install
+# tesseract-ocr) — sinon OCR désactivé en dégradation gracieuse.
+_TESS = os.path.join(_HERE, "tesseract", "tesseract.exe" if os.name == "nt" else "tesseract")
 if os.path.exists(_TESS):
     os.environ.setdefault("TESSDATA_PREFIX", os.path.join(_HERE, "tesseract"))
     try:
