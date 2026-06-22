@@ -58,6 +58,7 @@ $CoreDir  = Join-Path $RepoRoot 'core'
 $StageDir = Join-Path $CoreDir 'target\dist-input'   # charge utile jpackage
 $OutDir   = Join-Path $CoreDir 'target\dist-out'     # .msi produit
 $IconFile = Join-Path $PSScriptRoot 'app-icon.ico'   # icone de l'app (.msi + raccourcis)
+$WixDir   = Join-Path $PSScriptRoot 'wix'            # main.wxs surcharge (case "Lancer" en fin d'install)
 
 # --- Version (numerique pour MSI) ------------------------------------------
 if (-not $Version) {
@@ -229,6 +230,7 @@ jpackage `
     --app-version $Version `
     --vendor 'IGML Creation' `
     --icon $IconFile `
+    --resource-dir $WixDir `
     --input $StageDir `
     --main-jar loremind-core.jar `
     --main-class org.springframework.boot.loader.launch.JarLauncher `
