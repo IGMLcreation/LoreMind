@@ -165,6 +165,9 @@ cp "$jar" "$STAGE_DIR/loremind-core.jar"
 [[ -d "$BRAIN_EMBED/python" ]] || { err "Brain introuvable (brain/dist-embed-linux). Relancez sans --skip-brain."; exit 1; }
 mkdir -p "$STAGE_DIR/brain"
 cp -r "$BRAIN_EMBED/." "$STAGE_DIR/brain/"
+
+# Splash : copie dans la charge utile -> atterrit dans $APPDIR/splash.png (cf. -splash plus bas).
+[[ -f "$SCRIPT_DIR/splash.png" ]] && cp "$SCRIPT_DIR/splash.png" "$STAGE_DIR/splash.png"
 ok "Charge utile prete ($STAGE_DIR)"
 
 # --- 5. jpackage -> app-image ----------------------------------------------
@@ -191,7 +194,8 @@ jpackage \
   --main-class org.springframework.boot.loader.launch.JarLauncher \
   --dest "$OUT_DIR" \
   --java-options '-Dspring.profiles.active=local' \
-  --java-options "-Dbrain.sidecar.command=$BRAIN_CMD"
+  --java-options "-Dbrain.sidecar.command=$BRAIN_CMD" \
+  --java-options '-splash:$APPDIR/splash.png'
 
 APPIMG_SRC="$OUT_DIR/$APP_NAME"   # dossier produit par jpackage (avec espace)
 [[ -d "$APPIMG_SRC" ]] || { err "app-image jpackage introuvable ($APPIMG_SRC)."; exit 1; }

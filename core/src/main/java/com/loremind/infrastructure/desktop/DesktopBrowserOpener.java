@@ -7,6 +7,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
+import java.awt.SplashScreen;
+
 /**
  * En mode bureau (profil "local"), ouvre le navigateur par defaut sur
  * l'application des que le serveur est pret. L'app n'ayant pas de fenetre
@@ -25,7 +27,26 @@ public class DesktopBrowserOpener {
 
     @EventListener(ApplicationReadyEvent.class)
     public void onReady() {
+        // Ferme le splash natif (affiche par la JVM via -splash des le double-clic)
+        // juste avant d'ouvrir le navigateur : le relais visuel est assure.
+        closeSplash();
         log.info("[Desktop] Application prete — ouverture du navigateur.");
         DesktopSingleInstance.openAppInBrowser();
+    }
+
+    /**
+     * Ferme l'ecran de demarrage si l'app a ete lancee avec {@code -splash:...}
+     * (cas des installeurs jpackage). No-op silencieux sinon (lancement dev sans
+     * splash, ou environnement sans affichage).
+     */
+    private void closeSplash() {
+        try {
+            SplashScreen splash = SplashScreen.getSplashScreen();
+            if (splash != null) {
+                splash.close();
+            }
+        } catch (Exception e) {
+            log.debug("[Desktop] Pas de splash a fermer : {}", e.getMessage());
+        }
     }
 }

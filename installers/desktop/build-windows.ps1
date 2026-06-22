@@ -59,6 +59,7 @@ $StageDir = Join-Path $CoreDir 'target\dist-input'   # charge utile jpackage
 $OutDir   = Join-Path $CoreDir 'target\dist-out'     # .msi produit
 $IconFile = Join-Path $PSScriptRoot 'app-icon.ico'   # icone de l'app (.msi + raccourcis)
 $WixDir   = Join-Path $PSScriptRoot 'wix'            # main.wxs surcharge (case "Lancer" en fin d'install)
+$SplashFile = Join-Path $PSScriptRoot 'splash.png'   # ecran de demarrage (affiche par la JVM via -splash)
 
 # --- Version (numerique pour MSI) ------------------------------------------
 if (-not $Version) {
@@ -192,6 +193,9 @@ if (-not (Test-Path $BrainEmbed)) { Write-Err "Brain introuvable (brain/dist-emb
 $stageBrain = Join-Path $StageDir 'brain'
 New-Item -ItemType Directory -Force -Path $stageBrain | Out-Null
 Copy-Item (Join-Path $BrainEmbed '*') $stageBrain -Recurse
+
+# Splash : copie dans la charge utile -> atterrit dans $APPDIR\splash.png (cf. -splash plus bas).
+if (Test-Path $SplashFile) { Copy-Item $SplashFile (Join-Path $StageDir 'splash.png') }
 Write-Ok "Charge utile prete ($StageDir)"
 
 # --- 5. jpackage -> .msi ---------------------------------------------------
@@ -237,6 +241,7 @@ jpackage `
     --dest $OutDir `
     --java-options '-Dspring.profiles.active=local' `
     --java-options "-Dbrain.sidecar.command=$brainCmd" `
+    --java-options '-splash:$APPDIR\splash.png' `
     --win-per-user-install `
     --win-upgrade-uuid 'a7c4e1d2-9b3f-4e6a-8d05-1f2c3b4a5e6d' `
     --win-menu --win-menu-group 'DM Loremind' `
