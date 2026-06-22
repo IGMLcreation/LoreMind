@@ -235,7 +235,9 @@ chmod +x "$APPDIR/AppRun"
 
 # e) appimagetool (telecharge si absent). --appimage-extract-and-run : evite
 #    d'exiger FUSE (absent des runners CI).
-TOOL="$OUT_DIR/appimagetool-x86_64.AppImage"
+#    /!\ HORS de $OUT_DIR : sinon ce .AppImage (l'outil) serait pris pour un livrable
+#    et attache a la release a cote du vrai DM_Loremind-*.AppImage.
+TOOL="$CORE_DIR/target/appimagetool-x86_64.AppImage"
 if [[ ! -x "$TOOL" ]]; then
   curl -fsSL -o "$TOOL" \
     https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage

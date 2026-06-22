@@ -249,7 +249,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.ver.outputs.tag }}
-          files: core/target/dist-out/*.AppImage
+          files: core/target/dist-out/DM_Loremind*.AppImage
           fail_on_unmatched_files: true
 
       # BETA uniquement : artefact PRIVE (pas de release publique).
@@ -258,5 +258,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: loremind-beta-${{ steps.ver.outputs.version }}-appimage
-          path: core/target/dist-out/*.AppImage
+          path: core/target/dist-out/DM_Loremind*.AppImage
           retention-days: 90

@@ -88,6 +88,14 @@ export class LanguageService {
     return this.defaultLang;
   }
 
+  /**
+   * Vrai si une langue a déjà été choisie explicitement (mémorisée en localStorage).
+   * Faux au tout premier lancement → on propose alors l'écran de choix de langue.
+   */
+  hasExplicitChoice(): boolean {
+    return this.read() !== null;
+  }
+
   private read(): string | null {
     try {
       return localStorage.getItem(STORAGE_KEY);

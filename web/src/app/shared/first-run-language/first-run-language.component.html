@@ -1,0 +1,17 @@
+@if (visible) {
+  <div class="flo-overlay" role="dialog" aria-modal="true" aria-label="Language / Langue">
+    <div class="flo-card">
+      <img class="flo-logo" src="assets/logo.png" alt="DM Loremind" />
+      <h2 class="flo-title">Bienvenue&nbsp;·&nbsp;Welcome</h2>
+      <p class="flo-sub">Choisissez votre langue&nbsp;·&nbsp;Choose your language</p>
+      <div class="flo-buttons">
+        @for (opt of options; track opt.code) {
+          <button type="button" class="flo-btn" (click)="choose(opt.code)">
+            <span class="flo-flag">{{ opt.flag }}</span>
+            <span class="flo-native">{{ opt.native }}</span>
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+}
