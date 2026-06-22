@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==========================================================================
-# Installeur LoreMindMJ pour Linux (Debian/Ubuntu/Fedora/Arch)
+# Installeur DM Loremind pour Linux (Debian/Ubuntu/Fedora/Arch)
 # Usage :
 #   curl -fsSL https://raw.githubusercontent.com/IGMLcreation/LoreMind/main/installers/install.sh | bash
 # ==========================================================================
@@ -71,7 +71,7 @@ install_docker() {
 # ---------------------------------------------------------------------------
 echo
 echo "============================================================"
-echo -e " ${c_cyan}LoreMindMJ - Installeur Linux${c_off}"
+echo -e " ${c_cyan}DM Loremind - Installeur Linux${c_off}"
 echo "============================================================"
 echo
 
@@ -169,7 +169,7 @@ if [ "$LLM_PROVIDER" = "ollama" ]; then
             # sera installe plus tard sur l'hote. L'utilisateur peut aussi
             # changer l'URL via la page Parametres pour un Ollama distant.
             OLLAMA_BASE_URL_VAL="http://host.docker.internal:11434"
-            warn "Aucun Ollama ne sera installe pour le moment. Configurez-le plus tard via la page Parametres de LoreMind."
+            warn "Aucun Ollama ne sera installe pour le moment. Configurez-le plus tard via la page Parametres de DM Loremind."
             ;;
     esac
 fi
@@ -268,7 +268,7 @@ fi
 URL="http://localhost:${WEB_PORT}"
 echo
 echo -e "${c_green}============================================================${c_off}"
-echo -e "${c_green} LoreMindMJ est lance !${c_off}"
+echo -e "${c_green} DM Loremind est lance !${c_off}"
 echo -e "${c_green}============================================================${c_off}"
 echo " URL          : $URL"
 echo " Identifiant  : $ADMIN_USERNAME"

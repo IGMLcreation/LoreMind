@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-  Installeur officiel de LoreMindMJ pour Windows 10/11.
+  Installeur officiel de DM Loremind pour Windows 10/11.
 
 .DESCRIPTION
   Script d'installation pas-a-pas qui :
@@ -18,7 +18,7 @@
   Le code source de ce script est public et auditable a l'adresse indiquee dans .LINK.
 
 .PARAMETER InstallDir
-  Dossier d'installation. Defaut : %LOCALAPPDATA%\LoreMind
+  Dossier d'installation. Defaut : %LOCALAPPDATA%\DM Loremind
 
 .PARAMETER ComposeUrl
   URL du fichier docker-compose.yml a recuperer. Defaut : version officielle du depot.
@@ -39,7 +39,7 @@
 .NOTES
   Auteur       : ietm64
   Licence      : AGPL-3.0
-  Projet       : LoreMindMJ - assistant pour Maitres de Jeu de JDR
+  Projet       : DM Loremind - assistant pour Maitres de Jeu de JDR
   Version      : 0.8.3
 
 .LINK
@@ -48,7 +48,7 @@
 
 [CmdletBinding()]
 param(
-    [string]$InstallDir = "$env:LOCALAPPDATA\LoreMind",
+    [string]$InstallDir = "$env:LOCALAPPDATA\DM Loremind",
     [string]$ComposeUrl = "https://raw.githubusercontent.com/IGMLcreation/LoreMind/main/docker-compose.yml",
     [int]$WebPort      = 8081,
     [switch]$NonInteractive
@@ -142,7 +142,7 @@ if (-not (Test-Admin)) {
 
 Write-Host ""
 Write-Host "============================================================"
-Write-Host " LoreMindMJ - Installeur Windows" -ForegroundColor Magenta
+Write-Host " DM Loremind - Installeur Windows" -ForegroundColor Magenta
 Write-Host "============================================================"
 Write-Host ""
 
@@ -250,7 +250,7 @@ if ($llmProvider -eq 'onemin' -and -not $NonInteractive) {
 #              pare-feu pour que Docker puisse l'atteindre sans exposer le port.
 # 2. Embarque : Ollama tourne dans un conteneur Docker dedie (profile local-ollama).
 # 3. Aucun   : on n'installe rien tout de suite. L'utilisateur configurera
-#              Ollama plus tard via la page Parametres de LoreMind.
+#              Ollama plus tard via la page Parametres de DM Loremind.
 $ollamaMode = 'embedded'   # valeurs : 'host' | 'embedded' | 'none'
 $ollamaBaseUrl = 'http://ollama:11434'
 if ($llmProvider -eq 'ollama') {
@@ -298,7 +298,7 @@ if ($llmProvider -eq 'ollama') {
         # sera installe plus tard sur l'hote. L'utilisateur peut aussi changer
         # l'URL via la page Parametres pour pointer vers un Ollama distant.
         $ollamaBaseUrl = 'http://host.docker.internal:11434'
-        Write-Warn2 "Aucun Ollama ne sera installe pour le moment. Configurez-le plus tard via la page Parametres de LoreMind."
+        Write-Warn2 "Aucun Ollama ne sera installe pour le moment. Configurez-le plus tard via la page Parametres de DM Loremind."
     }
 }
 
@@ -404,7 +404,7 @@ if ($ollamaMode -eq 'embedded' -and $llmProvider -eq 'ollama') {
 $url = "http://localhost:$WebPort"
 Write-Host ""
 Write-Host "============================================================" -ForegroundColor Green
-Write-Host " LoreMindMJ est lance !" -ForegroundColor Green
+Write-Host " DM Loremind est lance !" -ForegroundColor Green
 Write-Host "============================================================" -ForegroundColor Green
 Write-Host " URL          : $url"
 Write-Host " Identifiant  : $adminUser"

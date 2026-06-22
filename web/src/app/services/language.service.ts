@@ -77,23 +77,13 @@ export class LanguageService {
   }
 
   private resolveInitialLang(): string {
+    // 1) Choix mémorisé (sélecteur in-app) → prioritaire.
     const stored = this.read();
     if (stored && this.languages.some((l) => l.code === stored)) {
       return stored;
     }
-    const browser = this.translate.getBrowserLang();
-    if (browser && this.languages.some((l) => l.code === browser)) {
-      return browser;
-    }
-    return this.defaultLang;
-  }
-
-  /**
-   * Vrai si une langue a déjà été choisie explicitement (mémorisée en localStorage).
-   * Faux au tout premier lancement → on propose alors l'écran de choix de langue.
-   */
-  hasExplicitChoice(): boolean {
-    return this.read() !== null;
+    // 2) Sinon, détection du système : français → fr, toute autre langue → en.
+    return this.translate.getBrowserLang() === 'fr' ? 'fr' : 'en';
   }
 
   private read(): string | null {

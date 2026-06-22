@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ============================================================================
-#  LoreMindMJ - Configuration securisee d'Ollama hote (Linux)
+#  DM Loremind - Configuration securisee d'Ollama hote (Linux)
 # ----------------------------------------------------------------------------
 #  But : permettre au conteneur Docker de LoreMind d'atteindre l'Ollama
 #        installe sur l'hote, SANS l'exposer sur le LAN ni Internet.

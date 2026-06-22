@@ -1,10 +1,10 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-  Configuration securisee d'Ollama hote pour LoreMindMJ (Windows).
+  Configuration securisee d'Ollama hote pour DM Loremind (Windows).
 
 .DESCRIPTION
-  But : permettre au conteneur Docker LoreMind d'atteindre l'Ollama installe
+  But : permettre au conteneur Docker DM Loremind d'atteindre l'Ollama installe
         sur l'hote, SANS exposer Ollama sur le LAN ni Internet.
 
   Strategie (specifique a Docker Desktop / WSL2 sur Windows) :
