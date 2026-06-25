@@ -30,8 +30,8 @@ class EnemyServiceMonsterImportTest {
                 CampaignJpaEntity.builder().name("Camp").arcsCount(0).build()).getId();
 
         var r1 = enemyService.importFoundryMonsters(String.valueOf(cid), List.of(
-                new EnemyService.MonsterImport("Goblin", "Compendium.nimble.monsters.Actor.g1", Map.of("level", "1"), "Briarban"),
-                new EnemyService.MonsterImport("Orc", "Compendium.nimble.monsters.Actor.o1", Map.of(), null)));
+                new EnemyService.MonsterImport("Goblin", "Compendium.nimble.monsters.Actor.g1", Map.of("level", "1"), "Briarban", null),
+                new EnemyService.MonsterImport("Orc", "Compendium.nimble.monsters.Actor.o1", Map.of(), null, null)));
         assertEquals(2, r1.created());
         assertEquals(0, r1.updated());
         assertEquals(2, enemyRepo.findByCampaignIdOrderByOrderAsc(cid).size());
@@ -49,8 +49,8 @@ class EnemyServiceMonsterImportTest {
 
         // Réimport : g1 déjà connu (renommé + redossiérisé) + un nouveau (k1). Pas de doublon.
         var r2 = enemyService.importFoundryMonsters(String.valueOf(cid), List.of(
-                new EnemyService.MonsterImport("Goblin Boss", "Compendium.nimble.monsters.Actor.g1", Map.of(), "Briarban/Bosses"),
-                new EnemyService.MonsterImport("Kobold", "Compendium.nimble.monsters.Actor.k1", Map.of(), "Kobolds")));
+                new EnemyService.MonsterImport("Goblin Boss", "Compendium.nimble.monsters.Actor.g1", Map.of(), "Briarban/Bosses", null),
+                new EnemyService.MonsterImport("Kobold", "Compendium.nimble.monsters.Actor.k1", Map.of(), "Kobolds", null)));
         assertEquals(1, r2.created());
         assertEquals(1, r2.updated());
         assertEquals("Foundry/Briarban/Bosses", enemyRepo.findByCampaignIdOrderByOrderAsc(cid).stream()
@@ -70,9 +70,9 @@ class EnemyServiceMonsterImportTest {
                 CampaignJpaEntity.builder().name("Camp2").arcsCount(0).build()).getId();
 
         var r = enemyService.importFoundryMonsters(String.valueOf(cid), List.of(
-                new EnemyService.MonsterImport("", "Compendium.x.Actor.a", Map.of(), null),
-                new EnemyService.MonsterImport("SansRef", " ", Map.of(), null),
-                new EnemyService.MonsterImport("Valide", "Compendium.x.Actor.b", Map.of(), null)));
+                new EnemyService.MonsterImport("", "Compendium.x.Actor.a", Map.of(), null, null),
+                new EnemyService.MonsterImport("SansRef", " ", Map.of(), null, null),
+                new EnemyService.MonsterImport("Valide", "Compendium.x.Actor.b", Map.of(), null, null)));
         assertEquals(1, r.created());
         assertEquals(1, enemyRepo.findByCampaignIdOrderByOrderAsc(cid).size());
     }

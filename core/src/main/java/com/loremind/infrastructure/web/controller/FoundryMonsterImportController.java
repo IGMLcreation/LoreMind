@@ -27,7 +27,7 @@ public class FoundryMonsterImportController {
     public record MonsterCatalog(String system, List<MonsterEntry> monsters) {}
 
     public record MonsterEntry(String name, String uuid, String type, String img,
-                               java.util.Map<String, String> stats, String folder) {}
+                               java.util.Map<String, String> stats, String folder, String imgData) {}
 
     @PostMapping("/import-foundry-monsters")
     public ResponseEntity<EnemyService.MonsterImportResult> importMonsters(
@@ -35,7 +35,7 @@ public class FoundryMonsterImportController {
             @RequestBody MonsterCatalog catalog) {
         List<EnemyService.MonsterImport> monsters = (catalog.monsters() == null ? List.<MonsterEntry>of() : catalog.monsters())
                 .stream()
-                .map(m -> new EnemyService.MonsterImport(m.name(), m.uuid(), m.stats(), m.folder()))
+                .map(m -> new EnemyService.MonsterImport(m.name(), m.uuid(), m.stats(), m.folder(), m.imgData()))
                 .toList();
         return ResponseEntity.ok(enemyService.importFoundryMonsters(campaignId, monsters));
     }

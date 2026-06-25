@@ -2,8 +2,14 @@ package com.loremind.application.campaigncontext;
 
 import com.loremind.domain.campaigncontext.Enemy;
 import com.loremind.domain.campaigncontext.ports.EnemyRepository;
+import com.loremind.domain.images.Image;
+import com.loremind.application.images.ImageService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayInputStream;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,10 +22,14 @@ import java.util.Optional;
 @Service
 public class EnemyService {
 
-    private final EnemyRepository enemyRepository;
+    private static final Logger log = LoggerFactory.getLogger(EnemyService.class);
 
-    public EnemyService(EnemyRepository enemyRepository) {
+    private final EnemyRepository enemyRepository;
+    private final ImageService imageService;
+
+    public EnemyService(EnemyRepository enemyRepository, ImageService imageService) {
         this.enemyRepository = enemyRepository;
+        this.imageService = imageService;
     }
 
     public record EnemyData(
@@ -83,8 +93,12 @@ public class EnemyService {
 
     // --- Import de monstres depuis un compendium Foundry -------------------
 
-    /** Un monstre du catalogue Foundry : nom + référence + snapshot de stats + dossier. */
-    public record MonsterImport(String name, String foundryRef, Map<String, String> stats, String folder) {}
+    /**
+     * Un monstre du catalogue Foundry : nom + référence + snapshot de stats + dossier
+     * + vignette du portrait (data URL base64, optionnelle).
+     */
+    public record MonsterImport(String name, String foundryRef, Map<String, String> stats,
+                                String folder, String imgData) {}
 
     /**
      * Dossier LoreMind d'un monstre importé : on conserve l'arborescence Foundry
@@ -93,6 +107,38 @@ public class EnemyService {
     private static String foundryFolder(String path) {
         String p = path == null ? "" : path.trim();
         return p.isEmpty() ? "Foundry" : "Foundry/" + p;
+    }
+
+    /**
+     * Décode une vignette de portrait (data URL base64 "data:image/webp;base64,…")
+     * et l'enregistre comme image LoreMind. Renvoie l'id de l'image, ou null si
+     * absente/illisible (l'import ne doit jamais échouer à cause d'un portrait).
+     */
+    private String storePortrait(String dataUrl, String name) {
+        if (dataUrl == null || !dataUrl.startsWith("data:")) return null;
+        int comma = dataUrl.indexOf(',');
+        if (comma < 0) return null;
+        String header = dataUrl.substring(5, comma);            // "image/webp;base64"
+        String contentType = header.split(";")[0].toLowerCase();
+        byte[] bytes;
+        try {
+            bytes = Base64.getDecoder().decode(dataUrl.substring(comma + 1));
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+        if (bytes.length == 0) return null;
+        String ext = contentType.contains("png") ? "png"
+                : contentType.contains("jpeg") || contentType.contains("jpg") ? "jpg"
+                : contentType.contains("gif") ? "gif" : "webp";
+        String filename = (name == null || name.isBlank() ? "monstre" : name.replaceAll("[^a-zA-Z0-9._-]", "_")) + "." + ext;
+        try {
+            Image img = imageService.upload(filename, contentType,
+                    new ByteArrayInputStream(bytes), bytes.length);
+            return img.getId();
+        } catch (RuntimeException e) {
+            log.warn("Portrait de monstre ignoré (\"{}\") : {}", name, e.getMessage());
+            return null;
+        }
     }
 
     public record MonsterImportResult(int created, int updated) {}
@@ -124,6 +170,11 @@ public class EnemyService {
                 ex.setName(m.name());
                 ex.setFoundryStats(stats); // rafraîchit le snapshot
                 ex.setFolder(folder);      // ré-aligne sur l'arborescence Foundry
+                // Portrait : seulement s'il manque (pas de ré-upload à chaque import).
+                if (ex.getPortraitImageId() == null) {
+                    String portrait = storePortrait(m.imgData(), m.name());
+                    if (portrait != null) ex.setPortraitImageId(portrait);
+                }
                 enemyRepository.save(ex);
                 updated++;
             } else {
@@ -132,6 +183,7 @@ public class EnemyService {
                         .foundryRef(m.foundryRef())
                         .foundryStats(stats)
                         .folder(folder)
+                        .portraitImageId(storePortrait(m.imgData(), m.name()))
                         .campaignId(campaignId)
                         .order(order++)
                         .values(new HashMap<>())
