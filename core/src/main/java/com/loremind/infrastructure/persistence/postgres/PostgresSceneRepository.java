@@ -89,9 +89,8 @@ public class PostgresSceneRepository implements SceneRepository {
                 .illustrationImageIds(jpaEntity.getIllustrationImageIds() != null
                         ? new ArrayList<>(jpaEntity.getIllustrationImageIds())
                         : new ArrayList<>())
-                .mapImageIds(jpaEntity.getMapImageIds() != null
-                        ? new ArrayList<>(jpaEntity.getMapImageIds())
-                        : new ArrayList<>())
+                .battlemapMediaFileId(jpaEntity.getBattlemapMediaFileId())
+                .battlemapDataFileId(jpaEntity.getBattlemapDataFileId())
                 .branches(jpaEntity.getBranches() != null
                         ? new ArrayList<>(jpaEntity.getBranches())
                         : new ArrayList<>())
@@ -129,9 +128,8 @@ public class PostgresSceneRepository implements SceneRepository {
                 .illustrationImageIds(scene.getIllustrationImageIds() != null
                         ? new ArrayList<>(scene.getIllustrationImageIds())
                         : new ArrayList<>())
-                .mapImageIds(scene.getMapImageIds() != null
-                        ? new ArrayList<>(scene.getMapImageIds())
-                        : new ArrayList<>())
+                .battlemapMediaFileId(scene.getBattlemapMediaFileId())
+                .battlemapDataFileId(scene.getBattlemapDataFileId())
                 .branches(scene.getBranches() != null
                         ? new ArrayList<>(scene.getBranches())
                         : new ArrayList<>())

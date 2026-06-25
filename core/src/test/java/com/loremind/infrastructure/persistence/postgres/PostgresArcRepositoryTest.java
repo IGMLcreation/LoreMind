@@ -19,8 +19,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests d'integration pour PostgresArcRepository.
- * Valide la persistance des 3 collections JSONB (relatedPageIds,
- * illustrationImageIds, mapImageIds) et des 5 champs narratifs enrichis.
+ * Valide la persistance des collections JSONB (relatedPageIds,
+ * illustrationImageIds) et des 5 champs narratifs enrichis.
  */
 @SpringBootTest
 @Transactional
@@ -44,7 +44,6 @@ class PostgresArcRepositoryTest {
                 .themes("trahison").stakes("survie").gmNotes("secret").rewards("artefact").resolution("couronnement")
                 .relatedPageIds(List.of("page-1"))
                 .illustrationImageIds(List.of("img-a", "img-b"))
-                .mapImageIds(List.of("map-1"))
                 .build();
 
         Arc saved = repository.save(arc);
@@ -56,7 +55,6 @@ class PostgresArcRepositoryTest {
         assertEquals("secret", r.getGmNotes());
         assertEquals(List.of("page-1"), r.getRelatedPageIds());
         assertEquals(2, r.getIllustrationImageIds().size());
-        assertEquals(List.of("map-1"), r.getMapImageIds());
     }
 
     @Test
@@ -86,6 +84,5 @@ class PostgresArcRepositoryTest {
         assertNotNull(r.getRelatedPageIds());
         assertTrue(r.getRelatedPageIds().isEmpty());
         assertTrue(r.getIllustrationImageIds().isEmpty());
-        assertTrue(r.getMapImageIds().isEmpty());
     }
 }

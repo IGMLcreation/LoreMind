@@ -29,13 +29,6 @@
         <app-image-gallery [imageIds]="arc.illustrationImageIds ?? []" [layout]="'EDITORIAL'"></app-image-gallery>
       </section>
     }
-    <!-- Cartes & plans -->
-    @if ((arc.mapImageIds?.length ?? 0) > 0) {
-      <section class="view-section">
-        <h2 class="view-section-title"><span class="view-section-icon">🗺️</span> {{ 'arcView.mapsTitle' | translate }}</h2>
-        <app-image-gallery [imageIds]="arc.mapImageIds ?? []" [layout]="'MAPS'"></app-image-gallery>
-      </section>
-    }
     <!-- Vue Hub (scénario) : liste les quêtes et leurs conditions, sans statut.
     Le statut effectif et les actions de jeu vivent dans l'écran d'une Partie. -->
     @if (arc.type === 'HUB') {

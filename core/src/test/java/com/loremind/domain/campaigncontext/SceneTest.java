@@ -6,13 +6,14 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests unitaires du domaine pour Scene.
- * Scene est la plus riche en champs : on valide les quatre collections
- * @Builder.Default (relatedPageIds, illustrationImageIds, mapImageIds, branches)
- * et la preservation de l'ensemble des champs narratifs.
+ * Scene est la plus riche en champs : on valide les collections @Builder.Default
+ * (relatedPageIds, illustrationImageIds, branches), la battlemap (paire media +
+ * sidecar, nullable) et la preservation de l'ensemble des champs narratifs.
  */
 class SceneTest {
 
@@ -27,12 +28,24 @@ class SceneTest {
 
         assertNotNull(scene.getRelatedPageIds());
         assertNotNull(scene.getIllustrationImageIds());
-        assertNotNull(scene.getMapImageIds());
         assertNotNull(scene.getBranches(), "branches ne doit jamais etre null — une scene sans branche est une feuille");
         assertTrue(scene.getRelatedPageIds().isEmpty());
         assertTrue(scene.getIllustrationImageIds().isEmpty());
-        assertTrue(scene.getMapImageIds().isEmpty());
         assertTrue(scene.getBranches().isEmpty());
+        // Battlemap : aucune carte par defaut (les deux refs sont null).
+        assertNull(scene.getBattlemapMediaFileId());
+        assertNull(scene.getBattlemapDataFileId());
+    }
+
+    @Test
+    void builder_preservesBattlemap_whenProvided() {
+        Scene scene = Scene.builder()
+                .battlemapMediaFileId("42")
+                .battlemapDataFileId("43")
+                .build();
+
+        assertEquals("42", scene.getBattlemapMediaFileId());
+        assertEquals("43", scene.getBattlemapDataFileId());
     }
 
     @Test

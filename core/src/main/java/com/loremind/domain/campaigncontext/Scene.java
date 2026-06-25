@@ -65,12 +65,16 @@ public class Scene {
     private List<String> illustrationImageIds = new ArrayList<>();
 
     /**
-     * IDs des images utilisees comme cartes / plans.
-     * Vocation "outil de table" : plan de donjon, carte du lieu, schema tactique.
-     * Rendu different des illustrations : vignettes plus grandes, ratio natif preserve.
+     * "Battlemap" de la scene destinee a l'export Foundry : paire { media + sidecar }.
+     * Le media est un fichier image ou video ({@link com.loremind.domain.files.StoredFile}),
+     * le sidecar le .json/.dd2vtt Universal VTT (grille, murs, portes, lumieres) sorti
+     * de Dungeon Alchemist / Dungeondraft. Non affichee dans l'appli : passee telle quelle
+     * a l'export pour recreer la Scene cote Foundry. Null = scene sans carte.
      */
-    @Builder.Default
-    private List<String> mapImageIds = new ArrayList<>();
+    private String battlemapMediaFileId;
+
+    /** ID du fichier sidecar Universal VTT (json) associe au media. Null si absent. */
+    private String battlemapDataFileId;
 
     /**
      * Sorties narratives possibles depuis cette scène (graphe intra-chapitre).

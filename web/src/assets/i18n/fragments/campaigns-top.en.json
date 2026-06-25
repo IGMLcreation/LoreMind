@@ -58,6 +58,8 @@
     "newPlaythrough": "New playthrough",
     "noPlaythrough": "No playthroughs. Create one to start a session with a table.",
     "defaultPlaythroughName": "New playthrough {{n}}",
+    "foundryExport": "Export to Foundry",
+    "foundryExporting": "Exporting…",
     "gameSystemChange": {
       "title": "Change the game system?",
       "message": "You are about to change the game system of this campaign. This also changes the template for PC and NPC sheets.",

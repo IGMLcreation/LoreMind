@@ -39,8 +39,11 @@ public class SceneDTO {
     /** IDs des images (Shared Kernel) illustrant cette scene (ambiance). */
     private List<String> illustrationImageIds = new ArrayList<>();
 
-    /** IDs des images utilisees comme cartes / plans (outil de table). */
-    private List<String> mapImageIds = new ArrayList<>();
+    /** Battlemap Foundry : ID du fichier media (image/video). Null = pas de carte. */
+    private String battlemapMediaFileId;
+
+    /** Battlemap Foundry : ID du fichier sidecar Universal VTT (json). Null si absent. */
+    private String battlemapDataFileId;
 
     /** Branches narratives : sorties possibles vers d'autres scènes du même chapitre. */
     private List<SceneBranchDTO> branches = new ArrayList<>();

@@ -68,9 +68,6 @@ export interface Arc {
 
   /** IDs des images (Shared Kernel) illustrant cet arc (ambiance). */
   illustrationImageIds?: string[];
-
-  /** IDs des images utilisees comme cartes / plans (outil de table). */
-  mapImageIds?: string[];
 }
 
 // Payload pour la création d'un Arc (pas d'id)
@@ -90,7 +87,6 @@ export interface ArcCreate {
 
   relatedPageIds?: string[];
   illustrationImageIds?: string[];
-  mapImageIds?: string[];
 }
 
 export interface Chapter {
@@ -122,7 +118,6 @@ export interface Chapter {
 
   relatedPageIds?: string[];
   illustrationImageIds?: string[];
-  mapImageIds?: string[];
 }
 
 export interface ChapterCreate {
@@ -140,7 +135,6 @@ export interface ChapterCreate {
 
   relatedPageIds?: string[];
   illustrationImageIds?: string[];
-  mapImageIds?: string[];
 }
 
 /**
@@ -238,7 +232,13 @@ export interface Scene {
 
   relatedPageIds?: string[];
   illustrationImageIds?: string[];
-  mapImageIds?: string[];
+
+  /**
+   * Battlemap Foundry : ID du fichier media (image/video) + ID du sidecar JSON
+   * Universal VTT. Non affichee dans l'appli ; transportee a l'export Foundry.
+   */
+  battlemapMediaFileId?: string | null;
+  battlemapDataFileId?: string | null;
 
   /** Sorties narratives (graphe intra-chapitre). */
   branches?: SceneBranch[];
@@ -268,7 +268,8 @@ export interface SceneCreate {
 
   relatedPageIds?: string[];
   illustrationImageIds?: string[];
-  mapImageIds?: string[];
+  battlemapMediaFileId?: string | null;
+  battlemapDataFileId?: string | null;
   branches?: SceneBranch[];
   rooms?: Room[];
 }

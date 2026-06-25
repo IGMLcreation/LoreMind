@@ -42,6 +42,11 @@ export class CampaignService {
     return this.http.get<Campaign>(`${this.apiUrl}/${id}`);
   }
 
+  /** Télécharge le bundle d'export Foundry de la campagne (.zip). */
+  exportFoundry(id: string): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/${id}/foundry-export`, { responseType: 'blob' });
+  }
+
   createCampaign(campaign: CampaignCreate): Observable<Campaign> {
     return this.http.post<Campaign>(this.apiUrl, campaign);
   }

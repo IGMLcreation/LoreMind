@@ -91,10 +91,13 @@ public class SceneJpaEntity {
     @Builder.Default
     private List<String> illustrationImageIds = new ArrayList<>();
 
-    @Column(name = "map_image_ids", columnDefinition = "TEXT")
-    @Convert(converter = StringListJsonConverter.class)
-    @Builder.Default
-    private List<String> mapImageIds = new ArrayList<>();
+    /** Battlemap Foundry : fichier media (image/video). Null = pas de carte. */
+    @Column(name = "battlemap_media_file_id")
+    private String battlemapMediaFileId;
+
+    /** Battlemap Foundry : fichier sidecar Universal VTT (json/dd2vtt). Null si absent. */
+    @Column(name = "battlemap_data_file_id")
+    private String battlemapDataFileId;
 
     // Graphe narratif intra-chapitre : sorties possibles vers d'autres scènes.
     // Persisté en TEXT JSON via converter (pattern homogène avec les autres listes).

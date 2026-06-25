@@ -50,12 +50,6 @@ public class Chapter {
     @Builder.Default
     private List<String> illustrationImageIds = new ArrayList<>();
 
-    /**
-     * IDs des images utilisees comme cartes / plans pour ce chapitre (outil de table).
-     */
-    @Builder.Default
-    private List<String> mapImageIds = new ArrayList<>();
-
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

@@ -55,12 +55,6 @@ public class Arc {
     @Builder.Default
     private List<String> illustrationImageIds = new ArrayList<>();
 
-    /**
-     * IDs des images utilisees comme cartes / plans (outil de table).
-     */
-    @Builder.Default
-    private List<String> mapImageIds = new ArrayList<>();
-
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

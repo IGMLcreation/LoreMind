@@ -62,6 +62,7 @@ public class ImportService {
     private final ItemCatalogJpaRepository itemCatalogRepo;
     private final RandomTableJpaRepository randomTableRepo;
     private final ImageImporter imageImporter;
+    private final StoredFileImporter storedFileImporter;
     private final ObjectMapper objectMapper;
 
     public ImportService(GameSystemJpaRepository gameSystemRepo,
@@ -79,6 +80,7 @@ public class ImportService {
                          ItemCatalogJpaRepository itemCatalogRepo,
                          RandomTableJpaRepository randomTableRepo,
                          ImageImporter imageImporter,
+                         StoredFileImporter storedFileImporter,
                          ObjectMapper objectMapper) {
         this.gameSystemRepo = gameSystemRepo;
         this.loreRepo = loreRepo;
@@ -95,6 +97,7 @@ public class ImportService {
         this.itemCatalogRepo = itemCatalogRepo;
         this.randomTableRepo = randomTableRepo;
         this.imageImporter = imageImporter;
+        this.storedFileImporter = storedFileImporter;
         this.objectMapper = objectMapper;
     }
 
@@ -106,8 +109,9 @@ public class ImportService {
 
         ImportResult.Builder result = new ImportResult.Builder();
 
-        // 2. Reecriture des images (cle preservee).
+        // 2. Reecriture des images + fichiers (cle preservee).
         imageImporter.importImages(export, archive.imageBinaries(), result);
+        storedFileImporter.importFiles(export, archive.fileBinaries(), result);
 
         // 3. Insertion top-down + maps de remapping.
         Map<Long, Long> gameSystemMap = new HashMap<>();
@@ -223,7 +227,6 @@ public class ImportService {
             e.setResolution(d.resolution());
             e.setRelatedPageIds(d.relatedPageIds()); // remappe plus bas
             e.setIllustrationImageIds(d.illustrationImageIds());
-            e.setMapImageIds(d.mapImageIds());
             arcMap.put(d.id(), arcRepo.save(e).getId());
         }
         result.count("arcs", arcMap.size());
@@ -299,7 +302,6 @@ public class ImportService {
             e.setNarrativeStakes(d.narrativeStakes());
             e.setRelatedPageIds(d.relatedPageIds()); // remappe plus bas
             e.setIllustrationImageIds(d.illustrationImageIds());
-            e.setMapImageIds(d.mapImageIds());
             chapterMap.put(d.id(), chapterRepo.save(e).getId());
         }
         result.count("chapters", chapterMap.size());
@@ -373,7 +375,10 @@ public class ImportService {
             e.setEnemyIds(d.enemyIds());            // remappe plus bas
             e.setRelatedPageIds(d.relatedPageIds()); // remappe plus bas
             e.setIllustrationImageIds(d.illustrationImageIds());
-            e.setMapImageIds(d.mapImageIds());
+            // Battlemap : ids StoredFile passes tels quels (meme logique que les refs
+            // d'images illustration, non remappees). Cf. ImportService doc.
+            e.setBattlemapMediaFileId(d.battlemapMediaFileId());
+            e.setBattlemapDataFileId(d.battlemapDataFileId());
             e.setBranches(d.branches());             // remappe plus bas
             e.setRooms(d.rooms());                   // Rooms: UUID, non remappes
             sceneMap.put(d.id(), sceneRepo.save(e).getId());
@@ -462,8 +467,10 @@ public class ImportService {
 
     // ----- Lecture de l'archive -----
 
-    /** Contenu déballé d'un zip d'import : le {@code data.json} parsé + les binaires d'images. */
-    private record ParsedArchive(ContentExport export, Map<String, byte[]> imageBinaries) {
+    /** Contenu déballé d'un zip d'import : {@code data.json} + binaires images + fichiers. */
+    private record ParsedArchive(ContentExport export,
+                                 Map<String, byte[]> imageBinaries,
+                                 Map<String, byte[]> fileBinaries) {
     }
 
     /**
@@ -473,6 +480,7 @@ public class ImportService {
     private ParsedArchive parseArchive(InputStream zipStream) {
         ContentExport export = null;
         Map<String, byte[]> imageBinaries = new LinkedHashMap<>(); // storageKey -> binaire
+        Map<String, byte[]> fileBinaries = new LinkedHashMap<>();  // storageKey -> binaire
         try (ZipInputStream zip = new ZipInputStream(zipStream)) {
             ZipEntry entry;
             while ((entry = zip.getNextEntry()) != null) {
@@ -484,6 +492,11 @@ public class ImportService {
                     // c'est-a-dire EXACTEMENT le storageKey d'origine ("images/UUID.ext").
                     String storageKey = name.substring("images/".length());
                     imageBinaries.put(storageKey, readAll(zip));
+                } else if (name.startsWith("files/") && !entry.isDirectory()) {
+                    // Le prefixe zip "files/" enrobe le storageKey, lui-meme "files/UUID.ext" :
+                    // on retire UNE fois le prefixe pour retrouver la cle d'origine.
+                    String storageKey = name.substring("files/".length());
+                    fileBinaries.put(storageKey, readAll(zip));
                 }
                 zip.closeEntry();
             }
@@ -493,7 +506,7 @@ public class ImportService {
         if (export == null) {
             throw new IllegalArgumentException("Archive invalide : data.json introuvable");
         }
-        return new ParsedArchive(export, imageBinaries);
+        return new ParsedArchive(export, imageBinaries, fileBinaries);
     }
 
     // ----- Helpers divers -----

@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
-import { LucideAngularModule, Search, Download, Settings, ArrowLeft, Dices } from 'lucide-angular';
+import { LucideAngularModule, Search, Settings, ArrowLeft, Dices } from 'lucide-angular';
 import { LayoutService } from '../services/layout.service';
 import { GlobalSearchService } from '../services/global-search.service';
 import { ConfigService } from '../services/config.service';
@@ -21,7 +21,6 @@ export class SidebarComponent implements OnInit {
   currentRoute = '';
 
   readonly Search = Search;
-  readonly Download = Download;
   readonly Settings = Settings;
   readonly ArrowLeft = ArrowLeft;
   readonly Dices = Dices;

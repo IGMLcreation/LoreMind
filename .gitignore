@@ -128,3 +128,4 @@ installers/desktop/README.md
 web/coverage/
 brain/htmlcov/
 brain/.coverage
+foundry-module/

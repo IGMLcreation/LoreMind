@@ -26,10 +26,8 @@ class ArcTest {
 
         assertNotNull(arc.getRelatedPageIds(), "relatedPageIds ne doit jamais etre null");
         assertNotNull(arc.getIllustrationImageIds(), "illustrationImageIds ne doit jamais etre null");
-        assertNotNull(arc.getMapImageIds(), "mapImageIds ne doit jamais etre null");
         assertTrue(arc.getRelatedPageIds().isEmpty());
         assertTrue(arc.getIllustrationImageIds().isEmpty());
-        assertTrue(arc.getMapImageIds().isEmpty());
     }
 
     @Test
@@ -37,12 +35,10 @@ class ArcTest {
         Arc arc = Arc.builder()
                 .relatedPageIds(List.of("page-a", "page-b"))
                 .illustrationImageIds(List.of("img-1"))
-                .mapImageIds(List.of("map-1", "map-2", "map-3"))
                 .build();
 
         assertEquals(2, arc.getRelatedPageIds().size());
         assertEquals(1, arc.getIllustrationImageIds().size());
-        assertEquals(3, arc.getMapImageIds().size());
     }
 
     @Test

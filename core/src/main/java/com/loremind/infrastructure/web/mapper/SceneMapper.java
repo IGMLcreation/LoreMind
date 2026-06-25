@@ -49,9 +49,8 @@ public class SceneMapper {
         dto.setIllustrationImageIds(scene.getIllustrationImageIds() != null
                 ? new ArrayList<>(scene.getIllustrationImageIds())
                 : new ArrayList<>());
-        dto.setMapImageIds(scene.getMapImageIds() != null
-                ? new ArrayList<>(scene.getMapImageIds())
-                : new ArrayList<>());
+        dto.setBattlemapMediaFileId(scene.getBattlemapMediaFileId());
+        dto.setBattlemapDataFileId(scene.getBattlemapDataFileId());
         dto.setBranches(toBranchDTOs(scene.getBranches()));
         dto.setRooms(toRoomDTOs(scene.getRooms()));
         return dto;
@@ -86,9 +85,8 @@ public class SceneMapper {
                 .illustrationImageIds(dto.getIllustrationImageIds() != null
                         ? new ArrayList<>(dto.getIllustrationImageIds())
                         : new ArrayList<>())
-                .mapImageIds(dto.getMapImageIds() != null
-                        ? new ArrayList<>(dto.getMapImageIds())
-                        : new ArrayList<>())
+                .battlemapMediaFileId(dto.getBattlemapMediaFileId())
+                .battlemapDataFileId(dto.getBattlemapDataFileId())
                 .branches(toBranchDomain(dto.getBranches()))
                 .rooms(toRoomDomain(dto.getRooms()))
                 .build();

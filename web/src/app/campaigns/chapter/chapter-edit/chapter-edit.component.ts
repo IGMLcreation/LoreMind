@@ -69,7 +69,6 @@ export class ChapterEditComponent implements OnInit, OnDestroy {
   loreId: string | null = null;
   relatedPageIds: string[] = [];
   illustrationImageIds: string[] = [];
-  mapImageIds: string[] = [];
 
   /** Prérequis (donnée de scénario). */
   prerequisites: Prerequisite[] = [];
@@ -149,7 +148,6 @@ export class ChapterEditComponent implements OnInit, OnDestroy {
       this.relatedPageIds = [...(chapter.relatedPageIds ?? [])];
       this.selectedIcon = chapter.icon ?? null;
       this.illustrationImageIds = [...(chapter.illustrationImageIds ?? [])];
-      this.mapImageIds = [...(chapter.mapImageIds ?? [])];
 
       this.prerequisites = [...(chapter.prerequisites ?? [])];
 
@@ -194,7 +192,6 @@ export class ChapterEditComponent implements OnInit, OnDestroy {
       prerequisites:    this.prerequisites,
       relatedPageIds:   this.relatedPageIds,
       illustrationImageIds: this.illustrationImageIds,
-      mapImageIds:      this.mapImageIds,
       icon:             this.selectedIcon
     }).subscribe({
       next: () => this.router.navigate(['/campaigns', this.campaignId, 'arcs', this.arcId, 'chapters', this.chapterId]),

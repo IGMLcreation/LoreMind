@@ -64,13 +64,6 @@
         <app-image-gallery [imageIds]="chapter.illustrationImageIds ?? []" [layout]="'EDITORIAL'"></app-image-gallery>
       </section>
     }
-    <!-- Cartes & plans -->
-    @if ((chapter.mapImageIds?.length ?? 0) > 0) {
-      <section class="view-section">
-        <h2 class="view-section-title"><span class="view-section-icon">🗺️</span> {{ 'chapterView.maps' | translate }}</h2>
-        <app-image-gallery [imageIds]="chapter.mapImageIds ?? []" [layout]="'MAPS'"></app-image-gallery>
-      </section>
-    }
     <section class="view-section">
       <h2 class="view-section-title"><span class="view-section-icon">📖</span> {{ 'chapterView.synopsis' | translate }}</h2>
       @if (chapter.description?.trim()) {

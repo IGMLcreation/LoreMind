@@ -7,6 +7,7 @@ import { switchMap } from 'rxjs/operators';
 import { LucideAngularModule, Trash2, Sparkles } from 'lucide-angular';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { CampaignService } from '../../../services/campaign.service';
+import { StoredFileService } from '../../../services/stored-file.service';
 import { CharacterService } from '../../../services/character.service';
 import { NpcService } from '../../../services/npc.service';
 import { RandomTableService } from '../../../services/random-table.service';
@@ -70,7 +71,14 @@ export class SceneEditComponent implements OnInit, OnDestroy {
   availableEnemies: Enemy[] = [];
   enemyIds: string[] = [];
   illustrationImageIds: string[] = [];
-  mapImageIds: string[] = [];
+
+  /** Battlemap Foundry : paire { media + sidecar JSON Universal VTT }. Non affichee. */
+  battlemapMediaFileId: string | null = null;
+  battlemapDataFileId: string | null = null;
+  battlemapMediaName: string | null = null;
+  battlemapDataName: string | null = null;
+  battlemapUploadingMedia = false;
+  battlemapUploadingData = false;
 
   /** Scènes du chapitre courant (hors scène éditée) — alimente le dropdown des cibles. */
   siblingScenes: Scene[] = [];
@@ -87,6 +95,7 @@ export class SceneEditComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private campaignService: CampaignService,
+    private storedFileService: StoredFileService,
     private characterService: CharacterService,
     private npcService: NpcService,
     private randomTableService: RandomTableService,
@@ -161,7 +170,18 @@ export class SceneEditComponent implements OnInit, OnDestroy {
       this.enemyIds = [...(scene.enemyIds ?? [])];
       this.selectedIcon = scene.icon ?? null;
       this.illustrationImageIds = [...(scene.illustrationImageIds ?? [])];
-      this.mapImageIds = [...(scene.mapImageIds ?? [])];
+      this.battlemapMediaFileId = scene.battlemapMediaFileId ?? null;
+      this.battlemapDataFileId = scene.battlemapDataFileId ?? null;
+      this.battlemapMediaName = null;
+      this.battlemapDataName = null;
+      if (this.battlemapMediaFileId) {
+        this.storedFileService.getById(this.battlemapMediaFileId)
+          .subscribe({ next: f => this.battlemapMediaName = f.filename, error: () => {} });
+      }
+      if (this.battlemapDataFileId) {
+        this.storedFileService.getById(this.battlemapDataFileId)
+          .subscribe({ next: f => this.battlemapDataName = f.filename, error: () => {} });
+      }
       this.siblingScenes = chapterScenes.filter(s => s.id !== this.sceneId);
       this.branches = (scene.branches ?? []).map(b => ({ ...b }));
       this.rooms = (scene.rooms ?? []).map(r => ({ ...r, branches: [...(r.branches ?? [])] }));
@@ -200,7 +220,8 @@ export class SceneEditComponent implements OnInit, OnDestroy {
       enemyIds:             this.enemyIds,
       relatedPageIds:       this.relatedPageIds,
       illustrationImageIds: this.illustrationImageIds,
-      mapImageIds:          this.mapImageIds,
+      battlemapMediaFileId: this.battlemapMediaFileId,
+      battlemapDataFileId:  this.battlemapDataFileId,
       branches:             this.branches,
       rooms:                this.rooms,
       icon:                 this.selectedIcon
@@ -251,6 +272,53 @@ export class SceneEditComponent implements OnInit, OnDestroy {
 
   updateBranchCondition(index: number, value: string): void {
     this.branches[index].condition = value;
+  }
+
+  // ─────────────── Battlemap Foundry (media + sidecar JSON) ───────────────
+  // On NE supprime PAS le binaire au "retirer" (juste la reference locale) :
+  // si l'utilisateur annule le formulaire, la scene garde son fichier intact.
+  // Le binaire orphelin eventuel est inoffensif (nettoyage ulterieur possible).
+
+  onBattlemapMediaSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    this.battlemapUploadingMedia = true;
+    this.storedFileService.upload(file).subscribe({
+      next: f => {
+        this.battlemapMediaFileId = f.id;
+        this.battlemapMediaName = f.filename;
+        this.battlemapUploadingMedia = false;
+      },
+      error: () => { this.battlemapUploadingMedia = false; }
+    });
+    input.value = '';
+  }
+
+  onBattlemapDataSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    this.battlemapUploadingData = true;
+    this.storedFileService.upload(file).subscribe({
+      next: f => {
+        this.battlemapDataFileId = f.id;
+        this.battlemapDataName = f.filename;
+        this.battlemapUploadingData = false;
+      },
+      error: () => { this.battlemapUploadingData = false; }
+    });
+    input.value = '';
+  }
+
+  removeBattlemapMedia(): void {
+    this.battlemapMediaFileId = null;
+    this.battlemapMediaName = null;
+  }
+
+  removeBattlemapData(): void {
+    this.battlemapDataFileId = null;
+    this.battlemapDataName = null;
   }
 
   ngOnDestroy(): void {

@@ -2,6 +2,7 @@ package com.loremind.infrastructure.transfer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.loremind.domain.files.ports.FileStorage;
 import com.loremind.domain.images.ports.ImageStorage;
 import com.loremind.infrastructure.persistence.converter.PrerequisiteListJsonConverter;
 import com.loremind.infrastructure.persistence.entity.*;
@@ -60,6 +61,8 @@ public class ExportService {
     private final RandomTableJpaRepository randomTableRepo;
     private final ImageJpaRepository imageRepo;
     private final ImageStorage imageStorage;
+    private final StoredFileJpaRepository storedFileRepo;
+    private final FileStorage fileStorage;
     private final ObjectMapper objectMapper;
     private final String appVersion;
 
@@ -79,6 +82,8 @@ public class ExportService {
                          RandomTableJpaRepository randomTableRepo,
                          ImageJpaRepository imageRepo,
                          ImageStorage imageStorage,
+                         StoredFileJpaRepository storedFileRepo,
+                         FileStorage fileStorage,
                          ObjectMapper objectMapper,
                          @Nullable BuildProperties buildProperties) {
         this.gameSystemRepo = gameSystemRepo;
@@ -97,6 +102,8 @@ public class ExportService {
         this.randomTableRepo = randomTableRepo;
         this.imageRepo = imageRepo;
         this.imageStorage = imageStorage;
+        this.storedFileRepo = storedFileRepo;
+        this.fileStorage = fileStorage;
         this.objectMapper = objectMapper;
         this.appVersion = buildProperties != null ? buildProperties.getVersion() : "dev";
     }
@@ -140,10 +147,12 @@ public class ExportService {
                 .map(this::toRandomTableDto).toList();
         List<ContentExport.ImageDto> images = imageRepo.findAll().stream()
                 .map(this::toImageDto).toList();
+        List<ContentExport.StoredFileDto> storedFiles = storedFileRepo.findAll().stream()
+                .map(this::toStoredFileDto).toList();
 
         return new ContentExport(manifest, gameSystems, lores, loreNodes, templates,
                 pages, campaigns, arcs, chapters, scenes, characters, npcs, enemies,
-                itemCatalogs, randomTables, images);
+                itemCatalogs, randomTables, images, storedFiles);
     }
 
     /**
@@ -184,6 +193,24 @@ public class ExportService {
                     zip.closeEntry();
                 }
             }
+
+            // Binaires fichiers (battlemaps : media + sidecar) : ceux references par
+            // les scenes. Stockes a part sous "files/<storageKey>".
+            Set<String> referencedFiles = collectReferencedFileStorageKeys(export);
+            Set<String> filesWritten = new LinkedHashSet<>();
+            for (String key : referencedFiles) {
+                if (key == null || key.isBlank() || !filesWritten.add(key)) {
+                    continue;
+                }
+                try (InputStream data = fileStorage.download(key)) {
+                    if (data == null) {
+                        continue; // cle orpheline : on ignore silencieusement
+                    }
+                    zip.putNextEntry(new ZipEntry("files/" + key));
+                    data.transferTo(zip);
+                    zip.closeEntry();
+                }
+            }
         } catch (IOException e) {
             throw new UncheckedIOException("Echec de la generation du zip d'export", e);
         }
@@ -198,15 +225,12 @@ public class ExportService {
         Set<String> keys = new LinkedHashSet<>();
         for (ContentExport.ArcDto a : export.arcs()) {
             addAll(keys, a.illustrationImageIds());
-            addAll(keys, a.mapImageIds());
         }
         for (ContentExport.ChapterDto c : export.chapters()) {
             addAll(keys, c.illustrationImageIds());
-            addAll(keys, c.mapImageIds());
         }
         for (ContentExport.SceneDto s : export.scenes()) {
             addAll(keys, s.illustrationImageIds());
-            addAll(keys, s.mapImageIds());
         }
         for (ContentExport.CharacterDto c : export.characters()) {
             add(keys, c.portraitImageId());
@@ -227,6 +251,29 @@ public class ExportService {
             addImageValues(keys, p.imageValues());
         }
         return keys;
+    }
+
+    /**
+     * Collecte les storageKeys des fichiers (battlemaps) references par les scenes.
+     * Resout l'ID StoredFile porte par la scene -> storageKey via l'index storedFiles.
+     */
+    private Set<String> collectReferencedFileStorageKeys(ContentExport export) {
+        java.util.Map<String, String> keyById = new java.util.HashMap<>();
+        for (ContentExport.StoredFileDto f : export.storedFiles()) {
+            if (f.id() != null) keyById.put(f.id().toString(), f.storageKey());
+        }
+        Set<String> keys = new LinkedHashSet<>();
+        for (ContentExport.SceneDto s : export.scenes()) {
+            addFileKey(keys, keyById, s.battlemapMediaFileId());
+            addFileKey(keys, keyById, s.battlemapDataFileId());
+        }
+        return keys;
+    }
+
+    private void addFileKey(Set<String> keys, java.util.Map<String, String> keyById, String fileId) {
+        if (fileId == null || fileId.isBlank()) return;
+        String key = keyById.get(fileId);
+        if (key != null && !key.isBlank()) keys.add(key);
     }
 
     private void add(Set<String> keys, String key) {
@@ -282,14 +329,14 @@ public class ExportService {
                 e.getType() != null ? e.getType().name() : null,
                 e.getIcon(), e.getThemes(), e.getStakes(), e.getGmNotes(),
                 e.getRewards(), e.getResolution(), e.getRelatedPageIds(),
-                e.getIllustrationImageIds(), e.getMapImageIds());
+                e.getIllustrationImageIds());
     }
 
     private ContentExport.ChapterDto toChapterDto(ChapterJpaEntity e) {
         return new ContentExport.ChapterDto(e.getId(), e.getName(), e.getDescription(),
                 e.getArcId(), e.getOrder(), PREREQ_CONVERTER.convertToDatabaseColumn(e.getPrerequisites()), e.getIcon(),
                 e.getGmNotes(), e.getPlayerObjectives(), e.getNarrativeStakes(),
-                e.getRelatedPageIds(), e.getIllustrationImageIds(), e.getMapImageIds());
+                e.getRelatedPageIds(), e.getIllustrationImageIds());
     }
 
     private ContentExport.SceneDto toSceneDto(SceneJpaEntity e) {
@@ -298,7 +345,8 @@ public class ExportService {
                 e.getTiming(), e.getAtmosphere(), e.getPlayerNarration(),
                 e.getGmSecretNotes(), e.getChoicesConsequences(), e.getCombatDifficulty(),
                 e.getEnemies(), e.getEnemyIds(), e.getRelatedPageIds(),
-                e.getIllustrationImageIds(), e.getMapImageIds(), e.getBranches(), e.getRooms());
+                e.getIllustrationImageIds(), e.getBattlemapMediaFileId(),
+                e.getBattlemapDataFileId(), e.getBranches(), e.getRooms());
     }
 
     private ContentExport.CharacterDto toCharacterDto(CharacterJpaEntity e) {
@@ -345,6 +393,11 @@ public class ExportService {
 
     private ContentExport.ImageDto toImageDto(ImageJpaEntity e) {
         return new ContentExport.ImageDto(e.getId(), e.getFilename(), e.getContentType(),
+                e.getSizeBytes(), e.getStorageKey());
+    }
+
+    private ContentExport.StoredFileDto toStoredFileDto(StoredFileJpaEntity e) {
+        return new ContentExport.StoredFileDto(e.getId(), e.getFilename(), e.getContentType(),
                 e.getSizeBytes(), e.getStorageKey());
     }
 }

@@ -35,7 +35,8 @@ public record ContentExport(
         List<EnemyDto> enemies,
         List<ItemCatalogDto> itemCatalogs,
         List<RandomTableDto> randomTables,
-        List<ImageDto> images
+        List<ImageDto> images,
+        List<StoredFileDto> storedFiles
 ) {
 
     /**
@@ -124,8 +125,7 @@ public record ContentExport(
             String rewards,
             String resolution,
             List<String> relatedPageIds,
-            List<String> illustrationImageIds,
-            List<String> mapImageIds
+            List<String> illustrationImageIds
     ) {}
 
     public record ChapterDto(
@@ -144,8 +144,7 @@ public record ContentExport(
             String playerObjectives,
             String narrativeStakes,
             List<String> relatedPageIds,
-            List<String> illustrationImageIds,
-            List<String> mapImageIds
+            List<String> illustrationImageIds
     ) {}
 
     public record SceneDto(
@@ -166,7 +165,8 @@ public record ContentExport(
             List<String> enemyIds,
             List<String> relatedPageIds,
             List<String> illustrationImageIds,
-            List<String> mapImageIds,
+            String battlemapMediaFileId,
+            String battlemapDataFileId,
             List<SceneBranch> branches,
             List<Room> rooms
     ) {}
@@ -256,6 +256,19 @@ public record ContentExport(
      * {@code images/<storageKey>}. La cle est PRESERVEE telle quelle a l'import.
      */
     public record ImageDto(
+            Long id,
+            String filename,
+            String contentType,
+            long sizeBytes,
+            String storageKey
+    ) {}
+
+    /**
+     * Metadonnees d'un fichier generique (battlemap : media + sidecar JSON).
+     * Le binaire voyage a part dans le zip sous {@code files/<storageKey>}.
+     * La cle est PRESERVEE telle quelle a l'import (meme logique que ImageDto).
+     */
+    public record StoredFileDto(
             Long id,
             String filename,
             String contentType,

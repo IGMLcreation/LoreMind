@@ -53,12 +53,6 @@
       <span>{{ 'sidebar.gameSystems' | translate }}</span>
     </button>
     @if (!config.demoMode) {
-      <button class="tool-btn">
-        <lucide-icon [img]="Download" [size]="16"></lucide-icon>
-        <span>{{ 'sidebar.vttExport' | translate }}</span>
-      </button>
-    }
-    @if (!config.demoMode) {
       <button class="tool-btn" [class.active]="currentRoute.startsWith('/settings')" (click)="navigateTo('/settings')">
         <lucide-icon [img]="Settings" [size]="16"></lucide-icon>
         <span>{{ 'sidebar.settings' | translate }}</span>

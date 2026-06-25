@@ -54,7 +54,7 @@ class PostgresSceneRepositoryTest {
                 .choicesConsequences("Si attaque -> gardes").combatDifficulty("facile").enemies("3 brigands")
                 .relatedPageIds(List.of("page-aubergiste"))
                 .illustrationImageIds(List.of("img-1", "img-2"))
-                .mapImageIds(List.of("plan-taverne"))
+                .battlemapMediaFileId("100").battlemapDataFileId("101")
                 .build();
 
         Scene saved = repository.save(scene);
@@ -65,7 +65,8 @@ class PostgresSceneRepositoryTest {
         assertEquals("Taverne du Dragon d'Or", r.getLocation());
         assertEquals("Piege cache", r.getGmSecretNotes());
         assertEquals(2, r.getIllustrationImageIds().size());
-        assertEquals(List.of("plan-taverne"), r.getMapImageIds());
+        assertEquals("100", r.getBattlemapMediaFileId());
+        assertEquals("101", r.getBattlemapDataFileId());
     }
 
     @Test

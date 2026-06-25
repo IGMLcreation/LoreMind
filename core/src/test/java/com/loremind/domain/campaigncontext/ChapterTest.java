@@ -26,10 +26,8 @@ class ChapterTest {
 
         assertNotNull(chapter.getRelatedPageIds());
         assertNotNull(chapter.getIllustrationImageIds());
-        assertNotNull(chapter.getMapImageIds());
         assertTrue(chapter.getRelatedPageIds().isEmpty());
         assertTrue(chapter.getIllustrationImageIds().isEmpty());
-        assertTrue(chapter.getMapImageIds().isEmpty());
     }
 
     @Test
@@ -37,12 +35,10 @@ class ChapterTest {
         Chapter chapter = Chapter.builder()
                 .relatedPageIds(List.of("page-x"))
                 .illustrationImageIds(List.of("img-1", "img-2"))
-                .mapImageIds(List.of("map-dungeon"))
                 .build();
 
         assertEquals(1, chapter.getRelatedPageIds().size());
         assertEquals(2, chapter.getIllustrationImageIds().size());
-        assertEquals(1, chapter.getMapImageIds().size());
     }
 
     @Test

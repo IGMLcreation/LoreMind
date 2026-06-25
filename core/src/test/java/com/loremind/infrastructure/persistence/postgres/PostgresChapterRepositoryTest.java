@@ -43,7 +43,6 @@ class PostgresChapterRepositoryTest {
                 .gmNotes("note secrete").playerObjectives("trouver l'indice").narrativeStakes("si echec allie meurt")
                 .relatedPageIds(List.of("page-x"))
                 .illustrationImageIds(List.of("img-1"))
-                .mapImageIds(List.of("map-donjon"))
                 .build();
 
         Chapter saved = repository.save(chapter);
@@ -54,7 +53,6 @@ class PostgresChapterRepositoryTest {
         assertEquals("note secrete", r.getGmNotes());
         assertEquals("trouver l'indice", r.getPlayerObjectives());
         assertEquals(List.of("page-x"), r.getRelatedPageIds());
-        assertEquals(List.of("map-donjon"), r.getMapImageIds());
     }
 
     @Test

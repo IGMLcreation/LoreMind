@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { LucideAngularModule, Swords, Plus, Globe, Pencil, Trash2, Dices, Drama, Check, Play, Upload, Sparkles } from 'lucide-angular';
+import { LucideAngularModule, Swords, Plus, Globe, Pencil, Trash2, Dices, Drama, Check, Play, Upload, Sparkles, Download } from 'lucide-angular';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
@@ -45,6 +45,10 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   readonly Play = Play;
   readonly Upload = Upload;
   readonly Sparkles = Sparkles;
+  readonly Download = Download;
+
+  /** Export Foundry en cours (anti double-clic). */
+  exportingFoundry = false;
 
   campaign: Campaign | null = null;
   arcs: Arc[] = [];
@@ -249,6 +253,33 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   createArc(): void {
     if (!this.campaign) return;
     this.router.navigate(['/campaigns', this.campaign.id, 'arcs', 'create']);
+  }
+
+  /** Télécharge le bundle Foundry de la campagne via un lien temporaire. */
+  exportFoundry(): void {
+    if (!this.campaign?.id || this.exportingFoundry) return;
+    this.exportingFoundry = true;
+    this.campaignService.exportFoundry(this.campaign.id).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'foundry-export.zip';
+        // Certains navigateurs ignorent un click() sur un <a> détaché : on l'attache
+        // au DOM le temps du déclenchement, puis on nettoie.
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        // Révocation différée : libère l'URL sans annuler le téléchargement en cours.
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        this.exportingFoundry = false;
+      },
+      error: (err) => {
+        // Ne pas avaler l'erreur en silence : visible en console pour diagnostic.
+        console.error('Échec de l\'export Foundry', err);
+        this.exportingFoundry = false;
+      }
+    });
   }
 
   openArc(arc: Arc): void {

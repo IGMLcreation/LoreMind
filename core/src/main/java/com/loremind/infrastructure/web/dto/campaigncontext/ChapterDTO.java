@@ -46,7 +46,4 @@ public class ChapterDTO {
 
     /** IDs des images (Shared Kernel) illustrant ce chapitre (ambiance). */
     private List<String> illustrationImageIds = new ArrayList<>();
-
-    /** IDs des images utilisees comme cartes / plans. */
-    private List<String> mapImageIds = new ArrayList<>();
 }

@@ -38,18 +38,6 @@
       <small class="field-hint">{{ 'arcEdit.illustrationsHint' | translate }}</small>
     </div>
 
-    <!-- Cartes & plans -->
-    <div class="field">
-      <label>{{ 'arcEdit.mapsLabel' | translate }}</label>
-      <app-image-gallery
-        [imageIds]="mapImageIds"
-        [editable]="true"
-        [layout]="'MAPS'"
-        (imageIdsChange)="mapImageIds = $event">
-      </app-image-gallery>
-      <small class="field-hint">{{ 'arcEdit.mapsHint' | translate }}</small>
-    </div>
-
     <div class="field">
       <label for="arc-edit-name">{{ 'arcEdit.nameLabel' | translate }}</label>
       <input

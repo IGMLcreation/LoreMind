@@ -35,7 +35,4 @@ public class ArcDTO {
 
     /** IDs des images (Shared Kernel) illustrant cet arc (ambiance). */
     private List<String> illustrationImageIds = new ArrayList<>();
-
-    /** IDs des images utilisees comme cartes / plans. */
-    private List<String> mapImageIds = new ArrayList<>();
 }

@@ -34,7 +34,6 @@ public class ArcMapper {
         dto.setResolution(arc.getResolution());
         dto.setRelatedPageIds(copyList(arc.getRelatedPageIds()));
         dto.setIllustrationImageIds(copyList(arc.getIllustrationImageIds()));
-        dto.setMapImageIds(copyList(arc.getMapImageIds()));
         return dto;
     }
 
@@ -58,7 +57,6 @@ public class ArcMapper {
                 .resolution(dto.getResolution())
                 .relatedPageIds(copyList(dto.getRelatedPageIds()))
                 .illustrationImageIds(copyList(dto.getIllustrationImageIds()))
-                .mapImageIds(copyList(dto.getMapImageIds()))
                 .build();
     }
 

@@ -84,9 +84,6 @@ public class PostgresChapterRepository implements ChapterRepository {
                 .illustrationImageIds(jpaEntity.getIllustrationImageIds() != null
                         ? new ArrayList<>(jpaEntity.getIllustrationImageIds())
                         : new ArrayList<>())
-                .mapImageIds(jpaEntity.getMapImageIds() != null
-                        ? new ArrayList<>(jpaEntity.getMapImageIds())
-                        : new ArrayList<>())
                 .createdAt(jpaEntity.getCreatedAt())
                 .updatedAt(jpaEntity.getUpdatedAt())
                 .build();
@@ -112,9 +109,6 @@ public class PostgresChapterRepository implements ChapterRepository {
                         : new ArrayList<>())
                 .illustrationImageIds(chapter.getIllustrationImageIds() != null
                         ? new ArrayList<>(chapter.getIllustrationImageIds())
-                        : new ArrayList<>())
-                .mapImageIds(chapter.getMapImageIds() != null
-                        ? new ArrayList<>(chapter.getMapImageIds())
                         : new ArrayList<>())
                 .createdAt(chapter.getCreatedAt())
                 .updatedAt(chapter.getUpdatedAt())

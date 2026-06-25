@@ -38,16 +38,40 @@
       <small class="field-hint">{{ 'sceneEdit.illustrationsHint' | translate }}</small>
     </div>
 
-    <!-- Cartes & plans (galerie editable, rendu maps) -->
+    <!-- Battlemap Foundry : media + sidecar JSON Universal VTT (non affichee, export only) -->
     <div class="field">
-      <label>{{ 'sceneEdit.mapsLabel' | translate }}</label>
-      <app-image-gallery
-        [imageIds]="mapImageIds"
-        [editable]="true"
-        [layout]="'MAPS'"
-        (imageIdsChange)="mapImageIds = $event">
-      </app-image-gallery>
-      <small class="field-hint">{{ 'sceneEdit.mapsHint' | translate }}</small>
+      <label>{{ 'sceneEdit.battlemapLabel' | translate }}</label>
+      <small class="field-hint">{{ 'sceneEdit.battlemapHint' | translate }}</small>
+
+      <div class="battlemap-slot">
+        <span class="battlemap-slot-label">{{ 'sceneEdit.battlemapMedia' | translate }}</span>
+        @if (battlemapMediaFileId) {
+          <span class="battlemap-file">{{ battlemapMediaName || ('sceneEdit.battlemapAttached' | translate) }}</span>
+          <button type="button" class="battlemap-remove" (click)="removeBattlemapMedia()">
+            {{ 'sceneEdit.battlemapRemove' | translate }}
+          </button>
+        } @else {
+          <label class="battlemap-pick">
+            {{ (battlemapUploadingMedia ? 'sceneEdit.battlemapUploading' : 'sceneEdit.battlemapChoose') | translate }}
+            <input type="file" accept="image/*,video/mp4,video/webm" hidden (change)="onBattlemapMediaSelected($event)" />
+          </label>
+        }
+      </div>
+
+      <div class="battlemap-slot">
+        <span class="battlemap-slot-label">{{ 'sceneEdit.battlemapData' | translate }}</span>
+        @if (battlemapDataFileId) {
+          <span class="battlemap-file">{{ battlemapDataName || ('sceneEdit.battlemapAttached' | translate) }}</span>
+          <button type="button" class="battlemap-remove" (click)="removeBattlemapData()">
+            {{ 'sceneEdit.battlemapRemove' | translate }}
+          </button>
+        } @else {
+          <label class="battlemap-pick">
+            {{ (battlemapUploadingData ? 'sceneEdit.battlemapUploading' : 'sceneEdit.battlemapChoose') | translate }}
+            <input type="file" accept=".json,.dd2vtt,.uvtt,application/json" hidden (change)="onBattlemapDataSelected($event)" />
+          </label>
+        }
+      </div>
     </div>
 
     <div class="field">

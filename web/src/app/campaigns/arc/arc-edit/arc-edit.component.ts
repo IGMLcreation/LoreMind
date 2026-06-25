@@ -71,8 +71,6 @@ export class ArcEditComponent implements OnInit, OnDestroy {
 
   /** IDs des images illustrant cet arc (bind sur app-image-gallery editable). */
   illustrationImageIds: string[] = [];
-  /** IDs des images utilisees comme cartes / plans (outil de table). */
-  mapImageIds: string[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -140,7 +138,6 @@ export class ArcEditComponent implements OnInit, OnDestroy {
       this.relatedPageIds = [...(arc.relatedPageIds ?? [])];
       this.selectedIcon = arc.icon ?? null;
       this.illustrationImageIds = [...(arc.illustrationImageIds ?? [])];
-      this.mapImageIds = [...(arc.mapImageIds ?? [])];
       this.pageTitleService.set(arc.name);
       this.form.patchValue({
         name:        arc.name,
@@ -172,7 +169,6 @@ export class ArcEditComponent implements OnInit, OnDestroy {
       resolution:     this.form.value.resolution,
       relatedPageIds: this.relatedPageIds,
       illustrationImageIds: this.illustrationImageIds,
-      mapImageIds:    this.mapImageIds,
       icon:           this.selectedIcon
     }).subscribe({
       next: () => this.router.navigate(['/campaigns', this.campaignId, 'arcs', this.arcId]),

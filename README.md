@@ -1,4 +1,4 @@
-# LoreMind
+# DM Loremind
 
 **English** · [Français](README.fr.md)
 
@@ -10,15 +10,15 @@
 [![Patreon](https://img.shields.io/badge/Patreon-support-red)](https://www.patreon.com/c/IGMLCreation)
 [![Discord](https://img.shields.io/badge/Discord-join-5865F2)](https://discord.gg/cPpFzCjEzQ)
 
-## See LoreMind in action
+## See DM Loremind in action
 
-[![LoreMind overview](https://img.youtube.com/vi/llJkmlotbB8/maxresdefault.jpg)](https://www.youtube.com/watch?v=llJkmlotbB8)
+[![DM Loremind overview](https://img.youtube.com/vi/llJkmlotbB8/maxresdefault.jpg)](https://www.youtube.com/watch?v=llJkmlotbB8)
 
 ![Dashboard](https://raw.githubusercontent.com/IGMLcreation/loremind-docs/main/static/img/screenshots/dashboard.png)
 
 ## What it does
 
-LoreMind brings together what a game master usually scatters across several tools. The app is built around three core modules, augmented by an AI assistant that draws on all of your content.
+DM Loremind brings together what a game master usually scatters across several tools. The app is built around three core modules, augmented by an AI assistant that draws on all of your content.
 
 ### Lore
 
@@ -36,7 +36,19 @@ Structure your campaigns as Arcs → Chapters → Scenes, with a clear split bet
 
 A context-aware assistant that pulls from your Lore, rules and campaigns to answer your questions, suggest consistent content, or improvise around an unexpected situation at the table.
 
-The AI runs **locally via [Ollama](https://ollama.com/)** or via **[1min.ai](https://1min.ai/)**. More engines will be supported in the future.
+The AI runs **locally via [Ollama](https://ollama.com/)** — your data stays on your machine — or in the **cloud** with your own API key via [1min.ai](https://1min.ai/), [Mistral](https://mistral.ai/), [Google AI Studio (Gemini)](https://aistudio.google.com/) or [OpenRouter](https://openrouter.ai/).
+
+## Quick start
+
+**Desktop (easiest)** — grab the latest installer from the [Releases page](https://github.com/IGMLcreation/LoreMind/releases): Windows `.msi` or Linux `.AppImage`, then run it. Your data stays local.
+
+**Self-host with Docker** — on Linux:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/IGMLcreation/LoreMind/main/installers/install.sh | bash
+```
+
+On Windows, follow the [installation guide](https://loremind-docs.igmlcreation.fr/en/).
 
 ## Documentation
 
@@ -49,20 +61,20 @@ A demo instance is available at **[loremind-demo.igmlcreation.fr](https://loremi
 A few limitations to be aware of:
 - 10 concurrent users maximum (isolated instances)
 - Sessions limited to 20 minutes before reset
-- The AI part is not included in the demo (requires Ollama or 1min.ai server-side)
+- The AI features are not included in the demo (they require an AI provider — local Ollama or a cloud API key — configured server-side)
 
 ## Support the project
 
-LoreMind is **and will remain free when self-hosted**. Development moves faster with your support:
+DM Loremind is **and will remain free when self-hosted**. Development moves faster with your support:
 
 - **[Patreon](https://www.patreon.com/c/IGMLCreation)** — early access to features, roadmap voting, exclusive devlogs
 - **[Discord](https://discord.gg/cPpFzCjEzQ)** — announcements, support, user feedback
 
 ## License
 
-LoreMind is distributed under the **[GNU AGPL v3](LICENSE)** license.
+DM Loremind is distributed under the **[GNU AGPL v3](LICENSE)** license.
 
 In practice:
 - You can use it for free, host it, modify it, and redistribute it.
 - If you modify the code and expose the modified app over a network (even as a private SaaS), you must make your changes public under the same license.
-- The worlds (Lore) and campaigns you create with LoreMind **belong entirely to you** — the license only covers the application's code.
+- The worlds (Lore) and campaigns you create with DM Loremind **belong entirely to you** — the license only covers the application's code.

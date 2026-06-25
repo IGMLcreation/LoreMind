@@ -3,6 +3,44 @@
   max-width: 760px;
 }
 
+// Widget battlemap (export Foundry) : deux emplacements media + sidecar JSON.
+.battlemap-slot {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+
+  .battlemap-slot-label {
+    min-width: 160px;
+    font-size: 0.9rem;
+    opacity: 0.85;
+  }
+
+  .battlemap-file {
+    font-size: 0.9rem;
+    word-break: break-all;
+  }
+
+  .battlemap-pick {
+    cursor: pointer;
+    padding: 0.35rem 0.75rem;
+    border: 1px dashed currentColor;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    opacity: 0.9;
+  }
+
+  .battlemap-remove {
+    background: none;
+    border: none;
+    color: inherit;
+    opacity: 0.7;
+    cursor: pointer;
+    text-decoration: underline;
+    font-size: 0.85rem;
+  }
+}
+
 // Header local : titre à gauche, actions (Assistant IA) à droite.
 .page-header {
   display: flex;

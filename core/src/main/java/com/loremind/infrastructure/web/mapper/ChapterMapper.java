@@ -41,7 +41,6 @@ public class ChapterMapper {
         dto.setNarrativeStakes(chapter.getNarrativeStakes());
         dto.setRelatedPageIds(copyList(chapter.getRelatedPageIds()));
         dto.setIllustrationImageIds(copyList(chapter.getIllustrationImageIds()));
-        dto.setMapImageIds(copyList(chapter.getMapImageIds()));
         return dto;
     }
 
@@ -61,7 +60,6 @@ public class ChapterMapper {
                 .narrativeStakes(dto.getNarrativeStakes())
                 .relatedPageIds(copyList(dto.getRelatedPageIds()))
                 .illustrationImageIds(copyList(dto.getIllustrationImageIds()))
-                .mapImageIds(copyList(dto.getMapImageIds()))
                 .build();
     }
 
