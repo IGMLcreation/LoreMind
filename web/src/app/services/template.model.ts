@@ -35,6 +35,8 @@ export interface TemplateField {
    * KEY_VALUE_LIST = libelles des lignes ; TABLE = noms des colonnes.
    */
   labels?: string[] | null;
+  /** Chemin Foundry du champ (system.<path>) quand le template est calqué Foundry. */
+  foundryPath?: string | null;
 }
 
 /**

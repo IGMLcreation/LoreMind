@@ -70,6 +70,7 @@ public class PostgresGameSystemRepository implements GameSystemRepository {
                 .enemyTemplate(e.getEnemyTemplate() != null
                         ? new java.util.ArrayList<>(e.getEnemyTemplate())
                         : new java.util.ArrayList<>())
+                .foundryActorType(e.getFoundryActorType())
                 .author(e.getAuthor())
                 .isPublic(e.isPublic())
                 .createdAt(e.getCreatedAt())
@@ -93,6 +94,7 @@ public class PostgresGameSystemRepository implements GameSystemRepository {
                 .enemyTemplate(g.getEnemyTemplate() != null
                         ? new java.util.ArrayList<>(g.getEnemyTemplate())
                         : new java.util.ArrayList<>())
+                .foundryActorType(g.getFoundryActorType())
                 .author(g.getAuthor())
                 .isPublic(g.isPublic())
                 .createdAt(g.getCreatedAt())

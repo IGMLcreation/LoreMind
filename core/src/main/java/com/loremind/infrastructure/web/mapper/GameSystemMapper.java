@@ -23,6 +23,7 @@ public class GameSystemMapper {
         dto.setCharacterTemplate(fieldMapper.toDTOList(g.getCharacterTemplate()));
         dto.setNpcTemplate(fieldMapper.toDTOList(g.getNpcTemplate()));
         dto.setEnemyTemplate(fieldMapper.toDTOList(g.getEnemyTemplate()));
+        dto.setFoundryActorType(g.getFoundryActorType());
         dto.setAuthor(g.getAuthor());
         dto.setPublic(g.isPublic());
         return dto;
@@ -38,6 +39,7 @@ public class GameSystemMapper {
                 .characterTemplate(fieldMapper.toDomainList(dto.getCharacterTemplate()))
                 .npcTemplate(fieldMapper.toDomainList(dto.getNpcTemplate()))
                 .enemyTemplate(fieldMapper.toDomainList(dto.getEnemyTemplate()))
+                .foundryActorType(dto.getFoundryActorType())
                 .author(dto.getAuthor())
                 .isPublic(dto.isPublic())
                 .build();

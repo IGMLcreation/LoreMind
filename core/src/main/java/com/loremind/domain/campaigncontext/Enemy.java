@@ -55,6 +55,14 @@ public class Enemy {
      */
     private String foundryRef;
 
+    /**
+     * Instantané (figé) des stats de l'acteur Foundry d'origine, aplati en
+     * cle->valeur, pour AFFICHAGE en prep dans LoreMind. Dependant du systeme,
+     * non synchronise (les stats vivantes restent cote Foundry). Jamais null apres
+     * construction.
+     */
+    private Map<String, String> foundryStats;
+
     /** Ordre d'affichage dans la liste. */
     private int order;
 
@@ -74,5 +82,10 @@ public class Enemy {
     public Map<String, Map<String, String>> getKeyValueValues() {
         if (keyValueValues == null) keyValueValues = new HashMap<>();
         return keyValueValues;
+    }
+
+    public Map<String, String> getFoundryStats() {
+        if (foundryStats == null) foundryStats = new HashMap<>();
+        return foundryStats;
     }
 }

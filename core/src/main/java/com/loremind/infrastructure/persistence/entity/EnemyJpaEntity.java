@@ -67,6 +67,11 @@ public class EnemyJpaEntity {
     @Column(name = "foundry_ref", length = 512)
     private String foundryRef;
 
+    /** Instantané figé des stats Foundry (aplati cle->valeur), JSON en TEXT. */
+    @Convert(converter = StringMapJsonConverter.class)
+    @Column(name = "foundry_stats", columnDefinition = "TEXT")
+    private Map<String, String> foundryStats;
+
     @Column(name = "\"order\"", nullable = false)
     private int order;
 

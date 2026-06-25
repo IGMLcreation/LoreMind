@@ -50,6 +50,49 @@
   color: #d8b4fe;
 }
 
+// Snapshot des stats importées de Foundry (lecture seule, figé).
+.foundry-stats {
+  max-width: 1100px;
+  margin: 28px auto 0;
+  padding: 0 32px;
+
+  h2 {
+    font-size: 1rem;
+    color: #d1a878;
+    margin: 0 0 0.25rem;
+  }
+
+  .foundry-stats-hint {
+    margin: 0 0 0.75rem;
+    color: #9aa0aa;
+    font-size: 0.8rem;
+    font-style: italic;
+  }
+
+  .foundry-stats-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+
+    th, td {
+      text-align: left;
+      padding: 0.3rem 0.6rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      vertical-align: top;
+    }
+
+    th {
+      width: 45%;
+      color: #9aa0aa;
+      font-weight: 500;
+      font-family: monospace;
+      word-break: break-all;
+    }
+
+    td { color: #e0e0e0; }
+  }
+}
+
 // Pages de Lore liées au PNJ — chips cliquables sous la fiche.
 .nv-lore-links {
   max-width: 1100px;

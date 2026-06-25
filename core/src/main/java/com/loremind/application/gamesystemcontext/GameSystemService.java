@@ -4,11 +4,15 @@ import com.loremind.domain.gamesystemcontext.GameSystem;
 import com.loremind.domain.gamesystemcontext.RulesImportResult;
 import com.loremind.domain.gamesystemcontext.ports.GameSystemRepository;
 import com.loremind.domain.gamesystemcontext.ports.RulesPdfImporter;
+import com.loremind.domain.shared.template.FieldType;
 import com.loremind.domain.shared.template.TemplateField;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class GameSystemService {
@@ -58,6 +62,7 @@ public class GameSystemService {
             List<TemplateField> characterTemplate,
             List<TemplateField> npcTemplate,
             List<TemplateField> enemyTemplate,
+            String foundryActorType,
             String author,
             boolean isPublic
     ) {}
@@ -67,6 +72,7 @@ public class GameSystemService {
                 .name(data.name())
                 .description(data.description())
                 .rulesMarkdown(data.rulesMarkdown())
+                .foundryActorType(normalize(data.foundryActorType()))
                 .author(normalize(data.author()))
                 .isPublic(data.isPublic())
                 .build();
@@ -93,9 +99,39 @@ public class GameSystemService {
         existing.replaceCharacterTemplate(data.characterTemplate());
         existing.replaceNpcTemplate(data.npcTemplate());
         existing.replaceEnemyTemplate(data.enemyTemplate());
+        existing.setFoundryActorType(normalize(data.foundryActorType()));
         existing.setAuthor(normalize(data.author()));
         existing.setPublic(data.isPublic());
         return gameSystemRepository.save(existing);
+    }
+
+    /** Un champ scalaire d'une structure d'acteur Foundry importée. */
+    public record FoundryStructField(String path, String label, String type) {}
+
+    /**
+     * Remplace le template ENNEMI par une structure importée d'un système Foundry :
+     * chaque champ devient un TemplateField mappé à son chemin Foundry. Pose aussi le
+     * type d'acteur. L'utilisateur élague/renomme ensuite dans l'éditeur de template.
+     */
+    public GameSystem importFoundryStructure(String id, String actorType, List<FoundryStructField> fields) {
+        GameSystem gs = gameSystemRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("GameSystem non trouvé avec l'ID: " + id));
+
+        List<TemplateField> template = new ArrayList<>();
+        Set<String> usedNames = new HashSet<>();
+        for (FoundryStructField f : fields == null ? List.<FoundryStructField>of() : fields) {
+            if (f.path() == null || f.path().isBlank()) continue;
+            String label = (f.label() != null && !f.label().isBlank()) ? f.label().trim() : f.path();
+            // Nom unique : libellé si libre, sinon le chemin (toujours unique).
+            String name = usedNames.contains(label.toLowerCase()) ? f.path() : label;
+            if (usedNames.contains(name.toLowerCase())) continue;
+            usedNames.add(name.toLowerCase());
+            FieldType type = "number".equalsIgnoreCase(f.type()) ? FieldType.NUMBER : FieldType.TEXT;
+            template.add(new TemplateField(name, type, null, null, f.path()));
+        }
+        gs.replaceEnemyTemplate(template);
+        gs.setFoundryActorType(normalize(actorType));
+        return gameSystemRepository.save(gs);
     }
 
     public void deleteGameSystem(String id) {

@@ -77,6 +77,16 @@ export class EnemyViewComponent implements OnInit, OnDestroy {
     this.paramsSub?.unsubscribe();
   }
 
+  /** Stats importées de Foundry (snapshot figé), triées pour affichage. */
+  get foundryStatsEntries(): { key: string; value: string }[] {
+    const s = this.enemy?.foundryStats ?? {};
+    return Object.keys(s).sort().map(key => ({ key, value: s[key] }));
+  }
+
+  get hasFoundryStats(): boolean {
+    return this.foundryStatsEntries.length > 0;
+  }
+
   /** Sous-titre de la fiche : niveau + dossier (« Niveau 8 · Démons »). */
   get subtitle(): string {
     const parts: string[] = [];

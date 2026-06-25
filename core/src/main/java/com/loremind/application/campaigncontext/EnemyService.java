@@ -83,8 +83,17 @@ public class EnemyService {
 
     // --- Import de monstres depuis un compendium Foundry -------------------
 
-    /** Un monstre du catalogue Foundry : nom + référence (UUID de compendium). */
-    public record MonsterImport(String name, String foundryRef) {}
+    /** Un monstre du catalogue Foundry : nom + référence + snapshot de stats + dossier. */
+    public record MonsterImport(String name, String foundryRef, Map<String, String> stats, String folder) {}
+
+    /**
+     * Dossier LoreMind d'un monstre importé : on conserve l'arborescence Foundry
+     * sous un dossier racine « Foundry » ("Foundry/Briarban", "Foundry" si aucun).
+     */
+    private static String foundryFolder(String path) {
+        String p = path == null ? "" : path.trim();
+        return p.isEmpty() ? "Foundry" : "Foundry/" + p;
+    }
 
     public record MonsterImportResult(int created, int updated) {}
 
@@ -108,15 +117,21 @@ public class EnemyService {
                     || m.name() == null || m.name().isBlank()) {
                 continue;
             }
+            Map<String, String> stats = m.stats() != null ? new HashMap<>(m.stats()) : new HashMap<>();
+            String folder = foundryFolder(m.folder());
             Enemy ex = byRef.get(m.foundryRef());
             if (ex != null) {
                 ex.setName(m.name());
+                ex.setFoundryStats(stats); // rafraîchit le snapshot
+                ex.setFolder(folder);      // ré-aligne sur l'arborescence Foundry
                 enemyRepository.save(ex);
                 updated++;
             } else {
                 Enemy saved = enemyRepository.save(Enemy.builder()
                         .name(m.name())
                         .foundryRef(m.foundryRef())
+                        .foundryStats(stats)
+                        .folder(folder)
                         .campaignId(campaignId)
                         .order(order++)
                         .values(new HashMap<>())

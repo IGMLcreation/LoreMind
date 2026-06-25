@@ -18,6 +18,8 @@
     "searchPlaceholder": "Search for an enemy from the bestiary...",
     "openInNewTab": "Open the sheet in a new tab",
     "removeLink": "Remove link",
+    "increment": "One more",
+    "decrement": "One less",
     "noMatch": "No matching enemy"
   },
   "personaView": {

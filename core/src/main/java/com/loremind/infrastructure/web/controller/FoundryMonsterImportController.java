@@ -26,7 +26,8 @@ public class FoundryMonsterImportController {
     /** Format du catalogue produit par le module Foundry. */
     public record MonsterCatalog(String system, List<MonsterEntry> monsters) {}
 
-    public record MonsterEntry(String name, String uuid, String img) {}
+    public record MonsterEntry(String name, String uuid, String type, String img,
+                               java.util.Map<String, String> stats, String folder) {}
 
     @PostMapping("/import-foundry-monsters")
     public ResponseEntity<EnemyService.MonsterImportResult> importMonsters(
@@ -34,7 +35,7 @@ public class FoundryMonsterImportController {
             @RequestBody MonsterCatalog catalog) {
         List<EnemyService.MonsterImport> monsters = (catalog.monsters() == null ? List.<MonsterEntry>of() : catalog.monsters())
                 .stream()
-                .map(m -> new EnemyService.MonsterImport(m.name(), m.uuid()))
+                .map(m -> new EnemyService.MonsterImport(m.name(), m.uuid(), m.stats(), m.folder()))
                 .toList();
         return ResponseEntity.ok(enemyService.importFoundryMonsters(campaignId, monsters));
     }

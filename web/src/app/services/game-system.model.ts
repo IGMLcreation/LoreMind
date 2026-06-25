@@ -15,6 +15,8 @@ export interface GameSystem {
   characterTemplate?: TemplateField[];
   npcTemplate?: TemplateField[];
   enemyTemplate?: TemplateField[];
+  /** Type d'acteur Foundry pour l'export d'ennemis maison typés (import de structure). */
+  foundryActorType?: string | null;
   author?: string | null;
   isPublic?: boolean;
 }
@@ -52,6 +54,7 @@ export interface GameSystemCreate {
   characterTemplate?: TemplateField[];
   npcTemplate?: TemplateField[];
   enemyTemplate?: TemplateField[];
+  foundryActorType?: string | null;
   author?: string | null;
   isPublic: boolean;
 }

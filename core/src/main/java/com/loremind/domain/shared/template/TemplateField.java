@@ -37,14 +37,26 @@ public class TemplateField {
      */
     private List<String> labels;
 
+    /**
+     * Chemin Foundry de ce champ (ex: {@code attributes.hp.value}) quand le template
+     * est calqué sur un système Foundry importé. Permet, a l'export, de construire un
+     * acteur typé en posant {@code system.<foundryPath> = valeur}. Null = non mappé.
+     */
+    private String foundryPath;
+
     /** Constructeur de retrocompat : type seul, layout/labels=null. */
     public TemplateField(String name, FieldType type) {
-        this(name, type, null, null);
+        this(name, type, null, null, null);
     }
 
     /** Constructeur de retrocompat : type + layout, labels=null. */
     public TemplateField(String name, FieldType type, ImageLayout layout) {
-        this(name, type, layout, null);
+        this(name, type, layout, null, null);
+    }
+
+    /** Constructeur de retrocompat (4 args) : sans foundryPath. */
+    public TemplateField(String name, FieldType type, ImageLayout layout, List<String> labels) {
+        this(name, type, layout, labels, null);
     }
 
     /** Raccourci : construit un champ de type TEXT (cas le plus courant). */

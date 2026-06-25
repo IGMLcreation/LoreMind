@@ -28,7 +28,7 @@
       @if (g.folder) {
         <h2 class="sbl-folder">
           <lucide-icon [img]="Folder" [size]="14"></lucide-icon>
-          {{ g.folder }}
+          {{ g.folder.split('/').join(' / ') }}
           <span class="sbl-folder-count">{{ g.enemies.length }}</span>
         </h2>
       } @else if (groups.length > 1) {

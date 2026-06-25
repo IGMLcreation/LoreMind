@@ -33,6 +33,32 @@
     &:hover { color: #fecdd3; }
   }
 
+  .chip-qty {
+    display: inline-flex;
+    align-items: center;
+    border-left: 1px solid #2a2a3d;
+
+    .chip-step {
+      width: 1.4rem;
+      padding: 0.25rem 0;
+      background: transparent;
+      border: none;
+      color: inherit;
+      cursor: pointer;
+      font-size: 0.95rem;
+      line-height: 1;
+      opacity: 0.8;
+      &:hover { opacity: 1; background: #2a2a3d; color: #fecdd3; }
+    }
+
+    .chip-count {
+      min-width: 1.6rem;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+      opacity: 0.9;
+    }
+  }
+
   .chip-remove {
     display: inline-flex;
     align-items: center;

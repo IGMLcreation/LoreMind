@@ -18,6 +18,8 @@
     "searchPlaceholder": "Rechercher un ennemi du bestiaire...",
     "openInNewTab": "Ouvrir la fiche dans un nouvel onglet",
     "removeLink": "Retirer le lien",
+    "increment": "Un de plus",
+    "decrement": "Un de moins",
     "noMatch": "Aucun ennemi ne correspond"
   },
   "personaView": {

@@ -12,4 +12,21 @@
   </div>
 
   <app-persona-view [persona]="enemy" [templateFields]="templateFields" [subtitle]="subtitle"></app-persona-view>
+
+  @if (hasFoundryStats) {
+    <section class="foundry-stats">
+      <h2>{{ 'enemyView.foundryStatsTitle' | translate }}</h2>
+      <p class="foundry-stats-hint">{{ 'enemyView.foundryStatsHint' | translate }}</p>
+      <table class="foundry-stats-table">
+        <tbody>
+          @for (s of foundryStatsEntries; track s.key) {
+            <tr>
+              <th>{{ s.key }}</th>
+              <td>{{ s.value }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+  }
 </div>

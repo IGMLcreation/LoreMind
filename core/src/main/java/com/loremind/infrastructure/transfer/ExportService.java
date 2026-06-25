@@ -293,7 +293,7 @@ public class ExportService {
     private ContentExport.GameSystemDto toGameSystemDto(GameSystemJpaEntity e) {
         return new ContentExport.GameSystemDto(e.getId(), e.getName(), e.getDescription(),
                 e.getRulesMarkdown(), e.getCharacterTemplate(), e.getNpcTemplate(),
-                e.getEnemyTemplate(), e.getAuthor(), e.isPublic());
+                e.getEnemyTemplate(), e.getFoundryActorType(), e.getAuthor(), e.isPublic());
     }
 
     private ContentExport.LoreDto toLoreDto(LoreJpaEntity e) {
@@ -364,7 +364,7 @@ public class ExportService {
     private ContentExport.EnemyDto toEnemyDto(EnemyJpaEntity e) {
         return new ContentExport.EnemyDto(e.getId(), e.getName(), e.getLevel(), e.getFolder(),
                 e.getPortraitImageId(), e.getHeaderImageId(), e.getValues(), e.getImageValues(),
-                e.getKeyValueValues(), e.getCampaignId(), e.getFoundryRef(), e.getOrder());
+                e.getKeyValueValues(), e.getCampaignId(), e.getFoundryRef(), e.getFoundryStats(), e.getOrder());
     }
 
     private ContentExport.ItemCatalogDto toItemCatalogDto(ItemCatalogJpaEntity e) {

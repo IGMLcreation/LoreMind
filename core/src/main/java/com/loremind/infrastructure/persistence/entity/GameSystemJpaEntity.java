@@ -51,6 +51,10 @@ public class GameSystemJpaEntity {
     @Column(name = "enemy_template", columnDefinition = "TEXT")
     private List<TemplateField> enemyTemplate;
 
+    /** Type d'acteur Foundry pour les ennemis maison (import de structure). Nullable. */
+    @Column(name = "foundry_actor_type")
+    private String foundryActorType;
+
     @Column
     private String author;
 

@@ -26,13 +26,21 @@ public class TemplateFieldDTO {
     /** Labels predefinis pour KEY_VALUE_LIST (ordre significatif). */
     private List<String> labels;
 
+    /** Chemin Foundry du champ (mapping pour l'export d'acteur typé). Nullable. */
+    private String foundryPath;
+
+    /** Retrocompat : constructeur sans foundryPath. */
+    public TemplateFieldDTO(String name, String type, String layout, List<String> labels) {
+        this(name, type, layout, labels, null);
+    }
+
     /** Retrocompat : constructeur sans labels. */
     public TemplateFieldDTO(String name, String type, String layout) {
-        this(name, type, layout, null);
+        this(name, type, layout, null, null);
     }
 
     /** Retrocompat : constructeur sans layout ni labels. */
     public TemplateFieldDTO(String name, String type) {
-        this(name, type, null, null);
+        this(name, type, null, null, null);
     }
 }

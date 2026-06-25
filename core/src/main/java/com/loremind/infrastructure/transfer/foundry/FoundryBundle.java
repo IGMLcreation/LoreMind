@@ -77,8 +77,14 @@ public final class FoundryBundle {
     public record Persona(
             String id, String name, String folder, int order,
             String portraitAssetId, String headerAssetId, String level,
-            String foundryRef, List<Field> fields
+            String foundryRef, FoundryActor foundryActor, List<Field> fields
     ) {}
+
+    /**
+     * Acteur Foundry typé à créer pour un ennemi MAISON (sans référence) : type
+     * d'acteur + données system pré-construites depuis les champs mappés du template.
+     */
+    public record FoundryActor(String type, Map<String, Object> system) {}
 
     /** Champ de fiche resolu : {type, label} + selon le type value | entries | assetIds. */
     public record Field(String type, String label, String value, List<Entry> entries, List<String> assetIds) {}

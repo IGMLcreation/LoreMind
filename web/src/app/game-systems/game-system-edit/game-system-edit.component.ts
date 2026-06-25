@@ -88,6 +88,12 @@ export class GameSystemEditComponent implements OnInit {
   npcTemplate: TemplateField[] = [];
   enemyTemplate: TemplateField[] = [];
 
+  /** Type d'acteur Foundry (posé par l'import de structure). */
+  foundryActorType: string | null = null;
+  /** Import de structure Foundry en cours. */
+  importingStructure = false;
+  importStructureError: string | null = null;
+
   readonly suggestedSections = SUGGESTED_SECTIONS;
   readonly characterFieldSuggestions = CHARACTER_FIELD_SUGGESTIONS;
   readonly npcFieldSuggestions = NPC_FIELD_SUGGESTIONS;
@@ -112,6 +118,7 @@ export class GameSystemEditComponent implements OnInit {
           this.characterTemplate = gs.characterTemplate ? [...gs.characterTemplate] : [];
           this.npcTemplate = gs.npcTemplate ? [...gs.npcTemplate] : [];
           this.enemyTemplate = gs.enemyTemplate ? [...gs.enemyTemplate] : [];
+          this.foundryActorType = gs.foundryActorType ?? null;
         },
         error: () => this.back()
       });
@@ -234,6 +241,47 @@ export class GameSystemEditComponent implements OnInit {
     return count;
   }
 
+  // --- Import d'une structure d'acteur Foundry (template ennemi) ------------
+
+  /** Déclenché par le <input file> caché : importe la structure choisie. */
+  onStructureSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (file) this.importStructureFile(file);
+  }
+
+  /**
+   * Importe une structure Foundry (.json du module) : REMPLACE le template ennemi
+   * par les champs mappés + pose le type d'acteur. Nécessite un système déjà
+   * enregistré (id). L'utilisateur élague/renomme ensuite, puis enregistre.
+   */
+  private importStructureFile(file: File): void {
+    if (!this.id || this.importingStructure) return;
+    this.importStructureError = null;
+    file.text().then(txt => {
+      let structure: unknown;
+      try {
+        structure = JSON.parse(txt);
+      } catch {
+        this.importStructureError = this.translate.instant('gameSystemEdit.structureInvalid');
+        return;
+      }
+      this.importingStructure = true;
+      this.service.importFoundryStructure(this.id!, structure).subscribe({
+        next: (gs) => {
+          this.enemyTemplate = gs.enemyTemplate ? [...gs.enemyTemplate] : [];
+          this.foundryActorType = gs.foundryActorType ?? null;
+          this.importingStructure = false;
+        },
+        error: () => {
+          this.importingStructure = false;
+          this.importStructureError = this.translate.instant('gameSystemEdit.structureFailed');
+        }
+      });
+    });
+  }
+
   removeSection(index: number): void {
     this.sections.splice(index, 1);
   }
@@ -256,6 +304,7 @@ export class GameSystemEditComponent implements OnInit {
       characterTemplate: this.characterTemplate,
       npcTemplate: this.npcTemplate,
       enemyTemplate: this.enemyTemplate,
+      foundryActorType: this.foundryActorType,
       isPublic: false
     };
     const req = this.id

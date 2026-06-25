@@ -92,6 +92,8 @@
     "deleteMessage": "Delete \"{{name}}\"?"
   },
   "enemyView": {
-    "levelLong": "Level {{level}}"
+    "levelLong": "Level {{level}}",
+    "foundryStatsTitle": "Foundry stats",
+    "foundryStatsHint": "Snapshot imported from Foundry (frozen — the live sheet stays in Foundry)."
   }
 }

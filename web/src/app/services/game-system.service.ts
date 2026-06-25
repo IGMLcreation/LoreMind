@@ -41,6 +41,14 @@ export class GameSystemService {
   }
 
   /**
+   * Importe une structure d'acteur Foundry (exportée par le module) : remplace le
+   * template ennemi par les champs mappés + pose le type d'acteur. Renvoie le système.
+   */
+  importFoundryStructure(id: string, structure: unknown): Observable<GameSystem> {
+    return this.http.post<GameSystem>(`${this.apiUrl}/${id}/import-foundry-structure`, structure);
+  }
+
+  /**
    * Importe un PDF de règles : renvoie une PROPOSITION de sections (titre →
    * markdown). Rien n'est persisté côté serveur — l'appelant injecte les
    * sections dans l'éditeur pour révision avant enregistrement.

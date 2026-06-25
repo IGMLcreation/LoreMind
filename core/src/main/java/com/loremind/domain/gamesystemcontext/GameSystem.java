@@ -58,6 +58,13 @@ public class GameSystem {
      */
     private List<TemplateField> enemyTemplate;
 
+    /**
+     * Type d'acteur Foundry à créer pour les ennemis maison de ce système
+     * (ex: {@code npc}, {@code monster}). Renseigné par l'import de structure Foundry ;
+     * couplé aux {@code foundryPath} des champs de {@link #enemyTemplate}. Nullable.
+     */
+    private String foundryActorType;
+
     /** Auteur déclaré — futur marketplace. Nullable. */
     private String author;
 

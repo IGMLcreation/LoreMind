@@ -20,6 +20,8 @@ public class GameSystemDTO {
     private List<TemplateFieldDTO> characterTemplate = new ArrayList<>();
     private List<TemplateFieldDTO> npcTemplate = new ArrayList<>();
     private List<TemplateFieldDTO> enemyTemplate = new ArrayList<>();
+    /** Type d'acteur Foundry pour l'export des ennemis maison (import de structure). */
+    private String foundryActorType;
     private String author;
     private boolean isPublic;
 }

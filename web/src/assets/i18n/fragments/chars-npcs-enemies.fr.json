@@ -92,6 +92,8 @@
     "deleteMessage": "Supprimer « {{name}} » ?"
   },
   "enemyView": {
-    "levelLong": "Niveau {{level}}"
+    "levelLong": "Niveau {{level}}",
+    "foundryStatsTitle": "Statistiques Foundry",
+    "foundryStatsHint": "Instantané importé depuis Foundry (figé — la fiche vivante reste côté Foundry)."
   }
 }

@@ -101,6 +101,7 @@ public class FoundryExportService {
 
         List<TemplateField> npcTemplate = resolveTemplate(campaign.getGameSystemId(), true);
         List<TemplateField> enemyTemplate = resolveTemplate(campaign.getGameSystemId(), false);
+        String foundryActorType = resolveActorType(campaign.getGameSystemId());
 
         AssetRegistry assets = new AssetRegistry();
 
@@ -133,7 +134,7 @@ public class FoundryExportService {
         for (NpcJpaEntity n : npcRepo.findByCampaignIdOrderByOrderAsc(campaign.getId())) {
             npcs.add(new FoundryBundle.Persona(
                     str(n.getId()), n.getName(), n.getFolder(), n.getOrder(),
-                    assets.image(n.getPortraitImageId()), assets.image(n.getHeaderImageId()), null, null,
+                    assets.image(n.getPortraitImageId()), assets.image(n.getHeaderImageId()), null, null, null,
                     fields(npcTemplate, n.getValues(), n.getKeyValueValues(), n.getImageValues(), assets)));
         }
 
@@ -143,6 +144,7 @@ public class FoundryExportService {
                     str(e.getId()), e.getName(), e.getFolder(), e.getOrder(),
                     assets.image(e.getPortraitImageId()), assets.image(e.getHeaderImageId()), e.getLevel(),
                     e.getFoundryRef(),
+                    buildFoundryActor(e, enemyTemplate, foundryActorType),
                     fields(enemyTemplate, e.getValues(), e.getKeyValueValues(), e.getImageValues(), assets)));
         }
 
@@ -282,6 +284,65 @@ public class FoundryExportService {
         } catch (NumberFormatException ex) {
             return null;
         }
+    }
+
+    private String resolveActorType(String gameSystemId) {
+        if (gameSystemId == null || gameSystemId.isBlank()) return null;
+        try {
+            return gameSystemRepo.findById(Long.parseLong(gameSystemId))
+                    .map(GameSystemJpaEntity::getFoundryActorType)
+                    .orElse(null);
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
+
+    /**
+     * Construit l'acteur Foundry typé d'un ennemi MAISON (sans référence) : pose
+     * {@code system.<foundryPath> = valeur} pour chaque champ mappé non vide. Null si
+     * pas de type d'acteur, pas de champ mappé, ou si l'ennemi a déjà une référence
+     * (auquel cas le vrai acteur du compendium est utilisé à la place).
+     */
+    private FoundryBundle.FoundryActor buildFoundryActor(EnemyJpaEntity e, List<TemplateField> template, String actorType) {
+        if (actorType == null || actorType.isBlank() || template == null) return null;
+        if (e.getFoundryRef() != null && !e.getFoundryRef().isBlank()) return null;
+        Map<String, Object> system = new LinkedHashMap<>();
+        Map<String, String> values = e.getValues();
+        boolean any = false;
+        for (TemplateField f : template) {
+            if (f == null || f.getName() == null) continue;
+            String path = f.getFoundryPath();
+            if (path == null || path.isBlank()) continue;
+            String raw = values != null ? values.get(f.getName()) : null;
+            if (raw == null || raw.isBlank()) continue;
+            setPath(system, path, f.getType() == FieldType.NUMBER ? parseNumber(raw) : raw);
+            any = true;
+        }
+        return any ? new FoundryBundle.FoundryActor(actorType, system) : null;
+    }
+
+    /** Pose une valeur dans un objet imbriqué selon un chemin pointé ("a.b.c"). */
+    @SuppressWarnings("unchecked")
+    private static void setPath(Map<String, Object> root, String path, Object value) {
+        String[] parts = path.split("\\.");
+        Map<String, Object> cur = root;
+        for (int i = 0; i < parts.length - 1; i++) {
+            Object next = cur.get(parts[i]);
+            if (!(next instanceof Map)) {
+                next = new LinkedHashMap<String, Object>();
+                cur.put(parts[i], next);
+            }
+            cur = (Map<String, Object>) next;
+        }
+        cur.put(parts[parts.length - 1], value);
+    }
+
+    /** Convertit en Integer ou Double si possible (pour que Foundry reçoive un nombre). */
+    private static Object parseNumber(String s) {
+        String t = s.trim();
+        try { return Integer.valueOf(t); } catch (NumberFormatException ignored) { /* fallthrough */ }
+        try { return Double.valueOf(t.replace(',', '.')); } catch (NumberFormatException ignored) { /* fallthrough */ }
+        return s;
     }
 
     private List<FoundryBundle.Field> fields(List<TemplateField> template,

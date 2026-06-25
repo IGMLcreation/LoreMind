@@ -1,20 +1,25 @@
 <div class="picker">
 
-  <!-- Chips des ennemis déjà liés -->
-  @if (linkedEnemies.length > 0) {
+  <!-- Chips des ennemis déjà liés (avec quantité) -->
+  @if (linkedGroups.length > 0) {
     <div class="linked-chips">
-      @for (e of linkedEnemies; track e.id) {
+      @for (g of linkedGroups; track g.enemy.id) {
         <span class="chip">
           <a
             class="chip-label"
-            [href]="enemyUrl(e.id!)"
+            [href]="enemyUrl(g.enemy.id!)"
             target="_blank"
             rel="noopener"
             [title]="'enemyLinkPicker.openInNewTab' | translate">
             <lucide-icon [img]="Skull" [size]="12"></lucide-icon>
-            {{ label(e) }}
+            {{ label(g.enemy) }}
           </a>
-          <button type="button" class="chip-remove" (click)="remove(e.id!)" [title]="'enemyLinkPicker.removeLink' | translate">
+          <span class="chip-qty">
+            <button type="button" class="chip-step" (click)="decrement(g.enemy.id!)" [title]="'enemyLinkPicker.decrement' | translate">−</button>
+            <span class="chip-count">×{{ g.count }}</span>
+            <button type="button" class="chip-step" (click)="increment(g.enemy.id!)" [title]="'enemyLinkPicker.increment' | translate">+</button>
+          </span>
+          <button type="button" class="chip-remove" (click)="remove(g.enemy.id!)" [title]="'enemyLinkPicker.removeLink' | translate">
             <lucide-icon [img]="X" [size]="12"></lucide-icon>
           </button>
         </span>

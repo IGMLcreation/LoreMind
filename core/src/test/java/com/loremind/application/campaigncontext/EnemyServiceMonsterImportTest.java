@@ -9,6 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -29,18 +30,32 @@ class EnemyServiceMonsterImportTest {
                 CampaignJpaEntity.builder().name("Camp").arcsCount(0).build()).getId();
 
         var r1 = enemyService.importFoundryMonsters(String.valueOf(cid), List.of(
-                new EnemyService.MonsterImport("Goblin", "Compendium.nimble.monsters.Actor.g1"),
-                new EnemyService.MonsterImport("Orc", "Compendium.nimble.monsters.Actor.o1")));
+                new EnemyService.MonsterImport("Goblin", "Compendium.nimble.monsters.Actor.g1", Map.of("level", "1"), "Briarban"),
+                new EnemyService.MonsterImport("Orc", "Compendium.nimble.monsters.Actor.o1", Map.of(), null)));
         assertEquals(2, r1.created());
         assertEquals(0, r1.updated());
         assertEquals(2, enemyRepo.findByCampaignIdOrderByOrderAsc(cid).size());
 
-        // Réimport : g1 déjà connu (renommé) + un nouveau (k1). Pas de doublon pour g1.
+        // Snapshot de stats conservé + arborescence Foundry sous "Foundry/".
+        var goblin = enemyRepo.findByCampaignIdOrderByOrderAsc(cid).stream()
+                .filter(e -> "Compendium.nimble.monsters.Actor.g1".equals(e.getFoundryRef()))
+                .findFirst().orElseThrow();
+        assertEquals("1", goblin.getFoundryStats().get("level"));
+        assertEquals("Foundry/Briarban", goblin.getFolder());
+        var orc = enemyRepo.findByCampaignIdOrderByOrderAsc(cid).stream()
+                .filter(e -> "Compendium.nimble.monsters.Actor.o1".equals(e.getFoundryRef()))
+                .findFirst().orElseThrow();
+        assertEquals("Foundry", orc.getFolder()); // sans dossier Foundry -> racine
+
+        // Réimport : g1 déjà connu (renommé + redossiérisé) + un nouveau (k1). Pas de doublon.
         var r2 = enemyService.importFoundryMonsters(String.valueOf(cid), List.of(
-                new EnemyService.MonsterImport("Goblin Boss", "Compendium.nimble.monsters.Actor.g1"),
-                new EnemyService.MonsterImport("Kobold", "Compendium.nimble.monsters.Actor.k1")));
+                new EnemyService.MonsterImport("Goblin Boss", "Compendium.nimble.monsters.Actor.g1", Map.of(), "Briarban/Bosses"),
+                new EnemyService.MonsterImport("Kobold", "Compendium.nimble.monsters.Actor.k1", Map.of(), "Kobolds")));
         assertEquals(1, r2.created());
         assertEquals(1, r2.updated());
+        assertEquals("Foundry/Briarban/Bosses", enemyRepo.findByCampaignIdOrderByOrderAsc(cid).stream()
+                .filter(e -> "Compendium.nimble.monsters.Actor.g1".equals(e.getFoundryRef()))
+                .findFirst().orElseThrow().getFolder());
 
         var all = enemyRepo.findByCampaignIdOrderByOrderAsc(cid);
         assertEquals(3, all.size());
@@ -55,9 +70,9 @@ class EnemyServiceMonsterImportTest {
                 CampaignJpaEntity.builder().name("Camp2").arcsCount(0).build()).getId();
 
         var r = enemyService.importFoundryMonsters(String.valueOf(cid), List.of(
-                new EnemyService.MonsterImport("", "Compendium.x.Actor.a"),
-                new EnemyService.MonsterImport("SansRef", " "),
-                new EnemyService.MonsterImport("Valide", "Compendium.x.Actor.b")));
+                new EnemyService.MonsterImport("", "Compendium.x.Actor.a", Map.of(), null),
+                new EnemyService.MonsterImport("SansRef", " ", Map.of(), null),
+                new EnemyService.MonsterImport("Valide", "Compendium.x.Actor.b", Map.of(), null)));
         assertEquals(1, r.created());
         assertEquals(1, enemyRepo.findByCampaignIdOrderByOrderAsc(cid).size());
     }

@@ -19,6 +19,8 @@ export interface Enemy {
   order?: number;
   /** UUID de l'acteur de compendium Foundry d'origine (monstre importé). Null sinon. */
   foundryRef?: string | null;
+  /** Instantané figé des stats Foundry (aplati clé→valeur), pour affichage en prep. */
+  foundryStats?: Record<string, string>;
 }
 
 export interface EnemyCreate {

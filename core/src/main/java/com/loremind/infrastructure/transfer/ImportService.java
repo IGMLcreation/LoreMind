@@ -136,6 +136,7 @@ public class ImportService {
             e.setCharacterTemplate(d.characterTemplate());
             e.setNpcTemplate(d.npcTemplate());
             e.setEnemyTemplate(d.enemyTemplate());
+            e.setFoundryActorType(d.foundryActorType());
             e.setAuthor(d.author());
             e.setPublic(d.isPublic());
             gameSystemMap.put(d.id(), gameSystemRepo.save(e).getId());
@@ -336,6 +337,7 @@ public class ImportService {
             e.setKeyValueValues(d.keyValueValues());
             e.setCampaignId(IdRemapper.remapId(campaignMap, d.campaignId()));
             e.setFoundryRef(d.foundryRef()); // ref externe Foundry : conservee telle quelle
+            e.setFoundryStats(d.foundryStats());
             e.setOrder(d.order());
             enemyMap.put(d.id(), enemyRepo.save(e).getId());
         }

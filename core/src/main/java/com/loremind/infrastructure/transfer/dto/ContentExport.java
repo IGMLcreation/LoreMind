@@ -58,6 +58,7 @@ public record ContentExport(
             List<TemplateField> characterTemplate,
             List<TemplateField> npcTemplate,
             List<TemplateField> enemyTemplate,
+            String foundryActorType,
             String author,
             boolean isPublic
     ) {}
@@ -210,6 +211,7 @@ public record ContentExport(
             Map<String, Map<String, String>> keyValueValues,
             Long campaignId,
             String foundryRef,
+            Map<String, String> foundryStats,
             int order
     ) {}
 

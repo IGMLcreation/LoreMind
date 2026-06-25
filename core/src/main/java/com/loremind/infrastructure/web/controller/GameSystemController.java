@@ -261,8 +261,29 @@ public class GameSystemController {
                 templateFieldMapper.toDomainList(dto.getCharacterTemplate()),
                 templateFieldMapper.toDomainList(dto.getNpcTemplate()),
                 templateFieldMapper.toDomainList(dto.getEnemyTemplate()),
+                dto.getFoundryActorType(),
                 dto.getAuthor(),
                 dto.isPublic()
         );
     }
+
+    /**
+     * Importe une structure d'acteur Foundry (exportée par le module) : remplace le
+     * template ENNEMI par les champs mappés + pose le type d'acteur. Renvoie le système
+     * mis à jour (le front rafraîchit l'éditeur de template).
+     */
+    @PostMapping("/{id}/import-foundry-structure")
+    public ResponseEntity<GameSystemDTO> importFoundryStructure(
+            @PathVariable String id, @RequestBody FoundryStructureRequest req) {
+        List<GameSystemService.FoundryStructField> fields =
+                (req.fields() == null ? List.<StructFieldDto>of() : req.fields()).stream()
+                        .map(f -> new GameSystemService.FoundryStructField(f.path(), f.label(), f.type()))
+                        .collect(Collectors.toList());
+        GameSystem updated = gameSystemService.importFoundryStructure(id, req.actorType(), fields);
+        return ResponseEntity.ok(gameSystemMapper.toDTO(updated));
+    }
+
+    public record FoundryStructureRequest(String system, String actorType, List<StructFieldDto> fields) {}
+
+    public record StructFieldDto(String path, String label, String type) {}
 }

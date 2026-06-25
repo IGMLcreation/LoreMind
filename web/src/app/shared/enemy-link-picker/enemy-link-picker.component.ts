@@ -44,11 +44,20 @@ export class EnemyLinkPickerComponent {
   /** true tant que l'input a le focus (pour afficher le dropdown). */
   dropdownOpen = false;
 
-  /** Ennemis actuellement liés (résolus en objets complets pour affichage). */
-  get linkedEnemies(): Enemy[] {
-    return this.value
-      .map(id => this.availableEnemies.find(e => e.id === id))
-      .filter((e): e is Enemy => !!e);
+  /**
+   * Ennemis liés groupés AVEC leur quantité (le même id peut apparaître N fois
+   * dans `value` → N tokens à l'export). Ordre = première apparition.
+   */
+  get linkedGroups(): { enemy: Enemy; count: number }[] {
+    const counts = new Map<string, number>();
+    const order: string[] = [];
+    for (const id of this.value) {
+      if (!counts.has(id)) order.push(id);
+      counts.set(id, (counts.get(id) ?? 0) + 1);
+    }
+    return order
+      .map(id => ({ enemy: this.availableEnemies.find(e => e.id === id), count: counts.get(id)! }))
+      .filter((g): g is { enemy: Enemy; count: number } => !!g.enemy);
   }
 
   /** Ennemis proposables dans le dropdown — filtrés par query, exclut les déjà liés. */
@@ -66,14 +75,28 @@ export class EnemyLinkPickerComponent {
     return level ? `${enemy.name} (${level})` : enemy.name;
   }
 
-  /** Ajoute un ennemi aux liens. */
+  /** Ajoute un ennemi aux liens (première occurrence). */
   add(enemy: Enemy): void {
-    if (!enemy.id || this.value.includes(enemy.id)) return;
+    if (!enemy.id) return;
     this.valueChange.emit([...this.value, enemy.id]);
     this.query = '';
   }
 
-  /** Retire un ennemi des liens. */
+  /** +1 du même ennemi (un token de plus à l'export). */
+  increment(enemyId: string): void {
+    this.valueChange.emit([...this.value, enemyId]);
+  }
+
+  /** −1 du même ennemi (retire UNE occurrence). */
+  decrement(enemyId: string): void {
+    const i = this.value.indexOf(enemyId);
+    if (i < 0) return;
+    const next = [...this.value];
+    next.splice(i, 1);
+    this.valueChange.emit(next);
+  }
+
+  /** Retire TOUTES les occurrences de cet ennemi. */
   remove(enemyId: string): void {
     this.valueChange.emit(this.value.filter(id => id !== enemyId));
   }

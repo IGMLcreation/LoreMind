@@ -153,6 +153,22 @@
           (fieldsChange)="npcTemplate = $event">
         </app-template-fields-editor>
 
+        @if (id) {
+          <div class="structure-import">
+            <button type="button" class="btn-secondary" [disabled]="importingStructure" (click)="structureInput.click()">
+              <lucide-icon [img]="Upload" [size]="14"></lucide-icon>
+              {{ (importingStructure ? 'gameSystemEdit.structureImporting' : 'gameSystemEdit.structureImport') | translate }}
+            </button>
+            <input #structureInput type="file" accept=".json,application/json" hidden (change)="onStructureSelected($event)" />
+            @if (foundryActorType) {
+              <span class="structure-actor-type">{{ 'gameSystemEdit.structureActorType' | translate:{ type: foundryActorType } }}</span>
+            }
+            @if (importStructureError) {
+              <span class="structure-error">{{ importStructureError }}</span>
+            }
+          </div>
+        }
+
         <app-template-fields-editor
           [label]="'gameSystemEdit.enemyFieldsLabel' | translate"
           [hint]="'gameSystemEdit.enemyFieldsHint' | translate"

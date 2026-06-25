@@ -368,6 +368,8 @@
     "searchPlaceholder": "Search for an enemy from the bestiary...",
     "openInNewTab": "Open the sheet in a new tab",
     "removeLink": "Remove link",
+    "increment": "One more",
+    "decrement": "One less",
     "noMatch": "No matching enemy"
   },
   "personaView": {
@@ -1096,7 +1098,9 @@
     "deleteMessage": "Delete \"{{name}}\"?"
   },
   "enemyView": {
-    "levelLong": "Level {{level}}"
+    "levelLong": "Level {{level}}",
+    "foundryStatsTitle": "Foundry stats",
+    "foundryStatsHint": "Snapshot imported from Foundry (frozen — the live sheet stays in Foundry)."
   },
   "gameSystems": {
     "heroTitle": "RPG Systems",
@@ -1141,6 +1145,11 @@
     "npcFieldsHint": "Shown when creating/editing a non-player character.",
     "enemyFieldsLabel": "Enemy sheet fields",
     "enemyFieldsHint": "Shown when creating/editing an enemy (bestiary). Name, level, folder, portrait and banner are automatic.",
+    "structureImport": "Import a Foundry structure",
+    "structureImporting": "Importing…",
+    "structureActorType": "Foundry actor: {{type}}",
+    "structureInvalid": "Unreadable structure (invalid JSON).",
+    "structureFailed": "Structure import failed.",
     "importExtracting": "Extracting text…",
     "importAnalyzing": "Analyzing rules… ({{current}}/{{total}})",
     "importFailed": "PDF import failed.",

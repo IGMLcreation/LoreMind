@@ -33,7 +33,7 @@ public class TemplateFieldMapper {
                 && field.getLabels() != null) {
             labels = new ArrayList<>(field.getLabels());
         }
-        return new TemplateFieldDTO(field.getName(), typeStr, layoutStr, labels);
+        return new TemplateFieldDTO(field.getName(), typeStr, layoutStr, labels, field.getFoundryPath());
     }
 
     public TemplateField toDomain(TemplateFieldDTO dto) {
@@ -58,7 +58,7 @@ public class TemplateFieldMapper {
         if ((type == FieldType.KEY_VALUE_LIST || type == FieldType.TABLE) && dto.getLabels() != null) {
             labels = new ArrayList<>(dto.getLabels());
         }
-        return new TemplateField(dto.getName(), type, layout, labels);
+        return new TemplateField(dto.getName(), type, layout, labels, dto.getFoundryPath());
     }
 
     /** Mappe une liste de champs domaine → DTO ({@code null} → liste vide). */
