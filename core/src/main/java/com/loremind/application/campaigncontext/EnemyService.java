@@ -81,6 +81,55 @@ public class EnemyService {
         enemyRepository.deleteById(id);
     }
 
+    // --- Import de monstres depuis un compendium Foundry -------------------
+
+    /** Un monstre du catalogue Foundry : nom + référence (UUID de compendium). */
+    public record MonsterImport(String name, String foundryRef) {}
+
+    public record MonsterImportResult(int created, int updated) {}
+
+    /**
+     * Importe (upsert) des monstres Foundry dans le bestiaire d'une campagne.
+     * Dédup par {@code foundryRef} : un monstre déjà importé est mis à jour (nom),
+     * jamais dupliqué. Fiche minimale (nom + référence) ; les stats restent côté
+     * Foundry et sont ré-instanciées à l'export.
+     */
+    public MonsterImportResult importFoundryMonsters(String campaignId, List<MonsterImport> monsters) {
+        List<Enemy> existing = enemyRepository.findByCampaignId(campaignId);
+        Map<String, Enemy> byRef = new HashMap<>();
+        for (Enemy e : existing) {
+            if (e.getFoundryRef() != null) byRef.put(e.getFoundryRef(), e);
+        }
+        int order = existing.stream().mapToInt(Enemy::getOrder).max().orElse(-1) + 1;
+
+        int created = 0, updated = 0;
+        for (MonsterImport m : monsters) {
+            if (m.foundryRef() == null || m.foundryRef().isBlank()
+                    || m.name() == null || m.name().isBlank()) {
+                continue;
+            }
+            Enemy ex = byRef.get(m.foundryRef());
+            if (ex != null) {
+                ex.setName(m.name());
+                enemyRepository.save(ex);
+                updated++;
+            } else {
+                Enemy saved = enemyRepository.save(Enemy.builder()
+                        .name(m.name())
+                        .foundryRef(m.foundryRef())
+                        .campaignId(campaignId)
+                        .order(order++)
+                        .values(new HashMap<>())
+                        .imageValues(new HashMap<>())
+                        .keyValueValues(new HashMap<>())
+                        .build());
+                byRef.put(m.foundryRef(), saved);
+                created++;
+            }
+        }
+        return new MonsterImportResult(created, updated);
+    }
+
     public List<Enemy> searchEnemies(String query) {
         if (query == null || query.isBlank()) return List.of();
         return enemyRepository.searchByName(query.trim());

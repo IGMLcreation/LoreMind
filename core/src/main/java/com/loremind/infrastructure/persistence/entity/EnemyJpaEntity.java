@@ -63,6 +63,10 @@ public class EnemyJpaEntity {
     @Column(name = "campaign_id", nullable = false)
     private Long campaignId;
 
+    /** UUID de l'acteur de compendium Foundry d'origine (import bestiaire). Nullable. */
+    @Column(name = "foundry_ref", length = 512)
+    private String foundryRef;
+
     @Column(name = "\"order\"", nullable = false)
     private int order;
 

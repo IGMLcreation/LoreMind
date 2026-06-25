@@ -11,7 +11,7 @@
 
   <!-- Étape 1 : upload (masqué une fois en revue) -->
   @if (!reviewing) {
-    <section class="upload-area">
+    <section class="upload-area" appFileDrop [dropDisabled]="importing" (filesDropped)="onPdfDropped($event)">
       <input #pdfInput type="file" accept="application/pdf,.pdf" hidden (change)="onPdfSelected($event)" />
       <button type="button" class="btn-primary big" [disabled]="importing" (click)="pdfInput.click()">
         <lucide-icon [img]="Upload" [size]="16"></lucide-icon>

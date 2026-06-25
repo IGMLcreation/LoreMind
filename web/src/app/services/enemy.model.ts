@@ -17,6 +17,8 @@ export interface Enemy {
   keyValueValues?: Record<string, Record<string, string>>;
   campaignId: string;
   order?: number;
+  /** UUID de l'acteur de compendium Foundry d'origine (monstre importé). Null sinon. */
+  foundryRef?: string | null;
 }
 
 export interface EnemyCreate {

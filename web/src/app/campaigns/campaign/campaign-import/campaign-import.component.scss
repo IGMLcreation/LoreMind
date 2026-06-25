@@ -32,6 +32,9 @@
   border-radius: 12px;
   text-align: center;
   background: #0b1220;
+  transition: border-color 0.15s, background 0.15s;
+
+  &.drag-over { border-color: #667eea; background: #141d33; }
 }
 
 .btn-primary,

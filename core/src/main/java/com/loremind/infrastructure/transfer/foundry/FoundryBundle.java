@@ -35,6 +35,7 @@ public final class FoundryBundle {
             List<Scene> scenes,
             List<Persona> npcs,
             List<Persona> enemies,
+            List<RandomTable> randomTables,
             List<Asset> assets
     ) {}
 
@@ -75,13 +76,19 @@ public final class FoundryBundle {
 
     public record Persona(
             String id, String name, String folder, int order,
-            String portraitAssetId, String headerAssetId, String level, List<Field> fields
+            String portraitAssetId, String headerAssetId, String level,
+            String foundryRef, List<Field> fields
     ) {}
 
     /** Champ de fiche resolu : {type, label} + selon le type value | entries | assetIds. */
     public record Field(String type, String label, String value, List<Entry> entries, List<String> assetIds) {}
 
     public record Entry(String label, String value) {}
+
+    /** Table aléatoire -> RollTable Foundry (formule + entrées avec intervalles). */
+    public record RandomTable(String id, String name, String description, String diceFormula, List<RandomTableEntry> entries) {}
+
+    public record RandomTableEntry(int minRoll, int maxRoll, String label, String detail) {}
 
     public record Asset(String id, String kind, String path, String filename, String mime, long sizeBytes) {}
 }

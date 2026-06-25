@@ -364,7 +364,7 @@ public class ExportService {
     private ContentExport.EnemyDto toEnemyDto(EnemyJpaEntity e) {
         return new ContentExport.EnemyDto(e.getId(), e.getName(), e.getLevel(), e.getFolder(),
                 e.getPortraitImageId(), e.getHeaderImageId(), e.getValues(), e.getImageValues(),
-                e.getKeyValueValues(), e.getCampaignId(), e.getOrder());
+                e.getKeyValueValues(), e.getCampaignId(), e.getFoundryRef(), e.getOrder());
     }
 
     private ContentExport.ItemCatalogDto toItemCatalogDto(ItemCatalogJpaEntity e) {

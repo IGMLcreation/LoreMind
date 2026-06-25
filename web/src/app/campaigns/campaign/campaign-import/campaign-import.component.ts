@@ -20,6 +20,7 @@ import { CampaignImportProposal } from '../../../services/campaign-import.model'
 import { loadCampaignTreeData, CampaignTreeData } from '../../campaign-tree.helper';
 import { of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { FileDropDirective } from '../../../shared/file-drop.directive';
 
 /**
  * Nœuds éditables (= proposition + état d'UI). `existing` = déjà présent dans la
@@ -54,7 +55,7 @@ interface NpcNode { name: string; description: string; selected: boolean; existi
  */
 @Component({
     selector: 'app-campaign-import',
-    imports: [FormsModule, LucideAngularModule, TranslatePipe],
+    imports: [FormsModule, LucideAngularModule, TranslatePipe, FileDropDirective],
     templateUrl: './campaign-import.component.html',
     styleUrls: ['./campaign-import.component.scss']
 })
@@ -133,6 +134,11 @@ export class CampaignImportComponent implements OnInit {
     const file = input.files?.[0];
     input.value = '';
     if (file) this.importPdf(file);
+  }
+
+  /** Drop d'un PDF sur la zone d'upload. */
+  onPdfDropped(files: File[]): void {
+    if (!this.importing && files[0]) this.importPdf(files[0]);
   }
 
   private importPdf(file: File): void {

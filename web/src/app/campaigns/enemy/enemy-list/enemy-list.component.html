@@ -1,9 +1,13 @@
 <div class="sbl-page">
-  <div class="sbl-toolbar">
+  <div class="sbl-toolbar" appFileDrop [dropDisabled]="importing" (filesDropped)="onMonstersDropped($event)">
     <button class="btn-back" (click)="back()">
       <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon> {{ 'common.back' | translate }}
     </button>
     <span class="spacer"></span>
+    <button class="btn-back" (click)="importMonsters()" [disabled]="importing">
+      <lucide-icon [img]="Upload" [size]="14"></lucide-icon>
+      {{ (importing ? 'enemyList.importing' : 'enemyList.importMonsters') | translate }}
+    </button>
     <button class="btn-create" (click)="create()">
       <lucide-icon [img]="Plus" [size]="14"></lucide-icon> {{ 'enemyList.create' | translate }}
     </button>

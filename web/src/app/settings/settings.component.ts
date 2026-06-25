@@ -9,6 +9,7 @@ import { LayoutService } from '../services/layout.service';
 import { UpdatesSectionComponent } from './updates-section/updates-section.component';
 import { OllamaModelManagerComponent } from './ollama-model-manager/ollama-model-manager.component';
 import { LanguageSwitcherComponent } from '../shared/language-switcher/language-switcher.component';
+import { FileDropDirective } from '../shared/file-drop.directive';
 
 /**
  * Ecran de parametrage du LLM utilise par le Brain.
@@ -26,7 +27,7 @@ import { LanguageSwitcherComponent } from '../shared/language-switcher/language-
  */
 @Component({
     selector: 'app-settings',
-    imports: [CommonModule, FormsModule, LucideAngularModule, TranslatePipe, UpdatesSectionComponent, OllamaModelManagerComponent, LanguageSwitcherComponent],
+    imports: [CommonModule, FormsModule, LucideAngularModule, TranslatePipe, UpdatesSectionComponent, OllamaModelManagerComponent, LanguageSwitcherComponent, FileDropDirective],
     templateUrl: './settings.component.html',
     styleUrls: ['./settings.component.scss']
 })
@@ -366,8 +367,16 @@ export class SettingsComponent implements OnInit {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     input.value = ''; // permet de re-sélectionner le même fichier
-    if (!file) return;
+    if (file) this.importBackupFile(file);
+  }
 
+  /** Drop d'un zip de sauvegarde sur la zone d'actions. */
+  onBackupDropped(files: File[]): void {
+    if (files[0]) this.importBackupFile(files[0]);
+  }
+
+  private importBackupFile(file: File): void {
+    if (this.importing) return;
     if (!confirm(this.translate.instant('settings.data.importConfirm'))) return;
 
     this.importing = true;

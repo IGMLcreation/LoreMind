@@ -36,4 +36,18 @@ export class EnemyService {
   search(q: string): Observable<Enemy[]> {
     return this.http.get<Enemy[]>(`${this.apiUrl}/search`, { params: { q } });
   }
+
+  /**
+   * Importe un catalogue de monstres Foundry (exporté par le module) dans le
+   * bestiaire de la campagne. Upsert par référence côté backend.
+   */
+  importFoundryMonsters(campaignId: string, catalog: unknown): Observable<MonsterImportResult> {
+    return this.http.post<MonsterImportResult>(
+      `/api/campaigns/${campaignId}/import-foundry-monsters`, catalog);
+  }
+}
+
+export interface MonsterImportResult {
+  created: number;
+  updated: number;
 }

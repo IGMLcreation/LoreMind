@@ -209,6 +209,7 @@ public record ContentExport(
             Map<String, List<String>> imageValues,
             Map<String, Map<String, String>> keyValueValues,
             Long campaignId,
+            String foundryRef,
             int order
     ) {}
 

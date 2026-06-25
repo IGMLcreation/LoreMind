@@ -1085,6 +1085,8 @@
   },
   "enemyList": {
     "create": "Nouvel ennemi",
+    "importMonsters": "Importer des monstres Foundry",
+    "importing": "Import…",
     "title": "Ennemis",
     "hint": "Le bestiaire de la campagne : monstres et créatures avec leur fiche (pilotée par le template Ennemi du système de jeu), classés par dossier (Démons, Humanoïdes…).",
     "empty": "Aucun ennemi pour l'instant.",

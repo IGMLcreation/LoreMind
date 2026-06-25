@@ -2,6 +2,9 @@
 
 .sbl-toolbar {
   display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;
+  border: 1px dashed transparent; border-radius: 6px;
+  transition: border-color 0.15s, background 0.15s;
+  &.drag-over { border-color: #667eea; background: rgba(102,126,234,0.12); }
   .spacer { flex: 1; }
   button {
     display: inline-flex; align-items: center; gap: 0.35rem;

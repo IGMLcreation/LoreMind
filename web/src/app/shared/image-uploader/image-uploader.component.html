@@ -1,6 +1,12 @@
 <!-- Mode compact : bouton "+ ajouter" carre, utilise dans les galeries. -->
 @if (compact) {
-  <label class="upload-compact" [class.loading]="uploading" [title]="errorMessage || ('imageUploader.addImage' | translate)">
+  <label class="upload-compact"
+    [class.loading]="uploading"
+    [class.drag-over]="dragOver"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave()"
+    (drop)="onDrop($event)"
+    [title]="errorMessage || ('imageUploader.addImage' | translate)">
     @if (!uploading) {
       <lucide-icon [img]="Upload" [size]="18"></lucide-icon>
       <span>{{ 'common.add' | translate }}</span>

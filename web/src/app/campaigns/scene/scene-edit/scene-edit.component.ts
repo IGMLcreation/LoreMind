@@ -26,6 +26,7 @@ import { AiChatDrawerComponent } from '../../../shared/ai-chat-drawer/ai-chat-dr
 import { ImageGalleryComponent } from '../../../shared/image-gallery/image-gallery.component';
 import { IconPickerComponent } from '../../../shared/icon-picker/icon-picker.component';
 import { RoomsEditorComponent } from '../../../shared/rooms-editor/rooms-editor.component';
+import { FileDropDirective } from '../../../shared/file-drop.directive';
 import { CAMPAIGN_ICON_OPTIONS } from '../../campaign-icons';
 import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 
@@ -35,7 +36,7 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  */
 @Component({
     selector: 'app-scene-edit',
-    imports: [ReactiveFormsModule, LucideAngularModule, ExpandableSectionComponent, LoreLinkPickerComponent, EnemyLinkPickerComponent, AiChatDrawerComponent, ImageGalleryComponent, IconPickerComponent, RoomsEditorComponent, TranslatePipe],
+    imports: [ReactiveFormsModule, LucideAngularModule, ExpandableSectionComponent, LoreLinkPickerComponent, EnemyLinkPickerComponent, AiChatDrawerComponent, ImageGalleryComponent, IconPickerComponent, RoomsEditorComponent, FileDropDirective, TranslatePipe],
     templateUrl: './scene-edit.component.html',
     styleUrls: ['./scene-edit.component.scss']
 })
@@ -282,7 +283,15 @@ export class SceneEditComponent implements OnInit, OnDestroy {
   onBattlemapMediaSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-    if (!file) return;
+    if (file) this.uploadBattlemapMedia(file);
+    input.value = '';
+  }
+
+  onBattlemapMediaDropped(files: File[]): void {
+    if (files[0]) this.uploadBattlemapMedia(files[0]);
+  }
+
+  private uploadBattlemapMedia(file: File): void {
     this.battlemapUploadingMedia = true;
     this.storedFileService.upload(file).subscribe({
       next: f => {
@@ -292,13 +301,20 @@ export class SceneEditComponent implements OnInit, OnDestroy {
       },
       error: () => { this.battlemapUploadingMedia = false; }
     });
-    input.value = '';
   }
 
   onBattlemapDataSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-    if (!file) return;
+    if (file) this.uploadBattlemapData(file);
+    input.value = '';
+  }
+
+  onBattlemapDataDropped(files: File[]): void {
+    if (files[0]) this.uploadBattlemapData(files[0]);
+  }
+
+  private uploadBattlemapData(file: File): void {
     this.battlemapUploadingData = true;
     this.storedFileService.upload(file).subscribe({
       next: f => {
@@ -308,7 +324,6 @@ export class SceneEditComponent implements OnInit, OnDestroy {
       },
       error: () => { this.battlemapUploadingData = false; }
     });
-    input.value = '';
   }
 
   removeBattlemapMedia(): void {

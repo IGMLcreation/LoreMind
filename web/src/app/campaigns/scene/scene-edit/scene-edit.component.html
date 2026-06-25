@@ -43,7 +43,9 @@
       <label>{{ 'sceneEdit.battlemapLabel' | translate }}</label>
       <small class="field-hint">{{ 'sceneEdit.battlemapHint' | translate }}</small>
 
-      <div class="battlemap-slot">
+      <div class="battlemap-slot"
+        appFileDrop [dropDisabled]="battlemapUploadingMedia"
+        (filesDropped)="onBattlemapMediaDropped($event)">
         <span class="battlemap-slot-label">{{ 'sceneEdit.battlemapMedia' | translate }}</span>
         @if (battlemapMediaFileId) {
           <span class="battlemap-file">{{ battlemapMediaName || ('sceneEdit.battlemapAttached' | translate) }}</span>
@@ -58,7 +60,9 @@
         }
       </div>
 
-      <div class="battlemap-slot">
+      <div class="battlemap-slot"
+        appFileDrop [dropDisabled]="battlemapUploadingData"
+        (filesDropped)="onBattlemapDataDropped($event)">
         <span class="battlemap-slot-label">{{ 'sceneEdit.battlemapData' | translate }}</span>
         @if (battlemapDataFileId) {
           <span class="battlemap-file">{{ battlemapDataName || ('sceneEdit.battlemapAttached' | translate) }}</span>

@@ -335,6 +335,7 @@ public class ImportService {
             e.setImageValues(d.imageValues());
             e.setKeyValueValues(d.keyValueValues());
             e.setCampaignId(IdRemapper.remapId(campaignMap, d.campaignId()));
+            e.setFoundryRef(d.foundryRef()); // ref externe Foundry : conservee telle quelle
             e.setOrder(d.order());
             enemyMap.put(d.id(), enemyRepo.save(e).getId());
         }

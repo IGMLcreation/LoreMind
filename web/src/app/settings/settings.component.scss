@@ -290,6 +290,13 @@
   display: flex;
   justify-content: flex-end;
   margin-top: 24px;
+  gap: 0.5rem;
+  border: 1px dashed transparent;
+  border-radius: 8px;
+  padding: 0.4rem;
+  transition: border-color 0.15s, background 0.15s;
+
+  &.drag-over { border-color: #667eea; background: rgba(102,126,234,0.1); }
 }
 
 .alert {

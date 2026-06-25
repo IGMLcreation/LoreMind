@@ -32,6 +32,7 @@ class FoundryExportServiceTest {
     @Autowired private GameSystemJpaRepository gameSystemRepo;
     @Autowired private ImageJpaRepository imageRepo;
     @Autowired private StoredFileJpaRepository fileRepo;
+    @Autowired private RandomTableJpaRepository tableRepo;
 
     @Test
     void buildBundle_assemblesFullCampaign_withBattlemapAssetsAndResolvedNpcFields() {
@@ -76,6 +77,19 @@ class FoundryExportServiceTest {
                 .keyValueValues(Map.of("Caracs", Map.of("FOR", "16")))
                 .build());
 
+        // Table aléatoire (1d6) avec 2 entrées -> RollTable Foundry.
+        RandomTableJpaEntity table = RandomTableJpaEntity.builder()
+                .campaignId(camp.getId()).name("Rencontres").description("Sur la route").diceFormula("1d6").order(0)
+                .build();
+        RandomTableEntryJpaEntity e1 = new RandomTableEntryJpaEntity();
+        e1.setMinRoll(1); e1.setMaxRoll(3); e1.setLabel("Gobelins"); e1.setDetail("3d4"); e1.setPosition(0);
+        e1.setRandomTable(table);
+        RandomTableEntryJpaEntity e2 = new RandomTableEntryJpaEntity();
+        e2.setMinRoll(4); e2.setMaxRoll(6); e2.setLabel("Rien"); e2.setPosition(1);
+        e2.setRandomTable(table);
+        table.setEntries(List.of(e1, e2));
+        tableRepo.save(table);
+
         FoundryExportService.BuiltBundle bundle = service.buildBundle(String.valueOf(camp.getId()), "2026-06-25T00:00:00Z");
         FoundryBundle.Data data = bundle.data();
 
@@ -119,10 +133,21 @@ class FoundryExportServiceTest {
         assertEquals("FOR", caracs.entries().get(0).label());
         assertEquals("16", caracs.entries().get(0).value());
 
+        // Table aléatoire -> RollTable (formule + entrées avec intervalles).
+        assertEquals(1, data.randomTables().size());
+        FoundryBundle.RandomTable rt = data.randomTables().get(0);
+        assertEquals("Rencontres", rt.name());
+        assertEquals("1d6", rt.diceFormula());
+        assertEquals(2, rt.entries().size());
+        assertEquals("Gobelins", rt.entries().get(0).label());
+        assertEquals(1, rt.entries().get(0).minRoll());
+        assertEquals(3, rt.entries().get(0).maxRoll());
+
         // Manifest
         assertEquals("1.0", bundle.manifest().formatVersion());
         assertEquals("plain", bundle.manifest().contentFormat());
         assertEquals(1, bundle.manifest().counts().get("scenes"));
+        assertEquals(1, bundle.manifest().counts().get("randomTables"));
         assertEquals(3, bundle.manifest().counts().get("assets"));
     }
 

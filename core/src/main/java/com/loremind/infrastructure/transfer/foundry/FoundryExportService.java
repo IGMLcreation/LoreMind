@@ -43,6 +43,7 @@ public class FoundryExportService {
     private final SceneJpaRepository sceneRepo;
     private final NpcJpaRepository npcRepo;
     private final EnemyJpaRepository enemyRepo;
+    private final RandomTableJpaRepository randomTableRepo;
     private final GameSystemJpaRepository gameSystemRepo;
     private final ImageJpaRepository imageRepo;
     private final StoredFileJpaRepository storedFileRepo;
@@ -57,6 +58,7 @@ public class FoundryExportService {
                                 SceneJpaRepository sceneRepo,
                                 NpcJpaRepository npcRepo,
                                 EnemyJpaRepository enemyRepo,
+                                RandomTableJpaRepository randomTableRepo,
                                 GameSystemJpaRepository gameSystemRepo,
                                 ImageJpaRepository imageRepo,
                                 StoredFileJpaRepository storedFileRepo,
@@ -70,6 +72,7 @@ public class FoundryExportService {
         this.sceneRepo = sceneRepo;
         this.npcRepo = npcRepo;
         this.enemyRepo = enemyRepo;
+        this.randomTableRepo = randomTableRepo;
         this.gameSystemRepo = gameSystemRepo;
         this.imageRepo = imageRepo;
         this.storedFileRepo = storedFileRepo;
@@ -130,7 +133,7 @@ public class FoundryExportService {
         for (NpcJpaEntity n : npcRepo.findByCampaignIdOrderByOrderAsc(campaign.getId())) {
             npcs.add(new FoundryBundle.Persona(
                     str(n.getId()), n.getName(), n.getFolder(), n.getOrder(),
-                    assets.image(n.getPortraitImageId()), assets.image(n.getHeaderImageId()), null,
+                    assets.image(n.getPortraitImageId()), assets.image(n.getHeaderImageId()), null, null,
                     fields(npcTemplate, n.getValues(), n.getKeyValueValues(), n.getImageValues(), assets)));
         }
 
@@ -139,14 +142,28 @@ public class FoundryExportService {
             enemies.add(new FoundryBundle.Persona(
                     str(e.getId()), e.getName(), e.getFolder(), e.getOrder(),
                     assets.image(e.getPortraitImageId()), assets.image(e.getHeaderImageId()), e.getLevel(),
+                    e.getFoundryRef(),
                     fields(enemyTemplate, e.getValues(), e.getKeyValueValues(), e.getImageValues(), assets)));
+        }
+
+        List<FoundryBundle.RandomTable> randomTables = new ArrayList<>();
+        for (RandomTableJpaEntity t : randomTableRepo.findByCampaignIdOrderByOrderAsc(campaign.getId())) {
+            List<FoundryBundle.RandomTableEntry> entries = new ArrayList<>();
+            if (t.getEntries() != null) {
+                for (RandomTableEntryJpaEntity en : t.getEntries()) {
+                    entries.add(new FoundryBundle.RandomTableEntry(
+                            en.getMinRoll(), en.getMaxRoll(), en.getLabel(), en.getDetail()));
+                }
+            }
+            randomTables.add(new FoundryBundle.RandomTable(
+                    str(t.getId()), t.getName(), t.getDescription(), t.getDiceFormula(), entries));
         }
 
         FoundryBundle.Campaign campaignNode = new FoundryBundle.Campaign(
                 str(campaign.getId()), campaign.getName(), campaign.getDescription(), campaign.getGameSystemId());
 
         FoundryBundle.Data data = new FoundryBundle.Data(
-                FORMAT_VERSION, campaignNode, arcs, quests, scenes, npcs, enemies, assets.assets());
+                FORMAT_VERSION, campaignNode, arcs, quests, scenes, npcs, enemies, randomTables, assets.assets());
 
         Map<String, Integer> counts = new LinkedHashMap<>();
         counts.put("arcs", arcs.size());
@@ -154,6 +171,7 @@ public class FoundryExportService {
         counts.put("scenes", scenes.size());
         counts.put("npcs", npcs.size());
         counts.put("enemies", enemies.size());
+        counts.put("randomTables", randomTables.size());
         counts.put("assets", assets.assets().size());
 
         FoundryBundle.Manifest manifest = new FoundryBundle.Manifest(

@@ -8,7 +8,15 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.5rem 0;
+  padding: 0.5rem 0.5rem;
+  border: 1px dashed transparent;
+  border-radius: 6px;
+  transition: border-color 0.15s, background 0.15s;
+
+  &.drag-over {
+    border-color: #6c63ff;
+    background: #1f1f3a;
+  }
 
   .battlemap-slot-label {
     min-width: 160px;

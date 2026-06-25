@@ -47,6 +47,14 @@ public class Enemy {
     /** Référence vers la Campaign parente (cross-aggregate via ID). */
     private String campaignId;
 
+    /**
+     * Référence vers l'acteur Foundry d'origine (UUID de compendium, ex.
+     * {@code Compendium.nimble.monsters.Actor.abc123}). Renseigné quand l'ennemi
+     * a été importé depuis un compendium Foundry ; permet, à l'export, de poser
+     * un token du VRAI acteur (stats natives). Null pour un ennemi fait main.
+     */
+    private String foundryRef;
+
     /** Ordre d'affichage dans la liste. */
     private int order;
 

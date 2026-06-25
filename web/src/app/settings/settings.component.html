@@ -376,7 +376,7 @@
                       <section class="card">
                         <h2>{{ 'settings.data.title' | translate }}</h2>
                         <p class="hint" [innerHTML]="'settings.data.hint' | translate"></p>
-                        <div class="actions">
+                        <div class="actions" appFileDrop [dropDisabled]="exporting || importing" (filesDropped)="onBackupDropped($event)">
                           <button type="button" class="btn-secondary" (click)="exportData()" [disabled]="exporting || importing">
                             <span>{{ (exporting ? 'settings.data.exporting' : 'settings.data.exportBtn') | translate }}</span>
                           </button>

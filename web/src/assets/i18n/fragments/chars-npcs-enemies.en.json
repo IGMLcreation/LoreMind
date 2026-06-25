@@ -81,6 +81,8 @@
   },
   "enemyList": {
     "create": "New enemy",
+    "importMonsters": "Import Foundry monsters",
+    "importing": "Importing…",
     "title": "Enemies",
     "hint": "The campaign bestiary: monsters and creatures with their sheet (driven by the game system's Enemy template), organized by folder (Demons, Humanoids…).",
     "empty": "No enemies yet.",
