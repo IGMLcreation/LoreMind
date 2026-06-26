@@ -5,7 +5,14 @@
       <div class="detail-header">
         <div class="header-texts">
           <h1>{{ campaign.name }}</h1>
-          <p class="description">{{ campaign.description }}</p>
+          @if (campaign.description) {
+            <p class="description" [class.description--clamped]="!descExpanded">{{ campaign.description }}</p>
+            @if (campaign.description.length > 180) {
+              <button type="button" class="desc-toggle" (click)="descExpanded = !descExpanded">
+                {{ (descExpanded ? 'campaignDetail.showLess' : 'campaignDetail.showMore') | translate }}
+              </button>
+            }
+          }
           <div class="meta">
             <span class="badge">{{ 'campaignDetail.players' | translate:{ n: campaign.playerCount || 0 } }}</span>
             <!-- Badge "Univers" : lien vers le Lore associé si présent -->
@@ -141,22 +148,26 @@
             </div>
             @if (npcs.length > 0) {
               @for (g of npcGroups; track g.folder) {
-                @if (g.folder) {
-                  <h4 class="persona-folder">{{ g.folder.split('/').join(' / ') }}</h4>
-                } @else if (npcGroups.length > 1) {
-                  <h4 class="persona-folder persona-folder--none">{{ 'campaignTree.unclassified' | translate }}</h4>
+                @if (g.folder || npcGroups.length > 1) {
+                  <button type="button" class="persona-folder" [class.persona-folder--none]="!g.folder" (click)="toggleNpcFolder(g.folder)">
+                    <lucide-icon [img]="isNpcFolderCollapsed(g.folder) ? ChevronRight : ChevronDown" [size]="14"></lucide-icon>
+                    {{ g.folder ? g.folder.split('/').join(' / ') : ('campaignTree.unclassified' | translate) }}
+                    <span class="persona-folder-count">{{ g.items.length }}</span>
+                  </button>
                 }
-                <div class="characters-grid">
-                  @for (npc of g.items; track npc.id) {
-                    <div class="character-card" (click)="viewNpc(npc)">
-                      <lucide-icon [img]="Drama" [size]="20" class="character-icon character-icon--npc"></lucide-icon>
-                      <div class="character-info">
-                        <span class="character-name">{{ npc.name }}</span>
-                        <span class="character-snippet">{{ personaSnippet(npc) }}</span>
+                @if (!isNpcFolderCollapsed(g.folder)) {
+                  <div class="characters-grid">
+                    @for (npc of g.items; track npc.id) {
+                      <div class="character-card" (click)="viewNpc(npc)">
+                        <lucide-icon [img]="Drama" [size]="20" class="character-icon character-icon--npc"></lucide-icon>
+                        <div class="character-info">
+                          <span class="character-name">{{ npc.name }}</span>
+                          <span class="character-snippet">{{ personaSnippet(npc) }}</span>
+                        </div>
                       </div>
-                    </div>
-                  }
-                </div>
+                    }
+                  </div>
+                }
               }
             }
             @if (npcs.length === 0) {
@@ -222,15 +233,34 @@
           @if (playthroughs.length > 0) {
             <div class="playthroughs-grid">
               @for (p of playthroughs; track p) {
-                <div class="playthrough-card"
-                  (click)="openPlaythrough(p)">
+                <div class="playthrough-card" (click)="openPlaythrough(p)">
                   <lucide-icon [img]="Dices" [size]="22" class="playthrough-icon"></lucide-icon>
                   <div class="playthrough-info">
-                    <span class="playthrough-name">{{ p.name }}</span>
-                    @if (p.description) {
-                      <span class="playthrough-meta">{{ p.description }}</span>
+                    @if (editingPlaythroughId === p.id) {
+                      <input class="playthrough-rename-input"
+                        [(ngModel)]="editPlaythroughName"
+                        (click)="$event.stopPropagation()"
+                        (keydown.enter)="savePlaythroughRename(p)"
+                        (keydown.escape)="cancelPlaythroughRename()" />
+                    } @else {
+                      <span class="playthrough-name">{{ p.name }}</span>
+                      @if (p.description) {
+                        <span class="playthrough-meta">{{ p.description }}</span>
+                      }
                     }
                   </div>
+                  @if (editingPlaythroughId === p.id) {
+                    <button type="button" class="btn-icon" (click)="savePlaythroughRename(p); $event.stopPropagation()" [title]="'common.validate' | translate">
+                      <lucide-icon [img]="Check" [size]="15"></lucide-icon>
+                    </button>
+                    <button type="button" class="btn-icon" (click)="cancelPlaythroughRename(); $event.stopPropagation()" [title]="'common.cancel' | translate">
+                      <lucide-icon [img]="X" [size]="15"></lucide-icon>
+                    </button>
+                  } @else {
+                    <button type="button" class="btn-icon playthrough-edit" (click)="startRenamePlaythrough(p, $event)" [title]="'common.rename' | translate">
+                      <lucide-icon [img]="Pencil" [size]="15"></lucide-icon>
+                    </button>
+                  }
                 </div>
               }
             </div>

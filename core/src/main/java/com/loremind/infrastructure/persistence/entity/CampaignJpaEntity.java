@@ -37,6 +37,9 @@ public class CampaignJpaEntity {
     @Column(name = "arcs_count", nullable = false)
     private int arcsCount;
 
+    @Column(name = "player_count", nullable = false)
+    private int playerCount;
+
     /**
      * ID du Lore associé (nullable).
      * Pas de @ManyToOne / pas de FK : c'est une weak reference inter-contexte.

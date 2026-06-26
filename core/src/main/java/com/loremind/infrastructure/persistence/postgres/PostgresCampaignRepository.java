@@ -73,6 +73,7 @@ public class PostgresCampaignRepository implements CampaignRepository {
                 .createdAt(jpaEntity.getCreatedAt())
                 .updatedAt(jpaEntity.getUpdatedAt())
                 .arcsCount(jpaEntity.getArcsCount())
+                .playerCount(jpaEntity.getPlayerCount())
                 .loreId(jpaEntity.getLoreId())
                 .gameSystemId(jpaEntity.getGameSystemId())
                 .build();
@@ -87,6 +88,7 @@ public class PostgresCampaignRepository implements CampaignRepository {
                 .createdAt(campaign.getCreatedAt())
                 .updatedAt(campaign.getUpdatedAt())
                 .arcsCount(campaign.getArcsCount())
+                .playerCount(campaign.getPlayerCount())
                 .loreId(campaign.getLoreId())
                 .gameSystemId(campaign.getGameSystemId())
                 .build();

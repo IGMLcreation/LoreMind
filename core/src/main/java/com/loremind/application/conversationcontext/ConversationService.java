@@ -11,11 +11,9 @@ import java.util.Optional;
 
 /**
  * Service d'application du contexte Conversation.
- *
  * Regroupe les cas d'usage CRUD + append message + rename. Un seul
  * service suffit — le contexte est simple et les operations fortement
  * liees (meme aggregat).
- *
  * Regles metier :
  *  - exactement un ancrage parent (loreId XOR campaignId) ;
  *  - entityType et entityId vont ensemble (tous deux null = niveau racine,

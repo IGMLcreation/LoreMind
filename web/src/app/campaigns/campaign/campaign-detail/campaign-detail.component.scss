@@ -38,6 +38,18 @@
   flex-direction: column;
   gap: 0.15rem;
   min-width: 0;
+  flex: 1;
+}
+
+.playthrough-rename-input {
+  width: 100%;
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 0.15rem 0.4rem;
+  border: 1px solid var(--color-primary, #2c6cd6);
+  border-radius: 6px;
+  background: var(--color-surface, #fff);
+  color: inherit;
 }
 
 .playthrough-name {
@@ -85,7 +97,29 @@
     color: #6b7280;
     font-size: 0.95rem;
     line-height: 1.6;
+    margin-bottom: 0.4rem;
+    white-space: pre-wrap;
+
+    // Replié : on borne à 3 lignes avec ellipse ; déplié = texte intégral.
+    &--clamped {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+  }
+
+  .desc-toggle {
+    background: none;
+    border: none;
+    padding: 0;
     margin-bottom: 1rem;
+    color: #8a7bc8;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover { text-decoration: underline; }
   }
 
   .meta {
@@ -508,12 +542,25 @@
 
 // En-tête de dossier dans la grille des PNJ (regroupement par dossier).
 .persona-folder {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
   font-size: 0.78rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: #8a7bc8;
   margin: 0.9rem 0 0.4rem;
+  // En-tête de dossier cliquable (repli) : reset du <button>.
+  background: none; border: none; padding: 0; cursor: pointer; text-align: left;
+
+  &:hover { color: #a594e0; }
+
+  .persona-folder-count {
+    font-weight: 400; text-transform: none; letter-spacing: 0;
+    color: #6b7280;
+  }
 
   &--none { color: #6b7280; }
 }

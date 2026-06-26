@@ -24,6 +24,9 @@ public class Campaign {
     private LocalDateTime updatedAt;
     private int arcsCount;
 
+    /** Nombre de joueurs attendus à la table (métadonnée saisie à la création). */
+    private int playerCount;
+
     /**
      * Référence faible vers un Lore. Nullable.
      * Ce n'est qu'un ID : le Campaign Context ne dépend PAS du Lore Context.

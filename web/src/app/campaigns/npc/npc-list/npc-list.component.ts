@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { DestroyRef } from '@angular/core';
 import { CdkDropList, CdkDrag, CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { DataSyncService } from '../../../services/data-sync.service';
-import { LucideAngularModule, ArrowLeft, Plus, Trash2, Drama, Folder } from 'lucide-angular';
+import { LucideAngularModule, ArrowLeft, Plus, Trash2, Drama, Folder, ChevronDown, ChevronRight } from 'lucide-angular';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NpcService } from '../../../services/npc.service';
 import { CampaignSidebarService } from '../../../services/campaign-sidebar.service';
@@ -29,6 +29,11 @@ export class NpcListComponent implements OnInit {
   readonly Trash2 = Trash2;
   readonly Drama = Drama;
   readonly Folder = Folder;
+  readonly ChevronDown = ChevronDown;
+  readonly ChevronRight = ChevronRight;
+
+  /** Dossiers repliés (par nom ; '' = « Sans dossier ») — persiste entre rechargements. */
+  collapsedFolders = new Set<string>();
 
   campaignId = '';
   /** Groupes triés par nom de dossier ; les non-classés en dernier (folder = ''). */
@@ -68,6 +73,16 @@ export class NpcListComponent implements OnInit {
 
   create(): void {
     this.router.navigate(['/campaigns', this.campaignId, 'npcs', 'create']);
+  }
+
+  /** Replie / déplie un dossier. */
+  toggleFolder(folder: string): void {
+    if (this.collapsedFolders.has(folder)) this.collapsedFolders.delete(folder);
+    else this.collapsedFolders.add(folder);
+  }
+
+  isCollapsed(folder: string): boolean {
+    return this.collapsedFolders.has(folder);
   }
 
   // --- Glisser-déposer (réordonner + déplacer entre dossiers) --------------

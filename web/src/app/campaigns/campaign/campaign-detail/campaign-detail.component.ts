@@ -6,7 +6,7 @@ import { CampaignSidebarService } from '../../../services/campaign-sidebar.servi
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CdkDropList, CdkDrag, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
-import { LucideAngularModule, Swords, Plus, Globe, Pencil, Trash2, Dices, Drama, Check, Play, Upload, Sparkles, Download, FileText } from 'lucide-angular';
+import { LucideAngularModule, Swords, Plus, Globe, Pencil, Trash2, Dices, Drama, Check, Play, Upload, Sparkles, Download, FileText, ChevronDown, ChevronRight, X } from 'lucide-angular';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
@@ -51,6 +51,9 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   readonly Sparkles = Sparkles;
   readonly Download = Download;
   readonly FileText = FileText;
+  readonly ChevronDown = ChevronDown;
+  readonly ChevronRight = ChevronRight;
+  readonly X = X;
 
   /** Export Foundry en cours (anti double-clic). */
   exportingFoundry = false;
@@ -73,6 +76,16 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   npcs: Npc[] = [];
   /** PNJ groupés par dossier (dossiers alpha, ordre manuel dans chacun) — comme la sidebar. */
   npcGroups: FolderGroup<Npc>[] = [];
+
+  /** En-tête : description repliée par défaut (clamp), dépliable via « Voir plus ». */
+  descExpanded = false;
+
+  /** Dossiers de PNJ repliés (section Personnages) — par nom ('' = « Sans dossier »). */
+  collapsedNpcFolders = new Set<string>();
+
+  /** Renommage inline d'une partie : id en cours d'édition + valeur saisie. */
+  editingPlaythroughId: string | null = null;
+  editPlaythroughName = '';
   /** Sessions de jeu (passées et en cours) liées à cette campagne. */
   sessions: Session[] = [];
   /**
@@ -232,6 +245,36 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
 
   openPlaythrough(p: Playthrough): void {
     this.router.navigate(['/campaigns', this.campaign?.id, 'playthroughs', p.id]);
+  }
+
+  /** Démarre le renommage inline d'une partie (sans déclencher l'ouverture de la carte). */
+  startRenamePlaythrough(p: Playthrough, event: Event): void {
+    event.stopPropagation();
+    this.editingPlaythroughId = p.id ?? null;
+    this.editPlaythroughName = p.name;
+  }
+
+  savePlaythroughRename(p: Playthrough): void {
+    const name = this.editPlaythroughName.trim();
+    if (!name || !p.id) { this.editingPlaythroughId = null; return; }
+    this.playthroughService.update(p.id, { ...p, name }).subscribe({
+      next: updated => { p.name = updated.name; this.editingPlaythroughId = null; },
+      error: () => { this.editingPlaythroughId = null; }
+    });
+  }
+
+  cancelPlaythroughRename(): void {
+    this.editingPlaythroughId = null;
+  }
+
+  /** Replie / déplie un dossier de PNJ (section Personnages). */
+  toggleNpcFolder(folder: string): void {
+    if (this.collapsedNpcFolders.has(folder)) this.collapsedNpcFolders.delete(folder);
+    else this.collapsedNpcFolders.add(folder);
+  }
+
+  isNpcFolderCollapsed(folder: string): boolean {
+    return this.collapsedNpcFolders.has(folder);
   }
 
   /** Crée une nouvelle Partie avec un nom par défaut, puis y navigue. */

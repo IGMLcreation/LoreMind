@@ -36,18 +36,27 @@ public record ContentExport(
         List<ItemCatalogDto> itemCatalogs,
         List<RandomTableDto> randomTables,
         List<ImageDto> images,
-        List<StoredFileDto> storedFiles
+        List<StoredFileDto> storedFiles,
+        // --- Espace de jeu (format v2). Absent des exports v1 -> listes null a la
+        //     relecture (Jackson) -> traitees comme vides cote import (nullSafe). ---
+        List<PlaythroughDto> playthroughs,
+        List<SessionDto> sessions,
+        List<SessionEntryDto> sessionEntries,
+        List<PlaythroughFlagDto> playthroughFlags,
+        List<QuestProgressionDto> questProgressions
 ) {
 
     /**
      * Metadonnees de l'export. {@code exportedAt} est passe en parametre depuis
      * la couche requete (PAS Instant.now() ici, pour rester deterministe et
-     * testable).
+     * testable). {@code scope} decrit le perimetre ("complète" ou nom de campagne)
+     * a titre informatif.
      */
     public record Manifest(
             int formatVersion,
             String appVersion,
-            String exportedAt
+            String exportedAt,
+            String scope
     ) {}
 
     public record GameSystemDto(
@@ -108,6 +117,7 @@ public record ContentExport(
             String name,
             String description,
             int arcsCount,
+            int playerCount,
             String loreId,
             String gameSystemId
     ) {}
@@ -277,5 +287,50 @@ public record ContentExport(
             String contentType,
             long sizeBytes,
             String storageKey
+    ) {}
+
+    // ===================================================================== Jeu (v2)
+
+    /** Une Partie (Playthrough) : un run d'une campagne par un groupe. */
+    public record PlaythroughDto(
+            Long id,
+            Long campaignId,
+            String name,
+            String description
+    ) {}
+
+    /** Une séance de jeu rattachée à une Partie. Horodatages en ISO-8601 (ou null). */
+    public record SessionDto(
+            Long id,
+            String name,
+            String campaignId,
+            Long playthroughId,
+            String startedAt,
+            String endedAt
+    ) {}
+
+    /** Une entrée du journal d'une séance ({@code type} = nom de l'EntryType). */
+    public record SessionEntryDto(
+            Long id,
+            String sessionId,
+            String type,
+            String content,
+            String occurredAt
+    ) {}
+
+    /** Un drapeau de Partie (flag narratif booléen). */
+    public record PlaythroughFlagDto(
+            Long id,
+            Long playthroughId,
+            String name,
+            boolean value
+    ) {}
+
+    /** La progression d'une quête (Chapter) dans une Partie ({@code status} = nom du ProgressionStatus). */
+    public record QuestProgressionDto(
+            Long id,
+            Long playthroughId,
+            Long chapterId,
+            String status
     ) {}
 }

@@ -1,5 +1,5 @@
 import { Injectable, NgZone } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 /**
@@ -94,10 +94,22 @@ export class SettingsService {
 
   // --- Export / Import des donnees (sauvegarde & transfert d'instance) -------
 
-  /** Telecharge l'export complet du contenu (zip : data.json + images). */
-  exportData(): Observable<Blob> {
+  /**
+   * Télécharge un export (zip : data.json + images). Sans options : sauvegarde complète.
+   * Avec `campaignId` : export ciblé d'une campagne, les options réglant l'univers (lore),
+   * l'espace de jeu et les binaires d'images embarqués.
+   */
+  exportData(opts?: { campaignId?: string; includeLore?: boolean; includePlay?: boolean; includeImages?: boolean }): Observable<Blob> {
+    let params = new HttpParams();
+    if (opts?.campaignId) {
+      params = params
+        .set('campaignId', opts.campaignId)
+        .set('includeLore', String(opts.includeLore ?? true))
+        .set('includePlay', String(opts.includePlay ?? true))
+        .set('includeImages', String(opts.includeImages ?? true));
+    }
     return this.http.get('/api/admin/data/export',
-      { withCredentials: true, responseType: 'blob' });
+      { params, withCredentials: true, responseType: 'blob' });
   }
 
   /** Importe un zip d'export en mode FUSION (ajoute, ne remplace pas). */

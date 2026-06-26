@@ -93,35 +93,54 @@
           <div>
             @if (characters.length > 0) {
               <div class="ref-group">
-                <h4>
+                <button type="button" class="ref-group-head" (click)="pjCollapsed = !pjCollapsed">
+                  <lucide-icon class="ref-group-chevron" [img]="pjCollapsed ? ChevronRight : ChevronDown" [size]="12"></lucide-icon>
                   <lucide-icon [img]="User" [size]="13"></lucide-icon>
                   {{ 'sessionReferencePanel.playerCharacters' | translate }}
-                </h4>
-                @for (c of characters; track c) {
-                  <button
-                    type="button"
-                    class="ref-item"
-                    (click)="openInNewTab(['campaigns', campaignId, 'playthroughs', playthroughId!, 'characters', c.id!])">
-                    <span class="ref-item-name">{{ c.name }}</span>
-                    <lucide-icon [img]="ExternalLink" [size]="12" class="ref-item-icon"></lucide-icon>
-                  </button>
+                  <span class="ref-group-count">{{ characters.length }}</span>
+                </button>
+                @if (!pjCollapsed) {
+                  @for (c of characters; track c) {
+                    <button
+                      type="button"
+                      class="ref-item"
+                      (click)="openInNewTab(['campaigns', campaignId, 'playthroughs', playthroughId!, 'characters', c.id!])">
+                      <span class="ref-item-name">{{ c.name }}</span>
+                      <lucide-icon [img]="ExternalLink" [size]="12" class="ref-item-icon"></lucide-icon>
+                    </button>
+                  }
                 }
               </div>
             }
             @if (npcs.length > 0) {
               <div class="ref-group">
-                <h4>
+                <button type="button" class="ref-group-head" (click)="pnjCollapsed = !pnjCollapsed">
+                  <lucide-icon class="ref-group-chevron" [img]="pnjCollapsed ? ChevronRight : ChevronDown" [size]="12"></lucide-icon>
                   <lucide-icon [img]="Drama" [size]="13"></lucide-icon>
                   {{ 'sessionReferencePanel.nonPlayerCharacters' | translate }}
-                </h4>
-                @for (n of npcs; track n) {
-                  <button
-                    type="button"
-                    class="ref-item"
-                    (click)="openInNewTab(['campaigns', campaignId, 'npcs', n.id!])">
-                    <span class="ref-item-name">{{ n.name }}</span>
-                    <lucide-icon [img]="ExternalLink" [size]="12" class="ref-item-icon"></lucide-icon>
-                  </button>
+                  <span class="ref-group-count">{{ npcs.length }}</span>
+                </button>
+                @if (!pnjCollapsed) {
+                  @for (fg of npcGroups; track fg.folder) {
+                    <div class="ref-subgroup">
+                      <button type="button" class="ref-subgroup-head" (click)="toggleNpcFolder(fg.folder)">
+                        <lucide-icon class="ref-group-chevron" [img]="isNpcFolderCollapsed(fg.folder) ? ChevronRight : ChevronDown" [size]="11"></lucide-icon>
+                        {{ fg.folder ? fg.folder.split('/').join(' / ') : ('campaignTree.unclassified' | translate) }}
+                        <span class="ref-group-count">{{ fg.items.length }}</span>
+                      </button>
+                      @if (!isNpcFolderCollapsed(fg.folder)) {
+                        @for (n of fg.items; track n) {
+                          <button
+                            type="button"
+                            class="ref-item ref-item--nested"
+                            (click)="openInNewTab(['campaigns', campaignId, 'npcs', n.id!])">
+                            <span class="ref-item-name">{{ n.name }}</span>
+                            <lucide-icon [img]="ExternalLink" [size]="12" class="ref-item-icon"></lucide-icon>
+                          </button>
+                        }
+                      }
+                    </div>
+                  }
                 }
               </div>
             }
@@ -147,25 +166,28 @@
               {{ 'sessionReferencePanel.emptyScenes' | translate }}
             </p>
           }
-          @for (arc of treeData.arcs; track arc) {
+          @for (arc of sortedArcs; track arc) {
             <div class="ref-group">
-              <h4>
+              <button type="button" class="ref-group-head" (click)="toggleArc(arc.id!)">
+                <lucide-icon class="ref-group-chevron" [img]="isArcCollapsed(arc.id!) ? ChevronRight : ChevronDown" [size]="12"></lucide-icon>
                 <lucide-icon [img]="Swords" [size]="13"></lucide-icon>
                 {{ arc.name }}
-              </h4>
-              @for (chapter of chaptersOf(arc); track chapter) {
-                <div class="ref-subgroup">
-                  <span class="ref-subgroup-title">{{ chapter.name }}</span>
-                  @for (scene of scenesOf(chapter); track scene) {
-                    <button
-                      type="button"
-                      class="ref-item ref-item--nested"
-                      (click)="openInNewTab(['campaigns', campaignId, 'arcs', arc.id!, 'chapters', chapter.id!, 'scenes', scene.id!])">
-                      <span class="ref-item-name">{{ scene.name }}</span>
-                      <lucide-icon [img]="ExternalLink" [size]="12" class="ref-item-icon"></lucide-icon>
-                    </button>
-                  }
-                </div>
+              </button>
+              @if (!isArcCollapsed(arc.id!)) {
+                @for (chapter of chaptersOf(arc); track chapter) {
+                  <div class="ref-subgroup">
+                    <span class="ref-subgroup-title">{{ chapter.name }}</span>
+                    @for (scene of scenesOf(chapter); track scene) {
+                      <button
+                        type="button"
+                        class="ref-item ref-item--nested"
+                        (click)="openInNewTab(['campaigns', campaignId, 'arcs', arc.id!, 'chapters', chapter.id!, 'scenes', scene.id!])">
+                        <span class="ref-item-name">{{ scene.name }}</span>
+                        <lucide-icon [img]="ExternalLink" [size]="12" class="ref-item-icon"></lucide-icon>
+                      </button>
+                    }
+                  </div>
+                }
               }
             </div>
           }

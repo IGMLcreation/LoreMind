@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { DestroyRef } from '@angular/core';
 import { CdkDropList, CdkDrag, CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { DataSyncService } from '../../../services/data-sync.service';
-import { LucideAngularModule, ArrowLeft, Plus, Trash2, Skull, Folder, Upload } from 'lucide-angular';
+import { LucideAngularModule, ArrowLeft, Plus, Trash2, Skull, Folder, Upload, ChevronDown, ChevronRight } from 'lucide-angular';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { EnemyService } from '../../../services/enemy.service';
 import { CampaignSidebarService } from '../../../services/campaign-sidebar.service';
@@ -30,6 +30,11 @@ export class EnemyListComponent implements OnInit {
   readonly Skull = Skull;
   readonly Folder = Folder;
   readonly Upload = Upload;
+  readonly ChevronDown = ChevronDown;
+  readonly ChevronRight = ChevronRight;
+
+  /** Dossiers repliés (par nom ; '' = « Sans dossier ») — persiste entre rechargements. */
+  collapsedFolders = new Set<string>();
 
   /** Import de monstres Foundry en cours (anti double-clic). */
   importing = false;
@@ -72,6 +77,16 @@ export class EnemyListComponent implements OnInit {
 
   create(): void {
     this.router.navigate(['/campaigns', this.campaignId, 'enemies', 'create']);
+  }
+
+  /** Replie / déplie un dossier. */
+  toggleFolder(folder: string): void {
+    if (this.collapsedFolders.has(folder)) this.collapsedFolders.delete(folder);
+    else this.collapsedFolders.add(folder);
+  }
+
+  isCollapsed(folder: string): boolean {
+    return this.collapsedFolders.has(folder);
   }
 
   // --- Glisser-déposer (réordonner + déplacer entre dossiers) --------------

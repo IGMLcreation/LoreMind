@@ -20,6 +20,7 @@ public class CampaignMapper {
         dto.setName(campaign.getName());
         dto.setDescription(campaign.getDescription());
         dto.setArcsCount(campaign.getArcsCount());
+        dto.setPlayerCount(campaign.getPlayerCount());
         dto.setLoreId(campaign.getLoreId());
         dto.setGameSystemId(campaign.getGameSystemId());
         return dto;
@@ -35,6 +36,7 @@ public class CampaignMapper {
                 .name(dto.getName())
                 .description(dto.getDescription())
                 .arcsCount(dto.getArcsCount())
+                .playerCount(dto.getPlayerCount())
                 .loreId(dto.getLoreId())
                 .gameSystemId(dto.getGameSystemId())
                 .build();

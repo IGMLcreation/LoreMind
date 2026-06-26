@@ -48,7 +48,7 @@ public class CampaignService {
         this.playthroughService = playthroughService;
     }
 
-    public record CampaignData(String name, String description, String loreId, String gameSystemId) {}
+    public record CampaignData(String name, String description, String loreId, String gameSystemId, int playerCount) {}
 
     public record DeletionImpact(int arcs, int chapters, int scenes, int playthroughs) {}
 
@@ -59,6 +59,7 @@ public class CampaignService {
                 .loreId(normalizeId(data.loreId()))
                 .gameSystemId(normalizeId(data.gameSystemId()))
                 .arcsCount(0)
+                .playerCount(data.playerCount())
                 .build();
         Campaign saved = campaignRepository.save(campaign);
 
@@ -87,6 +88,7 @@ public class CampaignService {
         campaign.setDescription(data.description());
         campaign.setLoreId(normalizeId(data.loreId()));
         campaign.setGameSystemId(normalizeId(data.gameSystemId()));
+        campaign.setPlayerCount(data.playerCount());
         return campaignRepository.save(campaign);
     }
 

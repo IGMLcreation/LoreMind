@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 
 import { TranslatePipe } from '@ngx-translate/core';
-import { LucideAngularModule, User, Drama, Swords, Dices, ExternalLink, Sparkles, Table2, Package } from 'lucide-angular';
+import { LucideAngularModule, User, Drama, Swords, Dices, ExternalLink, Sparkles, Table2, Package, ChevronDown, ChevronRight } from 'lucide-angular';
 import { catchError, of } from 'rxjs';
 import { CampaignService } from '../../services/campaign.service';
 import { CharacterService } from '../../services/character.service';
@@ -11,6 +11,7 @@ import { Character } from '../../services/character.model';
 import { Npc } from '../../services/npc.model';
 import { Arc, Chapter, Scene } from '../../services/campaign.model';
 import { loadCampaignTreeData, CampaignTreeData } from '../../campaigns/campaign-tree.helper';
+import { byOrder, groupByFolder, FolderGroup } from '../../shared/folder-grouping.util';
 import {
   SessionDicePanelComponent, DiceRollResult
 } from '../session-dice-panel/session-dice-panel.component';
@@ -45,6 +46,8 @@ export class SessionReferencePanelComponent implements OnChanges {
   readonly Sparkles = Sparkles;
   readonly Table2 = Table2;
   readonly Package = Package;
+  readonly ChevronDown = ChevronDown;
+  readonly ChevronRight = ChevronRight;
 
   @Input() campaignId!: string;
   /** Partie active — nécessaire pour charger les PJ (refonte Playthrough). */
@@ -62,6 +65,14 @@ export class SessionReferencePanelComponent implements OnChanges {
   characters: Character[] = [];
   npcs: Npc[] = [];
   treeData: CampaignTreeData | null = null;
+
+  /** Sections PJ / PNJ repliables (onglet Personnages). */
+  pjCollapsed = false;
+  pnjCollapsed = false;
+  /** Dossiers de PNJ repliés (onglet Personnages) — par nom ('' = « Sans dossier »). */
+  collapsedNpcFolders = new Set<string>();
+  /** Arcs repliés dans l'onglet Scènes — repliés par défaut pour une vue d'ensemble. */
+  collapsedArcs = new Set<string>();
 
   loadingChars = false;
   loadingTree = false;
@@ -120,9 +131,40 @@ export class SessionReferencePanelComponent implements OnChanges {
       catchError(() => of({ arcs: [], chaptersByArc: {}, scenesByChapter: {}, npcs: [], randomTables: [], enemies: [] } as CampaignTreeData))
     ).subscribe(data => {
       this.treeData = data;
+      // Arcs repliés par défaut : on présente une vue d'ensemble compacte, le MJ
+      // déplie l'arc qui l'intéresse.
+      this.collapsedArcs = new Set(data.arcs.map(a => a.id!).filter(Boolean) as string[]);
       this.loadingTree = false;
       this.treeLoaded = true;
     });
+  }
+
+  /** Arcs triés par ordre manuel (cohérent avec l'arbre et les cartes). */
+  get sortedArcs(): Arc[] {
+    return [...(this.treeData?.arcs ?? [])].sort(byOrder);
+  }
+
+  toggleArc(id: string): void {
+    if (this.collapsedArcs.has(id)) this.collapsedArcs.delete(id);
+    else this.collapsedArcs.add(id);
+  }
+
+  isArcCollapsed(id: string): boolean {
+    return this.collapsedArcs.has(id);
+  }
+
+  /** PNJ groupés par dossier (même classement que les vues cartes/sidebar). */
+  get npcGroups(): FolderGroup<Npc>[] {
+    return groupByFolder(this.npcs);
+  }
+
+  toggleNpcFolder(folder: string): void {
+    if (this.collapsedNpcFolders.has(folder)) this.collapsedNpcFolders.delete(folder);
+    else this.collapsedNpcFolders.add(folder);
+  }
+
+  isNpcFolderCollapsed(folder: string): boolean {
+    return this.collapsedNpcFolders.has(folder);
   }
 
   /**
@@ -134,12 +176,12 @@ export class SessionReferencePanelComponent implements OnChanges {
     window.open('/' + url, '_blank', 'noopener');
   }
 
-  /** Helpers de typage pour le template (Angular n'infère pas bien sans). */
+  /** Chapitres/scènes triés par ordre manuel (l'arbre brut n'est pas ordonné). */
   chaptersOf(arc: Arc): Chapter[] {
-    return this.treeData?.chaptersByArc[arc.id!] ?? [];
+    return [...(this.treeData?.chaptersByArc[arc.id!] ?? [])].sort(byOrder);
   }
   scenesOf(chapter: Chapter): Scene[] {
-    return this.treeData?.scenesByChapter[chapter.id!] ?? [];
+    return [...(this.treeData?.scenesByChapter[chapter.id!] ?? [])].sort(byOrder);
   }
 
   onDiceRolled(result: DiceRollResult): void {

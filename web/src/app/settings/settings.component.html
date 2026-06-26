@@ -376,6 +376,27 @@
                       <section class="card">
                         <h2>{{ 'settings.data.title' | translate }}</h2>
                         <p class="hint" [innerHTML]="'settings.data.hint' | translate"></p>
+                        <div class="export-scope">
+                          <label class="export-scope-row">
+                            <span>{{ 'settings.data.scopeLabel' | translate }}</span>
+                            <select [(ngModel)]="exportScope" [disabled]="exporting || importing">
+                              <option value="full">{{ 'settings.data.scopeFull' | translate }}</option>
+                              <optgroup [label]="'settings.data.scopeCampaignGroup' | translate">
+                                @for (c of campaigns; track c.id) {
+                                  <option [value]="c.id">{{ c.name }}</option>
+                                }
+                              </optgroup>
+                            </select>
+                          </label>
+                          @if (exportScope !== 'full') {
+                            <div class="export-options">
+                              <span class="export-options-label">{{ 'settings.data.optionsLabel' | translate }}</span>
+                              <label><input type="checkbox" [(ngModel)]="exportIncludeLore"> {{ 'settings.data.optLore' | translate }}</label>
+                              <label><input type="checkbox" [(ngModel)]="exportIncludePlay"> {{ 'settings.data.optPlay' | translate }}</label>
+                              <label><input type="checkbox" [(ngModel)]="exportIncludeImages"> {{ 'settings.data.optImages' | translate }}</label>
+                            </div>
+                          }
+                        </div>
                         <div class="actions" appFileDrop [dropDisabled]="exporting || importing" (filesDropped)="onBackupDropped($event)">
                           <button type="button" class="btn-secondary" (click)="exportData()" [disabled]="exporting || importing">
                             <span>{{ (exporting ? 'settings.data.exporting' : 'settings.data.exportBtn') | translate }}</span>

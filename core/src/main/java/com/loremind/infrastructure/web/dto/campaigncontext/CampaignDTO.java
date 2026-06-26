@@ -13,6 +13,8 @@ public class CampaignDTO {
     private String name;
     private String description;
     private int arcsCount;
+    /** Nombre de joueurs attendus à la table. */
+    private int playerCount;
     /** Nullable : campagne sans univers associé. */
     private String loreId;
     /** Nullable : campagne sans système de JDR associé (générique). */

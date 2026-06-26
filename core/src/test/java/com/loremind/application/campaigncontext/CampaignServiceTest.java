@@ -70,7 +70,8 @@ public class CampaignServiceTest {
                 "New Campaign",
                 "Description",
                 "lore-123",
-                null
+                null,
+                4
         );
         // Le repo renvoie la Campaign telle que passée — on teste la normalisation
         // du loreId dans le service, pas le comportement du repo.
@@ -93,7 +94,8 @@ public class CampaignServiceTest {
                 "New Campaign",
                 "Description",
                 null,
-                null
+                null,
+                4
         );
         when(campaignRepository.save(any(Campaign.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
@@ -114,7 +116,8 @@ public class CampaignServiceTest {
                 "New Campaign",
                 "Description",
                 "   ",
-                null
+                null,
+                4
         );
         when(campaignRepository.save(any(Campaign.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
@@ -179,7 +182,8 @@ public class CampaignServiceTest {
                 "Updated Campaign",
                 "Updated Description",
                 "lore-456",
-                null
+                null,
+                4
         );
         when(campaignRepository.findById("campaign-1")).thenReturn(Optional.of(testCampaign));
         when(campaignRepository.save(any(Campaign.class))).thenReturn(testCampaign);
@@ -200,7 +204,8 @@ public class CampaignServiceTest {
                 "Updated Campaign",
                 "Updated Description",
                 "lore-456",
-                null
+                null,
+                4
         );
         when(campaignRepository.findById("invalid-id")).thenReturn(Optional.empty());
 

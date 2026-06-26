@@ -26,9 +26,15 @@
 // En-tête de dossier (Démons, Humanoïdes…) — sépare visuellement les groupes.
 .sbl-folder {
   display: flex; align-items: center; gap: 0.4rem;
-  margin: 0.9rem 0 0.15rem; font-size: 0.78rem; font-weight: 600;
+  width: 100%; margin: 0.9rem 0 0.15rem; font-size: 0.78rem; font-weight: 600;
   text-transform: uppercase; letter-spacing: 0.06em;
   color: #a5b4fc;
+  // En-tête cliquable (repli) : on neutralise le style natif du <button>.
+  background: none; border: none; padding: 0; cursor: pointer; font-family: inherit;
+
+  &:hover { color: #c7d2fe; }
+
+  .sbl-folder-chevron { opacity: 0.65; flex-shrink: 0; }
 
   .sbl-folder-count {
     font-weight: 400; color: var(--color-text-muted, #9aa0aa);

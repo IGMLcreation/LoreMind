@@ -53,6 +53,13 @@
     "data": {
       "title": "Data backup",
       "hint": "Export all your content (game systems, lores, campaigns + images) to a file, to back it up or move it to another instance. Importing <strong>adds</strong> the content without deleting what's already there.",
+      "scopeLabel": "Scope",
+      "scopeFull": "Full backup (everything)",
+      "scopeCampaignGroup": "Campaign",
+      "optionsLabel": "Include",
+      "optLore": "Lore (world)",
+      "optPlay": "Play space (playthroughs, sessions, characters)",
+      "optImages": "Images",
       "exportBtn": "Export data",
       "exporting": "Exporting…",
       "importBtn": "Import a file",
@@ -568,6 +575,8 @@
   },
   "campaignDetail": {
     "players": "{{n}} players",
+    "showMore": "Show more",
+    "showLess": "Show less",
     "openLinkedLore": "Open the linked universe",
     "loreMissingTitle": "The linked universe cannot be found",
     "loreMissing": "Universe not found",

@@ -1,5 +1,6 @@
 package com.loremind.infrastructure.web.controller;
 
+import com.loremind.infrastructure.transfer.ExportRequest;
 import com.loremind.infrastructure.transfer.ExportService;
 import com.loremind.infrastructure.transfer.ImportResult;
 import com.loremind.infrastructure.transfer.ImportService;
@@ -47,20 +48,50 @@ public class DataTransferController {
         this.demoMode = demoMode;
     }
 
+    /**
+     * Export portable. Sans {@code campaignId} : <b>sauvegarde complète</b> (toute la base).
+     * Avec {@code campaignId} : export ciblé d'une campagne et de sa clôture, les options
+     * {@code includeLore/Play/Images} (par défaut vraies) pilotant l'univers, l'espace de
+     * jeu et les binaires d'images embarqués.
+     */
     @GetMapping(value = "/export", produces = "application/zip")
-    public ResponseEntity<StreamingResponseBody> export() {
+    public ResponseEntity<StreamingResponseBody> export(
+            @RequestParam(required = false) Long campaignId,
+            @RequestParam(defaultValue = "true") boolean includeLore,
+            @RequestParam(defaultValue = "true") boolean includePlay,
+            @RequestParam(defaultValue = "true") boolean includeImages) {
         guardDemoMode();
         // Stamp de l'horodatage cote requete (PAS dans un init statique).
         String exportedAt = Instant.now().toString();
-        ContentExport content = exportService.buildExport(exportedAt);
+        ExportRequest req = campaignId == null
+                ? ExportRequest.full()
+                : new ExportRequest(campaignId, includeLore, includePlay, includeImages);
+
+        ContentExport content;
+        try {
+            content = exportService.buildExport(exportedAt, req);
+        } catch (java.util.NoSuchElementException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        }
 
         StreamingResponseBody body = out -> exportService.writeZip(content, out);
+        String filename = "loremind-" + slug(content.manifest().scope()) + ".zip";
 
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"loremind-export.zip\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                 .contentType(MediaType.parseMediaType("application/zip"))
                 .body(body);
+    }
+
+    /** Slug ASCII minuscule (pour le nom de fichier) à partir d'un libellé de scope. */
+    private static String slug(String s) {
+        if (s == null || s.isBlank()) return "export";
+        String slug = java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "")
+                .toLowerCase()
+                .replaceAll("[^a-z0-9]+", "-")
+                .replaceAll("(^-+|-+$)", "");
+        return slug.isBlank() ? "export" : slug;
     }
 
     @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

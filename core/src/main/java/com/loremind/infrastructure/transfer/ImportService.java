@@ -1,6 +1,8 @@
 package com.loremind.infrastructure.transfer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.loremind.domain.campaigncontext.ProgressionStatus;
+import com.loremind.domain.playcontext.EntryType;
 import com.loremind.infrastructure.persistence.converter.PrerequisiteListJsonConverter;
 import com.loremind.infrastructure.persistence.entity.*;
 import com.loremind.infrastructure.persistence.jpa.*;
@@ -61,6 +63,11 @@ public class ImportService {
     private final EnemyJpaRepository enemyRepo;
     private final ItemCatalogJpaRepository itemCatalogRepo;
     private final RandomTableJpaRepository randomTableRepo;
+    private final PlaythroughJpaRepository playthroughRepo;
+    private final SessionJpaRepository sessionRepo;
+    private final SessionEntryJpaRepository sessionEntryRepo;
+    private final PlaythroughFlagJpaRepository playthroughFlagRepo;
+    private final QuestProgressionJpaRepository questProgressionRepo;
     private final ImageImporter imageImporter;
     private final StoredFileImporter storedFileImporter;
     private final ObjectMapper objectMapper;
@@ -79,6 +86,11 @@ public class ImportService {
                          EnemyJpaRepository enemyRepo,
                          ItemCatalogJpaRepository itemCatalogRepo,
                          RandomTableJpaRepository randomTableRepo,
+                         PlaythroughJpaRepository playthroughRepo,
+                         SessionJpaRepository sessionRepo,
+                         SessionEntryJpaRepository sessionEntryRepo,
+                         PlaythroughFlagJpaRepository playthroughFlagRepo,
+                         QuestProgressionJpaRepository questProgressionRepo,
                          ImageImporter imageImporter,
                          StoredFileImporter storedFileImporter,
                          ObjectMapper objectMapper) {
@@ -96,6 +108,11 @@ public class ImportService {
         this.enemyRepo = enemyRepo;
         this.itemCatalogRepo = itemCatalogRepo;
         this.randomTableRepo = randomTableRepo;
+        this.playthroughRepo = playthroughRepo;
+        this.sessionRepo = sessionRepo;
+        this.sessionEntryRepo = sessionEntryRepo;
+        this.playthroughFlagRepo = playthroughFlagRepo;
+        this.questProgressionRepo = questProgressionRepo;
         this.imageImporter = imageImporter;
         this.storedFileImporter = storedFileImporter;
         this.objectMapper = objectMapper;
@@ -126,6 +143,8 @@ public class ImportService {
         Map<Long, Long> enemyMap = new HashMap<>();
         Map<Long, Long> characterMap = new HashMap<>();
         Map<Long, Long> sceneMap = new HashMap<>();
+        Map<Long, Long> playthroughMap = new HashMap<>();
+        Map<Long, Long> sessionMap = new HashMap<>();
 
         // -- GameSystem
         for (ContentExport.GameSystemDto d : nullSafe(export.gameSystems())) {
@@ -206,11 +225,60 @@ public class ImportService {
             e.setName(d.name());
             e.setDescription(d.description());
             e.setArcsCount(d.arcsCount());
+            e.setPlayerCount(d.playerCount());
             e.setLoreId(d.loreId());             // remappe plus bas
             e.setGameSystemId(d.gameSystemId()); // remappe plus bas
             campaignMap.put(d.id(), campaignRepo.save(e).getId());
         }
         result.count("campaigns", campaignMap.size());
+
+        // -- Playthrough (Partie) : campaignId remappe
+        for (ContentExport.PlaythroughDto d : nullSafe(export.playthroughs())) {
+            PlaythroughJpaEntity e = new PlaythroughJpaEntity();
+            e.setCampaignId(IdRemapper.remapId(campaignMap, d.campaignId()));
+            e.setName(d.name());
+            e.setDescription(d.description());
+            playthroughMap.put(d.id(), playthroughRepo.save(e).getId());
+        }
+        result.count("playthroughs", playthroughMap.size());
+
+        // -- Session : campaignId (ref faible String) + playthroughId remappes
+        for (ContentExport.SessionDto d : nullSafe(export.sessions())) {
+            SessionJpaEntity e = new SessionJpaEntity();
+            e.setName(d.name());
+            e.setCampaignId(IdRemapper.remapStringId(campaignMap, d.campaignId()));
+            e.setPlaythroughId(IdRemapper.remapId(playthroughMap, d.playthroughId()));
+            e.setStartedAt(parseDateTime(d.startedAt()));
+            e.setEndedAt(parseDateTime(d.endedAt()));
+            sessionMap.put(d.id(), sessionRepo.save(e).getId());
+        }
+        result.count("sessions", sessionMap.size());
+
+        // -- SessionEntry : sessionId (ref faible String) remappe
+        int sessionEntryCount = 0;
+        for (ContentExport.SessionEntryDto d : nullSafe(export.sessionEntries())) {
+            SessionEntryJpaEntity e = new SessionEntryJpaEntity();
+            e.setSessionId(IdRemapper.remapStringId(sessionMap, d.sessionId()));
+            e.setType(parseEntryType(d.type()));
+            e.setContent(d.content());
+            e.setOccurredAt(parseDateTime(d.occurredAt()));
+            sessionEntryRepo.save(e);
+            sessionEntryCount++;
+        }
+        result.count("sessionEntries", sessionEntryCount);
+
+        // -- PlaythroughFlag : playthroughId remappe (la contrainte unique (playthroughId,name)
+        //    ne saute pas, le playthroughId etant neuf).
+        int flagCount = 0;
+        for (ContentExport.PlaythroughFlagDto d : nullSafe(export.playthroughFlags())) {
+            PlaythroughFlagJpaEntity e = new PlaythroughFlagJpaEntity();
+            e.setPlaythroughId(IdRemapper.remapId(playthroughMap, d.playthroughId()));
+            e.setName(d.name());
+            e.setValue(d.value());
+            playthroughFlagRepo.save(e);
+            flagCount++;
+        }
+        result.count("playthroughFlags", flagCount);
 
         // -- Arc (relatedPageIds remappe en 2e passe)
         for (ContentExport.ArcDto d : nullSafe(export.arcs())) {
@@ -307,6 +375,19 @@ public class ImportService {
         }
         result.count("chapters", chapterMap.size());
 
+        // -- QuestProgression : playthroughId + chapterId remappes (chapitres deja inseres ;
+        //    contrainte unique (playthroughId, chapterId) preservee car playthroughId neuf).
+        int questProgCount = 0;
+        for (ContentExport.QuestProgressionDto d : nullSafe(export.questProgressions())) {
+            QuestProgressionJpaEntity e = new QuestProgressionJpaEntity();
+            e.setPlaythroughId(IdRemapper.remapId(playthroughMap, d.playthroughId()));
+            e.setChapterId(IdRemapper.remapId(chapterMap, d.chapterId()));
+            e.setStatus(parseProgressionStatus(d.status()));
+            questProgressionRepo.save(e);
+            questProgCount++;
+        }
+        result.count("questProgressions", questProgCount);
+
         // -- Npc (relatedPageIds remappe en 2e passe)
         for (ContentExport.NpcDto d : nullSafe(export.npcs())) {
             NpcJpaEntity e = new NpcJpaEntity();
@@ -353,7 +434,9 @@ public class ImportService {
             e.setImageValues(d.imageValues());
             e.setKeyValueValues(d.keyValueValues());
             e.setCampaignId(IdRemapper.remapId(campaignMap, d.campaignId()));
-            e.setPlaythroughId(null); // Playthrough hors perimetre d'export
+            // playthroughId remappe vers la Partie importee (ou null si le jeu n'etait pas
+            // dans l'export -> la map est vide). Evite une reference pendante.
+            e.setPlaythroughId(playthroughMap.get(d.playthroughId()));
             e.setOrder(d.order());
             characterMap.put(d.id(), characterRepo.save(e).getId());
         }
@@ -516,6 +599,36 @@ public class ImportService {
 
     private static <T> List<T> nullSafe(List<T> list) {
         return list != null ? list : List.of();
+    }
+
+    /** Parse un horodatage ISO LocalDateTime, ou null si absent/illisible. */
+    private static java.time.LocalDateTime parseDateTime(String s) {
+        if (s == null || s.isBlank()) return null;
+        try {
+            return java.time.LocalDateTime.parse(s.trim());
+        } catch (java.time.format.DateTimeParseException e) {
+            return null;
+        }
+    }
+
+    /** Parse un EntryType, repli sur NOTE si inconnu/absent (jamais d'echec). */
+    private static EntryType parseEntryType(String s) {
+        if (s == null) return EntryType.NOTE;
+        try {
+            return EntryType.valueOf(s);
+        } catch (IllegalArgumentException e) {
+            return EntryType.NOTE;
+        }
+    }
+
+    /** Parse un ProgressionStatus, repli sur NOT_STARTED si inconnu/absent. */
+    private static ProgressionStatus parseProgressionStatus(String s) {
+        if (s == null) return ProgressionStatus.NOT_STARTED;
+        try {
+            return ProgressionStatus.valueOf(s);
+        } catch (IllegalArgumentException e) {
+            return ProgressionStatus.NOT_STARTED;
+        }
     }
 
     private static byte[] readAll(InputStream in) throws IOException {

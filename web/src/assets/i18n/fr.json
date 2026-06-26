@@ -53,6 +53,13 @@
     "data": {
       "title": "Sauvegarde des données",
       "hint": "Exportez tout votre contenu (systèmes de jeu, lores, campagnes + images) dans un fichier, pour le sauvegarder ou le transférer vers une autre instance. L'import <strong>ajoute</strong> le contenu sans supprimer l'existant.",
+      "scopeLabel": "Périmètre",
+      "scopeFull": "Sauvegarde complète (tout)",
+      "scopeCampaignGroup": "Campagne",
+      "optionsLabel": "À inclure",
+      "optLore": "Univers (lore)",
+      "optPlay": "Espace de jeu (parties, sessions, persos)",
+      "optImages": "Images",
       "exportBtn": "Exporter les données",
       "exporting": "Export en cours…",
       "importBtn": "Importer un fichier",
@@ -568,6 +575,8 @@
   },
   "campaignDetail": {
     "players": "{{n}} joueurs",
+    "showMore": "Voir plus",
+    "showLess": "Voir moins",
     "openLinkedLore": "Ouvrir l'univers associé",
     "loreMissingTitle": "L'univers associé est introuvable",
     "loreMissing": "Univers introuvable",

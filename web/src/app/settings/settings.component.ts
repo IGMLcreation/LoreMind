@@ -6,6 +6,8 @@ import { LucideAngularModule, ArrowLeft, RefreshCw, Save, Check, AlertCircle, Pl
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { SettingsService, AppSettings, AppSettingsUpdate, OneMinModelGroup, OpenRouterModel, MistralModel, GeminiModel, ImportResult } from '../services/settings.service';
 import { LayoutService } from '../services/layout.service';
+import { CampaignService } from '../services/campaign.service';
+import { Campaign } from '../services/campaign.model';
 import { UpdatesSectionComponent } from './updates-section/updates-section.component';
 import { OllamaModelManagerComponent } from './ollama-model-manager/ollama-model-manager.component';
 import { LanguageSwitcherComponent } from '../shared/language-switcher/language-switcher.component';
@@ -97,7 +99,8 @@ export class SettingsComponent implements OnInit {
     private settingsService: SettingsService,
     private router: Router,
     private layoutService: LayoutService,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private campaignService: CampaignService
   ) {}
 
   ngOnInit(): void {
@@ -105,6 +108,11 @@ export class SettingsComponent implements OnInit {
     // section precedente (cf. fix CampaignsComponent / LoreComponent).
     this.layoutService.hide();
     this.loadSettings();
+    // Campagnes proposées pour un export ciblé (silencieux en cas d'échec).
+    this.campaignService.getAllCampaigns().subscribe({
+      next: (list) => this.campaigns = list,
+      error: () => this.campaigns = []
+    });
   }
 
   loadSettings(): void {
@@ -340,17 +348,33 @@ export class SettingsComponent implements OnInit {
   dataMessage = '';
   dataError = '';
 
-  /** Telecharge l'export complet (zip) via un lien temporaire. */
+  /** Campagnes proposées pour un export ciblé. */
+  campaigns: Campaign[] = [];
+  /** Périmètre d'export : 'full' (sauvegarde complète) ou l'id d'une campagne. */
+  exportScope = 'full';
+  /** Options de l'export ciblé (ignorées en sauvegarde complète). */
+  exportIncludeLore = true;
+  exportIncludePlay = true;
+  exportIncludeImages = true;
+
+  /** Télécharge l'export (complet ou ciblé selon le périmètre choisi) via un lien temporaire. */
   exportData(): void {
     this.exporting = true;
     this.dataMessage = '';
     this.dataError = '';
-    this.settingsService.exportData().subscribe({
+    const targeted = this.exportScope !== 'full';
+    const opts = targeted ? {
+      campaignId: this.exportScope,
+      includeLore: this.exportIncludeLore,
+      includePlay: this.exportIncludePlay,
+      includeImages: this.exportIncludeImages
+    } : undefined;
+    this.settingsService.exportData(opts).subscribe({
       next: (blob) => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'loremind-export.zip';
+        a.download = targeted ? 'loremind-campagne.zip' : 'loremind-export.zip';
         a.click();
         URL.revokeObjectURL(url);
         this.exporting = false;
