@@ -22,10 +22,33 @@ export type FieldType = 'TEXT' | 'IMAGE' | 'NUMBER' | 'KEY_VALUE_LIST' | 'TABLE'
 export type ImageLayout = 'GALLERY' | 'HERO' | 'MASONRY' | 'CAROUSEL' | 'EDITORIAL' | 'MAPS';
 
 /**
+ * Placement d'un bloc dans la grille 12 colonnes du template.
+ * Miroir de com.loremind.domain.shared.template.BlockPosition.
+ * Tout nullable : absence (ou coordonnees nulles) = auto-flow empile,
+ * exactement le rendu historique en une seule colonne.
+ */
+export interface BlockPosition {
+  /** Colonne de depart (0..11). */
+  x?: number | null;
+  /** Ligne de depart (0..n). */
+  y?: number | null;
+  /** Largeur en colonnes (1..12). */
+  w?: number | null;
+  /** Hauteur en lignes (1..n). */
+  h?: number | null;
+}
+
+/**
  * Champ d'un Template : nom + type discriminant.
  * Miroir de TemplateFieldDTO (backend).
  */
 export interface TemplateField {
+  /**
+   * Identifiant STABLE du bloc : cle d'ancrage des valeurs de Page, survit aux
+   * renommages. Retro-rempli avec le nom cote backend pour les templates
+   * anterieurs (donc id == name au depart).
+   */
+  id?: string;
   name: string;
   type: FieldType;
   /** Uniquement pour type='IMAGE'. Absent/null = 'GALLERY'. */
@@ -37,6 +60,8 @@ export interface TemplateField {
   labels?: string[] | null;
   /** Chemin Foundry du champ (system.<path>) quand le template est calqué Foundry. */
   foundryPath?: string | null;
+  /** Placement dans la grille 12 colonnes. Null = auto-flow empile (rendu historique). */
+  pos?: BlockPosition | null;
 }
 
 /**

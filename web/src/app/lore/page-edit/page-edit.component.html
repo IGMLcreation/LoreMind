@@ -43,104 +43,113 @@
         </select>
         <p class="hint">{{ 'pageEdit.folderHint' | translate }}</p>
       </div>
-      <!-- Champs dynamiques du template -------------------------------- -->
+      <!-- Champs dynamiques du template. Rendus en grille 12 colonnes quand le
+      template porte une mise en page (hasLayout) ; sinon empilés (rendu
+      historique). Les blocs suivent l'ordre (ligne, colonne) du template. -->
       @if (template?.fields?.length) {
         <h2 class="section-title">{{ 'pageEdit.fields' | translate }}</h2>
-        @for (field of template!.fields; track field) {
-          <!-- Champ TEXT : textarea editable -->
-          @if (field.type === 'TEXT') {
-            <div class="field">
-              <label>{{ field.name }}</label>
-              <textarea
-                [(ngModel)]="values[field.name]"
-                [name]="'value_' + field.name"
-                rows="4"
-                [placeholder]="'pageEdit.valuePlaceholder' | translate:{ field: field.name }">
-              </textarea>
-            </div>
-          }
-          <!-- Champ IMAGE : galerie editable. -->
-          @if (field.type === 'IMAGE') {
-            <div class="field">
-              <label>{{ field.name }}</label>
-              <app-image-gallery
-                [imageIds]="imageValues[field.name] || []"
-                [editable]="true"
-                [layout]="field.layout ?? 'GALLERY'"
-                (imageIdsChange)="imageValues[field.name] = $event">
-              </app-image-gallery>
-            </div>
-          }
-          <!-- Champ KEY_VALUE_LIST : liste libellé/valeur (labels figés par le template). -->
-          @if (field.type === 'KEY_VALUE_LIST') {
-            <div class="field">
-              <label>{{ field.name }}</label>
-              <div class="kv-grid">
-                @for (lbl of field.labels ?? []; track $index) {
-                  <div class="kv-cell">
-                    <span class="kv-label">{{ lbl }}</span>
-                    <input
-                      type="text"
-                      [(ngModel)]="keyValueValues[field.name][lbl]"
-                      [name]="'kv_' + field.name + '_' + lbl"
-                      placeholder="—" />
-                  </div>
-                }
-                @if (!(field.labels ?? []).length) {
-                  <p class="kv-empty">{{ 'pageEdit.noLabels' | translate }}</p>
-                }
+        <div class="edit-fields" [class.edit-fields--grid]="hasLayout">
+          @for (field of orderedFields; track field) {
+            <!-- Champ TEXT : textarea editable -->
+            @if (field.type === 'TEXT') {
+              <div class="field"
+                [style.grid-column]="hasLayout ? gridColumn(field) : null">
+                <label>{{ field.name }}</label>
+                <textarea
+                  [(ngModel)]="values[keyOf(field)]"
+                  [name]="'value_' + keyOf(field)"
+                  rows="4"
+                  [placeholder]="'pageEdit.valuePlaceholder' | translate:{ field: field.name }">
+                </textarea>
               </div>
-            </div>
-          }
-          <!-- Champ TABLE : colonnes figées par le template, lignes libres. -->
-          @if (field.type === 'TABLE') {
-            <div class="field">
-              <label>{{ field.name }}</label>
-              @if ((field.labels ?? []).length) {
-                <div class="table-edit-wrap">
-                  <table class="table-edit">
-                    <thead>
-                      <tr>
-                        @for (col of field.labels; track $index) {
-                          <th>{{ col }}</th>
-                        }
-                        <th class="table-edit-actions-col"></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      @for (row of tableRows(field.name); track $index; let ri = $index) {
+            }
+            <!-- Champ IMAGE : galerie editable. -->
+            @if (field.type === 'IMAGE') {
+              <div class="field"
+                [style.grid-column]="hasLayout ? gridColumn(field) : null">
+                <label>{{ field.name }}</label>
+                <app-image-block
+                  [editable]="true"
+                  [imageIds]="imageValues[keyOf(field)] || []"
+                  (imageIdsChange)="imageValues[keyOf(field)] = $event"
+                  [framing]="imageFraming[keyOf(field)] || {}"
+                  (framingChange)="imageFraming[keyOf(field)] = $event">
+                </app-image-block>
+              </div>
+            }
+            <!-- Champ KEY_VALUE_LIST : liste libellé/valeur (labels figés par le template). -->
+            @if (field.type === 'KEY_VALUE_LIST') {
+              <div class="field"
+                [style.grid-column]="hasLayout ? gridColumn(field) : null">
+                <label>{{ field.name }}</label>
+                <div class="kv-grid">
+                  @for (lbl of field.labels ?? []; track $index) {
+                    <div class="kv-cell">
+                      <span class="kv-label">{{ lbl }}</span>
+                      <input
+                        type="text"
+                        [(ngModel)]="keyValueValues[keyOf(field)][lbl]"
+                        [name]="'kv_' + keyOf(field) + '_' + lbl"
+                        placeholder="—" />
+                    </div>
+                  }
+                  @if (!(field.labels ?? []).length) {
+                    <p class="kv-empty">{{ 'pageEdit.noLabels' | translate }}</p>
+                  }
+                </div>
+              </div>
+            }
+            <!-- Champ TABLE : colonnes figées par le template, lignes libres. -->
+            @if (field.type === 'TABLE') {
+              <div class="field"
+                [style.grid-column]="hasLayout ? gridColumn(field) : null">
+                <label>{{ field.name }}</label>
+                @if ((field.labels ?? []).length) {
+                  <div class="table-edit-wrap">
+                    <table class="table-edit">
+                      <thead>
                         <tr>
                           @for (col of field.labels; track $index) {
-                            <td>
-                              <input
-                                type="text"
-                                [(ngModel)]="row[col]"
-                                [name]="'tbl_' + field.name + '_' + ri + '_' + col"
-                                [placeholder]="col" />
-                            </td>
+                            <th>{{ col }}</th>
                           }
-                          <td class="table-edit-actions-col">
-                            <button type="button" class="btn-row-delete"
-                              (click)="removeTableRow(field.name, ri)"
-                              [attr.aria-label]="'pageEdit.deleteRowN' | translate:{ n: (ri + 1) }" [title]="'pageEdit.deleteRow' | translate">
-                              <lucide-icon [img]="Trash2" [size]="13"></lucide-icon>
-                            </button>
-                          </td>
+                          <th class="table-edit-actions-col"></th>
                         </tr>
-                      }
-                    </tbody>
-                  </table>
-                  <button type="button" class="btn-row-add" (click)="addTableRow(field.name, field.labels)">
-                    <lucide-icon [img]="Plus" [size]="13"></lucide-icon>
-                    {{ 'pageEdit.addRow' | translate }}
-                  </button>
-                </div>
-              } @else {
-                <p class="kv-empty">{{ 'pageEdit.noColumns' | translate }}</p>
-              }
-            </div>
+                      </thead>
+                      <tbody>
+                        @for (row of tableRows(keyOf(field)); track $index; let ri = $index) {
+                          <tr>
+                            @for (col of field.labels; track $index) {
+                              <td>
+                                <input
+                                  type="text"
+                                  [(ngModel)]="row[col]"
+                                  [name]="'tbl_' + keyOf(field) + '_' + ri + '_' + col"
+                                  [placeholder]="col" />
+                              </td>
+                            }
+                            <td class="table-edit-actions-col">
+                              <button type="button" class="btn-row-delete"
+                                (click)="removeTableRow(keyOf(field), ri)"
+                                [attr.aria-label]="'pageEdit.deleteRowN' | translate:{ n: (ri + 1) }" [title]="'pageEdit.deleteRow' | translate">
+                                <lucide-icon [img]="Trash2" [size]="13"></lucide-icon>
+                              </button>
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                    <button type="button" class="btn-row-add" (click)="addTableRow(keyOf(field), field.labels)">
+                      <lucide-icon [img]="Plus" [size]="13"></lucide-icon>
+                      {{ 'pageEdit.addRow' | translate }}
+                    </button>
+                  </div>
+                } @else {
+                  <p class="kv-empty">{{ 'pageEdit.noColumns' | translate }}</p>
+                }
+              </div>
+            }
           }
-        }
+        </div>
       }
       <!-- Tags --------------------------------------------------------- -->
       <h2 class="section-title">{{ 'pageEdit.tags' | translate }}</h2>

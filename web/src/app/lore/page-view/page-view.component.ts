@@ -11,10 +11,12 @@ import { LayoutService } from '../../services/layout.service';
 import { PageTitleService } from '../../services/page-title.service';
 import { Lore, LoreNode } from '../../services/lore.model';
 import { Template } from '../../services/template.model';
-import { Page } from '../../services/page.model';
+import { Page, ImageFraming } from '../../services/page.model';
 import { loadLoreSidebarData, buildLoreSidebarConfig } from '../lore-sidebar.helper';
+import { hasBlockLayout, orderedBlocks, blockGridColumn, blockGridRow, blockKey } from '../block-layout.helper';
+import { TemplateField } from '../../services/template.model';
 import { BreadcrumbComponent, BreadcrumbItem } from '../../shared/breadcrumb/breadcrumb.component';
-import { ImageGalleryComponent } from '../../shared/image-gallery/image-gallery.component';
+import { ImageBlockComponent } from '../../shared/image-block/image-block.component';
 import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 
 /**
@@ -29,7 +31,7 @@ import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog
  */
 @Component({
     selector: 'app-page-view',
-    imports: [RouterModule, LucideAngularModule, TranslatePipe, BreadcrumbComponent, ImageGalleryComponent],
+    imports: [RouterModule, LucideAngularModule, TranslatePipe, BreadcrumbComponent, ImageBlockComponent],
     templateUrl: './page-view.component.html',
     styleUrls: ['./page-view.component.scss']
 })
@@ -44,6 +46,15 @@ export class PageViewComponent implements OnInit, OnDestroy {
   template: Template | null = null;
   nodes: LoreNode[] = [];
   allPages: Page[] = [];
+
+  /** Blocs du template ordonnes pour le rendu (tries par grille si placee). */
+  orderedFields: TemplateField[] = [];
+  /** True si le template porte une mise en page grille -> rendu en grille 12 col. */
+  hasLayout = false;
+
+  /** Placement CSS d'un bloc dans la grille (binde via [style.grid-column/row]). */
+  readonly gridColumn = blockGridColumn;
+  readonly gridRow = blockGridRow;
 
   constructor(
     private route: ActivatedRoute,
@@ -79,6 +90,8 @@ export class PageViewComponent implements OnInit, OnDestroy {
       this.nodes = sidebar.nodes;
       this.allPages = sidebar.pages;
       this.template = sidebar.templates.find(t => t.id === page.templateId) ?? null;
+      this.orderedFields = orderedBlocks(this.template?.fields);
+      this.hasLayout = hasBlockLayout(this.template?.fields);
       this.page = page;
       this.layoutService.show(buildLoreSidebarConfig(sidebar));
       this.pageTitleService.set(page.title);
@@ -106,29 +119,43 @@ export class PageViewComponent implements OnInit, OnDestroy {
     return items;
   }
 
+  // Les valeurs sont ancrées sur la clé STABLE du bloc ({@link blockKey} = id,
+  // repli sur le nom). Le repli supplémentaire sur `field.name` couvre les pages
+  // dont les valeurs étaient encore rangées par nom (migrées au prochain save).
+
   /** Récupère la valeur d'un champ dynamique TEXT du template. */
-  valueOf(fieldName: string): string {
-    return this.page?.values?.[fieldName] ?? '';
+  valueOf(field: TemplateField): string {
+    const v = this.page?.values;
+    return v?.[blockKey(field)] ?? v?.[field.name] ?? '';
   }
 
   /** IDs d'images pour un champ IMAGE (liste vide si aucune). */
-  imageIdsOf(fieldName: string): string[] {
-    return this.page?.imageValues?.[fieldName] ?? [];
+  imageIdsOf(field: TemplateField): string[] {
+    const v = this.page?.imageValues;
+    return v?.[blockKey(field)] ?? v?.[field.name] ?? [];
+  }
+
+  /** Cadrage (pan/zoom) des images d'un champ IMAGE : imageId → {x,y,scale}. */
+  imageFramingOf(field: TemplateField): Record<string, ImageFraming> {
+    const v = this.page?.imageFraming;
+    return v?.[blockKey(field)] ?? v?.[field.name] ?? {};
   }
 
   /** Valeur d'un libellé d'un champ KEY_VALUE_LIST (tableau). */
-  kvValueOf(fieldName: string, label: string): string {
-    return this.page?.keyValueValues?.[fieldName]?.[label] ?? '';
+  kvValueOf(field: TemplateField, label: string): string {
+    const v = this.page?.keyValueValues;
+    return v?.[blockKey(field)]?.[label] ?? v?.[field.name]?.[label] ?? '';
   }
 
   /** True si au moins une valeur de la liste clé/valeur est renseignée. */
-  kvHasContent(fieldName: string, labels: string[] | null | undefined): boolean {
-    return (labels ?? []).some(lbl => this.kvValueOf(fieldName, lbl).trim() !== '');
+  kvHasContent(field: TemplateField): boolean {
+    return (field.labels ?? []).some(lbl => this.kvValueOf(field, lbl).trim() !== '');
   }
 
   /** Lignes d'un champ TABLE (liste vide si jamais rempli). */
-  tableRowsOf(fieldName: string): Array<Record<string, string>> {
-    return this.page?.tableValues?.[fieldName] ?? [];
+  tableRowsOf(field: TemplateField): Array<Record<string, string>> {
+    const v = this.page?.tableValues;
+    return v?.[blockKey(field)] ?? v?.[field.name] ?? [];
   }
 
   /** Helper — résout l'ID d'une page liée en son titre (pour affichage dans les chips). */

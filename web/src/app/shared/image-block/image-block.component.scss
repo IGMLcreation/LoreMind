@@ -1,0 +1,168 @@
+.image-block {
+  position: relative;
+
+  // Mode "remplir le bloc" (page-view sur grille à hauteur fixe).
+  &.fill {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+
+    .frame { flex: 1 1 auto; aspect-ratio: auto; min-height: 0; }
+  }
+}
+
+.frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #000;   // bordures noires quand l'image entière ne remplit pas le bloc
+  touch-action: none; // évite le scroll pendant le drag tactile
+
+  &.grabbable { cursor: grab; }
+  &.grabbable:active { cursor: grabbing; }
+}
+
+.img {
+  width: 100%;
+  height: 100%;
+  // contain : l'image entière est visible (letterbox/pillarbox) ; le zoom (scale)
+  // permet ensuite de l'agrandir jusqu'à remplir le bloc, voire rogner.
+  object-fit: contain;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+  will-change: transform;
+}
+
+// Flèches de navigation (plusieurs images)
+.nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  background: rgba(0, 0, 0, 0.45);
+  border: none;
+  border-radius: 50%;
+  color: white;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover { background: rgba(0, 0, 0, 0.7); }
+  &.prev { left: 8px; }
+  &.next { right: 8px; }
+}
+
+.dots {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  padding: 4px 8px;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 999px;
+
+  .dot {
+    width: 7px;
+    height: 7px;
+    padding: 0;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.45);
+    cursor: pointer;
+    transition: background 0.15s;
+
+    &.active { background: white; }
+    &:hover { background: rgba(255, 255, 255, 0.8); }
+  }
+}
+
+// Barre d'édition (zoom + déplacer + ajouter/supprimer)
+.edit-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+
+  .zoom {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+
+    button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      background: #1a1a2e;
+      border: 1px solid #2a2a3d;
+      border-radius: 5px;
+      color: #d1d5db;
+      cursor: pointer;
+
+      &:hover { border-color: #6c63ff; color: white; }
+    }
+
+    input[type='range'] {
+      width: 120px;
+      accent-color: #6c63ff;
+      cursor: pointer;
+    }
+  }
+
+  .move-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.74rem;
+    color: #6b7280;
+  }
+
+  .edit-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-left: auto;
+  }
+
+  .btn-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    background: #3f1f1f;
+    border: none;
+    border-radius: 6px;
+    color: #fca5a5;
+    cursor: pointer;
+
+    &:hover { background: #5a2a2a; }
+  }
+}
+
+// État vide
+.image-empty {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  border: 1px dashed #2a2a3d;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.015);
+  color: #4b5563;
+
+  &.fill { height: 100%; aspect-ratio: auto; }
+}

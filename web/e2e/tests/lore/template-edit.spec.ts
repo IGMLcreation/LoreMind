@@ -30,8 +30,8 @@ test.describe('Template edit', () => {
 
     await expect(page.getByLabel(/^Nom$/)).toHaveValue(template.name);
     await expect(page.getByLabel(/Dossier par défaut/i)).toHaveValue(seeded.rootFolderId);
-    await expect(page.locator('.fields-list .field-chip', { hasText: 'Nom' })).toBeVisible();
-    await expect(page.locator('.fields-list .field-chip', { hasText: 'Description' })).toBeVisible();
+    await expect(page.locator('.grid-block[data-block-name="Nom"]')).toBeVisible();
+    await expect(page.locator('.grid-block[data-block-name="Description"]')).toBeVisible();
   });
 
   test('renames the template and persists to API', async ({ page, request }) => {
@@ -58,11 +58,11 @@ test.describe('Template edit', () => {
     const addInput = page.getByPlaceholder('+ Ajouter un champ');
     await addInput.fill('Stats');
     await addInput.press('Enter');
-    await expect(page.locator('.fields-list .field-chip', { hasText: 'Stats' })).toBeVisible();
+    await expect(page.locator('.grid-block[data-block-name="Stats"]')).toBeVisible();
 
-    const descriptionRow = page.locator('.fields-list .field-row', { hasText: 'Description' });
-    await descriptionRow.getByRole('button', { name: 'Supprimer' }).click();
-    await expect(page.locator('.fields-list .field-chip', { hasText: 'Description' })).toHaveCount(0);
+    const descriptionBlock = page.locator('.grid-block[data-block-name="Description"]');
+    await descriptionBlock.getByRole('button', { name: 'Supprimer' }).click();
+    await expect(page.locator('.grid-block[data-block-name="Description"]')).toHaveCount(0);
 
     await page.getByRole('button', { name: /^Sauvegarder$/i }).click();
     await expect(page).toHaveURL(new RegExp(`/lore/${seeded.id}$`));

@@ -86,6 +86,7 @@ public class PageService {
         existing.setNodeId(changes.getNodeId());
         existing.setValues(CollectionUtils.copyMap(changes.getValues()));
         existing.setImageValues(CollectionUtils.copyMap(changes.getImageValues()));
+        existing.setImageFraming(CollectionUtils.copyMap(changes.getImageFraming()));
         existing.setKeyValueValues(CollectionUtils.copyMap(changes.getKeyValueValues()));
         existing.setTableValues(CollectionUtils.copyMap(changes.getTableValues()));
         existing.setNotes(changes.getNotes());

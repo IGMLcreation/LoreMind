@@ -210,6 +210,7 @@ public class ImportService {
             e.setTitle(d.title());
             e.setValues(d.values());
             e.setImageValues(d.imageValues());
+            e.setImageFraming(d.imageFraming());
             e.setKeyValueValues(d.keyValueValues());
             e.setTableValues(d.tableValues());
             e.setNotes(d.notes());

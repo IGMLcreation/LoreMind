@@ -17,74 +17,86 @@
         </button>
       </div>
     </header>
-    <!-- Champs dynamiques du template (seuls les champs TEXT sont rendus ici ;
-    le support complet des champs IMAGE arrive a l'etape 5). -->
+    <!-- Champs dynamiques du template. Rendus en grille 12 colonnes quand le
+    template porte une mise en page (hasLayout) ; sinon empiles (rendu
+    historique). Les blocs sont ordonnes par (ligne, colonne). -->
     @if (template?.fields?.length) {
-      @for (field of template!.fields; track field) {
-        @if (field.type === 'TEXT') {
-          <section class="view-section">
-            <h2 class="view-section-title">{{ field.name }}</h2>
-            @if (valueOf(field.name)) {
-              <p class="view-section-body">{{ valueOf(field.name) }}</p>
-            } @else {
-              <p class="view-section-empty">{{ 'pageView.notFilled' | translate }}</p>
-            }
-          </section>
-        }
-        @if (field.type === 'IMAGE') {
-          <section class="view-section">
-            <h2 class="view-section-title">{{ field.name }}</h2>
-            <app-image-gallery
-              [imageIds]="imageIdsOf(field.name)"
-              [layout]="field.layout ?? 'GALLERY'">
-            </app-image-gallery>
-          </section>
-        }
-        @if (field.type === 'KEY_VALUE_LIST') {
-          <section class="view-section">
-            <h2 class="view-section-title">{{ field.name }}</h2>
-            @if (kvHasContent(field.name, field.labels)) {
-              <div class="view-kv-grid">
-                @for (lbl of field.labels ?? []; track $index) {
-                  <div class="view-kv-cell">
-                    <span class="view-kv-label">{{ lbl }}</span>
-                    <span class="view-kv-value">{{ kvValueOf(field.name, lbl) || '—' }}</span>
-                  </div>
-                }
-              </div>
-            } @else {
-              <p class="view-section-empty">{{ 'pageView.notFilled' | translate }}</p>
-            }
-          </section>
-        }
-        @if (field.type === 'TABLE') {
-          <section class="view-section">
-            <h2 class="view-section-title">{{ field.name }}</h2>
-            @if (tableRowsOf(field.name).length) {
-              <table class="view-table">
-                <thead>
-                  <tr>
-                    @for (col of field.labels ?? []; track $index) {
-                      <th>{{ col }}</th>
-                    }
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (row of tableRowsOf(field.name); track $index) {
+      <div class="view-fields" [class.view-fields--grid]="hasLayout">
+        @for (field of orderedFields; track field) {
+          @if (field.type === 'TEXT') {
+            <section class="view-section"
+              [style.grid-column]="hasLayout ? gridColumn(field) : null"
+              [style.grid-row]="hasLayout ? gridRow(field) : null">
+              <h2 class="view-section-title">{{ field.name }}</h2>
+              @if (valueOf(field)) {
+                <p class="view-section-body">{{ valueOf(field) }}</p>
+              } @else {
+                <p class="view-section-empty">{{ 'pageView.notFilled' | translate }}</p>
+              }
+            </section>
+          }
+          @if (field.type === 'IMAGE') {
+            <section class="view-section"
+              [style.grid-column]="hasLayout ? gridColumn(field) : null"
+              [style.grid-row]="hasLayout ? gridRow(field) : null">
+              <h2 class="view-section-title">{{ field.name }}</h2>
+              <app-image-block
+                [imageIds]="imageIdsOf(field)"
+                [framing]="imageFramingOf(field)"
+                [fill]="hasLayout">
+              </app-image-block>
+            </section>
+          }
+          @if (field.type === 'KEY_VALUE_LIST') {
+            <section class="view-section"
+              [style.grid-column]="hasLayout ? gridColumn(field) : null"
+              [style.grid-row]="hasLayout ? gridRow(field) : null">
+              <h2 class="view-section-title">{{ field.name }}</h2>
+              @if (kvHasContent(field)) {
+                <div class="view-kv-grid">
+                  @for (lbl of field.labels ?? []; track $index) {
+                    <div class="view-kv-cell">
+                      <span class="view-kv-label">{{ lbl }}</span>
+                      <span class="view-kv-value">{{ kvValueOf(field, lbl) || '—' }}</span>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <p class="view-section-empty">{{ 'pageView.notFilled' | translate }}</p>
+              }
+            </section>
+          }
+          @if (field.type === 'TABLE') {
+            <section class="view-section"
+              [style.grid-column]="hasLayout ? gridColumn(field) : null"
+              [style.grid-row]="hasLayout ? gridRow(field) : null">
+              <h2 class="view-section-title">{{ field.name }}</h2>
+              @if (tableRowsOf(field).length) {
+                <table class="view-table">
+                  <thead>
                     <tr>
                       @for (col of field.labels ?? []; track $index) {
-                        <td>{{ row[col] || '—' }}</td>
+                        <th>{{ col }}</th>
                       }
                     </tr>
-                  }
-                </tbody>
-              </table>
-            } @else {
-              <p class="view-section-empty">{{ 'pageView.notFilled' | translate }}</p>
-            }
-          </section>
+                  </thead>
+                  <tbody>
+                    @for (row of tableRowsOf(field); track $index) {
+                      <tr>
+                        @for (col of field.labels ?? []; track $index) {
+                          <td>{{ row[col] || '—' }}</td>
+                        }
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              } @else {
+                <p class="view-section-empty">{{ 'pageView.notFilled' | translate }}</p>
+              }
+            </section>
+          }
         }
-      }
+      </div>
     }
     <!-- Tags -->
     @if ((page.tags?.length ?? 0) > 0) {

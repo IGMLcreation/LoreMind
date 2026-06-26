@@ -40,6 +40,16 @@
     "lightboxAria": "Full-screen image",
     "lightboxAlt": "Enlarged image"
   },
+  "imageBlock": {
+    "prev": "Previous image",
+    "next": "Next image",
+    "goTo": "Go to image {{n}}",
+    "zoom": "Zoom",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "dragHint": "Drag to reframe",
+    "remove": "Remove this image"
+  },
   "imageUploader": {
     "addImage": "Add an image",
     "uploading": "Uploading",

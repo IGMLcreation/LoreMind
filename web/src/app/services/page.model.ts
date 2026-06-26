@@ -1,5 +1,17 @@
 // Interfaces TypeScript pour PageDTO (Backend Java).
 
+/**
+ * Cadrage (pan/zoom) d'une image dans son bloc IMAGE.
+ * Miroir de com.loremind.domain.lorecontext.ImageFraming.
+ * - x, y : object-position en pourcentage (0..100), 50/50 = centré.
+ * - scale : facteur de zoom (>= 1), 1 = plein cadre (cover).
+ */
+export interface ImageFraming {
+  x: number;
+  y: number;
+  scale: number;
+}
+
 export interface Page {
   id?: string;
   loreId: string;
@@ -14,6 +26,11 @@ export interface Page {
    * uploadees (Shared Kernel images). Structure separee de `values`.
    */
   imageValues?: Record<string, string[]>;
+  /**
+   * Cadrage (pan/zoom) des images : fieldKey → imageId → {x, y, scale}.
+   * Purement présentationnel ; absence = cadrage par défaut (centré, plein cadre).
+   */
+  imageFraming?: Record<string, Record<string, ImageFraming>>;
   /**
    * Pour chaque champ KEY_VALUE_LIST (tableau libelle → valeur, comme sur les
    * fiches de personnage) : fieldName → (label → valeur).

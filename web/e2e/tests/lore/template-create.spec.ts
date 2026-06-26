@@ -53,15 +53,15 @@ test.describe('Template creation', () => {
     const addFieldInput = page.getByPlaceholder('+ Ajouter un champ');
     await addFieldInput.fill('Pouvoir');
     await addFieldInput.press('Enter');
-    await expect(page.locator('.fields-list .field-chip', { hasText: 'Pouvoir' })).toBeVisible();
+    await expect(page.locator('.grid-block[data-block-name="Pouvoir"]')).toBeVisible();
 
     await addFieldInput.fill('Origine');
     await addFieldInput.press('Enter');
-    await expect(page.locator('.fields-list .field-chip', { hasText: 'Origine' })).toBeVisible();
+    await expect(page.locator('.grid-block[data-block-name="Origine"]')).toBeVisible();
 
-    const origineRow = page.locator('.fields-list .field-row', { hasText: 'Origine' });
-    await origineRow.getByRole('button', { name: 'Supprimer' }).click();
-    await expect(page.locator('.fields-list .field-chip', { hasText: 'Origine' })).toHaveCount(0);
+    const origineBlock = page.locator('.grid-block[data-block-name="Origine"]');
+    await origineBlock.getByRole('button', { name: 'Supprimer' }).click();
+    await expect(page.locator('.grid-block[data-block-name="Origine"]')).toHaveCount(0);
 
     await page.getByRole('button', { name: /^Créer le template$/i }).click();
     await expect(page).toHaveURL(new RegExp(`/lore/${seeded.id}$`));

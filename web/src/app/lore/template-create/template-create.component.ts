@@ -1,67 +1,42 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { LucideAngularModule, Plus, Trash2, Type, Image as ImageIcon, ChevronUp, ChevronDown, ListOrdered, Table as TableIcon, X } from 'lucide-angular';
 import { TranslatePipe } from '@ngx-translate/core';
 import { LoreService } from '../../services/lore.service';
 import { TemplateService } from '../../services/template.service';
 import { PageService } from '../../services/page.service';
 import { LayoutService } from '../../services/layout.service';
 import { LoreNode } from '../../services/lore.model';
-import { FieldType, ImageLayout, TemplateField, buildLoreTemplateField, cleanFieldLabels } from '../../services/template.model';
+import { TemplateField, cleanFieldLabels } from '../../services/template.model';
 import { loadLoreSidebarData, buildLoreSidebarConfig } from '../lore-sidebar.helper';
+import { BlockGridBuilderComponent } from '../block-grid-builder/block-grid-builder.component';
 import { popReturnTo } from '../return-stack.helper';
 
 /**
  * Écran de création d'un Template (gabarit de Page).
  * - Champs principaux : nom, description, noeud par défaut.
- * - Liste dynamique de "champs du template" (ex: "Nom", "Description", "Personnalité").
- *   Le user peut ajouter/retirer n'importe lequel — tous sont égaux.
+ * - Agencement des blocs délégué à {@link BlockGridBuilderComponent} (grille 12 col).
  */
 @Component({
     selector: 'app-template-create',
-    imports: [FormsModule, ReactiveFormsModule, RouterModule, LucideAngularModule, TranslatePipe],
+    imports: [ReactiveFormsModule, RouterModule, TranslatePipe, BlockGridBuilderComponent],
     templateUrl: './template-create.component.html',
     styleUrls: ['./template-create.component.scss']
 })
 export class TemplateCreateComponent implements OnInit, OnDestroy {
-  readonly Plus = Plus;
-  readonly Trash2 = Trash2;
-  readonly Type = Type;
-  readonly ImageIcon = ImageIcon;
-  readonly ChevronUp = ChevronUp;
-  readonly ChevronDown = ChevronDown;
-  readonly ListOrdered = ListOrdered;
-  readonly TableIcon = TableIcon;
-  readonly X = X;
-
-  /** Icone du chip selon le type du champ. */
-  iconFor(type: FieldType) {
-    switch (type) {
-      case 'IMAGE': return this.ImageIcon;
-      case 'KEY_VALUE_LIST': return this.ListOrdered;
-      case 'TABLE': return this.TableIcon;
-      default: return this.Type;
-    }
-  }
-
   form: FormGroup;
   loreId = '';
   nodes: LoreNode[] = [];
   /**
-   * Champs dynamiques actuellement definis. Chaque champ a un type discriminant
-   * (TEXT ou IMAGE) qui pilote son rendu sur les pages.
+   * Champs dynamiques par défaut d'un nouveau template. Le builder leur affecte
+   * id stable + placement (pos) à l'affichage.
    */
   fields: TemplateField[] = [
     { name: 'Nom', type: 'TEXT' },
     { name: 'Description', type: 'TEXT' },
     { name: 'Illustration', type: 'IMAGE', layout: 'GALLERY' }
   ];
-  /** Valeur courante de l'input d'ajout de champ (non binding direct pour reset facile). */
-  newFieldName = '';
-  /** Type choisi pour le prochain champ a ajouter. */
-  newFieldType: FieldType = 'TEXT';
 
   constructor(
     private fb: FormBuilder,
@@ -130,62 +105,6 @@ export class TemplateCreateComponent implements OnInit, OnDestroy {
   get nodeCreateReturnTo(): string {
     const current = this.route.snapshot.queryParamMap.get('returnTo');
     return current ? `template-create,${current}` : 'template-create';
-  }
-
-  addField(): void {
-    const name = this.newFieldName.trim();
-    if (!name) return;
-    // Unicite par nom (on ignore le type pour eviter des collisions d'affichage).
-    if (this.fields.some(f => f.name === name)) return;
-    this.fields = [...this.fields, buildLoreTemplateField(name, this.newFieldType)];
-    this.newFieldName = '';
-    // Le type reste sur la derniere valeur choisie : pratique pour enchainer
-    // plusieurs champs du meme type.
-  }
-
-  removeField(index: number): void {
-    this.fields = this.fields.filter((_, i) => i !== index);
-  }
-
-  /** Deplace un champ d'un cran vers le haut ou le bas. No-op aux bords. */
-  moveField(index: number, direction: -1 | 1): void {
-    const target = index + direction;
-    if (target < 0 || target >= this.fields.length) return;
-    const next = [...this.fields];
-    [next[index], next[target]] = [next[target], next[index]];
-    this.fields = next;
-  }
-
-  /** Change le type d'un champ existant (TEXT / IMAGE / KEY_VALUE_LIST). */
-  setFieldType(index: number, type: FieldType): void {
-    this.fields = this.fields.map((f, i) =>
-      i === index ? buildLoreTemplateField(f.name, type, f) : f
-    );
-  }
-
-  /** Met a jour le layout d'un champ IMAGE. */
-  setFieldLayout(index: number, layout: ImageLayout): void {
-    this.fields = this.fields.map((f, i) =>
-      i === index && f.type === 'IMAGE' ? { ...f, layout } : f
-    );
-  }
-
-  // --- Sous-editeur des libelles (KEY_VALUE_LIST) -------------------------
-  // Mutation en place des labels : recreer le tableau de fields a chaque
-  // frappe ferait perdre le focus de l'input en cours d'edition.
-
-  addLabel(field: TemplateField): void {
-    field.labels = [...(field.labels ?? []), ''];
-  }
-
-  updateLabel(field: TemplateField, labelIndex: number, value: string): void {
-    if (!field.labels) return;
-    field.labels[labelIndex] = value;
-  }
-
-  removeLabel(field: TemplateField, labelIndex: number): void {
-    if (!field.labels) return;
-    field.labels = field.labels.filter((_, i) => i !== labelIndex);
   }
 
   submit(): void {

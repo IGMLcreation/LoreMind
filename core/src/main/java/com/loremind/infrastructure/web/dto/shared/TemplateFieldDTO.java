@@ -29,6 +29,21 @@ public class TemplateFieldDTO {
     /** Chemin Foundry du champ (mapping pour l'export d'acteur typé). Nullable. */
     private String foundryPath;
 
+    /**
+     * Identifiant STABLE du bloc (cle d'ancrage des valeurs de Page). Retro-rempli
+     * avec le nom cote backend pour les templates anterieurs. Appended en fin de
+     * classe pour preserver la compat des constructeurs historiques.
+     */
+    private String id;
+
+    /** Placement du bloc dans la grille 12 colonnes. Null = auto-flow empile. */
+    private BlockPositionDTO pos;
+
+    /** Retrocompat : constructeur sans id ni pos. */
+    public TemplateFieldDTO(String name, String type, String layout, List<String> labels, String foundryPath) {
+        this(name, type, layout, labels, foundryPath, null, null);
+    }
+
     /** Retrocompat : constructeur sans foundryPath. */
     public TemplateFieldDTO(String name, String type, String layout, List<String> labels) {
         this(name, type, layout, labels, null);

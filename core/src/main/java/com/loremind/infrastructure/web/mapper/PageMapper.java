@@ -24,6 +24,7 @@ public class PageMapper {
         dto.setOrder(page.getOrder());
         dto.setValues(CollectionUtils.copyMap(page.getValues()));
         dto.setImageValues(CollectionUtils.copyMap(page.getImageValues()));
+        dto.setImageFraming(CollectionUtils.copyMap(page.getImageFraming()));
         dto.setKeyValueValues(CollectionUtils.copyMap(page.getKeyValueValues()));
         dto.setTableValues(CollectionUtils.copyMap(page.getTableValues()));
         dto.setNotes(page.getNotes());
@@ -45,6 +46,7 @@ public class PageMapper {
                 .order(dto.getOrder())
                 .values(CollectionUtils.copyMap(dto.getValues()))
                 .imageValues(CollectionUtils.copyMap(dto.getImageValues()))
+                .imageFraming(CollectionUtils.copyMap(dto.getImageFraming()))
                 .keyValueValues(CollectionUtils.copyMap(dto.getKeyValueValues()))
                 .tableValues(CollectionUtils.copyMap(dto.getTableValues()))
                 .notes(dto.getNotes())

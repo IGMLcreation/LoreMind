@@ -3,6 +3,34 @@
   max-width: 760px;
 }
 
+// Sélecteur de source de carte (Dungeon Alchemist / DungeonDraft).
+.battlemap-source {
+  display: inline-flex;
+  gap: 0;
+  margin: 0.5rem 0;
+  border: 1px solid #2a2a3d;
+  border-radius: 6px;
+  overflow: hidden;
+
+  button {
+    background: #1a1a2e;
+    border: none;
+    color: #9ca3af;
+    padding: 0.45rem 0.8rem;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+
+    & + button { border-left: 1px solid #2a2a3d; }
+    &:hover { color: #d1d5db; }
+    &.active { background: #6c63ff; color: white; }
+  }
+}
+
+.battlemap-warn {
+  color: #fca5a5 !important;
+}
+
 // Widget battlemap (export Foundry) : deux emplacements media + sidecar JSON.
 .battlemap-slot {
   display: flex;

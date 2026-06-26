@@ -105,6 +105,7 @@ public record ContentExport(
             String title,
             Map<String, String> values,
             Map<String, List<String>> imageValues,
+            Map<String, Map<String, com.loremind.domain.lorecontext.ImageFraming>> imageFraming,
             Map<String, Map<String, String>> keyValueValues,
             Map<String, List<Map<String, String>>> tableValues,
             String notes,

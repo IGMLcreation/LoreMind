@@ -35,112 +35,11 @@
       <!-- Colonne droite --------------------------------------------- -->
       <div class="col-right">
         <label class="section-label">{{ 'templateEdit.fieldsLabel' | translate }}</label>
-        <ul class="fields-list">
-          @for (f of fields; track f; let i = $index; let first = $first; let last = $last) {
-            <li class="field-row">
-              <div class="reorder-stack">
-                <button type="button" class="btn-icon-ghost btn-reorder"
-                  (click)="moveField(i, -1)"
-                  [disabled]="first"
-                  [attr.aria-label]="'templateEdit.moveUp' | translate" [title]="'templateEdit.moveUp' | translate">
-                  <lucide-icon [img]="ChevronUp" [size]="12"></lucide-icon>
-                </button>
-                <button type="button" class="btn-icon-ghost btn-reorder"
-                  (click)="moveField(i, 1)"
-                  [disabled]="last"
-                  [attr.aria-label]="'templateEdit.moveDown' | translate" [title]="'templateEdit.moveDown' | translate">
-                  <lucide-icon [img]="ChevronDown" [size]="12"></lucide-icon>
-                </button>
-              </div>
-              <span class="field-chip"
-                [class.field-chip-image]="f.type === 'IMAGE'"
-                [class.field-chip-kv]="f.type === 'KEY_VALUE_LIST'"
-                [class.field-chip-table]="f.type === 'TABLE'"
-                [class.field-chip-existing]="f.type === 'TEXT' && isExistingField(f)"
-                [class.field-chip-new]="f.type === 'TEXT' && !isExistingField(f)">
-                <lucide-icon [img]="iconFor(f.type)" [size]="12"></lucide-icon>
-                {{ f.name }}
-              </span>
-              <select
-                class="type-select"
-                [ngModel]="f.type"
-                [ngModelOptions]="{ standalone: true }"
-                (ngModelChange)="setFieldType(i, $event)"
-                [title]="'templateEdit.fieldTypeTitle' | translate">
-                <option value="TEXT">{{ 'templateEdit.typeText' | translate }}</option>
-                <option value="IMAGE">{{ 'templateEdit.typeImage' | translate }}</option>
-                <option value="KEY_VALUE_LIST">{{ 'templateEdit.typeKeyValue' | translate }}</option>
-                <option value="TABLE">{{ 'templateEdit.typeTable' | translate }}</option>
-              </select>
-              @if (f.type === 'IMAGE') {
-                <select
-                  class="layout-select"
-                  [ngModel]="f.layout ?? 'GALLERY'"
-                  [ngModelOptions]="{ standalone: true }"
-                  (ngModelChange)="setFieldLayout(i, $event)"
-                  [title]="'templateEdit.layoutTitle' | translate">
-                  <option value="GALLERY">{{ 'templateEdit.layoutGallery' | translate }}</option>
-                  <option value="HERO">{{ 'templateEdit.layoutHero' | translate }}</option>
-                  <option value="MASONRY">{{ 'templateEdit.layoutMasonry' | translate }}</option>
-                  <option value="CAROUSEL">{{ 'templateEdit.layoutCarousel' | translate }}</option>
-                </select>
-              }
-              <button type="button" class="btn-icon-danger" (click)="removeField(i)" [attr.aria-label]="'common.delete' | translate">
-                <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
-              </button>
-            </li>
-            <!-- Libelles (lignes d'une liste clé/valeur, ou colonnes d'un tableau) -->
-            @if (f.type === 'KEY_VALUE_LIST' || f.type === 'TABLE') {
-              <li class="kv-labels-row">
-                @for (lbl of f.labels ?? []; track $index; let li = $index) {
-                  <span class="kv-label-chip">
-                    <input
-                      type="text"
-                      [ngModel]="lbl"
-                      [ngModelOptions]="{ standalone: true }"
-                      (ngModelChange)="updateLabel(f, li, $event)"
-                      [placeholder]="(f.type === 'TABLE' ? 'templateEdit.column' : 'templateEdit.label') | translate"
-                      [attr.aria-label]="(f.type === 'TABLE' ? 'templateEdit.columnN' : 'templateEdit.labelN') | translate:{ n: (li + 1) }" />
-                    <button type="button" class="kv-label-remove" (click)="removeLabel(f, li)" [attr.aria-label]="'common.remove' | translate">
-                      <lucide-icon [img]="X" [size]="11"></lucide-icon>
-                    </button>
-                  </span>
-                }
-                <button type="button" class="btn-kv-add-label" (click)="addLabel(f)">
-                  <lucide-icon [img]="Plus" [size]="12"></lucide-icon>
-                  {{ (f.type === 'TABLE' ? 'templateEdit.column' : 'templateEdit.label') | translate }}
-                </button>
-                @if (!(f.labels ?? []).length) {
-                  <span class="kv-labels-hint">
-                    {{ (f.type === 'TABLE' ? 'templateEdit.tableLabelsHint' : 'templateEdit.kvLabelsHint') | translate }}
-                  </span>
-                }
-              </li>
-            }
-          }
-        </ul>
-        <div class="field-row add-row">
-          <input
-            type="text"
-            [(ngModel)]="newFieldName"
-            [ngModelOptions]="{ standalone: true }"
-            [placeholder]="'templateEdit.addFieldPlaceholder' | translate"
-            (keydown.enter)="$event.preventDefault(); addField()" />
-          <select
-            class="type-select"
-            [(ngModel)]="newFieldType"
-            [ngModelOptions]="{ standalone: true }"
-            [attr.aria-label]="'templateEdit.fieldTypeTitle' | translate">
-            <option value="TEXT">{{ 'templateEdit.typeText' | translate }}</option>
-            <option value="IMAGE">{{ 'templateEdit.typeImage' | translate }}</option>
-            <option value="KEY_VALUE_LIST">{{ 'templateEdit.typeKeyValue' | translate }}</option>
-            <option value="TABLE">{{ 'templateEdit.typeTable' | translate }}</option>
-          </select>
-          <button type="button" class="btn-add" (click)="addField()" [title]="'templateEdit.addFieldTitle' | translate">
-            <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
-          </button>
-        </div>
-        <p class="hint">{{ 'templateEdit.fieldsHelp' | translate }}</p>
+        <app-block-grid-builder
+          [fields]="fields"
+          (fieldsChange)="fields = $event"
+          [existingFieldNames]="originalFieldNames">
+        </app-block-grid-builder>
       </div>
     </form>
   </div>

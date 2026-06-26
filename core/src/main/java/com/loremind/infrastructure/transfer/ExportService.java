@@ -468,8 +468,8 @@ public class ExportService {
     private ContentExport.PageDto toPageDto(PageJpaEntity e) {
         return new ContentExport.PageDto(e.getId(), e.getLoreId(), e.getNodeId(),
                 e.getTemplateId(), e.getTitle(), e.getValues(), e.getImageValues(),
-                e.getKeyValueValues(), e.getTableValues(), e.getNotes(), e.getTags(),
-                e.getRelatedPageIds());
+                e.getImageFraming(), e.getKeyValueValues(), e.getTableValues(), e.getNotes(),
+                e.getTags(), e.getRelatedPageIds());
     }
 
     private ContentExport.CampaignDto toCampaignDto(CampaignJpaEntity e) {

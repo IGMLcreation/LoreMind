@@ -12,13 +12,15 @@ import { LayoutService } from '../../services/layout.service';
 import { PageTitleService } from '../../services/page-title.service';
 import { LoreNode } from '../../services/lore.model';
 import { Template } from '../../services/template.model';
-import { Page } from '../../services/page.model';
+import { Page, ImageFraming } from '../../services/page.model';
 import { loadLoreSidebarData, buildLoreSidebarConfig } from '../lore-sidebar.helper';
+import { hasBlockLayout, orderedBlocks, blockGridColumn, blockKey } from '../block-layout.helper';
+import { TemplateField } from '../../services/template.model';
 import { ChipsInputComponent } from '../../shared/chips-input/chips-input.component';
 import { LoreLinkPickerComponent } from '../../shared/lore-link-picker/lore-link-picker.component';
 import { BreadcrumbComponent, BreadcrumbItem } from '../../shared/breadcrumb/breadcrumb.component';
 import { AiChatDrawerComponent, ChatPrimaryAction } from '../../shared/ai-chat-drawer/ai-chat-drawer.component';
-import { ImageGalleryComponent } from '../../shared/image-gallery/image-gallery.component';
+import { ImageBlockComponent } from '../../shared/image-block/image-block.component';
 import { Lore } from '../../services/lore.model';
 import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 
@@ -37,7 +39,7 @@ import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog
  */
 @Component({
     selector: 'app-page-edit',
-    imports: [FormsModule, RouterLink, LucideAngularModule, TranslatePipe, ChipsInputComponent, LoreLinkPickerComponent, BreadcrumbComponent, AiChatDrawerComponent, ImageGalleryComponent],
+    imports: [FormsModule, RouterLink, LucideAngularModule, TranslatePipe, ChipsInputComponent, LoreLinkPickerComponent, BreadcrumbComponent, AiChatDrawerComponent, ImageBlockComponent],
     templateUrl: './page-edit.component.html',
     styleUrls: ['./page-edit.component.scss']
 })
@@ -55,6 +57,16 @@ export class PageEditComponent implements OnInit, OnDestroy {
   /** Toutes les pages du lore — nécessaire au lore-link-picker pour l'autocomplete. */
   allPages: Page[] = [];
 
+  /** Blocs du template ordonnes pour le rendu (tries par grille si placee). */
+  orderedFields: TemplateField[] = [];
+  /** True si le template porte une mise en page grille -> saisie en grille 12 col. */
+  hasLayout = false;
+
+  /** Placement horizontal d'un bloc (colonnes) ; hauteur naturelle en édition. */
+  readonly gridColumn = blockGridColumn;
+  /** Clé stable d'ancrage des valeurs (id, repli sur le nom). */
+  readonly keyOf = blockKey;
+
   /** Modèle du formulaire (bindé via ngModel). */
   title = '';
   nodeId = '';
@@ -66,6 +78,8 @@ export class PageEditComponent implements OnInit, OnDestroy {
    * la liste ordonnee des IDs d'images uploadees.
    */
   imageValues: Record<string, string[]> = {};
+  /** Cadrage (pan/zoom) des images : fieldKey → imageId → {x, y, scale}. */
+  imageFraming: Record<string, Record<string, ImageFraming>> = {};
   /** Valeurs des champs KEY_VALUE_LIST (liste clé/valeur) : fieldName → (label → valeur). */
   keyValueValues: Record<string, Record<string, string>> = {};
   /** Valeurs des champs TABLE : fieldName → lignes (colonne → cellule). */
@@ -171,6 +185,8 @@ export class PageEditComponent implements OnInit, OnDestroy {
   private hydrate(page: Page, templates: Template[]): void {
     this.page = page;
     this.template = templates.find(t => t.id === page.templateId) ?? null;
+    this.orderedFields = orderedBlocks(this.template?.fields);
+    this.hasLayout = hasBlockLayout(this.template?.fields);
     this.title = page.title;
     this.nodeId = page.nodeId;
     this.notes = page.notes ?? '';
@@ -180,25 +196,32 @@ export class PageEditComponent implements OnInit, OnDestroy {
     // structure `imageValues: Map<String, List<String>>` a l'etape 5).
     const base: Record<string, string> = {};
     const imageBase: Record<string, string[]> = {};
+    const framingBase: Record<string, Record<string, ImageFraming>> = {};
     const kvBase: Record<string, Record<string, string>> = {};
     const tableBase: Record<string, Array<Record<string, string>>> = {};
+    // Les valeurs sont rangées par clé STABLE (id) ; on relit d'abord par clé,
+    // puis par nom (pages dont les valeurs étaient encore rangées par nom — elles
+    // sont ainsi migrées vers la clé id à la prochaine sauvegarde).
     for (const f of this.template?.fields ?? []) {
+      const key = blockKey(f);
       if (f.type === 'TEXT') {
-        base[f.name] = page.values?.[f.name] ?? '';
+        base[key] = page.values?.[key] ?? page.values?.[f.name] ?? '';
       } else if (f.type === 'IMAGE') {
         // Initialise la galerie d'images pour ce champ (vide si jamais rempli).
-        imageBase[f.name] = [...(page.imageValues?.[f.name] ?? [])];
+        imageBase[key] = [...(page.imageValues?.[key] ?? page.imageValues?.[f.name] ?? [])];
+        framingBase[key] = { ...(page.imageFraming?.[key] ?? page.imageFraming?.[f.name] ?? {}) };
       } else if (f.type === 'KEY_VALUE_LIST') {
         // Toujours initialiser l'objet interne : le ngModel du formulaire
-        // bind directement keyValueValues[field.name][label].
-        kvBase[f.name] = { ...(page.keyValueValues?.[f.name] ?? {}) };
+        // bind directement keyValueValues[keyOf(field)][label].
+        kvBase[key] = { ...(page.keyValueValues?.[key] ?? page.keyValueValues?.[f.name] ?? {}) };
       } else if (f.type === 'TABLE') {
         // Copie profonde des lignes : chaque ligne est éditée par ngModel.
-        tableBase[f.name] = (page.tableValues?.[f.name] ?? []).map(row => ({ ...row }));
+        tableBase[key] = (page.tableValues?.[key] ?? page.tableValues?.[f.name] ?? []).map(row => ({ ...row }));
       }
     }
     this.values = base;
     this.imageValues = imageBase;
+    this.imageFraming = framingBase;
     this.keyValueValues = kvBase;
     this.tableValues = tableBase;
     this.tags = [...(page.tags ?? [])];
@@ -215,6 +238,7 @@ export class PageEditComponent implements OnInit, OnDestroy {
       notes: this.notes,
       values: this.values,
       imageValues: this.imageValues,
+      imageFraming: this.imageFraming,
       keyValueValues: this.keyValueValues,
       tableValues: this.tableValues,
       tags: this.tags,
@@ -291,11 +315,13 @@ export class PageEditComponent implements OnInit, OnDestroy {
    */
   private mergeSuggestions(suggestions: Record<string, string>): void {
     // L'IA ne genere que des valeurs texte : on ignore les champs IMAGE.
+    // L'IA renvoie ses suggestions par NOM de champ (le prompt liste les noms) ;
+    // on les range sous la clé STABLE (id) attendue par le formulaire.
     for (const field of this.template?.fields ?? []) {
       if (field.type !== 'TEXT') continue;
       const suggestion = suggestions[field.name];
       if (suggestion && suggestion.trim()) {
-        this.values[field.name] = suggestion;
+        this.values[blockKey(field)] = suggestion;
       }
     }
   }

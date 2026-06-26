@@ -17,12 +17,29 @@ import java.util.List;
  * Pour les champs IMAGE, {@link #layout} precise la variante de rendu
  * (gallery/hero/masonry/carousel). Nullable : l'absence equivaut a GALLERY.
  * Ignore pour les autres types.
+ * <p>
+ * {@link #id} est la cle STABLE du bloc : les valeurs des Pages s'ancrent
+ * dessus (et non sur {@link #name}), ce qui permet de renommer un bloc sans
+ * orpheliner son contenu. Pour les templates anterieurs (qui n'ont pas d'id),
+ * l'id est retro-rempli avec le nom courant a la lecture : comme les valeurs
+ * existantes sont deja rangees par nom, {@code id == name} au depart et rien
+ * n'a besoin d'etre migre.
+ * <p>
+ * {@link #pos} porte le placement du bloc dans la grille 12 colonnes du
+ * template (voir {@link BlockPosition}). Null = auto-flow empile (rendu
+ * historique).
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class TemplateField {
+    /**
+     * Identifiant STABLE du bloc, cle d'ancrage des valeurs de Page.
+     * Retro-rempli avec {@link #name} pour les templates sans id. Immuable :
+     * survit aux renommages du bloc.
+     */
+    private String id;
     /** Nom du champ tel qu'affiche dans l'UI (ex: "Histoire", "Portrait"). */
     private String name;
     /** Type du champ, pilote le rendu et la generation IA. */
@@ -44,6 +61,12 @@ public class TemplateField {
      */
     private String foundryPath;
 
+    /**
+     * Placement du bloc dans la grille 12 colonnes du template. Null = auto-flow
+     * (le bloc s'empile a la suite des precedents, comme le rendu historique).
+     */
+    private BlockPosition pos;
+
     /** Constructeur de retrocompat : type seul, layout/labels=null. */
     public TemplateField(String name, FieldType type) {
         this(name, type, null, null, null);
@@ -57,6 +80,14 @@ public class TemplateField {
     /** Constructeur de retrocompat (4 args) : sans foundryPath. */
     public TemplateField(String name, FieldType type, ImageLayout layout, List<String> labels) {
         this(name, type, layout, labels, null);
+    }
+
+    /**
+     * Constructeur de retrocompat (5 args) : sans id ni pos. Conserve la
+     * signature publique historique (id retro-rempli plus tard, pos=null).
+     */
+    public TemplateField(String name, FieldType type, ImageLayout layout, List<String> labels, String foundryPath) {
+        this(null, name, type, layout, labels, foundryPath, null);
     }
 
     /** Raccourci : construit un champ de type TEXT (cas le plus courant). */

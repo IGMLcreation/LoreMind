@@ -40,6 +40,16 @@
     "lightboxAria": "Image en plein écran",
     "lightboxAlt": "Image agrandie"
   },
+  "imageBlock": {
+    "prev": "Image précédente",
+    "next": "Image suivante",
+    "goTo": "Aller à l'image {{n}}",
+    "zoom": "Zoom",
+    "zoomIn": "Zoomer",
+    "zoomOut": "Dézoomer",
+    "dragHint": "Glisser pour recadrer",
+    "remove": "Retirer cette image"
+  },
   "imageUploader": {
     "addImage": "Ajouter une image",
     "uploading": "Upload en cours",

@@ -905,7 +905,23 @@
     "addFieldTitle": "Add the field",
     "fieldsHelp": "Text = free + AI-generatable. Image = gallery. Key/value list = label/value pairs (stats). Table = fixed columns + rows added freely (shop, inventory…).",
     "deleteTitle": "Delete the template",
-    "deleteMessage": "Delete the template \"{{name}}\"?"
+    "deleteMessage": "Delete the template \"{{name}}\"?",
+    "move": "Move (drag)",
+    "narrower": "Narrower",
+    "wider": "Wider",
+    "widthLabel": "Width in columns",
+    "gridHelp": "Drag a block type from the palette onto the grid. Move a block with its handle (top-left), resize its width AND height with the edge and corner handles. Click a name to rename. The layout is preserved in the preview.",
+    "blockNameLabel": "Block name",
+    "paletteTitle": "Blocks",
+    "addBlockHint": "Drag onto the grid (or click) to add",
+    "canvasEmpty": "Drag a block from the palette to start",
+    "resize": "Resize (drag)",
+    "defaultNameText": "Text",
+    "defaultNameImage": "Illustration",
+    "defaultNameKeyValue": "Characteristics",
+    "defaultNameTable": "Table",
+    "resizeWidth": "Width (drag)",
+    "resizeHeight": "Height (drag)"
   },
   "sceneCreate": {
     "title": "Create a new scene",
@@ -985,7 +1001,13 @@
     "deleteMessage": "Delete the scene \"{{name}}\"?",
     "deleteIrreversible": "This action is irreversible.",
     "saveError": "Error while saving",
-    "deleteError": "Error while deleting"
+    "deleteError": "Error while deleting",
+    "battlemapSourceLabel": "Map source",
+    "battlemapSourceDA": "Dungeon Alchemist (image/video + JSON)",
+    "battlemapSourceDD": "DungeonDraft (.dd2vtt)",
+    "battlemapDd2vttSlot": ".dd2vtt file",
+    "battlemapDd2vttHint": "The .dd2vtt contains the map AND the walls/lights; the embedded image is extracted automatically for the Foundry export.",
+    "battlemapDd2vttNoImage": "No image found in this .dd2vtt — the exported map will have no background."
   },
   "sceneView": {
     "subtitle": "Scene",
@@ -1531,5 +1553,15 @@
     "importInterrupted": "The import was interrupted before completion (connection dropped or timed out). Please try again.",
     "unknownServerError": "Unknown server error.",
     "networkError": "Network error"
+  },
+  "imageBlock": {
+    "prev": "Previous image",
+    "next": "Next image",
+    "goTo": "Go to image {{n}}",
+    "zoom": "Zoom",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "dragHint": "Drag to reframe",
+    "remove": "Remove this image"
   }
 }

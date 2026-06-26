@@ -1,8 +1,10 @@
 package com.loremind.infrastructure.web.mapper;
 
+import com.loremind.domain.shared.template.BlockPosition;
 import com.loremind.domain.shared.template.FieldType;
 import com.loremind.domain.shared.template.ImageLayout;
 import com.loremind.domain.shared.template.TemplateField;
+import com.loremind.infrastructure.web.dto.shared.BlockPositionDTO;
 import com.loremind.infrastructure.web.dto.shared.TemplateFieldDTO;
 import org.springframework.stereotype.Component;
 
@@ -33,7 +35,11 @@ public class TemplateFieldMapper {
                 && field.getLabels() != null) {
             labels = new ArrayList<>(field.getLabels());
         }
-        return new TemplateFieldDTO(field.getName(), typeStr, layoutStr, labels, field.getFoundryPath());
+        TemplateFieldDTO dto = new TemplateFieldDTO(
+                field.getName(), typeStr, layoutStr, labels, field.getFoundryPath());
+        dto.setId(resolveId(field.getId(), field.getName()));
+        dto.setPos(toPosDTO(field.getPos()));
+        return dto;
     }
 
     public TemplateField toDomain(TemplateFieldDTO dto) {
@@ -58,7 +64,34 @@ public class TemplateFieldMapper {
         if ((type == FieldType.KEY_VALUE_LIST || type == FieldType.TABLE) && dto.getLabels() != null) {
             labels = new ArrayList<>(dto.getLabels());
         }
-        return new TemplateField(dto.getName(), type, layout, labels, dto.getFoundryPath());
+        return TemplateField.builder()
+                .id(resolveId(dto.getId(), dto.getName()))
+                .name(dto.getName())
+                .type(type)
+                .layout(layout)
+                .labels(labels)
+                .foundryPath(dto.getFoundryPath())
+                .pos(toPosDomain(dto.getPos()))
+                .build();
+    }
+
+    /**
+     * Renvoie l'id du bloc, retro-rempli avec le nom quand il est absent.
+     * Garantit une cle d'ancrage stable meme pour les clients qui n'envoient
+     * pas encore d'id (front anterieur a la grille).
+     */
+    private String resolveId(String id, String name) {
+        return id != null && !id.isBlank() ? id : name;
+    }
+
+    private BlockPositionDTO toPosDTO(BlockPosition pos) {
+        if (pos == null) return null;
+        return new BlockPositionDTO(pos.getX(), pos.getY(), pos.getW(), pos.getH());
+    }
+
+    private BlockPosition toPosDomain(BlockPositionDTO pos) {
+        if (pos == null) return null;
+        return new BlockPosition(pos.getX(), pos.getY(), pos.getW(), pos.getH());
     }
 
     /** Mappe une liste de champs domaine → DTO ({@code null} → liste vide). */

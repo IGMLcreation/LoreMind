@@ -27,15 +27,26 @@
   }
 }
 
-.template-form {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem 2.5rem;
+.page { max-width: 1100px; }
 
-  .col-left, .col-right {
+// Empilé sur une colonne : la méta (nom/dossier/description) en haut, puis le
+// builder de blocs en pleine largeur (la grille 12 colonnes a besoin de place).
+.template-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+
+  .col-left {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+
+    .field:last-child { grid-column: 1 / -1; }   // description en pleine largeur
+  }
+  .col-right {
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 0.5rem;
   }
 }
 

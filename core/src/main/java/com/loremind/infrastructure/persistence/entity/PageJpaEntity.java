@@ -1,5 +1,7 @@
 package com.loremind.infrastructure.persistence.entity;
 
+import com.loremind.domain.lorecontext.ImageFraming;
+import com.loremind.infrastructure.persistence.converter.ImageFramingMapJsonConverter;
 import com.loremind.infrastructure.persistence.converter.StringListJsonConverter;
 import com.loremind.infrastructure.persistence.converter.StringListMapJsonConverter;
 import com.loremind.infrastructure.persistence.converter.StringMapJsonConverter;
@@ -57,6 +59,11 @@ public class PageJpaEntity {
     @Column(name = "image_values_json", columnDefinition = "TEXT")
     @Convert(converter = StringListMapJsonConverter.class)
     private Map<String, List<String>> imageValues;
+
+    /** Cadrage (pan/zoom) des images : fieldKey → imageId → ImageFraming. JSON TEXT. */
+    @Column(name = "image_framing", columnDefinition = "TEXT")
+    @Convert(converter = ImageFramingMapJsonConverter.class)
+    private Map<String, Map<String, ImageFraming>> imageFraming;
 
     /** Valeurs des champs KEY_VALUE_LIST : fieldName → (label → valeur). JSON TEXT. */
     @Column(name = "key_value_values", columnDefinition = "TEXT")

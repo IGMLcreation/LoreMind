@@ -1,0 +1,289 @@
+.grid-builder {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.builder-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+
+// --- Palette --------------------------------------------------------------
+.palette {
+  flex: 0 0 150px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.6rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid #23233a;
+  border-radius: 8px;
+
+  .palette-title {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #6b7280;
+    margin-bottom: 0.15rem;
+  }
+}
+
+.palette-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.6rem;
+  background: #1a1a2e;
+  border: 1px solid #2a2a3d;
+  border-radius: 6px;
+  color: #d1d5db;
+  font-size: 0.82rem;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  transition: border-color 0.12s, background 0.12s, color 0.12s;
+
+  lucide-icon { color: #a5b4fc; flex-shrink: 0; }
+
+  &:hover { border-color: #6c63ff; background: #20203a; color: white; }
+  &:active { cursor: grabbing; }
+}
+
+// --- Toile (grille 2D libre) ----------------------------------------------
+.canvas {
+  flex: 1 1 auto;
+  min-width: 0;
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 4px;
+  padding: 4px;
+  border: 1px dashed #2a2a3d;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.012);
+  background-image:
+    repeating-linear-gradient(to right, rgba(255, 255, 255, 0.045) 0 1px, transparent 1px calc((100% - 8px) / 12)),
+    repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.045) 0 1px, transparent 1px 36px);
+  background-position: 4px 4px;
+
+  &.dragging { border-color: #6c63ff; }
+}
+
+.canvas-empty {
+  grid-column: 1 / -1;
+  grid-row: 3 / span 3;
+  align-self: center;
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.85rem;
+  font-style: italic;
+  margin: 0;
+}
+
+.grid-block {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: #1a1a2e;
+  border: 1px solid #2a2a3d;
+  border-left: 3px solid #6c63ff;   // accent par type (TEXT par défaut)
+  border-radius: 5px;
+  min-width: 0;
+
+  &.is-image { border-left-color: #818cf8; }
+  &.is-kv    { border-left-color: #f59e0b; }
+  &.is-table { border-left-color: #14b8a6; }
+  &.is-new   { border-left-color: #34d399; }
+
+  &.dragged {
+    border-color: #6c63ff;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+    z-index: 5;
+  }
+}
+
+.block-head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 3px 16px 3px 3px;   // marge droite pour la poignée de largeur
+}
+
+.block-grip {
+  display: inline-flex;
+  align-items: center;
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  cursor: grab;
+  padding: 2px;
+  touch-action: none;
+  flex-shrink: 0;
+
+  &:active { cursor: grabbing; }
+  &:hover { color: #9ca3af; }
+}
+
+.block-type-icon { color: #a5b4fc; flex-shrink: 0; }
+
+.block-name-input {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: white;
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 2px 4px;
+  font-family: inherit;
+
+  &:hover { border-color: rgba(255, 255, 255, 0.12); }
+  &:focus { outline: none; background: rgba(0, 0, 0, 0.3); border-color: #6c63ff; }
+}
+
+.block-remove {
+  display: inline-flex;
+  align-items: center;
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 2px;
+  flex-shrink: 0;
+
+  &:hover { color: #f87171; }
+}
+
+// Libellés KV/TABLE — zone défilante (sous l'en-tête)
+.block-labels {
+  flex: 1 1 auto;
+  overflow: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 0.3rem;
+  padding: 0 14px 12px 8px;
+}
+
+.kv-label-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  padding: 1px 2px 1px 4px;
+  height: fit-content;
+
+  input {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 0.74rem;
+    width: 78px;
+    padding: 2px;
+
+    &:focus { outline: none; }
+  }
+
+  .kv-label-remove {
+    display: inline-flex;
+    background: transparent;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 1px;
+
+    &:hover { color: #f87171; }
+  }
+}
+
+.btn-kv-add-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: transparent;
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+  border-radius: 4px;
+  color: #9ca3af;
+  font-size: 0.72rem;
+  padding: 2px 6px;
+  cursor: pointer;
+  height: fit-content;
+
+  &:hover { color: white; border-color: #6c63ff; }
+}
+
+// --- Poignées de redimensionnement ----------------------------------------
+.rh {
+  position: absolute;
+  z-index: 3;
+  touch-action: none;
+}
+.rh-e { top: 0; right: 0; width: 10px; height: 100%; cursor: ew-resize; }
+.rh-s { left: 0; bottom: 0; height: 10px; width: 100%; cursor: ns-resize; }
+.rh-se {
+  right: 0; bottom: 0; width: 16px; height: 16px; cursor: nwse-resize; z-index: 4;
+
+  &::after {
+    content: '';
+    position: absolute;
+    right: 3px;
+    bottom: 3px;
+    width: 7px;
+    height: 7px;
+    border-right: 2px solid #6c63ff;
+    border-bottom: 2px solid #6c63ff;
+    opacity: 0.6;
+  }
+}
+.grid-block:hover .rh-se::after { opacity: 1; }
+
+// Aperçu du bloc en création (rectangle en pointillés)
+.create-preview {
+  border: 2px dashed #6c63ff;
+  border-radius: 5px;
+  background: rgba(108, 99, 255, 0.12);
+  pointer-events: none;
+}
+
+// Fantôme qui suit le pointeur pendant la création
+.drag-ghost {
+  position: fixed;
+  z-index: 1000;
+  transform: translate(8px, 8px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  background: #6c63ff;
+  color: white;
+  border-radius: 6px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+
+.hint {
+  font-size: 0.76rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+// Repli mobile : palette au-dessus, toile pleine largeur.
+@media (max-width: 820px) {
+  .builder-body { flex-direction: column; }
+  .palette {
+    flex: 1 1 auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 100%;
+    .palette-title { width: 100%; }
+  }
+  .canvas { width: 100%; }
+}

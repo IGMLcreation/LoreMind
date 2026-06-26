@@ -3,6 +3,7 @@ package com.loremind.infrastructure.persistence.converter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.loremind.domain.shared.template.BlockPosition;
 import com.loremind.domain.shared.template.FieldType;
 import com.loremind.domain.shared.template.ImageLayout;
 import com.loremind.domain.shared.template.TemplateField;
@@ -61,9 +62,14 @@ public class TemplateFieldListJsonConverter
             for (JsonNode item : root) {
                 if (item.isTextual()) {
                     // Format legacy : chaine simple, on suppose TEXT par defaut.
-                    result.add(TemplateField.text(item.asText()));
+                    // L'id stable est retro-rempli avec le nom (les valeurs de Page
+                    // sont deja rangees par nom -> id == name, aucune migration).
+                    String name = item.asText();
+                    TemplateField legacy = TemplateField.text(name);
+                    legacy.setId(name);
+                    result.add(legacy);
                 } else if (item.isObject()) {
-                    // Nouveau format : {name, type}
+                    // Nouveau format : {id?, name, type, layout?, labels?, foundryPath?, pos?}
                     String name = item.path("name").asText(null);
                     String typeStr = item.path("type").asText("TEXT");
                     FieldType type;
@@ -95,8 +101,27 @@ public class TemplateFieldListJsonConverter
                             }
                         }
                     }
+                    // foundryPath : lu via hasNonNull pour eviter le piege NullNode
+                    // (asText() renverrait la chaine "null"). Historiquement omis a la
+                    // relecture -> il etait perdu au save+reload : corrige ici.
+                    String foundryPath = item.hasNonNull("foundryPath")
+                            ? item.get("foundryPath").asText() : null;
+                    // id : explicite si present, sinon retro-rempli avec le nom.
+                    String id = item.hasNonNull("id") ? item.get("id").asText() : null;
+                    if (id == null || id.isBlank()) {
+                        id = name;
+                    }
+                    BlockPosition pos = readPos(item.path("pos"));
                     if (name != null && !name.isBlank()) {
-                        result.add(new TemplateField(name, type, layout, labels));
+                        result.add(TemplateField.builder()
+                                .id(id)
+                                .name(name)
+                                .type(type)
+                                .layout(layout)
+                                .labels(labels)
+                                .foundryPath(foundryPath)
+                                .pos(pos)
+                                .build());
                     }
                 }
                 // Autres types de noeuds (nombre, booleen...) : ignores silencieusement.
@@ -106,6 +131,31 @@ public class TemplateFieldListJsonConverter
             throw new IllegalStateException(
                     "Erreur deserialisation JSON -> List<TemplateField>", e);
         }
+    }
+
+    /**
+     * Lit le placement {@code pos: {x, y, w, h}} d'un bloc. Renvoie null si le
+     * noeud n'est pas un objet ou si toutes les coordonnees sont absentes
+     * (-> auto-flow empile, comportement historique).
+     */
+    private static BlockPosition readPos(JsonNode posNode) {
+        if (posNode == null || !posNode.isObject()) {
+            return null;
+        }
+        Integer x = intOrNull(posNode, "x");
+        Integer y = intOrNull(posNode, "y");
+        Integer w = intOrNull(posNode, "w");
+        Integer h = intOrNull(posNode, "h");
+        if (x == null && y == null && w == null && h == null) {
+            return null;
+        }
+        return new BlockPosition(x, y, w, h);
+    }
+
+    /** Lit un entier optionnel d'un noeud JSON ; null si absent ou non numerique. */
+    private static Integer intOrNull(JsonNode node, String field) {
+        JsonNode n = node.path(field);
+        return n.isNumber() ? n.asInt() : null;
     }
 
     // typeRef garde pour reference future si on veut deserialiser directement.

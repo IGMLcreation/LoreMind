@@ -20,18 +20,22 @@
 }
 
 .template-form {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
 
-  .col-left, .col-right {
+  .col-left {
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
   }
+  .col-right {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
 
   .actions-row {
-    grid-column: 1 / -1;
     display: flex;
     justify-content: flex-start;
     gap: 0.75rem;

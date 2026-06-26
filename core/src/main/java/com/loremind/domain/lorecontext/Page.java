@@ -43,6 +43,13 @@ public class Page {
     private Map<String, List<String>> imageValues;
 
     /**
+     * Cadrage (pan/zoom) des images dans leur bloc IMAGE : fieldKey → imageId →
+     * {@link ImageFraming}. Purement presentationnel ; l'absence d'entree = cadrage
+     * par defaut (centre, plein cadre). Voir {@link ImageFraming}.
+     */
+    private Map<String, Map<String, ImageFraming>> imageFraming;
+
+    /**
      * Valeurs des champs KEY_VALUE_LIST (tableau libelle → valeur, comme sur les
      * fiches de personnage) : fieldName → (label → valeur). Les labels sont
      * definis par le Template ; seules les valeurs vivent sur la page.

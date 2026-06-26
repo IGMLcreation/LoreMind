@@ -38,44 +38,79 @@
       <small class="field-hint">{{ 'sceneEdit.illustrationsHint' | translate }}</small>
     </div>
 
-    <!-- Battlemap Foundry : media + sidecar JSON Universal VTT (non affichee, export only) -->
+    <!-- Battlemap Foundry : selon la source (Dungeon Alchemist = media + .json,
+    DungeonDraft = .dd2vtt unique). Non affichee dans l'appli (export only). -->
     <div class="field">
       <label>{{ 'sceneEdit.battlemapLabel' | translate }}</label>
       <small class="field-hint">{{ 'sceneEdit.battlemapHint' | translate }}</small>
 
-      <div class="battlemap-slot"
-        appFileDrop [dropDisabled]="battlemapUploadingMedia"
-        (filesDropped)="onBattlemapMediaDropped($event)">
-        <span class="battlemap-slot-label">{{ 'sceneEdit.battlemapMedia' | translate }}</span>
-        @if (battlemapMediaFileId) {
-          <span class="battlemap-file">{{ battlemapMediaName || ('sceneEdit.battlemapAttached' | translate) }}</span>
-          <button type="button" class="battlemap-remove" (click)="removeBattlemapMedia()">
-            {{ 'sceneEdit.battlemapRemove' | translate }}
-          </button>
-        } @else {
-          <label class="battlemap-pick">
-            {{ (battlemapUploadingMedia ? 'sceneEdit.battlemapUploading' : 'sceneEdit.battlemapChoose') | translate }}
-            <input type="file" accept="image/*,video/mp4,video/webm" hidden (change)="onBattlemapMediaSelected($event)" />
-          </label>
-        }
+      <div class="battlemap-source" role="group" [attr.aria-label]="'sceneEdit.battlemapSourceLabel' | translate">
+        <button type="button" [class.active]="battlemapSource === 'DUNGEON_ALCHEMIST'"
+          (click)="setBattlemapSource('DUNGEON_ALCHEMIST')">
+          {{ 'sceneEdit.battlemapSourceDA' | translate }}
+        </button>
+        <button type="button" [class.active]="battlemapSource === 'DUNGEONDRAFT'"
+          (click)="setBattlemapSource('DUNGEONDRAFT')">
+          {{ 'sceneEdit.battlemapSourceDD' | translate }}
+        </button>
       </div>
 
-      <div class="battlemap-slot"
-        appFileDrop [dropDisabled]="battlemapUploadingData"
-        (filesDropped)="onBattlemapDataDropped($event)">
-        <span class="battlemap-slot-label">{{ 'sceneEdit.battlemapData' | translate }}</span>
-        @if (battlemapDataFileId) {
-          <span class="battlemap-file">{{ battlemapDataName || ('sceneEdit.battlemapAttached' | translate) }}</span>
-          <button type="button" class="battlemap-remove" (click)="removeBattlemapData()">
-            {{ 'sceneEdit.battlemapRemove' | translate }}
-          </button>
-        } @else {
-          <label class="battlemap-pick">
-            {{ (battlemapUploadingData ? 'sceneEdit.battlemapUploading' : 'sceneEdit.battlemapChoose') | translate }}
-            <input type="file" accept=".json,.dd2vtt,.uvtt,application/json" hidden (change)="onBattlemapDataSelected($event)" />
-          </label>
+      @if (battlemapSource === 'DUNGEON_ALCHEMIST') {
+        <div class="battlemap-slot"
+          appFileDrop [dropDisabled]="battlemapUploadingMedia"
+          (filesDropped)="onBattlemapMediaDropped($event)">
+          <span class="battlemap-slot-label">{{ 'sceneEdit.battlemapMedia' | translate }}</span>
+          @if (battlemapMediaFileId) {
+            <span class="battlemap-file">{{ battlemapMediaName || ('sceneEdit.battlemapAttached' | translate) }}</span>
+            <button type="button" class="battlemap-remove" (click)="removeBattlemapMedia()">
+              {{ 'sceneEdit.battlemapRemove' | translate }}
+            </button>
+          } @else {
+            <label class="battlemap-pick">
+              {{ (battlemapUploadingMedia ? 'sceneEdit.battlemapUploading' : 'sceneEdit.battlemapChoose') | translate }}
+              <input type="file" accept="image/*,video/mp4,video/webm" hidden (change)="onBattlemapMediaSelected($event)" />
+            </label>
+          }
+        </div>
+
+        <div class="battlemap-slot"
+          appFileDrop [dropDisabled]="battlemapUploadingData"
+          (filesDropped)="onBattlemapDataDropped($event)">
+          <span class="battlemap-slot-label">{{ 'sceneEdit.battlemapData' | translate }}</span>
+          @if (battlemapDataFileId) {
+            <span class="battlemap-file">{{ battlemapDataName || ('sceneEdit.battlemapAttached' | translate) }}</span>
+            <button type="button" class="battlemap-remove" (click)="removeBattlemapData()">
+              {{ 'sceneEdit.battlemapRemove' | translate }}
+            </button>
+          } @else {
+            <label class="battlemap-pick">
+              {{ (battlemapUploadingData ? 'sceneEdit.battlemapUploading' : 'sceneEdit.battlemapChoose') | translate }}
+              <input type="file" accept=".json,.dd2vtt,.uvtt,application/json" hidden (change)="onBattlemapDataSelected($event)" />
+            </label>
+          }
+        </div>
+      } @else {
+        <div class="battlemap-slot"
+          appFileDrop [dropDisabled]="battlemapUploadingData"
+          (filesDropped)="onDd2vttDropped($event)">
+          <span class="battlemap-slot-label">{{ 'sceneEdit.battlemapDd2vttSlot' | translate }}</span>
+          @if (battlemapDataFileId) {
+            <span class="battlemap-file">{{ battlemapDataName || ('sceneEdit.battlemapAttached' | translate) }}</span>
+            <button type="button" class="battlemap-remove" (click)="removeDd2vtt()">
+              {{ 'sceneEdit.battlemapRemove' | translate }}
+            </button>
+          } @else {
+            <label class="battlemap-pick">
+              {{ (battlemapUploadingData ? 'sceneEdit.battlemapUploading' : 'sceneEdit.battlemapChoose') | translate }}
+              <input type="file" accept=".dd2vtt,.uvtt,application/json" hidden (change)="onDd2vttSelected($event)" />
+            </label>
+          }
+        </div>
+        @if (battlemapDd2vttNoImage) {
+          <small class="field-hint battlemap-warn">{{ 'sceneEdit.battlemapDd2vttNoImage' | translate }}</small>
         }
-      </div>
+        <small class="field-hint">{{ 'sceneEdit.battlemapDd2vttHint' | translate }}</small>
+      }
     </div>
 
     <div class="field">

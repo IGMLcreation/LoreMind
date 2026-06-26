@@ -1,5 +1,6 @@
 package com.loremind.infrastructure.persistence.converter;
 
+import com.loremind.domain.shared.template.BlockPosition;
 import com.loremind.domain.shared.template.FieldType;
 import com.loremind.domain.shared.template.ImageLayout;
 import com.loremind.domain.shared.template.TemplateField;
@@ -8,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -207,5 +209,95 @@ class TemplateFieldListJsonConverterTest {
             assertEquals(pass1.get(i).getName(), pass2.get(i).getName());
             assertEquals(pass1.get(i).getType(), pass2.get(i).getType());
         }
+    }
+
+    // ---------- id stable (ancrage des valeurs de Page) --------------------
+
+    @Test
+    void fromDb_legacyFormat_backfillsIdWithName() {
+        // Format legacy (chaines) : l'id stable est retro-rempli avec le nom,
+        // donc id == name -> les valeurs deja rangees par nom resolvent toujours.
+        List<TemplateField> result = converter.convertToEntityAttribute("[\"Histoire\"]");
+        assertEquals("Histoire", result.get(0).getName());
+        assertEquals("Histoire", result.get(0).getId());
+    }
+
+    @Test
+    void fromDb_newFormat_withoutId_backfillsIdWithName() {
+        List<TemplateField> result = converter.convertToEntityAttribute(
+                "[{\"name\":\"Ambiance\",\"type\":\"TEXT\"}]");
+        assertEquals("Ambiance", result.get(0).getId());
+    }
+
+    @Test
+    void fromDb_newFormat_withExplicitId_keepsItEvenWhenNameDiffers() {
+        // Simule un bloc renomme : l'id stable est decorrele du nom courant.
+        List<TemplateField> result = converter.convertToEntityAttribute(
+                "[{\"id\":\"blk-1\",\"name\":\"Nouveau nom\",\"type\":\"TEXT\"}]");
+        assertEquals("blk-1", result.get(0).getId());
+        assertEquals("Nouveau nom", result.get(0).getName());
+    }
+
+    // ---------- foundryPath : non-regression (perdu au save+reload avant) --
+
+    @Test
+    void roundTrip_preservesFoundryPath() {
+        // Garde-fou : foundryPath n'etait pas relu et disparaissait au
+        // save+reload. Il doit desormais survivre a l'aller-retour.
+        List<TemplateField> source = List.of(
+                new TemplateField("PV", FieldType.NUMBER, null, null, "attributes.hp.value"));
+
+        List<TemplateField> back = converter.convertToEntityAttribute(
+                converter.convertToDatabaseColumn(source));
+
+        assertEquals("attributes.hp.value", back.get(0).getFoundryPath());
+    }
+
+    @Test
+    void fromDb_nullFoundryPath_readsAsNull_notLiteralNullString() {
+        // Piege Jackson : sur un NullNode, asText() renverrait la chaine "null".
+        List<TemplateField> result = converter.convertToEntityAttribute(
+                "[{\"name\":\"Histoire\",\"type\":\"TEXT\",\"foundryPath\":null}]");
+        assertNull(result.get(0).getFoundryPath());
+    }
+
+    // ---------- pos : placement dans la grille -----------------------------
+
+    @Test
+    void roundTrip_preservesBlockPosition() {
+        TemplateField illustration = TemplateField.builder()
+                .id("blk-illu").name("Illustration").type(FieldType.IMAGE)
+                .layout(ImageLayout.GALLERY)
+                .pos(new BlockPosition(0, 0, 6, 4))
+                .build();
+        TemplateField ambiance = TemplateField.builder()
+                .id("blk-amb").name("Ambiance générale").type(FieldType.TEXT)
+                .pos(new BlockPosition(6, 0, 6, 4))
+                .build();
+
+        List<TemplateField> back = converter.convertToEntityAttribute(
+                converter.convertToDatabaseColumn(List.of(illustration, ambiance)));
+
+        BlockPosition p0 = back.get(0).getPos();
+        assertNotNull(p0);
+        assertEquals(0, p0.getX());
+        assertEquals(6, p0.getW());
+        // Le second bloc est place a droite du premier (cote-a-cote).
+        assertEquals(6, back.get(1).getPos().getX());
+    }
+
+    @Test
+    void fromDb_withoutPos_yieldsNullPosition() {
+        // Pas de pos -> auto-flow empile (rendu historique).
+        List<TemplateField> result = converter.convertToEntityAttribute(
+                "[{\"name\":\"Histoire\",\"type\":\"TEXT\"}]");
+        assertNull(result.get(0).getPos());
+    }
+
+    @Test
+    void fromDb_nullPos_yieldsNullPosition() {
+        List<TemplateField> result = converter.convertToEntityAttribute(
+                "[{\"name\":\"Histoire\",\"type\":\"TEXT\",\"pos\":null}]");
+        assertNull(result.get(0).getPos());
     }
 }

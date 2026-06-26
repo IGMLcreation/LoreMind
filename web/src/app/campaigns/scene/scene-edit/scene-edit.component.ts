@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
+import { forkJoin, of, firstValueFrom } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { LucideAngularModule, Trash2, Sparkles } from 'lucide-angular';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -79,6 +79,17 @@ export class SceneEditComponent implements OnInit, OnDestroy {
   battlemapDataName: string | null = null;
   battlemapUploadingMedia = false;
   battlemapUploadingData = false;
+
+  /**
+   * Source de carte choisie pour CETTE scene :
+   *  - 'DUNGEON_ALCHEMIST' : export Foundry = image/video + .json (2 fichiers).
+   *  - 'DUNGEONDRAFT'      : .dd2vtt unique (Universal VTT, image embarquee) ;
+   *    on extrait l'image a l'upload -> media, et on range le .dd2vtt en donnees.
+   * Non persistee : deduite au chargement de l'extension du fichier de donnees.
+   */
+  battlemapSource: 'DUNGEON_ALCHEMIST' | 'DUNGEONDRAFT' = 'DUNGEON_ALCHEMIST';
+  /** Le .dd2vtt deposse ne contenait pas d'image embarquee (carte sans fond). */
+  battlemapDd2vttNoImage = false;
 
   /** Scènes du chapitre courant (hors scène éditée) — alimente le dropdown des cibles. */
   siblingScenes: Scene[] = [];
@@ -173,13 +184,21 @@ export class SceneEditComponent implements OnInit, OnDestroy {
       this.battlemapDataFileId = scene.battlemapDataFileId ?? null;
       this.battlemapMediaName = null;
       this.battlemapDataName = null;
+      this.battlemapSource = 'DUNGEON_ALCHEMIST';
+      this.battlemapDd2vttNoImage = false;
       if (this.battlemapMediaFileId) {
         this.storedFileService.getById(this.battlemapMediaFileId)
           .subscribe({ next: f => this.battlemapMediaName = f.filename, error: () => {} });
       }
       if (this.battlemapDataFileId) {
-        this.storedFileService.getById(this.battlemapDataFileId)
-          .subscribe({ next: f => this.battlemapDataName = f.filename, error: () => {} });
+        this.storedFileService.getById(this.battlemapDataFileId).subscribe({
+          next: f => {
+            this.battlemapDataName = f.filename;
+            // Deduit la source : un .dd2vtt/.uvtt => DungeonDraft.
+            if (/\.(dd2vtt|uvtt)$/i.test(f.filename)) this.battlemapSource = 'DUNGEONDRAFT';
+          },
+          error: () => {}
+        });
       }
       this.siblingScenes = chapterScenes.filter(s => s.id !== this.sceneId);
       this.branches = (scene.branches ?? []).map(b => ({ ...b }));
@@ -332,6 +351,106 @@ export class SceneEditComponent implements OnInit, OnDestroy {
   removeBattlemapData(): void {
     this.battlemapDataFileId = null;
     this.battlemapDataName = null;
+  }
+
+  // ─────────────── Source de carte (Dungeon Alchemist / DungeonDraft) ──────────
+
+  /** Change la source ; repart d'une carte vierge (les deux formats diffèrent). */
+  setBattlemapSource(src: 'DUNGEON_ALCHEMIST' | 'DUNGEONDRAFT'): void {
+    if (src === this.battlemapSource) return;
+    this.battlemapSource = src;
+    this.battlemapMediaFileId = null;
+    this.battlemapMediaName = null;
+    this.battlemapDataFileId = null;
+    this.battlemapDataName = null;
+    this.battlemapDd2vttNoImage = false;
+  }
+
+  /** Retire la carte DungeonDraft (data + media dérivé). */
+  removeDd2vtt(): void {
+    this.battlemapMediaFileId = null;
+    this.battlemapMediaName = null;
+    this.battlemapDataFileId = null;
+    this.battlemapDataName = null;
+    this.battlemapDd2vttNoImage = false;
+  }
+
+  onDd2vttSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (file) void this.uploadDd2vtt(file);
+    input.value = '';
+  }
+
+  onDd2vttDropped(files: File[]): void {
+    if (files[0]) void this.uploadDd2vtt(files[0]);
+  }
+
+  /**
+   * Upload d'un .dd2vtt (Universal VTT) : on en EXTRAIT l'image embarquee (base64)
+   * pour en faire le media (fond de carte pour l'export Foundry), et on range le
+   * sidecar (murs/lumieres/grille, SANS l'image pour ne pas dupliquer le binaire)
+   * comme fichier de donnees.
+   */
+  private async uploadDd2vtt(file: File): Promise<void> {
+    this.battlemapUploadingData = true;
+    this.battlemapDd2vttNoImage = false;
+    try {
+      const json = JSON.parse(await file.text());
+      const { image, ...sidecar } = json ?? {};
+      // Sidecar allégé (sans l'image embarquée) ; on garde le nom .dd2vtt.
+      const dataFile = new File([JSON.stringify(sidecar)], file.name, { type: 'application/json' });
+      const storedData = await firstValueFrom(this.storedFileService.upload(dataFile));
+      this.battlemapDataFileId = storedData.id;
+      this.battlemapDataName = storedData.filename;
+
+      if (typeof image === 'string' && image.length > 0) {
+        const blob = this.base64ToImageBlob(image);
+        const imgName = this.baseName(file.name) + this.extForType(blob.type);
+        const imgFile = new File([blob], imgName, { type: blob.type });
+        const storedMedia = await firstValueFrom(this.storedFileService.upload(imgFile));
+        this.battlemapMediaFileId = storedMedia.id;
+        this.battlemapMediaName = storedMedia.filename;
+      } else {
+        this.battlemapMediaFileId = null;
+        this.battlemapMediaName = null;
+        this.battlemapDd2vttNoImage = true;
+      }
+    } catch {
+      // JSON illisible : on stocke le fichier brut comme données, sans image.
+      try {
+        const stored = await firstValueFrom(this.storedFileService.upload(file));
+        this.battlemapDataFileId = stored.id;
+        this.battlemapDataName = stored.filename;
+        this.battlemapDd2vttNoImage = true;
+      } catch { /* upload échoué : on ignore */ }
+    } finally {
+      this.battlemapUploadingData = false;
+    }
+  }
+
+  /** Décode une image base64 (sans préfixe data:) en Blob, type sniffé. */
+  private base64ToImageBlob(b64: string): Blob {
+    const clean = b64.includes(',') ? b64.slice(b64.indexOf(',') + 1) : b64.trim();
+    const bin = atob(clean);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new Blob([bytes], { type: this.sniffImageType(bytes) });
+  }
+
+  private sniffImageType(b: Uint8Array): string {
+    if (b[0] === 0x89 && b[1] === 0x50) return 'image/png';
+    if (b[0] === 0xff && b[1] === 0xd8) return 'image/jpeg';
+    if (b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46) return 'image/webp'; // RIFF
+    return 'image/png';
+  }
+
+  private baseName(name: string): string {
+    return name.replace(/\.[^./\\]+$/, '');
+  }
+
+  private extForType(type: string): string {
+    return type === 'image/jpeg' ? '.jpg' : type === 'image/webp' ? '.webp' : '.png';
   }
 
   ngOnDestroy(): void {

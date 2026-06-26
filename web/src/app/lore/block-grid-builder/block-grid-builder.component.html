@@ -1,0 +1,100 @@
+<div class="grid-builder">
+  <div class="builder-body">
+    <!-- Palette : types de blocs à glisser sur la grille (ou cliquer) -->
+    <div class="palette">
+      <div class="palette-title">{{ 'templateEdit.paletteTitle' | translate }}</div>
+      @for (pt of paletteTypes; track pt.type) {
+        <div class="palette-item"
+          (pointerdown)="startCreate($event, pt.type)"
+          (click)="addType(pt.type)"
+          [title]="'templateEdit.addBlockHint' | translate">
+          <lucide-icon [img]="pt.icon" [size]="15"></lucide-icon>
+          <span>{{ pt.labelKey | translate }}</span>
+        </div>
+      }
+    </div>
+
+    <!-- Toile : grille 2D libre (placement + dimension en x/y/w/h) -->
+    <div class="canvas"
+      #canvasEl
+      [class.dragging]="!!drag"
+      [style.grid-template-rows]="'repeat(' + gridRows + ', ' + GRID_ROW_HEIGHT + 'px)'">
+      @for (block of blocks; track block.id) {
+        <div class="grid-block"
+          [attr.data-block-name]="block.name"
+          [style.grid-column]="gridColumn(block)"
+          [style.grid-row]="gridRow(block)"
+          [class.is-image]="block.type === 'IMAGE'"
+          [class.is-kv]="block.type === 'KEY_VALUE_LIST'"
+          [class.is-table]="block.type === 'TABLE'"
+          [class.is-new]="!isExisting(block)"
+          [class.dragged]="drag?.block === block">
+          <div class="block-head">
+            <button type="button" class="block-grip" (pointerdown)="startMove($event, block)"
+              [attr.aria-label]="'templateEdit.move' | translate" [title]="'templateEdit.move' | translate">
+              <lucide-icon [img]="GripVertical" [size]="14"></lucide-icon>
+            </button>
+            <lucide-icon class="block-type-icon" [img]="iconFor(block.type)" [size]="13"></lucide-icon>
+            <input class="block-name-input"
+              [ngModel]="block.name"
+              (ngModelChange)="rename(block, $event)"
+              (focus)="onNameFocus(block)"
+              (blur)="commitRename(block)"
+              [attr.aria-label]="'templateEdit.blockNameLabel' | translate"
+              [title]="block.name" />
+            <button type="button" class="block-remove" (click)="remove(block)" [attr.aria-label]="'common.delete' | translate">
+              <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+            </button>
+          </div>
+
+          @if (block.type === 'KEY_VALUE_LIST' || block.type === 'TABLE') {
+            <div class="block-labels">
+              @for (lbl of block.labels ?? []; track $index; let li = $index) {
+                <span class="kv-label-chip">
+                  <input type="text" [ngModel]="lbl" (ngModelChange)="updateLabel(block, li, $event)"
+                    [placeholder]="(block.type === 'TABLE' ? 'templateEdit.column' : 'templateEdit.label') | translate"
+                    [attr.aria-label]="(block.type === 'TABLE' ? 'templateEdit.columnN' : 'templateEdit.labelN') | translate:{ n: (li + 1) }" />
+                  <button type="button" class="kv-label-remove" (click)="removeLabel(block, li)" [attr.aria-label]="'common.remove' | translate">
+                    <lucide-icon [img]="X" [size]="11"></lucide-icon>
+                  </button>
+                </span>
+              }
+              <button type="button" class="btn-kv-add-label" (click)="addLabel(block)">
+                <lucide-icon [img]="Plus" [size]="12"></lucide-icon>
+                {{ (block.type === 'TABLE' ? 'templateEdit.column' : 'templateEdit.label') | translate }}
+              </button>
+            </div>
+          }
+
+          <!-- Poignées de redimensionnement -->
+          <div class="rh rh-e" (pointerdown)="startResize($event, block, 'e')"
+            [attr.aria-label]="'templateEdit.resizeWidth' | translate" [title]="'templateEdit.resizeWidth' | translate"></div>
+          <div class="rh rh-s" (pointerdown)="startResize($event, block, 's')"
+            [attr.aria-label]="'templateEdit.resizeHeight' | translate" [title]="'templateEdit.resizeHeight' | translate"></div>
+          <div class="rh rh-se" (pointerdown)="startResize($event, block, 'se')"
+            [attr.aria-label]="'templateEdit.resize' | translate" [title]="'templateEdit.resize' | translate"></div>
+        </div>
+      }
+
+      <!-- Aperçu du bloc en cours de création -->
+      @if (drag?.kind === 'create' && drag?.over) {
+        <div class="create-preview"
+          [style.grid-column]="(drag!.px + 1) + ' / span ' + drag!.pw"
+          [style.grid-row]="(drag!.py + 1) + ' / span ' + drag!.ph"></div>
+      }
+
+      @if (!blocks.length && !drag) {
+        <p class="canvas-empty">{{ 'templateEdit.canvasEmpty' | translate }}</p>
+      }
+    </div>
+  </div>
+
+  <!-- Fantôme suivant le pointeur pendant la création -->
+  @if (drag?.kind === 'create') {
+    <div class="drag-ghost" [style.left.px]="drag!.pointerX" [style.top.px]="drag!.pointerY">
+      <lucide-icon [img]="iconFor(drag!.type!)" [size]="13"></lucide-icon>
+    </div>
+  }
+
+  <p class="hint">{{ 'templateEdit.gridHelp' | translate }}</p>
+</div>

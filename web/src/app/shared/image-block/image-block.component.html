@@ -1,0 +1,66 @@
+@if (currentId) {
+  <div class="image-block" [class.fill]="fill">
+    <div class="frame"
+      [class.grabbable]="editable"
+      (pointerdown)="startPan($event)"
+      (wheel)="onWheel($event)">
+      <img class="img"
+        [src]="urlFor(currentId)"
+        alt=""
+        draggable="false"
+        [style.object-position]="objectPosition(currentId)"
+        [style.transform-origin]="objectPosition(currentId)"
+        [style.transform]="zoomTransform(currentId)" />
+    </div>
+
+    @if (hasMany) {
+      <button type="button" class="nav prev" (click)="prev()" [attr.aria-label]="'imageBlock.prev' | translate">
+        <lucide-icon [img]="ChevronLeft" [size]="20"></lucide-icon>
+      </button>
+      <button type="button" class="nav next" (click)="next()" [attr.aria-label]="'imageBlock.next' | translate">
+        <lucide-icon [img]="ChevronRight" [size]="20"></lucide-icon>
+      </button>
+      <div class="dots">
+        @for (id of imageIds; track id; let i = $index) {
+          <button type="button" class="dot" [class.active]="i === current"
+            (click)="goTo(i)" [attr.aria-label]="'imageBlock.goTo' | translate:{ n: i + 1 }"></button>
+        }
+      </div>
+    }
+
+    @if (editable) {
+      <div class="edit-bar">
+        <div class="zoom">
+          <button type="button" (click)="setZoom(scaleOf(currentId) - 0.2)"
+            [attr.aria-label]="'imageBlock.zoomOut' | translate" [title]="'imageBlock.zoomOut' | translate">
+            <lucide-icon [img]="ZoomOut" [size]="14"></lucide-icon>
+          </button>
+          <input type="range" min="0.4" max="4" step="0.05"
+            [ngModel]="scaleOf(currentId)" (ngModelChange)="setZoom($event)"
+            [attr.aria-label]="'imageBlock.zoom' | translate" />
+          <button type="button" (click)="setZoom(scaleOf(currentId) + 0.2)"
+            [attr.aria-label]="'imageBlock.zoomIn' | translate" [title]="'imageBlock.zoomIn' | translate">
+            <lucide-icon [img]="ZoomIn" [size]="14"></lucide-icon>
+          </button>
+        </div>
+        <span class="move-hint"><lucide-icon [img]="Move" [size]="13"></lucide-icon> {{ 'imageBlock.dragHint' | translate }}</span>
+        <div class="edit-actions">
+          <app-image-uploader [compact]="true" (uploaded)="onUploaded($event)"></app-image-uploader>
+          <button type="button" class="btn-remove" (click)="removeCurrent()"
+            [attr.aria-label]="'imageBlock.remove' | translate" [title]="'imageBlock.remove' | translate">
+            <lucide-icon [img]="X" [size]="14"></lucide-icon>
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+} @else if (editable) {
+  <div class="image-empty" [class.fill]="fill">
+    <lucide-icon [img]="ImageIcon" [size]="28"></lucide-icon>
+    <app-image-uploader [compact]="true" (uploaded)="onUploaded($event)"></app-image-uploader>
+  </div>
+} @else {
+  <div class="image-empty view" [class.fill]="fill">
+    <lucide-icon [img]="ImageIcon" [size]="28"></lucide-icon>
+  </div>
+}
