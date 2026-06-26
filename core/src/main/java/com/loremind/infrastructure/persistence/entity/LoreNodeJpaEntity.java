@@ -36,6 +36,10 @@ public class LoreNodeJpaEntity {
     @Column(name = "lore_id", nullable = false)
     private Long loreId;
 
+    /** Position parmi les dossiers frères. Colonne quotée : `order` est un mot-clé SQL. */
+    @Column(name = "\"order\"", nullable = false)
+    private int order;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

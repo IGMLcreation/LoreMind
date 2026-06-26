@@ -24,6 +24,8 @@ public class LoreNode {
     private String icon;
     private String parentId; // Auto-référence pour l'arborescence
     private String loreId;    // Référence vers le Lore parent
+    /** Position du dossier parmi ses frères (glisser-déposer). */
+    private int order;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

@@ -1,8 +1,12 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { DataSyncService } from '../../../services/data-sync.service';
+import { CampaignSidebarService } from '../../../services/campaign-sidebar.service';
 
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { LucideAngularModule, Swords, Plus, Globe, Pencil, Trash2, Dices, Drama, Check, Play, Upload, Sparkles, Download } from 'lucide-angular';
+import { CdkDropList, CdkDrag, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
+import { LucideAngularModule, Swords, Plus, Globe, Pencil, Trash2, Dices, Drama, Check, Play, Upload, Sparkles, Download, FileText } from 'lucide-angular';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
@@ -11,7 +15,6 @@ import { CampaignService } from '../../../services/campaign.service';
 import { LoreService } from '../../../services/lore.service';
 import { GameSystemService } from '../../../services/game-system.service';
 import { GameSystem } from '../../../services/game-system.model';
-import { CharacterService } from '../../../services/character.service';
 import { NpcService } from '../../../services/npc.service';
 import { RandomTableService } from '../../../services/random-table.service';
 import { EnemyService } from '../../../services/enemy.service';
@@ -26,10 +29,11 @@ import { Campaign, Arc } from '../../../services/campaign.model';
 import { Lore } from '../../../services/lore.model';
 import { loadCampaignTreeData, buildCampaignSidebarConfig, CampaignTreeData } from '../../campaign-tree.helper';
 import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
+import { FolderGroup, groupByFolder, byOrder } from '../../../shared/folder-grouping.util';
 
 @Component({
     selector: 'app-campaign-detail',
-    imports: [FormsModule, LucideAngularModule, RouterLink, TranslatePipe],
+    imports: [FormsModule, LucideAngularModule, RouterLink, TranslatePipe, CdkDropList, CdkDrag],
     templateUrl: './campaign-detail.component.html',
     styleUrls: ['./campaign-detail.component.scss']
 })
@@ -46,9 +50,12 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   readonly Upload = Upload;
   readonly Sparkles = Sparkles;
   readonly Download = Download;
+  readonly FileText = FileText;
 
   /** Export Foundry en cours (anti double-clic). */
   exportingFoundry = false;
+  /** Export PDF en cours (anti double-clic). */
+  exportingPdf = false;
 
   campaign: Campaign | null = null;
   arcs: Arc[] = [];
@@ -64,6 +71,8 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   linkedGameSystem: GameSystem | null = null;
   /** Fiches de personnages non-joueurs (PNJ) de la campagne. */
   npcs: Npc[] = [];
+  /** PNJ groupés par dossier (dossiers alpha, ordre manuel dans chacun) — comme la sidebar. */
+  npcGroups: FolderGroup<Npc>[] = [];
   /** Sessions de jeu (passées et en cours) liées à cette campagne. */
   sessions: Session[] = [];
   /**
@@ -98,7 +107,6 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
     private campaignService: CampaignService,
     private loreService: LoreService,
     private gameSystemService: GameSystemService,
-    private characterService: CharacterService,
     private npcService: NpcService,
     private randomTableService: RandomTableService,
     private enemyService: EnemyService,
@@ -107,37 +115,32 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService,
     private confirmDialog: ConfirmDialogService,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private dataSync: DataSyncService,
+    private campaignSidebar: CampaignSidebarService,
+    private destroyRef: DestroyRef
   ) {}
 
   ngOnInit(): void {
+    // Synchro temps réel : si l'ordre des arcs change ailleurs (arbre de la sidebar),
+    // on recharge les cartes pour rester cohérent sans rafraîchir la page.
+    this.dataSync.onChange(this.destroyRef, () => {
+      if (this.campaign?.id) {
+        this.campaignService.getArcs(this.campaign.id).subscribe(a => this.arcs = [...a].sort(byOrder));
+        this.loadNpcs(this.campaign.id);              // PNJ regroupés/ordonnés
+        this.campaignSidebar.show(this.campaign.id);  // recharge l'arbre aussi
+      }
+    });
+
     // switchMap annule automatiquement le load précédent si l'utilisateur
     // change de campagne avant que le forkJoin ne réponde — évite qu'une
     // réponse en retard écrase des données plus récentes (race condition).
     this.route.paramMap.pipe(
       map(pm => pm.get('id')),
       filter((id): id is string => !!id && id !== this.campaign?.id),
-      switchMap(id => forkJoin({
-        campaign: this.campaignService.getCampaignById(id),
-        allCampaigns: this.campaignService.getAllCampaigns(),
-        treeData: loadCampaignTreeData(this.campaignService, id, this.characterService, this.npcService, this.randomTableService, this.enemyService).pipe(
-          catchError(() => of({ arcs: [], chaptersByArc: {}, scenesByChapter: {}, characters: [], npcs: [], randomTables: [], enemies: [] } as CampaignTreeData))
-        ),
-        playthroughs: this.playthroughService.listByCampaign(id).pipe(catchError(() => of([] as Playthrough[])))
-      }))
-    ).subscribe(({ campaign, allCampaigns, treeData, playthroughs }) => {
-      this.campaign = campaign;
-      this.editing = false;
-      this.playthroughs = playthroughs;
-      this.loadLinkedLore(campaign);
-      this.loadLinkedGameSystem(campaign);
-      this.loadNpcs(campaign.id!);
-      this.loadSessions(campaign.id!);
-      this.arcs = treeData.arcs;
-      this.chapterCountByArc = this.computeChapterCounts(treeData);
-      this.showLayout(allCampaigns, treeData);
-      this.pageTitleService.set(campaign.name);
-    });
+      switchMap(id => this.loadCampaignBundle(id)),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(result => this.applyCampaignBundle(result));
   }
 
   private computeChapterCounts(data: CampaignTreeData): Record<string, number> {
@@ -154,26 +157,37 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
    * veut rafraîchir même si l'ID n'a pas changé.
    */
   private reload(id: string): void {
-    forkJoin({
+    this.loadCampaignBundle(id).subscribe(result => this.applyCampaignBundle(result));
+  }
+
+  /** Charge en un seul forkJoin : la campagne, ses voisines, l'arbre et les parties. */
+  private loadCampaignBundle(id: string) {
+    return forkJoin({
       campaign: this.campaignService.getCampaignById(id),
       allCampaigns: this.campaignService.getAllCampaigns(),
-      treeData: loadCampaignTreeData(this.campaignService, id, this.characterService, this.npcService, this.randomTableService, this.enemyService).pipe(
-        catchError(() => of({ arcs: [], chaptersByArc: {}, scenesByChapter: {}, characters: [], npcs: [], randomTables: [], enemies: [] } as CampaignTreeData))
+      treeData: loadCampaignTreeData(this.campaignService, id, this.npcService, this.randomTableService, this.enemyService).pipe(
+        catchError(() => of({ arcs: [], chaptersByArc: {}, scenesByChapter: {}, npcs: [], randomTables: [], enemies: [] } as CampaignTreeData))
       ),
       playthroughs: this.playthroughService.listByCampaign(id).pipe(catchError(() => of([] as Playthrough[])))
-    }).subscribe(({ campaign, allCampaigns, treeData, playthroughs }) => {
-      this.campaign = campaign;
-      this.editing = false;
-      this.playthroughs = playthroughs;
-      this.loadLinkedLore(campaign);
-      this.loadLinkedGameSystem(campaign);
-      this.loadNpcs(campaign.id!);
-      this.loadSessions(campaign.id!);
-      this.arcs = treeData.arcs;
-      this.chapterCountByArc = this.computeChapterCounts(treeData);
-      this.showLayout(allCampaigns, treeData);
-      this.pageTitleService.set(campaign.name);
     });
+  }
+
+  /** Applique le bundle chargé à l'état du composant (commun à ngOnInit et reload). */
+  private applyCampaignBundle(
+    { campaign, allCampaigns, treeData, playthroughs }:
+    { campaign: Campaign; allCampaigns: Campaign[]; treeData: CampaignTreeData; playthroughs: Playthrough[] }
+  ): void {
+    this.campaign = campaign;
+    this.editing = false;
+    this.playthroughs = playthroughs;
+    this.loadLinkedLore(campaign);
+    this.loadLinkedGameSystem(campaign);
+    this.loadNpcs(campaign.id!);
+    this.loadSessions(campaign.id!);
+    this.arcs = [...treeData.arcs].sort(byOrder);
+    this.chapterCountByArc = this.computeChapterCounts(treeData);
+    this.showLayout(allCampaigns, treeData);
+    this.pageTitleService.set(campaign.name);
   }
 
   /**
@@ -205,7 +219,10 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   private loadNpcs(campaignId: string): void {
     this.npcService.getByCampaign(campaignId).pipe(
       catchError(() => of([] as Npc[]))
-    ).subscribe(list => this.npcs = list);
+    ).subscribe(list => {
+      this.npcs = list;
+      this.npcGroups = groupByFolder(list);
+    });
   }
 
   // Sessions retirées de cette vue (vivent dans Playthrough Detail).
@@ -278,6 +295,45 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
         // Ne pas avaler l'erreur en silence : visible en console pour diagnostic.
         console.error('Échec de l\'export Foundry', err);
         this.exportingFoundry = false;
+      }
+    });
+  }
+
+  /** Génère et télécharge le livret PDF de la campagne. */
+  exportPdf(): void {
+    if (!this.campaign?.id || this.exportingPdf) return;
+    this.exportingPdf = true;
+    const name = this.campaign.name;
+    this.campaignService.exportPdf(this.campaign.id).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${(name || 'campagne').replace(/[^a-zA-Z0-9-_]+/g, '_')}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        this.exportingPdf = false;
+      },
+      error: (err) => {
+        console.error('Échec de l\'export PDF', err);
+        this.exportingPdf = false;
+      }
+    });
+  }
+
+  /** Réordonne les arcs par glisser-déposer et persiste le nouvel ordre. */
+  dropArc(event: CdkDragDrop<Arc[]>): void {
+    if (event.previousIndex === event.currentIndex) return;
+    moveItemInArray(this.arcs, event.previousIndex, event.currentIndex);
+    this.campaignService.reorderArcs(this.arcs.map(a => a.id!)).subscribe({
+      next: () => this.dataSync.notify(),
+      error: () => {
+        if (this.campaign?.id) {
+          this.campaignService.getArcs(this.campaign.id).subscribe(
+            a => this.arcs = [...a].sort((x, y) => (x.order ?? 0) - (y.order ?? 0)));
+        }
       }
     });
   }

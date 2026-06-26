@@ -40,10 +40,12 @@
           </p>
         }
         @if (hubQuests.length > 0) {
-          <div class="hub-quest-grid">
-            @for (q of hubQuests; track q) {
+          <div class="hub-quest-grid" cdkDropList cdkDropListOrientation="mixed"
+            (cdkDropListDropped)="dropQuest($event)">
+            @for (q of hubQuests; track q.id) {
               <button type="button"
                 class="hub-quest-card"
+                cdkDrag [cdkDragData]="q"
                 (click)="openQuest(q)">
                 <div class="hub-quest-card-head">
                   @if (q.icon) {

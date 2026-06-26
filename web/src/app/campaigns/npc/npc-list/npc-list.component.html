@@ -20,25 +20,29 @@
     @if (total === 0) {
       <p class="empty">{{ 'npcList.empty' | translate }}</p>
     }
-    @for (g of groups; track g.folder) {
+    @for (g of groups; track g.folder; let gi = $index) {
       @if (g.folder) {
         <h2 class="sbl-folder">
           <lucide-icon [img]="Folder" [size]="14"></lucide-icon>
           {{ g.folder }}
-          <span class="sbl-folder-count">{{ g.npcs.length }}</span>
+          <span class="sbl-folder-count">{{ g.items.length }}</span>
         </h2>
       } @else if (groups.length > 1) {
         <h2 class="sbl-folder sbl-folder--none">{{ 'npcList.unclassified' | translate }}</h2>
       }
-      @for (n of g.npcs; track n.id) {
-        <button class="sbl-item" (click)="open(n)">
-          <lucide-icon [img]="Drama" [size]="16"></lucide-icon>
-          <span class="sbl-item-name">{{ n.name }}</span>
-          <span class="sbl-del" (click)="remove(n, $event)" [title]="'common.delete' | translate">
-            <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
-          </span>
-        </button>
-      }
+      <div class="sbl-group" cdkDropList [id]="'npc-group-' + gi"
+        [cdkDropListData]="g.items" [cdkDropListConnectedTo]="groupListIds"
+        (cdkDropListDropped)="drop(g, $event)">
+        @for (n of g.items; track n.id) {
+          <button class="sbl-item" cdkDrag [cdkDragData]="n" (click)="open(n)">
+            <lucide-icon [img]="Drama" [size]="16"></lucide-icon>
+            <span class="sbl-item-name">{{ n.name }}</span>
+            <span class="sbl-del" (click)="remove(n, $event)" [title]="'common.delete' | translate">
+              <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+            </span>
+          </button>
+        }
+      </div>
     }
   </div>
 </div>

@@ -1,8 +1,11 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, DestroyRef } from '@angular/core';
 
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
-import { LucideAngularModule, LucideIconData, Folder, FileText, Pencil, Trash2, Plus, ChevronRight } from 'lucide-angular';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { CdkDropList, CdkDrag, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
+import { DataSyncService } from '../../services/data-sync.service';
+import { LucideAngularModule, LucideIconData, Folder, FileText, Pencil, Trash2, Plus, ChevronRight, GripVertical } from 'lucide-angular';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { LoreService } from '../../services/lore.service';
 import { TemplateService } from '../../services/template.service';
@@ -12,6 +15,7 @@ import { PageTitleService } from '../../services/page-title.service';
 import { Lore, LoreNode } from '../../services/lore.model';
 import { Page } from '../../services/page.model';
 import { loadLoreSidebarData, buildLoreSidebarConfig } from '../lore-sidebar.helper';
+import { byOrder } from '../../shared/folder-grouping.util';
 import { resolveIcon } from '../lore-icons';
 import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 
@@ -25,7 +29,7 @@ import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog
  */
 @Component({
     selector: 'app-folder-view',
-    imports: [LucideAngularModule, TranslatePipe],
+    imports: [LucideAngularModule, TranslatePipe, CdkDropList, CdkDrag],
     templateUrl: './folder-view.component.html',
     styleUrls: ['./folder-view.component.scss']
 })
@@ -36,6 +40,7 @@ export class FolderViewComponent implements OnInit, OnDestroy {
   readonly Trash2 = Trash2;
   readonly Plus = Plus;
   readonly ChevronRight = ChevronRight;
+  readonly GripVertical = GripVertical;
 
   loreId = '';
   folderId = '';
@@ -55,14 +60,17 @@ export class FolderViewComponent implements OnInit, OnDestroy {
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService,
     private confirmDialog: ConfirmDialogService,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private dataSync: DataSyncService,
+    private destroyRef: DestroyRef
   ) {}
 
   ngOnInit(): void {
+    this.dataSync.onChange(this.destroyRef, () => this.load());
     this.loreId = this.route.snapshot.paramMap.get('loreId')!;
     // Réagit aux changements de :folderId pour que la navigation d'un dossier
     // à un autre via la sidebar ne démonte/remonte pas le composant à blanc.
-    this.route.paramMap.subscribe(pm => {
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(pm => {
       const next = pm.get('folderId')!;
       if (next !== this.folderId) {
         this.folderId = next;
@@ -82,8 +90,9 @@ export class FolderViewComponent implements OnInit, OnDestroy {
       this.lore = sidebar.lore;
       this.node = node;
       this.pageTitleService.set(node.name);
-      this.subfolders = sidebar.nodes.filter(n => n.parentId === this.folderId);
-      this.pages = sidebar.pages.filter(p => p.nodeId === this.folderId);
+      // Tri par `order` — cohérent avec l'arbre (comparateur `byOrder` mutualisé).
+      this.subfolders = sidebar.nodes.filter(n => n.parentId === this.folderId).sort(byOrder);
+      this.pages = sidebar.pages.filter(p => p.nodeId === this.folderId).sort(byOrder);
       this.ancestors = this.buildAncestors(node, sidebar.nodes);
     });
   }
@@ -112,6 +121,49 @@ export class FolderViewComponent implements OnInit, OnDestroy {
   /** Icône du dossier courant, résolue depuis la clé lucide stockée sur le node. */
   get folderIcon(): LucideIconData {
     return resolveIcon(this.node?.icon ?? null);
+  }
+
+  // --- Glisser-déposer (réordonnancement + déplacement de pages) -----------
+
+  /** Ids des zones de dépôt « sous-dossier » (cibles connectées depuis la liste des pages). */
+  get subfolderListIds(): string[] {
+    return this.subfolders.map(s => 'sub-' + s.id);
+  }
+
+  /** Un drag transporte-t-il une Page (vs un dossier) ? La Page a un `title`. */
+  private isPageDrag(drag: CdkDrag): boolean {
+    const d = drag.data as { title?: string } | null;
+    return !!d && typeof d.title === 'string';
+  }
+
+  /** Prédicat de dépôt : n'accepter que des pages (cibles dossier + grille pages). */
+  acceptPages = (drag: CdkDrag): boolean => this.isPageDrag(drag);
+  /** Prédicat de dépôt : n'accepter que des dossiers (grille des sous-dossiers). */
+  acceptFolders = (drag: CdkDrag): boolean => !this.isPageDrag(drag);
+
+  /** Réordonne les pages du dossier courant. */
+  dropPage(event: CdkDragDrop<Page[]>): void {
+    if (event.previousContainer !== event.container) return; // déplacement géré par dropPageIntoFolder
+    if (event.previousIndex === event.currentIndex) return;
+    moveItemInArray(this.pages, event.previousIndex, event.currentIndex);
+    this.dataSync.persist(this.pageService.reorder(this.folderId, this.pages.map(p => p.id!)), () => this.load());
+  }
+
+  /** Réordonne les sous-dossiers du dossier courant. */
+  dropSubfolder(event: CdkDragDrop<LoreNode[]>): void {
+    if (event.previousContainer !== event.container) return;
+    if (event.previousIndex === event.currentIndex) return;
+    moveItemInArray(this.subfolders, event.previousIndex, event.currentIndex);
+    this.dataSync.persist(this.loreService.reorderNodes(this.folderId, this.subfolders.map(s => s.id!)), () => this.load());
+  }
+
+  /** Déplace une page (déposée sur la carte d'un sous-dossier) dans ce sous-dossier. */
+  dropPageIntoFolder(target: LoreNode, event: CdkDragDrop<LoreNode>): void {
+    const page = event.item.data as Page;
+    if (!page || page.nodeId === target.id) return;
+    // Succès → notify() → onChange → this.load() : le dossier courant se recharge
+    // et la page déplacée en disparaît.
+    this.dataSync.persist(this.pageService.reorder(target.id!, [page.id!]), () => this.load());
   }
 
   navigateToSubfolder(id: string): void {

@@ -47,6 +47,11 @@ export class CampaignService {
     return this.http.get(`${this.apiUrl}/${id}/foundry-export`, { responseType: 'blob' });
   }
 
+  /** Génère et télécharge le livret PDF de la campagne. */
+  exportPdf(id: string): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/${id}/pdf-export`, { responseType: 'blob' });
+  }
+
   createCampaign(campaign: CampaignCreate): Observable<Campaign> {
     return this.http.post<Campaign>(this.apiUrl, campaign);
   }
@@ -89,6 +94,11 @@ export class CampaignService {
     return this.http.get<ArcDeletionImpact>(`/api/arcs/${id}/deletion-impact`);
   }
 
+  /** Réordonne les arcs d'une campagne (glisser-déposer) : order = position. */
+  reorderArcs(orderedIds: string[]): Observable<void> {
+    return this.http.put<void>('/api/arcs/reorder', { orderedIds });
+  }
+
   // ========== CHAPTER ==========
   /**
    * Liste les chapitres d'un arc. Si {@code playthroughId} est fourni, le backend
@@ -122,6 +132,11 @@ export class CampaignService {
     return this.http.get<ChapterDeletionImpact>(`/api/chapters/${id}/deletion-impact`);
   }
 
+  /** Réordonne (et déplace) les chapitres d'un arc : order = position, arcId = arc cible. */
+  reorderChapters(arcId: string, orderedIds: string[]): Observable<void> {
+    return this.http.put<void>('/api/chapters/reorder', { arcId, orderedIds });
+  }
+
   // ========== SCENE ==========
   getScenes(chapterId: string): Observable<Scene[]> {
     const params = new HttpParams().set('chapterId', chapterId);
@@ -142,6 +157,11 @@ export class CampaignService {
 
   deleteScene(id: string): Observable<void> {
     return this.http.delete<void>(`/api/scenes/${id}`);
+  }
+
+  /** Réordonne (et déplace) les scènes d'un chapitre : order = position, chapterId = cible. */
+  reorderScenes(chapterId: string, orderedIds: string[]): Observable<void> {
+    return this.http.put<void>('/api/scenes/reorder', { chapterId, orderedIds });
   }
 
   search(q: string): Observable<Campaign[]> {

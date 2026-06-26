@@ -45,6 +45,10 @@ public class PageJpaEntity {
     @Column(nullable = false)
     private String title;
 
+    /** Position dans le dossier. Colonne quotée : `order` est un mot-clé SQL. */
+    @Column(name = "\"order\"", nullable = false)
+    private int order;
+
     @Column(name = "values_json", columnDefinition = "TEXT")
     @Convert(converter = StringMapJsonConverter.class)
     private Map<String, String> values;

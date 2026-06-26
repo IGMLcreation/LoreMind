@@ -11,6 +11,7 @@ import { LayoutService } from '../../services/layout.service';
 import { PageTitleService } from '../../services/page-title.service';
 import { Lore, LoreNode } from '../../services/lore.model';
 import { loadLoreSidebarData, buildLoreSidebarConfig } from '../lore-sidebar.helper';
+import { byOrder } from '../../shared/folder-grouping.util';
 import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 
 @Component({
@@ -68,7 +69,7 @@ export class LoreDetailComponent implements OnInit, OnDestroy {
       // Bug d'affichage corrigé : on ne liste ici que les dossiers racine
       // (les sous-dossiers apparaissent dans l'arbre de la sidebar quand on
       // ouvre leur parent). parentId null OU chaîne vide = racine.
-      this.rootNodes = data.nodes.filter(n => !n.parentId);
+      this.rootNodes = data.nodes.filter(n => !n.parentId).sort(byOrder); // même ordre que l'arbre
       this.layoutService.show(buildLoreSidebarConfig(data));
       this.pageTitleService.set(data.lore.name);
       // On sort du mode édition si on change de Lore en cours d'édition.

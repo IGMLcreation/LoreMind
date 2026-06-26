@@ -70,4 +70,13 @@ public class ArcController {
         }
         return ResponseEntity.ok(arcService.getDeletionImpact(id));
     }
+
+    /** Réordonne les arcs (drag-and-drop) : order = position dans orderedIds. */
+    @PutMapping("/reorder")
+    public ResponseEntity<Void> reorder(@RequestBody ReorderRequest req) {
+        arcService.reorderArcs(req.orderedIds());
+        return ResponseEntity.noContent().build();
+    }
+
+    public record ReorderRequest(List<String> orderedIds) {}
 }

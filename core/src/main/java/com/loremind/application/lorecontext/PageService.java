@@ -5,6 +5,7 @@ import com.loremind.domain.lorecontext.ports.PageRepository;
 import org.springframework.stereotype.Service;
 
 import com.loremind.domain.shared.CollectionUtils;
+import com.loremind.domain.shared.ReorderSupport;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,11 +34,20 @@ public class PageService {
                 .nodeId(nodeId)
                 .templateId(templateId)
                 .title(title)
+                .order(nextOrderFor(nodeId))
                 .values(new HashMap<>())
                 .tags(new ArrayList<>())
                 .relatedPageIds(new ArrayList<>())
                 .build();
         return pageRepository.save(page);
+    }
+
+    /** Prochain ordre pour une page neuve : après les pages existantes du même dossier. */
+    private int nextOrderFor(String nodeId) {
+        if (nodeId == null) return 0;
+        return pageRepository.findByNodeId(nodeId).stream()
+                .mapToInt(Page::getOrder)
+                .max().orElse(-1) + 1;
     }
 
     public Optional<Page> getPageById(String id) {
@@ -86,5 +96,20 @@ public class PageService {
 
     public void deletePage(String id) {
         pageRepository.deleteById(id);
+    }
+
+    /**
+     * Réordonne (et déplace) les pages d'un dossier : {@code order} = position dans la
+     * liste, et {@code nodeId} = dossier cible (déplacement par glisser-déposer).
+     */
+    @org.springframework.transaction.annotation.Transactional
+    public void reorderPages(String nodeId, List<String> orderedIds) {
+        ReorderSupport.reorder(orderedIds,
+                id -> pageRepository.findById(id).orElse(null),
+                (page, i) -> {
+                    if (nodeId != null && !nodeId.isBlank()) page.setNodeId(nodeId);
+                    page.setOrder(i);
+                },
+                pageRepository::save);
     }
 }

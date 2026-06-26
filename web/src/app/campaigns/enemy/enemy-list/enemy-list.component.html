@@ -24,28 +24,32 @@
     @if (total === 0) {
       <p class="empty">{{ 'enemyList.empty' | translate }}</p>
     }
-    @for (g of groups; track g.folder) {
+    @for (g of groups; track g.folder; let gi = $index) {
       @if (g.folder) {
         <h2 class="sbl-folder">
           <lucide-icon [img]="Folder" [size]="14"></lucide-icon>
           {{ g.folder.split('/').join(' / ') }}
-          <span class="sbl-folder-count">{{ g.enemies.length }}</span>
+          <span class="sbl-folder-count">{{ g.items.length }}</span>
         </h2>
       } @else if (groups.length > 1) {
         <h2 class="sbl-folder sbl-folder--none">{{ 'enemyList.unclassified' | translate }}</h2>
       }
-      @for (e of g.enemies; track e.id) {
-        <button class="sbl-item" (click)="open(e)">
-          <lucide-icon [img]="Skull" [size]="16"></lucide-icon>
-          <span class="sbl-item-name">{{ e.name }}</span>
-          @if (e.level) {
-            <span class="sbl-item-level">{{ 'enemyList.levelShort' | translate:{ level: e.level } }}</span>
-          }
-          <span class="sbl-del" (click)="remove(e, $event)" [title]="'common.delete' | translate">
-            <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
-          </span>
-        </button>
-      }
+      <div class="sbl-group" cdkDropList [id]="'enemy-group-' + gi"
+        [cdkDropListData]="g.items" [cdkDropListConnectedTo]="groupListIds"
+        (cdkDropListDropped)="drop(g, $event)">
+        @for (e of g.items; track e.id) {
+          <button class="sbl-item" cdkDrag [cdkDragData]="e" (click)="open(e)">
+            <lucide-icon [img]="Skull" [size]="16"></lucide-icon>
+            <span class="sbl-item-name">{{ e.name }}</span>
+            @if (e.level) {
+              <span class="sbl-item-level">{{ 'enemyList.levelShort' | translate:{ level: e.level } }}</span>
+            }
+            <span class="sbl-del" (click)="remove(e, $event)" [title]="'common.delete' | translate">
+              <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+            </span>
+          </button>
+        }
+      </div>
     }
   </div>
 </div>

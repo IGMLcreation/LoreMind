@@ -33,75 +33,33 @@
         }
       </div>
     }
+    <!-- cdkDropListGroup : connecte toutes les drop lists de l'arbre (déplacement d'un
+         nœud d'une liste à l'autre). Chaque ligne est un <app-sidebar-tree-node> :
+         comme c'est un VRAI composant déclaré statiquement dans la drop list, son
+         cdkDrag résout sa drop list par DI (impossible via un template outlet-é). -->
     <div class="tree">
-      @for (item of items; track item) {
-        <ng-container *ngTemplateOutlet="treeNode; context: { $implicit: item, level: 0 }"></ng-container>
-      }
-    </div>
-    <!-- Template récursif : un noeud d'arbre rend son bouton, puis ses enfants via ce même template -->
-    <ng-template #treeNode let-item let-level="level">
-      @if (level === 0 && item.sectionHeaderBefore) {
-        <div class="tree-section-header">
-          {{ item.sectionHeaderBefore }}
-        </div>
-      }
-      <div class="tree-item" [style.padding-left.px]="level * 12">
-        <div class="tree-row">
-          @if (!item.isAction && isExpandable(item)) {
-            <button
-              type="button"
-              class="chevron-btn"
-              (click)="clickChevron($event, item)">
-              <lucide-icon
-                [img]="isExpanded(item.id) ? ChevronDown : ChevronRight"
-                [size]="12">
-              </lucide-icon>
-            </button>
+      <div class="tree-list" cdkDropList
+        id="sidebar-root"
+        [cdkDropListData]="rootDragData"
+        [cdkDropListConnectedTo]="dropListIds"
+        [cdkDropListDisabled]="!dndEnabled()"
+        [cdkDropListEnterPredicate]="rootEnterPredicate"
+        (cdkDropListDropped)="onDrop(null, $event)">
+        @for (item of items; track item.id; let first = $first) {
+          <!-- En-tête de section RENDU HORS du nœud (sinon il serait emporté par le
+               drag du premier item). C'est un élément non-déplaçable de la drop list. -->
+          @if (item.sectionHeaderBefore) {
+            <div class="tree-section-header" [class.first]="first">{{ item.sectionHeaderBefore }}</div>
           }
-          @if (item.isAction || !isExpandable(item)) {
-            <span class="chevron-spacer"></span>
+          @if (dndEnabled() && item.dragKind) {
+            <app-sidebar-tree-node cdkDrag [cdkDragData]="item" cdkDragLockAxis="y"
+              [item]="item" [level]="0"></app-sidebar-tree-node>
+          } @else {
+            <app-sidebar-tree-node [item]="item" [level]="0"></app-sidebar-tree-node>
           }
-          <button type="button" class="tree-btn"
-            [class.action]="item.isAction"
-            [class.active]="isActive(item)"
-            (click)="clickItem(item)">
-            @if (iconFor(item); as icon) {
-              <lucide-icon
-                [img]="icon"
-                [size]="14"
-                class="item-icon">
-              </lucide-icon>
-            }
-            {{ item.label }}
-            @if (!item.isAction && item.meta) {
-              <span class="tree-item-meta">{{ item.meta }}</span>
-            }
-          </button>
-          <!-- Actions de creation contextuelles, revelees au survol de la ligne -->
-          @if (item.createActions?.length) {
-            <span class="node-actions">
-              @for (a of item.createActions; track a) {
-                <button
-                  type="button"
-                  class="node-action-btn"
-                  [title]="a.label"
-                  [attr.aria-label]="a.label"
-                  (click)="runCreateAction($event, a)">
-                  <lucide-icon [img]="iconForAction(a)" [size]="16"></lucide-icon>
-                </button>
-              }
-            </span>
-          }
-        </div>
-        @if (isExpanded(item.id) && hasChildren(item)) {
-          <div class="tree-children">
-            @for (child of item.children; track child) {
-              <ng-container *ngTemplateOutlet="treeNode; context: { $implicit: child, level: level + 1 }"></ng-container>
-            }
-          </div>
         }
       </div>
-    </ng-template>
+    </div>
     <!-- Panneau bas (ex: Templates) ------------------------------------ -->
     @if (bottomPanel) {
       <section class="bottom-panel">

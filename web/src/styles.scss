@@ -19,3 +19,48 @@ body {
   background: #0a0a14;
   color: #e0e0e0;
 }
+
+/* ===== Glisser-déposer (Angular CDK) — retours visuels GLOBAUX =====
+   Globaux car l'aperçu (cdk-drag-preview) est déplacé dans <body> : les styles
+   encapsulés des composants ne s'y appliquent pas. */
+
+/* Aperçu qui suit le curseur : ligne compacte et opaque (jamais transparente). */
+.cdk-drag-preview {
+  box-sizing: border-box;
+  border-radius: 6px;
+  background: #1b1b2b;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55);
+  color: #e0e0e0;
+  font-size: 0.9rem;
+  padding: 2px 6px;
+}
+/* Ne pas traîner tout un sous-arbre déplié quand on déplace un dossier/arc/quête. */
+.cdk-drag-preview .tree-children,
+.cdk-drag-preview .node-actions { display: none; }
+
+/* Emplacement cible : on GARDE la hauteur de la ligne (visibility, pas display) pour
+   qu'un vrai trou s'ouvre, et on affiche une barre d'insertion en pointillés. */
+.cdk-drag-placeholder {
+  opacity: 1;
+  background: rgba(138, 123, 200, 0.18);
+  border: 1px dashed #8a7bc8;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+/* On masque le contenu (visibility = on garde la hauteur d'UNE ligne) mais on REPLIE
+   le sous-arbre (display:none) pour que le trou d'insertion fasse une seule ligne. */
+.cdk-drag-placeholder > * { visibility: hidden; }
+.cdk-drag-placeholder .tree-children { display: none; }
+
+/* Les voisins glissent pour ouvrir/refermer l'espace pendant le déplacement. */
+.cdk-drag-animating { transition: transform 180ms cubic-bezier(0, 0, 0.2, 1); }
+.cdk-drop-list-dragging .cdk-drag:not(.cdk-drag-placeholder) {
+  transition: transform 180ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+/* Curseurs de préhension (le drag part de la poignée). */
+[cdkDrag] { cursor: default; }
+.cdk-drag-handle, [cdkDragHandle] { cursor: grab; }
+.cdk-drag-handle:active, [cdkDragHandle]:active { cursor: grabbing; }
+/* Surbrillance d'une zone de dépôt qui reçoit un élément (ex: page sur dossier). */
+.cdk-drop-list-receiving { outline: 2px dashed #6c63ff; outline-offset: 2px; }

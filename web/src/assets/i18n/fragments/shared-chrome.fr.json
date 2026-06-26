@@ -14,7 +14,8 @@
   },
   "secondarySidebar": {
     "backToCampaignHome": "Retour à l'accueil de la campagne",
-    "resizeHandle": "Glissez pour redimensionner"
+    "resizeHandle": "Glissez pour redimensionner",
+    "dragHandle": "Glissez pour réordonner"
   },
   "breadcrumb": {
     "ariaLabel": "Fil d'Ariane"

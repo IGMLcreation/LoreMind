@@ -260,7 +260,8 @@
   },
   "secondarySidebar": {
     "backToCampaignHome": "Retour à l'accueil de la campagne",
-    "resizeHandle": "Glissez pour redimensionner"
+    "resizeHandle": "Glissez pour redimensionner",
+    "dragHandle": "Glissez pour réordonner"
   },
   "breadcrumb": {
     "ariaLabel": "Fil d'Ariane"
@@ -592,6 +593,8 @@
     "defaultPlaythroughName": "Nouvelle partie {{n}}",
     "foundryExport": "Exporter pour Foundry",
     "foundryExporting": "Export…",
+    "pdfExport": "Exporter en PDF",
+    "pdfExporting": "Génération…",
     "gameSystemChange": {
       "title": "Changer le système de jeu ?",
       "message": "Vous êtes sur le point de changer le système de jeu de cette campagne. Cela change également le template des fiches de PJ et PNJ.",
@@ -1496,6 +1499,7 @@
   },
   "campaignTree": {
     "npcs": "PNJ",
+    "unclassified": "Sans dossier",
     "newNpc": "Nouveau PNJ",
     "newScene": "Nouvelle scène",
     "newQuest": "Nouvelle quête",

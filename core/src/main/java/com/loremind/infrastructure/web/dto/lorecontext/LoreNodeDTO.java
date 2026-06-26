@@ -14,4 +14,5 @@ public class LoreNodeDTO {
     private String icon;
     private String parentId;
     private String loreId;
+    private int order;
 }

@@ -1,18 +1,16 @@
 import { Component, OnInit } from '@angular/core';
 
 import { ActivatedRoute, Router } from '@angular/router';
+import { DestroyRef } from '@angular/core';
+import { CdkDropList, CdkDrag, CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
+import { DataSyncService } from '../../../services/data-sync.service';
 import { LucideAngularModule, ArrowLeft, Plus, Trash2, Drama, Folder } from 'lucide-angular';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NpcService } from '../../../services/npc.service';
 import { CampaignSidebarService } from '../../../services/campaign-sidebar.service';
 import { Npc } from '../../../services/npc.model';
 import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
-
-/** Groupe d'affichage : un dossier (« Bard's Gate »…) et ses PNJ. */
-interface FolderGroup {
-  folder: string;
-  npcs: Npc[];
-}
+import { FolderGroup, groupByFolder } from '../../../shared/folder-grouping.util';
 
 /**
  * Vue d'ensemble des PNJ d'une campagne, groupés par dossier — pendant « page »
@@ -21,7 +19,7 @@ interface FolderGroup {
  */
 @Component({
     selector: 'app-npc-list',
-    imports: [LucideAngularModule, TranslatePipe],
+    imports: [LucideAngularModule, TranslatePipe, CdkDropList, CdkDrag],
     templateUrl: './npc-list.component.html',
     styleUrls: ['./npc-list.component.scss']
 })
@@ -34,7 +32,7 @@ export class NpcListComponent implements OnInit {
 
   campaignId = '';
   /** Groupes triés par nom de dossier ; les non-classés en dernier (folder = ''). */
-  groups: FolderGroup[] = [];
+  groups: FolderGroup<Npc>[] = [];
   total = 0;
 
   constructor(
@@ -43,7 +41,9 @@ export class NpcListComponent implements OnInit {
     private service: NpcService,
     private campaignSidebar: CampaignSidebarService,
     private confirmDialog: ConfirmDialogService,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private dataSync: DataSyncService,
+    private destroyRef: DestroyRef
   ) {}
 
   ngOnInit(): void {
@@ -52,39 +52,40 @@ export class NpcListComponent implements OnInit {
       this.campaignSidebar.show(this.campaignId);
       this.load();
     }
+    // Recharge la liste ET l'arbre (synchro temps réel).
+    this.dataSync.onChange(this.destroyRef, () => {
+      this.load();
+      if (this.campaignId) this.campaignSidebar.show(this.campaignId);
+    });
   }
 
   load(): void {
     this.service.getByCampaign(this.campaignId).subscribe({
-      next: (list) => this.groups = this.groupByFolder(list),
+      next: (list) => { this.total = list.length; this.groups = groupByFolder(list); },
       error: () => this.groups = []
     });
   }
 
-  /** Même logique de groupement que la sidebar : dossiers triés, non-classés à la fin. */
-  private groupByFolder(npcs: Npc[]): FolderGroup[] {
-    this.total = npcs.length;
-    const sorted = [...npcs].sort((a, b) => a.name.localeCompare(b.name, 'fr'));
-    const byFolder = new Map<string, Npc[]>();
-    const ungrouped: Npc[] = [];
-    for (const n of sorted) {
-      const f = (n.folder ?? '').trim();
-      if (f) {
-        if (!byFolder.has(f)) byFolder.set(f, []);
-        byFolder.get(f)!.push(n);
-      } else {
-        ungrouped.push(n);
-      }
-    }
-    const groups: FolderGroup[] = [...byFolder.keys()]
-      .sort((a, b) => a.localeCompare(b, 'fr'))
-      .map(folder => ({ folder, npcs: byFolder.get(folder)! }));
-    if (ungrouped.length) groups.push({ folder: '', npcs: ungrouped });
-    return groups;
-  }
-
   create(): void {
     this.router.navigate(['/campaigns', this.campaignId, 'npcs', 'create']);
+  }
+
+  // --- Glisser-déposer (réordonner + déplacer entre dossiers) --------------
+
+  get groupListIds(): string[] {
+    return this.groups.map((_, i) => 'npc-group-' + i);
+  }
+
+  drop(target: FolderGroup<Npc>, event: CdkDragDrop<Npc[]>): void {
+    if (event.previousContainer === event.container) {
+      if (event.previousIndex === event.currentIndex) return;
+      moveItemInArray(target.items, event.previousIndex, event.currentIndex);
+    } else {
+      transferArrayItem(event.previousContainer.data, event.container.data,
+        event.previousIndex, event.currentIndex);
+    }
+    const folder = target.folder || null;
+    this.dataSync.persist(this.service.reorder(folder, target.items.map(n => n.id!)), () => this.load());
   }
 
   open(n: Npc): void {

@@ -48,9 +48,15 @@
         </button>
       </div>
       @if (subfolders.length > 0) {
-        <div class="items-grid">
-          @for (sub of subfolders; track sub) {
-            <div class="node-card" (click)="navigateToSubfolder(sub.id!)">
+        <div class="items-grid" cdkDropList cdkDropListOrientation="mixed"
+          [cdkDropListData]="subfolders" [cdkDropListEnterPredicate]="acceptFolders"
+          (cdkDropListDropped)="dropSubfolder($event)">
+          @for (sub of subfolders; track sub.id) {
+            <div class="node-card" cdkDrag [cdkDragData]="sub"
+              cdkDropList [id]="'sub-' + sub.id" [cdkDropListData]="sub"
+              [cdkDropListEnterPredicate]="acceptPages"
+              (cdkDropListDropped)="dropPageIntoFolder(sub, $event)"
+              (click)="navigateToSubfolder(sub.id!)">
               <lucide-icon [img]="Folder" [size]="24" class="node-icon"></lucide-icon>
               <span class="node-name">{{ sub.name }}</span>
             </div>
@@ -73,9 +79,12 @@
         </button>
       </div>
       @if (pages.length > 0) {
-        <div class="items-grid">
-          @for (page of pages; track page) {
-            <div class="node-card" (click)="navigateToPage(page.id!)">
+        <div class="items-grid" cdkDropList cdkDropListOrientation="mixed"
+          [cdkDropListData]="pages" [cdkDropListConnectedTo]="subfolderListIds"
+          [cdkDropListEnterPredicate]="acceptPages"
+          (cdkDropListDropped)="dropPage($event)">
+          @for (page of pages; track page.id) {
+            <div class="node-card" cdkDrag [cdkDragData]="page" (click)="navigateToPage(page.id!)">
               <lucide-icon [img]="FileText" [size]="24" class="node-icon"></lucide-icon>
               <span class="node-name">{{ page.title }}</span>
             </div>

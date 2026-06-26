@@ -2,6 +2,7 @@ package com.loremind.application.campaigncontext;
 
 import com.loremind.domain.campaigncontext.Campaign;
 import com.loremind.domain.campaigncontext.RandomTable;
+import com.loremind.domain.shared.ReorderSupport;
 import com.loremind.domain.campaigncontext.RandomTableEntry;
 import com.loremind.domain.campaigncontext.ports.CampaignRepository;
 import com.loremind.domain.campaigncontext.ports.RandomTableGenerator;
@@ -83,6 +84,15 @@ public class RandomTableService {
 
     public void deleteTable(String id) {
         repository.deleteById(id);
+    }
+
+    /** Réordonne les tables aléatoires d'une campagne : {@code order} = position. */
+    @org.springframework.transaction.annotation.Transactional
+    public void reorderTables(List<String> orderedIds) {
+        ReorderSupport.reorder(orderedIds,
+                id -> repository.findById(id).orElse(null),
+                (table, i) -> table.setOrder(i),
+                repository::save);
     }
 
     public List<RandomTable> searchTables(String query) {

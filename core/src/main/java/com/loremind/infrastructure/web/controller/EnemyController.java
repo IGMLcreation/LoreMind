@@ -57,6 +57,15 @@ public class EnemyController {
         return ResponseEntity.noContent().build();
     }
 
+    /** Réordonne (et reclasse) les ennemis d'un dossier : order = position. */
+    @PutMapping("/reorder")
+    public ResponseEntity<Void> reorder(@RequestBody ReorderRequest req) {
+        enemyService.reorderEnemies(req.folder(), req.orderedIds());
+        return ResponseEntity.noContent().build();
+    }
+
+    public record ReorderRequest(String folder, List<String> orderedIds) {}
+
     private EnemyService.EnemyData toData(EnemyRequest req) {
         return new EnemyService.EnemyData(
                 req.name(), req.level(), req.folder(),

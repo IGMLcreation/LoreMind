@@ -2,6 +2,7 @@ package com.loremind.application.campaigncontext;
 
 import com.loremind.domain.campaigncontext.Arc;
 import com.loremind.domain.campaigncontext.Chapter;
+import com.loremind.domain.shared.ReorderSupport;
 import com.loremind.domain.campaigncontext.ports.ArcRepository;
 import com.loremind.domain.campaigncontext.ports.ChapterRepository;
 import com.loremind.domain.campaigncontext.ports.SceneRepository;
@@ -116,5 +117,17 @@ public class ArcService {
 
     public boolean arcExists(String id) {
         return arcRepository.existsById(id);
+    }
+
+    /**
+     * Réordonne les arcs d'une campagne : {@code order} = position dans la liste fournie.
+     * Les ids inconnus sont ignorés. Transactionnel.
+     */
+    @Transactional
+    public void reorderArcs(List<String> orderedIds) {
+        ReorderSupport.reorder(orderedIds,
+                id -> arcRepository.findById(id).orElse(null),
+                (arc, i) -> arc.setOrder(i),
+                arcRepository::save);
     }
 }

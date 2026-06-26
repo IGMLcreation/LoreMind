@@ -73,6 +73,15 @@ public class NpcController {
         return ResponseEntity.noContent().build();
     }
 
+    /** Réordonne (et reclasse) les PNJ d'un dossier : order = position. */
+    @PutMapping("/reorder")
+    public ResponseEntity<Void> reorder(@RequestBody ReorderRequest req) {
+        npcService.reorderNpcs(req.folder(), req.orderedIds());
+        return ResponseEntity.noContent().build();
+    }
+
+    public record ReorderRequest(String folder, List<String> orderedIds) {}
+
     private NpcService.NpcData toData(NpcDTO dto, Integer order) {
         return new NpcService.NpcData(
                 dto.getName(),

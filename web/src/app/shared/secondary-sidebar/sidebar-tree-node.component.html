@@ -1,0 +1,64 @@
+<div class="tree-row" [style.padding-left.px]="level * 12">
+  @if (sidebar.dndEnabled() && item.dragKind) {
+    <span class="drag-handle" cdkDragHandle [title]="'secondarySidebar.dragHandle' | translate">
+      <lucide-icon [img]="GripVertical" [size]="12"></lucide-icon>
+    </span>
+  }
+  @if (!item.isAction && sidebar.isExpandable(item)) {
+    <button type="button" class="chevron-btn" (click)="sidebar.clickChevron($event, item)">
+      <lucide-icon [img]="sidebar.isExpanded(item.id) ? ChevronDown : ChevronRight" [size]="12"></lucide-icon>
+    </button>
+  }
+  @if (item.isAction || !sidebar.isExpandable(item)) {
+    <span class="chevron-spacer"></span>
+  }
+  <button type="button" class="tree-btn"
+    [class.action]="item.isAction"
+    [class.active]="sidebar.isActive(item)"
+    (click)="sidebar.clickItem(item)">
+    @if (sidebar.iconFor(item); as icon) {
+      <lucide-icon [img]="icon" [size]="14" class="item-icon"></lucide-icon>
+    }
+    {{ item.label }}
+    @if (!item.isAction && item.meta) {
+      <span class="tree-item-meta">{{ item.meta }}</span>
+    }
+  </button>
+  @if (item.createActions?.length) {
+    <span class="node-actions">
+      @for (a of item.createActions; track a) {
+        <button type="button" class="node-action-btn"
+          [title]="a.label" [attr.aria-label]="a.label"
+          (click)="sidebar.runCreateAction($event, a)">
+          <lucide-icon [img]="sidebar.iconForAction(a)" [size]="16"></lucide-icon>
+        </button>
+      }
+    </span>
+  }
+</div>
+
+@if (sidebar.isExpanded(item.id) && sidebar.hasChildren(item)) {
+  @if (sidebar.dndEnabled() && item.dropKinds) {
+    <div class="tree-children" cdkDropList
+      [id]="'lst-' + item.id"
+      [cdkDropListData]="sidebar.dragDataFor(item)"
+      [cdkDropListConnectedTo]="sidebar.dropListIds"
+      [cdkDropListEnterPredicate]="sidebar.enterPredicateFor(item)"
+      (cdkDropListDropped)="sidebar.onDrop(item, $event)">
+      @for (child of item.children; track child.id) {
+        @if (sidebar.dndEnabled() && child.dragKind) {
+          <app-sidebar-tree-node cdkDrag [cdkDragData]="child" cdkDragLockAxis="y"
+            [item]="child" [level]="level + 1"></app-sidebar-tree-node>
+        } @else {
+          <app-sidebar-tree-node [item]="child" [level]="level + 1"></app-sidebar-tree-node>
+        }
+      }
+    </div>
+  } @else {
+    <div class="tree-children">
+      @for (child of item.children; track child.id) {
+        <app-sidebar-tree-node [item]="child" [level]="level + 1"></app-sidebar-tree-node>
+      }
+    </div>
+  }
+}

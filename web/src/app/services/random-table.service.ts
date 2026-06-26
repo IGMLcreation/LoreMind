@@ -32,6 +32,11 @@ export class RandomTableService {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
+  /** Réordonne les tables aléatoires d'une campagne : order = position. */
+  reorder(orderedIds: string[]): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/reorder`, { orderedIds });
+  }
+
   /** Recherche par nom — alimente la recherche globale (Ctrl+K). */
   search(q: string): Observable<RandomTable[]> {
     return this.http.get<RandomTable[]>(`${this.apiUrl}/search`, { params: { q } });

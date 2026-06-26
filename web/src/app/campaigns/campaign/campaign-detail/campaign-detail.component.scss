@@ -505,3 +505,15 @@
     font-weight: 600;
   }
 }
+
+// En-tête de dossier dans la grille des PNJ (regroupement par dossier).
+.persona-folder {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #8a7bc8;
+  margin: 0.9rem 0 0.4rem;
+
+  &--none { color: #6b7280; }
+}

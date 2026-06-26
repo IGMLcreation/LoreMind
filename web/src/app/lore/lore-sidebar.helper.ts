@@ -6,6 +6,7 @@ import { PageService } from '../services/page.service';
 import { Lore, LoreNode } from '../services/lore.model';
 import { Template } from '../services/template.model';
 import { Page } from '../services/page.model';
+import { byOrder } from '../shared/folder-grouping.util';
 import {
   SecondarySidebarConfig, TreeItem, GlobalItem, BottomPanel
 } from '../services/layout.service';
@@ -47,6 +48,8 @@ export function loadLoreSidebarData(
 export function buildLoreSidebarConfig(data: LoreSidebarData): SecondarySidebarConfig {
   const { lore, allLores, nodes, templates, pages } = data;
 
+  // Tri par ORDRE manuel (glisser-déposer) — comparateur `byOrder` mutualisé.
+
   // Regroupe les pages par nodeId et les sous-dossiers par parentId pour un accès O(1).
   const pagesByNode = new Map<string, Page[]>();
   for (const p of pages) {
@@ -68,14 +71,15 @@ export function buildLoreSidebarConfig(data: LoreSidebarData): SecondarySidebarC
    * hiérarchie) — "Nouveau sous-dossier" et "Nouvelle page".
    */
   const buildFolderItem = (node: LoreNode): TreeItem => {
-    const subFolders = childrenByParent.get(node.id!) ?? [];
-    const nodePages = pagesByNode.get(node.id!) ?? [];
+    const subFolders = (childrenByParent.get(node.id!) ?? []).slice().sort(byOrder);
+    const nodePages = (pagesByNode.get(node.id!) ?? []).slice().sort(byOrder);
     const children: TreeItem[] = [
       ...subFolders.map(buildFolderItem),
       ...nodePages.map(p => ({
         id: `page-${p.id}`,
         label: p.title,
-        route: `/lore/${lore.id}/pages/${p.id}`
+        route: `/lore/${lore.id}/pages/${p.id}`,
+        dragKind: 'page' as const, dragId: p.id
       }))
     ];
     // IDs préfixés par type — chaque entité a sa propre séquence IDENTITY en base,
@@ -88,6 +92,8 @@ export function buildLoreSidebarConfig(data: LoreSidebarData): SecondarySidebarC
       route: `/lore/${lore.id}/folders/${node.id}`,
       meta: nodePages.length > 0 ? String(nodePages.length) : undefined,
       children,
+      dragKind: 'folder', dragId: node.id,
+      dropKinds: ['folder', 'page'], dropParentId: node.id,
       createActions: [
         {
           id: `create-folder-${node.id}`,
@@ -106,7 +112,7 @@ export function buildLoreSidebarConfig(data: LoreSidebarData): SecondarySidebarC
   };
 
   // L'arbre démarre aux dossiers racine (parentId nul ou vide).
-  const rootFolders = childrenByParent.get('__root__') ?? [];
+  const rootFolders = (childrenByParent.get('__root__') ?? []).slice().sort(byOrder);
   const treeItems: TreeItem[] = rootFolders.map(buildFolderItem);
 
   const globalItems: GlobalItem[] = allLores.map(l => ({
@@ -116,7 +122,6 @@ export function buildLoreSidebarConfig(data: LoreSidebarData): SecondarySidebarC
   const templatesPanel: BottomPanel = {
     id: 'templates',
     title: 'Templates',
-    initiallyOpen: true,
     headerAction: {
       label: 'Nouveau template',
       route: `/lore/${lore.id}/templates/create`
@@ -139,7 +144,11 @@ export function buildLoreSidebarConfig(data: LoreSidebarData): SecondarySidebarC
     globalItems,
     globalBackLabel: 'Tous les lores',
     globalBackRoute: '/lore',
-    bottomPanel: templatesPanel
+    bottomPanel: templatesPanel,
+    // DnD : les dossiers racine se réordonnent ; '' = parent racine (→ null côté service).
+    rootDropKinds: ['folder'],
+    rootDropParentId: '',
+    reorderContext: { scope: 'lore', id: lore.id! }
   };
 }
 

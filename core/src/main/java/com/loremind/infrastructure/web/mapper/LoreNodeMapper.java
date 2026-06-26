@@ -21,6 +21,7 @@ public class LoreNodeMapper {
         dto.setIcon(loreNode.getIcon());
         dto.setParentId(loreNode.getParentId());
         dto.setLoreId(loreNode.getLoreId());
+        dto.setOrder(loreNode.getOrder());
         return dto;
     }
 
@@ -35,6 +36,7 @@ public class LoreNodeMapper {
                 .icon(dto.getIcon())
                 .parentId(dto.getParentId())
                 .loreId(dto.getLoreId())
+                .order(dto.getOrder())
                 .build();
     }
 }

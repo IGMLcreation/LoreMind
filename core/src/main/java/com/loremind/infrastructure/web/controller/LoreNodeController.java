@@ -109,4 +109,13 @@ public class LoreNodeController {
         }
         return ResponseEntity.ok(loreNodeService.getDeletionImpact(id));
     }
+
+    /** Réordonne (et déplace) des dossiers : order = position, parentId = parent cible. */
+    @PutMapping("/reorder")
+    public ResponseEntity<Void> reorder(@RequestBody ReorderRequest req) {
+        loreNodeService.reorderNodes(req.parentId(), req.orderedIds());
+        return ResponseEntity.noContent().build();
+    }
+
+    public record ReorderRequest(String parentId, List<String> orderedIds) {}
 }

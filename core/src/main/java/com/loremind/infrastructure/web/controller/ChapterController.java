@@ -89,4 +89,13 @@ public class ChapterController {
         }
         return ResponseEntity.ok(chapterService.getDeletionImpact(id));
     }
+
+    /** Réordonne (et déplace) les chapitres d'un arc : order = position. */
+    @PutMapping("/reorder")
+    public ResponseEntity<Void> reorder(@RequestBody ReorderRequest req) {
+        chapterService.reorderChapters(req.arcId(), req.orderedIds());
+        return ResponseEntity.noContent().build();
+    }
+
+    public record ReorderRequest(String arcId, List<String> orderedIds) {}
 }

@@ -21,6 +21,8 @@ export interface LoreNode {
   /** ID du dossier parent (null = racine). */
   parentId?: string | null;
   loreId: string;
+  /** Position parmi les dossiers frères (glisser-déposer). */
+  order?: number;
   /** Champs historiques non encore persistés côté backend — gardés pour compat de l'UI. */
   type?: string;
   description?: string;

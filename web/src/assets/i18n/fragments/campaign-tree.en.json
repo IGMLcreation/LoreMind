@@ -1,6 +1,7 @@
 {
   "campaignTree": {
     "npcs": "NPCs",
+    "unclassified": "Unfiled",
     "newNpc": "New NPC",
     "newScene": "New scene",
     "newQuest": "New quest",

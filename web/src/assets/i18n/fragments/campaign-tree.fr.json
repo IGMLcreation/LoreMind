@@ -1,6 +1,7 @@
 {
   "campaignTree": {
     "npcs": "PNJ",
+    "unclassified": "Sans dossier",
     "newNpc": "Nouveau PNJ",
     "newScene": "Nouvelle scène",
     "newQuest": "Nouvelle quête",

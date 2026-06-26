@@ -1,13 +1,15 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, DestroyRef } from '@angular/core';
 
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { CdkDropList, CdkDrag, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
+import { DataSyncService } from '../../../services/data-sync.service';
 import { LucideAngularModule, Pencil, Trash2, AlertCircle } from 'lucide-angular';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { resolveCampaignIcon } from '../../campaign-icons';
 import { CampaignService } from '../../../services/campaign.service';
-import { CharacterService } from '../../../services/character.service';
 import { NpcService } from '../../../services/npc.service';
 import { RandomTableService } from '../../../services/random-table.service';
 import { EnemyService } from '../../../services/enemy.service';
@@ -27,7 +29,7 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  */
 @Component({
     selector: 'app-arc-view',
-    imports: [RouterModule, LucideAngularModule, ImageGalleryComponent, TranslatePipe],
+    imports: [RouterModule, LucideAngularModule, ImageGalleryComponent, TranslatePipe, CdkDropList, CdkDrag],
     templateUrl: './arc-view.component.html',
     styleUrls: ['./arc-view.component.scss']
 })
@@ -59,7 +61,6 @@ export class ArcViewComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private campaignService: CampaignService,
-    private characterService: CharacterService,
     private npcService: NpcService,
     private randomTableService: RandomTableService,
     private enemyService: EnemyService,
@@ -67,11 +68,16 @@ export class ArcViewComponent implements OnInit, OnDestroy {
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService,
     private confirmDialog: ConfirmDialogService,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private dataSync: DataSyncService,
+    private destroyRef: DestroyRef
   ) {}
 
   ngOnInit(): void {
-    this.route.paramMap.subscribe(pm => {
+    this.dataSync.onChange(this.destroyRef, () => {
+      if (this.campaignId && this.arcId) this.load();
+    });
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(pm => {
       const newCampaignId = pm.get('campaignId')!;
       const newArcId = pm.get('arcId')!;
       if (newArcId !== this.arcId || newCampaignId !== this.campaignId) {
@@ -87,7 +93,7 @@ export class ArcViewComponent implements OnInit, OnDestroy {
       campaign: this.campaignService.getCampaignById(this.campaignId),
       allCampaigns: this.campaignService.getAllCampaigns(),
       arc: this.campaignService.getArcById(this.arcId),
-      treeData: loadCampaignTreeData(this.campaignService, this.campaignId, this.characterService, this.npcService, this.randomTableService, this.enemyService)
+      treeData: loadCampaignTreeData(this.campaignService, this.campaignId, this.npcService, this.randomTableService, this.enemyService)
     }).pipe(
       switchMap(data => {
         const lid = data.campaign.loreId ?? null;
@@ -127,6 +133,15 @@ export class ArcViewComponent implements OnInit, OnDestroy {
       case 'FLAG_SET':
         return this.translate.instant('arcView.prereqFlagSet', { flag: p.flagName });
     }
+  }
+
+  /** Réordonne les quêtes (chapitres) de l'arc par glisser-déposer. */
+  dropQuest(event: CdkDragDrop<Chapter[]>): void {
+    if (event.previousIndex === event.currentIndex) return;
+    moveItemInArray(this.hubQuests, event.previousIndex, event.currentIndex);
+    this.dataSync.persist(
+      this.campaignService.reorderChapters(this.arcId, this.hubQuests.map(q => q.id!)),
+      () => this.load());
   }
 
   openQuest(q: Chapter): void {

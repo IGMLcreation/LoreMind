@@ -1,0 +1,138 @@
+// Le nœud est l'élément déplaçable (cdkDrag) → il doit être un bloc dans la colonne.
+// (Les en-têtes de section sont rendus HORS du nœud, dans la sidebar, pour qu'ils ne
+// soient pas emportés quand on déplace le premier item d'une section.)
+:host { display: block; }
+
+.tree-row {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  width: 100%;
+  position: relative;
+
+  // Hover-reveal : les actions de création n'apparaissent qu'au survol (Notion/VS Code).
+  &:hover .node-actions { opacity: 1; pointer-events: auto; }
+}
+
+.tree-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: #d1d5db;
+  font-size: 0.82rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+
+  &:hover { background: #1f2937; }
+  &.action { color: #6b7280; font-style: italic; }
+  &.action:hover { color: #a5b4fc; background: #1f2937; }
+
+  &.active {
+    background: #1e1b4b;
+    color: white;
+    font-weight: 500;
+    box-shadow: inset 3px 0 0 #6c63ff;
+  }
+  &.active:hover { background: #2a2558; }
+
+  .tree-item-meta {
+    margin-left: auto;
+    font-size: 0.72rem;
+    color: #6b7280;
+    flex-shrink: 0;
+  }
+}
+
+.item-icon {
+  display: inline-flex;
+  align-items: center;
+  color: #a5b4fc;
+  flex-shrink: 0;
+  margin-right: 0.1rem;
+}
+
+.node-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin-left: auto;
+  flex-shrink: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  position: absolute;
+  right: 0.25rem;
+  background: linear-gradient(to right, transparent, #1f2937 30%);
+  padding-left: 1rem;
+}
+
+.node-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: rgba(55, 65, 81, 0.6);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #d1d5db;
+  padding: 0;
+  transition: background 0.12s, color 0.12s;
+
+  &:hover { background: #4338ca; color: #ffffff; }
+}
+
+.chevron-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 0;
+
+  &:hover { background: #374151; color: white; }
+}
+
+.chevron-spacer {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.tree-children {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+// Zone de dépôt qui reçoit un élément valide : léger fond pour guider l'œil.
+.tree-children.cdk-drop-list-receiving { background: rgba(138, 123, 200, 0.08); border-radius: 4px; }
+
+// Poignée de glisser-déposer : faible au repos, visible au survol de la ligne.
+.drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  flex-shrink: 0;
+  margin-right: 1px;
+  color: #6b7280;
+  opacity: 0.25;
+  cursor: grab;
+  transition: opacity 0.15s, color 0.15s;
+}
+.tree-row:hover .drag-handle { opacity: 0.9; color: #8a7bc8; }
+.drag-handle:active { cursor: grabbing; }

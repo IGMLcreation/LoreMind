@@ -1,10 +1,12 @@
 package com.loremind.application.campaigncontext;
 
 import com.loremind.domain.campaigncontext.Scene;
+import com.loremind.domain.shared.ReorderSupport;
 import com.loremind.domain.campaigncontext.SceneBranch;
 import com.loremind.domain.campaigncontext.ports.SceneRepository;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -90,6 +92,25 @@ public class SceneService {
 
     public boolean sceneExists(String id) {
         return sceneRepository.existsById(id);
+    }
+
+    /**
+     * Réordonne les scènes d'un chapitre : {@code order} = position. Si {@code chapterId}
+     * diffère (scène déplacée vers un autre chapitre), on réaffecte le chapitre et on
+     * vide ses branches (elles ne valent que dans le chapitre d'origine). Transactionnel.
+     */
+    @Transactional
+    public void reorderScenes(String chapterId, List<String> orderedIds) {
+        ReorderSupport.reorder(orderedIds,
+                id -> sceneRepository.findById(id).orElse(null),
+                (scene, i) -> {
+                    if (chapterId != null && !chapterId.isBlank() && !chapterId.equals(scene.getChapterId())) {
+                        scene.setChapterId(chapterId);
+                        scene.setBranches(new ArrayList<>());
+                    }
+                    scene.setOrder(i);
+                },
+                sceneRepository::save);
     }
 
     /**

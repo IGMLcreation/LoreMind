@@ -1,6 +1,7 @@
 package com.loremind.application.campaigncontext;
 
 import com.loremind.domain.campaigncontext.Chapter;
+import com.loremind.domain.shared.ReorderSupport;
 import com.loremind.domain.campaigncontext.ports.ChapterRepository;
 import com.loremind.domain.campaigncontext.ports.SceneRepository;
 import org.springframework.beans.BeanUtils;
@@ -96,5 +97,20 @@ public class ChapterService {
 
     public boolean chapterExists(String id) {
         return chapterRepository.existsById(id);
+    }
+
+    /**
+     * Réordonne (et déplace) les chapitres d'un arc : {@code order} = position. Si
+     * {@code arcId} est fourni, on réaffecte le chapitre à cet arc. Transactionnel.
+     */
+    @Transactional
+    public void reorderChapters(String arcId, List<String> orderedIds) {
+        ReorderSupport.reorder(orderedIds,
+                id -> chapterRepository.findById(id).orElse(null),
+                (chapter, i) -> {
+                    if (arcId != null && !arcId.isBlank()) chapter.setArcId(arcId);
+                    chapter.setOrder(i);
+                },
+                chapterRepository::save);
     }
 }

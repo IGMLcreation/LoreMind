@@ -29,6 +29,9 @@ public class Page {
     private String templateId;
     private String title;
 
+    /** Position de la page dans son dossier (glisser-déposer). */
+    private int order;
+
     /** Valeurs des champs dynamiques TEXT définis par le Template. */
     private Map<String, String> values;
 

@@ -148,6 +148,23 @@
             <artifactId>tink</artifactId>
             <version>1.21.0</version>
         </dependency>
+
+        <!-- openhtmltopdf — rendu XHTML+CSS -> PDF, 100 % JVM (pas de binaire natif :
+             compatible distribution bureau locale via jpackage). Sert l'export PDF
+             d'une campagne (livret). -->
+        <dependency>
+            <groupId>com.openhtmltopdf</groupId>
+            <artifactId>openhtmltopdf-pdfbox</artifactId>
+            <version>1.0.10</version>
+        </dependency>
+        <!-- TwelveMonkeys imageio-webp — décodeur WebP pur Java pour ImageIO. Sans lui,
+             ImageIO (et donc openhtmltopdf/PDFBox) ne sait pas lire le WebP : les
+             portraits/illustrations WebP seraient absents du PDF. -->
+        <dependency>
+            <groupId>com.twelvemonkeys.imageio</groupId>
+            <artifactId>imageio-webp</artifactId>
+            <version>3.12.0</version>
+        </dependency>
     </dependencies>
 
     <build>

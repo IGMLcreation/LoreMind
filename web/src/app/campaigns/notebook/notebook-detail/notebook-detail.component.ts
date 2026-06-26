@@ -6,7 +6,6 @@ import { LucideAngularModule, ArrowLeft, Upload, Trash2, Send, FileText, Loader,
 import { NotebookService } from '../../../services/notebook.service';
 import { CampaignSidebarService } from '../../../services/campaign-sidebar.service';
 import { CampaignService } from '../../../services/campaign.service';
-import { CharacterService } from '../../../services/character.service';
 import { NpcService } from '../../../services/npc.service';
 import { EnemyService } from '../../../services/enemy.service';
 import { NotebookArchive, NotebookDetail, NotebookSource, NotebookMessage } from '../../../services/notebook.model';
@@ -66,7 +65,6 @@ export class NotebookDetailComponent implements OnInit {
     private service: NotebookService,
     private campaignSidebar: CampaignSidebarService,
     private campaignService: CampaignService,
-    private characterService: CharacterService,
     private npcService: NpcService,
     private enemyService: EnemyService,
     private confirmDialog: ConfirmDialogService,
@@ -84,7 +82,7 @@ export class NotebookDetailComponent implements OnInit {
   }
 
   private loadTree(): void {
-    loadCampaignTreeData(this.campaignService, this.campaignId, this.characterService, this.npcService, undefined, this.enemyService)
+    loadCampaignTreeData(this.campaignService, this.campaignId, this.npcService, undefined, this.enemyService)
       .subscribe({
         next: (data) => { this.arcs = data.arcs; this.chaptersByArc = data.chaptersByArc; },
         error: () => { /* cibles indisponibles : les cartes le signaleront */ }

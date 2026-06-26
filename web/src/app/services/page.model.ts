@@ -6,6 +6,8 @@ export interface Page {
   nodeId: string;
   templateId?: string | null;
   title: string;
+  /** Position de la page dans son dossier (glisser-déposer). */
+  order?: number;
   values?: Record<string, string>;
   /**
    * Pour chaque champ IMAGE du template, la liste ordonnee des IDs d'images

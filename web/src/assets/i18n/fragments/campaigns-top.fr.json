@@ -60,6 +60,8 @@
     "defaultPlaythroughName": "Nouvelle partie {{n}}",
     "foundryExport": "Exporter pour Foundry",
     "foundryExporting": "Export…",
+    "pdfExport": "Exporter en PDF",
+    "pdfExporting": "Génération…",
     "gameSystemChange": {
       "title": "Changer le système de jeu ?",
       "message": "Vous êtes sur le point de changer le système de jeu de cette campagne. Cela change également le template des fiches de PJ et PNJ.",

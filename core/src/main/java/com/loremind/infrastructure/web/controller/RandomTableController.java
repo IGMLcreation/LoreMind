@@ -90,6 +90,15 @@ public class RandomTableController {
         }
     }
 
+    /** Réordonne les tables aléatoires : order = position. */
+    @PutMapping("/reorder")
+    public ResponseEntity<Void> reorder(@RequestBody ReorderRequest req) {
+        service.reorderTables(req.orderedIds());
+        return ResponseEntity.noContent().build();
+    }
+
+    public record ReorderRequest(List<String> orderedIds) {}
+
     public record GenerateRequest(String campaignId, String description, String diceFormula) {}
 
     public record ImproviseRequest(String campaignId, String tableName, String resultLabel, String resultDetail) {}

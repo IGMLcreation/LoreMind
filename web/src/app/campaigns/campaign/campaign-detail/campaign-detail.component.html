@@ -28,6 +28,10 @@
           </div>
         </div>
         <div class="header-actions">
+          <button type="button" class="btn-secondary" (click)="exportPdf()" [disabled]="exportingPdf">
+            <lucide-icon [img]="FileText" [size]="14"></lucide-icon>
+            {{ (exportingPdf ? 'campaignDetail.pdfExporting' : 'campaignDetail.pdfExport') | translate }}
+          </button>
           <button type="button" class="btn-secondary" (click)="exportFoundry()" [disabled]="exportingFoundry">
             <lucide-icon [img]="Download" [size]="14"></lucide-icon>
             {{ (exportingFoundry ? 'campaignDetail.foundryExporting' : 'campaignDetail.foundryExport') | translate }}
@@ -136,17 +140,24 @@
               </button>
             </div>
             @if (npcs.length > 0) {
-              <div class="characters-grid">
-                @for (npc of npcs; track npc) {
-                  <div class="character-card" (click)="viewNpc(npc)">
-                    <lucide-icon [img]="Drama" [size]="20" class="character-icon character-icon--npc"></lucide-icon>
-                    <div class="character-info">
-                      <span class="character-name">{{ npc.name }}</span>
-                      <span class="character-snippet">{{ personaSnippet(npc) }}</span>
-                    </div>
-                  </div>
+              @for (g of npcGroups; track g.folder) {
+                @if (g.folder) {
+                  <h4 class="persona-folder">{{ g.folder.split('/').join(' / ') }}</h4>
+                } @else if (npcGroups.length > 1) {
+                  <h4 class="persona-folder persona-folder--none">{{ 'campaignTree.unclassified' | translate }}</h4>
                 }
-              </div>
+                <div class="characters-grid">
+                  @for (npc of g.items; track npc.id) {
+                    <div class="character-card" (click)="viewNpc(npc)">
+                      <lucide-icon [img]="Drama" [size]="20" class="character-icon character-icon--npc"></lucide-icon>
+                      <div class="character-info">
+                        <span class="character-name">{{ npc.name }}</span>
+                        <span class="character-snippet">{{ personaSnippet(npc) }}</span>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
             }
             @if (npcs.length === 0) {
               <div class="empty-state empty-state--compact">
@@ -172,9 +183,10 @@
             </div>
           </div>
           @if (arcs.length > 0) {
-            <div class="arcs-grid">
-              @for (arc of arcs; track arc) {
-                <div class="arc-card" (click)="openArc(arc)">
+            <div class="arcs-grid" cdkDropList cdkDropListOrientation="mixed"
+              (cdkDropListDropped)="dropArc($event)">
+              @for (arc of arcs; track arc.id) {
+                <div class="arc-card" cdkDrag [cdkDragData]="arc" (click)="openArc(arc)">
                   <lucide-icon [img]="Swords" [size]="24" class="arc-icon"></lucide-icon>
                   <span class="arc-name">{{ arc.name }}</span>
                   <span class="arc-meta">{{ 'campaignDetail.chapters' | translate:{ n: chapterCountByArc[arc.id!] || 0 } }}</span>

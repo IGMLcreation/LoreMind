@@ -59,6 +59,15 @@ export class PageService {
     return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(tap(() => this.invalidate()));
   }
 
+  /**
+   * Réordonne (et déplace) les pages d'un dossier : `order` = position dans
+   * `orderedIds`, et chaque page reçoit `nodeId` (déplacement par glisser-déposer).
+   */
+  reorder(nodeId: string, orderedIds: string[]): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/reorder`, { nodeId, orderedIds })
+      .pipe(tap(() => this.invalidate()));
+  }
+
   search(q: string): Observable<Page[]> {
     const params = new HttpParams().set('q', q);
     return this.http.get<Page[]>(`${this.apiUrl}/search`, { params });

@@ -1,6 +1,7 @@
 package com.loremind.application.lorecontext;
 
 import com.loremind.domain.lorecontext.LoreNode;
+import com.loremind.domain.shared.ReorderSupport;
 import com.loremind.domain.lorecontext.Page;
 import com.loremind.domain.lorecontext.ports.LoreNodeRepository;
 import com.loremind.domain.lorecontext.ports.PageRepository;
@@ -45,8 +46,18 @@ public class LoreNodeService {
                 .icon(changes.getIcon())
                 .parentId(changes.getParentId())
                 .loreId(changes.getLoreId())
+                .order(nextOrderFor(changes.getLoreId(), changes.getParentId()))
                 .build();
         return loreNodeRepository.save(loreNode);
+    }
+
+    /** Prochain ordre pour un dossier neuf : après ses frères (même lore + même parent). */
+    private int nextOrderFor(String loreId, String parentId) {
+        if (loreId == null) return 0;
+        return loreNodeRepository.findByLoreId(loreId).stream()
+                .filter(n -> java.util.Objects.equals(n.getParentId(), parentId))
+                .mapToInt(LoreNode::getOrder)
+                .max().orElse(-1) + 1;
     }
 
     public Optional<LoreNode> getLoreNodeById(String id) {
@@ -55,6 +66,37 @@ public class LoreNodeService {
 
     public List<LoreNode> getAllLoreNodes() {
         return loreNodeRepository.findAll();
+    }
+
+    /**
+     * Réordonne (et déplace) des dossiers frères : {@code order} = position, et
+     * {@code parentId} = dossier parent cible (null = racine). Évite les cycles : un
+     * dossier n'est pas réaffecté sous lui-même ni sous un de ses descendants.
+     */
+    @Transactional
+    public void reorderNodes(String parentId, List<String> orderedIds) {
+        String parent = (parentId == null || parentId.isBlank()) ? null : parentId;
+        ReorderSupport.reorder(orderedIds,
+                id -> loreNodeRepository.findById(id).orElse(null),
+                (node, i) -> {
+                    if (parent == null || !isSelfOrDescendant(parent, node.getId())) {
+                        node.setParentId(parent);
+                    }
+                    node.setOrder(i);
+                },
+                loreNodeRepository::save);
+    }
+
+    /** True si {@code candidateId} est {@code nodeId} ou un de ses descendants (anti-cycle). */
+    private boolean isSelfOrDescendant(String candidateId, String nodeId) {
+        String cur = candidateId;
+        int guard = 0;
+        while (cur != null && guard++ < 100) {
+            if (cur.equals(nodeId)) return true;
+            LoreNode n = loreNodeRepository.findById(cur).orElse(null);
+            cur = n != null ? n.getParentId() : null;
+        }
+        return false;
     }
 
     public List<LoreNode> getLoreNodesByLoreId(String loreId) {

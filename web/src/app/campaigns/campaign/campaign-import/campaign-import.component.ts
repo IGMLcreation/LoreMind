@@ -9,7 +9,6 @@ import {
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { CampaignImportService } from '../../../services/campaign-import.service';
 import { CampaignService } from '../../../services/campaign.service';
-import { CharacterService } from '../../../services/character.service';
 import { NpcService } from '../../../services/npc.service';
 import { RandomTableService } from '../../../services/random-table.service';
 import { EnemyService } from '../../../services/enemy.service';
@@ -106,7 +105,6 @@ export class CampaignImportComponent implements OnInit {
     private router: Router,
     private service: CampaignImportService,
     private campaignService: CampaignService,
-    private characterService: CharacterService,
     private npcService: NpcService,
     private randomTableService: RandomTableService,
     private enemyService: EnemyService,
@@ -122,7 +120,7 @@ export class CampaignImportComponent implements OnInit {
 
     // Pré-chargement de l'arborescence existante (pour fusionner à la revue).
     // En cas d'échec on dégrade : tout sera considéré comme nouveau.
-    loadCampaignTreeData(this.campaignService, this.campaignId, this.characterService, this.npcService, this.randomTableService, this.enemyService)
+    loadCampaignTreeData(this.campaignService, this.campaignId, this.npcService, this.randomTableService, this.enemyService)
       .pipe(catchError(() => of(null)))
       .subscribe(data => this.existingData = data);
   }

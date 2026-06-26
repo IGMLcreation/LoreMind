@@ -32,6 +32,11 @@ export class EnemyService {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
+  /** Réordonne (et reclasse) les ennemis d'un dossier : order = position, folder = cible. */
+  reorder(folder: string | null, orderedIds: string[]): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/reorder`, { folder, orderedIds });
+  }
+
   /** Recherche par nom — alimente la recherche globale (Ctrl+K). */
   search(q: string): Observable<Enemy[]> {
     return this.http.get<Enemy[]>(`${this.apiUrl}/search`, { params: { q } });

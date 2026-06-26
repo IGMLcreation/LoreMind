@@ -6,7 +6,6 @@ import { forkJoin } from 'rxjs';
 import { LucideAngularModule } from 'lucide-angular';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { CampaignService } from '../../../services/campaign.service';
-import { CharacterService } from '../../../services/character.service';
 import { NpcService } from '../../../services/npc.service';
 import { RandomTableService } from '../../../services/random-table.service';
 import { EnemyService } from '../../../services/enemy.service';
@@ -41,7 +40,6 @@ export class SceneCreateComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private campaignService: CampaignService,
-    private characterService: CharacterService,
     private npcService: NpcService,
     private randomTableService: RandomTableService,
     private enemyService: EnemyService,
@@ -65,7 +63,7 @@ export class SceneCreateComponent implements OnInit, OnDestroy {
     forkJoin({
       campaign: this.campaignService.getCampaignById(this.campaignId),
       allCampaigns: this.campaignService.getAllCampaigns(),
-      treeData: loadCampaignTreeData(this.campaignService, this.campaignId, this.characterService, this.npcService, this.randomTableService, this.enemyService)
+      treeData: loadCampaignTreeData(this.campaignService, this.campaignId, this.npcService, this.randomTableService, this.enemyService)
     }).subscribe(({ campaign, allCampaigns, treeData }) => {
       const currentChapter = (treeData.chaptersByArc[this.arcId] ?? []).find(c => c.id === this.chapterId);
       this.chapterName = currentChapter?.name ?? '';

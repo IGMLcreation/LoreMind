@@ -86,4 +86,13 @@ public class PageController {
         pageService.deletePage(id);
         return ResponseEntity.noContent().build();
     }
+
+    /** Réordonne (et déplace) les pages d'un dossier : order = position, nodeId = cible. */
+    @PutMapping("/reorder")
+    public ResponseEntity<Void> reorder(@RequestBody ReorderRequest req) {
+        pageService.reorderPages(req.nodeId(), req.orderedIds());
+        return ResponseEntity.noContent().build();
+    }
+
+    public record ReorderRequest(String nodeId, List<String> orderedIds) {}
 }

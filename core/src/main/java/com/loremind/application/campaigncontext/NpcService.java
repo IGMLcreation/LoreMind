@@ -2,6 +2,7 @@ package com.loremind.application.campaigncontext;
 
 import com.loremind.domain.campaigncontext.Campaign;
 import com.loremind.domain.campaigncontext.Npc;
+import com.loremind.domain.shared.ReorderSupport;
 import com.loremind.domain.campaigncontext.ports.CampaignRepository;
 import com.loremind.domain.campaigncontext.ports.NpcRepository;
 import org.springframework.stereotype.Service;
@@ -100,6 +101,19 @@ public class NpcService {
 
     public void deleteNpc(String id) {
         npcRepository.deleteById(id);
+    }
+
+    /**
+     * Réordonne (et reclasse) les PNJ d'un dossier : {@code order} = position, et le
+     * dossier de chaque PNJ est posé à {@code folder} (déplacement par glisser-déposer).
+     */
+    @org.springframework.transaction.annotation.Transactional
+    public void reorderNpcs(String folder, List<String> orderedIds) {
+        String f = normalizeFolder(folder);
+        ReorderSupport.reorder(orderedIds,
+                id -> npcRepository.findById(id).orElse(null),
+                (npc, i) -> { npc.setFolder(f); npc.setOrder(i); },
+                npcRepository::save);
     }
 
     public List<Npc> searchNpcs(String query) {

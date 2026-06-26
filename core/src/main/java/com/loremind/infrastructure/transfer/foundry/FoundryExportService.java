@@ -99,9 +99,10 @@ public class FoundryExportService {
         CampaignJpaEntity campaign = campaignRepo.findById(Long.parseLong(campaignId))
                 .orElseThrow(() -> new NoSuchElementException("Campagne introuvable : " + campaignId));
 
-        List<TemplateField> npcTemplate = resolveTemplate(campaign.getGameSystemId(), true);
-        List<TemplateField> enemyTemplate = resolveTemplate(campaign.getGameSystemId(), false);
-        String foundryActorType = resolveActorType(campaign.getGameSystemId());
+        GameSystemJpaEntity gameSystem = resolveGameSystem(campaign.getGameSystemId());
+        List<TemplateField> npcTemplate = gameSystem != null ? gameSystem.getNpcTemplate() : null;
+        List<TemplateField> enemyTemplate = gameSystem != null ? gameSystem.getEnemyTemplate() : null;
+        String foundryActorType = gameSystem != null ? gameSystem.getFoundryActorType() : null;
 
         AssetRegistry assets = new AssetRegistry();
 
@@ -275,23 +276,11 @@ public class FoundryExportService {
 
     // ----- Resolution des champs PNJ/Ennemi via le template -----
 
-    private List<TemplateField> resolveTemplate(String gameSystemId, boolean npc) {
+    /** Résout le GameSystem UNE fois (templates PNJ/ennemi + type d'acteur en sont tirés). */
+    private GameSystemJpaEntity resolveGameSystem(String gameSystemId) {
         if (gameSystemId == null || gameSystemId.isBlank()) return null;
         try {
-            return gameSystemRepo.findById(Long.parseLong(gameSystemId))
-                    .map(gs -> npc ? gs.getNpcTemplate() : gs.getEnemyTemplate())
-                    .orElse(null);
-        } catch (NumberFormatException ex) {
-            return null;
-        }
-    }
-
-    private String resolveActorType(String gameSystemId) {
-        if (gameSystemId == null || gameSystemId.isBlank()) return null;
-        try {
-            return gameSystemRepo.findById(Long.parseLong(gameSystemId))
-                    .map(GameSystemJpaEntity::getFoundryActorType)
-                    .orElse(null);
+            return gameSystemRepo.findById(Long.parseLong(gameSystemId)).orElse(null);
         } catch (NumberFormatException ex) {
             return null;
         }

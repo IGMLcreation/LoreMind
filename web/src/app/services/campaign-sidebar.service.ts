@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { forkJoin, Subscription } from 'rxjs';
 import { CampaignService } from './campaign.service';
-import { CharacterService } from './character.service';
 import { NpcService } from './npc.service';
 import { RandomTableService } from './random-table.service';
 import { EnemyService } from './enemy.service';
@@ -27,7 +26,6 @@ import { loadCampaignTreeData, buildCampaignSidebarConfig } from '../campaigns/c
 export class CampaignSidebarService {
   constructor(
     private campaignService: CampaignService,
-    private characterService: CharacterService,
     private npcService: NpcService,
     private randomTableService: RandomTableService,
     private enemyService: EnemyService,
@@ -47,7 +45,6 @@ export class CampaignSidebarService {
       treeData: loadCampaignTreeData(
         this.campaignService,
         campaignId,
-        this.characterService,
         this.npcService,
         this.randomTableService,
         this.enemyService

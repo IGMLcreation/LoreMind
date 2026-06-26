@@ -14,7 +14,8 @@
   },
   "secondarySidebar": {
     "backToCampaignHome": "Back to campaign home",
-    "resizeHandle": "Drag to resize"
+    "resizeHandle": "Drag to resize",
+    "dragHandle": "Drag to reorder"
   },
   "breadcrumb": {
     "ariaLabel": "Breadcrumb"

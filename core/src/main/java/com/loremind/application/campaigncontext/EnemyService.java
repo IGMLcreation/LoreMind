@@ -1,6 +1,7 @@
 package com.loremind.application.campaigncontext;
 
 import com.loremind.domain.campaigncontext.Enemy;
+import com.loremind.domain.shared.ReorderSupport;
 import com.loremind.domain.campaigncontext.ports.EnemyRepository;
 import com.loremind.domain.images.Image;
 import com.loremind.application.images.ImageService;
@@ -91,6 +92,19 @@ public class EnemyService {
         enemyRepository.deleteById(id);
     }
 
+    /**
+     * Réordonne (et reclasse) les ennemis d'un dossier : {@code order} = position, et
+     * le dossier de chaque ennemi est posé à {@code folder} (glisser-déposer).
+     */
+    @org.springframework.transaction.annotation.Transactional
+    public void reorderEnemies(String folder, List<String> orderedIds) {
+        String f = normalize(folder);
+        ReorderSupport.reorder(orderedIds,
+                id -> enemyRepository.findById(id).orElse(null),
+                (enemy, i) -> { enemy.setFolder(f); enemy.setOrder(i); },
+                enemyRepository::save);
+    }
+
     // --- Import de monstres depuis un compendium Foundry -------------------
 
     /**
@@ -130,9 +144,12 @@ public class EnemyService {
         String ext = contentType.contains("png") ? "png"
                 : contentType.contains("jpeg") || contentType.contains("jpg") ? "jpg"
                 : contentType.contains("gif") ? "gif" : "webp";
+        // Type MIME canonique dérivé de l'extension : un data URL "image/jpg" (non
+        // standard) serait rejeté par ImageService (qui n'accepte que "image/jpeg").
+        String mimeType = "jpg".equals(ext) ? "image/jpeg" : "image/" + ext;
         String filename = (name == null || name.isBlank() ? "monstre" : name.replaceAll("[^a-zA-Z0-9._-]", "_")) + "." + ext;
         try {
-            Image img = imageService.upload(filename, contentType,
+            Image img = imageService.upload(filename, mimeType,
                     new ByteArrayInputStream(bytes), bytes.length);
             return img.getId();
         } catch (RuntimeException e) {

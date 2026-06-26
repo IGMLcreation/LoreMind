@@ -21,6 +21,7 @@ public class PageMapper {
         dto.setNodeId(page.getNodeId());
         dto.setTemplateId(page.getTemplateId());
         dto.setTitle(page.getTitle());
+        dto.setOrder(page.getOrder());
         dto.setValues(CollectionUtils.copyMap(page.getValues()));
         dto.setImageValues(CollectionUtils.copyMap(page.getImageValues()));
         dto.setKeyValueValues(CollectionUtils.copyMap(page.getKeyValueValues()));
@@ -41,6 +42,7 @@ public class PageMapper {
                 .nodeId(dto.getNodeId())
                 .templateId(dto.getTemplateId())
                 .title(dto.getTitle())
+                .order(dto.getOrder())
                 .values(CollectionUtils.copyMap(dto.getValues()))
                 .imageValues(CollectionUtils.copyMap(dto.getImageValues()))
                 .keyValueValues(CollectionUtils.copyMap(dto.getKeyValueValues()))

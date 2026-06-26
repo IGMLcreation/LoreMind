@@ -117,6 +117,15 @@ export class LoreService {
     return this.http.delete<void>(`${this.nodesUrl}/${id}`).pipe(tap(() => this.invalidate()));
   }
 
+  /**
+   * Réordonne (et déplace) des dossiers : `order` = position dans `orderedIds`, et
+   * chaque dossier reçoit `parentId` (null = racine). Anti-cycle géré côté backend.
+   */
+  reorderNodes(parentId: string | null, orderedIds: string[]): Observable<void> {
+    return this.http.put<void>(`${this.nodesUrl}/reorder`, { parentId, orderedIds })
+      .pipe(tap(() => this.invalidate()));
+  }
+
   getLoreNodeDeletionImpact(id: string): Observable<LoreNodeDeletionImpact> {
     return this.http.get<LoreNodeDeletionImpact>(`${this.nodesUrl}/${id}/deletion-impact`);
   }

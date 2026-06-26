@@ -17,6 +17,7 @@ public class PageDTO {
     private String nodeId;
     private String templateId;
     private String title;
+    private int order;
     private Map<String, String> values;
     /** Pour chaque champ IMAGE du template, la liste ordonnee des IDs d'images. */
     private Map<String, List<String>> imageValues;

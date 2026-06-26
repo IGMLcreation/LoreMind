@@ -1,6 +1,15 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 
+/** Type d'entité déplaçable (réordonnancement par glisser-déposer dans l'arbre). */
+export type ReorderKind = 'arc' | 'chapter' | 'scene' | 'npc' | 'enemy' | 'table' | 'folder' | 'page';
+
+/** Contexte servant à recharger la bonne sidebar après un réordonnancement. */
+export interface SidebarReorderContext {
+  scope: 'campaign' | 'lore';
+  id: string;
+}
+
 export interface TreeItem {
   id: string;
   label: string;
@@ -9,6 +18,14 @@ export interface TreeItem {
   isAction?: boolean;  // style "action" (ex: "+ Nouveau chapitre")
   /** Clé d'icône optionnelle (ex: "users"). Résolue par le composant via `resolveIcon`. */
   iconKey?: string;
+  /** Type d'entité déplaçable (active le drag sur ce nœud). Absent = non déplaçable. */
+  dragKind?: ReorderKind;
+  /** Id BRUT de l'entité (sans préfixe) — utilisé pour l'ordre persisté. */
+  dragId?: string;
+  /** Types acceptés en dépôt dans la liste des enfants de ce nœud (drop list). */
+  dropKinds?: ReorderKind[];
+  /** Parent transmis au réordonnancement (arcId, chapterId, nodeId, dossier…). */
+  dropParentId?: string | null;
   /** Petit badge affiché à droite (ex: "3" pour compter les pages d'un dossier). */
   meta?: string;
   /**
@@ -66,7 +83,6 @@ export interface BottomPanel {
   id: string;         // identifiant pour mémoriser l'état ouvert/fermé
   title: string;
   items: BottomPanelItem[];
-  initiallyOpen?: boolean;
   /** Action "+" inline dans le header — créer un item sans déplier le panneau. */
   headerAction?: { label: string; route: string };
 }
@@ -87,6 +103,12 @@ export interface SecondarySidebarConfig {
   bottomPanel?: BottomPanel;   // optionnel : présent côté Lore (Templates)
   /** @deprecated Remplacé par bottomPanel. Gardé pour compat des callers campagne. */
   footerLabel?: string;
+  /** Types déplaçables acceptés à la RACINE de l'arbre (ex: arcs côté campagne). */
+  rootDropKinds?: ReorderKind[];
+  /** Parent transmis au reorder pour les éléments racine (campaignId, ou null = racine lore). */
+  rootDropParentId?: string | null;
+  /** Contexte de rechargement après un réordonnancement (présent = DnD activé). */
+  reorderContext?: SidebarReorderContext;
 }
 
 /**

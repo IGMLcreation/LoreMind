@@ -62,4 +62,13 @@ public class SceneController {
         sceneService.deleteScene(id);
         return ResponseEntity.noContent().build();
     }
+
+    /** Réordonne (et déplace) les scènes d'un chapitre : order = position. */
+    @PutMapping("/reorder")
+    public ResponseEntity<Void> reorder(@RequestBody ReorderRequest req) {
+        sceneService.reorderScenes(req.chapterId(), req.orderedIds());
+        return ResponseEntity.noContent().build();
+    }
+
+    public record ReorderRequest(String chapterId, List<String> orderedIds) {}
 }

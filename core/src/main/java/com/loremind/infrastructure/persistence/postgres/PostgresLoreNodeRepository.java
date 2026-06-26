@@ -95,6 +95,7 @@ public class PostgresLoreNodeRepository implements LoreNodeRepository {
                 .icon(jpaEntity.getIcon())
                 .parentId(jpaEntity.getParentId() != null ? jpaEntity.getParentId().toString() : null)
                 .loreId(jpaEntity.getLoreId().toString())
+                .order(jpaEntity.getOrder())
                 .createdAt(jpaEntity.getCreatedAt())
                 .updatedAt(jpaEntity.getUpdatedAt())
                 .build();
@@ -111,6 +112,7 @@ public class PostgresLoreNodeRepository implements LoreNodeRepository {
                 .icon(loreNode.getIcon())
                 .parentId(parentId)
                 .loreId(Long.parseLong(loreNode.getLoreId()))
+                .order(loreNode.getOrder())
                 .createdAt(loreNode.getCreatedAt())
                 .updatedAt(loreNode.getUpdatedAt())
                 .build();

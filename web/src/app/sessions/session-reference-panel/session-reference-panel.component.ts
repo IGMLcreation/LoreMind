@@ -116,8 +116,8 @@ export class SessionReferencePanelComponent implements OnChanges {
   private ensureTreeLoaded(): void {
     if (this.treeLoaded || this.loadingTree || !this.campaignId) return;
     this.loadingTree = true;
-    loadCampaignTreeData(this.campaignService, this.campaignId, this.characterService, this.npcService, undefined, this.enemyService).pipe(
-      catchError(() => of({ arcs: [], chaptersByArc: {}, scenesByChapter: {}, characters: [], npcs: [], randomTables: [], enemies: [] } as CampaignTreeData))
+    loadCampaignTreeData(this.campaignService, this.campaignId, this.npcService, undefined, this.enemyService).pipe(
+      catchError(() => of({ arcs: [], chaptersByArc: {}, scenesByChapter: {}, npcs: [], randomTables: [], enemies: [] } as CampaignTreeData))
     ).subscribe(data => {
       this.treeData = data;
       this.loadingTree = false;
