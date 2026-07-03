@@ -1,11 +1,15 @@
 package com.loremind.infrastructure.web.mapper;
 
+import com.loremind.domain.campaigncontext.LinkType;
 import com.loremind.domain.campaigncontext.Room;
 import com.loremind.domain.campaigncontext.RoomBranch;
 import com.loremind.domain.campaigncontext.Scene;
+import com.loremind.domain.campaigncontext.SceneBattlemap;
 import com.loremind.domain.campaigncontext.SceneBranch;
+import com.loremind.domain.campaigncontext.SceneType;
 import com.loremind.infrastructure.web.dto.campaigncontext.RoomBranchDTO;
 import com.loremind.infrastructure.web.dto.campaigncontext.RoomDTO;
+import com.loremind.infrastructure.web.dto.campaigncontext.SceneBattlemapDTO;
 import com.loremind.infrastructure.web.dto.campaigncontext.SceneBranchDTO;
 import com.loremind.infrastructure.web.dto.campaigncontext.SceneDTO;
 import org.springframework.stereotype.Component;
@@ -32,6 +36,7 @@ public class SceneMapper {
         dto.setChapterId(scene.getChapterId());
         dto.setOrder(scene.getOrder());
         dto.setIcon(scene.getIcon());
+        dto.setType((scene.getType() != null ? scene.getType() : SceneType.GENERIC).name());
         dto.setLocation(scene.getLocation());
         dto.setTiming(scene.getTiming());
         dto.setAtmosphere(scene.getAtmosphere());
@@ -49,8 +54,9 @@ public class SceneMapper {
         dto.setIllustrationImageIds(scene.getIllustrationImageIds() != null
                 ? new ArrayList<>(scene.getIllustrationImageIds())
                 : new ArrayList<>());
-        dto.setBattlemapMediaFileId(scene.getBattlemapMediaFileId());
-        dto.setBattlemapDataFileId(scene.getBattlemapDataFileId());
+        dto.setBattlemaps(toBattlemapDTOs(scene.getBattlemaps()));
+        dto.setGraphX(scene.getGraphX());
+        dto.setGraphY(scene.getGraphY());
         dto.setBranches(toBranchDTOs(scene.getBranches()));
         dto.setRooms(toRoomDTOs(scene.getRooms()));
         return dto;
@@ -68,6 +74,7 @@ public class SceneMapper {
                 .chapterId(dto.getChapterId())
                 .order(dto.getOrder())
                 .icon(dto.getIcon())
+                .type(parseSceneType(dto.getType()))
                 .location(dto.getLocation())
                 .timing(dto.getTiming())
                 .atmosphere(dto.getAtmosphere())
@@ -85,11 +92,28 @@ public class SceneMapper {
                 .illustrationImageIds(dto.getIllustrationImageIds() != null
                         ? new ArrayList<>(dto.getIllustrationImageIds())
                         : new ArrayList<>())
-                .battlemapMediaFileId(dto.getBattlemapMediaFileId())
-                .battlemapDataFileId(dto.getBattlemapDataFileId())
+                .battlemaps(toBattlemapDomain(dto.getBattlemaps()))
+                .graphX(dto.getGraphX())
+                .graphY(dto.getGraphY())
                 .branches(toBranchDomain(dto.getBranches()))
                 .rooms(toRoomDomain(dto.getRooms()))
                 .build();
+    }
+
+    // ─────────────── Mapping des battlemaps (VO <-> DTO) ───────────────
+
+    private List<SceneBattlemapDTO> toBattlemapDTOs(List<SceneBattlemap> battlemaps) {
+        if (battlemaps == null) return new ArrayList<>();
+        return battlemaps.stream()
+                .map(b -> new SceneBattlemapDTO(b.label(), b.mediaFileId(), b.dataFileId()))
+                .collect(Collectors.toList());
+    }
+
+    private List<SceneBattlemap> toBattlemapDomain(List<SceneBattlemapDTO> dtos) {
+        if (dtos == null) return new ArrayList<>();
+        return dtos.stream()
+                .map(d -> new SceneBattlemap(d.getLabel(), d.getMediaFileId(), d.getDataFileId()))
+                .collect(Collectors.toList());
     }
 
     // ─────────────── Mapping des branches (VO <-> DTO) ───────────────
@@ -97,15 +121,35 @@ public class SceneMapper {
     private List<SceneBranchDTO> toBranchDTOs(List<SceneBranch> branches) {
         if (branches == null) return new ArrayList<>();
         return branches.stream()
-                .map(b -> new SceneBranchDTO(b.label(), b.targetSceneId(), b.condition()))
+                .map(b -> new SceneBranchDTO(b.label(), b.targetSceneId(), b.condition(), b.kind().name()))
                 .collect(Collectors.toList());
     }
 
     private List<SceneBranch> toBranchDomain(List<SceneBranchDTO> dtos) {
         if (dtos == null) return new ArrayList<>();
         return dtos.stream()
-                .map(d -> new SceneBranch(d.getLabel(), d.getTargetSceneId(), d.getCondition()))
+                .map(d -> new SceneBranch(d.getLabel(), d.getTargetSceneId(), d.getCondition(), parseLinkType(d.getKind())))
                 .collect(Collectors.toList());
+    }
+
+    /** Parse tolérant d'un {@link SceneType} : null / valeur inconnue -> GENERIC. */
+    private SceneType parseSceneType(String value) {
+        if (value == null) return SceneType.GENERIC;
+        try {
+            return SceneType.valueOf(value);
+        } catch (IllegalArgumentException ex) {
+            return SceneType.GENERIC;
+        }
+    }
+
+    /** Parse tolérant d'un {@link LinkType} : null / valeur inconnue -> EXIT. */
+    private LinkType parseLinkType(String value) {
+        if (value == null) return LinkType.EXIT;
+        try {
+            return LinkType.valueOf(value);
+        } catch (IllegalArgumentException ex) {
+            return LinkType.EXIT;
+        }
     }
 
     // ─────────────── Mapping des pièces (VO <-> DTO) ───────────────

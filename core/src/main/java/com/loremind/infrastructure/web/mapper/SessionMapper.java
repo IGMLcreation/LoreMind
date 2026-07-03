@@ -18,6 +18,7 @@ public class SessionMapper {
         dto.setPlaythroughId(session.getPlaythroughId());
         dto.setStartedAt(session.getStartedAt());
         dto.setEndedAt(session.getEndedAt());
+        dto.setCurrentSceneId(session.getCurrentSceneId());
         dto.setCreatedAt(session.getCreatedAt());
         dto.setUpdatedAt(session.getUpdatedAt());
         dto.setActive(session.isActive());

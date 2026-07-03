@@ -71,9 +71,6 @@ public class PostgresChapterRepository implements ChapterRepository {
                 .description(jpaEntity.getDescription())
                 .arcId(jpaEntity.getArcId().toString())
                 .order(jpaEntity.getOrder())
-                .prerequisites(jpaEntity.getPrerequisites() != null
-                        ? new ArrayList<>(jpaEntity.getPrerequisites())
-                        : new ArrayList<>())
                 .icon(jpaEntity.getIcon())
                 .gmNotes(jpaEntity.getGmNotes())
                 .playerObjectives(jpaEntity.getPlayerObjectives())
@@ -97,9 +94,6 @@ public class PostgresChapterRepository implements ChapterRepository {
                 .description(chapter.getDescription())
                 .arcId(Long.parseLong(chapter.getArcId()))
                 .order(chapter.getOrder())
-                .prerequisites(chapter.getPrerequisites() != null
-                        ? new ArrayList<>(chapter.getPrerequisites())
-                        : new ArrayList<>())
                 .icon(chapter.getIcon())
                 .gmNotes(chapter.getGmNotes())
                 .playerObjectives(chapter.getPlayerObjectives())

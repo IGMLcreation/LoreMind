@@ -1,0 +1,50 @@
+@if (assessment) {
+  <section class="readiness-panel" [class.ready]="isReady">
+    <button type="button" class="readiness-header" (click)="toggle()">
+      <lucide-icon [img]="collapsed ? ChevronRight : ChevronDown" [size]="16"></lucide-icon>
+      @if (isReady) {
+        <lucide-icon [img]="CheckCircle2" [size]="16" class="ready-icon"></lucide-icon>
+      } @else {
+        <lucide-icon [img]="AlertTriangle" [size]="16" class="warn-icon"></lucide-icon>
+      }
+      <span class="readiness-title">{{ 'readiness.title' | translate }}</span>
+      <span class="status-badge" [class]="'status-' + assessment.overallStatus">
+        {{ ('readiness.badge.' + assessment.overallStatus) | translate }}
+      </span>
+      @if (!collapsed) {
+        <span class="counts">
+          @if (blockingCount > 0) {
+            <span class="count-chip blocking">{{ 'readiness.blockingN' | translate:{ n: blockingCount } }}</span>
+          }
+          @if (recommendedCount > 0) {
+            <span class="count-chip recommended">{{ 'readiness.recommendedN' | translate:{ n: recommendedCount } }}</span>
+          }
+        </span>
+      }
+    </button>
+
+    @if (!collapsed) {
+      @if (isReady) {
+        <p class="ready-msg">{{ 'readiness.allSet' | translate }}</p>
+      } @else {
+        <ul class="gap-list">
+          @for (gap of assessment.gaps; track gap.ruleId + gap.entityId) {
+            <li class="gap-card" [class]="'sev-' + gap.severity">
+              <span class="sev-dot"></span>
+              <div class="gap-body">
+                <span class="gap-message">{{ gap.message }}</span>
+                @if (gap.entityName) {
+                  <span class="gap-entity">{{ gap.entityName }}</span>
+                }
+              </div>
+              <a class="gap-cta" [routerLink]="gapLink(gap)" [queryParams]="gapQuery(gap)">
+                {{ 'readiness.fix' | translate }}
+                <lucide-icon [img]="ArrowRight" [size]="13"></lucide-icon>
+              </a>
+            </li>
+          }
+        </ul>
+      }
+    }
+  </section>
+}

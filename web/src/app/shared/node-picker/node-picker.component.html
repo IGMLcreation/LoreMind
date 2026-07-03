@@ -1,0 +1,51 @@
+<div class="node-picker">
+
+  <div class="node-list">
+    @for (n of nodes; track $index) {
+      <div class="node-chip">
+        <lucide-icon class="node-icon" [img]="n.nodeType === 'SCENE' ? MapPin : BookOpen" [size]="15"></lucide-icon>
+        <span class="node-name">{{ nodeName(n) || ('nodePicker.deletedNode' | translate) }}</span>
+        <span class="node-type">{{ (n.nodeType === 'SCENE' ? 'nodePicker.scene' : 'nodePicker.chapter') | translate }}</span>
+        <button type="button" (click)="moveUp($index)" [disabled]="$index === 0" [title]="'nodePicker.moveUp' | translate">
+          <lucide-icon [img]="ChevronUp" [size]="15"></lucide-icon>
+        </button>
+        <button type="button" (click)="moveDown($index)" [disabled]="$index === nodes.length - 1" [title]="'nodePicker.moveDown' | translate">
+          <lucide-icon [img]="ChevronDown" [size]="15"></lucide-icon>
+        </button>
+        <button type="button" (click)="remove($index)" [title]="'nodePicker.remove' | translate">
+          <lucide-icon [img]="X" [size]="15"></lucide-icon>
+        </button>
+      </div>
+    }
+    @if (nodes.length === 0) {
+      <p class="empty-hint">{{ 'nodePicker.empty' | translate }}</p>
+    }
+  </div>
+
+  <div class="add-row">
+    <select [(ngModel)]="selectedChapterId" [attr.aria-label]="'nodePicker.selectChapter' | translate">
+      <option value="">{{ 'nodePicker.selectChapter' | translate }}</option>
+      @for (c of availableChapters; track c.id) {
+        <option [value]="c.id">{{ c.name }}</option>
+      }
+    </select>
+    <button type="button" class="btn-secondary" (click)="addChapter()" [disabled]="!selectedChapterId">
+      <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
+      {{ 'nodePicker.addChapter' | translate }}
+    </button>
+  </div>
+
+  <div class="add-row">
+    <select [(ngModel)]="selectedSceneId" [attr.aria-label]="'nodePicker.selectScene' | translate">
+      <option value="">{{ 'nodePicker.selectScene' | translate }}</option>
+      @for (s of availableScenes; track s.id) {
+        <option [value]="s.id">{{ sceneOptionLabel(s) }}</option>
+      }
+    </select>
+    <button type="button" class="btn-secondary" (click)="addScene()" [disabled]="!selectedSceneId">
+      <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
+      {{ 'nodePicker.addScene' | translate }}
+    </button>
+  </div>
+
+</div>

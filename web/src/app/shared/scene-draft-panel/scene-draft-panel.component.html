@@ -1,0 +1,60 @@
+<div class="scene-draft">
+  <button type="button" class="draft-toggle" (click)="toggle()">
+    <lucide-icon [img]="open ? ChevronDown : ChevronRight" [size]="15"></lucide-icon>
+    <lucide-icon [img]="Sparkles" [size]="15" class="spark"></lucide-icon>
+    <span class="draft-title">{{ 'sceneDraft.button' | translate }}</span>
+  </button>
+
+  @if (open) {
+    <div class="draft-body">
+      <p class="draft-hint">{{ 'sceneDraft.hint' | translate }}</p>
+
+      <div class="draft-prompt">
+        <textarea [(ngModel)]="instruction" rows="2"
+          [placeholder]="'sceneDraft.instructionPlaceholder' | translate"></textarea>
+        <div class="draft-controls">
+          <label class="count-label">
+            {{ 'sceneDraft.countLabel' | translate }}
+            <select [(ngModel)]="count">
+              @for (c of countOptions; track c) { <option [ngValue]="c">{{ c }}</option> }
+            </select>
+          </label>
+          <button type="button" class="btn-generate" (click)="generate()" [disabled]="loading">
+            <lucide-icon [img]="loading ? RefreshCw : Sparkles" [size]="14" [class.spin]="loading"></lucide-icon>
+            {{ (loading ? 'sceneDraft.generating' : (generated ? 'sceneDraft.regenerate' : 'sceneDraft.generate')) | translate }}
+          </button>
+        </div>
+      </div>
+
+      @if (error) {
+        <p class="draft-error">{{ error }}</p>
+      }
+
+      @if (generated && drafts.length === 0 && !loading) {
+        <p class="draft-empty">{{ 'sceneDraft.empty' | translate }}</p>
+      }
+
+      @if (drafts.length > 0) {
+        <ul class="draft-list">
+          @for (d of drafts; track $index) {
+            <li class="draft-card" [class.rejected]="!d.accepted">
+              <label class="draft-check">
+                <input type="checkbox" [(ngModel)]="d.accepted" />
+                <span class="draft-name">{{ d.name }}</span>
+              </label>
+              @if (d.description) { <p class="draft-desc">{{ d.description }}</p> }
+              @if (d.playerNarration) { <p class="draft-narration">{{ d.playerNarration }}</p> }
+            </li>
+          }
+        </ul>
+
+        <div class="draft-actions">
+          <button type="button" class="btn-apply" (click)="apply()" [disabled]="acceptedCount === 0 || applying">
+            <lucide-icon [img]="applying ? RefreshCw : Check" [size]="14" [class.spin]="applying"></lucide-icon>
+            {{ (applying ? 'sceneDraft.creating' : 'sceneDraft.createSelection') | translate:{ n: acceptedCount } }}
+          </button>
+        </div>
+      }
+    </div>
+  }
+</div>

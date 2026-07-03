@@ -6,13 +6,16 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   LucideAngularModule, LucideIconData,
   Dices, ArrowLeft, Square, Trash2, Pencil, Check,
-  StickyNote, Sparkles, UserCheck, Plus, X
+  StickyNote, Sparkles, UserCheck, Plus, X,
+  Pin, PinOff, ExternalLink, ScrollText, RefreshCw
 } from 'lucide-angular';
 import { catchError, switchMap, filter, map } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { SessionService } from '../../services/session.service';
 import { Session } from '../../services/session.model';
 import { PlaythroughService } from '../../services/playthrough.service';
+import { CampaignService } from '../../services/campaign.service';
+import { Scene } from '../../services/campaign.model';
 import {
   SessionEntry, SessionEntryInput, EntryType, ENTRY_TYPE_META
 } from '../../services/session-entry.model';
@@ -43,6 +46,11 @@ export class SessionDetailComponent implements OnInit, OnDestroy {
   readonly Check = Check;
   readonly Plus = Plus;
   readonly X = X;
+  readonly Pin = Pin;
+  readonly PinOff = PinOff;
+  readonly ExternalLink = ExternalLink;
+  readonly ScrollText = ScrollText;
+  readonly RefreshCw = RefreshCw;
 
   /** Mapping enum → composant Lucide pour le rendu des icônes par type. */
   readonly typeIcons: Record<EntryType, LucideIconData> = {
@@ -73,11 +81,25 @@ export class SessionDetailComponent implements OnInit, OnDestroy {
   editEntryType: EntryType = 'NOTE';
   editEntryContent = '';
 
+  // ─────────────── Mode cockpit : scène courante épinglée ───────────────
+  pinnedScene: Scene | null = null;
+  /** Arc parent de la scène épinglée (résolu via son chapitre) — pour le lien d'ouverture. */
+  pinnedArcId: string | null = null;
+  /** Narration joueur dépliée dans le bandeau. */
+  narrationOpen = false;
+
+  // ─────────────── Récap « précédemment… » ───────────────
+  recapLoading = false;
+  recapText: string | null = null;
+  recapFrom: string | null = null;
+  recapError: string | null = null;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private sessionService: SessionService,
     private playthroughService: PlaythroughService,
+    private campaignService: CampaignService,
     private entryService: SessionEntryService,
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService,
@@ -110,6 +132,7 @@ export class SessionDetailComponent implements OnInit, OnDestroy {
       if (session) {
         this.pageTitleService.set(session.name);
         this.loadEntries(session.id);
+        this.loadPinnedScene(session.currentSceneId ?? null);
         if (session.playthroughId) {
           this.playthroughService.getById(session.playthroughId).pipe(
             catchError(() => of(null))
@@ -125,6 +148,88 @@ export class SessionDetailComponent implements OnInit, OnDestroy {
     ).subscribe(list => {
       this.entries = list.slice().sort((a, b) => b.occurredAt.localeCompare(a.occurredAt));
     });
+  }
+
+  // ─────────────── Mode cockpit : scène courante ───────────────
+
+  /** Charge (ou vide) le bandeau de scène épinglée. Épingle caduque (scène supprimée) → ignorée. */
+  private loadPinnedScene(sceneId: string | null): void {
+    if (!sceneId) { this.pinnedScene = null; this.pinnedArcId = null; return; }
+    this.campaignService.getSceneById(sceneId).pipe(catchError(() => of(null))).subscribe(scene => {
+      this.pinnedScene = scene;
+      this.narrationOpen = false;
+      this.pinnedArcId = null;
+      if (scene?.chapterId) {
+        this.campaignService.getChapterById(scene.chapterId).pipe(catchError(() => of(null)))
+          .subscribe(ch => this.pinnedArcId = ch?.arcId ?? null);
+      }
+    });
+  }
+
+  /** Épingle une scène depuis le panneau de référence (onglet Scènes). */
+  onPinScene(sceneId: string): void {
+    if (!this.session) return;
+    this.sessionService.setCurrentScene(this.session.id, sceneId).subscribe({
+      next: updated => { this.session = updated; this.loadPinnedScene(updated.currentSceneId ?? null); },
+      error: () => console.error('Erreur lors de l\'épinglage de la scène')
+    });
+  }
+
+  unpinScene(): void {
+    if (!this.session) return;
+    this.sessionService.setCurrentScene(this.session.id, null).subscribe({
+      next: updated => { this.session = updated; this.pinnedScene = null; this.pinnedArcId = null; },
+      error: () => console.error('Erreur lors du retrait de l\'épingle')
+    });
+  }
+
+  /** Ouvre la scène épinglée dans un nouvel onglet (préserve l'écran de session). */
+  openPinnedScene(): void {
+    if (!this.pinnedScene || !this.campaignId || !this.pinnedArcId) return;
+    const url = ['/campaigns', this.campaignId, 'arcs', this.pinnedArcId,
+      'chapters', this.pinnedScene.chapterId, 'scenes', this.pinnedScene.id].join('/');
+    window.open(url, '_blank', 'noopener');
+  }
+
+  // ─────────────── Récap « précédemment… » ───────────────
+
+  generateRecap(): void {
+    if (!this.session || this.recapLoading) return;
+    this.recapLoading = true;
+    this.recapError = null;
+    this.sessionService.recap(this.session.id).subscribe({
+      next: r => {
+        this.recapLoading = false;
+        this.recapText = r.recap;
+        this.recapFrom = r.previousSessionName;
+      },
+      error: err => {
+        this.recapLoading = false;
+        // Message backend (pas de séance précédente, journal vide, Brain KO…) si disponible.
+        this.recapError = err?.error?.error
+          ?? this.translate.instant('sessionDetail.recap.error');
+      }
+    });
+  }
+
+  /** Consigne le récap au journal (entrée NOTE 📜) puis referme l'encart. */
+  addRecapToJournal(): void {
+    if (!this.session || !this.recapText) return;
+    const input: SessionEntryInput = { type: 'NOTE', content: '📜 ' + this.recapText };
+    this.entryService.createEntry(this.session.id, input).subscribe({
+      next: created => {
+        this.entries = [created, ...this.entries];
+        this.recapText = null;
+        this.recapFrom = null;
+      },
+      error: () => console.error('Erreur lors de l\'ajout du récap au journal')
+    });
+  }
+
+  closeRecap(): void {
+    this.recapText = null;
+    this.recapFrom = null;
+    this.recapError = null;
   }
 
   // ─────────────── Renommage de la Session ───────────────

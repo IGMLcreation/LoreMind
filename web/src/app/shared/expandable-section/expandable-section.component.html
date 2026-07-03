@@ -6,6 +6,9 @@
         <span class="section-icon">{{ icon }}</span>
       }
       {{ title }}
+      @if (filled) {
+        <span class="section-dot" aria-hidden="true"></span>
+      }
     </span>
     <lucide-icon [img]="isOpen ? ChevronUp : ChevronDown" [size]="16"></lucide-icon>
   </button>

@@ -76,6 +76,7 @@ public class PostgresSessionRepository implements SessionRepository {
                 .playthroughId(jpa.getPlaythroughId() != null ? jpa.getPlaythroughId().toString() : null)
                 .startedAt(jpa.getStartedAt())
                 .endedAt(jpa.getEndedAt())
+                .currentSceneId(jpa.getCurrentSceneId() != null ? jpa.getCurrentSceneId().toString() : null)
                 .createdAt(jpa.getCreatedAt())
                 .updatedAt(jpa.getUpdatedAt())
                 .build();
@@ -89,6 +90,8 @@ public class PostgresSessionRepository implements SessionRepository {
                 .playthroughId(session.getPlaythroughId() != null ? Long.parseLong(session.getPlaythroughId()) : null)
                 .startedAt(session.getStartedAt())
                 .endedAt(session.getEndedAt())
+                .currentSceneId(session.getCurrentSceneId() != null && !session.getCurrentSceneId().isBlank()
+                        ? Long.parseLong(session.getCurrentSceneId()) : null)
                 .createdAt(session.getCreatedAt())
                 .updatedAt(session.getUpdatedAt())
                 .build();

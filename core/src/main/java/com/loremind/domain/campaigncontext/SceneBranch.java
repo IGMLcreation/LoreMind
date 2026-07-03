@@ -15,8 +15,19 @@ package com.loremind.domain.campaigncontext;
  * @param label          Libellé du choix (ex: "Si les joueurs attaquent le garde").
  * @param targetSceneId  Id de la Scene de destination, intra-chapitre uniquement.
  * @param condition      Notes MJ privées sur la condition de déclenchement (optionnel).
+ * @param kind           Type de lien (Niveau 2). {@code null} normalisé en {@link LinkType#EXIT}.
  */
-public record SceneBranch(String label, String targetSceneId, String condition) {
+public record SceneBranch(String label, String targetSceneId, String condition, LinkType kind) {
+
+    /** Normalise un {@code kind} absent (branches / bundles antérieurs au Niveau 2) vers EXIT. */
+    public SceneBranch {
+        if (kind == null) kind = LinkType.EXIT;
+    }
+
+    /** Constructeur 3-args rétro-compatible : {@code kind} par défaut {@link LinkType#EXIT}. */
+    public SceneBranch(String label, String targetSceneId, String condition) {
+        this(label, targetSceneId, condition, LinkType.EXIT);
+    }
 
     /** Raccourci pour construire une branche sans condition (cas le plus courant). */
     public static SceneBranch of(String label, String targetSceneId) {

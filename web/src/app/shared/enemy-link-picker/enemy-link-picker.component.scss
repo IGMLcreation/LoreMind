@@ -75,6 +75,19 @@
   }
 }
 
+// Chip d'une référence cassée (fiche du bestiaire supprimée) — teinte ambre = « à corriger ».
+.chip-broken {
+  background: #3a2e14;
+  color: #fcd34d;
+
+  .chip-label { cursor: default; }
+  .chip-label:hover { color: #fde68a; }
+  .chip-remove {
+    border-left: 1px solid #4a3a1a;
+    &:hover { background: #4a3a1a; color: #fde68a; }
+  }
+}
+
 .search-wrapper {
   position: relative;
 }

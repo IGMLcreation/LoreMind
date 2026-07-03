@@ -27,6 +27,23 @@
     </div>
   }
 
+  <!-- Références cassées (fiche supprimée) : exposées pour pouvoir les retirer -->
+  @if (brokenGroups.length > 0) {
+    <div class="linked-chips">
+      @for (b of brokenGroups; track b.id) {
+        <span class="chip chip-broken" [title]="'enemyLinkPicker.brokenTitle' | translate">
+          <span class="chip-label">
+            <lucide-icon [img]="AlertTriangle" [size]="12"></lucide-icon>
+            {{ 'enemyLinkPicker.broken' | translate }}{{ b.count > 1 ? ' ×' + b.count : '' }}
+          </span>
+          <button type="button" class="chip-remove" (click)="remove(b.id)" [title]="'enemyLinkPicker.removeLink' | translate">
+            <lucide-icon [img]="X" [size]="12"></lucide-icon>
+          </button>
+        </span>
+      }
+    </div>
+  }
+
   <!-- Input + dropdown de suggestions -->
   <div class="search-wrapper">
     <input

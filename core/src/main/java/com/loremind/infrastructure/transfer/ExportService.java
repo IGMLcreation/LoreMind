@@ -6,6 +6,7 @@ import com.loremind.domain.campaigncontext.Room;
 import com.loremind.domain.files.ports.FileStorage;
 import com.loremind.domain.images.ports.ImageStorage;
 import com.loremind.infrastructure.persistence.converter.PrerequisiteListJsonConverter;
+import com.loremind.infrastructure.persistence.converter.QuestNodeListJsonConverter;
 import com.loremind.infrastructure.persistence.entity.*;
 import com.loremind.infrastructure.persistence.jpa.*;
 import com.loremind.infrastructure.transfer.dto.ContentExport;
@@ -45,6 +46,7 @@ public class ExportService {
     // Réutilise le converter JPA pour (dé)sérialiser les prérequis dans le MÊME
     // format que la base (discriminant "kind"), au lieu de Jackson polymorphe.
     private static final PrerequisiteListJsonConverter PREREQ_CONVERTER = new PrerequisiteListJsonConverter();
+    private static final QuestNodeListJsonConverter NODE_CONVERTER = new QuestNodeListJsonConverter();
 
     private final GameSystemJpaRepository gameSystemRepo;
     private final LoreJpaRepository loreRepo;
@@ -69,6 +71,9 @@ public class ExportService {
     private final SessionEntryJpaRepository sessionEntryRepo;
     private final PlaythroughFlagJpaRepository playthroughFlagRepo;
     private final QuestProgressionJpaRepository questProgressionRepo;
+    private final QuestJpaRepository questRepo;
+    private final ClockJpaRepository clockRepo;
+    private final FrontJpaRepository frontRepo;
     private final ObjectMapper objectMapper;
     private final String appVersion;
 
@@ -95,6 +100,9 @@ public class ExportService {
                          SessionEntryJpaRepository sessionEntryRepo,
                          PlaythroughFlagJpaRepository playthroughFlagRepo,
                          QuestProgressionJpaRepository questProgressionRepo,
+                         QuestJpaRepository questRepo,
+                         ClockJpaRepository clockRepo,
+                         FrontJpaRepository frontRepo,
                          ObjectMapper objectMapper,
                          @Nullable BuildProperties buildProperties) {
         this.gameSystemRepo = gameSystemRepo;
@@ -120,6 +128,9 @@ public class ExportService {
         this.sessionEntryRepo = sessionEntryRepo;
         this.playthroughFlagRepo = playthroughFlagRepo;
         this.questProgressionRepo = questProgressionRepo;
+        this.questRepo = questRepo;
+        this.clockRepo = clockRepo;
+        this.frontRepo = frontRepo;
         this.objectMapper = objectMapper;
         this.appVersion = buildProperties != null ? buildProperties.getVersion() : "dev";
     }
@@ -163,7 +174,10 @@ public class ExportService {
                 map(sessionRepo.findAll(), this::toSessionDto),
                 map(sessionEntryRepo.findAll(), this::toSessionEntryDto),
                 map(playthroughFlagRepo.findAll(), this::toFlagDto),
-                map(questProgressionRepo.findAll(), this::toQuestProgressionDto));
+                map(questProgressionRepo.findAll(), this::toQuestProgressionDto),
+                map(questRepo.findAll(), this::toQuestDto),
+                map(clockRepo.findAll(), this::toClockDto),
+                map(frontRepo.findAll(), this::toFrontDto));
     }
 
     /**
@@ -209,8 +223,15 @@ public class ExportService {
                 .flatMap(p -> playthroughFlagRepo.findByPlaythroughId(p.getId()).stream()).toList();
         List<QuestProgressionJpaEntity> questEntities = ptEntities.stream()
                 .flatMap(p -> questProgressionRepo.findByPlaythroughId(p.getId()).stream()).toList();
+        List<ClockJpaEntity> clockEntities = ptEntities.stream()
+                .flatMap(p -> clockRepo.findByPlaythroughIdOrderByOrderAsc(p.getId()).stream()).toList();
+        List<FrontJpaEntity> frontEntities = ptEntities.stream()
+                .flatMap(p -> frontRepo.findByPlaythroughIdOrderByOrderAsc(p.getId()).stream()).toList();
         List<CharacterJpaEntity> characterEntities = ptEntities.stream()
                 .flatMap(p -> characterRepo.findByPlaythroughIdOrderByOrderAsc(p.getId()).stream()).toList();
+
+        // Quêtes de la campagne (Niveau 1) — toujours incluses dans la clôture.
+        List<QuestJpaEntity> campaignQuests = questRepo.findByCampaignId(cid);
 
         // Images/fichiers : uniquement les binaires RÉFÉRENCÉS par la clôture (si option active).
         List<ImageJpaEntity> imageEntities = List.of();
@@ -231,7 +252,10 @@ public class ExportService {
                     .distinct().toList();
 
             Set<Long> fileRefs = new LinkedHashSet<>();
-            sceneEntities.forEach(s -> { addLong(fileRefs, s.getBattlemapMediaFileId()); addLong(fileRefs, s.getBattlemapDataFileId()); });
+            sceneEntities.forEach(s -> {
+                if (s.getBattlemaps() == null) return;
+                s.getBattlemaps().forEach(bm -> { addLong(fileRefs, bm.mediaFileId()); addLong(fileRefs, bm.dataFileId()); });
+            });
             fileEntities = fileRefs.stream()
                     .map(id -> storedFileRepo.findById(id).orElse(null)).filter(java.util.Objects::nonNull).toList();
         }
@@ -268,7 +292,10 @@ public class ExportService {
                 map(sessionEntities, this::toSessionDto),
                 map(entryEntities, this::toSessionEntryDto),
                 map(flagEntities, this::toFlagDto),
-                map(questEntities, this::toQuestProgressionDto));
+                map(questEntities, this::toQuestProgressionDto),
+                map(campaignQuests, this::toQuestDto),
+                map(clockEntities, this::toClockDto),
+                map(frontEntities, this::toFrontDto));
     }
 
     // ----- Helpers de chargement -----
@@ -409,6 +436,14 @@ public class ExportService {
         }
         Set<String> keys = new LinkedHashSet<>();
         for (ContentExport.SceneDto s : export.scenes()) {
+            if (s.battlemaps() != null) {
+                s.battlemaps().forEach(bm -> {
+                    addFileKey(keys, keyById, bm.mediaFileId());
+                    addFileKey(keys, keyById, bm.dataFileId());
+                });
+            }
+            // Legacy (paire unique) : jamais renseigne sur les nouveaux exports,
+            // mais ce collecteur sert aussi de reference au format on-disk.
             addFileKey(keys, keyById, s.battlemapMediaFileId());
             addFileKey(keys, keyById, s.battlemapDataFileId());
         }
@@ -487,8 +522,19 @@ public class ExportService {
     }
 
     private ContentExport.ChapterDto toChapterDto(ChapterJpaEntity e) {
+        // prerequisitesJson : champ conservé dans le bundle pour la rétro-compat de l'import
+        // legacy (un vieux backup HUB→quête le lit). Les chapitres n'ont plus de prérequis -> "[]".
         return new ContentExport.ChapterDto(e.getId(), e.getName(), e.getDescription(),
-                e.getArcId(), e.getOrder(), PREREQ_CONVERTER.convertToDatabaseColumn(e.getPrerequisites()), e.getIcon(),
+                e.getArcId(), e.getOrder(), "[]", e.getIcon(),
+                e.getGmNotes(), e.getPlayerObjectives(), e.getNarrativeStakes(),
+                e.getRelatedPageIds(), e.getIllustrationImageIds());
+    }
+
+    private ContentExport.QuestDto toQuestDto(QuestJpaEntity e) {
+        return new ContentExport.QuestDto(
+                e.getId(), e.getCampaignId(), e.getArcId(), e.getName(), e.getDescription(), e.getIcon(), e.getOrder(),
+                PREREQ_CONVERTER.convertToDatabaseColumn(e.getPrerequisites()),
+                NODE_CONVERTER.convertToDatabaseColumn(e.getNodes()),
                 e.getGmNotes(), e.getPlayerObjectives(), e.getNarrativeStakes(),
                 e.getRelatedPageIds(), e.getIllustrationImageIds());
     }
@@ -499,8 +545,9 @@ public class ExportService {
                 e.getTiming(), e.getAtmosphere(), e.getPlayerNarration(),
                 e.getGmSecretNotes(), e.getChoicesConsequences(), e.getCombatDifficulty(),
                 e.getEnemies(), e.getEnemyIds(), e.getRelatedPageIds(),
-                e.getIllustrationImageIds(), e.getBattlemapMediaFileId(),
-                e.getBattlemapDataFileId(), e.getBranches(), e.getRooms());
+                e.getIllustrationImageIds(), null, null, // legacy battlemap : plus émis
+                e.getBattlemaps(), e.getBranches(), e.getRooms(), e.getType(),
+                e.getGraphX(), e.getGraphY());
     }
 
     private ContentExport.CharacterDto toCharacterDto(CharacterJpaEntity e) {
@@ -561,6 +608,17 @@ public class ExportService {
         return new ContentExport.PlaythroughDto(e.getId(), e.getCampaignId(), e.getName(), e.getDescription());
     }
 
+    private ContentExport.ClockDto toClockDto(ClockJpaEntity e) {
+        return new ContentExport.ClockDto(e.getId(), e.getPlaythroughId(), e.getName(),
+                e.getDescription(), e.getSegments(), e.getFilled(), e.getOrder(),
+                e.getTriggerType(), e.getTriggerRef(), e.getFrontId());
+    }
+
+    private ContentExport.FrontDto toFrontDto(FrontJpaEntity e) {
+        return new ContentExport.FrontDto(e.getId(), e.getPlaythroughId(), e.getName(),
+                e.getDescription(), e.getOrder());
+    }
+
     private ContentExport.SessionDto toSessionDto(SessionJpaEntity e) {
         return new ContentExport.SessionDto(e.getId(), e.getName(), e.getCampaignId(), e.getPlaythroughId(),
                 e.getStartedAt() != null ? e.getStartedAt().toString() : null,
@@ -578,7 +636,9 @@ public class ExportService {
     }
 
     private ContentExport.QuestProgressionDto toQuestProgressionDto(QuestProgressionJpaEntity e) {
-        return new ContentExport.QuestProgressionDto(e.getId(), e.getPlaythroughId(), e.getChapterId(),
+        // Le champ DTO se nomme encore chapterId (format bundle v1) ; il porte désormais
+        // le quest id (== chapter id partagé). Le renommage du format est traité en Phase 5.
+        return new ContentExport.QuestProgressionDto(e.getId(), e.getPlaythroughId(), e.getQuestId(),
                 e.getStatus() != null ? e.getStatus().name() : null);
     }
 }

@@ -26,36 +26,21 @@
 
   <form [formGroup]="form" (ngSubmit)="submit()" class="edit-form">
 
-    <!-- Conditions de déblocage (scénario) — pour TOUT chapitre : arc HUB (= quête)
-    comme arc linéaire (= chapitre conditionnel). Vide = disponible d'emblée. -->
-    <div class="hub-section">
-      <h2 class="hub-section-title">
-        {{ (parentArc?.type === 'HUB' ? 'chapterEdit.unlockTitleQuest' : 'chapterEdit.unlockTitleChapter') | translate }}
-      </h2>
-      <small class="field-hint">
-        {{ (parentArc?.type === 'HUB' ? 'chapterEdit.unlockHintQuest' : 'chapterEdit.unlockHintChapter') | translate }}
-      </small>
-      <app-prerequisite-editor
-        [prerequisites]="prerequisites"
-        [availableQuests]="availableQuests"
-        [availableFlags]="availableFlagNames"
-        (prerequisitesChange)="onPrerequisitesChange($event)">
-      </app-prerequisite-editor>
-    </div>
+    <!-- Tout est optionnel sauf le titre : identité visible, le reste replié. -->
+    <p class="optional-hint">{{ 'chapterEdit.optionalHint' | translate }}</p>
 
-    <!-- Illustrations (galerie editable, rendu editorial) -->
-    <div class="field">
-      <label>{{ 'chapterEdit.illustrations' | translate }}</label>
-      <app-image-gallery
-        [imageIds]="illustrationImageIds"
-        [editable]="true"
-        [layout]="'EDITORIAL'"
-        (imageIdsChange)="illustrationImageIds = $event">
-      </app-image-gallery>
-      <small class="field-hint">{{ 'chapterEdit.illustrationsHint' | translate }}</small>
-    </div>
+    <!-- Co-création (Pilier A) : le co-MJ propose, validation champ par champ → remplit le formulaire. -->
+    <app-entity-assist-panel
+      [entityType]="'chapter'" [entityId]="chapterId" [campaignId]="campaignId"
+      (applied)="onAssistApplied($event)"></app-entity-assist-panel>
 
+    <!-- Co-création (Pilier A, « create ») : peupler ce chapitre en scènes. -->
+    <app-scene-draft-panel
+      [chapterId]="chapterId" [campaignId]="campaignId"
+      [startOpen]="assistParam === 'draft-scenes'"
+      (created)="onScenesCreated($event)"></app-scene-draft-panel>
 
+    <!-- Identité -->
     <div class="field">
       <label for="chapter-edit-name">{{ 'chapterEdit.nameLabel' | translate }}</label>
       <input
@@ -82,42 +67,58 @@
       <app-icon-picker [options]="campaignIconOptions" [(selected)]="selectedIcon"></app-icon-picker>
     </div>
 
-    <div class="field">
-      <label for="chapter-edit-gm-notes">{{ 'chapterEdit.gmNotesLabel' | translate }}</label>
-      <textarea
-        id="chapter-edit-gm-notes"
-        formControlName="gmNotes"
-        [placeholder]="'chapterEdit.gmNotesPlaceholder' | translate"
-        rows="6">
-      </textarea>
-      <small class="field-hint">{{ 'chapterEdit.gmNotesHint' | translate }}</small>
-    </div>
+    <!-- Illustrations (galerie editable, rendu editorial) -->
+    <app-expandable-section [title]="'chapterEdit.illustrations' | translate" icon="🖼️" [filled]="illustrationsFilled">
+      <app-image-gallery
+        [imageIds]="illustrationImageIds"
+        [editable]="true"
+        [layout]="'EDITORIAL'"
+        (imageIdsChange)="illustrationImageIds = $event">
+      </app-image-gallery>
+      <small class="field-hint">{{ 'chapterEdit.illustrationsHint' | translate }}</small>
+    </app-expandable-section>
 
-    <div class="field-row">
+    <!-- Notes du MJ (privé) -->
+    <app-expandable-section [title]="'chapterEdit.gmNotesSectionTitle' | translate" icon="🔒" variant="private" [filled]="gmNotesFilled">
       <div class="field">
-        <label for="chapter-edit-player-objectives">{{ 'chapterEdit.playerObjectivesLabel' | translate }}</label>
+        <label for="chapter-edit-gm-notes">{{ 'chapterEdit.gmNotesLabel' | translate }}</label>
         <textarea
-          id="chapter-edit-player-objectives"
-          formControlName="playerObjectives"
-          [placeholder]="'chapterEdit.playerObjectivesPlaceholder' | translate"
-          rows="4">
+          id="chapter-edit-gm-notes"
+          formControlName="gmNotes"
+          [placeholder]="'chapterEdit.gmNotesPlaceholder' | translate"
+          rows="6">
         </textarea>
+        <small class="field-hint">{{ 'chapterEdit.gmNotesHint' | translate }}</small>
       </div>
-      <div class="field">
-        <label for="chapter-edit-narrative-stakes">{{ 'chapterEdit.narrativeStakesLabel' | translate }}</label>
-        <textarea
-          id="chapter-edit-narrative-stakes"
-          formControlName="narrativeStakes"
-          [placeholder]="'chapterEdit.narrativeStakesPlaceholder' | translate"
-          rows="4">
-        </textarea>
+    </app-expandable-section>
+
+    <!-- Objectifs et enjeux -->
+    <app-expandable-section [title]="'chapterEdit.objectivesStakesSectionTitle' | translate" icon="🎯" [filled]="objectivesStakesFilled">
+      <div class="field-row">
+        <div class="field">
+          <label for="chapter-edit-player-objectives">{{ 'chapterEdit.playerObjectivesLabel' | translate }}</label>
+          <textarea
+            id="chapter-edit-player-objectives"
+            formControlName="playerObjectives"
+            [placeholder]="'chapterEdit.playerObjectivesPlaceholder' | translate"
+            rows="4">
+          </textarea>
+        </div>
+        <div class="field">
+          <label for="chapter-edit-narrative-stakes">{{ 'chapterEdit.narrativeStakesLabel' | translate }}</label>
+          <textarea
+            id="chapter-edit-narrative-stakes"
+            formControlName="narrativeStakes"
+            [placeholder]="'chapterEdit.narrativeStakesPlaceholder' | translate"
+            rows="4">
+          </textarea>
+        </div>
       </div>
-    </div>
+    </app-expandable-section>
 
     <!-- ===== Pages Lore associées (B2 cross-context) ===== -->
     @if (loreId) {
-      <div class="field">
-        <label>{{ 'chapterEdit.relatedPages' | translate }}</label>
+      <app-expandable-section [title]="'chapterEdit.relatedPages' | translate" icon="🔗" [filled]="loreFilled">
         <app-lore-link-picker
           [value]="relatedPageIds"
           [availablePages]="availablePages"
@@ -127,7 +128,7 @@
         <small class="field-hint">
           {{ 'chapterEdit.relatedPagesHint' | translate }}
         </small>
-      </div>
+      </app-expandable-section>
     }
 
     @if (!loreId) {

@@ -1,0 +1,84 @@
+.quest-page {
+  padding: 1.75rem 1.5rem;
+  max-width: 760px;
+}
+
+.quest-toolbar {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+
+  .spacer { flex: 1; }
+}
+
+.btn-back,
+.btn-create {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  border: 1px solid #374151;
+  background: #1f2937;
+  color: #d1d5db;
+}
+
+.btn-create {
+  background: #6c63ff;
+  border-color: #6c63ff;
+  color: #fff;
+}
+
+.quest-header {
+  h1 {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .quest-hint {
+    color: #9ca3af;
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+  }
+}
+
+.quest-empty {
+  color: #6b7280;
+  padding: 2rem 0;
+}
+
+.quest-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.quest-card {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  background: #1f2937;
+  color: #e5e7eb;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s;
+
+  &:hover { border-color: #6c63ff; }
+
+  .quest-card-icon { color: #a5b4fc; flex: 0 0 auto; }
+  .quest-card-name { flex: 1; font-weight: 600; }
+  .quest-card-cond { opacity: 0.85; }
+  .quest-del {
+    opacity: 0.6;
+    display: inline-flex;
+    &:hover { opacity: 1; color: #f87171; }
+  }
+}

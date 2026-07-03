@@ -344,3 +344,92 @@
   word-break: break-word;
   margin: 0;
 }
+
+// ─────────────── Mode cockpit : scène courante épinglée ───────────────
+.pinned-scene {
+  margin-bottom: 1rem;
+  padding: 0.7rem 0.9rem;
+  background: #14141f;
+  border: 1px solid #3a3658;
+  border-left: 3px solid #6c63ff;
+  border-radius: 10px;
+
+  .pinned-head {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+
+    .pinned-icon { color: #8b80ff; flex-shrink: 0; }
+    .pinned-label { color: #9ca3af; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .pinned-name { flex: 1; min-width: 0; color: #f3f4f6; font-size: 0.95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pinned-actions { display: inline-flex; gap: 0.25rem; flex-shrink: 0; }
+  }
+
+  .pinned-meta {
+    display: flex;
+    gap: 0.9rem;
+    margin: 0.4rem 0 0;
+    color: #9ca3af;
+    font-size: 0.82rem;
+  }
+
+  .pinned-narration-toggle {
+    margin-top: 0.45rem;
+    background: none;
+    border: none;
+    padding: 0;
+    color: #8b80ff;
+    font-size: 0.8rem;
+    cursor: pointer;
+    &:hover { color: #b9a8ff; text-decoration: underline; }
+  }
+
+  .pinned-narration {
+    margin: 0.45rem 0 0;
+    color: #d1d5db;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    font-style: italic;
+  }
+}
+
+// ─────────────── Récap « précédemment… » ───────────────
+.recap-bar { margin-bottom: 1rem; }
+
+.recap-btn { display: inline-flex; align-items: center; gap: 0.4rem; }
+
+.recap-error { margin-left: 0.6rem; color: #fca5a5; font-size: 0.82rem; }
+
+.spin { animation: session-spin 0.9s linear infinite; }
+@keyframes session-spin { to { transform: rotate(360deg); } }
+
+.recap-box {
+  padding: 0.7rem 0.9rem;
+  background: #17131f;
+  border: 1px solid #4a3a68;
+  border-left: 3px solid #8b5fb4;
+  border-radius: 10px;
+
+  .recap-head {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: #cbb9ff;
+    font-size: 0.85rem;
+    font-weight: 600;
+
+    span { flex: 1; min-width: 0; }
+  }
+
+  .recap-text {
+    margin: 0.5rem 0;
+    color: #e5e7eb;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    font-style: italic;
+  }
+
+  .recap-add { display: inline-flex; align-items: center; gap: 0.35rem; }
+}

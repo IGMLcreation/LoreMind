@@ -1,8 +1,11 @@
 package com.loremind.infrastructure.persistence.entity;
 
 import com.loremind.domain.campaigncontext.Room;
+import com.loremind.domain.campaigncontext.SceneBattlemap;
 import com.loremind.domain.campaigncontext.SceneBranch;
+import com.loremind.domain.campaigncontext.SceneType;
 import com.loremind.infrastructure.persistence.converter.RoomListJsonConverter;
+import com.loremind.infrastructure.persistence.converter.SceneBattlemapListJsonConverter;
 import com.loremind.infrastructure.persistence.converter.SceneBranchListJsonConverter;
 import com.loremind.infrastructure.persistence.converter.StringListJsonConverter;
 import jakarta.persistence.*;
@@ -43,6 +46,12 @@ public class SceneJpaEntity {
 
     @Column
     private String icon;
+
+    /** Type narratif du nœud (Niveau 2). Défaut GENERIC ; colonne dotée d'un default SQL (V13). */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "scene_type", length = 32)
+    @Builder.Default
+    private SceneType type = SceneType.GENERIC;
 
     // Champs narratifs enrichis — ajoutés automatiquement par Hibernate (ddl-auto=update)
 
@@ -91,13 +100,21 @@ public class SceneJpaEntity {
     @Builder.Default
     private List<String> illustrationImageIds = new ArrayList<>();
 
-    /** Battlemap Foundry : fichier media (image/video). Null = pas de carte. */
-    @Column(name = "battlemap_media_file_id")
-    private String battlemapMediaFileId;
+    /**
+     * Battlemaps Foundry : liste de paires { media + sidecar } étiquetées
+     * (variantes Jour/Nuit, étages…). JSON en TEXT via converter (V22).
+     */
+    @Column(name = "battlemaps", columnDefinition = "TEXT")
+    @Convert(converter = SceneBattlemapListJsonConverter.class)
+    @Builder.Default
+    private List<SceneBattlemap> battlemaps = new ArrayList<>();
 
-    /** Battlemap Foundry : fichier sidecar Universal VTT (json/dd2vtt). Null si absent. */
-    @Column(name = "battlemap_data_file_id")
-    private String battlemapDataFileId;
+    /** Position du nœud dans la vue graphe du chapitre (Niveau 2). Null = layout auto. */
+    @Column(name = "graph_x")
+    private Double graphX;
+
+    @Column(name = "graph_y")
+    private Double graphY;
 
     // Graphe narratif intra-chapitre : sorties possibles vers d'autres scènes.
     // Persisté en TEXT JSON via converter (pattern homogène avec les autres listes).

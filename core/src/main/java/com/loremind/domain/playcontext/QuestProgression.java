@@ -11,7 +11,7 @@ import lombok.Data;
  * le scénario et l'état de jeu : ici, la progression est exclusivement
  * propre à une instance jouée (Playthrough).</p>
  *
- * <p>Référence le Chapter par weak reference (chapterId) pour respecter les
+ * <p>Référence la Quest par weak reference (questId) pour respecter les
  * Bounded Contexts. Le type {@link ProgressionStatus} reste défini dans
  * Campaign Context (c'est un Value Object générique, partageable).</p>
  *
@@ -24,6 +24,6 @@ public class QuestProgression {
 
     private String id;
     private String playthroughId;
-    private String chapterId;
+    private String questId;
     private ProgressionStatus status;
 }

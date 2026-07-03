@@ -1,0 +1,141 @@
+<div class="edit-page">
+
+  <div class="page-header">
+    <div>
+      <h1>{{ quest?.name || (isCreate ? ('questEdit.newTitle' | translate) : ('questEdit.fallbackTitle' | translate)) }}</h1>
+      <p class="subtitle">{{ 'questEdit.subtitle' | translate }}</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn-secondary" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
+      @if (!isCreate) {
+        <button type="button" class="btn-danger" (click)="delete()">
+          <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+          {{ 'common.delete' | translate }}
+        </button>
+      }
+      <button type="button" class="btn-primary" (click)="submit()" [disabled]="form.invalid">
+        {{ (isCreate ? 'common.create' : 'common.save') | translate }}
+      </button>
+    </div>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="edit-form">
+
+    <p class="optional-hint">{{ 'questEdit.optionalHint' | translate }}</p>
+
+    <div class="field">
+      <label for="quest-name">{{ 'questEdit.nameLabel' | translate }}</label>
+      <input
+        id="quest-name"
+        type="text"
+        formControlName="name"
+        [placeholder]="'questEdit.namePlaceholder' | translate"
+        [class.invalid]="form.get('name')?.invalid && form.get('name')?.touched" />
+    </div>
+
+    <div class="field">
+      <label for="quest-description">{{ 'questEdit.descriptionLabel' | translate }}</label>
+      <textarea
+        id="quest-description"
+        formControlName="description"
+        [placeholder]="'questEdit.descriptionPlaceholder' | translate"
+        rows="4">
+      </textarea>
+    </div>
+
+    <div class="field">
+      <label>{{ 'questEdit.iconLabel' | translate }}</label>
+      <app-icon-picker [options]="campaignIconOptions" [(selected)]="selectedIcon"></app-icon-picker>
+    </div>
+
+    <!-- Illustrations (galerie editable, rendu editorial) -->
+    <app-expandable-section [title]="'questEdit.illustrationsLabel' | translate" icon="🖼️" [filled]="illustrationsFilled">
+      <app-image-gallery
+        [imageIds]="illustrationImageIds"
+        [editable]="true"
+        [layout]="'EDITORIAL'"
+        (imageIdsChange)="illustrationImageIds = $event">
+      </app-image-gallery>
+      <small class="field-hint">{{ 'questEdit.illustrationsHint' | translate }}</small>
+    </app-expandable-section>
+
+    <!-- Cœur de la quête : conditions de déblocage -->
+    <app-expandable-section [title]="'questEdit.unlockSectionTitle' | translate" icon="🔓" [initiallyOpen]="true" [filled]="prereqFilled">
+      <small class="field-hint">{{ 'questEdit.unlockHint' | translate }}</small>
+      <app-prerequisite-editor
+        [prerequisites]="prerequisites"
+        [availableQuests]="availableQuests"
+        [availableFlags]="availableFlagNames"
+        (prerequisitesChange)="onPrerequisitesChange($event)">
+      </app-prerequisite-editor>
+    </app-expandable-section>
+
+    <!-- Nœuds narratifs traversés — quêtes TRANSVERSES uniquement : une quête d'arc HUB
+    a son conteneur de scènes automatique, inutile d'exposer cette plomberie. -->
+    @if (!isAttached) {
+      <app-expandable-section [title]="'questEdit.nodesSectionTitle' | translate" icon="📍" [filled]="nodesFilled">
+        <small class="field-hint">{{ 'questEdit.nodesHint' | translate }}</small>
+        <app-node-picker
+          [nodes]="nodes"
+          [chapters]="chapters"
+          [scenes]="scenes"
+          (nodesChange)="nodes = $event">
+        </app-node-picker>
+      </app-expandable-section>
+    }
+
+    <!-- Notes du MJ (privé) -->
+    <app-expandable-section [title]="'questEdit.gmNotesSectionTitle' | translate" icon="🔒" variant="private" [filled]="gmNotesFilled">
+      <div class="field">
+        <textarea
+          formControlName="gmNotes"
+          [placeholder]="'questEdit.gmNotesPlaceholder' | translate"
+          rows="5">
+        </textarea>
+      </div>
+    </app-expandable-section>
+
+    <!-- Objectifs et enjeux -->
+    <app-expandable-section [title]="'questEdit.objectivesSectionTitle' | translate" icon="🎯" [filled]="objectivesFilled">
+      <div class="field">
+        <label for="quest-objectives">{{ 'questEdit.playerObjectivesLabel' | translate }}</label>
+        <textarea
+          id="quest-objectives"
+          formControlName="playerObjectives"
+          [placeholder]="'questEdit.playerObjectivesPlaceholder' | translate"
+          rows="3">
+        </textarea>
+      </div>
+      <div class="field">
+        <label for="quest-stakes">{{ 'questEdit.narrativeStakesLabel' | translate }}</label>
+        <textarea
+          id="quest-stakes"
+          formControlName="narrativeStakes"
+          [placeholder]="'questEdit.narrativeStakesPlaceholder' | translate"
+          rows="3">
+        </textarea>
+      </div>
+    </app-expandable-section>
+
+    <!-- Pages Lore associées (cross-context) -->
+    @if (loreId) {
+      <app-expandable-section [title]="'questEdit.relatedPagesLabel' | translate" icon="🔗" [filled]="loreFilled">
+        <app-lore-link-picker
+          [value]="relatedPageIds"
+          [availablePages]="availablePages"
+          [loreId]="loreId"
+          (valueChange)="relatedPageIds = $event">
+        </app-lore-link-picker>
+        <small class="field-hint">{{ 'questEdit.relatedPagesHint' | translate }}</small>
+      </app-expandable-section>
+    }
+
+    @if (!loreId) {
+      <div class="field">
+        <small class="field-hint">{{ 'questEdit.noLoreHint' | translate }}</small>
+      </div>
+    }
+
+  </form>
+
+</div>

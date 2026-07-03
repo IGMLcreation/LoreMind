@@ -2,9 +2,12 @@ package com.loremind.application.campaigncontext;
 
 import com.loremind.domain.campaigncontext.Arc;
 import com.loremind.domain.campaigncontext.Chapter;
+import com.loremind.domain.campaigncontext.FieldProposal;
+import com.loremind.domain.campaigncontext.Quest;
 import com.loremind.domain.shared.ReorderSupport;
 import com.loremind.domain.campaigncontext.ports.ArcRepository;
 import com.loremind.domain.campaigncontext.ports.ChapterRepository;
+import com.loremind.domain.campaigncontext.ports.QuestRepository;
 import com.loremind.domain.campaigncontext.ports.SceneRepository;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -24,13 +27,16 @@ public class ArcService {
     private final ArcRepository arcRepository;
     private final ChapterRepository chapterRepository;
     private final SceneRepository sceneRepository;
+    private final QuestRepository questRepository;
 
     public ArcService(ArcRepository arcRepository,
                       ChapterRepository chapterRepository,
-                      SceneRepository sceneRepository) {
+                      SceneRepository sceneRepository,
+                      QuestRepository questRepository) {
         this.arcRepository = arcRepository;
         this.chapterRepository = chapterRepository;
         this.sceneRepository = sceneRepository;
+        this.questRepository = questRepository;
     }
 
     /** Compte des entités qui seront supprimées en cascade avec l'arc. */
@@ -88,6 +94,37 @@ public class ArcService {
     }
 
     /**
+     * Patch CIBLÉ champ-par-champ d'un arc (Pilier A — co-création). Applique UNIQUEMENT
+     * les {@link FieldProposal} reçus ; les autres champs restent INTACTS (contraste voulu
+     * avec {@link #updateArc} qui écrase tout via BeanUtils).
+     */
+    @Transactional
+    public Arc patchArc(String id, List<FieldProposal> fields) {
+        Arc arc = arcRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Arc non trouvé avec l'ID: " + id));
+        if (fields != null) {
+            for (FieldProposal f : fields) {
+                if (f == null || f.key() == null) continue;
+                applyField(arc, f.key(), f.proposedValue());
+            }
+        }
+        return arcRepository.save(arc);
+    }
+
+    /** Whitelist STRICTE des champs étoffables d'un arc ; clé inconnue ignorée. */
+    private void applyField(Arc arc, String key, String value) {
+        switch (key) {
+            case "description" -> arc.setDescription(value);
+            case "themes" -> arc.setThemes(value);
+            case "stakes" -> arc.setStakes(value);
+            case "rewards" -> arc.setRewards(value);
+            case "resolution" -> arc.setResolution(value);
+            case "gmNotes" -> arc.setGmNotes(value);
+            default -> { /* clé inconnue → ignorée (garde-fou anti-écrasement) */ }
+        }
+    }
+
+    /**
      * Calcule l'impact d'une suppression en cascade : chapitres + scènes
      * qui disparaîtront avec l'arc.
      */
@@ -111,6 +148,12 @@ public class ArcService {
                 sceneRepository.deleteById(scene.getId());
             }
             chapterRepository.deleteById(chapter.getId());
+        }
+        // Détache les quêtes rattachées (arc HUB) : elles deviennent TRANSVERSES plutôt
+        // que fantômes (arcId pointant un arc disparu). Weak ref, pas de FK cascade.
+        for (Quest quest : questRepository.findByArcId(id)) {
+            quest.setArcId(null);
+            questRepository.save(quest);
         }
         arcRepository.deleteById(id);
     }

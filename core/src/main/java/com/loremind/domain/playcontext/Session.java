@@ -31,6 +31,12 @@ public class Session {
     /** Null = session en cours ; renseigné = session terminée. */
     private LocalDateTime endedAt;
 
+    /**
+     * Scène courante épinglée pendant la séance (mode cockpit). Weak ref nullable vers
+     * une Scene du scénario ; null = rien d'épinglé. Sert de repère « on en est là ».
+     */
+    private String currentSceneId;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

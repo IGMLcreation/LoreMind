@@ -1,7 +1,9 @@
 package com.loremind.infrastructure.transfer;
 
 import com.loremind.domain.campaigncontext.ArcType;
+import com.loremind.domain.campaigncontext.NodeType;
 import com.loremind.domain.campaigncontext.Prerequisite;
+import com.loremind.domain.campaigncontext.QuestNodeRef;
 import com.loremind.domain.campaigncontext.SceneBranch;
 
 import java.util.ArrayList;
@@ -47,15 +49,32 @@ final class IdRemapper {
         return out;
     }
 
-    static List<Prerequisite> remapPrerequisites(Map<Long, Long> chapterMap, List<Prerequisite> prereqs) {
+    /**
+     * Remappe {@code QuestCompleted.questId} via {@code idMap}. L'appelant fournit la map
+     * sémantiquement correcte selon le contexte : {@code questMap} pour des prérequis de
+     * Quête (v2), {@code chapterMap} pour des prérequis de Chapitre legacy (v1).
+     */
+    static List<Prerequisite> remapPrerequisites(Map<Long, Long> idMap, List<Prerequisite> prereqs) {
         if (prereqs == null) return null;
         List<Prerequisite> out = new ArrayList<>(prereqs.size());
         for (Prerequisite p : prereqs) {
             if (p instanceof Prerequisite.QuestCompleted qc) {
-                out.add(new Prerequisite.QuestCompleted(remapStringId(chapterMap, qc.questId())));
+                out.add(new Prerequisite.QuestCompleted(remapStringId(idMap, qc.questId())));
             } else {
                 out.add(p); // FlagSet / SessionReached : inchangés
             }
+        }
+        return out;
+    }
+
+    /** Remap des nœuds d'une quête : nodeId via {@code sceneMap} (SCENE) ou {@code chapterMap} (CHAPTER). */
+    static List<QuestNodeRef> remapQuestNodes(Map<Long, Long> chapterMap, Map<Long, Long> sceneMap,
+                                              List<QuestNodeRef> nodes) {
+        if (nodes == null) return null;
+        List<QuestNodeRef> out = new ArrayList<>(nodes.size());
+        for (QuestNodeRef n : nodes) {
+            Map<Long, Long> map = (n.nodeType() == NodeType.SCENE) ? sceneMap : chapterMap;
+            out.add(new QuestNodeRef(n.nodeType(), remapStringId(map, n.nodeId()), n.order()));
         }
         return out;
     }
@@ -64,7 +83,7 @@ final class IdRemapper {
         if (branches == null) return null;
         List<SceneBranch> out = new ArrayList<>(branches.size());
         for (SceneBranch b : branches) {
-            out.add(new SceneBranch(b.label(), remapStringId(sceneMap, b.targetSceneId()), b.condition()));
+            out.add(new SceneBranch(b.label(), remapStringId(sceneMap, b.targetSceneId()), b.condition(), b.kind()));
         }
         return out;
     }

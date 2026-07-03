@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
-import { LucideAngularModule, X, Skull } from 'lucide-angular';
+import { LucideAngularModule, X, Skull, AlertTriangle } from 'lucide-angular';
 import { TranslatePipe } from '@ngx-translate/core';
 import { Enemy } from '../../services/enemy.model';
 
@@ -29,6 +29,7 @@ import { Enemy } from '../../services/enemy.model';
 export class EnemyLinkPickerComponent {
   readonly X = X;
   readonly Skull = Skull;
+  readonly AlertTriangle = AlertTriangle;
 
   /** IDs des ennemis actuellement liés (contrôlés par le parent). */
   @Input() value: string[] = [];
@@ -58,6 +59,25 @@ export class EnemyLinkPickerComponent {
     return order
       .map(id => ({ enemy: this.availableEnemies.find(e => e.id === id), count: counts.get(id)! }))
       .filter((g): g is { enemy: Enemy; count: number } => !!g.enemy);
+  }
+
+  /**
+   * IDs liés dont la fiche est INTROUVABLE dans le bestiaire de la campagne (fiche
+   * supprimée — typiquement un ennemi supprimé puis recréé sous un nouvel id). Le picker
+   * les cachait silencieusement ; on les EXPOSE (chip « introuvable ») pour que
+   * l'utilisateur puisse les retirer — sinon la référence morte reste invisible mais
+   * persistée, et le guidage (readiness) la signale sans que rien ne soit actionnable.
+   */
+  get brokenGroups(): { id: string; count: number }[] {
+    const counts = new Map<string, number>();
+    const order: string[] = [];
+    for (const id of this.value) {
+      if (!id) continue;
+      if (this.availableEnemies.some(e => e.id === id)) continue; // résolu → pas cassé
+      if (!counts.has(id)) order.push(id);
+      counts.set(id, (counts.get(id) ?? 0) + 1);
+    }
+    return order.map(id => ({ id, count: counts.get(id)! }));
   }
 
   /** Ennemis proposables dans le dropdown — filtrés par query, exclut les déjà liés. */

@@ -29,34 +29,34 @@ public class PostgresQuestProgressionRepository implements QuestProgressionRepos
     }
 
     @Override
-    public Set<String> findCompletedChapterIdsByPlaythroughId(String playthroughId) {
+    public Set<String> findCompletedQuestIdsByPlaythroughId(String playthroughId) {
         Set<String> out = new HashSet<>();
         for (QuestProgressionJpaEntity e : jpa.findByPlaythroughId(Long.parseLong(playthroughId))) {
             if (e.getStatus() == ProgressionStatus.COMPLETED) {
-                out.add(e.getChapterId().toString());
+                out.add(e.getQuestId().toString());
             }
         }
         return out;
     }
 
     @Override
-    public void setStatus(String playthroughId, String chapterId, ProgressionStatus status) {
+    public void setStatus(String playthroughId, String questId, ProgressionStatus status) {
         Long pid = Long.parseLong(playthroughId);
-        Long cid = Long.parseLong(chapterId);
+        Long qid = Long.parseLong(questId);
         // Sémantique : NOT_STARTED = absence de ligne.
         if (status == null || status == ProgressionStatus.NOT_STARTED) {
-            jpa.findByPlaythroughIdAndChapterId(pid, cid)
+            jpa.findByPlaythroughIdAndQuestId(pid, qid)
                     .ifPresent(e -> jpa.deleteById(e.getId()));
             return;
         }
-        jpa.findByPlaythroughIdAndChapterId(pid, cid).ifPresentOrElse(
+        jpa.findByPlaythroughIdAndQuestId(pid, qid).ifPresentOrElse(
                 existing -> {
                     existing.setStatus(status);
                     jpa.save(existing);
                 },
                 () -> jpa.save(QuestProgressionJpaEntity.builder()
                         .playthroughId(pid)
-                        .chapterId(cid)
+                        .questId(qid)
                         .status(status)
                         .build())
         );
@@ -67,11 +67,16 @@ public class PostgresQuestProgressionRepository implements QuestProgressionRepos
         jpa.deleteByPlaythroughId(Long.parseLong(playthroughId));
     }
 
+    @Override
+    public void deleteByQuestId(String questId) {
+        jpa.deleteByQuestId(Long.parseLong(questId));
+    }
+
     private QuestProgression toDomain(QuestProgressionJpaEntity e) {
         return QuestProgression.builder()
                 .id(e.getId().toString())
                 .playthroughId(e.getPlaythroughId().toString())
-                .chapterId(e.getChapterId().toString())
+                .questId(e.getQuestId().toString())
                 .status(e.getStatus())
                 .build();
     }

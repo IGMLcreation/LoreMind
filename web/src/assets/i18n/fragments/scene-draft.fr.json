@@ -1,0 +1,16 @@
+{
+  "sceneDraft": {
+    "button": "Générer des scènes",
+    "hint": "Le co-MJ propose plusieurs scènes pour ce chapitre. Cochez celles à garder ; elles sont créées dans le chapitre (vous pourrez les affiner ensuite).",
+    "instructionPlaceholder": "Consigne facultative (ex : « une infiltration, un combat, puis une révélation »)…",
+    "countLabel": "Nombre",
+    "generate": "Proposer des scènes",
+    "generating": "Génération…",
+    "regenerate": "Régénérer",
+    "createSelection": "Créer la sélection ({{n}})",
+    "creating": "Création…",
+    "empty": "L'IA n'a proposé aucune scène — reformulez la consigne.",
+    "error": "Échec de la génération. Le Brain (IA) est-il démarré ?",
+    "applyError": "Échec de la création des scènes."
+  }
+}

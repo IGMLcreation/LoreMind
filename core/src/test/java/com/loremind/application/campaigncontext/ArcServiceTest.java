@@ -2,9 +2,11 @@ package com.loremind.application.campaigncontext;
 
 import com.loremind.domain.campaigncontext.Arc;
 import com.loremind.domain.campaigncontext.Chapter;
+import com.loremind.domain.campaigncontext.FieldProposal;
 import com.loremind.domain.campaigncontext.Scene;
 import com.loremind.domain.campaigncontext.ports.ArcRepository;
 import com.loremind.domain.campaigncontext.ports.ChapterRepository;
+import com.loremind.domain.campaigncontext.ports.QuestRepository;
 import com.loremind.domain.campaigncontext.ports.SceneRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,6 +37,8 @@ public class ArcServiceTest {
     private ChapterRepository chapterRepository;
     @Mock
     private SceneRepository sceneRepository;
+    @Mock
+    private QuestRepository questRepository;
 
     @InjectMocks
     private ArcService arcService;
@@ -50,6 +54,32 @@ public class ArcServiceTest {
                 .campaignId("campaign-1")
                 .order(1)
                 .build();
+    }
+
+    @Test
+    void patchArc_appliesOnlyProvidedFields_leavesOthersIntact() {
+        Arc existing = Arc.builder()
+                .id("arc-1").name("Nom").campaignId("campaign-1")
+                .description("desc orig").themes("th orig").gmNotes("secret").build();
+        when(arcRepository.findById("arc-1")).thenReturn(Optional.of(existing));
+        when(arcRepository.save(any(Arc.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Arc result = arcService.patchArc("arc-1", List.of(
+                new FieldProposal("themes", "th orig", "trahison, rédemption"),
+                new FieldProposal("name", "Nom", "HACK")));   // name non patchable
+
+        assertEquals("trahison, rédemption", result.getThemes());
+        assertEquals("desc orig", result.getDescription());   // intact
+        assertEquals("secret", result.getGmNotes());           // intact
+        assertEquals("Nom", result.getName());                 // name hors whitelist
+        verify(arcRepository, times(1)).save(any(Arc.class));
+    }
+
+    @Test
+    void patchArc_notFound_throws() {
+        when(arcRepository.findById("nope")).thenReturn(Optional.empty());
+        assertThrows(IllegalArgumentException.class, () -> arcService.patchArc("nope", List.of()));
+        verify(arcRepository, never()).save(any());
     }
 
     @Test

@@ -3,7 +3,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
-import { LucideAngularModule, Pencil, Network, Trash2, Lock } from 'lucide-angular';
+import { LucideAngularModule, Pencil, Network, Trash2 } from 'lucide-angular';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { resolveCampaignIcon } from '../../campaign-icons';
 import { CampaignService } from '../../../services/campaign.service';
@@ -13,7 +13,7 @@ import { EnemyService } from '../../../services/enemy.service';
 import { PageService } from '../../../services/page.service';
 import { LayoutService } from '../../../services/layout.service';
 import { PageTitleService } from '../../../services/page-title.service';
-import { Chapter, Prerequisite, Arc } from '../../../services/campaign.model';
+import { Chapter } from '../../../services/campaign.model';
 import { Page } from '../../../services/page.model';
 import { loadCampaignTreeData, buildCampaignSidebarConfig } from '../../campaign-tree.helper';
 import { ImageGalleryComponent } from '../../../shared/image-gallery/image-gallery.component';
@@ -33,18 +33,15 @@ export class ChapterViewComponent implements OnInit, OnDestroy {
   readonly Pencil = Pencil;
   readonly Network = Network;
   readonly Trash2 = Trash2;
-  readonly Lock = Lock;
   readonly resolveCampaignIcon = resolveCampaignIcon;
 
   campaignId = '';
   arcId = '';
   chapterId = '';
   chapter: Chapter | null = null;
-  parentArc: Arc | null = null;
 
   loreId: string | null = null;
   availablePages: Page[] = [];
-  private allChaptersById: Record<string, Chapter> = {};
 
   constructor(
     private route: ActivatedRoute,
@@ -94,28 +91,8 @@ export class ChapterViewComponent implements OnInit, OnDestroy {
       this.availablePages = pages;
       this.pageTitleService.set(chapter.name);
 
-      // Arc parent (pour conditionner les sections Hub) + index des quêtes par id.
-      this.parentArc = treeData.arcs.find(a => a.id === this.arcId) ?? null;
-      this.allChaptersById = {};
-      Object.values(treeData.chaptersByArc).forEach(list =>
-          list.forEach(c => { if (c.id) this.allChaptersById[c.id] = c; })
-      );
-
       this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId, this.translate));
     });
-  }
-
-  describePrerequisite(p: Prerequisite): string {
-    switch (p.kind) {
-      case 'QUEST_COMPLETED':
-        return this.translate.instant('chapterView.prereqQuestCompleted', {
-          name: this.allChaptersById[p.questId]?.name ?? '?'
-        });
-      case 'SESSION_REACHED':
-        return this.translate.instant('chapterView.prereqSessionReached', { n: p.minSessionNumber });
-      case 'FLAG_SET':
-        return this.translate.instant('chapterView.prereqFlagSet', { flag: p.flagName });
-    }
   }
 
   titleOfRelated(pageId: string): string {

@@ -73,6 +73,17 @@
   gap: 1.5rem;
 }
 
+// Bandeau « tout est optionnel sauf le titre » en tête du formulaire.
+.optional-hint {
+  margin: 0;
+  padding: 0.6rem 0.85rem;
+  background: rgba(108, 99, 255, 0.08);
+  border: 1px solid rgba(108, 99, 255, 0.25);
+  border-radius: 8px;
+  color: #a5b4fc;
+  font-size: 0.85rem;
+}
+
 // Override local : bouton Supprimer poussé à droite (voir _buttons.scss pour la base).
 .btn-danger {
   display: inline-flex;

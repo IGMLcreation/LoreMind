@@ -217,7 +217,7 @@ export class SecondarySidebarComponent implements OnDestroy {
    */
   runCreateAction(event: Event, action: TreeCreateAction): void {
     event.stopPropagation();
-    this.router.navigate([action.route]);
+    this.router.navigate([action.route], action.queryParams ? { queryParams: action.queryParams } : {});
   }
 
   /** True si le noeud a au moins un vrai enfant (utile pour le chevron). */

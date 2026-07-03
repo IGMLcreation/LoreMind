@@ -1,0 +1,59 @@
+@if (open) {
+  <div class="confirm-backdrop" (click)="onCancel()">
+    <div class="confirm-modal variant-info"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="'foundryDialog.title' | translate"
+      (click)="$event.stopPropagation()">
+      <div class="confirm-header">
+        <div class="confirm-icon">
+          <lucide-icon [img]="Download" [size]="20"></lucide-icon>
+        </div>
+        <h2>{{ 'foundryDialog.title' | translate }}</h2>
+        <button type="button" class="btn-close" (click)="onCancel()" [attr.aria-label]="'common.close' | translate">
+          <lucide-icon [img]="X" [size]="18"></lucide-icon>
+        </button>
+      </div>
+
+      <div class="confirm-body">
+        <p class="confirm-message">{{ 'foundryDialog.intro' | translate }}</p>
+
+        <div class="fx-presets">
+          <button type="button" (click)="presetAll()">{{ 'foundryDialog.presetAll' | translate }}</button>
+          <button type="button" (click)="presetMapsOnly()">{{ 'foundryDialog.presetMapsOnly' | translate }}</button>
+        </div>
+
+        <label class="fx-option">
+          <input type="checkbox" [checked]="maps" (change)="maps = !maps" />
+          <span>
+            <strong>{{ 'foundryDialog.optMaps' | translate }}</strong>
+            <small>{{ 'foundryDialog.optMapsHint' | translate }}</small>
+          </span>
+        </label>
+        <label class="fx-option">
+          <input type="checkbox" [checked]="journals" (change)="journals = !journals" />
+          <span>
+            <strong>{{ 'foundryDialog.optJournals' | translate }}</strong>
+            <small>{{ 'foundryDialog.optJournalsHint' | translate }}</small>
+          </span>
+        </label>
+        <label class="fx-option">
+          <input type="checkbox" [checked]="tables" (change)="tables = !tables" />
+          <span>
+            <strong>{{ 'foundryDialog.optTables' | translate }}</strong>
+            <small>{{ 'foundryDialog.optTablesHint' | translate }}</small>
+          </span>
+        </label>
+      </div>
+
+      <div class="confirm-actions">
+        <button type="button" class="btn-secondary" (click)="onCancel()" [disabled]="exporting">
+          {{ 'common.cancel' | translate }}
+        </button>
+        <button type="button" class="btn-confirm" (click)="onConfirm()" [disabled]="nothingSelected || exporting">
+          {{ (exporting ? 'campaignDetail.foundryExporting' : 'foundryDialog.confirm') | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

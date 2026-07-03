@@ -1,0 +1,39 @@
+<div class="quest-page">
+  <div class="quest-toolbar">
+    <button class="btn-back" (click)="back()">
+      <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon> {{ 'common.back' | translate }}
+    </button>
+    <span class="spacer"></span>
+    <button class="btn-create" (click)="create()">
+      <lucide-icon [img]="Plus" [size]="14"></lucide-icon> {{ 'questList.create' | translate }}
+    </button>
+  </div>
+
+  <header class="quest-header">
+    <h1><lucide-icon [img]="Flag" [size]="22"></lucide-icon> {{ 'questList.title' | translate }}</h1>
+    <p class="quest-hint">{{ 'questList.hint' | translate }}</p>
+  </header>
+
+  @if (quests.length === 0) {
+    <p class="quest-empty">{{ 'questList.empty' | translate }}</p>
+  }
+
+  <div class="quest-grid">
+    @for (q of quests; track q.id) {
+      <button class="quest-card" (click)="open(q)">
+        @if (q.icon) {
+          <lucide-icon [img]="resolveCampaignIcon(q.icon)" [size]="20" class="quest-card-icon"></lucide-icon>
+        } @else {
+          <lucide-icon [img]="Flag" [size]="20" class="quest-card-icon"></lucide-icon>
+        }
+        <span class="quest-card-name">{{ q.name }}</span>
+        @if ((q.prerequisites?.length ?? 0) > 0) {
+          <span class="quest-card-cond" [title]="'questList.conditional' | translate">🔒</span>
+        }
+        <span class="quest-del" (click)="remove(q, $event)" [title]="'common.delete' | translate">
+          <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+        </span>
+      </button>
+    }
+  </div>
+</div>

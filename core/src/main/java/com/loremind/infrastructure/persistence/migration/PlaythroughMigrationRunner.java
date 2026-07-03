@@ -117,13 +117,15 @@ public class PlaythroughMigrationRunner {
         );
     }
 
-    private int migrateProgressions(JdbcTemplate jdbc) {
+    int migrateProgressions(JdbcTemplate jdbc) {
         if (!columnExists(jdbc, "chapters", "progression_status")) return 0;
         if (!tableExists(jdbc, "quest_progression")) return 0;
-        // On copie les chapitres dont la progression était != NOT_STARTED, vers la Partie principale
-        // de la campagne du chapitre. Déduplique via NOT EXISTS sur (playthrough_id, chapter_id).
+        // On copie les chapitres dont la progression était != NOT_STARTED, vers la Partie
+        // principale de la campagne du chapitre. Niveau 1 : la colonne cible est quest_id
+        // (renommée par V11). L'id du chapitre == id de la quête (continuité d'id, décision D4).
+        // Déduplique via NOT EXISTS sur (playthrough_id, quest_id).
         return jdbc.update(
-                "INSERT INTO quest_progression (playthrough_id, chapter_id, status) " +
+                "INSERT INTO quest_progression (playthrough_id, quest_id, status) " +
                 "SELECT p.id, ch.id, ch.progression_status " +
                 "FROM chapters ch " +
                 "JOIN arcs a ON a.id = ch.arc_id " +
@@ -132,7 +134,7 @@ public class PlaythroughMigrationRunner {
                 "  AND ch.progression_status <> 'NOT_STARTED' " +
                 "  AND NOT EXISTS (" +
                 "      SELECT 1 FROM quest_progression qp " +
-                "      WHERE qp.playthrough_id = p.id AND qp.chapter_id = ch.id" +
+                "      WHERE qp.playthrough_id = p.id AND qp.quest_id = ch.id" +
                 "  )"
         );
     }

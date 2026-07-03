@@ -4,6 +4,7 @@ import com.loremind.domain.campaigncontext.Arc;
 import com.loremind.domain.campaigncontext.Campaign;
 import com.loremind.domain.campaigncontext.Chapter;
 import com.loremind.domain.campaigncontext.Scene;
+import com.loremind.domain.campaigncontext.SceneBattlemap;
 import com.loremind.domain.campaigncontext.SceneBranch;
 import com.loremind.domain.campaigncontext.ports.ArcRepository;
 import com.loremind.domain.campaigncontext.ports.CampaignRepository;
@@ -54,7 +55,8 @@ class PostgresSceneRepositoryTest {
                 .choicesConsequences("Si attaque -> gardes").combatDifficulty("facile").enemies("3 brigands")
                 .relatedPageIds(List.of("page-aubergiste"))
                 .illustrationImageIds(List.of("img-1", "img-2"))
-                .battlemapMediaFileId("100").battlemapDataFileId("101")
+                .battlemaps(List.of(new SceneBattlemap("Jour", "100", "101"),
+                        new SceneBattlemap("Nuit", "102", null)))
                 .build();
 
         Scene saved = repository.save(scene);
@@ -65,8 +67,12 @@ class PostgresSceneRepositoryTest {
         assertEquals("Taverne du Dragon d'Or", r.getLocation());
         assertEquals("Piege cache", r.getGmSecretNotes());
         assertEquals(2, r.getIllustrationImageIds().size());
-        assertEquals("100", r.getBattlemapMediaFileId());
-        assertEquals("101", r.getBattlemapDataFileId());
+        // Battlemaps : round-trip JSON du record (labels + refs preserves).
+        assertEquals(2, r.getBattlemaps().size());
+        assertEquals("Jour", r.getBattlemaps().get(0).label());
+        assertEquals("100", r.getBattlemaps().get(0).mediaFileId());
+        assertEquals("101", r.getBattlemaps().get(0).dataFileId());
+        assertEquals("102", r.getBattlemaps().get(1).mediaFileId());
     }
 
     @Test

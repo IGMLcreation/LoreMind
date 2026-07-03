@@ -16,10 +16,15 @@ public interface QuestProgressionJpaRepository extends JpaRepository<QuestProgre
 
     List<QuestProgressionJpaEntity> findByPlaythroughId(Long playthroughId);
 
-    Optional<QuestProgressionJpaEntity> findByPlaythroughIdAndChapterId(Long playthroughId, Long chapterId);
+    Optional<QuestProgressionJpaEntity> findByPlaythroughIdAndQuestId(Long playthroughId, Long questId);
 
     @Modifying
     @Transactional
     @Query("DELETE FROM QuestProgressionJpaEntity q WHERE q.playthroughId = :playthroughId")
     void deleteByPlaythroughId(@Param("playthroughId") Long playthroughId);
+
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM QuestProgressionJpaEntity q WHERE q.questId = :questId")
+    void deleteByQuestId(@Param("questId") Long questId);
 }

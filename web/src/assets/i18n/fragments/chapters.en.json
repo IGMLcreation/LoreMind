@@ -16,8 +16,12 @@
   },
   "chapterEdit": {
     "chapter": "Chapter",
+    "quest": "Quest",
     "aiAssistant": "AI Assistant",
     "aiAssistantTitle": "Open the AI Assistant to discuss this chapter",
+    "optionalHint": "Only the title is required. Expand and fill in only the sections you need — everything else is optional.",
+    "gmNotesSectionTitle": "GM notes",
+    "objectivesStakesSectionTitle": "Objectives and stakes",
     "unlockTitleQuest": "🗺️ Quest unlock conditions",
     "unlockTitleChapter": "🔒 Chapter unlock conditions",
     "unlockHintQuest": "Scenario definition: all conditions must be met (AND) for the quest to unlock in a Playthrough. Leave empty to make it available from the start. Progression and fact states are managed in the Playthrough screen, not here.",
@@ -52,11 +56,34 @@
   "chapterGraph": {
     "chapter": "Chapter",
     "title": "{{name}} — Map",
+    "titleFlat": "Scene map",
     "subtitle": "Flowchart of scenes and their narrative branches",
     "back": "Back to chapter",
+    "backFlat": "Back to campaign",
     "empty": "This chapter has no scenes. Create some to see the map appear.",
-    "hint": "💡 Click a scene to open it, or drag it to rearrange the map. Scenes not connected to the entry point (scene of order 1) appear at the bottom.",
-    "allCampaigns": "All campaigns"
+    "hint": "💡 Click a scene to open it, drag it to move it. Drag the dot under a node onto another to create a link; click a link to edit or delete it. Wheel = zoom, drag the background = pan the view.",
+    "addScene": "Add a scene",
+    "newSceneName": "New scene",
+    "allCampaigns": "All campaigns",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "fit": "Fit to content",
+    "rename": "Rename scene",
+    "renamePlaceholder": "Scene name",
+    "linkEditor": {
+      "label": "Choice label",
+      "labelPlaceholder": "e.g. \"Follow the trail\"",
+      "condition": "Condition (GM notes)",
+      "conditionPlaceholder": "e.g. \"if the PCs have the key\"",
+      "type": "Link type",
+      "delete": "Delete link",
+      "close": "Close",
+      "kind": {
+        "EXIT": "Exit",
+        "CLUE": "Clue",
+        "LEAD": "Lead"
+      }
+    }
   },
   "chapterView": {
     "chapter": "Chapter",

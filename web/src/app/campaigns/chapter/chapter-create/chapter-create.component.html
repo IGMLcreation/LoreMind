@@ -1,21 +1,21 @@
 <div class="chapter-create-page">
 
   <div class="page-header">
-    <h1>{{ (isHub ? 'chapterCreate.titleQuest' : 'chapterCreate.titleChapter') | translate }}</h1>
+    <h1>{{ 'chapterCreate.titleChapter' | translate }}</h1>
     @if (arcName) {
-      <p class="arc-ref">{{ (isHub ? 'chapterCreate.hub' : 'chapterCreate.arc') | translate }} : {{ arcName }}</p>
+      <p class="arc-ref">{{ 'chapterCreate.arc' | translate }} : {{ arcName }}</p>
     }
   </div>
 
   <form [formGroup]="form" (ngSubmit)="submit()" class="chapter-form">
 
     <div class="field">
-      <label for="chapter-create-name">{{ (isHub ? 'chapterCreate.nameQuestLabel' : 'chapterCreate.nameChapterLabel') | translate }}</label>
+      <label for="chapter-create-name">{{ 'chapterCreate.nameChapterLabel' | translate }}</label>
       <input
         id="chapter-create-name"
         type="text"
         formControlName="name"
-        [placeholder]="(isHub ? 'chapterCreate.namePlaceholderQuest' : 'chapterCreate.namePlaceholderChapter') | translate"
+        [placeholder]="'chapterCreate.namePlaceholderChapter' | translate"
         [class.invalid]="form.get('name')?.invalid && form.get('name')?.touched"
         />
     </div>
@@ -25,7 +25,7 @@
       <textarea
         id="chapter-create-description"
         formControlName="description"
-        [placeholder]="(isHub ? 'chapterCreate.descPlaceholderQuest' : 'chapterCreate.descPlaceholderChapter') | translate"
+        [placeholder]="'chapterCreate.descPlaceholderChapter' | translate"
         rows="5">
       </textarea>
     </div>
@@ -37,7 +37,7 @@
 
     <div class="form-actions">
       <button type="submit" class="btn-primary" [disabled]="form.invalid">
-        {{ (isHub ? 'chapterCreate.createQuest' : 'chapterCreate.createChapter') | translate }}
+        {{ 'chapterCreate.createChapter' | translate }}
       </button>
       <button type="button" class="btn-secondary" (click)="cancel()">{{ 'common.cancel' | translate }}</button>
     </div>

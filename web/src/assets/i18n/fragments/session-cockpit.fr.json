@@ -1,0 +1,25 @@
+{
+  "sessionReferencePanel": {
+    "tabPlay": "Partie",
+    "playClocks": "Horloges",
+    "playFacts": "Faits",
+    "playNoPlaythrough": "Cette session n'est rattachée à aucune Partie.",
+    "pinScene": "Épingler comme scène courante"
+  },
+  "sessionDetail": {
+    "pinned": {
+      "label": "Scène courante",
+      "open": "Ouvrir la scène (nouvel onglet)",
+      "unpin": "Retirer l'épingle",
+      "showNarration": "Afficher la narration joueurs",
+      "hideNarration": "Masquer la narration"
+    },
+    "recap": {
+      "button": "Récap « précédemment… »",
+      "loading": "Rédaction du récap…",
+      "title": "Précédemment ({{name}})",
+      "addToJournal": "Consigner au journal",
+      "error": "Échec du récap. Le Brain (IA) est-il démarré ?"
+    }
+  }
+}

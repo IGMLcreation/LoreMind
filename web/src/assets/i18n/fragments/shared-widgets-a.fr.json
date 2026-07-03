@@ -20,7 +20,9 @@
     "removeLink": "Retirer le lien",
     "increment": "Un de plus",
     "decrement": "Un de moins",
-    "noMatch": "Aucun ennemi ne correspond"
+    "noMatch": "Aucun ennemi ne correspond",
+    "broken": "Référence introuvable",
+    "brokenTitle": "Cette scène référence une fiche du bestiaire supprimée (ennemi supprimé puis recréé ?). Cliquez sur × pour retirer la référence morte."
   },
   "personaView": {
     "empty": "Cette fiche est encore vide."

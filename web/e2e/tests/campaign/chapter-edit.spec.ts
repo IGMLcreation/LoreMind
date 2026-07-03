@@ -40,7 +40,13 @@ test.describe('Chapter edit', () => {
 
     await page.getByLabel(/Titre du chapitre/i).fill(newName);
     await page.getByLabel(/Synopsis du chapitre/i).fill(values.description);
+
+    // Les champs narratifs sont dans des sections repliables fermées par défaut :
+    // on les ouvre avant de taper (un clic sur l'en-tête toggle la section).
+    await page.locator('app-expandable-section', { hasText: 'Notes du MJ' }).click();
     await page.getByLabel(/Notes du Maître de Jeu/i).fill(values.gmNotes);
+
+    await page.locator('app-expandable-section', { hasText: 'Objectifs et enjeux' }).click();
     await page.getByLabel(/Objectifs des joueurs/i).fill(values.playerObjectives);
     await page.getByLabel(/Enjeux narratifs/i).fill(values.narrativeStakes);
 

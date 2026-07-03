@@ -12,8 +12,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * Tests unitaires du domaine pour Scene.
  * Scene est la plus riche en champs : on valide les collections @Builder.Default
- * (relatedPageIds, illustrationImageIds, branches), la battlemap (paire media +
- * sidecar, nullable) et la preservation de l'ensemble des champs narratifs.
+ * (relatedPageIds, illustrationImageIds, branches, battlemaps) et la preservation
+ * de l'ensemble des champs narratifs.
  */
 class SceneTest {
 
@@ -32,20 +32,26 @@ class SceneTest {
         assertTrue(scene.getRelatedPageIds().isEmpty());
         assertTrue(scene.getIllustrationImageIds().isEmpty());
         assertTrue(scene.getBranches().isEmpty());
-        // Battlemap : aucune carte par defaut (les deux refs sont null).
-        assertNull(scene.getBattlemapMediaFileId());
-        assertNull(scene.getBattlemapDataFileId());
+        // Battlemaps : aucune carte par defaut (liste vide, jamais null).
+        assertNotNull(scene.getBattlemaps());
+        assertTrue(scene.getBattlemaps().isEmpty());
     }
 
     @Test
-    void builder_preservesBattlemap_whenProvided() {
+    void builder_preservesBattlemaps_whenProvided() {
         Scene scene = Scene.builder()
-                .battlemapMediaFileId("42")
-                .battlemapDataFileId("43")
+                .battlemaps(List.of(
+                        new SceneBattlemap("Jour", "42", "43"),
+                        new SceneBattlemap("Nuit", "44", null)))
                 .build();
 
-        assertEquals("42", scene.getBattlemapMediaFileId());
-        assertEquals("43", scene.getBattlemapDataFileId());
+        assertEquals(2, scene.getBattlemaps().size());
+        assertEquals("Jour", scene.getBattlemaps().get(0).label());
+        assertEquals("42", scene.getBattlemaps().get(0).mediaFileId());
+        assertEquals("43", scene.getBattlemaps().get(0).dataFileId());
+        assertNull(scene.getBattlemaps().get(1).dataFileId());
+        // Libelle absent normalise en chaine vide par le constructeur canonique.
+        assertEquals("", new SceneBattlemap(null, "1", null).label());
     }
 
     @Test

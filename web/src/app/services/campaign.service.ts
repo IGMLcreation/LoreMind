@@ -1,7 +1,38 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Campaign, CampaignCreate, Arc, ArcCreate, Chapter, ChapterCreate, Scene, SceneCreate } from './campaign.model';
+import { Campaign, CampaignCreate, Arc, ArcCreate, Chapter, ChapterCreate, Scene, SceneCreate, Quest } from './campaign.model';
+import { CampaignReadinessAssessment } from './readiness.model';
+import { Npc } from './npc.model';
+import { RandomTable } from './random-table.model';
+import { Enemy } from './enemy.model';
+
+/**
+ * Arbre de campagne AGRÉGÉ (une seule requête HTTP) — miroir de CampaignTreeDTO.
+ * Remplace la rafale d'appels (~15-20) que la sidebar déclenchait à chaque navigation.
+ */
+export interface CampaignTreeResponse {
+  arcs: Arc[];
+  chaptersByArc: Record<string, Chapter[]>;
+  scenesByChapter: Record<string, Scene[]>;
+  npcs: Npc[];
+  randomTables: RandomTable[];
+  enemies: Enemy[];
+  quests: Quest[];
+  readiness: CampaignReadinessAssessment;
+}
+
+/**
+ * Périmètre de l'export Foundry (modale) :
+ * - maps     : Scenes Foundry (battlemaps) + acteurs/tokens des ennemis liés.
+ * - journals : journaux narratifs (arcs, chapitres, scènes, PNJ, bestiaire).
+ * - tables   : tables aléatoires (RollTables).
+ */
+export interface FoundryExportOptions {
+  maps: boolean;
+  journals: boolean;
+  tables: boolean;
+}
 
 /** Compte des entités qui seront supprimées en cascade avec la campagne. */
 export interface CampaignDeletionImpact {
@@ -42,9 +73,29 @@ export class CampaignService {
     return this.http.get<Campaign>(`${this.apiUrl}/${id}`);
   }
 
-  /** Télécharge le bundle d'export Foundry de la campagne (.zip). */
-  exportFoundry(id: string): Observable<Blob> {
-    return this.http.get(`${this.apiUrl}/${id}/foundry-export`, { responseType: 'blob' });
+  /** Bilan de préparation (Pilier B) — alimente les pastilles de l'arbre de la sidebar. */
+  getReadiness(id: string): Observable<CampaignReadinessAssessment> {
+    return this.http.get<CampaignReadinessAssessment>(`${this.apiUrl}/${id}/readiness`);
+  }
+
+  /** Arbre complet de la campagne en UNE requête (sidebar : structure + quêtes + readiness). */
+  getTree(id: string): Observable<CampaignTreeResponse> {
+    return this.http.get<CampaignTreeResponse>(`${this.apiUrl}/${id}/tree`);
+  }
+
+  /**
+   * Télécharge le bundle d'export Foundry de la campagne (.zip).
+   * Périmètre optionnel (tout par défaut) : cartes+ennemis / journaux / tables.
+   */
+  exportFoundry(id: string, opts?: FoundryExportOptions): Observable<Blob> {
+    let params = new HttpParams();
+    if (opts) {
+      params = params
+        .set('maps', String(opts.maps))
+        .set('journals', String(opts.journals))
+        .set('tables', String(opts.tables));
+    }
+    return this.http.get(`${this.apiUrl}/${id}/foundry-export`, { responseType: 'blob', params });
   }
 
   /** Génère et télécharge le livret PDF de la campagne. */
@@ -100,20 +151,14 @@ export class CampaignService {
   }
 
   // ========== CHAPTER ==========
-  /**
-   * Liste les chapitres d'un arc. Si {@code playthroughId} est fourni, le backend
-   * enrichit les DTOs avec progressionStatus + effectiveStatus relatifs à la Partie.
-   */
-  getChapters(arcId: string, playthroughId?: string): Observable<Chapter[]> {
-    let params = new HttpParams().set('arcId', arcId);
-    if (playthroughId) params = params.set('playthroughId', playthroughId);
+  /** Liste les chapitres d'un arc (donnée de scénario pure). */
+  getChapters(arcId: string): Observable<Chapter[]> {
+    const params = new HttpParams().set('arcId', arcId);
     return this.http.get<Chapter[]>('/api/chapters', { params });
   }
 
-  getChapterById(id: string, playthroughId?: string): Observable<Chapter> {
-    let params = new HttpParams();
-    if (playthroughId) params = params.set('playthroughId', playthroughId);
-    return this.http.get<Chapter>(`/api/chapters/${id}`, { params });
+  getChapterById(id: string): Observable<Chapter> {
+    return this.http.get<Chapter>(`/api/chapters/${id}`);
   }
 
   createChapter(payload: ChapterCreate): Observable<Chapter> {

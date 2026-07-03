@@ -19,6 +19,8 @@ import { Session } from '../../../services/session.model';
 import { Character } from '../../../services/character.model';
 import { loadCampaignTreeData, buildCampaignSidebarConfig } from '../../campaign-tree.helper';
 import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
+import { ClocksManagerComponent } from '../../../shared/clocks-manager/clocks-manager.component';
+import { SessionPrepPanelComponent } from '../../../shared/session-prep-panel/session-prep-panel.component';
 
 /**
  * Vue détail d'une Partie (Playthrough).
@@ -27,7 +29,7 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  */
 @Component({
     selector: 'app-playthrough-detail',
-    imports: [RouterModule, LucideAngularModule, TranslatePipe],
+    imports: [RouterModule, LucideAngularModule, TranslatePipe, ClocksManagerComponent, SessionPrepPanelComponent],
     templateUrl: './playthrough-detail.component.html',
     styleUrls: ['./playthrough-detail.component.scss']
 })

@@ -3,7 +3,13 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, Plus, Trash2, ChevronDown } from 'lucide-angular';
 import { TranslatePipe } from '@ngx-translate/core';
-import { Chapter, Prerequisite } from '../../services/campaign.model';
+import { Prerequisite } from '../../services/campaign.model';
+
+/** Cible candidate pour un prérequis QUEST_COMPLETED (Chapter HUB hérité ou Quest). */
+export interface PrerequisiteTarget {
+  id?: string;
+  name: string;
+}
 
 /**
  * Éditeur des prérequis (conditions de déblocage) d'une quête.
@@ -22,8 +28,8 @@ export class PrerequisiteEditorComponent {
   /** Liste courante. */
   @Input() prerequisites: Prerequisite[] = [];
 
-  /** Quêtes candidates pour QUEST_COMPLETED (typiquement les chapitres frères du Hub). */
-  @Input() availableQuests: Chapter[] = [];
+  /** Quêtes candidates pour QUEST_COMPLETED (Chapitres HUB hérités ou Quests). */
+  @Input() availableQuests: PrerequisiteTarget[] = [];
 
   /** Flags déjà connus de la campagne (autocomplete pour FLAG_SET). */
   @Input() availableFlags: string[] = [];

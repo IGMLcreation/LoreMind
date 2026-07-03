@@ -21,8 +21,11 @@ export interface CampaignCreate {
   gameSystemId?: string | null;
 }
 
-/** Type structurel d'un Arc (miroir de l'enum Java ArcType). */
-export type ArcType = 'LINEAR' | 'HUB';
+/**
+ * Type structurel d'un Arc (miroir de l'enum Java ArcType).
+ * SYSTEM = arc technique « Quêtes libres » (conteneurs des quêtes hors arc), masqué de la narration.
+ */
+export type ArcType = 'LINEAR' | 'HUB' | 'SYSTEM';
 
 /** Statut de progression piloté manuellement par le MJ (persisté). */
 export type ProgressionStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
@@ -89,6 +92,65 @@ export interface ArcCreate {
   illustrationImageIds?: string[];
 }
 
+/** Type de nœud narratif référencé par une quête (miroir Java NodeType). */
+export type NodeType = 'CHAPTER' | 'SCENE';
+
+/** Lien faible d'une quête vers un nœud narratif (miroir Java QuestNodeRef). */
+export interface QuestNodeRef {
+  nodeType: NodeType;
+  nodeId: string;
+  order: number;
+}
+
+/**
+ * Quête (Niveau 1) — entité de première classe, ORTHOGONALE à l'arbre
+ * Arc→Chapitre→Scène, rattachée à la campagne. Porte ses prérequis (réutilise
+ * l'union Prerequisite) et référence des nœuds via QuestNodeRef.
+ */
+export interface Quest {
+  id?: string;
+  campaignId: string;
+  /** Arc de rattachement (nullable). Non nul ⇒ quête d'un arc HUB ; null ⇒ transverse. */
+  arcId?: string | null;
+  name: string;
+  description?: string;
+  icon?: string | null;
+  order?: number;
+
+  /** Conditions de déblocage (ET logique). Donnée de SCÉNARIO. */
+  prerequisites?: Prerequisite[];
+
+  /** Nœuds narratifs (Chapitres / Scènes) traversés par la quête. */
+  nodes?: QuestNodeRef[];
+
+  /** Read-only — peuplé par le backend quand un playthroughId est passé. */
+  progressionStatus?: ProgressionStatus;
+  effectiveStatus?: QuestStatus;
+
+  gmNotes?: string;
+  playerObjectives?: string;
+  narrativeStakes?: string;
+
+  relatedPageIds?: string[];
+  illustrationImageIds?: string[];
+}
+
+export interface QuestCreate {
+  name: string;
+  /** Arc de rattachement (nullable). Renseigné quand la quête est créée depuis un arc HUB. */
+  arcId?: string | null;
+  description?: string;
+  icon?: string | null;
+  order?: number;
+  prerequisites?: Prerequisite[];
+  nodes?: QuestNodeRef[];
+  gmNotes?: string;
+  playerObjectives?: string;
+  narrativeStakes?: string;
+  relatedPageIds?: string[];
+  illustrationImageIds?: string[];
+}
+
 export interface Chapter {
   id?: string;
   name: string;
@@ -96,20 +158,6 @@ export interface Chapter {
   arcId: string;
   order?: number;
   icon?: string | null;
-
-  /** Conditions de déblocage (ET logique). Donnée de SCÉNARIO. */
-  prerequisites?: Prerequisite[];
-
-  /**
-   * Statut de progression read-only — peuplé par le backend uniquement quand
-   * un playthroughId est passé en query param. Ne pas inclure en écriture.
-   */
-  progressionStatus?: ProgressionStatus;
-
-  /**
-   * Statut effectif read-only — idem, dépend du Playthrough.
-   */
-  effectiveStatus?: QuestStatus;
 
   // Champs narratifs enrichis
   gmNotes?: string;
@@ -126,8 +174,6 @@ export interface ChapterCreate {
   arcId: string;
   order: number;
   icon?: string | null;
-
-  prerequisites?: Prerequisite[];
 
   gmNotes?: string;
   playerObjectives?: string;
@@ -166,6 +212,12 @@ export interface PlaythroughFlag {
   value: boolean;
 }
 
+/** Type narratif d'un nœud (Scène) — Niveau 2. Miroir de l'enum Java SceneType. */
+export type SceneType = 'GENERIC' | 'LOCATION' | 'ENCOUNTER' | 'NPC' | 'EVENT' | 'REVELATION';
+
+/** Type d'un lien narratif entre scènes — Niveau 2. Miroir de l'enum Java LinkType. */
+export type LinkType = 'EXIT' | 'CLUE' | 'LEAD';
+
 /**
  * Branche narrative : sortie possible d'une scène vers une autre du même chapitre.
  * Pendant TS du Value Object Java SceneBranch.
@@ -174,6 +226,21 @@ export interface SceneBranch {
   label: string;
   targetSceneId: string;
   condition?: string;
+  /** Type de lien (Niveau 2). Absent => EXIT côté backend. */
+  kind?: LinkType;
+}
+
+/**
+ * Battlemap étiquetée d'une scène (export Foundry) : variante Jour/Nuit, étage…
+ * Pendant TS du record domaine SceneBattlemap.
+ */
+export interface SceneBattlemap {
+  /** Libellé libre de la variante (ex : "Jour", "Nuit"). Peut être vide. */
+  label: string;
+  /** ID du fichier media (image/video). Null = carte sans fond. */
+  mediaFileId: string | null;
+  /** ID du fichier sidecar Universal VTT (.json/.dd2vtt). Null si absent. */
+  dataFileId: string | null;
 }
 
 /**
@@ -217,6 +284,9 @@ export interface Scene {
   order?: number;
   icon?: string | null;
 
+  /** Type narratif du nœud (Niveau 2). Absent => GENERIC. */
+  type?: SceneType;
+
   // Champs narratifs enrichis
   location?: string;
   timing?: string;
@@ -234,11 +304,15 @@ export interface Scene {
   illustrationImageIds?: string[];
 
   /**
-   * Battlemap Foundry : ID du fichier media (image/video) + ID du sidecar JSON
-   * Universal VTT. Non affichee dans l'appli ; transportee a l'export Foundry.
+   * Battlemaps Foundry : variantes étiquetées (Jour/Nuit, étages…), chacune =
+   * media (image/video) + sidecar JSON Universal VTT. Non affichées dans
+   * l'appli ; transportées à l'export Foundry.
    */
-  battlemapMediaFileId?: string | null;
-  battlemapDataFileId?: string | null;
+  battlemaps?: SceneBattlemap[];
+
+  /** Position du nœud dans la vue graphe du chapitre (Niveau 2). Absent => layout auto. */
+  graphX?: number;
+  graphY?: number;
 
   /** Sorties narratives (graphe intra-chapitre). */
   branches?: SceneBranch[];
@@ -254,6 +328,9 @@ export interface SceneCreate {
   order: number;
   icon?: string | null;
 
+  /** Type narratif du nœud (Niveau 2). */
+  type?: SceneType;
+
   location?: string;
   timing?: string;
   atmosphere?: string;
@@ -268,8 +345,9 @@ export interface SceneCreate {
 
   relatedPageIds?: string[];
   illustrationImageIds?: string[];
-  battlemapMediaFileId?: string | null;
-  battlemapDataFileId?: string | null;
+  battlemaps?: SceneBattlemap[];
+  graphX?: number;
+  graphY?: number;
   branches?: SceneBranch[];
   rooms?: Room[];
 }

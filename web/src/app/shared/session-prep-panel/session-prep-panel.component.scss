@@ -1,0 +1,180 @@
+.prep-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.prep-last {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  color: #9ca3af;
+  font-size: 0.85rem;
+}
+
+.prep-quiet {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  color: #86efac;
+  font-size: 0.88rem;
+}
+
+.prep-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+
+  h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #9ca3af;
+
+    &.warn { color: #fb923c; }
+  }
+}
+
+.prep-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.prep-chip-label {
+  color: #6b7280;
+  font-size: 0.78rem;
+}
+
+// Groupe chip + actions : le lien ouvre la quête, les petits boutons pilotent
+// la progression (▶ commencer, ✓ terminer, ↺ rouvrir).
+.prep-chip-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+
+  .chip-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    background: #1a1a2e;
+    border: 1px solid #2a2a3d;
+    border-radius: 50%;
+    color: #9ca3af;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+
+    &:hover { color: #fff; border-color: #6c63ff; background: #24243a; }
+  }
+}
+
+.prep-completed .prep-chip-label { color: #4b5563; }
+
+.prep-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: filter 0.15s;
+
+  &:hover { filter: brightness(1.25); }
+
+  &.in-progress { background: #1e2f45; border-color: #3c6ea5; color: #93c5fd; }
+  &.available   { background: #14311f; border-color: #2f6b46; color: #86efac; }
+  &.node        { background: #1f1d3a; border-color: #3a3658; color: #cfcbe8; }
+  &.done        { background: #16161f; border-color: #2a2a3d; color: #6b7280; text-decoration: line-through; }
+
+  .node-kind {
+    font-size: 0.68rem;
+    color: #8b8595;
+    text-transform: uppercase;
+  }
+}
+
+.prep-gap-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.prep-gap {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.7rem;
+  background: #14141f;
+  border: 1px solid #2a2a3d;
+  border-left: 3px solid #fb923c;
+  border-radius: 8px;
+
+  &.blocking { border-left-color: #ef4444; }
+
+  .gap-msg {
+    flex: 1;
+    min-width: 0;
+    color: #e5e7eb;
+    font-size: 0.83rem;
+    line-height: 1.3;
+  }
+
+  .gap-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    flex-shrink: 0;
+    padding: 0.25rem 0.55rem;
+    background: #1f1d3a;
+    border: 1px solid #3a3658;
+    border-radius: 6px;
+    color: #c7d2fe;
+    font-size: 0.75rem;
+    text-decoration: none;
+
+    &:hover { background: #2c2952; color: #fff; }
+  }
+}
+
+.prep-other {
+  margin: 0;
+  font-size: 0.78rem;
+
+  a { color: #6b7280; text-decoration: none; }
+  a:hover { color: #9ca3af; text-decoration: underline; }
+}
+
+.prep-clock {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  background: #201b3a;
+  border: 1px solid #3a3068;
+  color: #b9a8ff;
+  font-size: 0.82rem;
+
+  .clock-front { color: #8b8595; font-size: 0.75rem; }
+
+  &.nearly { border-color: #b48a4f; color: #fcd34d; background: #3a301a; }
+  &.full   { border-color: #b4554f; color: #fca5a5; background: #3a1d1d; }
+
+  strong { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.03em; }
+}

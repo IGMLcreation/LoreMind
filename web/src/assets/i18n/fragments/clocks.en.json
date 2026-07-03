@@ -1,0 +1,35 @@
+{
+  "playthroughDetail": {
+    "clocksTitle": "Progress clocks"
+  },
+  "clocksManager": {
+    "empty": "No clocks yet. Create one to track a threat or a countdown that advances as the game unfolds.",
+    "namePlaceholder": "Clock name (e.g. \"The cult completes its ritual\")",
+    "segments": "Segments",
+    "segmentsN": "{{n}} segments",
+    "add": "Add",
+    "advance": "Advance one segment",
+    "regress": "Roll back one segment",
+    "triggerType": "Auto trigger",
+    "triggerOption": {
+      "NONE": "Manual",
+      "FLAG_SET": "When a Fact becomes true",
+      "QUEST_COMPLETED": "When a quest completes",
+      "SESSION_ENDED": "At session end"
+    },
+    "flagPlaceholder": "Fact name",
+    "quest": "Quest",
+    "selectQuest": "— Choose a quest —",
+    "triggerFlag": "Fact: {{name}}",
+    "triggerQuest": "Quest: {{name}}",
+    "triggerSession": "Session end",
+    "deletedQuest": "(deleted quest)",
+    "ungrouped": "Loose clocks",
+    "deleteFront": "Delete this front (its clocks become loose)",
+    "frontPlaceholder": "New front (threat: \"The rise of the Cult\"…)",
+    "addFront": "Add a front",
+    "front": "Front",
+    "noFront": "— No front —",
+    "edit": "Edit"
+  }
+}

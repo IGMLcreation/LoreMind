@@ -16,6 +16,8 @@ public class SessionDTO {
     private LocalDateTime startedAt;
     /** Null = session en cours. */
     private LocalDateTime endedAt;
+    /** Scène courante épinglée (nullable, mode cockpit). */
+    private String currentSceneId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private boolean active;

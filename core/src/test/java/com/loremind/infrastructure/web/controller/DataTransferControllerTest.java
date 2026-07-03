@@ -38,7 +38,8 @@ class DataTransferControllerTest {
                 new ContentExport.Manifest(2, "dev", "t", scope),
                 List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of(),
                 List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of(),
-                List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of());
+                List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of(),
+                List.of(), List.of(), List.of());
     }
 
     private ArgumentCaptor<ExportRequest> captureExportAfter(Runnable call) {

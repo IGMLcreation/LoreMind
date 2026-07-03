@@ -1,0 +1,28 @@
+{
+  "playthroughDetail": {
+    "prepTitle": "Préparer la prochaine séance"
+  },
+  "sessionPrep": {
+    "lastSessionActive": "Séance en cours : {{name}}",
+    "lastSessionEnded": "Dernière séance : {{name}} (terminée)",
+    "allQuiet": "Rien à signaler : pas de quête active ni de manque sur le contenu à venir. Lancez la prochaine séance quand vous voulez.",
+    "positionTitle": "Où en sont les joueurs",
+    "inProgress": "En cours :",
+    "available": "Disponibles :",
+    "completed": "Terminées :",
+    "markStarted": "Marquer « en cours » (les joueurs l'ont entamée)",
+    "markCompleted": "Marquer « terminée » (elle sort des pistes probables)",
+    "reopen": "Rouvrir (revenir à « non commencée »)",
+    "hotspotsTitle": "Contenu probable de la prochaine séance",
+    "nodeKind": {
+      "CHAPTER": "chapitre",
+      "SCENE": "scène"
+    },
+    "gapsTitle": "À combler avant de jouer",
+    "fix": "Corriger",
+    "otherGaps": "+ {{n}} autre(s) manque(s) ailleurs dans la campagne",
+    "clocksTitle": "Menaces en mouvement",
+    "clockNearly": "presque pleine !",
+    "clockFull": "pleine !"
+  }
+}

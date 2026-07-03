@@ -27,13 +27,16 @@ public class SessionService {
     private final SessionRepository sessionRepository;
     private final SessionEntryRepository entryRepository;
     private final PlaythroughRepository playthroughRepository;
+    private final ClockService clockService;
 
     public SessionService(SessionRepository sessionRepository,
                           SessionEntryRepository entryRepository,
-                          PlaythroughRepository playthroughRepository) {
+                          PlaythroughRepository playthroughRepository,
+                          ClockService clockService) {
         this.sessionRepository = sessionRepository;
         this.entryRepository = entryRepository;
         this.playthroughRepository = playthroughRepository;
+        this.clockService = clockService;
     }
 
     /**
@@ -70,6 +73,21 @@ public class SessionService {
             throw new IllegalStateException("Cette session est déjà terminée.");
         }
         session.setEndedAt(LocalDateTime.now());
+        Session saved = sessionRepository.save(session);
+        // Co-MJ : la séance se clôture -> avancer les horloges « fin de séance » de la Partie.
+        clockService.onSessionEnded(saved.getPlaythroughId());
+        return saved;
+    }
+
+    /**
+     * Épingle (ou dés-épingle avec {@code null}) la scène courante de la session — mode
+     * cockpit : « on en est là ». Weak ref : on ne valide pas l'existence de la scène
+     * (l'UI ne propose que des scènes réelles ; une scène supprimée rend l'épingle caduque).
+     */
+    public Session setCurrentScene(String id, String sceneId) {
+        Session session = sessionRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Session introuvable : " + id));
+        session.setCurrentSceneId(sceneId != null && !sceneId.isBlank() ? sceneId : null);
         return sessionRepository.save(session);
     }
 

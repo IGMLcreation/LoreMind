@@ -3,9 +3,9 @@ package com.loremind.infrastructure.transfer.foundry;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.loremind.domain.campaigncontext.Prerequisite;
 import com.loremind.domain.campaigncontext.Room;
 import com.loremind.domain.campaigncontext.RoomBranch;
+import com.loremind.domain.campaigncontext.SceneBattlemap;
 import com.loremind.domain.campaigncontext.SceneBranch;
 import com.loremind.domain.shared.template.FieldType;
 import com.loremind.domain.shared.template.TemplateField;
@@ -91,11 +91,29 @@ public class FoundryExportService {
     public record BinaryRef(String path, String storageKey, boolean image) {}
 
     /**
+     * Perimetre de l'export, choisi par l'utilisateur dans la modale :
+     * - maps     : Scenes Foundry (battlemaps) + acteurs/tokens des ennemis lies.
+     * - journals : journaux narratifs (arcs, chapitres/quetes, scenes, PNJ, bestiaire)
+     *              avec leurs illustrations.
+     * - tables   : RollTables.
+     */
+    public record ExportOptions(boolean maps, boolean journals, boolean tables) {
+        public static ExportOptions all() { return new ExportOptions(true, true, true); }
+    }
+
+    /** Bundle complet (tout le perimetre) — conserve pour les appels existants. */
+    public BuiltBundle buildBundle(String campaignId, String exportedAt) {
+        return buildBundle(campaignId, exportedAt, ExportOptions.all());
+    }
+
+    /**
      * Assemble le bundle d'une campagne (sans toucher aux binaires : peu couteux).
+     * Le perimetre exclu n'est PAS embarque (ni entites ni binaires) : un export
+     * « cartes + ennemis » reste leger meme sur une campagne tres illustree.
      *
      * @throws NoSuchElementException si la campagne n'existe pas
      */
-    public BuiltBundle buildBundle(String campaignId, String exportedAt) {
+    public BuiltBundle buildBundle(String campaignId, String exportedAt, ExportOptions opts) {
         CampaignJpaEntity campaign = campaignRepo.findById(Long.parseLong(campaignId))
                 .orElseThrow(() -> new NoSuchElementException("Campagne introuvable : " + campaignId));
 
@@ -113,44 +131,59 @@ public class FoundryExportService {
 
         List<ArcJpaEntity> arcEntities = sortByOrder(arcRepo.findByCampaignId(campaign.getId()), ArcJpaEntity::getOrder);
         for (ArcJpaEntity arc : arcEntities) {
+            // Sans journaux, arcs/quetes ne servent que d'ossature (dossiers des Scenes) :
+            // leurs illustrations ne sont pas embarquees.
             arcs.add(new FoundryBundle.Arc(
                     str(arc.getId()), arc.getName(), arc.getDescription(), arc.getOrder(),
                     arc.getType() != null ? arc.getType().name() : null, arc.getIcon(),
                     arc.getThemes(), arc.getStakes(), arc.getGmNotes(), arc.getRewards(), arc.getResolution(),
-                    assets.images(arc.getIllustrationImageIds())));
+                    opts.journals() ? assets.images(arc.getIllustrationImageIds()) : List.of()));
 
             for (ChapterJpaEntity ch : sortByOrder(chapterRepo.findByArcId(arc.getId()), ChapterJpaEntity::getOrder)) {
                 quests.add(new FoundryBundle.Quest(
                         str(ch.getId()), str(arc.getId()), ch.getName(), ch.getDescription(), ch.getOrder(),
                         ch.getIcon(), ch.getPlayerObjectives(), ch.getNarrativeStakes(), ch.getGmNotes(),
-                        prerequisites(ch.getPrerequisites()), assets.images(ch.getIllustrationImageIds())));
+                        List.of(), opts.journals() ? assets.images(ch.getIllustrationImageIds()) : List.of()));
 
                 for (SceneJpaEntity sc : sortByOrder(sceneRepo.findByChapterId(ch.getId()), SceneJpaEntity::getOrder)) {
-                    scenes.add(toScene(sc, str(ch.getId()), assets));
+                    scenes.add(toScene(sc, str(ch.getId()), assets, opts));
                 }
             }
         }
 
+        // PNJ : purement journal — hors perimetre sans les journaux.
         List<FoundryBundle.Persona> npcs = new ArrayList<>();
-        for (NpcJpaEntity n : npcRepo.findByCampaignIdOrderByOrderAsc(campaign.getId())) {
-            npcs.add(new FoundryBundle.Persona(
-                    str(n.getId()), n.getName(), n.getFolder(), n.getOrder(),
-                    assets.image(n.getPortraitImageId()), assets.image(n.getHeaderImageId()), null, null, null,
-                    fields(npcTemplate, n.getValues(), n.getKeyValueValues(), n.getImageValues(), assets)));
+        if (opts.journals()) {
+            for (NpcJpaEntity n : npcRepo.findByCampaignIdOrderByOrderAsc(campaign.getId())) {
+                npcs.add(new FoundryBundle.Persona(
+                        str(n.getId()), n.getName(), n.getFolder(), n.getOrder(),
+                        assets.image(n.getPortraitImageId()), assets.image(n.getHeaderImageId()), null, null, null,
+                        fields(npcTemplate, n.getValues(), n.getKeyValueValues(), n.getImageValues(), assets)));
+            }
         }
 
+        // Ennemis : necessaires aux cartes (acteurs/tokens, portrait = image du token)
+        // ET aux journaux (bestiaire). Les galeries d'images des champs ne servent que
+        // les journaux -> non embarquees en mode cartes seules.
         List<FoundryBundle.Persona> enemies = new ArrayList<>();
-        for (EnemyJpaEntity e : enemyRepo.findByCampaignIdOrderByOrderAsc(campaign.getId())) {
-            enemies.add(new FoundryBundle.Persona(
-                    str(e.getId()), e.getName(), e.getFolder(), e.getOrder(),
-                    assets.image(e.getPortraitImageId()), assets.image(e.getHeaderImageId()), e.getLevel(),
-                    e.getFoundryRef(),
-                    buildFoundryActor(e, enemyTemplate, foundryActorType),
-                    fields(enemyTemplate, e.getValues(), e.getKeyValueValues(), e.getImageValues(), assets)));
+        if (opts.maps() || opts.journals()) {
+            for (EnemyJpaEntity e : enemyRepo.findByCampaignIdOrderByOrderAsc(campaign.getId())) {
+                enemies.add(new FoundryBundle.Persona(
+                        str(e.getId()), e.getName(), e.getFolder(), e.getOrder(),
+                        assets.image(e.getPortraitImageId()),
+                        opts.journals() ? assets.image(e.getHeaderImageId()) : null,
+                        e.getLevel(),
+                        e.getFoundryRef(),
+                        buildFoundryActor(e, enemyTemplate, foundryActorType),
+                        fields(enemyTemplate, e.getValues(), e.getKeyValueValues(),
+                                opts.journals() ? e.getImageValues() : null, assets)));
+            }
         }
 
         List<FoundryBundle.RandomTable> randomTables = new ArrayList<>();
-        for (RandomTableJpaEntity t : randomTableRepo.findByCampaignIdOrderByOrderAsc(campaign.getId())) {
+        for (RandomTableJpaEntity t : opts.tables()
+                ? randomTableRepo.findByCampaignIdOrderByOrderAsc(campaign.getId())
+                : List.<RandomTableJpaEntity>of()) {
             List<FoundryBundle.RandomTableEntry> entries = new ArrayList<>();
             if (t.getEntries() != null) {
                 for (RandomTableEntryJpaEntity en : t.getEntries()) {
@@ -166,7 +199,9 @@ public class FoundryExportService {
                 str(campaign.getId()), campaign.getName(), campaign.getDescription(), campaign.getGameSystemId());
 
         FoundryBundle.Data data = new FoundryBundle.Data(
-                FORMAT_VERSION, campaignNode, arcs, quests, scenes, npcs, enemies, randomTables, assets.assets());
+                FORMAT_VERSION, campaignNode,
+                new FoundryBundle.Options(opts.maps(), opts.journals(), opts.tables()),
+                arcs, quests, scenes, npcs, enemies, randomTables, assets.assets());
 
         Map<String, Integer> counts = new LinkedHashMap<>();
         counts.put("arcs", arcs.size());
@@ -218,22 +253,33 @@ public class FoundryExportService {
 
     // ----- Mapping Scene -----
 
-    private FoundryBundle.Scene toScene(SceneJpaEntity sc, String questId, AssetRegistry assets) {
-        FoundryBundle.Battlemap battlemap = battlemap(sc.getBattlemapMediaFileId(), sc.getBattlemapDataFileId(), assets);
+    private FoundryBundle.Scene toScene(SceneJpaEntity sc, String questId, AssetRegistry assets, ExportOptions opts) {
+        List<FoundryBundle.LabeledBattlemap> battlemaps = opts.maps()
+                ? battlemaps(sc.getBattlemaps(), assets)
+                : List.of();
+        // Champ legacy `battlemap` (première carte) conservé pour les modules Foundry existants.
+        FoundryBundle.Battlemap battlemap = battlemaps.isEmpty() ? null
+                : new FoundryBundle.Battlemap(battlemaps.get(0).mediaAssetId(), battlemaps.get(0).dataAssetId());
         return new FoundryBundle.Scene(
                 str(sc.getId()), questId, sc.getName(), sc.getDescription(), sc.getOrder(), sc.getIcon(),
                 sc.getLocation(), sc.getTiming(), sc.getAtmosphere(),
                 sc.getPlayerNarration(), sc.getGmSecretNotes(), sc.getChoicesConsequences(),
                 sc.getCombatDifficulty(), sc.getEnemies(), copy(sc.getEnemyIds()),
-                assets.images(sc.getIllustrationImageIds()), battlemap,
-                branches(sc.getBranches()), rooms(sc.getRooms(), assets));
+                opts.journals() ? assets.images(sc.getIllustrationImageIds()) : List.of(),
+                battlemap, battlemaps,
+                branches(sc.getBranches()), rooms(sc.getRooms(), assets, opts));
     }
 
-    private FoundryBundle.Battlemap battlemap(String mediaId, String dataId, AssetRegistry assets) {
-        String media = assets.file(mediaId, "battlemapMedia");
-        String data = assets.file(dataId, "battlemapData");
-        if (media == null && data == null) return null;
-        return new FoundryBundle.Battlemap(media, data);
+    private List<FoundryBundle.LabeledBattlemap> battlemaps(List<SceneBattlemap> maps, AssetRegistry assets) {
+        if (maps == null) return List.of();
+        List<FoundryBundle.LabeledBattlemap> out = new ArrayList<>();
+        for (SceneBattlemap bm : maps) {
+            String media = assets.file(bm.mediaFileId(), "battlemapMedia");
+            String data = assets.file(bm.dataFileId(), "battlemapData");
+            if (media == null && data == null) continue;
+            out.add(new FoundryBundle.LabeledBattlemap(bm.label(), media, data));
+        }
+        return out;
     }
 
     private List<FoundryBundle.Branch> branches(List<SceneBranch> branches) {
@@ -243,7 +289,7 @@ public class FoundryExportService {
         return out;
     }
 
-    private List<FoundryBundle.Room> rooms(List<Room> rooms, AssetRegistry assets) {
+    private List<FoundryBundle.Room> rooms(List<Room> rooms, AssetRegistry assets, ExportOptions opts) {
         if (rooms == null) return List.of();
         List<FoundryBundle.Room> out = new ArrayList<>();
         for (Room r : rooms) {
@@ -254,22 +300,7 @@ public class FoundryExportService {
             out.add(new FoundryBundle.Room(
                     r.getId(), r.getName(), r.getDescription(), r.getEnemies(), copy(r.getEnemyIds()),
                     r.getLoot(), r.getTraps(), r.getGmNotes(), r.getFloor(), r.getOrder(),
-                    assets.images(r.getIllustrationImageIds()), null, rb));
-        }
-        return out;
-    }
-
-    private List<Map<String, Object>> prerequisites(List<Prerequisite> prereqs) {
-        if (prereqs == null || prereqs.isEmpty()) return List.of();
-        List<Map<String, Object>> out = new ArrayList<>();
-        for (Prerequisite p : prereqs) {
-            if (p instanceof Prerequisite.QuestCompleted qc) {
-                out.add(Map.of("type", "questCompleted", "questId", String.valueOf(qc.questId())));
-            } else if (p instanceof Prerequisite.SessionReached sr) {
-                out.add(Map.of("type", "sessionReached", "minSessionNumber", sr.minSessionNumber()));
-            } else if (p instanceof Prerequisite.FlagSet fs) {
-                out.add(Map.of("type", "flagSet", "flagName", fs.flagName()));
-            }
+                    opts.journals() ? assets.images(r.getIllustrationImageIds()) : List.of(), null, rb));
         }
         return out;
     }

@@ -1,7 +1,5 @@
 package com.loremind.infrastructure.persistence.entity;
 
-import com.loremind.domain.campaigncontext.Prerequisite;
-import com.loremind.infrastructure.persistence.converter.PrerequisiteListJsonConverter;
 import com.loremind.infrastructure.persistence.converter.StringListJsonConverter;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -38,16 +36,6 @@ public class ChapterJpaEntity {
 
     @Column(name = "\"order\"", nullable = false)
     private int order;
-
-    /**
-     * Conditions de déblocage (combinées en ET). Sérialisées en JSON dans une colonne TEXT
-     * via {@link PrerequisiteListJsonConverter} (sealed type côté domaine).
-     * Donnée de SCÉNARIO — l'état réel est sur Playthrough.QuestProgression.
-     */
-    @Column(name = "prerequisites", columnDefinition = "TEXT")
-    @Convert(converter = PrerequisiteListJsonConverter.class)
-    @Builder.Default
-    private List<Prerequisite> prerequisites = new ArrayList<>();
 
     @Column
     private String icon;

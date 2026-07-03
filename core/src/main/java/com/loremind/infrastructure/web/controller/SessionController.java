@@ -1,11 +1,15 @@
 package com.loremind.infrastructure.web.controller;
 
+import com.loremind.application.playcontext.SessionRecapService;
 import com.loremind.application.playcontext.SessionService;
 import com.loremind.domain.playcontext.Session;
+import com.loremind.domain.playcontext.ports.SessionRecapException;
 import com.loremind.infrastructure.web.dto.playcontext.SessionDTO;
 import com.loremind.infrastructure.web.mapper.SessionMapper;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -19,16 +23,22 @@ import java.util.stream.Collectors;
 public class SessionController {
 
     private final SessionService sessionService;
+    private final SessionRecapService recapService;
     private final SessionMapper sessionMapper;
 
-    public SessionController(SessionService sessionService, SessionMapper sessionMapper) {
+    public SessionController(SessionService sessionService,
+                             SessionRecapService recapService,
+                             SessionMapper sessionMapper) {
         this.sessionService = sessionService;
+        this.recapService = recapService;
         this.sessionMapper = sessionMapper;
     }
 
     public record StartSessionRequest(String playthroughId) {}
 
     public record RenameSessionRequest(String name) {}
+
+    public record CurrentSceneRequest(String sceneId) {}
 
     @PostMapping
     public ResponseEntity<SessionDTO> startSession(@RequestBody StartSessionRequest request) {
@@ -82,5 +92,23 @@ public class SessionController {
     public ResponseEntity<Void> deleteSession(@PathVariable String id) {
         sessionService.deleteSession(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /** Épingle (sceneId) ou dés-épingle (null/vide) la scène courante — mode cockpit. */
+    @PutMapping("/{id}/current-scene")
+    public ResponseEntity<SessionDTO> setCurrentScene(@PathVariable String id,
+                                                      @RequestBody CurrentSceneRequest request) {
+        Session updated = sessionService.setCurrentScene(id, request.sceneId());
+        return ResponseEntity.ok(sessionMapper.toDTO(updated));
+    }
+
+    /** Récap « précédemment… » : résume le journal de la séance précédente de la même Partie. */
+    @PostMapping("/{id}/recap")
+    public ResponseEntity<SessionRecapService.RecapResult> recap(@PathVariable String id) {
+        try {
+            return ResponseEntity.ok(recapService.recapPreviousSession(id));
+        } catch (SessionRecapException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, e.getMessage(), e);
+        }
     }
 }

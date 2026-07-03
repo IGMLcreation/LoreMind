@@ -1,0 +1,68 @@
+.node-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.node-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.node-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  background: #1a1a2e;
+  border: 1px solid #2a2a3d;
+  border-radius: 8px;
+
+  .node-icon { color: #9ca3af; flex: none; }
+
+  .node-name {
+    flex: 1;
+    min-width: 0;
+    color: #e5e7eb;
+    font-size: 0.88rem;
+  }
+
+  .node-type {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #9ca3af;
+  }
+
+  button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.2rem;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    color: #9ca3af;
+    cursor: pointer;
+    transition: color 0.15s, background 0.15s;
+
+    &:hover:not(:disabled) { color: #fff; background: #2a2a3d; }
+    &:disabled { opacity: 0.3; cursor: default; }
+  }
+}
+
+.empty-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  font-style: italic;
+  color: #9ca3af;
+}
+
+.add-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+
+  select { flex: 1; min-width: 0; }
+}

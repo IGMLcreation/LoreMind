@@ -1,6 +1,8 @@
 package com.loremind.application.campaigncontext;
 
+import com.loremind.domain.campaigncontext.FieldProposal;
 import com.loremind.domain.campaigncontext.Scene;
+import com.loremind.domain.campaigncontext.SceneDraft;
 import com.loremind.domain.shared.ReorderSupport;
 import com.loremind.domain.campaigncontext.SceneBranch;
 import com.loremind.domain.campaigncontext.ports.SceneRepository;
@@ -86,7 +88,96 @@ public class SceneService {
         return sceneRepository.save(scene);
     }
 
+    /**
+     * Patch CIBLÉ champ-par-champ d'une scène (Pilier A — co-création). Applique
+     * UNIQUEMENT les {@link FieldProposal} reçus (valeurs acceptées par l'utilisateur) sur
+     * les champs correspondants ; tous les autres champs restent INTACTS.
+     *
+     * <p>Contraste volontaire avec {@link #updateScene} : ce dernier fait un
+     * {@code BeanUtils.copyProperties} qui écrase MÊME avec des null — inadapté ici où l'on
+     * ne veut toucher que les champs proposés. Les branches ne sont pas modifiées (pas de
+     * revalidation du graphe nécessaire).</p>
+     */
+    @Transactional
+    public Scene patchScene(String id, List<FieldProposal> fields) {
+        Scene scene = sceneRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Scene non trouvée avec l'ID: " + id));
+        if (fields != null) {
+            for (FieldProposal f : fields) {
+                if (f == null || f.key() == null) continue;
+                applyField(scene, f.key(), f.proposedValue());
+            }
+        }
+        return sceneRepository.save(scene);
+    }
+
+    /**
+     * Applique une valeur sur le champ nommé. Whitelist STRICTE alignée sur
+     * {@code NarrativeEntityContextBuilder.fromScene()} : toute clé inconnue est ignorée
+     * (jamais d'écrasement hors de la liste connue).
+     */
+    private void applyField(Scene scene, String key, String value) {
+        switch (key) {
+            case "description" -> scene.setDescription(value);
+            case "location" -> scene.setLocation(value);
+            case "timing" -> scene.setTiming(value);
+            case "atmosphere" -> scene.setAtmosphere(value);
+            case "playerNarration" -> scene.setPlayerNarration(value);
+            case "choicesConsequences" -> scene.setChoicesConsequences(value);
+            case "combatDifficulty" -> scene.setCombatDifficulty(value);
+            case "enemies" -> scene.setEnemies(value);
+            case "gmSecretNotes" -> scene.setGmSecretNotes(value);
+            default -> { /* clé inconnue → ignorée (garde-fou anti-écrasement) */ }
+        }
+    }
+
+    /**
+     * Crée en bloc des scènes à partir d'ébauches IA acceptées (Pilier A — capacité
+     * « create »). Les scènes sont AJOUTÉES à la fin du chapitre (ordre = suite des scènes
+     * existantes). Les ébauches sans titre sont ignorées. Transactionnel.
+     */
+    @Transactional
+    public List<Scene> createDraftScenes(String chapterId, List<SceneDraft> drafts) {
+        if (drafts == null || drafts.isEmpty()) return List.of();
+        int order = sceneRepository.findByChapterId(chapterId).stream()
+                .mapToInt(Scene::getOrder).max().orElse(-1) + 1;
+        List<Scene> created = new ArrayList<>();
+        for (SceneDraft d : drafts) {
+            if (d == null || d.name() == null || d.name().isBlank()) continue;
+            Scene scene = Scene.builder()
+                    .name(d.name().trim())
+                    .description(d.description())
+                    .playerNarration(d.playerNarration())
+                    .chapterId(chapterId)
+                    .order(order++)
+                    .build();
+            created.add(createScene(scene));   // createScene(Scene) force id=null + rooms
+        }
+        return created;
+    }
+
+    /**
+     * Supprime la scène ET nettoie les branches des scènes sœurs qui pointaient vers elle
+     * (sinon elles deviennent des références mortes : invisibles dans le graphe — qui filtre
+     * les cibles inexistantes — mais signalées « branche cassée » par le guidage, ce qui est
+     * incompréhensible pour l'utilisateur). Les branches étant intra-chapitre, le nettoyage
+     * se limite aux sœurs du même chapitre. Transactionnel : atomique.
+     */
+    @Transactional
     public void deleteScene(String id) {
+        sceneRepository.findById(id).ifPresent(scene -> {
+            for (Scene sibling : sceneRepository.findByChapterId(scene.getChapterId())) {
+                List<SceneBranch> branches = sibling.getBranches();
+                if (id.equals(sibling.getId()) || branches == null || branches.isEmpty()) continue;
+                List<SceneBranch> kept = branches.stream()
+                        .filter(b -> !id.equals(b.targetSceneId()))
+                        .collect(Collectors.toList());
+                if (kept.size() != branches.size()) {
+                    sibling.setBranches(kept);
+                    sceneRepository.save(sibling);
+                }
+            }
+        });
         sceneRepository.deleteById(id);
     }
 

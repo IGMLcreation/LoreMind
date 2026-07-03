@@ -20,6 +20,9 @@ public class SceneDTO {
     /** Cle d'icone (cf. CAMPAIGN_ICON_OPTIONS cote front). */
     private String icon;
 
+    /** Type narratif du nœud (Niveau 2) : "GENERIC" | "LOCATION" | "ENCOUNTER" | "NPC" | "EVENT" | "REVELATION". */
+    private String type;
+
     // Champs narratifs enrichis
     private String location;
     private String timing;
@@ -39,11 +42,12 @@ public class SceneDTO {
     /** IDs des images (Shared Kernel) illustrant cette scene (ambiance). */
     private List<String> illustrationImageIds = new ArrayList<>();
 
-    /** Battlemap Foundry : ID du fichier media (image/video). Null = pas de carte. */
-    private String battlemapMediaFileId;
+    /** Battlemaps Foundry : variantes étiquetées { label, media, sidecar }. Vide = pas de carte. */
+    private List<SceneBattlemapDTO> battlemaps = new ArrayList<>();
 
-    /** Battlemap Foundry : ID du fichier sidecar Universal VTT (json). Null si absent. */
-    private String battlemapDataFileId;
+    /** Position du nœud dans la vue graphe du chapitre (Niveau 2). Null = layout auto. */
+    private Double graphX;
+    private Double graphY;
 
     /** Branches narratives : sorties possibles vers d'autres scènes du même chapitre. */
     private List<SceneBranchDTO> branches = new ArrayList<>();

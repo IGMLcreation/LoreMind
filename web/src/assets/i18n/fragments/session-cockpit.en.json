@@ -1,0 +1,25 @@
+{
+  "sessionReferencePanel": {
+    "tabPlay": "Play",
+    "playClocks": "Clocks",
+    "playFacts": "Facts",
+    "playNoPlaythrough": "This session is not attached to any playthrough.",
+    "pinScene": "Pin as current scene"
+  },
+  "sessionDetail": {
+    "pinned": {
+      "label": "Current scene",
+      "open": "Open the scene (new tab)",
+      "unpin": "Unpin",
+      "showNarration": "Show player narration",
+      "hideNarration": "Hide narration"
+    },
+    "recap": {
+      "button": "“Previously…” recap",
+      "loading": "Writing the recap…",
+      "title": "Previously ({{name}})",
+      "addToJournal": "Add to journal",
+      "error": "Recap failed. Is the Brain (AI) running?"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "readiness": {
+    "title": "Next steps",
+    "badge": {
+      "DRAFT": "Draft",
+      "PLAYABLE": "Playable",
+      "POLISHED": "Polished"
+    },
+    "blockingN": "{{n}} blocking",
+    "recommendedN": "{{n}} recommended",
+    "allSet": "All set: this campaign is ready to play.",
+    "fix": "Fix",
+    "dot": {
+      "blocking": "To fix: a blocking gap, here or in an item below. See “Next steps” on the campaign.",
+      "recommended": "Suggested: a recommended gap, here or below. See “Next steps” on the campaign.",
+      "more": "+ {{n}} more gap(s) — see “Next steps”"
+    }
+  }
+}

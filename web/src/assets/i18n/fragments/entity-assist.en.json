@@ -1,0 +1,33 @@
+{
+  "entityAssist": {
+    "button": "Flesh out with AI",
+    "hint": "The co-GM suggests values for the fields. Nothing is saved: pick what fills the form, then save as usual.",
+    "instructionPlaceholder": "Optional instruction (e.g. \"make the mood more ominous\", \"add a clue about the cult\")…",
+    "generate": "Generate suggestions",
+    "generating": "Generating…",
+    "regenerate": "Regenerate",
+    "applySelection": "Apply selection ({{n}})",
+    "empty": "The AI had nothing new to suggest — the entity may already be complete, or rephrase your instruction.",
+    "error": "Generation failed. Is the Brain (AI) running?",
+    "current": "Current",
+    "proposed": "Proposed",
+    "field": {
+      "description": "Description",
+      "location": "Location",
+      "timing": "Timing",
+      "atmosphere": "Atmosphere",
+      "playerNarration": "Player narration",
+      "choicesConsequences": "Choices & consequences",
+      "combatDifficulty": "Combat difficulty",
+      "enemies": "Enemies",
+      "gmSecretNotes": "GM secret notes",
+      "gmNotes": "GM notes",
+      "playerObjectives": "Player objectives",
+      "narrativeStakes": "Narrative stakes",
+      "themes": "Themes",
+      "stakes": "Stakes",
+      "rewards": "Rewards",
+      "resolution": "Resolution"
+    }
+  }
+}

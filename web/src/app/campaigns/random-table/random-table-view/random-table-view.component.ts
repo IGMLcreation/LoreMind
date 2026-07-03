@@ -39,18 +39,25 @@ export class RandomTableViewComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    const params = this.route.snapshot.paramMap;
-    this.campaignId = params.get('campaignId');
-    this.tableId = params.get('tableId');
-    if (this.tableId) {
-      this.service.getById(this.tableId).subscribe({
-        next: t => this.table = t,
-        error: () => this.back()
-      });
-    }
-    if (this.campaignId) {
-      this.campaignSidebar.show(this.campaignId);
-    }
+    this.route.paramMap.subscribe(pm => {
+      const newCampaignId = pm.get('campaignId');
+      const newTableId = pm.get('tableId');
+      if (newCampaignId === this.campaignId && newTableId === this.tableId) return;
+      this.campaignId = newCampaignId;
+      this.tableId = newTableId;
+      this.table = null;
+      this.lastRoll = null;
+      this.matched = null;
+      if (this.tableId) {
+        this.service.getById(this.tableId).subscribe({
+          next: t => this.table = t,
+          error: () => this.back()
+        });
+      }
+      if (this.campaignId) {
+        this.campaignSidebar.show(this.campaignId);
+      }
+    });
   }
 
   roll(): void {

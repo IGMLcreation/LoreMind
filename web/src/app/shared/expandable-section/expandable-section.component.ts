@@ -25,6 +25,12 @@ export class ExpandableSectionComponent {
   @Input() icon = '';                      // Emoji ou caractère unicode (ex: '📍', '📖')
   @Input() initiallyOpen = false;
   @Input() variant: 'default' | 'private' = 'default';  // 'private' = notes MJ (couleur différente)
+  /**
+   * Pastille « contient du contenu » dans l'en-tête (replié comme déplié).
+   * Permet de voir d'un coup d'œil quelles sections optionnelles sont remplies
+   * sans avoir à les ouvrir une à une. Le parent calcule l'état.
+   */
+  @Input() filled = false;
 
   isOpen = false;
 

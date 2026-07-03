@@ -1,0 +1,117 @@
+@if (quest) {
+  <div class="view-page">
+    <header class="view-header">
+      <div>
+        <h1>
+          @if (quest.icon) {
+            <lucide-icon [img]="resolveCampaignIcon(quest.icon)" [size]="22" class="title-icon"></lucide-icon>
+          }
+          {{ quest.name }}
+        </h1>
+        <p class="view-subtitle">{{ 'questView.subtitle' | translate }}</p>
+      </div>
+      <div class="view-actions">
+        @if (containerChapter) {
+          <button type="button" class="btn-secondary" (click)="openGraph()">
+            <lucide-icon [img]="Network" [size]="14"></lucide-icon>
+            {{ 'questView.mapButton' | translate }}
+          </button>
+        }
+        <button type="button" class="btn-primary" (click)="editMode()">
+          <lucide-icon [img]="Pencil" [size]="14"></lucide-icon>
+          {{ 'common.edit' | translate }}
+        </button>
+        <button type="button" class="btn-danger" (click)="deleteQuest()" [title]="'questView.deleteTitle' | translate">
+          <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+          {{ 'common.delete' | translate }}
+        </button>
+      </div>
+    </header>
+
+    <!-- Illustrations (rendu editorial magazine) -->
+    @if ((quest.illustrationImageIds?.length ?? 0) > 0) {
+      <section class="view-section">
+        <app-image-gallery [imageIds]="quest.illustrationImageIds ?? []" [layout]="'EDITORIAL'"></app-image-gallery>
+      </section>
+    }
+
+    <!-- Description -->
+    <section class="view-section">
+      <h2 class="view-section-title"><span class="view-section-icon">📜</span> {{ 'questView.synopsisTitle' | translate }}</h2>
+      @if (quest.description?.trim()) {
+        <p class="view-section-body">{{ quest.description }}</p>
+      } @else {
+        <p class="view-section-empty">{{ 'questView.notProvided' | translate }}</p>
+      }
+    </section>
+
+    <!-- Objectifs / enjeux -->
+    <div class="view-row">
+      <section class="view-section">
+        <h2 class="view-section-title"><span class="view-section-icon">🎯</span> {{ 'questView.playerObjectivesTitle' | translate }}</h2>
+        @if (quest.playerObjectives?.trim()) {
+          <p class="view-section-body">{{ quest.playerObjectives }}</p>
+        } @else {
+          <p class="view-section-empty">{{ 'questView.notProvided' | translate }}</p>
+        }
+      </section>
+      <section class="view-section">
+        <h2 class="view-section-title"><span class="view-section-icon">⚡</span> {{ 'questView.narrativeStakesTitle' | translate }}</h2>
+        @if (quest.narrativeStakes?.trim()) {
+          <p class="view-section-body">{{ quest.narrativeStakes }}</p>
+        } @else {
+          <p class="view-section-empty">{{ 'questView.notProvided' | translate }}</p>
+        }
+      </section>
+    </div>
+
+    <!-- Conditions de déblocage -->
+    @if ((quest.prerequisites?.length ?? 0) > 0) {
+      <section class="view-section">
+        <h2 class="view-section-title"><span class="view-section-icon">🔓</span> {{ 'questView.prerequisitesTitle' | translate }}</h2>
+        <div class="view-chips">
+          @for (prereq of quest.prerequisites; track $index) {
+            <span class="view-chip">{{ prereqLabel(prereq) }}</span>
+          }
+        </div>
+      </section>
+    }
+
+    <!-- Nœuds narratifs traversés -->
+    @if (visibleNodes.length > 0) {
+      <section class="view-section">
+        <h2 class="view-section-title"><span class="view-section-icon">📍</span> {{ 'questView.nodesTitle' | translate }}</h2>
+        <div class="view-chips">
+          @for (n of visibleNodes; track $index) {
+            <span class="view-chip">
+              <lucide-icon [img]="n.nodeType === 'SCENE' ? MapPin : BookOpen" [size]="13"></lucide-icon>
+              {{ nodeLabel(n) }}
+            </span>
+          }
+        </div>
+      </section>
+    }
+
+    <!-- Notes du MJ (privé) -->
+    @if (quest.gmNotes?.trim()) {
+      <section class="view-section view-section--private">
+        <h2 class="view-section-title"><span class="view-section-icon">🔒</span> {{ 'questView.gmNotesTitle' | translate }}</h2>
+        <p class="view-section-body">{{ quest.gmNotes }}</p>
+      </section>
+    }
+
+    <!-- Pages Lore liées -->
+    @if (loreId && (quest.relatedPageIds?.length ?? 0) > 0) {
+      <section class="view-section">
+        <h2 class="view-section-title"><span class="view-section-icon">🔗</span> {{ 'questView.relatedPagesTitle' | translate }}</h2>
+        <div class="view-chips">
+          @for (relId of quest.relatedPageIds; track relId) {
+            <a class="view-chip" [routerLink]="['/lore', loreId, 'pages', relId]">
+              {{ titleOfRelated(relId) }}
+            </a>
+          }
+        </div>
+      </section>
+    }
+  </div>
+}

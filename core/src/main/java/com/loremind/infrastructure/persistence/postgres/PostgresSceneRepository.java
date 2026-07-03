@@ -1,6 +1,7 @@
 package com.loremind.infrastructure.persistence.postgres;
 
 import com.loremind.domain.campaigncontext.Scene;
+import com.loremind.domain.campaigncontext.SceneType;
 import com.loremind.domain.campaigncontext.ports.SceneRepository;
 import com.loremind.infrastructure.persistence.entity.SceneJpaEntity;
 import com.loremind.infrastructure.persistence.jpa.SceneJpaRepository;
@@ -72,6 +73,7 @@ public class PostgresSceneRepository implements SceneRepository {
                 .chapterId(jpaEntity.getChapterId().toString())
                 .order(jpaEntity.getOrder())
                 .icon(jpaEntity.getIcon())
+                .type(jpaEntity.getType() != null ? jpaEntity.getType() : SceneType.GENERIC)
                 .location(jpaEntity.getLocation())
                 .timing(jpaEntity.getTiming())
                 .atmosphere(jpaEntity.getAtmosphere())
@@ -89,8 +91,11 @@ public class PostgresSceneRepository implements SceneRepository {
                 .illustrationImageIds(jpaEntity.getIllustrationImageIds() != null
                         ? new ArrayList<>(jpaEntity.getIllustrationImageIds())
                         : new ArrayList<>())
-                .battlemapMediaFileId(jpaEntity.getBattlemapMediaFileId())
-                .battlemapDataFileId(jpaEntity.getBattlemapDataFileId())
+                .battlemaps(jpaEntity.getBattlemaps() != null
+                        ? new ArrayList<>(jpaEntity.getBattlemaps())
+                        : new ArrayList<>())
+                .graphX(jpaEntity.getGraphX())
+                .graphY(jpaEntity.getGraphY())
                 .branches(jpaEntity.getBranches() != null
                         ? new ArrayList<>(jpaEntity.getBranches())
                         : new ArrayList<>())
@@ -111,6 +116,7 @@ public class PostgresSceneRepository implements SceneRepository {
                 .chapterId(Long.parseLong(scene.getChapterId()))
                 .order(scene.getOrder())
                 .icon(scene.getIcon())
+                .type(scene.getType() != null ? scene.getType() : SceneType.GENERIC)
                 .location(scene.getLocation())
                 .timing(scene.getTiming())
                 .atmosphere(scene.getAtmosphere())
@@ -128,8 +134,11 @@ public class PostgresSceneRepository implements SceneRepository {
                 .illustrationImageIds(scene.getIllustrationImageIds() != null
                         ? new ArrayList<>(scene.getIllustrationImageIds())
                         : new ArrayList<>())
-                .battlemapMediaFileId(scene.getBattlemapMediaFileId())
-                .battlemapDataFileId(scene.getBattlemapDataFileId())
+                .battlemaps(scene.getBattlemaps() != null
+                        ? new ArrayList<>(scene.getBattlemaps())
+                        : new ArrayList<>())
+                .graphX(scene.getGraphX())
+                .graphY(scene.getGraphY())
                 .branches(scene.getBranches() != null
                         ? new ArrayList<>(scene.getBranches())
                         : new ArrayList<>())

@@ -62,6 +62,70 @@
     <div class="play-grid">
       <!-- Colonne gauche : journal -->
       <div class="play-main">
+        <!-- Scène courante épinglée (mode cockpit) -->
+        @if (pinnedScene) {
+          <section class="pinned-scene">
+            <div class="pinned-head">
+              <lucide-icon [img]="Pin" [size]="14" class="pinned-icon"></lucide-icon>
+              <span class="pinned-label">{{ 'sessionDetail.pinned.label' | translate }}</span>
+              <strong class="pinned-name">{{ pinnedScene.name }}</strong>
+              <span class="pinned-actions">
+                <button type="button" class="btn-icon" (click)="openPinnedScene()" [disabled]="!pinnedArcId"
+                  [title]="'sessionDetail.pinned.open' | translate">
+                  <lucide-icon [img]="ExternalLink" [size]="13"></lucide-icon>
+                </button>
+                <button type="button" class="btn-icon" (click)="unpinScene()"
+                  [title]="'sessionDetail.pinned.unpin' | translate">
+                  <lucide-icon [img]="PinOff" [size]="13"></lucide-icon>
+                </button>
+              </span>
+            </div>
+            @if (pinnedScene.location || pinnedScene.timing) {
+              <p class="pinned-meta">
+                @if (pinnedScene.location) { <span>📍 {{ pinnedScene.location }}</span> }
+                @if (pinnedScene.timing) { <span>🕒 {{ pinnedScene.timing }}</span> }
+              </p>
+            }
+            @if (pinnedScene.playerNarration) {
+              <button type="button" class="pinned-narration-toggle" (click)="narrationOpen = !narrationOpen">
+                {{ (narrationOpen ? 'sessionDetail.pinned.hideNarration' : 'sessionDetail.pinned.showNarration') | translate }}
+              </button>
+              @if (narrationOpen) {
+                <p class="pinned-narration">{{ pinnedScene.playerNarration }}</p>
+              }
+            }
+          </section>
+        }
+
+        <!-- Récap « précédemment… » -->
+        <section class="recap-bar">
+          @if (!recapText) {
+            <button type="button" class="btn-secondary recap-btn" (click)="generateRecap()" [disabled]="recapLoading">
+              <lucide-icon [img]="recapLoading ? RefreshCw : ScrollText" [size]="14" [class.spin]="recapLoading"></lucide-icon>
+              {{ (recapLoading ? 'sessionDetail.recap.loading' : 'sessionDetail.recap.button') | translate }}
+            </button>
+            @if (recapError) { <span class="recap-error">{{ recapError }}</span> }
+          }
+          @if (recapText) {
+            <div class="recap-box">
+              <div class="recap-head">
+                <lucide-icon [img]="ScrollText" [size]="14"></lucide-icon>
+                <span>{{ 'sessionDetail.recap.title' | translate:{ name: recapFrom } }}</span>
+                <button type="button" class="btn-icon" (click)="closeRecap()" [title]="'common.cancel' | translate">
+                  <lucide-icon [img]="X" [size]="13"></lucide-icon>
+                </button>
+              </div>
+              <p class="recap-text">{{ recapText }}</p>
+              @if (session.active) {
+                <button type="button" class="btn-secondary recap-add" (click)="addRecapToJournal()">
+                  <lucide-icon [img]="Plus" [size]="13"></lucide-icon>
+                  {{ 'sessionDetail.recap.addToJournal' | translate }}
+                </button>
+              }
+            </div>
+          }
+        </section>
+
         <!-- Ajouter une entrée -->
         @if (session.active) {
           <section class="detail-section add-entry-section">
@@ -185,7 +249,8 @@
           [canAddToJournal]="session.active"
           (rolled)="onDiceRolled($event)"
           (aiReplyToJournal)="onAiReplyToJournal($event)"
-          (noteToJournal)="onItemNoteToJournal($event)">
+          (noteToJournal)="onItemNoteToJournal($event)"
+          (pinScene)="onPinScene($event)">
         </app-session-reference-panel>
       </aside>
     </div>

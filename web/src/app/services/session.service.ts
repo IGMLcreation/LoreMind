@@ -59,4 +59,14 @@ export class SessionService {
   deleteSession(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
+
+  /** Épingle (sceneId) ou dés-épingle (null) la scène courante — mode cockpit. */
+  setCurrentScene(id: string, sceneId: string | null): Observable<Session> {
+    return this.http.put<Session>(`${this.apiUrl}/${id}/current-scene`, { sceneId });
+  }
+
+  /** Récap « précédemment… » : résume le journal de la séance précédente de la Partie. */
+  recap(id: string): Observable<{ previousSessionName: string; recap: string }> {
+    return this.http.post<{ previousSessionName: string; recap: string }>(`${this.apiUrl}/${id}/recap`, {});
+  }
 }

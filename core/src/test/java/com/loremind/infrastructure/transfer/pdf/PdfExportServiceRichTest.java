@@ -1,5 +1,9 @@
 package com.loremind.infrastructure.transfer.pdf;
 
+import com.loremind.domain.campaigncontext.NodeType;
+import com.loremind.domain.campaigncontext.Prerequisite;
+import com.loremind.domain.campaigncontext.QuestNodeRef;
+import com.loremind.domain.campaigncontext.SceneBattlemap;
 import com.loremind.domain.files.ports.FileStorage;
 import com.loremind.domain.images.ports.ImageStorage;
 import com.loremind.domain.shared.template.FieldType;
@@ -41,6 +45,7 @@ class PdfExportServiceRichTest {
     @Autowired private ArcJpaRepository arcRepo;
     @Autowired private ChapterJpaRepository chapterRepo;
     @Autowired private SceneJpaRepository sceneRepo;
+    @Autowired private QuestJpaRepository questRepo;
     @Autowired private NpcJpaRepository npcRepo;
     @Autowired private EnemyJpaRepository enemyRepo;
     @Autowired private ImageJpaRepository imageRepo;
@@ -112,14 +117,27 @@ class PdfExportServiceRichTest {
                 .name("La porte").arcId(arc.getId()).order(0)
                 .description("Franchir la porte.").playerObjectives("Entrer").narrativeStakes("Le temps presse")
                 .gmNotes("Piège").build());
+        // 2e chapitre : la campagne n'est PLUS "à plat" -> exerce le rendu HIÉRARCHIQUE (arc -> chapitre -> scènes).
+        chapterRepo.save(ChapterJpaEntity.builder()
+                .name("La fuite").arcId(arc.getId()).order(1).description("S'échapper.").build());
         sceneRepo.save(SceneJpaEntity.builder()
                 .name("L'embuscade").chapterId(chap.getId()).order(0)
                 .location("Ruelle").timing("Nuit").atmosphere("Tendue").playerNarration("Des ombres bougent")
                 .gmSecretNotes("3 bandits").choicesConsequences("Fuir ou combattre").combatDifficulty("Moyen")
-                .battlemapMediaFileId(String.valueOf(mapImg.getId())).build());
+                .battlemaps(List.of(new SceneBattlemap("Nuit", String.valueOf(mapImg.getId()), null))).build());
         sceneRepo.save(SceneJpaEntity.builder()
                 .name("La poursuite").chapterId(chap.getId()).order(1)
-                .battlemapMediaFileId(String.valueOf(clip.getId())).build());
+                .battlemaps(List.of(new SceneBattlemap("", String.valueOf(clip.getId()), null))).build());
+
+        // Quête (Niveau 1) : prérequis (flag) + nœud vers un chapitre + champs narratifs.
+        // Exerce la section « Quêtes » du PDF (renderPrerequisites / renderQuestNodes).
+        questRepo.save(QuestJpaEntity.builder()
+                .campaignId(camp.getId()).name("Sauver le marchand").order(0)
+                .description("Retrouver le marchand disparu.")
+                .prerequisites(List.of(new Prerequisite.FlagSet("porte_ouverte")))
+                .nodes(List.of(new QuestNodeRef(NodeType.CHAPTER, String.valueOf(chap.getId()), 0)))
+                .playerObjectives("Le ramener vivant").narrativeStakes("Sa famille attend")
+                .gmNotes("Il est retenu par les bandits").build());
 
         // PNJ avec portrait + champs de template (dont galerie d'image corrompue) ; rangé en dossier.
         npcRepo.save(NpcJpaEntity.builder()
@@ -148,6 +166,26 @@ class PdfExportServiceRichTest {
         assertTrue(pdf.length > 1000, "le PDF riche doit avoir un contenu substantiel");
         assertEquals("%PDF-", new String(pdf, 0, 5, StandardCharsets.US_ASCII));
         assertEquals("Campagne Riche & <test>", service.campaignName(String.valueOf(camp.getId())));
+    }
+
+    @Test
+    void exportsFlatCampaign_scenesWithoutArcChapterHeaders() {
+        // Mode plat : 1 arc d'un SEUL chapitre -> les scènes sont présentées à plat
+        // (exerce narrativeFlat ; pas d'en-têtes Arc/Chapitre « Quête »).
+        CampaignJpaEntity camp = campaignRepo.save(CampaignJpaEntity.builder()
+                .name("Campagne plate").description("d").arcsCount(1).build());
+        ArcJpaEntity arc = arcRepo.save(ArcJpaEntity.builder()
+                .name("Arc masqué").campaignId(camp.getId()).order(0).build());
+        ChapterJpaEntity ch = chapterRepo.save(ChapterJpaEntity.builder()
+                .name("Chapitre 1").arcId(arc.getId()).order(0).build());
+        sceneRepo.save(SceneJpaEntity.builder()
+                .name("Scène libre").chapterId(ch.getId()).order(0).playerNarration("Du texte.").build());
+
+        byte[] pdf = service.export(String.valueOf(camp.getId()));
+
+        assertNotNull(pdf);
+        assertTrue(pdf.length > 1000, "le PDF plat doit avoir un contenu substantiel");
+        assertEquals("%PDF-", new String(pdf, 0, 5, StandardCharsets.US_ASCII));
     }
 
     @Test

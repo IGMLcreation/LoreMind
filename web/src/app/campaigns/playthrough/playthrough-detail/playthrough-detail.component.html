@@ -40,6 +40,16 @@
         {{ 'playthroughDetail.facts' | translate }}
       </button>
     </section>
+    <!-- Préparer la prochaine séance (Phase 3 co-MJ) : position + contenu probable + manques ciblés -->
+    <section class="block">
+      <h2>{{ 'playthroughDetail.prepTitle' | translate }}</h2>
+      <app-session-prep-panel [playthroughId]="playthroughId" [campaignId]="campaignId"></app-session-prep-panel>
+    </section>
+    <!-- Horloges de progression (état émergent de la partie) -->
+    <section class="block">
+      <h2>{{ 'playthroughDetail.clocksTitle' | translate }}</h2>
+      <app-clocks-manager [playthroughId]="playthroughId" [campaignId]="campaignId"></app-clocks-manager>
+    </section>
     <!-- PJ -->
     <section class="block">
       <div class="block-header">

@@ -9,9 +9,9 @@ import { CdkDropList, CdkDrag, CdkDragDrop, moveItemInArray } from '@angular/cdk
 import { LucideAngularModule, Swords, Plus, Globe, Pencil, Trash2, Dices, Drama, Check, Play, Upload, Sparkles, Download, FileText, ChevronDown, ChevronRight, X } from 'lucide-angular';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { Router, RouterLink } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
+import { forkJoin, of, Observable } from 'rxjs';
 import { catchError, switchMap, filter, map } from 'rxjs/operators';
-import { CampaignService } from '../../../services/campaign.service';
+import { CampaignService, FoundryExportOptions } from '../../../services/campaign.service';
 import { LoreService } from '../../../services/lore.service';
 import { GameSystemService } from '../../../services/game-system.service';
 import { GameSystem } from '../../../services/game-system.model';
@@ -30,10 +30,13 @@ import { Lore } from '../../../services/lore.model';
 import { loadCampaignTreeData, buildCampaignSidebarConfig, CampaignTreeData } from '../../campaign-tree.helper';
 import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 import { FolderGroup, groupByFolder, byOrder } from '../../../shared/folder-grouping.util';
+import { CampaignReadinessAssessment } from '../../../services/readiness.model';
+import { ReadinessPanelComponent } from '../../../shared/readiness-panel/readiness-panel.component';
+import { FoundryExportDialogComponent } from '../foundry-export-dialog/foundry-export-dialog.component';
 
 @Component({
     selector: 'app-campaign-detail',
-    imports: [FormsModule, LucideAngularModule, RouterLink, TranslatePipe, CdkDropList, CdkDrag],
+    imports: [FormsModule, LucideAngularModule, RouterLink, TranslatePipe, CdkDropList, CdkDrag, ReadinessPanelComponent, FoundryExportDialogComponent],
     templateUrl: './campaign-detail.component.html',
     styleUrls: ['./campaign-detail.component.scss']
 })
@@ -57,6 +60,8 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
 
   /** Export Foundry en cours (anti double-clic). */
   exportingFoundry = false;
+  /** Modale de périmètre de l'export Foundry. */
+  foundryDialogOpen = false;
   /** Export PDF en cours (anti double-clic). */
   exportingPdf = false;
 
@@ -100,6 +105,9 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   /** Parties (Playthroughs) de cette campagne. */
   playthroughs: Playthrough[] = [];
 
+  /** Bilan de préparation (Pilier B — guidage) : alimente le panneau + les pastilles. */
+  readiness: CampaignReadinessAssessment | null = null;
+
   /** Mode édition inline. */
   editing = false;
   editName = '';
@@ -139,7 +147,8 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
     // on recharge les cartes pour rester cohérent sans rafraîchir la page.
     this.dataSync.onChange(this.destroyRef, () => {
       if (this.campaign?.id) {
-        this.campaignService.getArcs(this.campaign.id).subscribe(a => this.arcs = [...a].sort(byOrder));
+        this.campaignService.getArcs(this.campaign.id).subscribe(a =>
+          this.arcs = [...a].sort(byOrder).filter(x => x.type !== 'SYSTEM'));
         this.loadNpcs(this.campaign.id);              // PNJ regroupés/ordonnés
         this.campaignSidebar.show(this.campaign.id);  // recharge l'arbre aussi
       }
@@ -193,11 +202,14 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
     this.campaign = campaign;
     this.editing = false;
     this.playthroughs = playthroughs;
+    // Le bilan complet arrive avec l'arbre agrégé — plus de fetch séparé.
+    this.readiness = treeData.readiness ?? null;
     this.loadLinkedLore(campaign);
     this.loadLinkedGameSystem(campaign);
     this.loadNpcs(campaign.id!);
     this.loadSessions(campaign.id!);
-    this.arcs = [...treeData.arcs].sort(byOrder);
+    // L'arc SYSTEM (« Quêtes libres ») est de la plomberie : pas de carte d'arc pour lui.
+    this.arcs = [...treeData.arcs].sort(byOrder).filter(a => a.type !== 'SYSTEM');
     this.chapterCountByArc = this.computeChapterCounts(treeData);
     this.showLayout(allCampaigns, treeData);
     this.pageTitleService.set(campaign.name);
@@ -315,11 +327,71 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
     this.router.navigate(['/campaigns', this.campaign.id, 'arcs', 'create']);
   }
 
-  /** Télécharge le bundle Foundry de la campagne via un lien temporaire. */
+  // ─────────────── Ajout rapide d'une scène (conteneur par défaut) ───────────────
+  // Niveau 0 : on ne force plus à créer un arc puis un chapitre avant de poser une
+  // scène. Si la campagne n'a pas encore de structure, on provisionne un
+  // « Arc principal / Chapitre 1 » implicite (masqué dans l'arbre tant qu'il est
+  // seul), puis on ouvre la création de scène. Visible seulement quand la
+  // structure est simple (vide, ou un seul arc d'au plus un chapitre).
+  quickSceneInFlight = false;
+
+  get showQuickAddScene(): boolean {
+    if (this.arcs.length === 0) return true;
+    if (this.arcs.length === 1) return (this.chapterCountByArc[this.arcs[0].id!] ?? 0) <= 1;
+    return false;
+  }
+
+  quickAddScene(): void {
+    if (!this.campaign || this.quickSceneInFlight) return;
+    this.quickSceneInFlight = true;
+    const campaignId = this.campaign.id!;
+    this.ensureDefaultChapter(campaignId).subscribe({
+      next: ({ arcId, chapterId }) => {
+        this.quickSceneInFlight = false;
+        this.router.navigate(['/campaigns', campaignId, 'arcs', arcId, 'chapters', chapterId, 'scenes', 'create']);
+      },
+      error: () => {
+        this.quickSceneInFlight = false;
+        console.error('Erreur lors de la préparation de la scène rapide');
+      }
+    });
+  }
+
+  /**
+   * Garantit l'existence d'un chapitre cible pour une scène : réutilise le premier
+   * arc / chapitre s'ils existent, sinon crée « Arc principal » puis « Chapitre 1 ».
+   */
+  private ensureDefaultChapter(campaignId: string): Observable<{ arcId: string; chapterId: string }> {
+    const newChapter = (arcId: string) => this.campaignService.createChapter({
+      name: this.translate.instant('campaignDetail.defaultChapterName'),
+      description: '', arcId, order: 1, icon: null
+    }).pipe(map(ch => ({ arcId, chapterId: ch.id! })));
+
+    const firstArc = this.arcs[0];
+    if (!firstArc) {
+      return this.campaignService.createArc({
+        name: this.translate.instant('campaignDetail.defaultArcName'),
+        description: '', campaignId, order: 1, type: 'LINEAR', icon: null
+      }).pipe(switchMap(arc => newChapter(arc.id!)));
+    }
+    return this.campaignService.getChapters(firstArc.id!).pipe(
+      switchMap(chs => chs.length
+        ? of({ arcId: firstArc.id!, chapterId: chs[0].id! })
+        : newChapter(firstArc.id!))
+    );
+  }
+
+  /** Ouvre la modale de choix du périmètre de l'export Foundry. */
   exportFoundry(): void {
     if (!this.campaign?.id || this.exportingFoundry) return;
+    this.foundryDialogOpen = true;
+  }
+
+  /** Télécharge le bundle Foundry (périmètre choisi) via un lien temporaire. */
+  onFoundryExportConfirmed(opts: FoundryExportOptions): void {
+    if (!this.campaign?.id || this.exportingFoundry) return;
     this.exportingFoundry = true;
-    this.campaignService.exportFoundry(this.campaign.id).subscribe({
+    this.campaignService.exportFoundry(this.campaign.id, opts).subscribe({
       next: (blob) => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -333,11 +405,13 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
         // Révocation différée : libère l'URL sans annuler le téléchargement en cours.
         setTimeout(() => URL.revokeObjectURL(url), 1000);
         this.exportingFoundry = false;
+        this.foundryDialogOpen = false;
       },
       error: (err) => {
         // Ne pas avaler l'erreur en silence : visible en console pour diagnostic.
         console.error('Échec de l\'export Foundry', err);
         this.exportingFoundry = false;
+        this.foundryDialogOpen = false;
       }
     });
   }
@@ -407,7 +481,8 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   }
 
   private showLayout(allCampaigns: Campaign[], data: CampaignTreeData): void {
-    this.layoutService.show(buildCampaignSidebarConfig(this.campaign!, allCampaigns, data, this.campaign!.id!, this.translate));
+    this.layoutService.show(buildCampaignSidebarConfig(
+      this.campaign!, allCampaigns, data, this.campaign!.id!, this.translate, this.readiness?.gaps ?? []));
   }
 
   // ─────────────── Édition / suppression de la Campagne ───────────────

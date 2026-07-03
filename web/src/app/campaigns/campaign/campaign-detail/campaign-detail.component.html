@@ -54,6 +54,10 @@
         </div>
       </div>
     }
+    <!-- ============ Guidage co-MJ : « Prochaines étapes » (Pilier B) ============ -->
+    @if (!editing && campaign.id) {
+      <app-readiness-panel [campaignId]="campaign.id" [assessment]="readiness"></app-readiness-panel>
+    }
     <!-- ============ Header : mode édition inline ============ -->
     @if (editing) {
       <div class="detail-header edit-mode">
@@ -187,13 +191,19 @@
           <div class="section-header">
             <h2>{{ 'campaignDetail.arcsTitle' | translate }}</h2>
             <div class="section-header-actions">
+              @if (showQuickAddScene) {
+                <button class="btn-add" (click)="quickAddScene()" [disabled]="quickSceneInFlight">
+                  <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
+                  {{ 'campaignDetail.quickScene' | translate }}
+                </button>
+              }
               <button class="btn-add" (click)="createArc()">
                 <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
                 {{ 'campaignDetail.newArc' | translate }}
               </button>
             </div>
           </div>
-          @if (arcs.length > 0) {
+          @if (arcs.length > 0 && !showQuickAddScene) {
             <div class="arcs-grid" cdkDropList cdkDropListOrientation="mixed"
               (cdkDropListDropped)="dropArc($event)">
               @for (arc of arcs; track arc.id) {
@@ -205,13 +215,23 @@
               }
             </div>
           }
+          <!-- Mode plat (un seul arc d'un seul chapitre) : on masque la carte de
+          l'arc par défaut, comme dans la sidebar. Les scènes vivent dans le volet. -->
+          @if (arcs.length > 0 && showQuickAddScene) {
+            <div class="empty-state empty-state--compact">
+              <p>{{ 'campaignDetail.flatModeHint' | translate }}</p>
+            </div>
+          }
           @if (arcs.length === 0) {
             <div class="empty-state">
               <lucide-icon [img]="Swords" [size]="40" class="empty-icon"></lucide-icon>
               <p>{{ 'campaignDetail.noArc' | translate }}</p>
-              <button class="btn-add-first" (click)="createArc()">
+              <button class="btn-add-first" (click)="quickAddScene()" [disabled]="quickSceneInFlight">
                 <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
-                {{ 'campaignDetail.createFirstArc' | translate }}
+                {{ 'campaignDetail.quickSceneFirst' | translate }}
+              </button>
+              <button type="button" class="empty-alt-action" (click)="createArc()">
+                {{ 'campaignDetail.organizeInArcs' | translate }}
               </button>
             </div>
           }
@@ -277,3 +297,10 @@
       (chapter-edit > « Conditions de déblocage »). -->
     </div>
   }
+
+<!-- Choix du périmètre de l'export Foundry (tout / cartes+ennemis / journaux / tables). -->
+<app-foundry-export-dialog
+  [open]="foundryDialogOpen"
+  [exporting]="exportingFoundry"
+  (cancelled)="foundryDialogOpen = false"
+  (confirmed)="onFoundryExportConfirmed($event)"></app-foundry-export-dialog>

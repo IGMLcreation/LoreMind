@@ -84,7 +84,11 @@ export class NotebookDetailComponent implements OnInit {
   private loadTree(): void {
     loadCampaignTreeData(this.campaignService, this.campaignId, this.npcService, undefined, this.enemyService)
       .subscribe({
-        next: (data) => { this.arcs = data.arcs; this.chaptersByArc = data.chaptersByArc; },
+        next: (data) => {
+          // Pas d'envoi de contenu généré vers l'arc SYSTEM (plomberie des quêtes libres).
+          this.arcs = data.arcs.filter(a => a.type !== 'SYSTEM');
+          this.chaptersByArc = data.chaptersByArc;
+        },
         error: () => { /* cibles indisponibles : les cartes le signaleront */ }
       });
   }

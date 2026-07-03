@@ -1,7 +1,6 @@
 package com.loremind.infrastructure.web.controller;
 
 import com.loremind.application.campaigncontext.ChapterService;
-import com.loremind.application.campaigncontext.ChapterStatusEnricher;
 import com.loremind.domain.campaigncontext.Chapter;
 import com.loremind.infrastructure.web.dto.campaigncontext.ChapterDTO;
 import com.loremind.infrastructure.web.mapper.ChapterMapper;
@@ -13,8 +12,10 @@ import java.util.stream.Collectors;
 
 /**
  * REST Controller pour le contexte Chapter.
- * Si {@code ?playthroughId=} est fourni, les DTOs renvoyés sont enrichis de leur
- * {@code progressionStatus} et {@code effectiveStatus} relatifs à ce Playthrough.
+ *
+ * <p>Depuis le Niveau 1, le Chapitre est une donnée de SCÉNARIO pure : plus de prérequis
+ * ni de statut de progression (le gating et la progression vivent sur les Quêtes). Les
+ * endpoints GET n'enrichissent donc plus rien à partir d'un {@code playthroughId}.</p>
  */
 @RestController
 @RequestMapping("/api/chapters")
@@ -22,14 +23,10 @@ public class ChapterController {
 
     private final ChapterService chapterService;
     private final ChapterMapper chapterMapper;
-    private final ChapterStatusEnricher statusEnricher;
 
-    public ChapterController(ChapterService chapterService,
-                             ChapterMapper chapterMapper,
-                             ChapterStatusEnricher statusEnricher) {
+    public ChapterController(ChapterService chapterService, ChapterMapper chapterMapper) {
         this.chapterService = chapterService;
         this.chapterMapper = chapterMapper;
-        this.statusEnricher = statusEnricher;
     }
 
     @PostMapping
@@ -39,34 +36,21 @@ public class ChapterController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ChapterDTO> getChapterById(
-            @PathVariable String id,
-            @RequestParam(value = "playthroughId", required = false) String playthroughId) {
+    public ResponseEntity<ChapterDTO> getChapterById(@PathVariable String id) {
         return chapterService.getChapterById(id)
-                .map(chapter -> {
-                    ChapterDTO dto = chapterMapper.toDTO(chapter);
-                    if (playthroughId != null && !playthroughId.isBlank()) {
-                        statusEnricher.enrich(List.of(dto), List.of(chapter), playthroughId);
-                    }
-                    return ResponseEntity.ok(dto);
-                })
+                .map(chapter -> ResponseEntity.ok(chapterMapper.toDTO(chapter)))
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping
     public ResponseEntity<List<ChapterDTO>> getAllChapters(
-            @RequestParam(value = "arcId", required = false) String arcId,
-            @RequestParam(value = "playthroughId", required = false) String playthroughId) {
+            @RequestParam(value = "arcId", required = false) String arcId) {
         List<Chapter> chapters = (arcId != null && !arcId.isBlank())
                 ? chapterService.getChaptersByArcId(arcId)
                 : chapterService.getAllChapters();
         List<ChapterDTO> chapterDTOs = chapters.stream()
                 .map(chapterMapper::toDTO)
                 .collect(Collectors.toList());
-
-        if (playthroughId != null && !playthroughId.isBlank()) {
-            statusEnricher.enrich(chapterDTOs, chapters, playthroughId);
-        }
         return ResponseEntity.ok(chapterDTOs);
     }
 

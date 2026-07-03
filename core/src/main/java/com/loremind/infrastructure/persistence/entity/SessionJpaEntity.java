@@ -49,6 +49,10 @@ public class SessionJpaEntity {
     @Column(name = "ended_at")
     private LocalDateTime endedAt;
 
+    /** Scène courante épinglée (weak ref nullable, mode cockpit). */
+    @Column(name = "current_scene_id")
+    private Long currentSceneId;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

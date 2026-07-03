@@ -26,18 +26,15 @@
 
   <form [formGroup]="form" (ngSubmit)="submit()" class="edit-form">
 
-    <!-- Illustrations (galerie editable, rendu editorial) -->
-    <div class="field">
-      <label>{{ 'arcEdit.illustrationsLabel' | translate }}</label>
-      <app-image-gallery
-        [imageIds]="illustrationImageIds"
-        [editable]="true"
-        [layout]="'EDITORIAL'"
-        (imageIdsChange)="illustrationImageIds = $event">
-      </app-image-gallery>
-      <small class="field-hint">{{ 'arcEdit.illustrationsHint' | translate }}</small>
-    </div>
+    <!-- Tout est optionnel sauf le titre : identité visible, le reste replié. -->
+    <p class="optional-hint">{{ 'arcEdit.optionalHint' | translate }}</p>
 
+    <!-- Co-création (Pilier A) : le co-MJ propose, validation champ par champ → remplit le formulaire. -->
+    <app-entity-assist-panel
+      [entityType]="'arc'" [entityId]="arcId" [campaignId]="campaignId"
+      (applied)="onAssistApplied($event)"></app-entity-assist-panel>
+
+    <!-- Identité -->
     <div class="field">
       <label for="arc-edit-name">{{ 'arcEdit.nameLabel' | translate }}</label>
       <input
@@ -80,62 +77,80 @@
       <app-icon-picker [options]="campaignIconOptions" [(selected)]="selectedIcon"></app-icon-picker>
     </div>
 
-    <div class="field-row">
+    <!-- Illustrations (galerie editable, rendu editorial) -->
+    <app-expandable-section [title]="'arcEdit.illustrationsLabel' | translate" icon="🖼️" [filled]="illustrationsFilled">
+      <app-image-gallery
+        [imageIds]="illustrationImageIds"
+        [editable]="true"
+        [layout]="'EDITORIAL'"
+        (imageIdsChange)="illustrationImageIds = $event">
+      </app-image-gallery>
+      <small class="field-hint">{{ 'arcEdit.illustrationsHint' | translate }}</small>
+    </app-expandable-section>
+
+    <!-- Thèmes et enjeux -->
+    <app-expandable-section [title]="'arcEdit.themesStakesSectionTitle' | translate" icon="🎭" [filled]="themesStakesFilled">
+      <div class="field-row">
+        <div class="field">
+          <label for="arc-edit-themes">{{ 'arcEdit.themesLabel' | translate }}</label>
+          <textarea
+            id="arc-edit-themes"
+            formControlName="themes"
+            [placeholder]="'arcEdit.themesPlaceholder' | translate"
+            rows="4">
+          </textarea>
+        </div>
+        <div class="field">
+          <label for="arc-edit-stakes">{{ 'arcEdit.stakesLabel' | translate }}</label>
+          <textarea
+            id="arc-edit-stakes"
+            formControlName="stakes"
+            [placeholder]="'arcEdit.stakesPlaceholder' | translate"
+            rows="4">
+          </textarea>
+        </div>
+      </div>
+    </app-expandable-section>
+
+    <!-- Notes du MJ (privé) -->
+    <app-expandable-section [title]="'arcEdit.gmNotesSectionTitle' | translate" icon="🔒" variant="private" [filled]="gmNotesFilled">
       <div class="field">
-        <label for="arc-edit-themes">{{ 'arcEdit.themesLabel' | translate }}</label>
+        <label for="arc-edit-gm-notes">{{ 'arcEdit.gmNotesLabel' | translate }}</label>
         <textarea
-          id="arc-edit-themes"
-          formControlName="themes"
-          [placeholder]="'arcEdit.themesPlaceholder' | translate"
+          id="arc-edit-gm-notes"
+          formControlName="gmNotes"
+          [placeholder]="'arcEdit.gmNotesPlaceholder' | translate"
+          rows="5">
+        </textarea>
+        <small class="field-hint">{{ 'arcEdit.gmNotesHint' | translate }}</small>
+      </div>
+    </app-expandable-section>
+
+    <!-- Récompenses et dénouement -->
+    <app-expandable-section [title]="'arcEdit.rewardsResolutionSectionTitle' | translate" icon="🎁" [filled]="rewardsResolutionFilled">
+      <div class="field">
+        <label for="arc-edit-rewards">{{ 'arcEdit.rewardsLabel' | translate }}</label>
+        <textarea
+          id="arc-edit-rewards"
+          formControlName="rewards"
+          [placeholder]="'arcEdit.rewardsPlaceholder' | translate"
           rows="4">
         </textarea>
       </div>
       <div class="field">
-        <label for="arc-edit-stakes">{{ 'arcEdit.stakesLabel' | translate }}</label>
+        <label for="arc-edit-resolution">{{ 'arcEdit.resolutionLabel' | translate }}</label>
         <textarea
-          id="arc-edit-stakes"
-          formControlName="stakes"
-          [placeholder]="'arcEdit.stakesPlaceholder' | translate"
+          id="arc-edit-resolution"
+          formControlName="resolution"
+          [placeholder]="'arcEdit.resolutionPlaceholder' | translate"
           rows="4">
         </textarea>
       </div>
-    </div>
-
-    <div class="field">
-      <label for="arc-edit-gm-notes">{{ 'arcEdit.gmNotesLabel' | translate }}</label>
-      <textarea
-        id="arc-edit-gm-notes"
-        formControlName="gmNotes"
-        [placeholder]="'arcEdit.gmNotesPlaceholder' | translate"
-        rows="5">
-      </textarea>
-      <small class="field-hint">{{ 'arcEdit.gmNotesHint' | translate }}</small>
-    </div>
-
-    <div class="field">
-      <label for="arc-edit-rewards">{{ 'arcEdit.rewardsLabel' | translate }}</label>
-      <textarea
-        id="arc-edit-rewards"
-        formControlName="rewards"
-        [placeholder]="'arcEdit.rewardsPlaceholder' | translate"
-        rows="4">
-      </textarea>
-    </div>
-
-    <div class="field">
-      <label for="arc-edit-resolution">{{ 'arcEdit.resolutionLabel' | translate }}</label>
-      <textarea
-        id="arc-edit-resolution"
-        formControlName="resolution"
-        [placeholder]="'arcEdit.resolutionPlaceholder' | translate"
-        rows="4">
-      </textarea>
-    </div>
+    </app-expandable-section>
 
     <!-- ===== Pages Lore associées (phase B2 cross-context) ===== -->
     @if (loreId) {
-      <div class="field">
-        <label>{{ 'arcEdit.relatedPagesLabel' | translate }}</label>
+      <app-expandable-section [title]="'arcEdit.relatedPagesLabel' | translate" icon="🔗" [filled]="loreFilled">
         <app-lore-link-picker
           [value]="relatedPageIds"
           [availablePages]="availablePages"
@@ -145,7 +160,7 @@
         <small class="field-hint">
           {{ 'arcEdit.relatedPagesHint' | translate }}
         </small>
-      </div>
+      </app-expandable-section>
     }
 
     @if (!loreId) {

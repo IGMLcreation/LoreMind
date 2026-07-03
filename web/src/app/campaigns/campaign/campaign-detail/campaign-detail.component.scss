@@ -486,6 +486,19 @@
   &:hover { background: #5b52e0; }
 }
 
+// Action secondaire de l'état vide (« ou créer un arc ») — bouton texte discret.
+.empty-alt-action {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #8a7bc8;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover { text-decoration: underline; }
+}
+
 // ─────────────── Sessions de jeu (Play Context) ───────────────
 .sessions-grid {
   display: grid;

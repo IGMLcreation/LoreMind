@@ -9,6 +9,8 @@ export interface Session {
   startedAt: string;
   /** Null/undefined = session en cours. */
   endedAt: string | null;
+  /** Scène courante épinglée (mode cockpit) ; null = rien d'épinglé. */
+  currentSceneId?: string | null;
   createdAt: string;
   updatedAt: string;
   active: boolean;

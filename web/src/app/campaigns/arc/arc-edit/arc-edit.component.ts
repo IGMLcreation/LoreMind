@@ -20,8 +20,11 @@ import { LoreLinkPickerComponent } from '../../../shared/lore-link-picker/lore-l
 import { AiChatDrawerComponent } from '../../../shared/ai-chat-drawer/ai-chat-drawer.component';
 import { ImageGalleryComponent } from '../../../shared/image-gallery/image-gallery.component';
 import { IconPickerComponent } from '../../../shared/icon-picker/icon-picker.component';
+import { ExpandableSectionComponent } from '../../../shared/expandable-section/expandable-section.component';
 import { CAMPAIGN_ICON_OPTIONS } from '../../campaign-icons';
 import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
+import { EntityAssistPanelComponent } from '../../../shared/entity-assist-panel/entity-assist-panel.component';
+import { FieldProposal } from '../../../services/entity-assist.model';
 
 /**
  * Écran de détail/modification d'un Arc.
@@ -34,7 +37,7 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  */
 @Component({
     selector: 'app-arc-edit',
-    imports: [ReactiveFormsModule, LucideAngularModule, LoreLinkPickerComponent, AiChatDrawerComponent, ImageGalleryComponent, IconPickerComponent, TranslatePipe],
+    imports: [ReactiveFormsModule, LucideAngularModule, LoreLinkPickerComponent, AiChatDrawerComponent, ImageGalleryComponent, IconPickerComponent, ExpandableSectionComponent, EntityAssistPanelComponent, TranslatePipe],
     templateUrl: './arc-edit.component.html',
     styleUrls: ['./arc-edit.component.scss']
 })
@@ -56,6 +59,15 @@ export class ArcEditComponent implements OnInit, OnDestroy {
 
   toggleChat(): void { this.chatOpen = !this.chatOpen; }
 
+  /** Applique au FORMULAIRE les champs étoffés retenus (Pilier A). Non destructif. */
+  onAssistApplied(fields: FieldProposal[]): void {
+    const patch: Record<string, string> = {};
+    for (const f of fields) {
+      if (this.form.get(f.key)) patch[f.key] = f.proposedValue;
+    }
+    this.form.patchValue(patch);
+  }
+
   form: FormGroup;
   campaignId = '';
   arcId = '';
@@ -70,6 +82,20 @@ export class ArcEditComponent implements OnInit, OnDestroy {
 
   /** IDs des images illustrant cet arc (bind sur app-image-gallery editable). */
   illustrationImageIds: string[] = [];
+
+  // ─────────────── État « rempli » par section (pastille de l'en-tête) ───────────────
+  // Seul le titre est requis ; ces getters signalent ce qui contient déjà du contenu.
+  get illustrationsFilled(): boolean { return this.illustrationImageIds.length > 0; }
+  get themesStakesFilled(): boolean {
+    const v = this.form.value;
+    return !!(v.themes || v.stakes);
+  }
+  get gmNotesFilled(): boolean { return !!this.form.value.gmNotes; }
+  get rewardsResolutionFilled(): boolean {
+    const v = this.form.value;
+    return !!(v.rewards || v.resolution);
+  }
+  get loreFilled(): boolean { return this.relatedPageIds.length > 0; }
 
   constructor(
     private fb: FormBuilder,

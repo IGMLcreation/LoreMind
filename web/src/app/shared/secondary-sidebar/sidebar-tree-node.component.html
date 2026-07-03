@@ -19,6 +19,13 @@
     @if (sidebar.iconFor(item); as icon) {
       <lucide-icon [img]="icon" [size]="14" class="item-icon"></lucide-icon>
     }
+    <!-- Pastille AVANT le libellé : les actions « + » (hover, à droite) ne la masquent jamais. -->
+    @if (item.statusDot) {
+      <span class="status-dot"
+        [class.blocking]="item.statusDot === 'blocking'"
+        [class.recommended]="item.statusDot === 'recommended'"
+        [title]="item.statusDotTitle || (('readiness.dot.' + item.statusDot) | translate)"></span>
+    }
     {{ item.label }}
     @if (!item.isAction && item.meta) {
       <span class="tree-item-meta">{{ item.meta }}</span>

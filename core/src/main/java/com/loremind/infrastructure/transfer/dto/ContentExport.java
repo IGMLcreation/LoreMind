@@ -1,7 +1,9 @@
 package com.loremind.infrastructure.transfer.dto;
 
 import com.loremind.domain.campaigncontext.Room;
+import com.loremind.domain.campaigncontext.SceneBattlemap;
 import com.loremind.domain.campaigncontext.SceneBranch;
+import com.loremind.domain.campaigncontext.SceneType;
 import com.loremind.domain.shared.template.TemplateField;
 
 import java.util.List;
@@ -43,7 +45,13 @@ public record ContentExport(
         List<SessionDto> sessions,
         List<SessionEntryDto> sessionEntries,
         List<PlaythroughFlagDto> playthroughFlags,
-        List<QuestProgressionDto> questProgressions
+        List<QuestProgressionDto> questProgressions,
+        // --- Quêtes (Niveau 1). Absent des bundles antérieurs -> null à la relecture (nullSafe). ---
+        List<QuestDto> quests,
+        // --- Horloges de progression (Clocks, état de Partie). Absent des anciens bundles -> nullSafe. ---
+        List<ClockDto> clocks,
+        // --- Fronts (menaces regroupant des horloges). Absent des anciens bundles -> nullSafe. ---
+        List<FrontDto> fronts
 ) {
 
     /**
@@ -177,10 +185,17 @@ public record ContentExport(
             List<String> enemyIds,
             List<String> relatedPageIds,
             List<String> illustrationImageIds,
+            // LEGACY (exports antérieurs à V22) : paire unique, lue à l'import pour
+            // reconstituer une entrée de `battlemaps`. Toujours null sur les nouveaux exports.
             String battlemapMediaFileId,
             String battlemapDataFileId,
+            // Battlemaps multiples (variantes Jour/Nuit, étages…) — remplace la paire ci-dessus.
+            List<SceneBattlemap> battlemaps,
             List<SceneBranch> branches,
-            List<Room> rooms
+            List<Room> rooms,
+            SceneType type,
+            Double graphX,
+            Double graphY
     ) {}
 
     public record CharacterDto(
@@ -327,11 +342,60 @@ public record ContentExport(
             boolean value
     ) {}
 
-    /** La progression d'une quête (Chapter) dans une Partie ({@code status} = nom du ProgressionStatus). */
+    /** Une horloge de progression d'une Partie (Clock, façon Blades in the Dark). */
+    public record ClockDto(
+            Long id,
+            Long playthroughId,
+            String name,
+            String description,
+            int segments,
+            int filled,
+            int order,
+            com.loremind.domain.playcontext.ClockTrigger triggerType,
+            String triggerRef,
+            Long frontId
+    ) {}
+
+    /** Un Front (menace regroupant des horloges) d'une Partie. */
+    public record FrontDto(
+            Long id,
+            Long playthroughId,
+            String name,
+            String description,
+            int order
+    ) {}
+
+    /**
+     * La progression d'une quête dans une Partie ({@code status} = nom du ProgressionStatus).
+     * NB : le champ {@code chapterId} porte désormais le quest id (== chapter id partagé en
+     * format v1) — nom conservé pour la rétrocompat de lecture des anciens bundles.
+     */
     public record QuestProgressionDto(
             Long id,
             Long playthroughId,
             Long chapterId,
             String status
+    ) {}
+
+    /**
+     * Une Quête (Niveau 1) : entité orthogonale rattachée à la campagne.
+     * {@code prerequisitesJson} / {@code nodesJson} = JSON brut des converters JPA
+     * (même logique que {@code ChapterDto.prerequisitesJson}).
+     */
+    public record QuestDto(
+            Long id,
+            Long campaignId,
+            Long arcId,
+            String name,
+            String description,
+            String icon,
+            int order,
+            String prerequisitesJson,
+            String nodesJson,
+            String gmNotes,
+            String playerObjectives,
+            String narrativeStakes,
+            List<String> relatedPageIds,
+            List<String> illustrationImageIds
     ) {}
 }

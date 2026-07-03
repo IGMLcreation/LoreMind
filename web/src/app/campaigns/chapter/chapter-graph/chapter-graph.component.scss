@@ -17,6 +17,12 @@
   }
 }
 
+.graph-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
 .graph-empty {
   padding: 2rem;
   text-align: center;
@@ -27,46 +33,41 @@
 }
 
 .graph-container {
-  // Fond legerement plus sombre que la couleur des noeuds : creuse l'image
-  // sans aller jusqu'au noir pur (qui « brulerait » par contraste).
+  position: relative;                 // ancre les contrôles + l'éditeur de lien
   background: #0d0d18;
   border: 1px solid #374151;
   border-radius: 12px;
-  padding: 20px;
-  overflow: auto;
-  display: flex;
-  justify-content: center;
-  flex-direction: column;
-  align-items: center;
+  height: 72vh;                       // caméra : hauteur fixe, le viewBox gère le contenu
+  overflow: hidden;
 }
 
 .graph-svg {
   display: block;
-  max-width: 100%;
-  // Empeche le browser de clipper le contenu qui depasserait le viewport SVG
-  // pendant un drag — le scroll du conteneur prend le relais.
-  overflow: visible;
-  // Évite que le navigateur intercepte le drag pour faire de la sélection texte
-  // ou du panning natif sur les nœuds.
+  width: 100%;
+  height: 100%;
+  cursor: grab;                       // le fond se déplace au glisser (pan)
   touch-action: none;
   user-select: none;
+
+  &:active { cursor: grabbing; }
 }
 
 .node {
   cursor: grab;
-  // Ombre portee douce pour detacher chaque noeud du fond. Faible alpha pour
-  // rester subtil sur fond sombre, large diffusion pour rester organique.
   filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
 
   .node-box {
-    // Indigo desature : reprend la palette accent (#6c63ff) en version assombrie
-    // pour donner du caractere aux noeuds sans saturer la vue. Bordure assortie
-    // un peu plus claire pour bien dessiner le contour.
     fill: #1f1d3a;
     stroke: #4f4a7a;
     stroke-width: 2;
     transition: fill 0.15s ease, stroke 0.15s ease;
   }
+
+  .node-box--LOCATION   { fill: #14342a; stroke: #2f8f6b; }
+  .node-box--ENCOUNTER  { fill: #3a1d1d; stroke: #b4554f; }
+  .node-box--NPC        { fill: #1a2942; stroke: #4f7ab4; }
+  .node-box--EVENT      { fill: #3a301a; stroke: #b48a4f; }
+  .node-box--REVELATION { fill: #2e1d3a; stroke: #8b5fb4; }
 
   .node-label {
     font-size: 0.9rem;
@@ -74,6 +75,28 @@
     fill: #f3f4f6;
     pointer-events: none;
   }
+
+  .node-connect {
+    fill: #6c63ff;
+    stroke: #0d0d18;
+    stroke-width: 1.5;
+    cursor: crosshair;
+    opacity: 0.35;
+    transition: opacity 0.15s ease;
+  }
+  &:hover .node-connect { opacity: 1; }
+
+  // Poignée de renommage (coin haut-droit), révélée au survol du nœud.
+  .node-rename {
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+
+    .node-rename-bg { fill: #2c2952; stroke: #8b80ff; stroke-width: 1.5; }
+    .node-rename-glyph { fill: #e5e7eb; font-size: 12px; pointer-events: none; }
+    &:hover .node-rename-bg { fill: #3a3568; }
+  }
+  &:hover .node-rename { opacity: 1; }
 
   &:hover .node-box {
     fill: #2c2952;
@@ -90,13 +113,31 @@
   }
 }
 
+// L'arête visible ne capte pas le pointeur ; c'est la « zone de clic » qui le fait.
+.edge-line {
+  pointer-events: none;
+  transition: stroke-width 0.1s ease;
+}
+
+// Zone de clic large et invisible au-dessus de chaque arête (sélection facile).
+.edge-hit {
+  stroke: transparent;
+  stroke-width: 16;
+  fill: none;
+  cursor: pointer;
+  pointer-events: stroke;
+}
+
+.edge.selected .edge-line {
+  stroke-width: 3.5;
+  filter: drop-shadow(0 0 4px rgba(139, 128, 255, 0.7));
+}
+
 .edge-label {
   font-size: 0.75rem;
   fill: #e5e7eb;
   font-style: italic;
   cursor: grab;
-  // Halo sombre autour du texte pour rester lisible quand un label passe
-  // par-dessus une arête ou un autre nœud. Aligne sur la couleur du fond.
   paint-order: stroke;
   stroke: #0d0d18;
   stroke-width: 4px;
@@ -106,6 +147,158 @@
   &.dragging {
     cursor: grabbing;
     fill: #ffffff;
+  }
+}
+
+.link-temp {
+  stroke: #8b80ff;
+  stroke-width: 2;
+  stroke-dasharray: 5 4;
+  pointer-events: none;
+}
+
+// Champ de renommage inline, posé par-dessus le nœud édité.
+.node-rename-input {
+  position: absolute;
+  box-sizing: border-box;
+  padding: 0 0.6rem;
+  background: #2c2952;
+  border: 2px solid #8b80ff;
+  border-radius: 8px;
+  color: #f3f4f6;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: center;
+  z-index: 5;
+
+  &:focus { outline: none; }
+  &::placeholder { color: #9ca3af; }
+}
+
+// ─────────────── Contrôles de caméra ───────────────
+.graph-controls {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    background: #1a1a2e;
+    border: 1px solid #374151;
+    border-radius: 8px;
+    color: #cbd5e1;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+
+    &:hover { background: #24243a; color: #fff; border-color: #6c63ff; }
+  }
+}
+
+// ─────────────── Éditeur d'un lien sélectionné ───────────────
+.edge-editor {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 260px;
+  background: #14141f;
+  border: 1px solid #3a3658;
+  border-radius: 10px;
+  padding: 0.7rem 0.8rem 0.8rem;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.edge-editor-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  .edge-editor-title {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #cbb9ff;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .edge-editor-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background: transparent;
+    border: 1px solid #3a3658;
+    border-radius: 6px;
+    color: #9ca3af;
+    cursor: pointer;
+    &:hover { background: #24243a; color: #fff; }
+  }
+}
+
+.edge-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.76rem;
+  color: #9ca3af;
+
+  input, select {
+    width: 100%;
+    box-sizing: border-box;
+    background: #1a1a2e;
+    border: 1px solid #2a2a3d;
+    color: #f3f4f6;
+    border-radius: 6px;
+    padding: 0.4rem 0.5rem;
+    font-size: 0.83rem;
+
+    &:focus { outline: none; border-color: #6c63ff; }
+  }
+}
+
+.edge-editor-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.15rem;
+
+  button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.4rem 0.6rem;
+    border-radius: 7px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    border: 1px solid transparent;
+  }
+
+  .btn-del {
+    background: #3a1d1d;
+    border-color: #b4554f;
+    color: #ffb4ae;
+    &:hover { background: #4a2424; color: #fff; }
+  }
+
+  .btn-save {
+    background: #163326;
+    border-color: #2f6b46;
+    color: #a7f3d0;
+    &:hover { background: #1c4531; color: #fff; }
   }
 }
 

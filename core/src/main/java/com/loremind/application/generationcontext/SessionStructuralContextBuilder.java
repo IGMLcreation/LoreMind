@@ -1,13 +1,10 @@
 package com.loremind.application.generationcontext;
 
-import com.loremind.domain.campaigncontext.Arc;
-import com.loremind.domain.campaigncontext.ArcType;
-import com.loremind.domain.campaigncontext.Chapter;
 import com.loremind.domain.campaigncontext.PrerequisiteEvaluator;
 import com.loremind.domain.campaigncontext.ProgressionStatus;
+import com.loremind.domain.campaigncontext.Quest;
 import com.loremind.domain.campaigncontext.QuestStatus;
-import com.loremind.domain.campaigncontext.ports.ArcRepository;
-import com.loremind.domain.campaigncontext.ports.ChapterRepository;
+import com.loremind.domain.campaigncontext.ports.QuestRepository;
 import com.loremind.domain.generationcontext.SessionContext;
 import com.loremind.domain.generationcontext.SessionContext.JournalEntrySummary;
 import com.loremind.domain.generationcontext.SessionContext.QuestSummary;
@@ -46,8 +43,7 @@ public class SessionStructuralContextBuilder {
     private final SessionRepository sessionRepository;
     private final SessionEntryRepository entryRepository;
     private final PlaythroughRepository playthroughRepository;
-    private final ArcRepository arcRepository;
-    private final ChapterRepository chapterRepository;
+    private final QuestRepository questRepository;
     private final PlaythroughFlagRepository playthroughFlagRepository;
     private final QuestProgressionRepository questProgressionRepository;
     private final PrerequisiteEvaluator prerequisiteEvaluator = new PrerequisiteEvaluator();
@@ -55,15 +51,13 @@ public class SessionStructuralContextBuilder {
     public SessionStructuralContextBuilder(SessionRepository sessionRepository,
                                            SessionEntryRepository entryRepository,
                                            PlaythroughRepository playthroughRepository,
-                                           ArcRepository arcRepository,
-                                           ChapterRepository chapterRepository,
+                                           QuestRepository questRepository,
                                            PlaythroughFlagRepository playthroughFlagRepository,
                                            QuestProgressionRepository questProgressionRepository) {
         this.sessionRepository = sessionRepository;
         this.entryRepository = entryRepository;
         this.playthroughRepository = playthroughRepository;
-        this.arcRepository = arcRepository;
-        this.chapterRepository = chapterRepository;
+        this.questRepository = questRepository;
         this.playthroughFlagRepository = playthroughFlagRepository;
         this.questProgressionRepository = questProgressionRepository;
     }
@@ -169,23 +163,14 @@ public class SessionStructuralContextBuilder {
         Map<String, Boolean> flags = playthroughFlagRepository.findByPlaythroughId(playthroughId);
         List<String> activeFlags = buildActiveFlags(flags);
 
-        List<Arc> arcs = arcRepository.findByCampaignId(campaignId);
-        Map<String, Arc> arcsById = arcs.stream()
-                .filter(a -> a.getId() != null)
-                .collect(Collectors.toMap(Arc::getId, a -> a));
-
-        // On suit comme "quêtes" les chapitres CONDITIONNELS : ceux d'un arc HUB, ET
-        // ceux d'un arc linéaire qui portent des prérequis. Un chapitre linéaire sans
-        // condition reste hors du tableau (sinon tous les chapitres deviendraient des quêtes).
-
-        // Map chapterId -> ProgressionStatus pour ce Playthrough
-        Map<String, ProgressionStatus> progressionByChapter = new HashMap<>();
+        // Map questId -> ProgressionStatus pour ce Playthrough
+        Map<String, ProgressionStatus> progressionByQuest = new HashMap<>();
         for (QuestProgression qp : questProgressionRepository.findByPlaythroughId(playthroughId)) {
-            progressionByChapter.put(qp.getChapterId(), qp.getStatus());
+            progressionByQuest.put(qp.getQuestId(), qp.getStatus());
         }
 
-        // IDs des chapitres COMPLETED dans la campagne (pour les prérequis QuestCompleted)
-        var completedIds = questProgressionRepository.findCompletedChapterIdsByPlaythroughId(playthroughId);
+        // IDs des quêtes COMPLETED dans la campagne (pour les prérequis QuestCompleted)
+        var completedIds = questProgressionRepository.findCompletedQuestIdsByPlaythroughId(playthroughId);
 
         int sessionCount = sessionRepository.findByPlaythroughId(playthroughId).size();
         PrerequisiteEvaluator.EvaluationContext ctx =
@@ -195,29 +180,24 @@ public class SessionStructuralContextBuilder {
         List<QuestSummary> inProgress = new ArrayList<>();
         List<String> lockedTitles = new ArrayList<>();
 
-        for (Arc arc : arcs) {
-            boolean isHub = arc.getType() == ArcType.HUB;
-            for (Chapter c : chapterRepository.findByArcId(arc.getId())) {
-                boolean hasPrereqs = c.getPrerequisites() != null && !c.getPrerequisites().isEmpty();
-                if (!isHub && !hasPrereqs) continue;  // chapitre linéaire sans condition : ignoré
-                ProgressionStatus prog = progressionByChapter.getOrDefault(c.getId(), ProgressionStatus.NOT_STARTED);
-                QuestStatus status = prerequisiteEvaluator.computeStatus(prog, c.getPrerequisites(), ctx);
-                Arc parent = arcsById.get(c.getArcId());
-                String arcName = parent != null ? parent.getName() : null;
-                switch (status) {
-                    case AVAILABLE:
-                        available.add(new QuestSummary(c.getName(), arcName, c.getDescription()));
-                        break;
-                    case IN_PROGRESS:
-                        inProgress.add(new QuestSummary(c.getName(), arcName, c.getDescription()));
-                        break;
-                    case LOCKED:
-                        lockedTitles.add(c.getName());
-                        break;
-                    case COMPLETED:
-                        // Omis (déjà dans le journal des EVENTs).
-                        break;
-                }
+        // Niveau 1 : les quêtes sont des entités orthogonales rattachées à la campagne
+        // (plus des chapitres HUB). arcName n'a plus de sens => null.
+        for (Quest q : questRepository.findByCampaignId(campaignId)) {
+            ProgressionStatus prog = progressionByQuest.getOrDefault(q.getId(), ProgressionStatus.NOT_STARTED);
+            QuestStatus status = prerequisiteEvaluator.computeStatus(prog, q.getPrerequisites(), ctx);
+            switch (status) {
+                case AVAILABLE:
+                    available.add(new QuestSummary(q.getName(), null, q.getDescription()));
+                    break;
+                case IN_PROGRESS:
+                    inProgress.add(new QuestSummary(q.getName(), null, q.getDescription()));
+                    break;
+                case LOCKED:
+                    lockedTitles.add(q.getName());
+                    break;
+                case COMPLETED:
+                    // Omis (déjà dans le journal des EVENTs).
+                    break;
             }
         }
 

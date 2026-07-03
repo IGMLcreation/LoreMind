@@ -1,11 +1,15 @@
 package com.loremind.infrastructure.transfer;
 
 import com.loremind.domain.campaigncontext.ArcType;
+import com.loremind.domain.campaigncontext.NodeType;
 import com.loremind.domain.campaigncontext.Prerequisite;
+import com.loremind.domain.campaigncontext.QuestNodeRef;
 import com.loremind.domain.campaigncontext.ProgressionStatus;
+import com.loremind.domain.campaigncontext.SceneBattlemap;
 import com.loremind.domain.campaigncontext.SceneBranch;
 import com.loremind.domain.files.ports.FileStorage;
 import com.loremind.domain.images.ports.ImageStorage;
+import com.loremind.domain.playcontext.ClockTrigger;
 import com.loremind.domain.playcontext.EntryType;
 import com.loremind.infrastructure.persistence.entity.*;
 import com.loremind.infrastructure.persistence.jpa.*;
@@ -71,8 +75,11 @@ class ContentExportImportRoundTripTest {
     @Autowired private PlaythroughJpaRepository playthroughRepo;
     @Autowired private SessionJpaRepository sessionRepo;
     @Autowired private SessionEntryJpaRepository sessionEntryRepo;
+    @Autowired private ClockJpaRepository clockRepo;
+    @Autowired private FrontJpaRepository frontRepo;
     @Autowired private PlaythroughFlagJpaRepository playthroughFlagRepo;
     @Autowired private QuestProgressionJpaRepository questProgressionRepo;
+    @Autowired private QuestJpaRepository questRepo;
 
     @MockitoBean private ImageStorage imageStorage;
     @MockitoBean private FileStorage fileStorage;
@@ -120,10 +127,16 @@ class ContentExportImportRoundTripTest {
                 .name("RT Chapter A").arcId(arc.getId()).order(0).build());
         chapterRepo.save(ChapterJpaEntity.builder()
                 .name("RT Chapter B").arcId(arc.getId()).order(1)
-                .prerequisites(new ArrayList<>(List.of(new Prerequisite.QuestCompleted(String.valueOf(chapterA.getId())))))
                 .relatedPageIds(new ArrayList<>(List.of(String.valueOf(page.getId())))).build());
         ChapterJpaEntity chapterB = chapterRepo.findAll().stream()
                 .filter(c -> "RT Chapter B".equals(c.getName())).findFirst().orElseThrow();
+
+        // Quête (Niveau 1) : prérequis (flag), nœud vers chapterA (à remapper), page liée (à remapper).
+        QuestJpaEntity quest = questRepo.save(QuestJpaEntity.builder()
+                .campaignId(campaign.getId()).name("RT Quest").order(0)
+                .prerequisites(new ArrayList<>(List.of(new Prerequisite.FlagSet("porte_ouverte"))))
+                .nodes(new ArrayList<>(List.of(new QuestNodeRef(NodeType.CHAPTER, String.valueOf(chapterA.getId()), 0))))
+                .relatedPageIds(new ArrayList<>(List.of(String.valueOf(page.getId())))).build());
 
         EnemyJpaEntity enemy = enemyRepo.save(EnemyJpaEntity.builder()
                 .name("RT Enemy").campaignId(campaign.getId()).level("3").folder("Cave")
@@ -134,7 +147,8 @@ class ContentExportImportRoundTripTest {
                 .enemyIds(new ArrayList<>(List.of(String.valueOf(enemy.getId()))))
                 .relatedPageIds(new ArrayList<>(List.of(String.valueOf(page.getId()))))
                 .illustrationImageIds(new ArrayList<>(List.of(imageRef)))
-                .battlemapMediaFileId(String.valueOf(storedFile.getId()))
+                .battlemaps(new ArrayList<>(List.of(
+                        new SceneBattlemap("Nuit", String.valueOf(storedFile.getId()), null))))
                 .branches(new ArrayList<>(List.of(new SceneBranch("Si fuite", null, "cond")))).build());
 
         npcRepo.save(NpcJpaEntity.builder()
@@ -166,8 +180,16 @@ class ContentExportImportRoundTripTest {
                 .occurredAt(LocalDateTime.of(2026, 1, 1, 20, 5)).build());
         playthroughFlagRepo.save(PlaythroughFlagJpaEntity.builder()
                 .playthroughId(pt.getId()).name("porte_ouverte").value(true).build());
+        FrontJpaEntity front = frontRepo.save(FrontJpaEntity.builder()
+                .playthroughId(pt.getId()).name("RT Front").description("menace").order(0).build());
+        clockRepo.save(ClockJpaEntity.builder()
+                .playthroughId(pt.getId()).name("RT Horloge").description("Quand pleine : boom")
+                .segments(6).filled(2).order(0)
+                .triggerType(ClockTrigger.QUEST_COMPLETED).triggerRef(String.valueOf(quest.getId()))
+                .frontId(front.getId()).build());
+        // Progression d'une VRAIE quête (modèle Niveau 1) : référence le quest id.
         questProgressionRepo.save(QuestProgressionJpaEntity.builder()
-                .playthroughId(pt.getId()).chapterId(chapterA.getId()).status(ProgressionStatus.IN_PROGRESS).build());
+                .playthroughId(pt.getId()).questId(quest.getId()).status(ProgressionStatus.IN_PROGRESS).build());
         characterRepo.save(CharacterJpaEntity.builder()
                 .name("RT Hero").campaignId(campaign.getId()).playthroughId(pt.getId()).order(0).build());
 
@@ -181,6 +203,7 @@ class ContentExportImportRoundTripTest {
         long entriesBefore = sessionEntryRepo.count();
         long flagsBefore = playthroughFlagRepo.count();
         long questsBefore = questProgressionRepo.count();
+        long questEntitiesBefore = questRepo.count();
         long charactersBefore = characterRepo.count();
         Long campaignId0 = campaign.getId();
         Long pageId0 = page.getId();
@@ -257,10 +280,48 @@ class ContentExportImportRoundTripTest {
                 .findFirst().orElseThrow();
         assertEquals("Début", importedEntry.getContent());
 
-        QuestProgressionJpaEntity importedQuest = questProgressionRepo.findAll().stream()
+        // 4d. Quête (Niveau 1) : dupliquée + références remappées (nœud chapitre, page liée).
+        assertEquals(2 * questEntitiesBefore, questRepo.count());
+        QuestJpaEntity importedQuestEntity = questRepo.findAll().stream()
+                .filter(q -> "RT Quest".equals(q.getName()) && importedCampaignId.equals(q.getCampaignId()))
+                .findFirst().orElseThrow();
+        assertEquals(1, importedQuestEntity.getNodes().size());
+        assertEquals(String.valueOf(importedChapterAId), importedQuestEntity.getNodes().get(0).nodeId(),
+                "Le nœud CHAPTER de la quête doit pointer le chapitre importé.");
+        assertTrue(importedQuestEntity.getRelatedPageIds().contains(String.valueOf(importedPageId)),
+                "relatedPageIds de la quête remappé vers la page importée.");
+        assertEquals(1, importedQuestEntity.getPrerequisites().size());
+
+        // 4e. quest_progression importée pointe la QUÊTE importée (remap v2 via questMap).
+        QuestProgressionJpaEntity importedQuestProg = questProgressionRepo.findAll().stream()
                 .filter(q -> importedPtId.equals(q.getPlaythroughId()))
                 .findFirst().orElseThrow();
-        assertEquals(importedChapterAId, importedQuest.getChapterId());
+        assertEquals(importedQuestEntity.getId(), importedQuestProg.getQuestId());
+
+        // 4f. Battlemaps : la liste étiquetée survit au round-trip (originale ET importée —
+        // le binaire est réutilisé par clé, la ref StoredFile reste valide telle quelle).
+        List<SceneJpaEntity> rtScenes = sceneRepo.findAll().stream()
+                .filter(s -> "RT Scene".equals(s.getName())).toList();
+        assertEquals(2, rtScenes.size());
+        for (SceneJpaEntity s : rtScenes) {
+            assertEquals(1, s.getBattlemaps().size(), "1 battlemap attendue sur " + s.getId());
+            assertEquals("Nuit", s.getBattlemaps().get(0).label());
+        }
+
+        // 4f. Horloge importée : pointe la Partie importée + valeurs (segments/filled) préservées.
+        ClockJpaEntity importedClock = clockRepo.findAll().stream()
+                .filter(c -> "RT Horloge".equals(c.getName()) && importedPtId.equals(c.getPlaythroughId()))
+                .findFirst().orElseThrow();
+        assertEquals(6, importedClock.getSegments());
+        assertEquals(2, importedClock.getFilled());
+        // Trigger QUEST_COMPLETED : le triggerRef (id de quête) est remappé vers la quête importée.
+        assertEquals(ClockTrigger.QUEST_COMPLETED, importedClock.getTriggerType());
+        assertEquals(String.valueOf(importedQuestEntity.getId()), importedClock.getTriggerRef());
+        // 4g. Front importé + horloge rattachée à ce front (frontId remappé).
+        FrontJpaEntity importedFront = frontRepo.findAll().stream()
+                .filter(f -> "RT Front".equals(f.getName()) && importedPtId.equals(f.getPlaythroughId()))
+                .findFirst().orElseThrow();
+        assertEquals(importedFront.getId(), importedClock.getFrontId());
     }
 
     private static Map<String, byte[]> readZip(byte[] bytes) throws IOException {

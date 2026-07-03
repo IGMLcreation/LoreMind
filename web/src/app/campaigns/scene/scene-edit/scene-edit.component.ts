@@ -14,7 +14,7 @@ import { EnemyService } from '../../../services/enemy.service';
 import { PageService } from '../../../services/page.service';
 import { LayoutService } from '../../../services/layout.service';
 import { PageTitleService } from '../../../services/page-title.service';
-import { Scene, SceneBranch, Room } from '../../../services/campaign.model';
+import { Scene, SceneBattlemap, SceneBranch, Room, SceneType, LinkType } from '../../../services/campaign.model';
 import { Page } from '../../../services/page.model';
 import { Enemy } from '../../../services/enemy.model';
 import { loadCampaignTreeData, buildCampaignSidebarConfig } from '../../campaign-tree.helper';
@@ -25,9 +25,36 @@ import { AiChatDrawerComponent } from '../../../shared/ai-chat-drawer/ai-chat-dr
 import { ImageGalleryComponent } from '../../../shared/image-gallery/image-gallery.component';
 import { IconPickerComponent } from '../../../shared/icon-picker/icon-picker.component';
 import { RoomsEditorComponent } from '../../../shared/rooms-editor/rooms-editor.component';
+import { EntityAssistPanelComponent } from '../../../shared/entity-assist-panel/entity-assist-panel.component';
+import { FieldProposal } from '../../../services/entity-assist.model';
 import { FileDropDirective } from '../../../shared/file-drop.directive';
 import { CAMPAIGN_ICON_OPTIONS } from '../../campaign-icons';
 import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
+
+/**
+ * État d'édition d'UNE battlemap de la scène (une carte par variante : Jour, Nuit,
+ * étage…). Enveloppe locale de SceneBattlemap + méta d'UI (noms de fichiers résolus,
+ * source du fichier, uploads en cours) — seuls label/mediaFileId/dataFileId persistent.
+ */
+interface BattlemapEdit {
+  label: string;
+  mediaFileId: string | null;
+  dataFileId: string | null;
+  mediaName: string | null;
+  dataName: string | null;
+  /**
+   * Source de CETTE carte :
+   *  - 'DUNGEON_ALCHEMIST' : export Foundry = image/video + .json (2 fichiers).
+   *  - 'DUNGEONDRAFT'      : .dd2vtt unique (Universal VTT, image embarquee) ;
+   *    on extrait l'image a l'upload -> media, et on range le .dd2vtt en donnees.
+   * Non persistee : deduite au chargement de l'extension du fichier de donnees.
+   */
+  source: 'DUNGEON_ALCHEMIST' | 'DUNGEONDRAFT';
+  /** Le .dd2vtt deposse ne contenait pas d'image embarquee (carte sans fond). */
+  dd2vttNoImage: boolean;
+  uploadingMedia: boolean;
+  uploadingData: boolean;
+}
 
 /**
  * Écran de détail/modification d'une Scène.
@@ -35,7 +62,7 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  */
 @Component({
     selector: 'app-scene-edit',
-    imports: [ReactiveFormsModule, LucideAngularModule, ExpandableSectionComponent, LoreLinkPickerComponent, EnemyLinkPickerComponent, AiChatDrawerComponent, ImageGalleryComponent, IconPickerComponent, RoomsEditorComponent, FileDropDirective, TranslatePipe],
+    imports: [ReactiveFormsModule, LucideAngularModule, ExpandableSectionComponent, LoreLinkPickerComponent, EnemyLinkPickerComponent, AiChatDrawerComponent, ImageGalleryComponent, IconPickerComponent, RoomsEditorComponent, EntityAssistPanelComponent, FileDropDirective, TranslatePipe],
     templateUrl: './scene-edit.component.html',
     styleUrls: ['./scene-edit.component.scss']
 })
@@ -43,6 +70,8 @@ export class SceneEditComponent implements OnInit, OnDestroy {
   readonly Trash2 = Trash2;
   readonly Sparkles = Sparkles;
   readonly campaignIconOptions = CAMPAIGN_ICON_OPTIONS;
+  readonly sceneTypeOptions: SceneType[] = ['GENERIC', 'LOCATION', 'ENCOUNTER', 'NPC', 'EVENT', 'REVELATION'];
+  readonly linkTypeOptions: LinkType[] = ['EXIT', 'CLUE', 'LEAD'];
   selectedIcon: string | null = null;
 
   /** État drawer chat IA (b5.7 — intégration Campagne). */
@@ -64,6 +93,12 @@ export class SceneEditComponent implements OnInit, OnDestroy {
   sceneId = '';
   scene: Scene | null = null;
 
+  /**
+   * Section à déplier d'office (query param `?focus=combat|branches|rooms`) — posé par
+   * le bouton « Corriger » du guidage pour atterrir directement sur l'outil fautif.
+   */
+  focusSection: string | null = null;
+
   availablePages: Page[] = [];
   loreId: string | null = null;
   relatedPageIds: string[] = [];
@@ -72,24 +107,11 @@ export class SceneEditComponent implements OnInit, OnDestroy {
   enemyIds: string[] = [];
   illustrationImageIds: string[] = [];
 
-  /** Battlemap Foundry : paire { media + sidecar JSON Universal VTT }. Non affichee. */
-  battlemapMediaFileId: string | null = null;
-  battlemapDataFileId: string | null = null;
-  battlemapMediaName: string | null = null;
-  battlemapDataName: string | null = null;
-  battlemapUploadingMedia = false;
-  battlemapUploadingData = false;
-
   /**
-   * Source de carte choisie pour CETTE scene :
-   *  - 'DUNGEON_ALCHEMIST' : export Foundry = image/video + .json (2 fichiers).
-   *  - 'DUNGEONDRAFT'      : .dd2vtt unique (Universal VTT, image embarquee) ;
-   *    on extrait l'image a l'upload -> media, et on range le .dd2vtt en donnees.
-   * Non persistee : deduite au chargement de l'extension du fichier de donnees.
+   * Battlemaps Foundry de la scene : une entree par variante (Jour/Nuit, etage…).
+   * Non affichees dans l'appli — transportees a l'export Foundry.
    */
-  battlemapSource: 'DUNGEON_ALCHEMIST' | 'DUNGEONDRAFT' = 'DUNGEON_ALCHEMIST';
-  /** Le .dd2vtt deposse ne contenait pas d'image embarquee (carte sans fond). */
-  battlemapDd2vttNoImage = false;
+  battlemaps: BattlemapEdit[] = [];
 
   /** Scènes du chapitre courant (hors scène éditée) — alimente le dropdown des cibles. */
   siblingScenes: Scene[] = [];
@@ -100,6 +122,39 @@ export class SceneEditComponent implements OnInit, OnDestroy {
   rooms: Room[] = [];
 
   onRoomsChange(next: Room[]): void { this.rooms = next; }
+
+  /**
+   * Applique au FORMULAIRE les champs étoffés retenus par l'utilisateur (Pilier A).
+   * Non destructif : ne touche que les contrôles proposés ; l'utilisateur enregistre
+   * ensuite normalement (rien n'est persisté par ce geste).
+   */
+  onAssistApplied(fields: FieldProposal[]): void {
+    const patch: Record<string, string> = {};
+    for (const f of fields) {
+      if (this.form.get(f.key)) patch[f.key] = f.proposedValue;
+    }
+    this.form.patchValue(patch);
+  }
+
+  // ─────────────── État « rempli » par section (pastille de l'en-tête) ───────────────
+  // Tout est optionnel sauf le titre : ces getters signalent visuellement ce qui
+  // contient déjà du contenu, pour ne pas donner l'impression qu'il faut tout remplir.
+  get illustrationsFilled(): boolean { return this.illustrationImageIds.length > 0; }
+  get battlemapFilled(): boolean { return this.battlemaps.some(b => !!b.mediaFileId || !!b.dataFileId); }
+  get contextFilled(): boolean {
+    const v = this.form.value;
+    return !!(v.location || v.timing || v.atmosphere);
+  }
+  get narrationFilled(): boolean { return !!this.form.value.playerNarration; }
+  get gmNotesFilled(): boolean { return !!this.form.value.gmSecretNotes; }
+  get choicesFilled(): boolean { return !!this.form.value.choicesConsequences; }
+  get branchesFilled(): boolean { return this.branches.length > 0; }
+  get combatFilled(): boolean {
+    const v = this.form.value;
+    return !!(v.combatDifficulty || v.enemies) || this.enemyIds.length > 0;
+  }
+  get loreFilled(): boolean { return this.relatedPageIds.length > 0; }
+  get dungeonFilled(): boolean { return this.rooms.length > 0; }
 
   constructor(
     private fb: FormBuilder,
@@ -118,6 +173,7 @@ export class SceneEditComponent implements OnInit, OnDestroy {
   ) {
     this.form = this.fb.group({
       name:                 ['', Validators.required],
+      type:                 ['GENERIC'],
       description:          [''],
       // Contexte et ambiance
       location:             [''],
@@ -152,6 +208,7 @@ export class SceneEditComponent implements OnInit, OnDestroy {
         this.arcId = newArcId;
         this.chapterId = newChapterId;
         this.sceneId = newSceneId;
+        this.focusSection = this.route.snapshot.queryParamMap.get('focus');
         this.loadAll();
       }
     });
@@ -180,31 +237,37 @@ export class SceneEditComponent implements OnInit, OnDestroy {
       this.enemyIds = [...(scene.enemyIds ?? [])];
       this.selectedIcon = scene.icon ?? null;
       this.illustrationImageIds = [...(scene.illustrationImageIds ?? [])];
-      this.battlemapMediaFileId = scene.battlemapMediaFileId ?? null;
-      this.battlemapDataFileId = scene.battlemapDataFileId ?? null;
-      this.battlemapMediaName = null;
-      this.battlemapDataName = null;
-      this.battlemapSource = 'DUNGEON_ALCHEMIST';
-      this.battlemapDd2vttNoImage = false;
-      if (this.battlemapMediaFileId) {
-        this.storedFileService.getById(this.battlemapMediaFileId)
-          .subscribe({ next: f => this.battlemapMediaName = f.filename, error: () => {} });
-      }
-      if (this.battlemapDataFileId) {
-        this.storedFileService.getById(this.battlemapDataFileId).subscribe({
-          next: f => {
-            this.battlemapDataName = f.filename;
-            // Deduit la source : un .dd2vtt/.uvtt => DungeonDraft.
-            if (/\.(dd2vtt|uvtt)$/i.test(f.filename)) this.battlemapSource = 'DUNGEONDRAFT';
-          },
-          error: () => {}
-        });
-      }
+      this.battlemaps = (scene.battlemaps ?? []).map(bm => {
+        const entry: BattlemapEdit = {
+          label: bm.label ?? '',
+          mediaFileId: bm.mediaFileId ?? null,
+          dataFileId: bm.dataFileId ?? null,
+          mediaName: null, dataName: null,
+          source: 'DUNGEON_ALCHEMIST', dd2vttNoImage: false,
+          uploadingMedia: false, uploadingData: false
+        };
+        if (entry.mediaFileId) {
+          this.storedFileService.getById(entry.mediaFileId)
+            .subscribe({ next: f => entry.mediaName = f.filename, error: () => {} });
+        }
+        if (entry.dataFileId) {
+          this.storedFileService.getById(entry.dataFileId).subscribe({
+            next: f => {
+              entry.dataName = f.filename;
+              // Deduit la source : un .dd2vtt/.uvtt => DungeonDraft.
+              if (/\.(dd2vtt|uvtt)$/i.test(f.filename)) entry.source = 'DUNGEONDRAFT';
+            },
+            error: () => {}
+          });
+        }
+        return entry;
+      });
       this.siblingScenes = chapterScenes.filter(s => s.id !== this.sceneId);
       this.branches = (scene.branches ?? []).map(b => ({ ...b }));
       this.rooms = (scene.rooms ?? []).map(r => ({ ...r, branches: [...(r.branches ?? [])] }));
       this.form.patchValue({
         name:                 scene.name,
+        type:                 scene.type ?? 'GENERIC',
         description:          scene.description ?? '',
         location:             scene.location ?? '',
         timing:               scene.timing ?? '',
@@ -224,6 +287,7 @@ export class SceneEditComponent implements OnInit, OnDestroy {
     if (this.form.invalid || !this.scene) return;
     this.campaignService.updateScene(this.sceneId, {
       name:                 this.form.value.name,
+      type:                 this.form.value.type,
       description:          this.form.value.description,
       chapterId:            this.chapterId,
       order:                this.scene.order ?? 1,
@@ -238,8 +302,11 @@ export class SceneEditComponent implements OnInit, OnDestroy {
       enemyIds:             this.enemyIds,
       relatedPageIds:       this.relatedPageIds,
       illustrationImageIds: this.illustrationImageIds,
-      battlemapMediaFileId: this.battlemapMediaFileId,
-      battlemapDataFileId:  this.battlemapDataFileId,
+      // Seules les cartes portant au moins un fichier sont persistees (une entree
+      // ajoutee puis laissee vide n'est pas une carte).
+      battlemaps: this.battlemaps
+        .filter(b => b.mediaFileId || b.dataFileId)
+        .map(b => ({ label: b.label.trim(), mediaFileId: b.mediaFileId, dataFileId: b.dataFileId } as SceneBattlemap)),
       branches:             this.branches,
       rooms:                this.rooms,
       icon:                 this.selectedIcon
@@ -272,8 +339,18 @@ export class SceneEditComponent implements OnInit, OnDestroy {
   // ─────────────── Gestion des branches narratives ───────────────
 
 
+  /**
+   * Destination de branche morte : renseignée mais ne résolvant vers aucune scène sœur
+   * (scène supprimée). Sans ce signal, la branche est invisible (le <select> affiche le
+   * placeholder) alors que le guidage la signale « cassée » ET que la sauvegarde serait
+   * refusée par le backend — incompréhensible pour l'utilisateur.
+   */
+  isBranchTargetBroken(branch: SceneBranch): boolean {
+    return !!branch.targetSceneId && !this.siblingScenes.some(s => s.id === branch.targetSceneId);
+  }
+
   addBranch(): void {
-    this.branches.push({ label: '', targetSceneId: '', condition: '' });
+    this.branches.push({ label: '', targetSceneId: '', condition: '', kind: 'EXIT' });
   }
 
   removeBranch(index: number): void {
@@ -292,98 +369,120 @@ export class SceneEditComponent implements OnInit, OnDestroy {
     this.branches[index].condition = value;
   }
 
-  // ─────────────── Battlemap Foundry (media + sidecar JSON) ───────────────
+  updateBranchKind(index: number, value: string): void {
+    this.branches[index].kind = value as LinkType;
+  }
+
+  // ─────────────── Battlemaps Foundry (liste de variantes) ───────────────
   // On NE supprime PAS le binaire au "retirer" (juste la reference locale) :
   // si l'utilisateur annule le formulaire, la scene garde son fichier intact.
   // Le binaire orphelin eventuel est inoffensif (nettoyage ulterieur possible).
 
-  onBattlemapMediaSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (file) this.uploadBattlemapMedia(file);
-    input.value = '';
-  }
-
-  onBattlemapMediaDropped(files: File[]): void {
-    if (files[0]) this.uploadBattlemapMedia(files[0]);
-  }
-
-  private uploadBattlemapMedia(file: File): void {
-    this.battlemapUploadingMedia = true;
-    this.storedFileService.upload(file).subscribe({
-      next: f => {
-        this.battlemapMediaFileId = f.id;
-        this.battlemapMediaName = f.filename;
-        this.battlemapUploadingMedia = false;
-      },
-      error: () => { this.battlemapUploadingMedia = false; }
+  /** Ajoute une carte vierge (variante Jour/Nuit, etage…). */
+  addBattlemap(): void {
+    this.battlemaps.push({
+      label: '', mediaFileId: null, dataFileId: null, mediaName: null, dataName: null,
+      source: 'DUNGEON_ALCHEMIST', dd2vttNoImage: false,
+      uploadingMedia: false, uploadingData: false
     });
   }
 
-  onBattlemapDataSelected(event: Event): void {
+  /** Retire la carte entiere (references locales seulement, binaires conserves). */
+  removeBattlemap(index: number): void {
+    this.battlemaps.splice(index, 1);
+  }
+
+  updateBattlemapLabel(index: number, value: string): void {
+    this.battlemaps[index].label = value;
+  }
+
+  onBattlemapMediaSelected(bm: BattlemapEdit, event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-    if (file) this.uploadBattlemapData(file);
+    if (file) this.uploadBattlemapMedia(bm, file);
     input.value = '';
   }
 
-  onBattlemapDataDropped(files: File[]): void {
-    if (files[0]) this.uploadBattlemapData(files[0]);
+  onBattlemapMediaDropped(bm: BattlemapEdit, files: File[]): void {
+    if (files[0]) this.uploadBattlemapMedia(bm, files[0]);
   }
 
-  private uploadBattlemapData(file: File): void {
-    this.battlemapUploadingData = true;
+  private uploadBattlemapMedia(bm: BattlemapEdit, file: File): void {
+    bm.uploadingMedia = true;
     this.storedFileService.upload(file).subscribe({
       next: f => {
-        this.battlemapDataFileId = f.id;
-        this.battlemapDataName = f.filename;
-        this.battlemapUploadingData = false;
+        bm.mediaFileId = f.id;
+        bm.mediaName = f.filename;
+        bm.uploadingMedia = false;
       },
-      error: () => { this.battlemapUploadingData = false; }
+      error: () => { bm.uploadingMedia = false; }
     });
   }
 
-  removeBattlemapMedia(): void {
-    this.battlemapMediaFileId = null;
-    this.battlemapMediaName = null;
+  onBattlemapDataSelected(bm: BattlemapEdit, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (file) this.uploadBattlemapData(bm, file);
+    input.value = '';
   }
 
-  removeBattlemapData(): void {
-    this.battlemapDataFileId = null;
-    this.battlemapDataName = null;
+  onBattlemapDataDropped(bm: BattlemapEdit, files: File[]): void {
+    if (files[0]) this.uploadBattlemapData(bm, files[0]);
+  }
+
+  private uploadBattlemapData(bm: BattlemapEdit, file: File): void {
+    bm.uploadingData = true;
+    this.storedFileService.upload(file).subscribe({
+      next: f => {
+        bm.dataFileId = f.id;
+        bm.dataName = f.filename;
+        bm.uploadingData = false;
+      },
+      error: () => { bm.uploadingData = false; }
+    });
+  }
+
+  removeBattlemapMedia(bm: BattlemapEdit): void {
+    bm.mediaFileId = null;
+    bm.mediaName = null;
+  }
+
+  removeBattlemapData(bm: BattlemapEdit): void {
+    bm.dataFileId = null;
+    bm.dataName = null;
   }
 
   // ─────────────── Source de carte (Dungeon Alchemist / DungeonDraft) ──────────
 
-  /** Change la source ; repart d'une carte vierge (les deux formats diffèrent). */
-  setBattlemapSource(src: 'DUNGEON_ALCHEMIST' | 'DUNGEONDRAFT'): void {
-    if (src === this.battlemapSource) return;
-    this.battlemapSource = src;
-    this.battlemapMediaFileId = null;
-    this.battlemapMediaName = null;
-    this.battlemapDataFileId = null;
-    this.battlemapDataName = null;
-    this.battlemapDd2vttNoImage = false;
+  /** Change la source de CETTE carte ; repart d'une carte vierge (les deux formats diffèrent). */
+  setBattlemapSource(bm: BattlemapEdit, src: 'DUNGEON_ALCHEMIST' | 'DUNGEONDRAFT'): void {
+    if (src === bm.source) return;
+    bm.source = src;
+    bm.mediaFileId = null;
+    bm.mediaName = null;
+    bm.dataFileId = null;
+    bm.dataName = null;
+    bm.dd2vttNoImage = false;
   }
 
   /** Retire la carte DungeonDraft (data + media dérivé). */
-  removeDd2vtt(): void {
-    this.battlemapMediaFileId = null;
-    this.battlemapMediaName = null;
-    this.battlemapDataFileId = null;
-    this.battlemapDataName = null;
-    this.battlemapDd2vttNoImage = false;
+  removeDd2vtt(bm: BattlemapEdit): void {
+    bm.mediaFileId = null;
+    bm.mediaName = null;
+    bm.dataFileId = null;
+    bm.dataName = null;
+    bm.dd2vttNoImage = false;
   }
 
-  onDd2vttSelected(event: Event): void {
+  onDd2vttSelected(bm: BattlemapEdit, event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-    if (file) void this.uploadDd2vtt(file);
+    if (file) void this.uploadDd2vtt(bm, file);
     input.value = '';
   }
 
-  onDd2vttDropped(files: File[]): void {
-    if (files[0]) void this.uploadDd2vtt(files[0]);
+  onDd2vttDropped(bm: BattlemapEdit, files: File[]): void {
+    if (files[0]) void this.uploadDd2vtt(bm, files[0]);
   }
 
   /**
@@ -392,40 +491,40 @@ export class SceneEditComponent implements OnInit, OnDestroy {
    * sidecar (murs/lumieres/grille, SANS l'image pour ne pas dupliquer le binaire)
    * comme fichier de donnees.
    */
-  private async uploadDd2vtt(file: File): Promise<void> {
-    this.battlemapUploadingData = true;
-    this.battlemapDd2vttNoImage = false;
+  private async uploadDd2vtt(bm: BattlemapEdit, file: File): Promise<void> {
+    bm.uploadingData = true;
+    bm.dd2vttNoImage = false;
     try {
       const json = JSON.parse(await file.text());
       const { image, ...sidecar } = json ?? {};
       // Sidecar allégé (sans l'image embarquée) ; on garde le nom .dd2vtt.
       const dataFile = new File([JSON.stringify(sidecar)], file.name, { type: 'application/json' });
       const storedData = await firstValueFrom(this.storedFileService.upload(dataFile));
-      this.battlemapDataFileId = storedData.id;
-      this.battlemapDataName = storedData.filename;
+      bm.dataFileId = storedData.id;
+      bm.dataName = storedData.filename;
 
       if (typeof image === 'string' && image.length > 0) {
         const blob = this.base64ToImageBlob(image);
         const imgName = this.baseName(file.name) + this.extForType(blob.type);
         const imgFile = new File([blob], imgName, { type: blob.type });
         const storedMedia = await firstValueFrom(this.storedFileService.upload(imgFile));
-        this.battlemapMediaFileId = storedMedia.id;
-        this.battlemapMediaName = storedMedia.filename;
+        bm.mediaFileId = storedMedia.id;
+        bm.mediaName = storedMedia.filename;
       } else {
-        this.battlemapMediaFileId = null;
-        this.battlemapMediaName = null;
-        this.battlemapDd2vttNoImage = true;
+        bm.mediaFileId = null;
+        bm.mediaName = null;
+        bm.dd2vttNoImage = true;
       }
     } catch {
       // JSON illisible : on stocke le fichier brut comme données, sans image.
       try {
         const stored = await firstValueFrom(this.storedFileService.upload(file));
-        this.battlemapDataFileId = stored.id;
-        this.battlemapDataName = stored.filename;
-        this.battlemapDd2vttNoImage = true;
+        bm.dataFileId = stored.id;
+        bm.dataName = stored.filename;
+        bm.dd2vttNoImage = true;
       } catch { /* upload échoué : on ignore */ }
     } finally {
-      this.battlemapUploadingData = false;
+      bm.uploadingData = false;
     }
   }
 

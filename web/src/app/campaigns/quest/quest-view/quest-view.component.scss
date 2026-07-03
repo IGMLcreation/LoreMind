@@ -1,0 +1,5 @@
+// La mise en page réutilise les classes partagées de styles/_view.scss
+// (.view-page, .view-header, .view-section, .view-chips, .view-chip…).
+// Les chips de prérequis / nœuds sont des <span class="view-chip"> statiques
+// (pas de :host hover, pas d'href) — aucun style spécifique requis ici.
+:host { display: block; }

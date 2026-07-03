@@ -17,22 +17,6 @@ public class ChapterDTO {
     private String arcId;
     private int order;
 
-    /** Conditions de déblocage (ET logique). Donnée de SCÉNARIO. */
-    private List<PrerequisiteDTO> prerequisites = new ArrayList<>();
-
-    /**
-     * Statut de progression — lecture seule, populé uniquement quand le client demande
-     * l'enrichissement pour un Playthrough donné (param ?playthroughId=).
-     * Valeurs : "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED".
-     */
-    private String progressionStatus;
-
-    /**
-     * Statut effectif calculé côté backend ("LOCKED" | "AVAILABLE" | "IN_PROGRESS" | "COMPLETED").
-     * Read-only — populé en même temps que {@code progressionStatus}.
-     */
-    private String effectiveStatus;
-
     /** Cle d'icone (cf. CAMPAIGN_ICON_OPTIONS cote front). */
     private String icon;
 

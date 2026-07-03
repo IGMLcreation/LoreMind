@@ -1,0 +1,35 @@
+{
+  "playthroughDetail": {
+    "clocksTitle": "Horloges de progression"
+  },
+  "clocksManager": {
+    "empty": "Aucune horloge. Créez-en une pour suivre une menace ou un compte à rebours qui avance avec la partie.",
+    "namePlaceholder": "Nom de l'horloge (ex : « Le culte achève son rituel »)",
+    "segments": "Segments",
+    "segmentsN": "{{n}} segments",
+    "add": "Ajouter",
+    "advance": "Avancer d'un segment",
+    "regress": "Reculer d'un segment",
+    "triggerType": "Déclencheur auto",
+    "triggerOption": {
+      "NONE": "Manuel",
+      "FLAG_SET": "Quand un Fait devient vrai",
+      "QUEST_COMPLETED": "Quand une quête se termine",
+      "SESSION_ENDED": "En fin de séance"
+    },
+    "flagPlaceholder": "Nom du fait",
+    "quest": "Quête",
+    "selectQuest": "— Choisir une quête —",
+    "triggerFlag": "Fait : {{name}}",
+    "triggerQuest": "Quête : {{name}}",
+    "triggerSession": "Fin de séance",
+    "deletedQuest": "(quête supprimée)",
+    "ungrouped": "Horloges libres",
+    "deleteFront": "Supprimer cette menace (les horloges deviennent libres)",
+    "frontPlaceholder": "Nouvelle menace (ex : « La montée du Culte »…)",
+    "addFront": "Ajouter une menace",
+    "front": "Menace",
+    "noFront": "— Sans menace —",
+    "edit": "Modifier"
+  }
+}

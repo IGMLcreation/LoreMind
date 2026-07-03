@@ -1,0 +1,28 @@
+{
+  "playthroughDetail": {
+    "prepTitle": "Prepare the next session"
+  },
+  "sessionPrep": {
+    "lastSessionActive": "Session in progress: {{name}}",
+    "lastSessionEnded": "Last session: {{name}} (ended)",
+    "allQuiet": "All clear: no active quest and no gap in upcoming content. Start the next session whenever you like.",
+    "positionTitle": "Where the players are",
+    "inProgress": "In progress:",
+    "available": "Available:",
+    "completed": "Completed:",
+    "markStarted": "Mark as in progress (the players started it)",
+    "markCompleted": "Mark as completed (removed from likely leads)",
+    "reopen": "Reopen (back to not started)",
+    "hotspotsTitle": "Likely content for the next session",
+    "nodeKind": {
+      "CHAPTER": "chapter",
+      "SCENE": "scene"
+    },
+    "gapsTitle": "To fill in before playing",
+    "fix": "Fix",
+    "otherGaps": "+ {{n}} other gap(s) elsewhere in the campaign",
+    "clocksTitle": "Threats in motion",
+    "clockNearly": "nearly full!",
+    "clockFull": "full!"
+  }
+}

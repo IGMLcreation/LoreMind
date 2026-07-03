@@ -3,6 +3,13 @@
   <nav class="ref-tabs">
     <button type="button"
       class="ref-tab"
+      [class.ref-tab--active]="activeTab === 'play'"
+      (click)="selectTab('play')">
+      <lucide-icon [img]="Timer" [size]="14"></lucide-icon>
+      {{ 'sessionReferencePanel.tabPlay' | translate }}
+    </button>
+    <button type="button"
+      class="ref-tab"
       [class.ref-tab--active]="activeTab === 'ai'"
       (click)="selectTab('ai')">
       <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
@@ -46,6 +53,24 @@
   </nav>
 
   <div class="ref-content" [class.ref-content--fill]="activeTab === 'ai'">
+
+    <!-- ====== Partie (état de jeu : horloges + faits) ====== -->
+    @if (activeTab === 'play') {
+      <div class="ref-list">
+        @if (playthroughId) {
+          <div class="ref-play-section">
+            <h4 class="ref-play-title">{{ 'sessionReferencePanel.playClocks' | translate }}</h4>
+            <app-clocks-manager [playthroughId]="playthroughId" [campaignId]="campaignId"></app-clocks-manager>
+          </div>
+          <div class="ref-play-section">
+            <h4 class="ref-play-title">{{ 'sessionReferencePanel.playFacts' | translate }}</h4>
+            <app-playthrough-flags-manager [campaignId]="campaignId" [playthroughId]="playthroughId"></app-playthrough-flags-manager>
+          </div>
+        } @else {
+          <p class="empty-hint">{{ 'sessionReferencePanel.playNoPlaythrough' | translate }}</p>
+        }
+      </div>
+    }
 
     <!-- ====== IA ====== -->
     @if (activeTab === 'ai') {
@@ -178,13 +203,21 @@
                   <div class="ref-subgroup">
                     <span class="ref-subgroup-title">{{ chapter.name }}</span>
                     @for (scene of scenesOf(chapter); track scene) {
-                      <button
-                        type="button"
-                        class="ref-item ref-item--nested"
-                        (click)="openInNewTab(['campaigns', campaignId, 'arcs', arc.id!, 'chapters', chapter.id!, 'scenes', scene.id!])">
-                        <span class="ref-item-name">{{ scene.name }}</span>
-                        <lucide-icon [img]="ExternalLink" [size]="12" class="ref-item-icon"></lucide-icon>
-                      </button>
+                      <div class="ref-item-row">
+                        <button
+                          type="button"
+                          class="ref-item ref-item--nested"
+                          (click)="openInNewTab(['campaigns', campaignId, 'arcs', arc.id!, 'chapters', chapter.id!, 'scenes', scene.id!])">
+                          <span class="ref-item-name">{{ scene.name }}</span>
+                          <lucide-icon [img]="ExternalLink" [size]="12" class="ref-item-icon"></lucide-icon>
+                        </button>
+                        <!-- Épingler comme scène courante (mode cockpit). -->
+                        <button type="button" class="ref-pin"
+                          [title]="'sessionReferencePanel.pinScene' | translate"
+                          (click)="pinScene.emit(scene.id!)">
+                          <lucide-icon [img]="Pin" [size]="12"></lucide-icon>
+                        </button>
+                      </div>
                     }
                   </div>
                 }

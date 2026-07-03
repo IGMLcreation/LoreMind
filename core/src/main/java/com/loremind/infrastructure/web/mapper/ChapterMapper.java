@@ -10,18 +10,11 @@ import java.util.List;
 /**
  * Mapper Chapter (domaine) ↔ ChapterDTO (REST).
  *
- * <p>Ne touche plus à {@code progressionStatus} ni {@code effectiveStatus} :
- * ces champs sont propres à un Playthrough et injectés par {@code ChapterStatusEnricher}
- * quand le controller a un playthroughId.</p>
+ * <p>Depuis le Niveau 1, le Chapitre est une donnée de SCÉNARIO pure : plus de
+ * prérequis ni de statut de progression (le gating vit sur les Quêtes).</p>
  */
 @Component
 public class ChapterMapper {
-
-    private final PrerequisiteMapper prerequisiteMapper;
-
-    public ChapterMapper(PrerequisiteMapper prerequisiteMapper) {
-        this.prerequisiteMapper = prerequisiteMapper;
-    }
 
     public ChapterDTO toDTO(Chapter chapter) {
         if (chapter == null) return null;
@@ -32,9 +25,6 @@ public class ChapterMapper {
         dto.setDescription(chapter.getDescription());
         dto.setArcId(chapter.getArcId());
         dto.setOrder(chapter.getOrder());
-        dto.setPrerequisites(prerequisiteMapper.toDTOList(chapter.getPrerequisites()));
-        // progressionStatus / effectiveStatus : laissés null. Peuplés par ChapterStatusEnricher.enrich(...)
-        // si le client a fourni un playthroughId au controller.
         dto.setIcon(chapter.getIcon());
         dto.setGmNotes(chapter.getGmNotes());
         dto.setPlayerObjectives(chapter.getPlayerObjectives());
@@ -53,7 +43,6 @@ public class ChapterMapper {
                 .description(dto.getDescription())
                 .arcId(dto.getArcId())
                 .order(dto.getOrder())
-                .prerequisites(prerequisiteMapper.toDomainList(dto.getPrerequisites()))
                 .icon(dto.getIcon())
                 .gmNotes(dto.getGmNotes())
                 .playerObjectives(dto.getPlayerObjectives())

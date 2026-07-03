@@ -45,9 +45,17 @@ test.describe('Arc edit', () => {
 
     await page.getByLabel(/Titre de l'arc/i).fill(newName);
     await page.getByLabel(/Synopsis de l'arc/i).fill(values.description);
+
+    // Les champs narratifs sont dans des sections repliables fermées par défaut :
+    // on les ouvre avant de taper (un clic sur l'en-tête toggle la section).
+    await page.locator('app-expandable-section', { hasText: 'Thèmes et enjeux' }).click();
     await page.getByLabel(/Thèmes principaux/i).fill(values.themes);
     await page.getByLabel(/Enjeux globaux/i).fill(values.stakes);
+
+    await page.locator('app-expandable-section', { hasText: 'Notes du MJ' }).click();
     await page.getByLabel(/Notes et planification du MJ/i).fill(values.gmNotes);
+
+    await page.locator('app-expandable-section', { hasText: 'Récompenses et dénouement' }).click();
     await page.getByLabel(/Récompenses et progression/i).fill(values.rewards);
     await page.getByLabel(/Dénouement prévu/i).fill(values.resolution);
 

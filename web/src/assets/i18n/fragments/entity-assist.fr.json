@@ -1,0 +1,33 @@
+{
+  "entityAssist": {
+    "button": "Étoffer avec l'IA",
+    "hint": "Le co-MJ propose des valeurs pour les champs. Rien n'est enregistré : vous choisissez ce qui remplit le formulaire, puis vous sauvegardez.",
+    "instructionPlaceholder": "Consigne facultative (ex : « ambiance plus inquiétante », « ajoute un indice sur le culte »)…",
+    "generate": "Générer des suggestions",
+    "generating": "Génération…",
+    "regenerate": "Régénérer",
+    "applySelection": "Appliquer la sélection ({{n}})",
+    "empty": "L'IA n'a rien proposé de neuf — l'entité est peut-être déjà complète, ou reformulez la consigne.",
+    "error": "Échec de la génération. Le Brain (IA) est-il démarré ?",
+    "current": "Actuel",
+    "proposed": "Proposé",
+    "field": {
+      "description": "Description",
+      "location": "Lieu",
+      "timing": "Moment",
+      "atmosphere": "Ambiance",
+      "playerNarration": "Narration joueurs",
+      "choicesConsequences": "Choix & conséquences",
+      "combatDifficulty": "Difficulté de combat",
+      "enemies": "Ennemis",
+      "gmSecretNotes": "Notes secrètes du MJ",
+      "gmNotes": "Notes du MJ",
+      "playerObjectives": "Objectifs des joueurs",
+      "narrativeStakes": "Enjeux narratifs",
+      "themes": "Thèmes",
+      "stakes": "Enjeux",
+      "rewards": "Récompenses",
+      "resolution": "Dénouement"
+    }
+  }
+}

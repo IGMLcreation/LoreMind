@@ -30,6 +30,7 @@ public final class FoundryBundle {
     public record Data(
             String formatVersion,
             Campaign campaign,
+            Options options,
             List<Arc> arcs,
             List<Quest> quests,
             List<Scene> scenes,
@@ -38,6 +39,13 @@ public final class FoundryBundle {
             List<RandomTable> randomTables,
             List<Asset> assets
     ) {}
+
+    /**
+     * Perimetre choisi a l'export (additif, format 1.0) : le module s'en sert pour ne
+     * creer QUE ce qui a ete demande (ex. cartes+ennemis sans journaux). Un bundle sans
+     * ce champ (ancien export) = tout inclus — le module doit defaulter a true.
+     */
+    public record Options(boolean maps, boolean journals, boolean tables) {}
 
     public record Campaign(String id, String name, String description, String gameSystemId) {}
 
@@ -59,10 +67,18 @@ public final class FoundryBundle {
             String playerNarration, String gmSecretNotes, String choicesConsequences,
             String combatDifficulty, String enemies, List<String> enemyIds,
             List<String> illustrationAssetIds, Battlemap battlemap,
+            List<LabeledBattlemap> battlemaps,
             List<Branch> branches, List<Room> rooms
     ) {}
 
     public record Battlemap(String mediaAssetId, String dataAssetId) {}
+
+    /**
+     * Battlemap étiquetée (variantes Jour/Nuit, étages…). Le champ {@code battlemap}
+     * (première carte) est CONSERVÉ pour compatibilité avec les modules Foundry
+     * existants ; {@code battlemaps} porte la liste complète — additive, format 1.0.
+     */
+    public record LabeledBattlemap(String label, String mediaAssetId, String dataAssetId) {}
 
     public record Branch(String label, String targetSceneId, String condition) {}
 

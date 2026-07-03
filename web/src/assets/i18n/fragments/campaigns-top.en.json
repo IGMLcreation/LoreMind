@@ -10,6 +10,19 @@
     "newCampaignSubtitle": "Create a new adventure",
     "tip": "💡 Tip: Organize your arcs and chapters so you never forget anything in your adventures"
   },
+  "foundryDialog": {
+    "title": "Export to Foundry",
+    "intro": "Choose what the Foundry module should import. For example, to run your combats, export only the maps and the enemies prepared in your scenes.",
+    "presetAll": "Everything",
+    "presetMapsOnly": "Maps & enemies only",
+    "optMaps": "Maps & enemies",
+    "optMapsHint": "One Foundry Scene per battlemap (day/night variants included), with the tokens of the enemies linked to each scene.",
+    "optJournals": "Narrative journals",
+    "optJournalsHint": "Arcs, chapters, quests and scenes as journals (texts + illustrations), plus NPC and bestiary sheets.",
+    "optTables": "Random tables",
+    "optTablesHint": "Your encounter and event tables as Foundry RollTables.",
+    "confirm": "Export"
+  },
   "campaignCreate": {
     "title": "Create a new Campaign",
     "nameLabel": "Campaign name *",
@@ -53,7 +66,13 @@
     "newArc": "New arc",
     "chapters": "{{n}} chapters",
     "noArc": "No narrative arcs yet.",
+    "quickScene": "Scene",
+    "quickSceneFirst": "Add a scene",
+    "organizeInArcs": "or organize into arcs",
+    "flatModeHint": "Simple mode: your scenes are in the left panel. Add one, or organize the campaign into arcs.",
     "createFirstArc": "Create your first arc",
+    "defaultArcName": "Main arc",
+    "defaultChapterName": "Chapter 1",
     "playthroughsTitle": "My playthroughs",
     "newPlaythrough": "New playthrough",
     "noPlaythrough": "No playthroughs. Create one to start a session with a table.",

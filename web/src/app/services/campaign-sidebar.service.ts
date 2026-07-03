@@ -42,6 +42,7 @@ export class CampaignSidebarService {
     return forkJoin({
       campaign: this.campaignService.getCampaignById(campaignId),
       allCampaigns: this.campaignService.getAllCampaigns(),
+      // L'arbre agrégé embarque déjà quêtes + readiness (pastilles) en une requête.
       treeData: loadCampaignTreeData(
         this.campaignService,
         campaignId,
@@ -50,7 +51,9 @@ export class CampaignSidebarService {
         this.enemyService
       )
     }).subscribe(({ campaign, allCampaigns, treeData }) => {
-      this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, campaignId, this.translate));
+      this.layoutService.show(
+        buildCampaignSidebarConfig(campaign, allCampaigns, treeData, campaignId, this.translate)
+      );
     });
   }
 }

@@ -2,13 +2,19 @@
 
   <div class="page-header">
     <div>
-      <h1>{{ 'chapterGraph.title' | translate:{ name: chapter?.name || ('chapterGraph.chapter' | translate) } }}</h1>
+      <h1>{{ isFlatMode ? ('chapterGraph.titleFlat' | translate) : ('chapterGraph.title' | translate:{ name: chapter?.name || ('chapterGraph.chapter' | translate) }) }}</h1>
       <p class="subtitle">{{ 'chapterGraph.subtitle' | translate }}</p>
     </div>
-    <button type="button" class="btn-secondary" (click)="back()">
-      <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon>
-      {{ 'chapterGraph.back' | translate }}
-    </button>
+    <div class="graph-actions">
+      <button type="button" class="btn-primary" (click)="addScene()">
+        <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
+        {{ 'chapterGraph.addScene' | translate }}
+      </button>
+      <button type="button" class="btn-secondary" (click)="back()">
+        <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon>
+        {{ (isFlatMode ? 'chapterGraph.backFlat' : 'chapterGraph.back') | translate }}
+      </button>
+    </div>
   </div>
 
   @if (scenes.length === 0) {
@@ -20,24 +26,35 @@
   @if (scenes.length > 0) {
     <div class="graph-container">
       <svg #svgEl
-        [attr.width]="svgWidth" [attr.height]="svgHeight"
+        [attr.viewBox]="viewBox"
+        preserveAspectRatio="xMidYMid meet"
         class="graph-svg"
+        [class.panning]="false"
+        (pointerdown)="onSvgPointerDown($event)"
         (pointermove)="onPointerMove($event)"
         (pointerup)="onPointerUp($event)"
-        (pointercancel)="onPointerUp($event)">
+        (pointercancel)="onPointerUp($event)"
+        (wheel)="onWheel($event)">
         <defs>
+          <!-- fill=context-stroke : la pointe de flèche prend la couleur de l'arête. -->
           <marker id="arrowhead" viewBox="0 0 10 10" refX="9" refY="5"
             markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-            <path d="M 0 0 L 10 5 L 0 10 z" fill="#b8c0cc" />
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke" />
           </marker>
         </defs>
         <g class="edges">
           @for (edge of edges; track edge) {
-            <g class="edge">
-              <line [attr.x1]="edge.x1" [attr.y1]="edge.y1"
+            <g class="edge" [class.selected]="selectedEdgeKey === edge.key">
+              <line class="edge-line"
+                [attr.x1]="edge.x1" [attr.y1]="edge.y1"
                 [attr.x2]="edge.x2" [attr.y2]="edge.y2"
-                stroke="#b8c0cc" stroke-width="2"
+                [attr.stroke]="edgeColor(edge.kind)" stroke-width="2"
                 marker-end="url(#arrowhead)" />
+              <!-- Zone de clic élargie et transparente pour sélectionner le lien -->
+              <line class="edge-hit"
+                [attr.x1]="edge.x1" [attr.y1]="edge.y1"
+                [attr.x2]="edge.x2" [attr.y2]="edge.y2"
+                (pointerdown)="onEdgeSelect($event, edge)" />
               @if (edge.label) {
                 <text
                   [attr.x]="edge.labelX"
@@ -60,21 +77,109 @@
               <title>{{ node.name }}</title>
               <rect [attr.x]="node.x" [attr.y]="node.y"
                 [attr.width]="NODE_WIDTH" [attr.height]="NODE_HEIGHT"
-                rx="8" ry="8" class="node-box" />
+                rx="8" ry="8" [attr.class]="'node-box node-box--' + node.type" />
               <text [attr.x]="node.x + NODE_WIDTH / 2"
                 [attr.y]="node.y + NODE_HEIGHT / 2 + 5"
                 text-anchor="middle"
                 class="node-label">
                 {{ node.displayName }}
               </text>
+              <!-- Pastille de connexion : tirer un lien vers un autre nœud. -->
+              <circle class="node-connect"
+                [attr.cx]="node.x + NODE_WIDTH / 2"
+                [attr.cy]="node.y + NODE_HEIGHT"
+                r="6"
+                (pointerdown)="onConnectStart($event, node)" />
+              <!-- Poignée de renommage (visible au survol du nœud). -->
+              <g class="node-rename"
+                [attr.transform]="'translate(' + (node.x + NODE_WIDTH - 26) + ',' + (node.y + 6) + ')'"
+                (pointerdown)="startRenameNode($event, node)">
+                <title>{{ 'chapterGraph.rename' | translate }}</title>
+                <circle cx="9" cy="9" r="10" class="node-rename-bg" />
+                <text x="9" y="13" text-anchor="middle" class="node-rename-glyph">✎</text>
+              </g>
             </g>
           }
         </g>
+        @if (linkingFromId) {
+          <line class="link-temp"
+            [attr.x1]="linkSourceX()" [attr.y1]="linkSourceY()"
+            [attr.x2]="linkPointerX" [attr.y2]="linkPointerY" />
+        }
       </svg>
-      <small class="graph-hint">
-        {{ 'chapterGraph.hint' | translate }}
-      </small>
+
+      <!-- Renommage inline : champ positionné par-dessus le nœud édité. -->
+      @if (editingNodeId) {
+        <input id="node-rename-input" class="node-rename-input"
+          [style.left.px]="renameBox.left" [style.top.px]="renameBox.top"
+          [style.width.px]="renameBox.width" [style.height.px]="renameBox.height"
+          [(ngModel)]="editNodeName"
+          [placeholder]="'chapterGraph.renamePlaceholder' | translate"
+          (keydown.enter)="saveRename()"
+          (keydown.escape)="cancelRename()"
+          (blur)="saveRename()" />
+      }
+
+      <!-- Contrôles de caméra (zoom + recadrer) -->
+      <div class="graph-controls">
+        <button type="button" (click)="zoomBy(1 / 1.2)" [title]="'chapterGraph.zoomIn' | translate">
+          <lucide-icon [img]="ZoomIn" [size]="16"></lucide-icon>
+        </button>
+        <button type="button" (click)="zoomBy(1.2)" [title]="'chapterGraph.zoomOut' | translate">
+          <lucide-icon [img]="ZoomOut" [size]="16"></lucide-icon>
+        </button>
+        <button type="button" (click)="fitView()" [title]="'chapterGraph.fit' | translate">
+          <lucide-icon [img]="Maximize" [size]="16"></lucide-icon>
+        </button>
+      </div>
+
+      <!-- Éditeur du lien sélectionné -->
+      @if (selectedEdge; as edge) {
+        <div class="edge-editor">
+          <div class="edge-editor-head">
+            @if (selectedEdgeEndpoints; as ep) {
+              <span class="edge-editor-title" [title]="ep.from + ' → ' + ep.to">{{ ep.from }} → {{ ep.to }}</span>
+            }
+            <button type="button" class="edge-editor-close" (click)="closeEdgeEditor()"
+              [title]="'chapterGraph.linkEditor.close' | translate">
+              <lucide-icon [img]="X" [size]="14"></lucide-icon>
+            </button>
+          </div>
+          <label class="edge-field">
+            <span>{{ 'chapterGraph.linkEditor.label' | translate }}</span>
+            <input type="text" [(ngModel)]="editEdgeLabel"
+              [placeholder]="'chapterGraph.linkEditor.labelPlaceholder' | translate" />
+          </label>
+          <label class="edge-field">
+            <span>{{ 'chapterGraph.linkEditor.condition' | translate }}</span>
+            <input type="text" [(ngModel)]="editEdgeCondition"
+              [placeholder]="'chapterGraph.linkEditor.conditionPlaceholder' | translate" />
+          </label>
+          <label class="edge-field">
+            <span>{{ 'chapterGraph.linkEditor.type' | translate }}</span>
+            <select [(ngModel)]="editEdgeKind">
+              @for (k of linkKindOptions; track k) {
+                <option [ngValue]="k">{{ 'chapterGraph.linkEditor.kind.' + k | translate }}</option>
+              }
+            </select>
+          </label>
+          <div class="edge-editor-actions">
+            <button type="button" class="btn-del" (click)="deleteEdge()">
+              <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+              {{ 'chapterGraph.linkEditor.delete' | translate }}
+            </button>
+            <button type="button" class="btn-save" (click)="saveEdge()">
+              <lucide-icon [img]="Check" [size]="14"></lucide-icon>
+              {{ 'common.save' | translate }}
+            </button>
+          </div>
+        </div>
+      }
     </div>
+
+    <small class="graph-hint">
+      {{ 'chapterGraph.hint' | translate }}
+    </small>
   }
 
 </div>

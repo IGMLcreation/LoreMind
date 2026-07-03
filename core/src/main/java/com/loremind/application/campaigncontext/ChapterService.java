@@ -1,6 +1,7 @@
 package com.loremind.application.campaigncontext;
 
 import com.loremind.domain.campaigncontext.Chapter;
+import com.loremind.domain.campaigncontext.FieldProposal;
 import com.loremind.domain.shared.ReorderSupport;
 import com.loremind.domain.campaigncontext.ports.ChapterRepository;
 import com.loremind.domain.campaigncontext.ports.SceneRepository;
@@ -79,6 +80,35 @@ public class ChapterService {
         Chapter chapter = existingChapter.get();
         BeanUtils.copyProperties(updated, chapter, "id");
         return chapterRepository.save(chapter);
+    }
+
+    /**
+     * Patch CIBLÉ champ-par-champ d'un chapitre (Pilier A — co-création). Applique
+     * UNIQUEMENT les {@link FieldProposal} reçus ; les autres champs restent INTACTS
+     * (contraste voulu avec {@link #updateChapter} qui écrase tout via BeanUtils).
+     */
+    @Transactional
+    public Chapter patchChapter(String id, List<FieldProposal> fields) {
+        Chapter chapter = chapterRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Chapter non trouvé avec l'ID: " + id));
+        if (fields != null) {
+            for (FieldProposal f : fields) {
+                if (f == null || f.key() == null) continue;
+                applyField(chapter, f.key(), f.proposedValue());
+            }
+        }
+        return chapterRepository.save(chapter);
+    }
+
+    /** Whitelist STRICTE des champs étoffables d'un chapitre ; clé inconnue ignorée. */
+    private void applyField(Chapter chapter, String key, String value) {
+        switch (key) {
+            case "description" -> chapter.setDescription(value);
+            case "gmNotes" -> chapter.setGmNotes(value);
+            case "playerObjectives" -> chapter.setPlayerObjectives(value);
+            case "narrativeStakes" -> chapter.setNarrativeStakes(value);
+            default -> { /* clé inconnue → ignorée (garde-fou anti-écrasement) */ }
+        }
     }
 
     /** Compte des scènes qui tomberont avec le chapitre. */

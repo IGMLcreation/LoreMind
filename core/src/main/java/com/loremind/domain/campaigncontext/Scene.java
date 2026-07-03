@@ -24,6 +24,14 @@ public class Scene {
     /** Cle d'icone choisie par l'utilisateur (cf. CAMPAIGN_ICON_OPTIONS cote front). */
     private String icon;
 
+    /**
+     * Type narratif du nœud (Niveau 2 — graphe de nœuds typés). Défaut
+     * {@link SceneType#GENERIC} (scène non typée). Métadonnée : n'altère pas
+     * le comportement existant des scènes.
+     */
+    @Builder.Default
+    private SceneType type = SceneType.GENERIC;
+
     // === Contexte et ambiance ===
     private String location;               // Lieu de la scène (ex: Taverne du Dragon d'Or)
     private String timing;                 // Moment (ex: Soir, à la tombée de la nuit)
@@ -65,16 +73,23 @@ public class Scene {
     private List<String> illustrationImageIds = new ArrayList<>();
 
     /**
-     * "Battlemap" de la scene destinee a l'export Foundry : paire { media + sidecar }.
-     * Le media est un fichier image ou video ({@link com.loremind.domain.files.StoredFile}),
-     * le sidecar le .json/.dd2vtt Universal VTT (grille, murs, portes, lumieres) sorti
-     * de Dungeon Alchemist / Dungeondraft. Non affichee dans l'appli : passee telle quelle
-     * a l'export pour recreer la Scene cote Foundry. Null = scene sans carte.
+     * "Battlemaps" de la scene destinees a l'export Foundry : liste de paires
+     * { media + sidecar } etiquetees ({@link SceneBattlemap}). Plusieurs cartes =
+     * variantes de la meme scene (Jour/Nuit, etages, avant/apres). Le media est un
+     * fichier image ou video ({@link com.loremind.domain.files.StoredFile}), le sidecar
+     * le .json/.dd2vtt Universal VTT (grille, murs, portes, lumieres) sorti de
+     * Dungeon Alchemist / Dungeondraft. Non affichees dans l'appli : passees telles
+     * quelles a l'export pour recreer les Scenes cote Foundry. Vide = scene sans carte.
      */
-    private String battlemapMediaFileId;
+    @Builder.Default
+    private List<SceneBattlemap> battlemaps = new ArrayList<>();
 
-    /** ID du fichier sidecar Universal VTT (json) associe au media. Null si absent. */
-    private String battlemapDataFileId;
+    /**
+     * Position X/Y du nœud dans la vue graphe du chapitre (Niveau 2). {@code null} =
+     * pas encore positionné → le layout automatique (BFS) place le nœud à l'ouverture.
+     */
+    private Double graphX;
+    private Double graphY;
 
     /**
      * Sorties narratives possibles depuis cette scène (graphe intra-chapitre).

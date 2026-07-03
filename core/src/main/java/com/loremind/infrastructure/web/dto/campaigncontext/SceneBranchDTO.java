@@ -19,4 +19,7 @@ public class SceneBranchDTO {
     private String label;
     private String targetSceneId;
     private String condition;
+
+    /** Type de lien (Niveau 2) : "EXIT" | "CLUE" | "LEAD". Absent => EXIT côté domaine. */
+    private String kind;
 }

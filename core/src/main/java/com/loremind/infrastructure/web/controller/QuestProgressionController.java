@@ -1,5 +1,6 @@
 package com.loremind.infrastructure.web.controller;
 
+import com.loremind.application.playcontext.ClockService;
 import com.loremind.domain.campaigncontext.ProgressionStatus;
 import com.loremind.domain.playcontext.ports.QuestProgressionRepository;
 import org.springframework.http.ResponseEntity;
@@ -18,28 +19,30 @@ import java.util.Map;
 public class QuestProgressionController {
 
     private final QuestProgressionRepository repo;
+    private final ClockService clockService;
 
-    public QuestProgressionController(QuestProgressionRepository repo) {
+    public QuestProgressionController(QuestProgressionRepository repo, ClockService clockService) {
         this.repo = repo;
+        this.clockService = clockService;
     }
 
     public record SetStatusRequest(String status) {}
 
     /**
-     * GET : renvoie une map chapterId -> ProgressionStatus pour le Playthrough.
+     * GET : renvoie une map questId -> ProgressionStatus pour le Playthrough.
      * Pratique pour le front qui peut indexer puissamment.
      */
     @GetMapping
     public ResponseEntity<Map<String, String>> list(@PathVariable String playthroughId) {
         Map<String, String> out = new HashMap<>();
         repo.findByPlaythroughId(playthroughId)
-                .forEach(qp -> out.put(qp.getChapterId(), qp.getStatus().name()));
+                .forEach(qp -> out.put(qp.getQuestId(), qp.getStatus().name()));
         return ResponseEntity.ok(out);
     }
 
-    @PutMapping("/{chapterId}")
+    @PutMapping("/{questId}")
     public ResponseEntity<Void> setStatus(@PathVariable String playthroughId,
-                                          @PathVariable String chapterId,
+                                          @PathVariable String questId,
                                           @RequestBody SetStatusRequest body) {
         ProgressionStatus parsed = ProgressionStatus.NOT_STARTED;
         if (body.status() != null && !body.status().isBlank()) {
@@ -49,7 +52,12 @@ public class QuestProgressionController {
                 return ResponseEntity.badRequest().build();
             }
         }
-        repo.setStatus(playthroughId, chapterId, parsed);
+        boolean wasCompleted = repo.findCompletedQuestIdsByPlaythroughId(playthroughId).contains(questId);
+        repo.setStatus(playthroughId, questId, parsed);
+        // Co-MJ : la quête vient de passer à COMPLETED (transition) -> avancer les horloges liées.
+        if (parsed == ProgressionStatus.COMPLETED && !wasCompleted) {
+            clockService.onQuestCompleted(playthroughId, questId);
+        }
         return ResponseEntity.noContent().build();
     }
 }

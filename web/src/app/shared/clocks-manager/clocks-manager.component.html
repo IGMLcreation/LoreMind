@@ -1,0 +1,158 @@
+<div class="clocks-manager">
+
+  @if (clocks.length === 0 && fronts.length === 0 && !loading) {
+    <p class="empty">{{ 'clocksManager.empty' | translate }}</p>
+  }
+
+  @for (group of groups; track group.front?.id ?? '__ungrouped__') {
+    <div class="front-group">
+      @if (group.front; as front) {
+        <div class="front-header">
+          <div class="front-title">
+            <span class="front-name">{{ front.name }}</span>
+            @if (front.description) { <span class="front-desc">{{ front.description }}</span> }
+          </div>
+          <span class="front-progress">{{ frontProgressLabel(group.clocks) }}</span>
+          <button type="button" class="btn-del-front" (click)="removeFront(front)"
+            [title]="'clocksManager.deleteFront' | translate">
+            <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+          </button>
+        </div>
+      } @else {
+        <div class="front-header ungrouped">
+          <span class="front-name">{{ 'clocksManager.ungrouped' | translate }}</span>
+        </div>
+      }
+
+      <div class="clock-grid">
+        @for (clock of group.clocks; track clock.id) {
+          <div class="clock-card" [class.complete]="clock.complete" [class.editing]="editingId === clock.id">
+            <svg viewBox="0 0 64 64" class="clock-svg" role="img"
+              [attr.aria-label]="clock.name + ' ' + clock.filled + '/' + clock.segments">
+              @for (seg of segments(clock); track $index) {
+                <path [attr.d]="seg.d" fill="none"
+                  [attr.stroke]="seg.filled ? '#8b80ff' : '#2f2f42'"
+                  stroke-width="7" stroke-linecap="butt" />
+              }
+              <text x="32" y="36" text-anchor="middle" class="clock-count">{{ clock.filled }}/{{ clock.segments }}</text>
+            </svg>
+            @if (editingId === clock.id) {
+              <div class="clock-edit">
+                <input type="text" [(ngModel)]="editName" [placeholder]="'clocksManager.namePlaceholder' | translate" />
+                <select [(ngModel)]="editSegments" [attr.aria-label]="'clocksManager.segments' | translate">
+                  @for (s of segmentOptions; track s) {
+                    <option [ngValue]="s">{{ 'clocksManager.segmentsN' | translate:{ n: s } }}</option>
+                  }
+                </select>
+                <select [(ngModel)]="editTriggerType" [attr.aria-label]="'clocksManager.triggerType' | translate">
+                  @for (t of triggerTypeOptions; track t) {
+                    <option [ngValue]="t">{{ 'clocksManager.triggerOption.' + t | translate }}</option>
+                  }
+                </select>
+                @if (editTriggerType === 'FLAG_SET') {
+                  <input type="text" [(ngModel)]="editTriggerRef" list="clock-flags-list"
+                    [placeholder]="'clocksManager.flagPlaceholder' | translate" />
+                }
+                @if (editTriggerType === 'QUEST_COMPLETED') {
+                  <select [(ngModel)]="editTriggerRef" [attr.aria-label]="'clocksManager.quest' | translate">
+                    <option value="">{{ 'clocksManager.selectQuest' | translate }}</option>
+                    @for (q of quests; track q.id) { <option [value]="q.id">{{ q.name }}</option> }
+                  </select>
+                }
+                @if (fronts.length > 0) {
+                  <select [(ngModel)]="editFront" [attr.aria-label]="'clocksManager.front' | translate">
+                    <option value="">{{ 'clocksManager.noFront' | translate }}</option>
+                    @for (f of fronts; track f.id) { <option [value]="f.id">{{ f.name }}</option> }
+                  </select>
+                }
+                <div class="clock-actions">
+                  <button type="button" class="btn-step" (click)="saveEdit(clock)" [disabled]="!editName.trim()"
+                    [title]="'common.save' | translate">
+                    <lucide-icon [img]="Check" [size]="14"></lucide-icon>
+                  </button>
+                  <button type="button" class="btn-step" (click)="cancelEdit()" [title]="'common.cancel' | translate">
+                    <lucide-icon [img]="X" [size]="14"></lucide-icon>
+                  </button>
+                </div>
+              </div>
+            } @else {
+              <div class="clock-name" [title]="clock.description || clock.name">{{ clock.name }}</div>
+              @if (triggerLabel(clock); as label) {
+                <div class="clock-trigger"><lucide-icon [img]="Zap" [size]="11"></lucide-icon> {{ label }}</div>
+              }
+              <div class="clock-actions">
+                <button type="button" class="btn-step" (click)="regress(clock)" [disabled]="clock.filled === 0"
+                  [title]="'clocksManager.regress' | translate">
+                  <lucide-icon [img]="Minus" [size]="14"></lucide-icon>
+                </button>
+                <button type="button" class="btn-step" (click)="advance(clock)" [disabled]="clock.filled >= clock.segments"
+                  [title]="'clocksManager.advance' | translate">
+                  <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
+                </button>
+                <button type="button" class="btn-step" (click)="startEdit(clock)" [title]="'clocksManager.edit' | translate">
+                  <lucide-icon [img]="Pencil" [size]="14"></lucide-icon>
+                </button>
+                <button type="button" class="btn-del" (click)="remove(clock)" [title]="'common.delete' | translate">
+                  <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
+                </button>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Créer un front -->
+  <div class="front-create">
+    <input type="text" [(ngModel)]="newFrontName" [placeholder]="'clocksManager.frontPlaceholder' | translate"
+      (keyup.enter)="createFront()" />
+    <button type="button" class="btn-add" (click)="createFront()" [disabled]="!newFrontName.trim()">
+      <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
+      {{ 'clocksManager.addFront' | translate }}
+    </button>
+  </div>
+
+  <!-- Créer une horloge -->
+  <div class="clock-create">
+    <input type="text" [(ngModel)]="newName" [placeholder]="'clocksManager.namePlaceholder' | translate"
+      (keyup.enter)="create()" />
+    <select [(ngModel)]="newSegments" [attr.aria-label]="'clocksManager.segments' | translate">
+      @for (s of segmentOptions; track s) {
+        <option [ngValue]="s">{{ 'clocksManager.segmentsN' | translate:{ n: s } }}</option>
+      }
+    </select>
+    <select [(ngModel)]="newTriggerType" [attr.aria-label]="'clocksManager.triggerType' | translate">
+      @for (t of triggerTypeOptions; track t) {
+        <option [ngValue]="t">{{ 'clocksManager.triggerOption.' + t | translate }}</option>
+      }
+    </select>
+    @if (newTriggerType === 'FLAG_SET') {
+      <input type="text" [(ngModel)]="newTriggerRef" list="clock-flags-list"
+        [placeholder]="'clocksManager.flagPlaceholder' | translate" />
+      <datalist id="clock-flags-list">
+        @for (f of referencedFlags; track f) { <option [value]="f"></option> }
+      </datalist>
+    }
+    @if (newTriggerType === 'QUEST_COMPLETED') {
+      <select [(ngModel)]="newTriggerRef" [attr.aria-label]="'clocksManager.quest' | translate">
+        <option value="">{{ 'clocksManager.selectQuest' | translate }}</option>
+        @for (q of quests; track q.id) {
+          <option [value]="q.id">{{ q.name }}</option>
+        }
+      </select>
+    }
+    @if (fronts.length > 0) {
+      <select [(ngModel)]="newClockFront" [attr.aria-label]="'clocksManager.front' | translate">
+        <option value="">{{ 'clocksManager.noFront' | translate }}</option>
+        @for (f of fronts; track f.id) {
+          <option [value]="f.id">{{ f.name }}</option>
+        }
+      </select>
+    }
+    <button type="button" class="btn-add" (click)="create()" [disabled]="!newName.trim()">
+      <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
+      {{ 'clocksManager.add' | translate }}
+    </button>
+  </div>
+</div>

@@ -16,8 +16,12 @@
   },
   "chapterEdit": {
     "chapter": "Chapitre",
+    "quest": "Quête",
     "aiAssistant": "Assistant IA",
     "aiAssistantTitle": "Ouvrir l'Assistant IA pour dialoguer autour de ce chapitre",
+    "optionalHint": "Seul le titre est requis. Déplie et remplis uniquement les sections utiles — tout le reste est optionnel.",
+    "gmNotesSectionTitle": "Notes du MJ",
+    "objectivesStakesSectionTitle": "Objectifs et enjeux",
     "unlockTitleQuest": "🗺️ Conditions de déblocage de la quête",
     "unlockTitleChapter": "🔒 Conditions de déblocage du chapitre",
     "unlockHintQuest": "Définition du scénario : toutes les conditions doivent être remplies (ET) pour que la quête soit débloquée dans une Partie. Laissez vide pour qu'elle soit disponible dès le départ. La progression et l'état des faits se gèrent dans l'écran de la Partie, pas ici.",
@@ -52,11 +56,34 @@
   "chapterGraph": {
     "chapter": "Chapitre",
     "title": "{{name}} — Carte",
+    "titleFlat": "Carte des scènes",
     "subtitle": "Organigramme des scènes et de leurs branches narratives",
     "back": "Retour au chapitre",
+    "backFlat": "Retour à la campagne",
     "empty": "Ce chapitre n'a aucune scène. Créez-en pour voir apparaître la carte.",
-    "hint": "💡 Cliquez sur une scène pour l'ouvrir, ou glissez-la pour réorganiser la carte. Les scènes non reliées au point d'entrée (scène d'ordre 1) apparaissent en bas.",
-    "allCampaigns": "Toutes les campagnes"
+    "hint": "💡 Cliquez une scène pour l'ouvrir, glissez-la pour la déplacer. Glissez la pastille sous un nœud vers un autre pour créer un lien ; cliquez un lien pour l'éditer ou le supprimer. Molette = zoom, glisser le fond = déplacer la vue.",
+    "addScene": "Ajouter une scène",
+    "newSceneName": "Nouvelle scène",
+    "allCampaigns": "Toutes les campagnes",
+    "zoomIn": "Zoom avant",
+    "zoomOut": "Zoom arrière",
+    "fit": "Recadrer sur l'ensemble",
+    "rename": "Renommer la scène",
+    "renamePlaceholder": "Nom de la scène",
+    "linkEditor": {
+      "label": "Libellé du choix",
+      "labelPlaceholder": "ex : « Suivre la piste »",
+      "condition": "Condition (notes MJ)",
+      "conditionPlaceholder": "ex : « si les PJ ont la clé »",
+      "type": "Type de lien",
+      "delete": "Supprimer le lien",
+      "close": "Fermer",
+      "kind": {
+        "EXIT": "Sortie",
+        "CLUE": "Indice",
+        "LEAD": "Piste"
+      }
+    }
   },
   "chapterView": {
     "chapter": "Chapitre",

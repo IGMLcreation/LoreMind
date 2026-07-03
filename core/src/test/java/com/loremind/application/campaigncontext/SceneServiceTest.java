@@ -1,7 +1,9 @@
 package com.loremind.application.campaigncontext;
 
+import com.loremind.domain.campaigncontext.FieldProposal;
 import com.loremind.domain.campaigncontext.Scene;
 import com.loremind.domain.campaigncontext.SceneBranch;
+import com.loremind.domain.campaigncontext.SceneDraft;
 import com.loremind.domain.campaigncontext.ports.SceneRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -303,6 +305,103 @@ public class SceneServiceTest {
         verify(sceneRepository, times(1)).save(any(Scene.class));
     }
 
+    // ─────────────── patchScene (Pilier A — co-création) ───────────────
+
+    @Test
+    void patchScene_appliesOnlyProvidedFields_leavesOthersIntact() {
+        Scene existing = Scene.builder()
+                .id("scene-1").name("Nom").chapterId("chapter-1").order(1)
+                .description("desc orig").location("Taverne").atmosphere("tendue")
+                .playerNarration("narration orig").gmSecretNotes("secret orig")
+                .build();
+        when(sceneRepository.findById("scene-1")).thenReturn(Optional.of(existing));
+        when(sceneRepository.save(any(Scene.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        List<FieldProposal> fields = List.of(
+                new FieldProposal("atmosphere", "tendue", "oppressante, brumeuse"),
+                new FieldProposal("playerNarration", "narration orig", "Une nouvelle narration.")
+        );
+        Scene result = sceneService.patchScene("scene-1", fields);
+
+        // Champs patchés
+        assertEquals("oppressante, brumeuse", result.getAtmosphere());
+        assertEquals("Une nouvelle narration.", result.getPlayerNarration());
+        // Champs NON proposés : strictement intacts (garde-fou anti-écrasement)
+        assertEquals("desc orig", result.getDescription());
+        assertEquals("Taverne", result.getLocation());
+        assertEquals("secret orig", result.getGmSecretNotes());
+        assertEquals("Nom", result.getName());
+        assertEquals("chapter-1", result.getChapterId());
+        verify(sceneRepository, times(1)).save(any(Scene.class));
+    }
+
+    @Test
+    void patchScene_ignoresUnknownAndNonWhitelistedKeys() {
+        Scene existing = Scene.builder()
+                .id("scene-1").name("Nom").chapterId("chapter-1").description("desc").build();
+        when(sceneRepository.findById("scene-1")).thenReturn(Optional.of(existing));
+        when(sceneRepository.save(any(Scene.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Scene result = sceneService.patchScene("scene-1", List.of(
+                new FieldProposal("id", "x", "HACK"),           // hors whitelist
+                new FieldProposal("name", "Nom", "AUTRE"),      // name n'est pas patchable
+                new FieldProposal("unknownKey", "", "y")
+        ));
+
+        assertEquals("Nom", result.getName());        // inchangé
+        assertEquals("scene-1", result.getId());      // inchangé
+        assertEquals("desc", result.getDescription());
+    }
+
+    @Test
+    void patchScene_notFound_throws() {
+        when(sceneRepository.findById("nope")).thenReturn(Optional.empty());
+        assertThrows(IllegalArgumentException.class, () -> sceneService.patchScene("nope", List.of()));
+        verify(sceneRepository, never()).save(any());
+    }
+
+    @Test
+    void patchScene_nullFields_savesUnchanged() {
+        Scene existing = Scene.builder().id("scene-1").name("Nom").description("desc").build();
+        when(sceneRepository.findById("scene-1")).thenReturn(Optional.of(existing));
+        when(sceneRepository.save(any(Scene.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Scene result = sceneService.patchScene("scene-1", null);
+
+        assertEquals("desc", result.getDescription());
+        verify(sceneRepository, times(1)).save(any(Scene.class));
+    }
+
+    // ─────────────── createDraftScenes (Pilier A — capacité « create ») ───────────────
+
+    @Test
+    void createDraftScenes_createsInOrder_skipsBlankNames() {
+        when(sceneRepository.findByChapterId("chapter-1")).thenReturn(List.of(
+                Scene.builder().id("s-0").chapterId("chapter-1").order(2).build())); // max order = 2
+        when(sceneRepository.save(any(Scene.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        List<Scene> created = sceneService.createDraftScenes("chapter-1", List.of(
+                new SceneDraft("Embuscade", "desc", "narration"),
+                new SceneDraft("  ", "x", "y"),          // titre vide → ignoré
+                new SceneDraft("Poursuite", null, null)));
+
+        assertEquals(2, created.size());
+        assertEquals("Embuscade", created.get(0).getName());
+        assertEquals("chapter-1", created.get(0).getChapterId());
+        assertEquals(3, created.get(0).getOrder());      // append après max(2)+1
+        assertEquals("narration", created.get(0).getPlayerNarration());
+        assertEquals("Poursuite", created.get(1).getName());
+        assertEquals(4, created.get(1).getOrder());
+        verify(sceneRepository, times(2)).save(any(Scene.class));
+    }
+
+    @Test
+    void createDraftScenes_emptyOrNull_noCreation() {
+        assertTrue(sceneService.createDraftScenes("chapter-1", null).isEmpty());
+        assertTrue(sceneService.createDraftScenes("chapter-1", List.of()).isEmpty());
+        verify(sceneRepository, never()).save(any());
+    }
+
     @Test
     void testDeleteScene() {
         // Arrange
@@ -312,6 +411,28 @@ public class SceneServiceTest {
         sceneService.deleteScene("scene-1");
 
         // Assert
+        verify(sceneRepository, times(1)).deleteById("scene-1");
+    }
+
+    @Test
+    void deleteScene_cleansSiblingBranchesPointingToIt() {
+        // scene-2 et scene-3 pointent vers scene-1 ; scene-3 a aussi une branche saine.
+        Scene s1 = Scene.builder().id("scene-1").name("Cible").chapterId("chapter-1").build();
+        Scene s2 = Scene.builder().id("scene-2").name("S2").chapterId("chapter-1")
+                .branches(List.of(SceneBranch.of("vers cible", "scene-1"))).build();
+        Scene s3 = Scene.builder().id("scene-3").name("S3").chapterId("chapter-1")
+                .branches(List.of(SceneBranch.of("vers cible", "scene-1"), SceneBranch.of("ok", "scene-2"))).build();
+        when(sceneRepository.findById("scene-1")).thenReturn(Optional.of(s1));
+        when(sceneRepository.findByChapterId("chapter-1")).thenReturn(List.of(s1, s2, s3));
+        when(sceneRepository.save(any(Scene.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        sceneService.deleteScene("scene-1");
+
+        // Les branches mortes sont retirées, la branche saine survit, puis la scène est supprimée.
+        assertTrue(s2.getBranches().isEmpty());
+        assertEquals(1, s3.getBranches().size());
+        assertEquals("scene-2", s3.getBranches().get(0).targetSceneId());
+        verify(sceneRepository, times(2)).save(any(Scene.class)); // s2 + s3 (pas s1)
         verify(sceneRepository, times(1)).deleteById("scene-1");
     }
 

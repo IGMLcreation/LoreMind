@@ -20,7 +20,9 @@
     "removeLink": "Remove link",
     "increment": "One more",
     "decrement": "One less",
-    "noMatch": "No matching enemy"
+    "noMatch": "No matching enemy",
+    "broken": "Missing reference",
+    "brokenTitle": "This scene references a deleted bestiary entry (enemy deleted then recreated?). Click × to remove the dead reference."
   },
   "personaView": {
     "empty": "This sheet is still empty."

@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
@@ -33,12 +34,21 @@ public class FoundryExportController {
         this.foundryExportService = foundryExportService;
     }
 
+    /**
+     * Perimetre optionnel (tout par defaut) : {@code ?maps=&journals=&tables=} —
+     * ex. cartes + ennemis seulement : {@code ?journals=false&tables=false}.
+     */
     @GetMapping(produces = "application/zip")
-    public ResponseEntity<StreamingResponseBody> export(@PathVariable String campaignId) {
+    public ResponseEntity<StreamingResponseBody> export(
+            @PathVariable String campaignId,
+            @RequestParam(name = "maps", defaultValue = "true") boolean maps,
+            @RequestParam(name = "journals", defaultValue = "true") boolean journals,
+            @RequestParam(name = "tables", defaultValue = "true") boolean tables) {
         String exportedAt = Instant.now().toString();
         BuiltBundle bundle;
         try {
-            bundle = foundryExportService.buildBundle(campaignId, exportedAt);
+            bundle = foundryExportService.buildBundle(campaignId, exportedAt,
+                    new FoundryExportService.ExportOptions(maps, journals, tables));
         } catch (NoSuchElementException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         }

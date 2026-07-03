@@ -10,6 +10,19 @@
     "newCampaignSubtitle": "Créez une nouvelle aventure",
     "tip": "💡 Astuce : Organisez vos arcs et chapitres pour ne rien oublier de vos aventures"
   },
+  "foundryDialog": {
+    "title": "Exporter pour Foundry",
+    "intro": "Choisissez ce que le module Foundry doit importer. Par exemple, pour jouer vos combats, exportez seulement les cartes et les ennemis préparés dans vos scènes.",
+    "presetAll": "Tout",
+    "presetMapsOnly": "Cartes & ennemis seulement",
+    "optMaps": "Cartes & ennemis",
+    "optMapsHint": "Une Scène Foundry par battlemap (variantes Jour/Nuit incluses), avec les tokens des ennemis liés à chaque scène.",
+    "optJournals": "Journaux narratifs",
+    "optJournalsHint": "Arcs, chapitres, quêtes et scènes en journaux (textes + illustrations), plus les fiches PNJ et bestiaire.",
+    "optTables": "Tables aléatoires",
+    "optTablesHint": "Vos tables de rencontres et d'événements en RollTables Foundry.",
+    "confirm": "Exporter"
+  },
   "campaignCreate": {
     "title": "Créer une nouvelle Campagne",
     "nameLabel": "Nom de la campagne *",
@@ -53,7 +66,13 @@
     "newArc": "Nouvel arc",
     "chapters": "{{n}} chapitres",
     "noArc": "Aucun arc narratif pour le moment.",
+    "quickScene": "Scène",
+    "quickSceneFirst": "Ajouter une scène",
+    "organizeInArcs": "ou organiser en arcs",
+    "flatModeHint": "Mode simple : vos scènes sont dans le volet de gauche. Ajoutez-en une, ou organisez la campagne en arcs.",
     "createFirstArc": "Créer votre premier arc",
+    "defaultArcName": "Arc principal",
+    "defaultChapterName": "Chapitre 1",
     "playthroughsTitle": "Mes parties",
     "newPlaythrough": "Nouvelle partie",
     "noPlaythrough": "Aucune partie. Créez-en une pour démarrer une session avec une table.",

@@ -1,0 +1,40 @@
+.edit-page {
+  padding: 2.5rem 2rem;
+  max-width: 720px;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+
+  .header-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+}
+
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+// Bandeau « tout est optionnel sauf le titre ».
+.optional-hint {
+  margin: 0;
+  padding: 0.6rem 0.85rem;
+  background: rgba(108, 99, 255, 0.08);
+  border: 1px solid rgba(108, 99, 255, 0.25);
+  border-radius: 8px;
+  color: #a5b4fc;
+  font-size: 0.85rem;
+}
+
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: auto;
+}

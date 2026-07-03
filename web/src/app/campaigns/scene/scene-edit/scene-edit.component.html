@@ -26,93 +26,17 @@
 
   <form [formGroup]="form" (ngSubmit)="submit()" class="edit-form">
 
-    <!-- Illustrations (galerie editable, rendu editorial) -->
-    <div class="field">
-      <label>{{ 'sceneEdit.illustrationsLabel' | translate }}</label>
-      <app-image-gallery
-        [imageIds]="illustrationImageIds"
-        [editable]="true"
-        [layout]="'EDITORIAL'"
-        (imageIdsChange)="illustrationImageIds = $event">
-      </app-image-gallery>
-      <small class="field-hint">{{ 'sceneEdit.illustrationsHint' | translate }}</small>
-    </div>
+    <!-- Tout est optionnel sauf le titre : on n'affiche que l'identité, le reste
+    est dans des sections repliables avec pastille « rempli ». -->
+    <p class="optional-hint">{{ 'sceneEdit.optionalHint' | translate }}</p>
 
-    <!-- Battlemap Foundry : selon la source (Dungeon Alchemist = media + .json,
-    DungeonDraft = .dd2vtt unique). Non affichee dans l'appli (export only). -->
-    <div class="field">
-      <label>{{ 'sceneEdit.battlemapLabel' | translate }}</label>
-      <small class="field-hint">{{ 'sceneEdit.battlemapHint' | translate }}</small>
+    <!-- Co-création (Pilier A) : le co-MJ propose, l'utilisateur valide champ par champ.
+    Les champs retenus remplissent le formulaire ; rien n'est enregistré avant la sauvegarde. -->
+    <app-entity-assist-panel
+      [entityType]="'scene'" [entityId]="sceneId" [campaignId]="campaignId"
+      (applied)="onAssistApplied($event)"></app-entity-assist-panel>
 
-      <div class="battlemap-source" role="group" [attr.aria-label]="'sceneEdit.battlemapSourceLabel' | translate">
-        <button type="button" [class.active]="battlemapSource === 'DUNGEON_ALCHEMIST'"
-          (click)="setBattlemapSource('DUNGEON_ALCHEMIST')">
-          {{ 'sceneEdit.battlemapSourceDA' | translate }}
-        </button>
-        <button type="button" [class.active]="battlemapSource === 'DUNGEONDRAFT'"
-          (click)="setBattlemapSource('DUNGEONDRAFT')">
-          {{ 'sceneEdit.battlemapSourceDD' | translate }}
-        </button>
-      </div>
-
-      @if (battlemapSource === 'DUNGEON_ALCHEMIST') {
-        <div class="battlemap-slot"
-          appFileDrop [dropDisabled]="battlemapUploadingMedia"
-          (filesDropped)="onBattlemapMediaDropped($event)">
-          <span class="battlemap-slot-label">{{ 'sceneEdit.battlemapMedia' | translate }}</span>
-          @if (battlemapMediaFileId) {
-            <span class="battlemap-file">{{ battlemapMediaName || ('sceneEdit.battlemapAttached' | translate) }}</span>
-            <button type="button" class="battlemap-remove" (click)="removeBattlemapMedia()">
-              {{ 'sceneEdit.battlemapRemove' | translate }}
-            </button>
-          } @else {
-            <label class="battlemap-pick">
-              {{ (battlemapUploadingMedia ? 'sceneEdit.battlemapUploading' : 'sceneEdit.battlemapChoose') | translate }}
-              <input type="file" accept="image/*,video/mp4,video/webm" hidden (change)="onBattlemapMediaSelected($event)" />
-            </label>
-          }
-        </div>
-
-        <div class="battlemap-slot"
-          appFileDrop [dropDisabled]="battlemapUploadingData"
-          (filesDropped)="onBattlemapDataDropped($event)">
-          <span class="battlemap-slot-label">{{ 'sceneEdit.battlemapData' | translate }}</span>
-          @if (battlemapDataFileId) {
-            <span class="battlemap-file">{{ battlemapDataName || ('sceneEdit.battlemapAttached' | translate) }}</span>
-            <button type="button" class="battlemap-remove" (click)="removeBattlemapData()">
-              {{ 'sceneEdit.battlemapRemove' | translate }}
-            </button>
-          } @else {
-            <label class="battlemap-pick">
-              {{ (battlemapUploadingData ? 'sceneEdit.battlemapUploading' : 'sceneEdit.battlemapChoose') | translate }}
-              <input type="file" accept=".json,.dd2vtt,.uvtt,application/json" hidden (change)="onBattlemapDataSelected($event)" />
-            </label>
-          }
-        </div>
-      } @else {
-        <div class="battlemap-slot"
-          appFileDrop [dropDisabled]="battlemapUploadingData"
-          (filesDropped)="onDd2vttDropped($event)">
-          <span class="battlemap-slot-label">{{ 'sceneEdit.battlemapDd2vttSlot' | translate }}</span>
-          @if (battlemapDataFileId) {
-            <span class="battlemap-file">{{ battlemapDataName || ('sceneEdit.battlemapAttached' | translate) }}</span>
-            <button type="button" class="battlemap-remove" (click)="removeDd2vtt()">
-              {{ 'sceneEdit.battlemapRemove' | translate }}
-            </button>
-          } @else {
-            <label class="battlemap-pick">
-              {{ (battlemapUploadingData ? 'sceneEdit.battlemapUploading' : 'sceneEdit.battlemapChoose') | translate }}
-              <input type="file" accept=".dd2vtt,.uvtt,application/json" hidden (change)="onDd2vttSelected($event)" />
-            </label>
-          }
-        </div>
-        @if (battlemapDd2vttNoImage) {
-          <small class="field-hint battlemap-warn">{{ 'sceneEdit.battlemapDd2vttNoImage' | translate }}</small>
-        }
-        <small class="field-hint">{{ 'sceneEdit.battlemapDd2vttHint' | translate }}</small>
-      }
-    </div>
-
+    <!-- Identité -->
     <div class="field">
       <label for="scene-edit-name">{{ 'sceneEdit.nameLabel' | translate }}</label>
       <input
@@ -139,8 +63,122 @@
       <app-icon-picker [options]="campaignIconOptions" [(selected)]="selectedIcon"></app-icon-picker>
     </div>
 
+    <!-- Type narratif du nœud (Niveau 2 — graphe de nœuds typés) -->
+    <div class="field">
+      <label for="scene-edit-type">{{ 'sceneEdit.nodeTypeLabel' | translate }}</label>
+      <select id="scene-edit-type" formControlName="type">
+        @for (opt of sceneTypeOptions; track opt) {
+          <option [value]="opt">{{ 'sceneType.' + opt | translate }}</option>
+        }
+      </select>
+      <small class="field-hint">{{ 'sceneEdit.nodeTypeHint' | translate }}</small>
+    </div>
+
+    <!-- Illustrations (galerie editable, rendu editorial) -->
+    <app-expandable-section [title]="'sceneEdit.illustrationsLabel' | translate" icon="🖼️" [filled]="illustrationsFilled">
+      <app-image-gallery
+        [imageIds]="illustrationImageIds"
+        [editable]="true"
+        [layout]="'EDITORIAL'"
+        (imageIdsChange)="illustrationImageIds = $event">
+      </app-image-gallery>
+      <small class="field-hint">{{ 'sceneEdit.illustrationsHint' | translate }}</small>
+    </app-expandable-section>
+
+    <!-- Battlemaps Foundry : LISTE de variantes (Jour/Nuit, étages…), chacune selon
+    sa source (Dungeon Alchemist = media + .json, DungeonDraft = .dd2vtt unique).
+    Non affichées dans l'appli (export only). -->
+    <app-expandable-section [title]="'sceneEdit.battlemapLabel' | translate" icon="🗺️" [filled]="battlemapFilled">
+      <small class="field-hint">{{ 'sceneEdit.battlemapHint' | translate }}</small>
+
+      @for (bm of battlemaps; track $index; let i = $index) {
+        <div class="battlemap-card">
+          <div class="battlemap-card-head">
+            <input class="battlemap-label-input" type="text" [value]="bm.label"
+              (input)="updateBattlemapLabel(i, $any($event.target).value)"
+              [placeholder]="'sceneEdit.battlemapLabelPlaceholder' | translate" />
+            <button type="button" class="battlemap-remove" (click)="removeBattlemap(i)">
+              {{ 'sceneEdit.battlemapRemoveMap' | translate }}
+            </button>
+          </div>
+
+          <div class="battlemap-source" role="group" [attr.aria-label]="'sceneEdit.battlemapSourceLabel' | translate">
+            <button type="button" [class.active]="bm.source === 'DUNGEON_ALCHEMIST'"
+              (click)="setBattlemapSource(bm, 'DUNGEON_ALCHEMIST')">
+              {{ 'sceneEdit.battlemapSourceDA' | translate }}
+            </button>
+            <button type="button" [class.active]="bm.source === 'DUNGEONDRAFT'"
+              (click)="setBattlemapSource(bm, 'DUNGEONDRAFT')">
+              {{ 'sceneEdit.battlemapSourceDD' | translate }}
+            </button>
+          </div>
+
+          @if (bm.source === 'DUNGEON_ALCHEMIST') {
+            <div class="battlemap-slot"
+              appFileDrop [dropDisabled]="bm.uploadingMedia"
+              (filesDropped)="onBattlemapMediaDropped(bm, $event)">
+              <span class="battlemap-slot-label">{{ 'sceneEdit.battlemapMedia' | translate }}</span>
+              @if (bm.mediaFileId) {
+                <span class="battlemap-file">{{ bm.mediaName || ('sceneEdit.battlemapAttached' | translate) }}</span>
+                <button type="button" class="battlemap-remove" (click)="removeBattlemapMedia(bm)">
+                  {{ 'sceneEdit.battlemapRemove' | translate }}
+                </button>
+              } @else {
+                <label class="battlemap-pick">
+                  {{ (bm.uploadingMedia ? 'sceneEdit.battlemapUploading' : 'sceneEdit.battlemapChoose') | translate }}
+                  <input type="file" accept="image/*,video/mp4,video/webm" hidden (change)="onBattlemapMediaSelected(bm, $event)" />
+                </label>
+              }
+            </div>
+
+            <div class="battlemap-slot"
+              appFileDrop [dropDisabled]="bm.uploadingData"
+              (filesDropped)="onBattlemapDataDropped(bm, $event)">
+              <span class="battlemap-slot-label">{{ 'sceneEdit.battlemapData' | translate }}</span>
+              @if (bm.dataFileId) {
+                <span class="battlemap-file">{{ bm.dataName || ('sceneEdit.battlemapAttached' | translate) }}</span>
+                <button type="button" class="battlemap-remove" (click)="removeBattlemapData(bm)">
+                  {{ 'sceneEdit.battlemapRemove' | translate }}
+                </button>
+              } @else {
+                <label class="battlemap-pick">
+                  {{ (bm.uploadingData ? 'sceneEdit.battlemapUploading' : 'sceneEdit.battlemapChoose') | translate }}
+                  <input type="file" accept=".json,.dd2vtt,.uvtt,application/json" hidden (change)="onBattlemapDataSelected(bm, $event)" />
+                </label>
+              }
+            </div>
+          } @else {
+            <div class="battlemap-slot"
+              appFileDrop [dropDisabled]="bm.uploadingData"
+              (filesDropped)="onDd2vttDropped(bm, $event)">
+              <span class="battlemap-slot-label">{{ 'sceneEdit.battlemapDd2vttSlot' | translate }}</span>
+              @if (bm.dataFileId) {
+                <span class="battlemap-file">{{ bm.dataName || ('sceneEdit.battlemapAttached' | translate) }}</span>
+                <button type="button" class="battlemap-remove" (click)="removeDd2vtt(bm)">
+                  {{ 'sceneEdit.battlemapRemove' | translate }}
+                </button>
+              } @else {
+                <label class="battlemap-pick">
+                  {{ (bm.uploadingData ? 'sceneEdit.battlemapUploading' : 'sceneEdit.battlemapChoose') | translate }}
+                  <input type="file" accept=".dd2vtt,.uvtt,application/json" hidden (change)="onDd2vttSelected(bm, $event)" />
+                </label>
+              }
+            </div>
+            @if (bm.dd2vttNoImage) {
+              <small class="field-hint battlemap-warn">{{ 'sceneEdit.battlemapDd2vttNoImage' | translate }}</small>
+            }
+            <small class="field-hint">{{ 'sceneEdit.battlemapDd2vttHint' | translate }}</small>
+          }
+        </div>
+      }
+
+      <button type="button" class="battlemap-add" (click)="addBattlemap()">
+        + {{ 'sceneEdit.battlemapAdd' | translate }}
+      </button>
+    </app-expandable-section>
+
     <!-- Section : Contexte et ambiance -->
-    <app-expandable-section [title]="'sceneEdit.contextSectionTitle' | translate" icon="📍" [initiallyOpen]="true">
+    <app-expandable-section [title]="'sceneEdit.contextSectionTitle' | translate" icon="📍" [initiallyOpen]="true" [filled]="contextFilled">
       <div class="field-row">
         <div class="field">
           <label for="scene-edit-location">{{ 'sceneEdit.locationLabel' | translate }}</label>
@@ -163,7 +201,7 @@
     </app-expandable-section>
 
     <!-- Section : Narration pour les joueurs -->
-    <app-expandable-section [title]="'sceneEdit.narrationSectionTitle' | translate" icon="📖">
+    <app-expandable-section [title]="'sceneEdit.narrationSectionTitle' | translate" icon="📖" [filled]="narrationFilled">
       <div class="field">
         <textarea
           formControlName="playerNarration"
@@ -175,7 +213,7 @@
     </app-expandable-section>
 
     <!-- Section : Notes et secrets du MJ (privé) -->
-    <app-expandable-section [title]="'sceneEdit.gmNotesSectionTitle' | translate" icon="🔒" variant="private">
+    <app-expandable-section [title]="'sceneEdit.gmNotesSectionTitle' | translate" icon="🔒" variant="private" [filled]="gmNotesFilled">
       <div class="field">
         <textarea
           formControlName="gmSecretNotes"
@@ -187,7 +225,7 @@
     </app-expandable-section>
 
     <!-- Section : Choix et conséquences -->
-    <app-expandable-section [title]="'sceneEdit.choicesSectionTitle' | translate" icon="🔀">
+    <app-expandable-section [title]="'sceneEdit.choicesSectionTitle' | translate" icon="🔀" [filled]="choicesFilled">
       <div class="field">
         <textarea
           formControlName="choicesConsequences"
@@ -198,7 +236,7 @@
     </app-expandable-section>
 
     <!-- Section : Branches narratives (graphe intra-chapitre) -->
-    <app-expandable-section [title]="'sceneEdit.branchesSectionTitle' | translate" icon="🌿">
+    <app-expandable-section [title]="'sceneEdit.branchesSectionTitle' | translate" icon="🌿" [initiallyOpen]="focusSection === 'branches'" [filled]="branchesFilled">
       @if (siblingScenes.length === 0) {
         <div class="branches-hint">
           <small class="field-hint">
@@ -221,7 +259,11 @@
               </div>
               <div class="field">
                 <label>{{ 'sceneEdit.branchTargetLabel' | translate }}</label>
+                @if (isBranchTargetBroken(branch)) {
+                  <small class="branch-broken">⚠ {{ 'sceneEdit.branchTargetBroken' | translate }}</small>
+                }
                 <select
+                  [class.invalid]="isBranchTargetBroken(branch)"
                   (change)="updateBranchTarget(i, $any($event.target).value)">
                   <option value="" [selected]="!branch.targetSceneId">{{ 'sceneEdit.branchTargetPlaceholder' | translate }}</option>
                   @for (s of siblingScenes; track s) {
@@ -238,6 +280,14 @@
                   [value]="branch.condition || ''"
                   (input)="updateBranchCondition(i, $any($event.target).value)"
                   [placeholder]="'sceneEdit.branchConditionPlaceholder' | translate" />
+              </div>
+              <div class="field">
+                <label>{{ 'sceneEdit.branchKindLabel' | translate }}</label>
+                <select (change)="updateBranchKind(i, $any($event.target).value)">
+                  @for (opt of linkTypeOptions; track opt) {
+                    <option [value]="opt" [selected]="opt === (branch.kind || 'EXIT')">{{ 'linkType.' + opt | translate }}</option>
+                  }
+                </select>
               </div>
               <button type="button" class="btn-remove-branch" (click)="removeBranch(i)"
                 [title]="'sceneEdit.branchRemoveTitle' | translate">
@@ -257,7 +307,7 @@
     </app-expandable-section>
 
     <!-- Section : Combat ou rencontre -->
-    <app-expandable-section [title]="'sceneEdit.combatSectionTitle' | translate" icon="⚔️">
+    <app-expandable-section [title]="'sceneEdit.combatSectionTitle' | translate" icon="⚔️" [initiallyOpen]="focusSection === 'combat'" [filled]="combatFilled">
       <div class="field">
         <label for="scene-edit-combat-difficulty">{{ 'sceneEdit.combatDifficultyLabel' | translate }}</label>
         <input id="scene-edit-combat-difficulty" type="text" formControlName="combatDifficulty" [placeholder]="'sceneEdit.combatDifficultyPlaceholder' | translate" />
@@ -287,7 +337,7 @@
 
     <!-- Section : Pages Lore associées (B2 cross-context) -->
     @if (loreId) {
-      <app-expandable-section [title]="'sceneEdit.loreSectionTitle' | translate" icon="🔗">
+      <app-expandable-section [title]="'sceneEdit.loreSectionTitle' | translate" icon="🔗" [filled]="loreFilled">
         <div class="field">
           <app-lore-link-picker
             [value]="relatedPageIds"
@@ -311,7 +361,7 @@
     }
 
     <!-- Lieu explorable : pièces / donjon -->
-    <app-expandable-section [title]="'sceneEdit.dungeonSectionTitle' | translate" icon="🏰" [initiallyOpen]="rooms.length > 0">
+    <app-expandable-section [title]="'sceneEdit.dungeonSectionTitle' | translate" icon="🏰" [initiallyOpen]="rooms.length > 0 || focusSection === 'rooms'" [filled]="dungeonFilled">
       <small class="field-hint">
         {{ 'sceneEdit.dungeonHint' | translate }}
       </small>

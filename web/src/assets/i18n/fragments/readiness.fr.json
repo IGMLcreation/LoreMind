@@ -1,0 +1,19 @@
+{
+  "readiness": {
+    "title": "Prochaines étapes",
+    "badge": {
+      "DRAFT": "Brouillon",
+      "PLAYABLE": "Jouable",
+      "POLISHED": "Peaufiné"
+    },
+    "blockingN": "{{n}} bloquant(s)",
+    "recommendedN": "{{n}} recommandé(s)",
+    "allSet": "Tout est prêt : cette campagne peut être jouée sans accroc.",
+    "fix": "Corriger",
+    "dot": {
+      "blocking": "À corriger : un manque bloquant, ici ou dans un élément en dessous. Voir « Prochaines étapes » sur la campagne.",
+      "recommended": "Conseillé : un manque recommandé, ici ou en dessous. Voir « Prochaines étapes » sur la campagne.",
+      "more": "+ {{n}} autre(s) manque(s) — voir « Prochaines étapes »"
+    }
+  }
+}

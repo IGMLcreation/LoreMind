@@ -1,12 +1,10 @@
 package com.loremind.infrastructure.web.controller;
 
-import com.loremind.domain.campaigncontext.Arc;
 import com.loremind.domain.campaigncontext.Campaign;
-import com.loremind.domain.campaigncontext.Chapter;
 import com.loremind.domain.campaigncontext.Prerequisite;
-import com.loremind.domain.campaigncontext.ports.ArcRepository;
+import com.loremind.domain.campaigncontext.Quest;
 import com.loremind.domain.campaigncontext.ports.CampaignRepository;
-import com.loremind.domain.campaigncontext.ports.ChapterRepository;
+import com.loremind.domain.campaigncontext.ports.QuestRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,8 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Tests d'intégration de {@link CampaignFlagController}.
  * Unique endpoint : list (GET) qui déduplique les noms de faits (Prerequisite.FlagSet)
- * référencés dans les prérequis des chapitres de la campagne.
- * Fixtures : campaign -> arc -> chapters avec prérequis FlagSet.
+ * référencés dans les prérequis des QUÊTES de la campagne (Niveau 1).
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -34,23 +31,19 @@ class CampaignFlagControllerTest {
 
     @Autowired private MockMvc mockMvc;
     @Autowired private CampaignRepository campaignRepository;
-    @Autowired private ArcRepository arcRepository;
-    @Autowired private ChapterRepository chapterRepository;
+    @Autowired private QuestRepository questRepository;
 
     private String campaignId;
-    private String arcId;
 
     @BeforeEach
     void setUp() {
-        // Chaîne de fixtures : campaign -> arc
         campaignId = campaignRepository.save(Campaign.builder().name("C").description("").build()).getId();
-        arcId = arcRepository.save(Arc.builder().campaignId(campaignId).name("A").order(0).build()).getId();
     }
 
     @Test
     void list_returnsEmptyArray_whenNoFlagPrerequisites() throws Exception {
-        // Chapitre sans prérequis FlagSet => aucun fait référencé
-        chapterRepository.save(Chapter.builder().arcId(arcId).name("Ch").order(0).build());
+        // Quête sans prérequis FlagSet => aucun fait référencé
+        questRepository.save(Quest.builder().campaignId(campaignId).name("Q").order(0).build());
         mockMvc.perform(get("/api/campaigns/{cid}/flags", campaignId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
@@ -59,13 +52,13 @@ class CampaignFlagControllerTest {
 
     @Test
     void list_returnsDeduplicatedSortedFlagNames() throws Exception {
-        // Deux chapitres référençant des FlagSet, avec un doublon "alpha"
-        chapterRepository.save(Chapter.builder().arcId(arcId).name("Ch1").order(0)
+        // Deux quêtes référençant des FlagSet, avec un doublon "alpha"
+        questRepository.save(Quest.builder().campaignId(campaignId).name("Q1").order(0)
                 .prerequisites(List.of(
                         new Prerequisite.FlagSet("zeta"),
                         new Prerequisite.FlagSet("alpha")))
                 .build());
-        chapterRepository.save(Chapter.builder().arcId(arcId).name("Ch2").order(1)
+        questRepository.save(Quest.builder().campaignId(campaignId).name("Q2").order(1)
                 .prerequisites(List.of(
                         new Prerequisite.FlagSet("alpha"),       // doublon
                         new Prerequisite.QuestCompleted("q-1"))) // ignoré (pas un FlagSet)
@@ -82,7 +75,7 @@ class CampaignFlagControllerTest {
 
     @Test
     void list_returnsEmptyArray_forUnknownCampaign() throws Exception {
-        // Campagne sans arcs => liste vide (pas d'erreur)
+        // Campagne sans quêtes => liste vide (pas d'erreur)
         mockMvc.perform(get("/api/campaigns/{cid}/flags", "999999999"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())

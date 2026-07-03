@@ -1,5 +1,8 @@
 package com.loremind.infrastructure.transfer.pdf;
 
+import com.loremind.domain.campaigncontext.NodeType;
+import com.loremind.domain.campaigncontext.Prerequisite;
+import com.loremind.domain.campaigncontext.QuestNodeRef;
 import com.loremind.domain.files.ports.FileStorage;
 import com.loremind.domain.images.ports.ImageStorage;
 import com.loremind.domain.shared.template.FieldType;
@@ -43,6 +46,7 @@ public class PdfExportService {
     private final ArcJpaRepository arcRepo;
     private final ChapterJpaRepository chapterRepo;
     private final SceneJpaRepository sceneRepo;
+    private final QuestJpaRepository questRepo;
     private final NpcJpaRepository npcRepo;
     private final EnemyJpaRepository enemyRepo;
     private final GameSystemJpaRepository gameSystemRepo;
@@ -56,6 +60,7 @@ public class PdfExportService {
 
     public PdfExportService(CampaignJpaRepository campaignRepo, ArcJpaRepository arcRepo,
                             ChapterJpaRepository chapterRepo, SceneJpaRepository sceneRepo,
+                            QuestJpaRepository questRepo,
                             NpcJpaRepository npcRepo, EnemyJpaRepository enemyRepo,
                             GameSystemJpaRepository gameSystemRepo, ImageJpaRepository imageRepo,
                             StoredFileJpaRepository storedFileRepo,
@@ -66,6 +71,7 @@ public class PdfExportService {
         this.arcRepo = arcRepo;
         this.chapterRepo = chapterRepo;
         this.sceneRepo = sceneRepo;
+        this.questRepo = questRepo;
         this.npcRepo = npcRepo;
         this.enemyRepo = enemyRepo;
         this.gameSystemRepo = gameSystemRepo;
@@ -116,6 +122,7 @@ public class PdfExportService {
 
         cover(body, campaign);
         narrative(body, bookmarks, campaign);
+        quests(body, bookmarks, campaign);
         personas(body, bookmarks, "part-npcs", "Personnages non-joueurs (PNJ)", npcEntries(campaign), npcTemplate, false);
         personas(body, bookmarks, "part-enemies", "Bestiaire", enemyEntries(campaign), enemyTemplate, true);
         lore(body, bookmarks, campaign);
@@ -144,6 +151,16 @@ public class PdfExportService {
         List<ArcJpaEntity> arcs = sortByOrder(arcRepo.findByCampaignId(campaign.getId()), ArcJpaEntity::getOrder);
         if (arcs.isEmpty()) return;
 
+        // Mode plat (miroir de l'UI Niveau 0) : 1 arc d'UN SEUL chapitre → on masque les
+        // niveaux Arc/Chapitre et on présente les scènes À PLAT (cohérent avec la sidebar).
+        if (arcs.size() == 1) {
+            List<ChapterJpaEntity> only = sortByOrder(chapterRepo.findByArcId(arcs.get(0).getId()), ChapterJpaEntity::getOrder);
+            if (only.size() == 1) {
+                narrativeFlat(b, bm, arcs.get(0), only.get(0));
+                return;
+            }
+        }
+
         b.append("<h1 class=\"part\" id=\"part-narrative\">Structure narrative</h1>");
         bm.append(bookmark("Structure narrative", "part-narrative", () -> {
             StringBuilder sub = new StringBuilder();
@@ -165,7 +182,7 @@ public class PdfExportService {
 
             for (ChapterJpaEntity ch : sortByOrder(chapterRepo.findByArcId(arc.getId()), ChapterJpaEntity::getOrder)) {
                 b.append("<div class=\"quest\"><div class=\"quest-head\">")
-                        .append("<span class=\"eyebrow\">Quête</span>")
+                        .append("<span class=\"eyebrow\">Chapitre</span>")
                         .append(esc(ch.getName())).append("</div>");
                 illustrations(b, ch.getIllustrationImageIds());
                 block(b, "Description", ch.getDescription());
@@ -182,6 +199,33 @@ public class PdfExportService {
         }
     }
 
+    /**
+     * Mode plat : scènes présentées sous « Scènes », sans en-têtes Arc/Chapitre. Le contenu
+     * narratif éventuel des niveaux masqués reste affiché en intro ({@code block} ignore les
+     * valeurs vides → en pratique rien n'apparaît pour un arc/chapitre auto-créés et vides).
+     */
+    private void narrativeFlat(StringBuilder b, StringBuilder bm, ArcJpaEntity arc, ChapterJpaEntity ch) {
+        b.append("<h1 class=\"part\" id=\"part-narrative\">Scènes</h1>");
+        bm.append(bookmark("Scènes", "part-narrative", null));
+
+        illustrations(b, arc.getIllustrationImageIds());
+        block(b, "Description", arc.getDescription());
+        block(b, "Themes", arc.getThemes());
+        block(b, "Enjeux", arc.getStakes());
+        block(b, "Recompenses", arc.getRewards());
+        block(b, "Resolution", arc.getResolution());
+        block(b, "Notes MJ", arc.getGmNotes());
+        illustrations(b, ch.getIllustrationImageIds());
+        block(b, "Description", ch.getDescription());
+        block(b, "Objectifs joueurs", ch.getPlayerObjectives());
+        block(b, "Enjeux narratifs", ch.getNarrativeStakes());
+        block(b, "Notes MJ", ch.getGmNotes());
+
+        for (SceneJpaEntity sc : sortByOrder(sceneRepo.findByChapterId(ch.getId()), SceneJpaEntity::getOrder)) {
+            scene(b, sc);
+        }
+    }
+
     private void scene(StringBuilder b, SceneJpaEntity sc) {
         b.append("<div class=\"scene\"><div class=\"scene-head\">")
                 .append("<span class=\"eyebrow\">Scène</span>")
@@ -194,12 +238,91 @@ public class PdfExportService {
         block(b, "Choix & consequences", sc.getChoicesConsequences());
         block(b, "Difficulte du combat", sc.getCombatDifficulty());
         illustrations(b, sc.getIllustrationImageIds());
-        // Battlemap (image uniquement ; les videos ne sont pas rendables en PDF).
-        String battlemap = fileImageUri(sc.getBattlemapMediaFileId());
-        if (battlemap != null) {
-            b.append("<div class=\"illus\"><img src=\"").append(battlemap).append("\"/></div>");
+        // Battlemaps (images uniquement ; les videos ne sont pas rendables en PDF).
+        // Le libellé de la variante (Jour/Nuit…) est rendu en légende s'il est renseigné.
+        if (sc.getBattlemaps() != null) {
+            for (var bm : sc.getBattlemaps()) {
+                String battlemap = fileImageUri(bm.mediaFileId());
+                if (battlemap == null) continue;
+                b.append("<div class=\"illus\"><img src=\"").append(battlemap).append("\"/>");
+                if (bm.label() != null && !bm.label().isBlank()) {
+                    b.append("<div class=\"eyebrow\">").append(esc(bm.label())).append("</div>");
+                }
+                b.append("</div>");
+            }
         }
         b.append("</div>");
+    }
+
+    // ----- Quêtes (Niveau 1 : entités orthogonales à l'arbre, rattachées à la campagne) -----
+
+    private void quests(StringBuilder b, StringBuilder bm, CampaignJpaEntity campaign) {
+        List<QuestJpaEntity> quests = sortByOrder(questRepo.findByCampaignId(campaign.getId()), QuestJpaEntity::getOrder);
+        if (quests.isEmpty()) return;
+
+        // Index de noms pour résoudre les références : prérequis -> quête, nœuds -> chapitre/scène.
+        Map<String, String> questNames = new HashMap<>();
+        for (QuestJpaEntity q : quests) questNames.put(String.valueOf(q.getId()), q.getName());
+        Map<String, String> chapterNames = new HashMap<>();
+        Map<String, String> sceneNames = new HashMap<>();
+        for (ArcJpaEntity arc : arcRepo.findByCampaignId(campaign.getId())) {
+            for (ChapterJpaEntity ch : chapterRepo.findByArcId(arc.getId())) {
+                chapterNames.put(String.valueOf(ch.getId()), ch.getName());
+                for (SceneJpaEntity sc : sceneRepo.findByChapterId(ch.getId())) {
+                    sceneNames.put(String.valueOf(sc.getId()), sc.getName());
+                }
+            }
+        }
+
+        b.append("<h1 class=\"part\" id=\"part-quests\">Quêtes</h1>");
+        bm.append(bookmark("Quêtes", "part-quests", () -> {
+            StringBuilder sub = new StringBuilder();
+            for (QuestJpaEntity q : quests) sub.append(bookmark(q.getName(), "quest-" + q.getId(), null));
+            return sub.toString();
+        }));
+
+        for (QuestJpaEntity q : quests) {
+            b.append("<div class=\"card\" id=\"quest-").append(q.getId()).append("\"><div class=\"card-body\">");
+            b.append("<div class=\"persona-name\">").append(esc(q.getName())).append("</div>");
+            block(b, "Description", q.getDescription());
+            block(b, "Conditions de déblocage", renderPrerequisites(q.getPrerequisites(), questNames));
+            block(b, "Nœuds liés", renderQuestNodes(q.getNodes(), chapterNames, sceneNames));
+            block(b, "Objectifs joueurs", q.getPlayerObjectives());
+            block(b, "Enjeux narratifs", q.getNarrativeStakes());
+            block(b, "Notes MJ", q.getGmNotes());
+            illustrations(b, q.getIllustrationImageIds());
+            b.append("</div></div>");
+        }
+    }
+
+    /** Prérequis d'une quête en texte lisible (une ligne par condition). */
+    private String renderPrerequisites(List<Prerequisite> prereqs, Map<String, String> questNames) {
+        if (prereqs == null || prereqs.isEmpty()) return null;
+        List<String> parts = new ArrayList<>();
+        for (Prerequisite p : prereqs) {
+            if (p instanceof Prerequisite.QuestCompleted qc) {
+                parts.add("Quête « " + questNames.getOrDefault(qc.questId(), "?") + " » terminée");
+            } else if (p instanceof Prerequisite.SessionReached sr) {
+                parts.add("Séance " + sr.minSessionNumber() + " atteinte");
+            } else if (p instanceof Prerequisite.FlagSet fs) {
+                parts.add("Fait : " + fs.flagName());
+            }
+        }
+        return parts.isEmpty() ? null : String.join("\n", parts);
+    }
+
+    /** Nœuds narratifs (chapitres / scènes) traversés par une quête, en texte lisible. */
+    private String renderQuestNodes(List<QuestNodeRef> nodes, Map<String, String> chapterNames, Map<String, String> sceneNames) {
+        if (nodes == null || nodes.isEmpty()) return null;
+        List<String> parts = new ArrayList<>();
+        for (QuestNodeRef n : nodes) {
+            if (n.nodeType() == NodeType.SCENE) {
+                parts.add("Scène : " + sceneNames.getOrDefault(n.nodeId(), "?"));
+            } else {
+                parts.add("Chapitre : " + chapterNames.getOrDefault(n.nodeId(), "?"));
+            }
+        }
+        return parts.isEmpty() ? null : String.join("\n", parts);
     }
 
     // ----- PNJ / Ennemis (groupes par dossier) -----

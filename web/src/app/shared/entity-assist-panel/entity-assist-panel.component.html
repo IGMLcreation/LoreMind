@@ -1,0 +1,60 @@
+<div class="entity-assist">
+  <button type="button" class="assist-toggle" (click)="toggle()">
+    <lucide-icon [img]="open ? ChevronDown : ChevronRight" [size]="15"></lucide-icon>
+    <lucide-icon [img]="Sparkles" [size]="15" class="spark"></lucide-icon>
+    <span class="assist-title">{{ 'entityAssist.button' | translate }}</span>
+  </button>
+
+  @if (open) {
+    <div class="assist-body">
+      <p class="assist-hint">{{ 'entityAssist.hint' | translate }}</p>
+
+      <div class="assist-prompt">
+        <textarea [(ngModel)]="instruction" rows="2"
+          [placeholder]="'entityAssist.instructionPlaceholder' | translate"></textarea>
+        <button type="button" class="btn-generate" (click)="generate()" [disabled]="loading">
+          <lucide-icon [img]="loading ? RefreshCw : Sparkles" [size]="14" [class.spin]="loading"></lucide-icon>
+          {{ (loading ? 'entityAssist.generating' : (generated ? 'entityAssist.regenerate' : 'entityAssist.generate')) | translate }}
+        </button>
+      </div>
+
+      @if (error) {
+        <p class="assist-error">{{ error }}</p>
+      }
+
+      @if (generated && fields.length === 0 && !loading) {
+        <p class="assist-empty">{{ 'entityAssist.empty' | translate }}</p>
+      }
+
+      @if (fields.length > 0) {
+        <ul class="field-list">
+          @for (f of fields; track f.key) {
+            <li class="field-card" [class.rejected]="!f.accepted">
+              <label class="field-check">
+                <input type="checkbox" [(ngModel)]="f.accepted" />
+                <span class="field-name">{{ fieldLabel(f.key) }}</span>
+              </label>
+              @if (f.currentValue) {
+                <div class="field-current">
+                  <span class="tag">{{ 'entityAssist.current' | translate }}</span>
+                  <span class="val">{{ f.currentValue }}</span>
+                </div>
+              }
+              <div class="field-proposed">
+                <span class="tag">{{ 'entityAssist.proposed' | translate }}</span>
+                <span class="val">{{ f.proposedValue }}</span>
+              </div>
+            </li>
+          }
+        </ul>
+
+        <div class="assist-actions">
+          <button type="button" class="btn-apply" (click)="apply()" [disabled]="acceptedCount === 0">
+            <lucide-icon [img]="Check" [size]="14"></lucide-icon>
+            {{ 'entityAssist.applySelection' | translate:{ n: acceptedCount } }}
+          </button>
+        </div>
+      }
+    </div>
+  }
+</div>

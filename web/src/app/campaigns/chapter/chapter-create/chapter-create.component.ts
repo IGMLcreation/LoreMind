@@ -32,8 +32,6 @@ export class ChapterCreateComponent implements OnInit, OnDestroy {
   campaignId = '';
   arcId = '';
   arcName = '';
-  /** Arc parent de type hub : un "chapitre" y est présenté comme une "quête". */
-  isHub = false;
   private existingChapterCount = 0;
 
   constructor(
@@ -67,7 +65,6 @@ export class ChapterCreateComponent implements OnInit, OnDestroy {
     }).subscribe(({ campaign, allCampaigns, treeData }) => {
       const currentArc = treeData.arcs.find(a => a.id === this.arcId);
       this.arcName = currentArc?.name ?? '';
-      this.isHub = currentArc?.type === 'HUB';
       this.existingChapterCount = treeData.chaptersByArc[this.arcId]?.length ?? 0;
 
       this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId, this.translate));

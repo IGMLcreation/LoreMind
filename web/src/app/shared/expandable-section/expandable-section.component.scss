@@ -42,6 +42,19 @@
   font-size: 1rem;
 }
 
+// Pastille « cette section contient du contenu » (voir Input `filled`).
+.section-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #6c63ff;
+  flex: 0 0 auto;
+}
+
+.private .section-dot {
+  background: #fca5a5;
+}
+
 .section-content {
   padding: 1rem 1.1rem 1.2rem 1.1rem;
   border-top: 1px solid #374151;

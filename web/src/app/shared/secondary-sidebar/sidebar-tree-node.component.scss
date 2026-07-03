@@ -47,6 +47,18 @@
     color: #6b7280;
     flex-shrink: 0;
   }
+
+  // Pastille de readiness (guidage) : reste collée au libellé ; si un compteur
+  // `meta` est présent, il file à droite (margin-left:auto) et la pastille reste ici.
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+
+    &.blocking { background: #ef4444; }
+    &.recommended { background: #fb923c; }
+  }
 }
 
 .item-icon {

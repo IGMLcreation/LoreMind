@@ -378,7 +378,9 @@
     "removeLink": "Remove link",
     "increment": "One more",
     "decrement": "One less",
-    "noMatch": "No matching enemy"
+    "noMatch": "No matching enemy",
+    "broken": "Missing reference",
+    "brokenTitle": "This scene references a deleted bestiary entry (enemy deleted then recreated?). Click × to remove the dead reference."
   },
   "personaView": {
     "empty": "This sheet is still empty."
@@ -508,7 +510,11 @@
     "chatSuggestion3": "Suggest a two-act resolution",
     "deleteTitle": "Delete arc",
     "deleteMessage": "Delete the arc \"{{name}}\"?",
-    "irreversible": "This action is irreversible."
+    "irreversible": "This action is irreversible.",
+    "optionalHint": "Only the title is required. Expand and fill in only the sections you need — everything else is optional.",
+    "themesStakesSectionTitle": "Themes and stakes",
+    "gmNotesSectionTitle": "GM notes",
+    "rewardsResolutionSectionTitle": "Rewards and resolution"
   },
   "arcView": {
     "subtitleHub": "Hub arc (non-linear quests)",
@@ -537,7 +543,10 @@
     "deleteCascade": "This action will also delete: {{parts}}.",
     "irreversible": "This action is irreversible.",
     "deleteConfirmTitle": "Delete arc",
-    "deleteConfirmMessage": "Delete the arc \"{{name}}\"?"
+    "deleteConfirmMessage": "Delete the arc \"{{name}}\"?",
+    "questsTitle": "Quests in this arc",
+    "questsEmpty": "No quests yet. Add one to populate this hub.",
+    "createQuest": "New quest"
   },
   "campaigns": {
     "heroTitle": "Your Campaigns",
@@ -625,7 +634,13 @@
       "playthroughsPlural": "{{n}} playthroughs (with their PCs, sessions, facts)",
       "alsoDeletes": "Will also be deleted: {{items}}.",
       "irreversible": "This action is irreversible."
-    }
+    },
+    "quickScene": "Scene",
+    "quickSceneFirst": "Add a scene",
+    "organizeInArcs": "or organize into arcs",
+    "defaultArcName": "Main arc",
+    "defaultChapterName": "Chapter 1",
+    "flatModeHint": "Simple mode: your scenes are in the left panel. Add one, or organize the campaign into arcs."
   },
   "campaignImport": {
     "pageTitle": "Import a campaign",
@@ -726,7 +741,11 @@
     "chatSuggestion3": "Suggest a striking opening scene",
     "deleteTitle": "Delete chapter",
     "deleteMessage": "Delete the chapter \"{{name}}\"?",
-    "irreversible": "This action is irreversible."
+    "irreversible": "This action is irreversible.",
+    "optionalHint": "Only the title is required. Expand and fill in only the sections you need — everything else is optional.",
+    "gmNotesSectionTitle": "GM notes",
+    "objectivesStakesSectionTitle": "Objectives and stakes",
+    "quest": "Quest"
   },
   "chapterGraph": {
     "chapter": "Chapter",
@@ -734,8 +753,31 @@
     "subtitle": "Flowchart of scenes and their narrative branches",
     "back": "Back to chapter",
     "empty": "This chapter has no scenes. Create some to see the map appear.",
-    "hint": "💡 Click a scene to open it, or drag it to rearrange the map. Scenes not connected to the entry point (scene of order 1) appear at the bottom.",
-    "allCampaigns": "All campaigns"
+    "hint": "💡 Click a scene to open it, drag it to move it. Drag the dot under a node onto another to create a link; click a link to edit or delete it. Wheel = zoom, drag the background = pan the view.",
+    "allCampaigns": "All campaigns",
+    "addScene": "Add a scene",
+    "newSceneName": "New scene",
+    "titleFlat": "Scene map",
+    "backFlat": "Back to campaign",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "fit": "Fit to content",
+    "linkEditor": {
+      "label": "Choice label",
+      "labelPlaceholder": "e.g. \"Follow the trail\"",
+      "condition": "Condition (GM notes)",
+      "conditionPlaceholder": "e.g. \"if the PCs have the key\"",
+      "type": "Link type",
+      "delete": "Delete link",
+      "close": "Close",
+      "kind": {
+        "EXIT": "Exit",
+        "CLUE": "Clue",
+        "LEAD": "Lead"
+      }
+    },
+    "rename": "Rename scene",
+    "renamePlaceholder": "Scene name"
   },
   "chapterView": {
     "chapter": "Chapter",
@@ -941,8 +983,8 @@
     "aiAssistantTitle": "Open the AI Assistant to discuss this scene",
     "illustrationsLabel": "Illustrations",
     "illustrationsHint": "NPC portraits, visual mood, evocative scenes...",
-    "battlemapLabel": "Battlemap (Foundry export)",
-    "battlemapHint": "Battle map to export to Foundry: media (image/video) + Universal VTT .json/.dd2vtt file (Dungeon Alchemist, Dungeondraft...). Not displayed in the app.",
+    "battlemapLabel": "Battlemaps (Foundry export)",
+    "battlemapHint": "Battle maps to export to Foundry: media (image/video) + Universal VTT .json/.dd2vtt file (Dungeon Alchemist, Dungeondraft...). Add several maps for variants of the same scene (day/night, floors...). Not displayed in the app.",
     "battlemapMedia": "Media (image / video)",
     "battlemapData": "Data (.json / .dd2vtt)",
     "battlemapChoose": "Choose a file",
@@ -951,7 +993,7 @@
     "battlemapRemove": "Remove",
     "nameLabel": "Scene title *",
     "namePlaceholder": "E.g.: Arrival at the village",
-    "descriptionLabel": "Short description *",
+    "descriptionLabel": "Short description",
     "descriptionPlaceholder": "One or two sentences summarizing what happens...",
     "iconLabel": "Icon",
     "contextSectionTitle": "Context and mood",
@@ -1007,7 +1049,15 @@
     "battlemapSourceDD": "DungeonDraft (.dd2vtt)",
     "battlemapDd2vttSlot": ".dd2vtt file",
     "battlemapDd2vttHint": "The .dd2vtt contains the map AND the walls/lights; the embedded image is extracted automatically for the Foundry export.",
-    "battlemapDd2vttNoImage": "No image found in this .dd2vtt — the exported map will have no background."
+    "battlemapDd2vttNoImage": "No image found in this .dd2vtt — the exported map will have no background.",
+    "optionalHint": "Only the title is required. Expand and fill in only the sections you need — everything else is optional.",
+    "nodeTypeLabel": "Node type",
+    "nodeTypeHint": "Level 2: typing the scene (location, encounter, NPC…) colors the node in the graph view. Optional.",
+    "branchKindLabel": "Link type",
+    "branchTargetBroken": "Destination not found (deleted scene): pick a new destination or remove this branch.",
+    "battlemapAdd": "Add a map",
+    "battlemapLabelPlaceholder": "Label (e.g.: Day, Night, Floor 1…)",
+    "battlemapRemoveMap": "Remove this map"
   },
   "sceneView": {
     "subtitle": "Scene",
@@ -1411,6 +1461,20 @@
     "deleteEntryConfirm": {
       "title": "Delete this entry?",
       "message": "This log entry will be permanently deleted."
+    },
+    "pinned": {
+      "label": "Current scene",
+      "open": "Open the scene (new tab)",
+      "unpin": "Unpin",
+      "showNarration": "Show player narration",
+      "hideNarration": "Hide narration"
+    },
+    "recap": {
+      "button": "“Previously…” recap",
+      "loading": "Writing the recap…",
+      "title": "Previously ({{name}})",
+      "addToJournal": "Add to journal",
+      "error": "Recap failed. Is the Brain (AI) running?"
     }
   },
   "sessionReferencePanel": {
@@ -1423,7 +1487,12 @@
     "playerCharacters": "Player characters",
     "nonPlayerCharacters": "Non-player characters",
     "emptyCharacters": "No characters in this campaign.",
-    "emptyScenes": "No narrative arc yet. Build your campaign scenario to find it here."
+    "emptyScenes": "No narrative arc yet. Build your campaign scenario to find it here.",
+    "tabPlay": "Play",
+    "playClocks": "Clocks",
+    "playFacts": "Facts",
+    "playNoPlaythrough": "This session is not attached to any playthrough.",
+    "pinScene": "Pin as current scene"
   },
   "sessionDicePanel": {
     "count": "Count",
@@ -1521,7 +1590,9 @@
     "deleteCascade": "This action will also delete: {{parts}}.",
     "irreversible": "This action is irreversible.",
     "deleteTitle": "Delete playthrough",
-    "deleteMessage": "Delete \"{{name}}\"?"
+    "deleteMessage": "Delete \"{{name}}\"?",
+    "clocksTitle": "Progress clocks",
+    "prepTitle": "Prepare the next session"
   },
   "playthroughFlagsPage": {
     "title": "Facts — {{name}}",
@@ -1546,7 +1617,9 @@
     "allCampaigns": "All campaigns",
     "sectionCharacters": "Characters",
     "sectionNarration": "Narration",
-    "sectionTools": "Tools"
+    "sectionTools": "Tools",
+    "scenesGroup": "Scenes",
+    "quests": "Quests"
   },
   "services": {
     "importFailed": "Import failed.",
@@ -1563,5 +1636,244 @@
     "zoomOut": "Zoom out",
     "dragHint": "Drag to reframe",
     "remove": "Remove this image"
+  },
+  "questList": {
+    "title": "Quests",
+    "create": "New quest",
+    "hint": "Quests are orthogonal to the structure: they carry objectives and unlock conditions, and can span several scenes.",
+    "empty": "No quests yet.",
+    "conditional": "Unlock conditions",
+    "deleteTitle": "Delete quest",
+    "deleteMessage": "Delete the quest \"{{name}}\"?",
+    "irreversible": "This action is irreversible."
+  },
+  "questEdit": {
+    "newTitle": "New quest",
+    "fallbackTitle": "Quest",
+    "subtitle": "Quest",
+    "optionalHint": "Only the title is required. Expand and fill in only the sections you need — everything else is optional.",
+    "nameLabel": "Quest title *",
+    "namePlaceholder": "E.g.: Save the missing merchant",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Describe the objective and context of the quest...",
+    "iconLabel": "Icon",
+    "unlockSectionTitle": "Unlock conditions",
+    "unlockHint": "All conditions must be met (AND) for the quest to unlock in a Playthrough. Empty = available from the start. Progression is managed in the Playthrough screen.",
+    "gmNotesSectionTitle": "GM notes",
+    "gmNotesPlaceholder": "Private notes about the quest, twists, secrets...",
+    "objectivesSectionTitle": "Objectives and stakes",
+    "playerObjectivesLabel": "Player objectives",
+    "playerObjectivesPlaceholder": "What must the players accomplish?",
+    "narrativeStakesLabel": "Narrative stakes",
+    "narrativeStakesPlaceholder": "What are the dramatic stakes?",
+    "deleteTitle": "Delete quest",
+    "deleteMessage": "Delete the quest \"{{name}}\"?",
+    "irreversible": "This action is irreversible.",
+    "illustrationsLabel": "Illustrations",
+    "illustrationsHint": "Portraits, moods and notable locations of the quest.",
+    "nodesSectionTitle": "Narrative nodes traversed",
+    "nodesHint": "OPTIONAL — only use this if the quest should TRAVERSE existing content (“the quest passes through these places”). These are links: removing a node deletes nothing. Without nodes, the quest automatically gets its own scene space (created on the fly, with its map).",
+    "relatedPagesLabel": "Linked Lore pages",
+    "relatedPagesHint": "Link this quest to NPCs, places or Lore elements that appear in it.",
+    "noLoreHint": "💡 This campaign is not linked to any universe. Link it to a Lore from the campaign screen to attach Lore pages to this quest."
+  },
+  "nodePicker": {
+    "chapter": "Chapter",
+    "scene": "Scene",
+    "selectChapter": "Add a chapter...",
+    "selectScene": "Add a scene...",
+    "addChapter": "Add",
+    "addScene": "Add",
+    "empty": "No node attached yet. This quest isn't linked to any chapter or scene.",
+    "deletedNode": "(deleted node)",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "remove": "Remove this node"
+  },
+  "questView": {
+    "subtitle": "Quest",
+    "synopsisTitle": "Description",
+    "playerObjectivesTitle": "Player objectives",
+    "narrativeStakesTitle": "Narrative stakes",
+    "prerequisitesTitle": "Unlock conditions",
+    "nodesTitle": "Narrative nodes traversed",
+    "gmNotesTitle": "GM notes",
+    "relatedPagesTitle": "Linked Lore pages",
+    "notProvided": "Not provided",
+    "deleteTitle": "Delete quest",
+    "deleteMessage": "Delete the quest \"{{name}}\"?",
+    "irreversible": "This action is irreversible.",
+    "deletedPage": "(deleted page)",
+    "deletedQuest": "(deleted quest)",
+    "deletedNode": "(deleted node)",
+    "prereqQuestCompleted": "Quest \"{{name}}\" completed",
+    "prereqSessionReached": "Session {{n}} reached",
+    "prereqFlagSet": "Fact: {{flag}}",
+    "mapButton": "Scene map"
+  },
+  "sceneType": {
+    "GENERIC": "Generic scene",
+    "LOCATION": "Location",
+    "ENCOUNTER": "Encounter",
+    "NPC": "NPC situation",
+    "EVENT": "Event",
+    "REVELATION": "Revelation"
+  },
+  "linkType": {
+    "EXIT": "Exit",
+    "CLUE": "Clue",
+    "LEAD": "Lead"
+  },
+  "clocksManager": {
+    "empty": "No clocks yet. Create one to track a threat or a countdown that advances as the game unfolds.",
+    "namePlaceholder": "Clock name (e.g. \"The cult completes its ritual\")",
+    "segments": "Segments",
+    "segmentsN": "{{n}} segments",
+    "add": "Add",
+    "advance": "Advance one segment",
+    "regress": "Roll back one segment",
+    "triggerType": "Auto trigger",
+    "triggerOption": {
+      "NONE": "Manual",
+      "FLAG_SET": "When a Fact becomes true",
+      "QUEST_COMPLETED": "When a quest completes",
+      "SESSION_ENDED": "At session end"
+    },
+    "flagPlaceholder": "Fact name",
+    "quest": "Quest",
+    "selectQuest": "— Choose a quest —",
+    "triggerFlag": "Fact: {{name}}",
+    "triggerQuest": "Quest: {{name}}",
+    "triggerSession": "Session end",
+    "deletedQuest": "(deleted quest)",
+    "ungrouped": "Loose clocks",
+    "deleteFront": "Delete this front (its clocks become loose)",
+    "frontPlaceholder": "New front (threat: \"The rise of the Cult\"…)",
+    "addFront": "Add a front",
+    "front": "Front",
+    "noFront": "— No front —",
+    "edit": "Edit"
+  },
+  "readiness": {
+    "title": "Next steps",
+    "badge": {
+      "DRAFT": "Draft",
+      "PLAYABLE": "Playable",
+      "POLISHED": "Polished"
+    },
+    "blockingN": "{{n}} blocking",
+    "recommendedN": "{{n}} recommended",
+    "allSet": "All set: this campaign is ready to play.",
+    "fix": "Fix",
+    "dot": {
+      "blocking": "To fix: a blocking gap, here or in an item below. See “Next steps” on the campaign.",
+      "recommended": "Suggested: a recommended gap, here or below. See “Next steps” on the campaign.",
+      "more": "+ {{n}} more gap(s) — see “Next steps”"
+    }
+  },
+  "sceneAssist": {
+    "button": "Flesh out with AI",
+    "hint": "The co-GM suggests values for the scene's fields. Nothing is saved: pick what fills the form, then save as usual.",
+    "instructionPlaceholder": "Optional instruction (e.g. \"make the mood more ominous\", \"add a clue about the cult\")…",
+    "generate": "Generate suggestions",
+    "generating": "Generating…",
+    "regenerate": "Regenerate",
+    "applySelection": "Apply selection ({{n}})",
+    "empty": "The AI had nothing new to suggest — the scene may already be complete, or rephrase your instruction.",
+    "error": "Generation failed. Is the Brain (AI) running?",
+    "current": "Current",
+    "proposed": "Proposed",
+    "field": {
+      "description": "Description",
+      "location": "Location",
+      "timing": "Timing",
+      "atmosphere": "Atmosphere",
+      "playerNarration": "Player narration",
+      "choicesConsequences": "Choices & consequences",
+      "combatDifficulty": "Combat difficulty",
+      "enemies": "Enemies",
+      "gmSecretNotes": "GM secret notes"
+    }
+  },
+  "entityAssist": {
+    "button": "Flesh out with AI",
+    "hint": "The co-GM suggests values for the fields. Nothing is saved: pick what fills the form, then save as usual.",
+    "instructionPlaceholder": "Optional instruction (e.g. \"make the mood more ominous\", \"add a clue about the cult\")…",
+    "generate": "Generate suggestions",
+    "generating": "Generating…",
+    "regenerate": "Regenerate",
+    "applySelection": "Apply selection ({{n}})",
+    "empty": "The AI had nothing new to suggest — the entity may already be complete, or rephrase your instruction.",
+    "error": "Generation failed. Is the Brain (AI) running?",
+    "current": "Current",
+    "proposed": "Proposed",
+    "field": {
+      "description": "Description",
+      "location": "Location",
+      "timing": "Timing",
+      "atmosphere": "Atmosphere",
+      "playerNarration": "Player narration",
+      "choicesConsequences": "Choices & consequences",
+      "combatDifficulty": "Combat difficulty",
+      "enemies": "Enemies",
+      "gmSecretNotes": "GM secret notes",
+      "gmNotes": "GM notes",
+      "playerObjectives": "Player objectives",
+      "narrativeStakes": "Narrative stakes",
+      "themes": "Themes",
+      "stakes": "Stakes",
+      "rewards": "Rewards",
+      "resolution": "Resolution"
+    }
+  },
+  "sceneDraft": {
+    "button": "Generate scenes",
+    "hint": "The co-GM suggests several scenes for this chapter. Tick the ones to keep; they are created in the chapter (you can refine them afterwards).",
+    "instructionPlaceholder": "Optional instruction (e.g. \"an infiltration, a fight, then a reveal\")…",
+    "countLabel": "How many",
+    "generate": "Suggest scenes",
+    "generating": "Generating…",
+    "regenerate": "Regenerate",
+    "createSelection": "Create selection ({{n}})",
+    "creating": "Creating…",
+    "empty": "The AI suggested no scenes — try rephrasing your instruction.",
+    "error": "Generation failed. Is the Brain (AI) running?",
+    "applyError": "Failed to create the scenes."
+  },
+  "sessionPrep": {
+    "lastSessionActive": "Session in progress: {{name}}",
+    "lastSessionEnded": "Last session: {{name}} (ended)",
+    "allQuiet": "All clear: no active quest and no gap in upcoming content. Start the next session whenever you like.",
+    "positionTitle": "Where the players are",
+    "inProgress": "In progress:",
+    "available": "Available:",
+    "hotspotsTitle": "Likely content for the next session",
+    "nodeKind": {
+      "CHAPTER": "chapter",
+      "SCENE": "scene"
+    },
+    "gapsTitle": "To fill in before playing",
+    "fix": "Fix",
+    "otherGaps": "+ {{n}} other gap(s) elsewhere in the campaign",
+    "clocksTitle": "Threats in motion",
+    "clockNearly": "nearly full!",
+    "clockFull": "full!",
+    "completed": "Completed:",
+    "markStarted": "Mark as in progress (the players started it)",
+    "markCompleted": "Mark as completed (removed from likely leads)",
+    "reopen": "Reopen (back to not started)"
+  },
+  "foundryDialog": {
+    "title": "Export to Foundry",
+    "intro": "Choose what the Foundry module should import. For example, to run your combats, export only the maps and the enemies prepared in your scenes.",
+    "presetAll": "Everything",
+    "presetMapsOnly": "Maps & enemies only",
+    "optMaps": "Maps & enemies",
+    "optMapsHint": "One Foundry Scene per battlemap (day/night variants included), with the tokens of the enemies linked to each scene.",
+    "optJournals": "Narrative journals",
+    "optJournalsHint": "Arcs, chapters, quests and scenes as journals (texts + illustrations), plus NPC and bestiary sheets.",
+    "optTables": "Random tables",
+    "optTablesHint": "Your encounter and event tables as Foundry RollTables.",
+    "confirm": "Export"
   }
 }

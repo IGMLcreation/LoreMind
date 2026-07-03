@@ -29,6 +29,14 @@ export interface TreeItem {
   /** Petit badge affiché à droite (ex: "3" pour compter les pages d'un dossier). */
   meta?: string;
   /**
+   * Pastille de readiness (Pilier B — guidage) : 'blocking' (rouge) ou
+   * 'recommended' (orange), agrégée depuis les manques de l'entité ET de ses
+   * descendants. Absente = rien à signaler. Alimentée par buildCampaignTree.
+   */
+  statusDot?: 'blocking' | 'recommended';
+  /** Tooltip de la pastille : le(s) message(s) réel(s) du manque (multi-lignes). */
+  statusDotTitle?: string;
+  /**
    * Libellé de section affiché AU-DESSUS du nœud, avec un filet de séparation.
    * Utilisé pour grouper visuellement des nœuds racines (ex: "Personnages" vs "Narration").
    */
@@ -46,6 +54,8 @@ export interface TreeCreateAction {
   id: string;
   label: string;      // tooltip au hover, texte complet en empty-state
   route: string;
+  /** Query params optionnels (ex: { arcId } pour créer une quête rattachée à un arc HUB). */
+  queryParams?: Record<string, string>;
   /** Cle d'icone cote sidebar (plus | folder-plus | file-plus). */
   actionIcon?: 'plus' | 'folder-plus' | 'file-plus';
 }

@@ -1,0 +1,135 @@
+.readiness-panel {
+  margin: 0 0 1.25rem;
+  background: #0d1117;
+  border: 1px solid #1f2937;
+  border-radius: 10px;
+  overflow: hidden;
+
+  &.ready { border-color: #14532d; }
+}
+
+.readiness-header {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  background: transparent;
+  border: none;
+  color: #e5e7eb;
+  cursor: pointer;
+  text-align: left;
+
+  &:hover { background: #111827; }
+
+  .ready-icon { color: #4ade80; }
+  .warn-icon { color: #fb923c; }
+}
+
+.readiness-title {
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.status-badge {
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+
+  &.status-DRAFT { background: #3a1d1d; color: #fca5a5; }
+  &.status-PLAYABLE { background: #3a2e1a; color: #fcd34d; }
+  &.status-POLISHED { background: #14311f; color: #86efac; }
+}
+
+.counts {
+  display: inline-flex;
+  gap: 0.35rem;
+  margin-left: auto;
+}
+
+.count-chip {
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 500;
+
+  &.blocking { background: #3a1d1d; color: #fca5a5; }
+  &.recommended { background: #3a2e1a; color: #fcd34d; }
+}
+
+.ready-msg {
+  margin: 0;
+  padding: 0 0.9rem 0.9rem;
+  color: #86efac;
+  font-size: 0.85rem;
+}
+
+.gap-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 0.6rem 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.gap-card {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.7rem;
+  background: #111827;
+  border: 1px solid #1f2937;
+  border-radius: 8px;
+
+  .sev-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  &.sev-BLOCKING .sev-dot { background: #ef4444; }
+  &.sev-RECOMMENDED .sev-dot { background: #fb923c; }
+  &.sev-OPTIONAL .sev-dot { background: #6b7280; }
+}
+
+.gap-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.gap-message {
+  color: #e5e7eb;
+  font-size: 0.83rem;
+  line-height: 1.25;
+}
+
+.gap-entity {
+  color: #9ca3af;
+  font-size: 0.74rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gap-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  flex-shrink: 0;
+  padding: 0.3rem 0.6rem;
+  background: #1f1d3a;
+  border: 1px solid #3a3658;
+  border-radius: 6px;
+  color: #c7d2fe;
+  font-size: 0.76rem;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover { background: #2c2952; color: #fff; }
+}

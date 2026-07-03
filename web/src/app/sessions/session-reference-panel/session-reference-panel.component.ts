@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 
 import { TranslatePipe } from '@ngx-translate/core';
-import { LucideAngularModule, User, Drama, Swords, Dices, ExternalLink, Sparkles, Table2, Package, ChevronDown, ChevronRight } from 'lucide-angular';
+import { LucideAngularModule, User, Drama, Swords, Dices, ExternalLink, Sparkles, Table2, Package, ChevronDown, ChevronRight, Timer, Pin } from 'lucide-angular';
 import { catchError, of } from 'rxjs';
 import { CampaignService } from '../../services/campaign.service';
 import { CharacterService } from '../../services/character.service';
@@ -18,8 +18,10 @@ import {
 import { SessionAiChatPanelComponent } from '../session-ai-chat-panel/session-ai-chat-panel.component';
 import { SessionRandomTablesPanelComponent } from '../session-random-tables-panel/session-random-tables-panel.component';
 import { SessionItemCatalogsPanelComponent } from '../session-item-catalogs-panel/session-item-catalogs-panel.component';
+import { ClocksManagerComponent } from '../../shared/clocks-manager/clocks-manager.component';
+import { PlaythroughFlagsManagerComponent } from '../../shared/playthrough-flags-manager/playthrough-flags-manager.component';
 
-type TabId = 'dice' | 'tables' | 'objects' | 'characters' | 'scenes' | 'ai';
+type TabId = 'play' | 'dice' | 'tables' | 'objects' | 'characters' | 'scenes' | 'ai';
 
 /**
  * Panneau latéral du mode jeu : référence rapide en lecture seule.
@@ -33,7 +35,7 @@ type TabId = 'dice' | 'tables' | 'objects' | 'characters' | 'scenes' | 'ai';
  */
 @Component({
     selector: 'app-session-reference-panel',
-    imports: [LucideAngularModule, TranslatePipe, SessionDicePanelComponent, SessionAiChatPanelComponent, SessionRandomTablesPanelComponent, SessionItemCatalogsPanelComponent],
+    imports: [LucideAngularModule, TranslatePipe, SessionDicePanelComponent, SessionAiChatPanelComponent, SessionRandomTablesPanelComponent, SessionItemCatalogsPanelComponent, ClocksManagerComponent, PlaythroughFlagsManagerComponent],
     templateUrl: './session-reference-panel.component.html',
     styleUrls: ['./session-reference-panel.component.scss']
 })
@@ -48,6 +50,8 @@ export class SessionReferencePanelComponent implements OnChanges {
   readonly Package = Package;
   readonly ChevronDown = ChevronDown;
   readonly ChevronRight = ChevronRight;
+  readonly Timer = Timer;
+  readonly Pin = Pin;
 
   @Input() campaignId!: string;
   /** Partie active — nécessaire pour charger les PJ (refonte Playthrough). */
@@ -59,8 +63,11 @@ export class SessionReferencePanelComponent implements OnChanges {
   @Output() aiReplyToJournal = new EventEmitter<string>();
   /** Émis pour consigner un objet de catalogue au journal (entrée NOTE). */
   @Output() noteToJournal = new EventEmitter<string>();
+  /** Émis quand le MJ épingle une scène comme « scène courante » (mode cockpit). */
+  @Output() pinScene = new EventEmitter<string>();
 
-  activeTab: TabId = 'dice';
+  // « Partie » par défaut : l'état de jeu (horloges + faits) est le réflexe à la table.
+  activeTab: TabId = 'play';
 
   characters: Character[] = [];
   npcs: Npc[] = [];

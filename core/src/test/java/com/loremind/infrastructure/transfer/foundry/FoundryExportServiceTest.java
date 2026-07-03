@@ -1,5 +1,6 @@
 package com.loremind.infrastructure.transfer.foundry;
 
+import com.loremind.domain.campaigncontext.SceneBattlemap;
 import com.loremind.domain.shared.template.TemplateField;
 import com.loremind.infrastructure.persistence.entity.*;
 import com.loremind.infrastructure.persistence.jpa.*;
@@ -67,8 +68,8 @@ class FoundryExportServiceTest {
                 .chapterId(quest.getId()).name("L'attaque du convoi").order(0)
                 .playerNarration("Le convoi s'arrete...")
                 .illustrationImageIds(List.of(String.valueOf(img.getId())))
-                .battlemapMediaFileId(String.valueOf(media.getId()))
-                .battlemapDataFileId(String.valueOf(sidecar.getId()))
+                .battlemaps(List.of(new SceneBattlemap("Nuit",
+                        String.valueOf(media.getId()), String.valueOf(sidecar.getId()))))
                 .build());
 
         npcRepo.save(NpcJpaEntity.builder()
@@ -101,8 +102,13 @@ class FoundryExportServiceTest {
         assertEquals(String.valueOf(arc.getId()), data.quests().get(0).arcId());
         assertEquals(String.valueOf(quest.getId()), data.scenes().get(0).questId());
 
-        // Battlemap : refs vers les assets fichiers (prefixe "file-").
+        // Battlemaps : refs vers les assets fichiers (prefixe "file-"), label preserve,
+        // et champ legacy `battlemap` (1re carte) maintenu pour les modules existants.
         FoundryBundle.Scene scene = data.scenes().get(0);
+        assertEquals(1, scene.battlemaps().size());
+        assertEquals("Nuit", scene.battlemaps().get(0).label());
+        assertEquals("file-" + media.getId(), scene.battlemaps().get(0).mediaAssetId());
+        assertEquals("file-" + sidecar.getId(), scene.battlemaps().get(0).dataAssetId());
         assertNotNull(scene.battlemap());
         assertEquals("file-" + media.getId(), scene.battlemap().mediaAssetId());
         assertEquals("file-" + sidecar.getId(), scene.battlemap().dataAssetId());
@@ -149,6 +155,58 @@ class FoundryExportServiceTest {
         assertEquals(1, bundle.manifest().counts().get("scenes"));
         assertEquals(1, bundle.manifest().counts().get("randomTables"));
         assertEquals(3, bundle.manifest().counts().get("assets"));
+    }
+
+    @Test
+    void buildBundle_mapsOnly_stripsJournalsNpcsTablesAndIllustrations() {
+        CampaignJpaEntity camp = campaignRepo.save(CampaignJpaEntity.builder()
+                .name("Cartes seules").description("d").arcsCount(1).build());
+        ImageJpaEntity illus = imageRepo.save(ImageJpaEntity.builder()
+                .filename("ambiance.webp").contentType("image/webp").sizeBytes(100L)
+                .storageKey("images/ill.webp").build());
+        StoredFileJpaEntity media = fileRepo.save(StoredFileJpaEntity.builder()
+                .filename("crypte.png").contentType("image/png").sizeBytes(2048L)
+                .storageKey("files/crypte.png").build());
+
+        ArcJpaEntity arc = arcRepo.save(ArcJpaEntity.builder()
+                .campaignId(camp.getId()).name("Acte I").order(0)
+                .illustrationImageIds(List.of(String.valueOf(illus.getId()))).build());
+        ChapterJpaEntity chap = chapterRepo.save(ChapterJpaEntity.builder()
+                .arcId(arc.getId()).name("La crypte").order(0).build());
+        sceneRepo.save(SceneJpaEntity.builder()
+                .chapterId(chap.getId()).name("Salle des tombeaux").order(0)
+                .illustrationImageIds(List.of(String.valueOf(illus.getId())))
+                .battlemaps(List.of(new SceneBattlemap("Nuit", String.valueOf(media.getId()), null)))
+                .build());
+        npcRepo.save(NpcJpaEntity.builder()
+                .campaignId(camp.getId()).name("Le prêtre").order(0).build());
+        RandomTableJpaEntity table = RandomTableJpaEntity.builder()
+                .campaignId(camp.getId()).name("Rencontres").diceFormula("1d6").order(0).build();
+        tableRepo.save(table);
+
+        FoundryExportService.BuiltBundle bundle = service.buildBundle(
+                String.valueOf(camp.getId()), "2026-07-03T00:00:00Z",
+                new FoundryExportService.ExportOptions(true, false, false));
+        FoundryBundle.Data data = bundle.data();
+
+        // Périmètre : cartes+ennemis SEULEMENT — pas de PNJ, pas de tables, options posées.
+        assertTrue(data.npcs().isEmpty());
+        assertTrue(data.randomTables().isEmpty());
+        assertTrue(data.options().maps());
+        assertFalse(data.options().journals());
+        assertFalse(data.options().tables());
+
+        // L'ossature (arc/quête/scène) reste pour les dossiers, SANS illustrations.
+        assertEquals(1, data.arcs().size());
+        assertTrue(data.arcs().get(0).illustrationAssetIds().isEmpty());
+        FoundryBundle.Scene scene = data.scenes().get(0);
+        assertTrue(scene.illustrationAssetIds().isEmpty());
+        assertEquals(1, scene.battlemaps().size());
+        assertEquals("Nuit", scene.battlemaps().get(0).label());
+
+        // Un SEUL binaire embarqué : la battlemap (l'illustration n'est pas exportée).
+        assertEquals(1, bundle.binaries().size());
+        assertTrue(data.assets().stream().allMatch(a -> a.kind().startsWith("battlemap")));
     }
 
     @Test

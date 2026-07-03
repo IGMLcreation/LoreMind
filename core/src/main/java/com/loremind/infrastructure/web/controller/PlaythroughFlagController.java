@@ -1,5 +1,6 @@
 package com.loremind.infrastructure.web.controller;
 
+import com.loremind.application.playcontext.ClockService;
 import com.loremind.domain.playcontext.ports.PlaythroughFlagRepository;
 import com.loremind.infrastructure.web.dto.playcontext.PlaythroughFlagDTO;
 import org.springframework.http.ResponseEntity;
@@ -18,9 +19,11 @@ import java.util.Map;
 public class PlaythroughFlagController {
 
     private final PlaythroughFlagRepository repo;
+    private final ClockService clockService;
 
-    public PlaythroughFlagController(PlaythroughFlagRepository repo) {
+    public PlaythroughFlagController(PlaythroughFlagRepository repo, ClockService clockService) {
         this.repo = repo;
+        this.clockService = clockService;
     }
 
     @GetMapping
@@ -35,7 +38,10 @@ public class PlaythroughFlagController {
     public ResponseEntity<PlaythroughFlagDTO> setFlag(@PathVariable String playthroughId,
                                                      @PathVariable String name,
                                                      @RequestBody PlaythroughFlagDTO body) {
+        boolean wasRaised = Boolean.TRUE.equals(repo.findByPlaythroughId(playthroughId).get(name));
         repo.setFlag(playthroughId, name, body.isValue());
+        // Co-MJ : le Fait vient de passer à vrai (transition) -> avancer les horloges liées.
+        if (body.isValue() && !wasRaised) clockService.onFlagRaised(playthroughId, name);
         return ResponseEntity.ok(new PlaythroughFlagDTO(name, body.isValue()));
     }
 

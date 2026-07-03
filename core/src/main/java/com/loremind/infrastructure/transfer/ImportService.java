@@ -1,9 +1,16 @@
 package com.loremind.infrastructure.transfer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.loremind.domain.campaigncontext.NodeType;
+import com.loremind.domain.campaigncontext.Prerequisite;
 import com.loremind.domain.campaigncontext.ProgressionStatus;
+import com.loremind.domain.campaigncontext.QuestNodeRef;
+import com.loremind.domain.campaigncontext.SceneBattlemap;
+import com.loremind.domain.campaigncontext.SceneType;
+import com.loremind.domain.playcontext.ClockTrigger;
 import com.loremind.domain.playcontext.EntryType;
 import com.loremind.infrastructure.persistence.converter.PrerequisiteListJsonConverter;
+import com.loremind.infrastructure.persistence.converter.QuestNodeListJsonConverter;
 import com.loremind.infrastructure.persistence.entity.*;
 import com.loremind.infrastructure.persistence.jpa.*;
 import com.loremind.infrastructure.transfer.dto.ContentExport;
@@ -16,9 +23,11 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -48,6 +57,7 @@ public class ImportService {
     // (Dé)sérialise les prérequis dans le format "kind" du converter JPA (Prerequisite
     // est scellé, non sérialisable en polymorphe par l'ObjectMapper standard).
     private static final PrerequisiteListJsonConverter PREREQ_CONVERTER = new PrerequisiteListJsonConverter();
+    private static final QuestNodeListJsonConverter NODE_CONVERTER = new QuestNodeListJsonConverter();
 
     private final GameSystemJpaRepository gameSystemRepo;
     private final LoreJpaRepository loreRepo;
@@ -68,6 +78,9 @@ public class ImportService {
     private final SessionEntryJpaRepository sessionEntryRepo;
     private final PlaythroughFlagJpaRepository playthroughFlagRepo;
     private final QuestProgressionJpaRepository questProgressionRepo;
+    private final QuestJpaRepository questRepo;
+    private final ClockJpaRepository clockRepo;
+    private final FrontJpaRepository frontRepo;
     private final ImageImporter imageImporter;
     private final StoredFileImporter storedFileImporter;
     private final ObjectMapper objectMapper;
@@ -91,6 +104,9 @@ public class ImportService {
                          SessionEntryJpaRepository sessionEntryRepo,
                          PlaythroughFlagJpaRepository playthroughFlagRepo,
                          QuestProgressionJpaRepository questProgressionRepo,
+                         QuestJpaRepository questRepo,
+                         ClockJpaRepository clockRepo,
+                         FrontJpaRepository frontRepo,
                          ImageImporter imageImporter,
                          StoredFileImporter storedFileImporter,
                          ObjectMapper objectMapper) {
@@ -113,6 +129,9 @@ public class ImportService {
         this.sessionEntryRepo = sessionEntryRepo;
         this.playthroughFlagRepo = playthroughFlagRepo;
         this.questProgressionRepo = questProgressionRepo;
+        this.questRepo = questRepo;
+        this.clockRepo = clockRepo;
+        this.frontRepo = frontRepo;
         this.imageImporter = imageImporter;
         this.storedFileImporter = storedFileImporter;
         this.objectMapper = objectMapper;
@@ -143,8 +162,11 @@ public class ImportService {
         Map<Long, Long> enemyMap = new HashMap<>();
         Map<Long, Long> characterMap = new HashMap<>();
         Map<Long, Long> sceneMap = new HashMap<>();
+        Map<Long, Long> questMap = new HashMap<>();
         Map<Long, Long> playthroughMap = new HashMap<>();
         Map<Long, Long> sessionMap = new HashMap<>();
+        Map<Long, Long> clockMap = new HashMap<>();
+        Map<Long, Long> frontMap = new HashMap<>();
 
         // -- GameSystem
         for (ContentExport.GameSystemDto d : nullSafe(export.gameSystems())) {
@@ -281,6 +303,33 @@ public class ImportService {
         }
         result.count("playthroughFlags", flagCount);
 
+        // -- Front (menaces regroupant des horloges) : playthroughId remappé.
+        for (ContentExport.FrontDto d : nullSafe(export.fronts())) {
+            FrontJpaEntity e = new FrontJpaEntity();
+            e.setPlaythroughId(IdRemapper.remapId(playthroughMap, d.playthroughId()));
+            e.setName(d.name());
+            e.setDescription(d.description());
+            e.setOrder(d.order());
+            frontMap.put(d.id(), frontRepo.save(e).getId());
+        }
+        result.count("fronts", frontMap.size());
+
+        // -- Clock (horloges de Partie) : playthroughId + frontId remappés ; triggerRef quête -> 2e passe.
+        for (ContentExport.ClockDto d : nullSafe(export.clocks())) {
+            ClockJpaEntity e = new ClockJpaEntity();
+            e.setPlaythroughId(IdRemapper.remapId(playthroughMap, d.playthroughId()));
+            e.setName(d.name());
+            e.setDescription(d.description());
+            e.setSegments(d.segments());
+            e.setFilled(d.filled());
+            e.setOrder(d.order());
+            e.setTriggerType(d.triggerType() != null ? d.triggerType() : ClockTrigger.NONE);
+            e.setTriggerRef(d.triggerRef());
+            e.setFrontId(IdRemapper.remapId(frontMap, d.frontId()));
+            clockMap.put(d.id(), clockRepo.save(e).getId());
+        }
+        result.count("clocks", clockMap.size());
+
         // -- Arc (relatedPageIds remappe en 2e passe)
         for (ContentExport.ArcDto d : nullSafe(export.arcs())) {
             ArcJpaEntity e = new ArcJpaEntity();
@@ -358,14 +407,14 @@ public class ImportService {
         result.count("randomTables", tableCount);
         result.count("randomTableEntries", entryCount);
 
-        // -- Chapter (prerequisites + relatedPageIds remappes en 2e passe)
+        // -- Chapter (relatedPageIds remappes en 2e passe). Les chapitres n'ont plus de
+        //    prérequis (Niveau 1) : d.prerequisitesJson() reste lu par la conversion legacy.
         for (ContentExport.ChapterDto d : nullSafe(export.chapters())) {
             ChapterJpaEntity e = new ChapterJpaEntity();
             e.setName(d.name());
             e.setDescription(d.description());
             e.setArcId(IdRemapper.remapId(arcMap, d.arcId()));
             e.setOrder(d.order());
-            e.setPrerequisites(PREREQ_CONVERTER.convertToEntityAttribute(d.prerequisitesJson())); // remappe plus bas
             e.setIcon(d.icon());
             e.setGmNotes(d.gmNotes());
             e.setPlayerObjectives(d.playerObjectives());
@@ -376,13 +425,55 @@ public class ImportService {
         }
         result.count("chapters", chapterMap.size());
 
-        // -- QuestProgression : playthroughId + chapterId remappes (chapitres deja inseres ;
-        //    contrainte unique (playthroughId, chapterId) preservee car playthroughId neuf).
+        boolean bundleHasQuests = export.quests() != null;
+
+        // -- Quest v2 (le bundle porte un champ quests) : campaignId remappé tout de suite ;
+        //    prereqs / nodes / relatedPageIds remappés en 2e passe (sceneMap pas encore prêt).
+        for (ContentExport.QuestDto d : nullSafe(export.quests())) {
+            QuestJpaEntity e = new QuestJpaEntity();
+            e.setCampaignId(IdRemapper.remapId(campaignMap, d.campaignId()));
+            e.setArcId(IdRemapper.remapId(arcMap, d.arcId())); // arcMap déjà prêt (arcs importés avant) ; null→null
+            e.setName(d.name());
+            e.setDescription(d.description());
+            e.setIcon(d.icon());
+            e.setOrder(d.order());
+            e.setPrerequisites(PREREQ_CONVERTER.convertToEntityAttribute(d.prerequisitesJson())); // remappé 2e passe
+            e.setNodes(NODE_CONVERTER.convertToEntityAttribute(d.nodesJson()));                    // remappé 2e passe
+            e.setGmNotes(d.gmNotes());
+            e.setPlayerObjectives(d.playerObjectives());
+            e.setNarrativeStakes(d.narrativeStakes());
+            e.setRelatedPageIds(d.relatedPageIds());                                               // remappé 2e passe
+            e.setIllustrationImageIds(d.illustrationImageIds());
+            questMap.put(d.id(), questRepo.save(e).getId());
+        }
+
+        // -- Quest legacy (bundle SANS champ quests) : on convertit les chapitres qui jouaient le
+        //    rôle de quête (arc HUB OU porteurs de prérequis OU référencés par une progression) en
+        //    vraies Quests, pour ne pas perdre les quêtes d'un vieux backup. Ici questMap est clé
+        //    par ANCIEN CHAPTER id (pas de collision : on compare chapter-id à chapter-id).
+        if (!bundleHasQuests) {
+            convertLegacyChaptersToQuests(export, campaignMap, arcMap, questMap);
+        }
+        result.count("quests", questMap.size());
+
+        // -- QuestProgression : playthroughId + (quest id) remappés (entités déjà insérées ;
+        //    contrainte unique (playthroughId, questId) préservée car playthroughId neuf).
         int questProgCount = 0;
         for (ContentExport.QuestProgressionDto d : nullSafe(export.questProgressions())) {
             QuestProgressionJpaEntity e = new QuestProgressionJpaEntity();
             e.setPlaythroughId(IdRemapper.remapId(playthroughMap, d.playthroughId()));
-            e.setChapterId(IdRemapper.remapId(chapterMap, d.chapterId()));
+            Long oldRef = d.chapterId();
+            // v2 : oldRef est un quest id -> questMap. v1 : oldRef est un chapter id ; s'il a été
+            //   converti en quête, questMap (clé chapter id) le résout, sinon fallback chapterMap.
+            Long newQuestId;
+            if (bundleHasQuests) {
+                newQuestId = IdRemapper.remapId(questMap, oldRef);
+            } else if (oldRef != null && questMap.containsKey(oldRef)) {
+                newQuestId = questMap.get(oldRef);
+            } else {
+                newQuestId = IdRemapper.remapId(chapterMap, oldRef);
+            }
+            e.setQuestId(newQuestId);
             e.setStatus(parseProgressionStatus(d.status()));
             questProgressionRepo.save(e);
             questProgCount++;
@@ -451,6 +542,7 @@ public class ImportService {
             e.setChapterId(IdRemapper.remapId(chapterMap, d.chapterId()));
             e.setOrder(d.order());
             e.setIcon(d.icon());
+            e.setType(d.type() != null ? d.type() : SceneType.GENERIC);
             e.setLocation(d.location());
             e.setTiming(d.timing());
             e.setAtmosphere(d.atmosphere());
@@ -462,10 +554,17 @@ public class ImportService {
             e.setEnemyIds(d.enemyIds());            // remappe plus bas
             e.setRelatedPageIds(d.relatedPageIds()); // remappe plus bas
             e.setIllustrationImageIds(d.illustrationImageIds());
-            // Battlemap : ids StoredFile passes tels quels (meme logique que les refs
-            // d'images illustration, non remappees). Cf. ImportService doc.
-            e.setBattlemapMediaFileId(d.battlemapMediaFileId());
-            e.setBattlemapDataFileId(d.battlemapDataFileId());
+            // Battlemaps : ids StoredFile passes tels quels (meme logique que les refs
+            // d'images illustration, non remappees). Les exports anterieurs a V22
+            // portaient une paire unique -> reconstituee en premiere entree de liste.
+            List<SceneBattlemap> battlemaps = d.battlemaps();
+            if ((battlemaps == null || battlemaps.isEmpty())
+                    && (d.battlemapMediaFileId() != null || d.battlemapDataFileId() != null)) {
+                battlemaps = List.of(new SceneBattlemap("", d.battlemapMediaFileId(), d.battlemapDataFileId()));
+            }
+            e.setBattlemaps(battlemaps != null ? battlemaps : List.of());
+            e.setGraphX(d.graphX());
+            e.setGraphY(d.graphY());
             e.setBranches(d.branches());             // remappe plus bas
             e.setRooms(d.rooms());                   // Rooms: UUID, non remappes
             sceneMap.put(d.id(), sceneRepo.save(e).getId());
@@ -522,11 +621,10 @@ public class ImportService {
             });
         }
 
-        // Chapter.relatedPageIds + prerequisites(QuestCompleted -> map Chapter)
+        // Chapter.relatedPageIds (les chapitres n'ont plus de prérequis depuis le Niveau 1)
         for (Long newChapterId : chapterMap.values()) {
             chapterRepo.findById(newChapterId).ifPresent(c -> {
                 c.setRelatedPageIds(IdRemapper.remapStringList(pageMap, c.getRelatedPageIds()));
-                c.setPrerequisites(IdRemapper.remapPrerequisites(chapterMap, c.getPrerequisites()));
                 chapterRepo.save(c);
             });
         }
@@ -549,7 +647,77 @@ public class ImportService {
             });
         }
 
+        // Quest : prereqs(QuestCompleted -> questMap), nodes(CHAPTER->chapterMap / SCENE->sceneMap),
+        //         relatedPageIds(pageMap). En 2e passe car sceneMap n'est prêt qu'ici.
+        for (Long newQuestId : questMap.values()) {
+            questRepo.findById(newQuestId).ifPresent(q -> {
+                q.setPrerequisites(IdRemapper.remapPrerequisites(questMap, q.getPrerequisites()));
+                q.setNodes(IdRemapper.remapQuestNodes(chapterMap, sceneMap, q.getNodes()));
+                q.setRelatedPageIds(IdRemapper.remapStringList(pageMap, q.getRelatedPageIds()));
+                questRepo.save(q);
+            });
+        }
+
+        // Clock : triggerRef d'une horloge QUEST_COMPLETED remappé vers la quête importée
+        // (FLAG_SET = nom de fait, SESSION_ENDED = sans ref : rien à remapper).
+        for (Long newClockId : clockMap.values()) {
+            clockRepo.findById(newClockId).ifPresent(c -> {
+                if (c.getTriggerType() == ClockTrigger.QUEST_COMPLETED) {
+                    c.setTriggerRef(IdRemapper.remapStringId(questMap, c.getTriggerRef()));
+                    clockRepo.save(c);
+                }
+            });
+        }
+
         return result.build();
+    }
+
+    /**
+     * Conversion legacy : pour un bundle SANS champ {@code quests}, recrée des Quests à partir
+     * des chapitres qui jouaient le rôle de quête (arc HUB, OU porteurs de prérequis, OU
+     * référencés par une {@code quest_progression}). Alimente {@code questMap} (clé = ANCIEN
+     * chapter id du bundle -> nouvel id de quête). Les prérequis / nœuds / relatedPageIds sont
+     * remappés en 2e passe, comme pour les quêtes v2.
+     */
+    private void convertLegacyChaptersToQuests(ContentExport export,
+                                               Map<Long, Long> campaignMap,
+                                               Map<Long, Long> arcMap,
+                                               Map<Long, Long> questMap) {
+        Map<Long, ContentExport.ArcDto> arcById = new HashMap<>();
+        for (ContentExport.ArcDto a : nullSafe(export.arcs())) arcById.put(a.id(), a);
+
+        Set<Long> progressedChapterIds = new HashSet<>();
+        for (ContentExport.QuestProgressionDto qp : nullSafe(export.questProgressions())) {
+            if (qp.chapterId() != null) progressedChapterIds.add(qp.chapterId());
+        }
+
+        for (ContentExport.ChapterDto d : nullSafe(export.chapters())) {
+            ContentExport.ArcDto arc = arcById.get(d.arcId());
+            boolean isHub = arc != null && "HUB".equals(arc.type());
+            List<Prerequisite> prereqs = PREREQ_CONVERTER.convertToEntityAttribute(d.prerequisitesJson());
+            boolean hasPrereqs = prereqs != null && !prereqs.isEmpty();
+            boolean inProgression = progressedChapterIds.contains(d.id());
+            if (!isHub && !hasPrereqs && !inProgression) continue;
+
+            QuestJpaEntity q = new QuestJpaEntity();
+            q.setCampaignId(IdRemapper.remapId(campaignMap, arc != null ? arc.campaignId() : null));
+            // Quête legacy issue d'un arc HUB → rattachée à cet arc (préserve la structure HUB) ;
+            // les quêtes issues de prérequis/progression seules restent transverses.
+            q.setArcId(isHub ? IdRemapper.remapId(arcMap, d.arcId()) : null);
+            q.setName(d.name());
+            q.setDescription(d.description());
+            q.setIcon(d.icon());
+            q.setOrder(d.order());
+            q.setPrerequisites(prereqs);                                                  // remappé 2e passe (questMap)
+            q.setNodes(new ArrayList<>(List.of(
+                    new QuestNodeRef(NodeType.CHAPTER, String.valueOf(d.id()), 0))));      // remappé 2e passe (chapterMap)
+            q.setGmNotes(d.gmNotes());
+            q.setPlayerObjectives(d.playerObjectives());
+            q.setNarrativeStakes(d.narrativeStakes());
+            q.setRelatedPageIds(d.relatedPageIds());                                       // remappé 2e passe (pageMap)
+            // illustrationImageIds : les chapitres legacy les conservent de leur côté.
+            questMap.put(d.id(), questRepo.save(q).getId());
+        }
     }
 
     // ----- Lecture de l'archive -----

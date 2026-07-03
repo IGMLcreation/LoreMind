@@ -1,6 +1,7 @@
 package com.loremind.application.campaigncontext;
 
 import com.loremind.domain.campaigncontext.Chapter;
+import com.loremind.domain.campaigncontext.FieldProposal;
 import com.loremind.domain.campaigncontext.Scene;
 import com.loremind.domain.campaigncontext.ports.ChapterRepository;
 import com.loremind.domain.campaigncontext.ports.SceneRepository;
@@ -46,6 +47,32 @@ public class ChapterServiceTest {
                 .arcId("arc-1")
                 .order(1)
                 .build();
+    }
+
+    @Test
+    void patchChapter_appliesOnlyProvidedFields_leavesOthersIntact() {
+        Chapter existing = Chapter.builder()
+                .id("chapter-1").name("Nom").arcId("arc-1")
+                .description("desc orig").gmNotes("secret").playerObjectives("obj orig").build();
+        when(chapterRepository.findById("chapter-1")).thenReturn(Optional.of(existing));
+        when(chapterRepository.save(any(Chapter.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Chapter result = chapterService.patchChapter("chapter-1", List.of(
+                new FieldProposal("playerObjectives", "obj orig", "Sauver le village"),
+                new FieldProposal("id", "x", "HACK")));
+
+        assertEquals("Sauver le village", result.getPlayerObjectives());
+        assertEquals("desc orig", result.getDescription());   // intact
+        assertEquals("secret", result.getGmNotes());           // intact
+        assertEquals("chapter-1", result.getId());             // clé hors whitelist ignorée
+        verify(chapterRepository, times(1)).save(any(Chapter.class));
+    }
+
+    @Test
+    void patchChapter_notFound_throws() {
+        when(chapterRepository.findById("nope")).thenReturn(Optional.empty());
+        assertThrows(IllegalArgumentException.class, () -> chapterService.patchChapter("nope", List.of()));
+        verify(chapterRepository, never()).save(any());
     }
 
     @Test

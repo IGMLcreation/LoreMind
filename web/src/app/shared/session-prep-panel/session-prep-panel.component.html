@@ -1,0 +1,130 @@
+@if (report) {
+  <div class="prep-panel">
+
+    <!-- Dernière séance -->
+    @if (report.lastSession; as last) {
+      <p class="prep-last">
+        <lucide-icon [img]="CalendarCheck" [size]="14"></lucide-icon>
+        {{ (last.active ? 'sessionPrep.lastSessionActive' : 'sessionPrep.lastSessionEnded') | translate:{ name: last.name } }}
+      </p>
+    }
+
+    @if (allQuiet) {
+      <p class="prep-quiet">
+        <lucide-icon [img]="CheckCircle2" [size]="15"></lucide-icon>
+        {{ 'sessionPrep.allQuiet' | translate }}
+      </p>
+    }
+
+    <!-- Où en sont les joueurs -->
+    @if (report.questsInProgress.length > 0 || report.questsAvailable.length > 0) {
+      <div class="prep-section">
+        <h3><lucide-icon [img]="Compass" [size]="14"></lucide-icon> {{ 'sessionPrep.positionTitle' | translate }}</h3>
+        @if (report.questsInProgress.length > 0) {
+          <div class="prep-chip-row">
+            <span class="prep-chip-label">{{ 'sessionPrep.inProgress' | translate }}</span>
+            @for (q of report.questsInProgress; track q.id) {
+              <span class="prep-chip-group">
+                <a class="prep-chip in-progress" [routerLink]="['/campaigns', campaignId, 'quests', q.id]">{{ q.name }}</a>
+                <button type="button" class="chip-action" (click)="completeQuest(q)"
+                  [title]="'sessionPrep.markCompleted' | translate">
+                  <lucide-icon [img]="Check" [size]="12"></lucide-icon>
+                </button>
+              </span>
+            }
+          </div>
+        }
+        @if (report.questsAvailable.length > 0) {
+          <div class="prep-chip-row">
+            <span class="prep-chip-label">{{ 'sessionPrep.available' | translate }}</span>
+            @for (q of report.questsAvailable; track q.id) {
+              <span class="prep-chip-group">
+                <a class="prep-chip available" [routerLink]="['/campaigns', campaignId, 'quests', q.id]">{{ q.name }}</a>
+                <button type="button" class="chip-action" (click)="startQuest(q)"
+                  [title]="'sessionPrep.markStarted' | translate">
+                  <lucide-icon [img]="Play" [size]="12"></lucide-icon>
+                </button>
+                <button type="button" class="chip-action" (click)="completeQuest(q)"
+                  [title]="'sessionPrep.markCompleted' | translate">
+                  <lucide-icon [img]="Check" [size]="12"></lucide-icon>
+                </button>
+              </span>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Quêtes terminées : rappel discret + rouvrir en cas d'erreur -->
+    @if (report.questsCompleted.length > 0) {
+      <div class="prep-chip-row prep-completed">
+        <span class="prep-chip-label">{{ 'sessionPrep.completed' | translate }}</span>
+        @for (q of report.questsCompleted; track q.id) {
+          <span class="prep-chip-group">
+            <a class="prep-chip done" [routerLink]="['/campaigns', campaignId, 'quests', q.id]">{{ q.name }}</a>
+            <button type="button" class="chip-action" (click)="reopenQuest(q)"
+              [title]="'sessionPrep.reopen' | translate">
+              <lucide-icon [img]="RotateCcw" [size]="12"></lucide-icon>
+            </button>
+          </span>
+        }
+      </div>
+    }
+
+    <!-- Contenu probable de la prochaine séance -->
+    @if (report.hotspots.length > 0) {
+      <div class="prep-section">
+        <h3><lucide-icon [img]="MapPin" [size]="14"></lucide-icon> {{ 'sessionPrep.hotspotsTitle' | translate }}</h3>
+        <div class="prep-chip-row">
+          @for (node of report.hotspots; track node.nodeType + node.id) {
+            <a class="prep-chip node" [routerLink]="nodeLink(node)">
+              {{ node.name }}
+              <span class="node-kind">{{ ('sessionPrep.nodeKind.' + node.nodeType) | translate }}</span>
+            </a>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- À combler avant de jouer -->
+    @if (report.gaps.length > 0) {
+      <div class="prep-section">
+        <h3 class="warn"><lucide-icon [img]="AlertTriangle" [size]="14"></lucide-icon> {{ 'sessionPrep.gapsTitle' | translate }}</h3>
+        <ul class="prep-gap-list">
+          @for (gap of report.gaps; track gap.ruleId + gap.entityId) {
+            <li class="prep-gap" [class.blocking]="gap.severity === 'BLOCKING'">
+              <span class="gap-msg">{{ gap.message }}</span>
+              <a class="gap-cta" [routerLink]="gapLink(gap)" [queryParams]="gapQuery(gap)">
+                {{ 'sessionPrep.fix' | translate }}
+                <lucide-icon [img]="ArrowRight" [size]="12"></lucide-icon>
+              </a>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+    @if (report.otherGapCount > 0) {
+      <p class="prep-other">
+        <a [routerLink]="['/campaigns', campaignId]">{{ 'sessionPrep.otherGaps' | translate:{ n: report.otherGapCount } }}</a>
+      </p>
+    }
+
+    <!-- Menaces en mouvement -->
+    @if (report.clocks.length > 0) {
+      <div class="prep-section">
+        <h3><lucide-icon [img]="Timer" [size]="14"></lucide-icon> {{ 'sessionPrep.clocksTitle' | translate }}</h3>
+        <div class="prep-chip-row">
+          @for (clock of report.clocks; track clock.id) {
+            <span class="prep-clock" [class.nearly]="isNearlyFull(clock)" [class.full]="isFull(clock)">
+              {{ clock.name }} — {{ clock.filled }}/{{ clock.segments }}
+              @if (clock.frontName) { <span class="clock-front">({{ clock.frontName }})</span> }
+              @if (isFull(clock)) { <strong>{{ 'sessionPrep.clockFull' | translate }}</strong> }
+              @else if (isNearlyFull(clock)) { <strong>{{ 'sessionPrep.clockNearly' | translate }}</strong> }
+            </span>
+          }
+        </div>
+      </div>
+    }
+
+  </div>
+}

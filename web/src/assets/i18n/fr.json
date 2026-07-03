@@ -378,7 +378,9 @@
     "removeLink": "Retirer le lien",
     "increment": "Un de plus",
     "decrement": "Un de moins",
-    "noMatch": "Aucun ennemi ne correspond"
+    "noMatch": "Aucun ennemi ne correspond",
+    "broken": "Référence introuvable",
+    "brokenTitle": "Cette scène référence une fiche du bestiaire supprimée (ennemi supprimé puis recréé ?). Cliquez sur × pour retirer la référence morte."
   },
   "personaView": {
     "empty": "Cette fiche est encore vide."
@@ -508,7 +510,11 @@
     "chatSuggestion3": "Suggère un dénouement en deux actes",
     "deleteTitle": "Supprimer l'arc",
     "deleteMessage": "Supprimer l'arc \"{{name}}\" ?",
-    "irreversible": "Cette action est irréversible."
+    "irreversible": "Cette action est irréversible.",
+    "optionalHint": "Seul le titre est requis. Déplie et remplis uniquement les sections utiles — tout le reste est optionnel.",
+    "themesStakesSectionTitle": "Thèmes et enjeux",
+    "gmNotesSectionTitle": "Notes du MJ",
+    "rewardsResolutionSectionTitle": "Récompenses et dénouement"
   },
   "arcView": {
     "subtitleHub": "Arc en hub (quêtes non linéaires)",
@@ -537,7 +543,10 @@
     "deleteCascade": "Cette action supprimera aussi : {{parts}}.",
     "irreversible": "Cette action est irréversible.",
     "deleteConfirmTitle": "Supprimer l'arc",
-    "deleteConfirmMessage": "Supprimer l'arc \"{{name}}\" ?"
+    "deleteConfirmMessage": "Supprimer l'arc \"{{name}}\" ?",
+    "questsTitle": "Quêtes de cet arc",
+    "questsEmpty": "Aucune quête pour l'instant. Ajoutez-en une pour peupler ce hub.",
+    "createQuest": "Nouvelle quête"
   },
   "campaigns": {
     "heroTitle": "Vos Campagnes",
@@ -625,7 +634,13 @@
       "playthroughsPlural": "{{n}} parties (avec ses PJ, sessions, faits)",
       "alsoDeletes": "Sera aussi supprimé : {{items}}.",
       "irreversible": "Cette action est irréversible."
-    }
+    },
+    "quickScene": "Scène",
+    "quickSceneFirst": "Ajouter une scène",
+    "organizeInArcs": "ou organiser en arcs",
+    "defaultArcName": "Arc principal",
+    "defaultChapterName": "Chapitre 1",
+    "flatModeHint": "Mode simple : vos scènes sont dans le volet de gauche. Ajoutez-en une, ou organisez la campagne en arcs."
   },
   "campaignImport": {
     "pageTitle": "Importer une campagne",
@@ -726,7 +741,11 @@
     "chatSuggestion3": "Suggère une scène d'ouverture marquante",
     "deleteTitle": "Supprimer le chapitre",
     "deleteMessage": "Supprimer le chapitre \"{{name}}\" ?",
-    "irreversible": "Cette action est irréversible."
+    "irreversible": "Cette action est irréversible.",
+    "optionalHint": "Seul le titre est requis. Déplie et remplis uniquement les sections utiles — tout le reste est optionnel.",
+    "gmNotesSectionTitle": "Notes du MJ",
+    "objectivesStakesSectionTitle": "Objectifs et enjeux",
+    "quest": "Quête"
   },
   "chapterGraph": {
     "chapter": "Chapitre",
@@ -734,8 +753,31 @@
     "subtitle": "Organigramme des scènes et de leurs branches narratives",
     "back": "Retour au chapitre",
     "empty": "Ce chapitre n'a aucune scène. Créez-en pour voir apparaître la carte.",
-    "hint": "💡 Cliquez sur une scène pour l'ouvrir, ou glissez-la pour réorganiser la carte. Les scènes non reliées au point d'entrée (scène d'ordre 1) apparaissent en bas.",
-    "allCampaigns": "Toutes les campagnes"
+    "hint": "💡 Cliquez une scène pour l'ouvrir, glissez-la pour la déplacer. Glissez la pastille sous un nœud vers un autre pour créer un lien ; cliquez un lien pour l'éditer ou le supprimer. Molette = zoom, glisser le fond = déplacer la vue.",
+    "allCampaigns": "Toutes les campagnes",
+    "addScene": "Ajouter une scène",
+    "newSceneName": "Nouvelle scène",
+    "titleFlat": "Carte des scènes",
+    "backFlat": "Retour à la campagne",
+    "zoomIn": "Zoom avant",
+    "zoomOut": "Zoom arrière",
+    "fit": "Recadrer sur l'ensemble",
+    "linkEditor": {
+      "label": "Libellé du choix",
+      "labelPlaceholder": "ex : « Suivre la piste »",
+      "condition": "Condition (notes MJ)",
+      "conditionPlaceholder": "ex : « si les PJ ont la clé »",
+      "type": "Type de lien",
+      "delete": "Supprimer le lien",
+      "close": "Fermer",
+      "kind": {
+        "EXIT": "Sortie",
+        "CLUE": "Indice",
+        "LEAD": "Piste"
+      }
+    },
+    "rename": "Renommer la scène",
+    "renamePlaceholder": "Nom de la scène"
   },
   "chapterView": {
     "chapter": "Chapitre",
@@ -941,8 +983,8 @@
     "aiAssistantTitle": "Ouvrir l'Assistant IA pour dialoguer autour de cette scène",
     "illustrationsLabel": "Illustrations",
     "illustrationsHint": "Portraits des PNJ, ambiance visuelle, scenes evocatrices...",
-    "battlemapLabel": "Battlemap (export Foundry)",
-    "battlemapHint": "Carte de combat a exporter vers Foundry : media (image/video) + fichier .json/.dd2vtt Universal VTT (Dungeon Alchemist, Dungeondraft...). Non affichee dans l'appli.",
+    "battlemapLabel": "Battlemaps (export Foundry)",
+    "battlemapHint": "Cartes de combat a exporter vers Foundry : media (image/video) + fichier .json/.dd2vtt Universal VTT (Dungeon Alchemist, Dungeondraft...). Ajoutez plusieurs cartes pour les variantes d'une meme scene (jour/nuit, etages...). Non affichees dans l'appli.",
     "battlemapMedia": "Media (image / video)",
     "battlemapData": "Donnees (.json / .dd2vtt)",
     "battlemapChoose": "Choisir un fichier",
@@ -951,7 +993,7 @@
     "battlemapRemove": "Retirer",
     "nameLabel": "Titre de la scène *",
     "namePlaceholder": "Ex: Arrivée au village",
-    "descriptionLabel": "Description courte *",
+    "descriptionLabel": "Description courte",
     "descriptionPlaceholder": "Résumé en une ou deux phrases de ce qui se passe...",
     "iconLabel": "Icône",
     "contextSectionTitle": "Contexte et ambiance",
@@ -1007,7 +1049,15 @@
     "battlemapSourceDD": "DungeonDraft (.dd2vtt)",
     "battlemapDd2vttSlot": "Fichier .dd2vtt",
     "battlemapDd2vttHint": "Le .dd2vtt contient la carte ET les murs/lumières ; l'image embarquée est extraite automatiquement pour l'export Foundry.",
-    "battlemapDd2vttNoImage": "Aucune image trouvée dans ce .dd2vtt — la carte exportée n'aura pas de fond."
+    "battlemapDd2vttNoImage": "Aucune image trouvée dans ce .dd2vtt — la carte exportée n'aura pas de fond.",
+    "optionalHint": "Seul le titre est requis. Déplie et remplis uniquement les sections utiles — tout le reste est optionnel.",
+    "nodeTypeLabel": "Type de nœud",
+    "nodeTypeHint": "Niveau 2 : typer la scène (lieu, rencontre, PNJ…) colore le nœud dans la vue graphe. Optionnel.",
+    "branchKindLabel": "Type de lien",
+    "branchTargetBroken": "Destination introuvable (scène supprimée) : choisissez une nouvelle destination ou retirez cette branche.",
+    "battlemapAdd": "Ajouter une carte",
+    "battlemapLabelPlaceholder": "Libellé (ex : Jour, Nuit, Étage 1…)",
+    "battlemapRemoveMap": "Retirer cette carte"
   },
   "sceneView": {
     "subtitle": "Scène",
@@ -1411,6 +1461,20 @@
     "deleteEntryConfirm": {
       "title": "Supprimer cette entrée ?",
       "message": "Cette entrée du journal sera définitivement supprimée."
+    },
+    "pinned": {
+      "label": "Scène courante",
+      "open": "Ouvrir la scène (nouvel onglet)",
+      "unpin": "Retirer l'épingle",
+      "showNarration": "Afficher la narration joueurs",
+      "hideNarration": "Masquer la narration"
+    },
+    "recap": {
+      "button": "Récap « précédemment… »",
+      "loading": "Rédaction du récap…",
+      "title": "Précédemment ({{name}})",
+      "addToJournal": "Consigner au journal",
+      "error": "Échec du récap. Le Brain (IA) est-il démarré ?"
     }
   },
   "sessionReferencePanel": {
@@ -1423,7 +1487,12 @@
     "playerCharacters": "Personnages joueurs",
     "nonPlayerCharacters": "Personnages non-joueurs",
     "emptyCharacters": "Aucun personnage dans cette campagne.",
-    "emptyScenes": "Aucun arc narratif. Construis le scénario de ta campagne pour le retrouver ici."
+    "emptyScenes": "Aucun arc narratif. Construis le scénario de ta campagne pour le retrouver ici.",
+    "tabPlay": "Partie",
+    "playClocks": "Horloges",
+    "playFacts": "Faits",
+    "playNoPlaythrough": "Cette session n'est rattachée à aucune Partie.",
+    "pinScene": "Épingler comme scène courante"
   },
   "sessionDicePanel": {
     "count": "Nombre",
@@ -1521,7 +1590,9 @@
     "deleteCascade": "Cette action supprimera aussi : {{parts}}.",
     "irreversible": "Cette action est irréversible.",
     "deleteTitle": "Supprimer la Partie",
-    "deleteMessage": "Supprimer \"{{name}}\" ?"
+    "deleteMessage": "Supprimer \"{{name}}\" ?",
+    "clocksTitle": "Horloges de progression",
+    "prepTitle": "Préparer la prochaine séance"
   },
   "playthroughFlagsPage": {
     "title": "Faits — {{name}}",
@@ -1546,7 +1617,9 @@
     "allCampaigns": "Toutes les campagnes",
     "sectionCharacters": "Personnages",
     "sectionNarration": "Narration",
-    "sectionTools": "Outils"
+    "sectionTools": "Outils",
+    "scenesGroup": "Scènes",
+    "quests": "Quêtes"
   },
   "services": {
     "importFailed": "Échec de l'import.",
@@ -1563,5 +1636,244 @@
     "zoomOut": "Dézoomer",
     "dragHint": "Glisser pour recadrer",
     "remove": "Retirer cette image"
+  },
+  "questList": {
+    "title": "Quêtes",
+    "create": "Nouvelle quête",
+    "hint": "Les quêtes sont transversales à la structure : elles portent des objectifs et des conditions de déblocage, et peuvent traverser plusieurs scènes.",
+    "empty": "Aucune quête pour l'instant.",
+    "conditional": "Conditions de déblocage",
+    "deleteTitle": "Supprimer la quête",
+    "deleteMessage": "Supprimer la quête « {{name}} » ?",
+    "irreversible": "Cette action est irréversible."
+  },
+  "questEdit": {
+    "newTitle": "Nouvelle quête",
+    "fallbackTitle": "Quête",
+    "subtitle": "Quête",
+    "optionalHint": "Seul le titre est requis. Déplie et remplis uniquement les sections utiles — tout le reste est optionnel.",
+    "nameLabel": "Titre de la quête *",
+    "namePlaceholder": "Ex: Sauver le marchand disparu",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Décrivez l'objectif et le contexte de la quête...",
+    "iconLabel": "Icône",
+    "unlockSectionTitle": "Conditions de déblocage",
+    "unlockHint": "Toutes les conditions doivent être remplies (ET) pour que la quête se débloque dans une Partie. Vide = disponible dès le départ. La progression se gère dans l'écran de la Partie.",
+    "gmNotesSectionTitle": "Notes du MJ",
+    "gmNotesPlaceholder": "Notes privées sur la quête, les rebondissements, les secrets...",
+    "objectivesSectionTitle": "Objectifs et enjeux",
+    "playerObjectivesLabel": "Objectifs des joueurs",
+    "playerObjectivesPlaceholder": "Que doivent accomplir les joueurs ?",
+    "narrativeStakesLabel": "Enjeux narratifs",
+    "narrativeStakesPlaceholder": "Quels sont les enjeux dramatiques ?",
+    "deleteTitle": "Supprimer la quête",
+    "deleteMessage": "Supprimer la quête « {{name}} » ?",
+    "irreversible": "Cette action est irréversible.",
+    "illustrationsLabel": "Illustrations",
+    "illustrationsHint": "Portraits, ambiances et lieux marquants de la quête.",
+    "nodesSectionTitle": "Nœuds narratifs traversés",
+    "nodesHint": "FACULTATIF — ne servez-vous en que si cette quête doit TRAVERSER du contenu existant (« la quête passe par ces endroits »). Ce sont des liens : retirer un nœud ne supprime rien. Sans nœud, la quête reçoit automatiquement son propre espace de scènes (créées à la volée, avec sa carte).",
+    "relatedPagesLabel": "Pages Lore liées",
+    "relatedPagesHint": "Liez cette quête à des PNJ, des lieux ou des éléments du Lore qui y apparaissent.",
+    "noLoreHint": "💡 Cette campagne n'est pas liée à un univers. Liez-la à un Lore depuis l'écran de campagne pour pouvoir rattacher des pages Lore à cette quête."
+  },
+  "nodePicker": {
+    "chapter": "Chapitre",
+    "scene": "Scène",
+    "selectChapter": "Ajouter un chapitre...",
+    "selectScene": "Ajouter une scène...",
+    "addChapter": "Ajouter",
+    "addScene": "Ajouter",
+    "empty": "Aucun nœud rattaché. Cette quête n'est encore liée à aucun chapitre ni scène.",
+    "deletedNode": "(nœud supprimé)",
+    "moveUp": "Monter",
+    "moveDown": "Descendre",
+    "remove": "Retirer ce nœud"
+  },
+  "questView": {
+    "subtitle": "Quête",
+    "synopsisTitle": "Description",
+    "playerObjectivesTitle": "Objectifs des joueurs",
+    "narrativeStakesTitle": "Enjeux narratifs",
+    "prerequisitesTitle": "Conditions de déblocage",
+    "nodesTitle": "Nœuds narratifs traversés",
+    "gmNotesTitle": "Notes du MJ",
+    "relatedPagesTitle": "Pages Lore liées",
+    "notProvided": "Non renseigné",
+    "deleteTitle": "Supprimer la quête",
+    "deleteMessage": "Supprimer la quête « {{name}} » ?",
+    "irreversible": "Cette action est irréversible.",
+    "deletedPage": "(page supprimée)",
+    "deletedQuest": "(quête supprimée)",
+    "deletedNode": "(nœud supprimé)",
+    "prereqQuestCompleted": "Quête « {{name}} » terminée",
+    "prereqSessionReached": "Séance {{n}} atteinte",
+    "prereqFlagSet": "Fait : {{flag}}",
+    "mapButton": "Carte des scènes"
+  },
+  "sceneType": {
+    "GENERIC": "Scène générique",
+    "LOCATION": "Lieu",
+    "ENCOUNTER": "Rencontre",
+    "NPC": "Situation PNJ",
+    "EVENT": "Événement",
+    "REVELATION": "Révélation"
+  },
+  "linkType": {
+    "EXIT": "Sortie",
+    "CLUE": "Indice",
+    "LEAD": "Piste"
+  },
+  "clocksManager": {
+    "empty": "Aucune horloge. Créez-en une pour suivre une menace ou un compte à rebours qui avance avec la partie.",
+    "namePlaceholder": "Nom de l'horloge (ex : « Le culte achève son rituel »)",
+    "segments": "Segments",
+    "segmentsN": "{{n}} segments",
+    "add": "Ajouter",
+    "advance": "Avancer d'un segment",
+    "regress": "Reculer d'un segment",
+    "triggerType": "Déclencheur auto",
+    "triggerOption": {
+      "NONE": "Manuel",
+      "FLAG_SET": "Quand un Fait devient vrai",
+      "QUEST_COMPLETED": "Quand une quête se termine",
+      "SESSION_ENDED": "En fin de séance"
+    },
+    "flagPlaceholder": "Nom du fait",
+    "quest": "Quête",
+    "selectQuest": "— Choisir une quête —",
+    "triggerFlag": "Fait : {{name}}",
+    "triggerQuest": "Quête : {{name}}",
+    "triggerSession": "Fin de séance",
+    "deletedQuest": "(quête supprimée)",
+    "ungrouped": "Horloges libres",
+    "deleteFront": "Supprimer cette menace (les horloges deviennent libres)",
+    "frontPlaceholder": "Nouvelle menace (ex : « La montée du Culte »…)",
+    "addFront": "Ajouter une menace",
+    "front": "Menace",
+    "noFront": "— Sans menace —",
+    "edit": "Modifier"
+  },
+  "readiness": {
+    "title": "Prochaines étapes",
+    "badge": {
+      "DRAFT": "Brouillon",
+      "PLAYABLE": "Jouable",
+      "POLISHED": "Peaufiné"
+    },
+    "blockingN": "{{n}} bloquant(s)",
+    "recommendedN": "{{n}} recommandé(s)",
+    "allSet": "Tout est prêt : cette campagne peut être jouée sans accroc.",
+    "fix": "Corriger",
+    "dot": {
+      "blocking": "À corriger : un manque bloquant, ici ou dans un élément en dessous. Voir « Prochaines étapes » sur la campagne.",
+      "recommended": "Conseillé : un manque recommandé, ici ou en dessous. Voir « Prochaines étapes » sur la campagne.",
+      "more": "+ {{n}} autre(s) manque(s) — voir « Prochaines étapes »"
+    }
+  },
+  "sceneAssist": {
+    "button": "Étoffer avec l'IA",
+    "hint": "Le co-MJ propose des valeurs pour les champs de la scène. Rien n'est enregistré : vous choisissez ce qui remplit le formulaire, puis vous sauvegardez.",
+    "instructionPlaceholder": "Consigne facultative (ex : « ambiance plus inquiétante », « ajoute un indice sur le culte »)…",
+    "generate": "Générer des suggestions",
+    "generating": "Génération…",
+    "regenerate": "Régénérer",
+    "applySelection": "Appliquer la sélection ({{n}})",
+    "empty": "L'IA n'a rien proposé de neuf — la scène est peut-être déjà complète, ou reformulez la consigne.",
+    "error": "Échec de la génération. Le Brain (IA) est-il démarré ?",
+    "current": "Actuel",
+    "proposed": "Proposé",
+    "field": {
+      "description": "Description",
+      "location": "Lieu",
+      "timing": "Moment",
+      "atmosphere": "Ambiance",
+      "playerNarration": "Narration joueurs",
+      "choicesConsequences": "Choix & conséquences",
+      "combatDifficulty": "Difficulté de combat",
+      "enemies": "Ennemis",
+      "gmSecretNotes": "Notes secrètes du MJ"
+    }
+  },
+  "entityAssist": {
+    "button": "Étoffer avec l'IA",
+    "hint": "Le co-MJ propose des valeurs pour les champs. Rien n'est enregistré : vous choisissez ce qui remplit le formulaire, puis vous sauvegardez.",
+    "instructionPlaceholder": "Consigne facultative (ex : « ambiance plus inquiétante », « ajoute un indice sur le culte »)…",
+    "generate": "Générer des suggestions",
+    "generating": "Génération…",
+    "regenerate": "Régénérer",
+    "applySelection": "Appliquer la sélection ({{n}})",
+    "empty": "L'IA n'a rien proposé de neuf — l'entité est peut-être déjà complète, ou reformulez la consigne.",
+    "error": "Échec de la génération. Le Brain (IA) est-il démarré ?",
+    "current": "Actuel",
+    "proposed": "Proposé",
+    "field": {
+      "description": "Description",
+      "location": "Lieu",
+      "timing": "Moment",
+      "atmosphere": "Ambiance",
+      "playerNarration": "Narration joueurs",
+      "choicesConsequences": "Choix & conséquences",
+      "combatDifficulty": "Difficulté de combat",
+      "enemies": "Ennemis",
+      "gmSecretNotes": "Notes secrètes du MJ",
+      "gmNotes": "Notes du MJ",
+      "playerObjectives": "Objectifs des joueurs",
+      "narrativeStakes": "Enjeux narratifs",
+      "themes": "Thèmes",
+      "stakes": "Enjeux",
+      "rewards": "Récompenses",
+      "resolution": "Dénouement"
+    }
+  },
+  "sceneDraft": {
+    "button": "Générer des scènes",
+    "hint": "Le co-MJ propose plusieurs scènes pour ce chapitre. Cochez celles à garder ; elles sont créées dans le chapitre (vous pourrez les affiner ensuite).",
+    "instructionPlaceholder": "Consigne facultative (ex : « une infiltration, un combat, puis une révélation »)…",
+    "countLabel": "Nombre",
+    "generate": "Proposer des scènes",
+    "generating": "Génération…",
+    "regenerate": "Régénérer",
+    "createSelection": "Créer la sélection ({{n}})",
+    "creating": "Création…",
+    "empty": "L'IA n'a proposé aucune scène — reformulez la consigne.",
+    "error": "Échec de la génération. Le Brain (IA) est-il démarré ?",
+    "applyError": "Échec de la création des scènes."
+  },
+  "sessionPrep": {
+    "lastSessionActive": "Séance en cours : {{name}}",
+    "lastSessionEnded": "Dernière séance : {{name}} (terminée)",
+    "allQuiet": "Rien à signaler : pas de quête active ni de manque sur le contenu à venir. Lancez la prochaine séance quand vous voulez.",
+    "positionTitle": "Où en sont les joueurs",
+    "inProgress": "En cours :",
+    "available": "Disponibles :",
+    "hotspotsTitle": "Contenu probable de la prochaine séance",
+    "nodeKind": {
+      "CHAPTER": "chapitre",
+      "SCENE": "scène"
+    },
+    "gapsTitle": "À combler avant de jouer",
+    "fix": "Corriger",
+    "otherGaps": "+ {{n}} autre(s) manque(s) ailleurs dans la campagne",
+    "clocksTitle": "Menaces en mouvement",
+    "clockNearly": "presque pleine !",
+    "clockFull": "pleine !",
+    "completed": "Terminées :",
+    "markStarted": "Marquer « en cours » (les joueurs l'ont entamée)",
+    "markCompleted": "Marquer « terminée » (elle sort des pistes probables)",
+    "reopen": "Rouvrir (revenir à « non commencée »)"
+  },
+  "foundryDialog": {
+    "title": "Exporter pour Foundry",
+    "intro": "Choisissez ce que le module Foundry doit importer. Par exemple, pour jouer vos combats, exportez seulement les cartes et les ennemis préparés dans vos scènes.",
+    "presetAll": "Tout",
+    "presetMapsOnly": "Cartes & ennemis seulement",
+    "optMaps": "Cartes & ennemis",
+    "optMapsHint": "Une Scène Foundry par battlemap (variantes Jour/Nuit incluses), avec les tokens des ennemis liés à chaque scène.",
+    "optJournals": "Journaux narratifs",
+    "optJournalsHint": "Arcs, chapitres, quêtes et scènes en journaux (textes + illustrations), plus les fiches PNJ et bestiaire.",
+    "optTables": "Tables aléatoires",
+    "optTablesHint": "Vos tables de rencontres et d'événements en RollTables Foundry.",
+    "confirm": "Exporter"
   }
 }

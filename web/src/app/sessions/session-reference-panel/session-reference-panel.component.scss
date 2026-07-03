@@ -196,3 +196,44 @@
   text-align: center;
   margin: 0.5rem 0;
 }
+
+// ─────────────── Onglet « Partie » (état de jeu : horloges + faits) ───────────────
+.ref-play-section {
+  margin-bottom: 1rem;
+
+  .ref-play-title {
+    margin: 0 0 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #9ca3af;
+  }
+}
+
+// Ligne scène + épingle : le bouton d'ouverture garde toute la largeur restante.
+.ref-item-row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+
+  .ref-item { flex: 1; min-width: 0; }
+}
+
+.ref-pin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  padding: 0;
+  background: transparent;
+  border: 1px solid #2a2a3d;
+  border-radius: 6px;
+  color: #6b7280;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+
+  &:hover { color: #c7d2fe; border-color: #6c63ff; background: rgba(108, 99, 255, 0.1); }
+}

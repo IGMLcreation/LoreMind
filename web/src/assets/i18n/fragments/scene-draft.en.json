@@ -1,0 +1,16 @@
+{
+  "sceneDraft": {
+    "button": "Generate scenes",
+    "hint": "The co-GM suggests several scenes for this chapter. Tick the ones to keep; they are created in the chapter (you can refine them afterwards).",
+    "instructionPlaceholder": "Optional instruction (e.g. \"an infiltration, a fight, then a reveal\")…",
+    "countLabel": "How many",
+    "generate": "Suggest scenes",
+    "generating": "Generating…",
+    "regenerate": "Regenerate",
+    "createSelection": "Create selection ({{n}})",
+    "creating": "Creating…",
+    "empty": "The AI suggested no scenes — try rephrasing your instruction.",
+    "error": "Generation failed. Is the Brain (AI) running?",
+    "applyError": "Failed to create the scenes."
+  }
+}
