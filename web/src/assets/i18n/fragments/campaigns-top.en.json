@@ -81,6 +81,8 @@
     "foundryExporting": "Exporting…",
     "pdfExport": "Export to PDF",
     "pdfExporting": "Generating…",
+    "graph": "Graph",
+    "graphTitle": "View the graph of NPCs and their linked lore pages",
     "gameSystemChange": {
       "title": "Change the game system?",
       "message": "You are about to change the game system of this campaign. This also changes the template for PC and NPC sheets.",
@@ -103,6 +105,21 @@
       "alsoDeletes": "Will also be deleted: {{items}}.",
       "irreversible": "This action is irreversible."
     }
+  },
+  "campaignGraph": {
+    "back": "Back to campaign",
+    "title": "{{name}} — Graph",
+    "subtitle": "{{pages}} page(s) · {{npcs}} NPC · {{scenes}} scene(s) · {{quests}} quest(s) · {{edges}} link(s). Click a node to open it, drag it to rearrange.",
+    "legendPage": "Lore page",
+    "legendNpc": "NPC",
+    "legendScene": "Scene",
+    "legendQuest": "Quest",
+    "reset": "Auto layout",
+    "resetTitle": "Recompute the automatic layout (forgets your manual moves)",
+    "toggleHint": "Click to hide / show this entity type",
+    "noLore": "No world (Lore) is linked to this campaign: link one from the campaign header to see the graph.",
+    "empty": "No pages in the linked world yet — the graph will fill in as you go.",
+    "hint": "No links yet: link pages together (a page's \"Related pages\") or attach an NPC to Lore pages from its sheet."
   },
   "campaignImport": {
     "pageTitle": "Import a campaign",

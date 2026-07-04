@@ -76,6 +76,7 @@ public class PostgresCampaignRepository implements CampaignRepository {
                 .playerCount(jpaEntity.getPlayerCount())
                 .loreId(jpaEntity.getLoreId())
                 .gameSystemId(jpaEntity.getGameSystemId())
+                .graphPositions(jpaEntity.getGraphPositions())
                 .build();
     }
 
@@ -91,6 +92,7 @@ public class PostgresCampaignRepository implements CampaignRepository {
                 .playerCount(campaign.getPlayerCount())
                 .loreId(campaign.getLoreId())
                 .gameSystemId(campaign.getGameSystemId())
+                .graphPositions(campaign.getGraphPositions())
                 .build();
     }
 }

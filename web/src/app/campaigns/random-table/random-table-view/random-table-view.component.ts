@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ActivatedRoute, Router } from '@angular/router';
 import { LucideAngularModule, ArrowLeft, Edit3, Dices } from 'lucide-angular';
@@ -35,11 +36,12 @@ export class RandomTableViewComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private service: RandomTableService,
-    private campaignSidebar: CampaignSidebarService
+    private campaignSidebar: CampaignSidebarService,
+    private destroyRef: DestroyRef
   ) {}
 
   ngOnInit(): void {
-    this.route.paramMap.subscribe(pm => {
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(pm => {
       const newCampaignId = pm.get('campaignId');
       const newTableId = pm.get('tableId');
       if (newCampaignId === this.campaignId && newTableId === this.tableId) return;

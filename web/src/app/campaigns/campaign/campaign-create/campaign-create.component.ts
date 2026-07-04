@@ -1,4 +1,5 @@
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
@@ -53,7 +54,8 @@ export class CampaignCreateComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private loreService: LoreService,
-    private gameSystemService: GameSystemService
+    private gameSystemService: GameSystemService,
+    private destroyRef: DestroyRef
   ) {
     this.form = this.fb.group({
       name:         ['', Validators.required],
@@ -77,7 +79,7 @@ export class CampaignCreateComponent implements OnInit {
     // Detecte la selection de l'option sentinelle "Creer un systeme" et bascule
     // en mode creation inline. On reinitialise immediatement le control a ''
     // pour que la sentinelle ne reste pas en valeur reelle du form.
-    this.form.get('gameSystemId')?.valueChanges.subscribe(value => {
+    this.form.get('gameSystemId')?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(value => {
       if (value === this.CREATE_GAMESYSTEM_SENTINEL) {
         this.form.get('gameSystemId')?.setValue('', { emitEvent: false });
         this.startCreateGameSystem();

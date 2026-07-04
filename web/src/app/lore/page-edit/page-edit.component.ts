@@ -1,4 +1,5 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -109,7 +110,8 @@ export class PageEditComponent implements OnInit, OnDestroy {
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService,
     private confirmDialog: ConfirmDialogService,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private destroyRef: DestroyRef
   ) {
     this.chatPrimaryAction = { label: this.translate.instant('pageEdit.chatPrimaryAction') };
     this.chatQuickSuggestions = [
@@ -126,7 +128,7 @@ export class PageEditComponent implements OnInit, OnDestroy {
     // navigue d'une page à une autre (ex. via les chips du lore-link-picker),
     // Angular réutilise le composant et ngOnInit ne se relance pas → l'écran
     // resterait figé sur l'ancienne page.
-    this.route.paramMap.subscribe(pm => {
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(pm => {
       const newPageId = pm.get('pageId')!;
       if (newPageId && newPageId !== this.pageId) {
         this.pageId = newPageId;

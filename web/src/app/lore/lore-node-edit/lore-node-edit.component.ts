@@ -1,4 +1,5 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -62,7 +63,8 @@ export class LoreNodeEditComponent implements OnInit, OnDestroy {
     private templateService: TemplateService,
     private pageService: PageService,
     private layoutService: LayoutService,
-    private pageTitleService: PageTitleService
+    private pageTitleService: PageTitleService,
+    private destroyRef: DestroyRef
   ) {
     this.form = this.fb.group({
       name:     ['', Validators.required],
@@ -76,7 +78,7 @@ export class LoreNodeEditComponent implements OnInit, OnDestroy {
 
     // Réagir aux changements de :folderId (navigation entre dossiers dans la sidebar
     // sans démonter le composant).
-    this.route.paramMap.subscribe(pm => {
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(pm => {
       const newId = pm.get('folderId')!;
       if (newId !== this.folderId) {
         this.folderId = newId;

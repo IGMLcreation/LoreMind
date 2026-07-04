@@ -1,4 +1,5 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
@@ -54,11 +55,12 @@ export class ChapterViewComponent implements OnInit, OnDestroy {
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService,
     private confirmDialog: ConfirmDialogService,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private destroyRef: DestroyRef
   ) {}
 
   ngOnInit(): void {
-    this.route.paramMap.subscribe(pm => {
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(pm => {
       const newCampaignId = pm.get('campaignId')!;
       const newArcId = pm.get('arcId')!;
       const newChapterId = pm.get('chapterId')!;

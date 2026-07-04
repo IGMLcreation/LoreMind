@@ -1,4 +1,5 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
@@ -106,7 +107,8 @@ export class QuestEditComponent implements OnInit, OnDestroy {
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService,
     private confirmDialog: ConfirmDialogService,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private destroyRef: DestroyRef
   ) {
     this.form = this.fb.group({
       name:             ['', Validators.required],
@@ -118,7 +120,7 @@ export class QuestEditComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.route.paramMap.subscribe(pm => {
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(pm => {
       this.campaignId = pm.get('campaignId')!;
       this.questId = pm.get('questId');   // null sur la route /create
       this.arcIdParam = this.route.snapshot.queryParamMap.get('arcId');  // ?arcId= depuis un arc HUB

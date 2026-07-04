@@ -1,8 +1,9 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { LucideAngularModule, Folder, Plus, Pencil, Trash2, Network } from 'lucide-angular';
+import { LucideAngularModule, Folder, Plus, Pencil, Trash2 } from 'lucide-angular';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { LoreService } from '../../services/lore.service';
 import { TemplateService } from '../../services/template.service';
@@ -25,7 +26,6 @@ export class LoreDetailComponent implements OnInit, OnDestroy {
   readonly Plus = Plus;
   readonly Pencil = Pencil;
   readonly Trash2 = Trash2;
-  readonly Network = Network;
 
   lore: Lore | null = null;
   /** Tous les dossiers du Lore (racines + enfants). */
@@ -47,14 +47,15 @@ export class LoreDetailComponent implements OnInit, OnDestroy {
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService,
     private confirmDialog: ConfirmDialogService,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private destroyRef: DestroyRef
   ) {}
 
   ngOnInit(): void {
     // On s'abonne à paramMap (pas snapshot) pour recharger quand on switche
     // d'un Lore à l'autre via la liste globale de la sidebar — Angular réutilise
     // le même composant et ngOnInit ne se relance pas tout seul.
-    this.route.paramMap.subscribe(pm => {
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(pm => {
       const id = pm.get('id');
       if (id && id !== this.lore?.id) {
         this.load(id);
@@ -83,13 +84,6 @@ export class LoreDetailComponent implements OnInit, OnDestroy {
 
   navigateToFolder(nodeId: string): void {
     this.router.navigate(['/lore', this.lore!.id, 'folders', nodeId]);
-  }
-
-  /** Ouvre la vue graphe : pages du Lore + PNJ liés, reliés par leurs liens. */
-  openGraph(): void {
-    if (this.lore?.id) {
-      this.router.navigate(['/lore', this.lore.id, 'graph']);
-    }
   }
 
   // ─────────────── Édition / suppression du Lore ───────────────

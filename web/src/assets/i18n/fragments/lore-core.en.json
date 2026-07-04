@@ -45,8 +45,6 @@
     "submit": "Create lore"
   },
   "loreDetail": {
-    "graph": "Graph",
-    "graphTitle": "View the graph of pages and their links (NPCs included)",
     "editTitle": "Edit Lore",
     "deleteTitle": "Delete Lore",
     "folders": "Folders",
@@ -67,16 +65,6 @@
       "detachedCampaignsPlural": "{{n}} campaigns will be kept but will lose their link to this world.",
       "irreversible": "This action is irreversible."
     }
-  },
-  "loreGraph": {
-    "back": "Back to Lore",
-    "title": "{{name}} — Graph",
-    "subtitle": "{{pages}} page(s) · {{npcs}} NPC · {{edges}} link(s). Click a node to open it, drag it to rearrange.",
-    "legendPage": "Lore page",
-    "legendNpc": "NPC",
-    "legendLink": "NPC → page link",
-    "empty": "No pages in this Lore yet — the graph will fill in as you go.",
-    "hint": "No links yet: link pages together (a page's \"Related pages\") or attach an NPC to Lore pages from its sheet."
   },
   "loreNodeCreate": {
     "title": "Create a new folder",

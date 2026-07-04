@@ -60,6 +60,19 @@ public class CampaignController {
         return ResponseEntity.ok(dtos);
     }
 
+    /** Corps de la sauvegarde des positions du graphe ({@code {"positions": "<json>"}}). */
+    public record GraphPositionsBody(String positions) {}
+
+    /**
+     * Sauvegarde la disposition personnalisée du graphe de campagne (drag et drop).
+     * JSON opaque côté back : c'est un état de présentation possédé par le front.
+     */
+    @PutMapping("/{id}/graph-positions")
+    public ResponseEntity<Void> updateGraphPositions(@PathVariable String id, @RequestBody GraphPositionsBody body) {
+        campaignService.updateGraphPositions(id, body.positions());
+        return ResponseEntity.noContent().build();
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<CampaignDTO> updateCampaign(@PathVariable String id, @RequestBody CampaignDTO campaignDTO) {
         Campaign updatedCampaign = campaignService.updateCampaign(

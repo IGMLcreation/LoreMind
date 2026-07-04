@@ -1,0 +1,101 @@
+@if (campaign) {
+  <div class="graph-page">
+    <header class="graph-header">
+      <button type="button" class="btn-back" (click)="back()">
+        <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon>
+        {{ 'campaignGraph.back' | translate }}
+      </button>
+      <div class="graph-title">
+        <h1>
+          <lucide-icon [img]="Network" [size]="20"></lucide-icon>
+          {{ 'campaignGraph.title' | translate:{ name: campaign.name } }}
+        </h1>
+        <p class="graph-subtitle">
+          {{ 'campaignGraph.subtitle' | translate:{ pages: pageCount, npcs: npcCount, scenes: sceneCount, quests: questCount, edges: edgeCount } }}
+        </p>
+      </div>
+      <!-- Légende cliquable : masquer/afficher un type d'entité (préférence mémorisée). -->
+      <div class="graph-legend">
+        <span class="legend-item"><span class="legend-dot legend-dot--page"></span> {{ 'campaignGraph.legendPage' | translate }}</span>
+        <button type="button" class="legend-item legend-toggle" [class.legend-toggle--off]="isHidden('npc')"
+          (click)="toggleKind('npc')" [title]="'campaignGraph.toggleHint' | translate">
+          <span class="legend-dot legend-dot--npc"></span> {{ 'campaignGraph.legendNpc' | translate }}
+        </button>
+        <button type="button" class="legend-item legend-toggle" [class.legend-toggle--off]="isHidden('scene')"
+          (click)="toggleKind('scene')" [title]="'campaignGraph.toggleHint' | translate">
+          <span class="legend-dot legend-dot--scene"></span> {{ 'campaignGraph.legendScene' | translate }}
+        </button>
+        <button type="button" class="legend-item legend-toggle" [class.legend-toggle--off]="isHidden('quest')"
+          (click)="toggleKind('quest')" [title]="'campaignGraph.toggleHint' | translate">
+          <span class="legend-dot legend-dot--quest"></span> {{ 'campaignGraph.legendQuest' | translate }}
+        </button>
+      </div>
+      <button type="button" class="btn-back" (click)="resetLayout()"
+        [title]="'campaignGraph.resetTitle' | translate">
+        <lucide-icon [img]="RotateCcw" [size]="14"></lucide-icon>
+        {{ 'campaignGraph.reset' | translate }}
+      </button>
+    </header>
+
+    @if (!hasLore) {
+      <div class="graph-empty">
+        {{ 'campaignGraph.noLore' | translate }}
+      </div>
+    } @else if (nodes.length === 0) {
+      <div class="graph-empty">
+        {{ 'campaignGraph.empty' | translate }}
+      </div>
+    } @else {
+      <div class="graph-scroll">
+        <svg #svgEl
+          [attr.width]="svgWidth"
+          [attr.height]="svgHeight"
+          (pointermove)="onPointerMove($event)"
+          (pointerup)="onPointerUp($event)"
+          (pointerleave)="onPointerUp($event)">
+
+          <!-- Arêtes (sous les nœuds) — estompées quand un autre nœud a le focus -->
+          @for (e of edges; track e.key) {
+            <line
+              [attr.x1]="e.x1" [attr.y1]="e.y1"
+              [attr.x2]="e.x2" [attr.y2]="e.y2"
+              [class.edge-page]="e.kind === 'page'"
+              [class.edge-npc]="e.kind === 'npc'"
+              [class.edge-scene]="e.kind === 'scene'"
+              [class.edge-quest]="e.kind === 'quest'"
+              [class.dimmed]="edgeDimmed(e)" />
+          }
+
+          <!-- Nœuds : survol = focus sur le nœud et ses voisins -->
+          @for (n of nodes; track n.id) {
+            <g class="node"
+              [class.node--npc]="n.kind === 'npc'"
+              [class.node--scene]="n.kind === 'scene'"
+              [class.node--quest]="n.kind === 'quest'"
+              [class.dragging]="draggingId === n.id"
+              [class.dimmed]="nodeDimmed(n)"
+              (pointerenter)="onNodeEnter(n)"
+              (pointerleave)="onNodeLeave()"
+              (pointerdown)="onPointerDown($event, n)">
+              <circle [attr.cx]="n.x" [attr.cy]="n.y" [attr.r]="radiusOf(n)" />
+              <text class="node-label"
+                [attr.x]="n.x"
+                [attr.y]="n.y + radiusOf(n) + 14"
+                text-anchor="middle">
+                @for (line of n.lines; track $index) {
+                  <tspan [attr.x]="n.x" [attr.dy]="$index === 0 ? 0 : 12">{{ line }}</tspan>
+                }
+              </text>
+              <title>{{ n.label }}</title>
+            </g>
+          }
+        </svg>
+      </div>
+      @if (edgeCount === 0) {
+        <p class="graph-hint">
+          {{ 'campaignGraph.hint' | translate }}
+        </p>
+      }
+    }
+  </div>
+}

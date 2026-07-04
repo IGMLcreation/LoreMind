@@ -1,4 +1,5 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -169,7 +170,8 @@ export class SceneEditComponent implements OnInit, OnDestroy {
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService,
     private confirmDialog: ConfirmDialogService,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private destroyRef: DestroyRef
   ) {
     this.form = this.fb.group({
       name:                 ['', Validators.required],
@@ -195,7 +197,7 @@ export class SceneEditComponent implements OnInit, OnDestroy {
     // On s'abonne à paramMap plutôt que de lire snapshot une fois : Angular
     // réutilise le composant quand on navigue entre scènes frères via l'arbre
     // (même route pattern), et ngOnInit ne se relance pas.
-    this.route.paramMap.subscribe(pm => {
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(pm => {
       const newCampaignId = pm.get('campaignId')!;
       const newArcId = pm.get('arcId')!;
       const newChapterId = pm.get('chapterId')!;
@@ -226,7 +228,8 @@ export class SceneEditComponent implements OnInit, OnDestroy {
         const lid = data.campaign.loreId ?? null;
         const pages$ = lid ? this.pageService.getByLoreId(lid) : of([] as Page[]);
         return pages$.pipe(switchMap(pages => of({ ...data, pages, loreId: lid })));
-      })
+      }),
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe(({ campaign, allCampaigns, scene, chapterScenes, treeData, pages, loreId }) => {
       this.scene = scene;
       this.pageTitleService.set(scene.name);

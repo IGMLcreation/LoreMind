@@ -6,7 +6,7 @@ import { CampaignSidebarService } from '../../../services/campaign-sidebar.servi
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CdkDropList, CdkDrag, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
-import { LucideAngularModule, Swords, Plus, Globe, Pencil, Trash2, Dices, Drama, Check, Play, Upload, Sparkles, Download, FileText, ChevronDown, ChevronRight, X } from 'lucide-angular';
+import { LucideAngularModule, Swords, Plus, Globe, Pencil, Trash2, Dices, Drama, Check, Play, Upload, Sparkles, Download, FileText, ChevronDown, ChevronRight, X, Network } from 'lucide-angular';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin, of, Observable } from 'rxjs';
@@ -57,6 +57,7 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   readonly ChevronDown = ChevronDown;
   readonly ChevronRight = ChevronRight;
   readonly X = X;
+  readonly Network = Network;
 
   /** Export Foundry en cours (anti double-clic). */
   exportingFoundry = false;
@@ -414,6 +415,13 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
         this.foundryDialogOpen = false;
       }
     });
+  }
+
+  /** Ouvre le graphe des liens : PNJ de la campagne reliés aux pages de son Lore. */
+  openGraph(): void {
+    if (this.campaign?.id) {
+      this.router.navigate(['/campaigns', this.campaign.id, 'graph']);
+    }
   }
 
   /** Génère et télécharge le livret PDF de la campagne. */

@@ -73,6 +73,11 @@ export class CampaignService {
     return this.http.get<Campaign>(`${this.apiUrl}/${id}`);
   }
 
+  /** Sauvegarde la disposition du graphe de campagne (JSON opaque ; '' = disposition auto). */
+  updateGraphPositions(id: string, positionsJson: string): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${id}/graph-positions`, { positions: positionsJson });
+  }
+
   /** Bilan de préparation (Pilier B) — alimente les pastilles de l'arbre de la sidebar. */
   getReadiness(id: string): Observable<CampaignReadinessAssessment> {
     return this.http.get<CampaignReadinessAssessment>(`${this.apiUrl}/${id}/readiness`);

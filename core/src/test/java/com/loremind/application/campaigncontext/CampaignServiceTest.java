@@ -364,4 +364,45 @@ public class CampaignServiceTest {
         assertEquals(1, result.size());
         verify(campaignRepository, times(1)).searchByName("Test");
     }
+
+    @Test
+    void testUpdateGraphPositions_SavesJson() {
+        when(campaignRepository.findById("campaign-1")).thenReturn(Optional.of(testCampaign));
+        when(campaignRepository.save(any(Campaign.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        campaignService.updateGraphPositions("campaign-1", "{\"page:1\":{\"x\":10,\"y\":20}}");
+
+        assertEquals("{\"page:1\":{\"x\":10,\"y\":20}}", testCampaign.getGraphPositions());
+        verify(campaignRepository, times(1)).save(testCampaign);
+    }
+
+    @Test
+    void testUpdateGraphPositions_BlankResetsToNull() {
+        // '' = retour à la disposition automatique (le front envoie une chaîne vide).
+        testCampaign.setGraphPositions("{\"page:1\":{\"x\":1,\"y\":2}}");
+        when(campaignRepository.findById("campaign-1")).thenReturn(Optional.of(testCampaign));
+        when(campaignRepository.save(any(Campaign.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        campaignService.updateGraphPositions("campaign-1", "  ");
+
+        assertNull(testCampaign.getGraphPositions());
+    }
+
+    @Test
+    void testUpdateGraphPositions_RejectsOversizedPayload() {
+        when(campaignRepository.findById("campaign-1")).thenReturn(Optional.of(testCampaign));
+
+        String huge = "x".repeat(200_001);
+        assertThrows(IllegalArgumentException.class,
+                () -> campaignService.updateGraphPositions("campaign-1", huge));
+        verify(campaignRepository, never()).save(any(Campaign.class));
+    }
+
+    @Test
+    void testUpdateGraphPositions_UnknownCampaign() {
+        when(campaignRepository.findById("missing")).thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class,
+                () -> campaignService.updateGraphPositions("missing", "{}"));
+    }
 }

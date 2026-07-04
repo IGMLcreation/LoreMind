@@ -57,14 +57,34 @@
       gap: 0.45rem;
     }
 
+    // Entrées cliquables : masquer/afficher un type d'entité.
+    .legend-toggle {
+      background: none;
+      border: none;
+      padding: 0;
+      font: inherit;
+      color: inherit;
+      cursor: pointer;
+      text-align: left;
+
+      &:hover { color: #e5e7eb; }
+
+      &.legend-toggle--off {
+        opacity: 0.4;
+        text-decoration: line-through;
+      }
+    }
+
     .legend-dot {
       width: 12px;
       height: 12px;
       border-radius: 50%;
       display: inline-block;
 
-      &.legend-dot--page { background: #4338ca; border: 1px solid #818cf8; }
-      &.legend-dot--npc  { background: #92400e; border: 1px solid #fbbf24; }
+      &.legend-dot--page  { background: #4338ca; border: 1px solid #818cf8; }
+      &.legend-dot--npc   { background: #92400e; border: 1px solid #fbbf24; }
+      &.legend-dot--scene { background: #365314; border: 1px solid #a3e635; }
+      &.legend-dot--quest { background: #581c87; border: 1px solid #d8b4fe; }
     }
 
     .legend-line {
@@ -91,6 +111,13 @@ svg {
   display: block;
   touch-action: none; // requis pour le drag au pointeur sur tactile
 
+  // Focus au survol : tout ce qui n'est pas le nœud survolé ou un voisin s'estompe.
+  line, .node {
+    transition: opacity 0.12s;
+
+    &.dimmed { opacity: 0.12; }
+  }
+
   line {
     &.edge-page {
       stroke: #4f4f7a;
@@ -99,6 +126,20 @@ svg {
 
     &.edge-npc {
       stroke: #d97706;
+      stroke-width: 1.4;
+      stroke-dasharray: 5 4;
+      opacity: 0.8;
+    }
+
+    &.edge-scene {
+      stroke: #65a30d;
+      stroke-width: 1.4;
+      stroke-dasharray: 5 4;
+      opacity: 0.8;
+    }
+
+    &.edge-quest {
+      stroke: #a855f7;
       stroke-width: 1.4;
       stroke-dasharray: 5 4;
       opacity: 0.8;
@@ -141,6 +182,36 @@ svg {
       &:hover circle {
         fill: #78350f;
         stroke: #fbbf24;
+      }
+    }
+
+    // Scènes : palette verte (cohérente avec les cartes de scène de l'app).
+    &.node--scene {
+      circle {
+        fill: #1a2e05;
+        stroke: #65a30d;
+      }
+
+      .node-label { fill: #d9f99d; }
+
+      &:hover circle {
+        fill: #365314;
+        stroke: #a3e635;
+      }
+    }
+
+    // Quêtes : palette pourpre claire, distincte de l'indigo des pages.
+    &.node--quest {
+      circle {
+        fill: #3b0764;
+        stroke: #a855f7;
+      }
+
+      .node-label { fill: #e9d5ff; }
+
+      &:hover circle {
+        fill: #581c87;
+        stroke: #c084fc;
       }
     }
   }

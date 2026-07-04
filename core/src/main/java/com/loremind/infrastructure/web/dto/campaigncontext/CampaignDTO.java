@@ -19,4 +19,6 @@ public class CampaignDTO {
     private String loreId;
     /** Nullable : campagne sans système de JDR associé (générique). */
     private String gameSystemId;
+    /** Positions des nœuds du graphe de campagne (JSON opaque, état de présentation). */
+    private String graphPositions;
 }

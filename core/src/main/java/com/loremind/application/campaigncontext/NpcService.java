@@ -1,9 +1,7 @@
 package com.loremind.application.campaigncontext;
 
-import com.loremind.domain.campaigncontext.Campaign;
 import com.loremind.domain.campaigncontext.Npc;
 import com.loremind.domain.shared.ReorderSupport;
-import com.loremind.domain.campaigncontext.ports.CampaignRepository;
 import com.loremind.domain.campaigncontext.ports.NpcRepository;
 import org.springframework.stereotype.Service;
 
@@ -20,11 +18,9 @@ import java.util.Optional;
 public class NpcService {
 
     private final NpcRepository npcRepository;
-    private final CampaignRepository campaignRepository;
 
-    public NpcService(NpcRepository npcRepository, CampaignRepository campaignRepository) {
+    public NpcService(NpcRepository npcRepository) {
         this.npcRepository = npcRepository;
-        this.campaignRepository = campaignRepository;
     }
 
     public record NpcData(
@@ -65,21 +61,6 @@ public class NpcService {
 
     public List<Npc> getNpcsByCampaignId(String campaignId) {
         return npcRepository.findByCampaignId(campaignId);
-    }
-
-    /**
-     * PNJ de TOUTES les campagnes liées au Lore donné (via {@code campaign.loreId}).
-     * Sert au graphe du Lore : relier les PNJ aux pages qu'ils référencent.
-     * Volume faible (usage mono-utilisateur) → filtrage en mémoire assumé.
-     */
-    public List<Npc> getNpcsByLoreId(String loreId) {
-        List<Npc> out = new ArrayList<>();
-        for (Campaign campaign : campaignRepository.findAll()) {
-            if (campaign.isLinkedToLore() && campaign.getLoreId().equals(loreId)) {
-                out.addAll(npcRepository.findByCampaignId(campaign.getId()));
-            }
-        }
-        return out;
     }
 
     public Npc updateNpc(String id, NpcData data) {

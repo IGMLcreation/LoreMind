@@ -5,7 +5,8 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build",
+    "build": "npm run i18n:check && ng build",
+    "i18n:check": "node scripts/check-i18n.mjs",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "test:unit": "vitest run",

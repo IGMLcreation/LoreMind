@@ -198,8 +198,6 @@
     "submit": "Créer le lore"
   },
   "loreDetail": {
-    "graph": "Graphe",
-    "graphTitle": "Visualiser le graphe des pages et de leurs liens (PNJ inclus)",
     "editTitle": "Modifier le Lore",
     "deleteTitle": "Supprimer le Lore",
     "folders": "Dossiers",
@@ -221,14 +219,19 @@
       "irreversible": "Cette action est irréversible."
     }
   },
-  "loreGraph": {
-    "back": "Retour au Lore",
+  "campaignGraph": {
+    "back": "Retour à la campagne",
     "title": "{{name}} — Graphe",
-    "subtitle": "{{pages}} page(s) · {{npcs}} PNJ · {{edges}} lien(s). Cliquez sur un nœud pour l'ouvrir, glissez-le pour réarranger.",
+    "subtitle": "{{pages}} page(s) · {{npcs}} PNJ · {{scenes}} scène(s) · {{quests}} quête(s) · {{edges}} lien(s). Cliquez sur un nœud pour l'ouvrir, glissez-le pour réarranger.",
     "legendPage": "Page de Lore",
     "legendNpc": "PNJ",
-    "legendLink": "Lien PNJ → page",
-    "empty": "Aucune page dans ce Lore pour l'instant — le graphe se remplira au fur et à mesure.",
+    "legendScene": "Scène",
+    "legendQuest": "Quête",
+    "reset": "Disposition auto",
+    "resetTitle": "Recalculer la disposition automatique (oublie vos déplacements manuels)",
+    "toggleHint": "Cliquer pour masquer / afficher ce type d'entité",
+    "noLore": "Aucun univers (Lore) n'est associé à cette campagne : associez-en un depuis l'en-tête de la campagne pour voir le graphe.",
+    "empty": "Aucune page dans l'univers associé pour l'instant — le graphe se remplira au fur et à mesure.",
     "hint": "Aucun lien pour l'instant : liez des pages entre elles (« Pages liées » d'une page) ou rattachez un PNJ à des pages de Lore depuis sa fiche."
   },
   "loreNodeCreate": {
@@ -613,6 +616,8 @@
     "foundryExporting": "Export…",
     "pdfExport": "Exporter en PDF",
     "pdfExporting": "Génération…",
+    "graph": "Graphe",
+    "graphTitle": "Visualiser le graphe des PNJ et des pages de lore liées",
     "gameSystemChange": {
       "title": "Changer le système de jeu ?",
       "message": "Vous êtes sur le point de changer le système de jeu de cette campagne. Cela change également le template des fiches de PJ et PNJ.",

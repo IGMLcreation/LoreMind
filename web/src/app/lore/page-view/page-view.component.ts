@@ -1,4 +1,5 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { forkJoin } from 'rxjs';
@@ -65,14 +66,15 @@ export class PageViewComponent implements OnInit, OnDestroy {
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService,
     private confirmDialog: ConfirmDialogService,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private destroyRef: DestroyRef
   ) {}
 
   ngOnInit(): void {
     this.loreId = this.route.snapshot.paramMap.get('loreId')!;
     // Même pattern que page-edit : on s'abonne à paramMap pour gérer la
     // navigation d'une page à l'autre (Angular réutilise le composant).
-    this.route.paramMap.subscribe(pm => {
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(pm => {
       const newPageId = pm.get('pageId')!;
       if (newPageId && newPageId !== this.pageId) {
         this.pageId = newPageId;

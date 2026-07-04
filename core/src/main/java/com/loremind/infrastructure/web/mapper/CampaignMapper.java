@@ -23,6 +23,7 @@ public class CampaignMapper {
         dto.setPlayerCount(campaign.getPlayerCount());
         dto.setLoreId(campaign.getLoreId());
         dto.setGameSystemId(campaign.getGameSystemId());
+        dto.setGraphPositions(campaign.getGraphPositions());
         return dto;
     }
 

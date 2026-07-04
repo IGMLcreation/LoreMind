@@ -38,6 +38,12 @@ public class Campaign {
      */
     private String gameSystemId;
 
+    /**
+     * Positions des nœuds du graphe de campagne (JSON opaque, état de
+     * présentation possédé par le front). Null = disposition automatique.
+     */
+    private String graphPositions;
+
     public boolean isLinkedToLore() {
         return this.loreId != null && !this.loreId.isBlank();
     }

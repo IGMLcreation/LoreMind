@@ -55,6 +55,13 @@ public class CampaignJpaEntity {
     @Column(name = "game_system_id")
     private String gameSystemId;
 
+    /**
+     * Positions personnalisées des nœuds du graphe de campagne (JSON opaque,
+     * possédé par le front). Null = disposition automatique.
+     */
+    @Column(name = "graph_positions", columnDefinition = "TEXT")
+    private String graphPositions;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

@@ -10,6 +10,8 @@ export interface Campaign {
   loreId?: string | null;
   /** ID du GameSystem associé (weak reference cross-context). `null` = campagne générique. */
   gameSystemId?: string | null;
+  /** Positions des nœuds du graphe de campagne (JSON `"<kind>:<id>" -> {x,y}`). Null = auto. */
+  graphPositions?: string | null;
 }
 
 // Interface pour la création de Campaign (sans id)

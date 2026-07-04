@@ -45,8 +45,6 @@
     "submit": "Créer le lore"
   },
   "loreDetail": {
-    "graph": "Graphe",
-    "graphTitle": "Visualiser le graphe des pages et de leurs liens (PNJ inclus)",
     "editTitle": "Modifier le Lore",
     "deleteTitle": "Supprimer le Lore",
     "folders": "Dossiers",
@@ -67,16 +65,6 @@
       "detachedCampaignsPlural": "{{n}} campagnes seront conservées mais perdront leur lien vers cet univers.",
       "irreversible": "Cette action est irréversible."
     }
-  },
-  "loreGraph": {
-    "back": "Retour au Lore",
-    "title": "{{name}} — Graphe",
-    "subtitle": "{{pages}} page(s) · {{npcs}} PNJ · {{edges}} lien(s). Cliquez sur un nœud pour l'ouvrir, glissez-le pour réarranger.",
-    "legendPage": "Page de Lore",
-    "legendNpc": "PNJ",
-    "legendLink": "Lien PNJ → page",
-    "empty": "Aucune page dans ce Lore pour l'instant — le graphe se remplira au fur et à mesure.",
-    "hint": "Aucun lien pour l'instant : liez des pages entre elles (« Pages liées » d'une page) ou rattachez un PNJ à des pages de Lore depuis sa fiche."
   },
   "loreNodeCreate": {
     "title": "Créer un nouveau dossier",

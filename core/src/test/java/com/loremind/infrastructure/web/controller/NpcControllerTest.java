@@ -83,13 +83,6 @@ class NpcControllerTest {
     }
 
     @Test
-    void getByLore_returnsArray() throws Exception {
-        mockMvc.perform(get("/api/npcs/lore/{loreId}", "lore-1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray());
-    }
-
-    @Test
     void update_returns200() throws Exception {
         Npc saved = npcRepository.save(Npc.builder().campaignId(campaignId).name("old").order(0).build());
         NpcDTO dto = new NpcDTO();

@@ -1,4 +1,5 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -67,7 +68,8 @@ export class PageCreateComponent implements OnInit, OnDestroy {
     private pageService: PageService,
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private destroyRef: DestroyRef
   ) {
     this.form = this.fb.group({
       title:  ['', Validators.required],
@@ -116,7 +118,7 @@ export class PageCreateComponent implements OnInit, OnDestroy {
           }
         }
 
-        this.form.get('nodeId')?.valueChanges.subscribe(nodeId => {
+        this.form.get('nodeId')?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(nodeId => {
           this.autoSelectTemplateForNode(nodeId);
         });
 

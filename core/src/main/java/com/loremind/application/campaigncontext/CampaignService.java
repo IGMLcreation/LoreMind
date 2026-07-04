@@ -92,6 +92,22 @@ public class CampaignService {
         return campaignRepository.save(campaign);
     }
 
+    /**
+     * Sauvegarde les positions du graphe de campagne (JSON opaque, état de
+     * présentation possédé par le front). Null/vide = retour à la disposition
+     * automatique. Taille bornée : ce champ ne doit pas devenir un fourre-tout.
+     */
+    public void updateGraphPositions(String id, String positionsJson) {
+        Campaign campaign = campaignRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Campaign non trouvé avec l'ID: " + id));
+        String value = (positionsJson == null || positionsJson.isBlank()) ? null : positionsJson;
+        if (value != null && value.length() > 200_000) {
+            throw new IllegalArgumentException("Positions de graphe trop volumineuses");
+        }
+        campaign.setGraphPositions(value);
+        campaignRepository.save(campaign);
+    }
+
     private String normalizeId(String id) {
         return (id == null || id.isBlank()) ? null : id;
     }

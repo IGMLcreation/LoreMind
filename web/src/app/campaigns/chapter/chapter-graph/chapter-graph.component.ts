@@ -1,4 +1,5 @@
-import { Component, OnInit, OnDestroy, ElementRef, ViewChild, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, ViewChild, HostListener, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -111,11 +112,12 @@ export class ChapterGraphComponent implements OnInit, OnDestroy {
     private enemyService: EnemyService,
     private layoutService: LayoutService,
     private pageTitleService: PageTitleService,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private destroyRef: DestroyRef
   ) {}
 
   ngOnInit(): void {
-    this.route.paramMap.subscribe(pm => {
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(pm => {
       this.campaignId = pm.get('campaignId')!;
       this.arcId = pm.get('arcId')!;
       this.chapterId = pm.get('chapterId')!;
@@ -130,7 +132,7 @@ export class ChapterGraphComponent implements OnInit, OnDestroy {
       chapter: this.campaignService.getChapterById(this.chapterId),
       scenes: this.campaignService.getScenes(this.chapterId),
       treeData: loadCampaignTreeData(this.campaignService, this.campaignId, this.npcService, this.randomTableService, this.enemyService)
-    }).subscribe(({ campaign, allCampaigns, chapter, scenes, treeData }) => {
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(({ campaign, allCampaigns, chapter, scenes, treeData }) => {
       this.chapter = chapter;
       this.scenes = scenes;
       // Mode plat = campagne simple (1 arc, 1 chapitre) SANS compter la plomberie
