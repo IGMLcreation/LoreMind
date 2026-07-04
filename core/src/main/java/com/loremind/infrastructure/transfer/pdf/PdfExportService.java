@@ -1283,7 +1283,9 @@ public class PdfExportService {
     private static String cssFor(String campaignName) {
         String header = campaignName == null ? "" : campaignName.trim();
         if (header.length() > 70) header = header.substring(0, 69) + "…";
-        return CSS.replace("__HEADER__", header.replace("\\", "\\\\").replace("'", "\\'"));
+        // Echappement CSS (chaine entre quotes) PUIS XML : le CSS vit dans <style>,
+        // du PCDATA — un '&' ou '<' brut casserait le parse du document entier.
+        return CSS.replace("__HEADER__", esc(header.replace("\\", "\\\\").replace("'", "\\'")));
     }
 
     // CSS print (CSS 2.1 + paged media supporte par openhtmltopdf : pas de flexbox/grid).
