@@ -9,7 +9,6 @@ import org.springframework.stereotype.Repository;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Repository
 public class PostgresCharacterRepository implements CharacterRepository {
@@ -36,7 +35,7 @@ public class PostgresCharacterRepository implements CharacterRepository {
     public List<Character> findByPlaythroughId(String playthroughId) {
         return jpaRepository.findByPlaythroughIdOrderByOrderAsc(Long.parseLong(playthroughId)).stream()
                 .map(this::toDomainEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -53,7 +52,7 @@ public class PostgresCharacterRepository implements CharacterRepository {
     public List<Character> searchByName(String query) {
         return jpaRepository.findTop20ByNameContainingIgnoreCaseOrderByNameAsc(query).stream()
                 .map(this::toDomainEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private Character toDomainEntity(CharacterJpaEntity e) {

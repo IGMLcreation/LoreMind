@@ -32,7 +32,7 @@ import static org.mockito.Mockito.*;
  * et le comportement défensif de la recherche.
  */
 @ExtendWith(MockitoExtension.class)
-public class LoreServiceTest {
+class LoreServiceTest {
 
     @Mock private LoreRepository loreRepository;
     @Mock private LoreNodeRepository loreNodeRepository;

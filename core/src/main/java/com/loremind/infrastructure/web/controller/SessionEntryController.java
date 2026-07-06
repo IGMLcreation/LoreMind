@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * REST Controller pour les entrées de journal d'une Session.
@@ -34,7 +33,7 @@ public class SessionEntryController {
     public ResponseEntity<List<SessionEntryDTO>> getEntries(@PathVariable String sessionId) {
         List<SessionEntryDTO> dtos = entryService.getBySessionId(sessionId).stream()
                 .map(entryMapper::toDTO)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(dtos);
     }
 

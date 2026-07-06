@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * REST Controller pour le Play Context.
@@ -64,7 +63,7 @@ public class SessionController {
                 : sessionService.getByPlaythroughId(playthroughId);
         List<SessionDTO> dtos = sessions.stream()
                 .map(sessionMapper::toDTO)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(dtos);
     }
 

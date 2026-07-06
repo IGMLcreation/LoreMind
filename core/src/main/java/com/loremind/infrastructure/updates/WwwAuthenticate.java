@@ -22,25 +22,40 @@ final class WwwAuthenticate {
         int i = 0;
         int n = s.length();
         while (i < n) {
-            while (i < n && (s.charAt(i) == ',' || s.charAt(i) == ' ')) i++;
-            int eq = s.indexOf('=', i);
-            if (eq < 0) break;
-            String key = s.substring(i, eq).trim();
-            int valStart = eq + 1;
-            String val;
-            if (valStart < n && s.charAt(valStart) == '"') {
-                int valEnd = s.indexOf('"', valStart + 1);
-                if (valEnd < 0) break;
-                val = s.substring(valStart + 1, valEnd);
-                i = valEnd + 1;
-            } else {
-                int valEnd = s.indexOf(',', valStart);
-                if (valEnd < 0) valEnd = n;
-                val = s.substring(valStart, valEnd).trim();
-                i = valEnd;
-            }
-            out.put(key, val);
+            i = parseOneParam(s, i, out);
+            if (i < 0) break;
         }
         return out;
+    }
+
+    /**
+     * Parse un unique {@code key=value} à partir de {@code from} (en sautant d'abord les
+     * séparateurs {@code ','}/espace), l'ajoute à {@code out}, et renvoie l'index suivant.
+     * Renvoie {@code -1} pour signaler la fin du parsing (plus de {@code '='} ou guillemet
+     * non fermé) : dans ce cas rien n'est ajouté à {@code out}.
+     */
+    private static int parseOneParam(String s, int from, Map<String, String> out) {
+        int n = s.length();
+        int i = from;
+        while (i < n && (s.charAt(i) == ',' || s.charAt(i) == ' ')) i++;
+        int eq = s.indexOf('=', i);
+        if (eq < 0) return -1;
+        String key = s.substring(i, eq).trim();
+        int valStart = eq + 1;
+        String val;
+        int next;
+        if (valStart < n && s.charAt(valStart) == '"') {
+            int valEnd = s.indexOf('"', valStart + 1);
+            if (valEnd < 0) return -1;
+            val = s.substring(valStart + 1, valEnd);
+            next = valEnd + 1;
+        } else {
+            int valEnd = s.indexOf(',', valStart);
+            if (valEnd < 0) valEnd = n;
+            val = s.substring(valStart, valEnd).trim();
+            next = valEnd;
+        }
+        out.put(key, val);
+        return next;
     }
 }

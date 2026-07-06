@@ -8,7 +8,6 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * Adaptateur d'infrastructure qui implémente le Port CampaignRepository.
@@ -43,7 +42,7 @@ public class PostgresCampaignRepository implements CampaignRepository {
     public List<Campaign> findAll() {
         return jpaRepository.findAll().stream()
                 .map(this::toDomainEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -62,7 +61,7 @@ public class PostgresCampaignRepository implements CampaignRepository {
     public List<Campaign> searchByName(String query) {
         return jpaRepository.findByNameContainingIgnoreCase(query).stream()
                 .map(this::toDomainEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private Campaign toDomainEntity(CampaignJpaEntity jpaEntity) {

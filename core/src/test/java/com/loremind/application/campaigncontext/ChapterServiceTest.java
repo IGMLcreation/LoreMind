@@ -26,7 +26,7 @@ import static org.mockito.Mockito.*;
  * Teste la logique d'orchestration de la couche Application.
  */
 @ExtendWith(MockitoExtension.class)
-public class ChapterServiceTest {
+class ChapterServiceTest {
 
     @Mock
     private ChapterRepository chapterRepository;

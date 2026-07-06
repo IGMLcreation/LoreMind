@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Repository
 public class PostgresNpcRepository implements NpcRepository {
@@ -37,7 +36,7 @@ public class PostgresNpcRepository implements NpcRepository {
     public List<Npc> findByCampaignId(String campaignId) {
         return jpaRepository.findByCampaignIdOrderByOrderAsc(Long.parseLong(campaignId)).stream()
                 .map(this::toDomainEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -54,7 +53,7 @@ public class PostgresNpcRepository implements NpcRepository {
     public List<Npc> searchByName(String query) {
         return jpaRepository.findTop20ByNameContainingIgnoreCaseOrderByNameAsc(query).stream()
                 .map(this::toDomainEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private Npc toDomainEntity(NpcJpaEntity e) {

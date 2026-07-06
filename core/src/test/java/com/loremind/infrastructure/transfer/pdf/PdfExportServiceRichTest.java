@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 /**
@@ -66,15 +65,15 @@ class PdfExportServiceRichTest {
                 .filename("good.png").contentType("image/png").sizeBytes(png.length).storageKey("images/good.png").build());
         ImageJpaEntity bad = imageRepo.save(ImageJpaEntity.builder()
                 .filename("bad.png").contentType("image/png").sizeBytes(3).storageKey("images/bad.png").build());
-        when(imageStorage.download(eq("images/good.png"))).thenAnswer(inv -> new ByteArrayInputStream(png));
-        when(imageStorage.download(eq("images/bad.png"))).thenAnswer(inv -> new ByteArrayInputStream("xxx".getBytes()));
+        when(imageStorage.download("images/good.png")).thenAnswer(inv -> new ByteArrayInputStream(png));
+        when(imageStorage.download("images/bad.png")).thenAnswer(inv -> new ByteArrayInputStream("xxx".getBytes()));
 
         // Battlemap image (rendue) vs vidéo (ignorée car non rendable en PDF).
         StoredFileJpaEntity mapImg = storedFileRepo.save(StoredFileJpaEntity.builder()
                 .filename("map.png").contentType("image/png").sizeBytes(png.length).storageKey("files/map.png").build());
         StoredFileJpaEntity clip = storedFileRepo.save(StoredFileJpaEntity.builder()
                 .filename("clip.mp4").contentType("video/mp4").sizeBytes(10).storageKey("files/clip.mp4").build());
-        when(fileStorage.download(eq("files/map.png"))).thenAnswer(inv -> new ByteArrayInputStream(png));
+        when(fileStorage.download("files/map.png")).thenAnswer(inv -> new ByteArrayInputStream(png));
 
         // Système de jeu : templates PNJ (TEXT + KEY_VALUE_LIST + IMAGE) et ennemi (TEXT).
         GameSystemJpaEntity gs = gameSystemRepo.save(GameSystemJpaEntity.builder()

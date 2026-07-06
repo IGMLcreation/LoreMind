@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/item-catalogs")
@@ -42,7 +41,7 @@ public class ItemCatalogController {
     public ResponseEntity<List<ItemCatalogDTO>> getByCampaign(@PathVariable String campaignId) {
         List<ItemCatalogDTO> dtos = service.getCatalogsByCampaignId(campaignId).stream()
                 .map(mapper::toDTO)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(dtos);
     }
 
@@ -63,7 +62,7 @@ public class ItemCatalogController {
     public ResponseEntity<List<ItemCatalogDTO>> search(@RequestParam("q") String query) {
         return ResponseEntity.ok(service.searchCatalogs(query).stream()
                 .map(mapper::toDTO)
-                .collect(java.util.stream.Collectors.toList()));
+                .toList());
     }
 
     /** Génère une PROPOSITION de catalogue via l'IA (non persistée) — l'UI préremplit le formulaire. */

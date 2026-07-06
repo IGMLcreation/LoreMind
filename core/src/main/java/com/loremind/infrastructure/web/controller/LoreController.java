@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * REST Controller pour le contexte Lore.
@@ -46,7 +45,7 @@ public class LoreController {
         List<Lore> lores = loreService.getAllLores();
         List<LoreDTO> loreDTOs = lores.stream()
                 .map(loreMapper::toDTO)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(loreDTOs);
     }
 
@@ -54,7 +53,7 @@ public class LoreController {
     public ResponseEntity<List<LoreDTO>> searchLores(@RequestParam("q") String query) {
         List<LoreDTO> dtos = loreService.searchLores(query).stream()
                 .map(loreMapper::toDTO)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(dtos);
     }
 

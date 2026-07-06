@@ -43,21 +43,21 @@ import static org.mockito.Mockito.when;
  */
 class PdfExportPreviewTest {
 
-    private static final String LOREM =
-            "Le vent du nord charrie des cendres depuis trois jours. Les habitants de Valfroide "
-            + "murmurent que la Tour de Jais s'est rallumée, et que son maître, qu'on croyait mort "
-            + "à la bataille des Gués, aurait passé un pacte avec les Profondeurs.\n"
-            + "Les héros arrivent alors que la foire d'automne bat son plein : un contraste saisissant "
-            + "entre les lampions colorés et la peur qui se lit sur les visages dès qu'on prononce "
-            + "le nom de la tour.";
+    private static final String LOREM = """
+            Le vent du nord charrie des cendres depuis trois jours. Les habitants de Valfroide \
+            murmurent que la Tour de Jais s'est rallumée, et que son maître, qu'on croyait mort \
+            à la bataille des Gués, aurait passé un pacte avec les Profondeurs.
+            Les héros arrivent alors que la foire d'automne bat son plein : un contraste saisissant \
+            entre les lampions colorés et la peur qui se lit sur les visages dès qu'on prononce \
+            le nom de la tour.""";
 
-    private static final String LONG_NOTES =
-            "Points importants à garder en tête :\n"
-            + "- Maëlis ment sur son passé (elle était scribe de la Tour).\n"
-            + "- Le médaillon des PJ réagit à proximité des sceaux — décrire une chaleur diffuse.\n"
-            + "- Si les joueurs interrogent le forgeron, il oriente vers la crypte SANS parler du pacte.\n"
-            + "Ne pas révéler le vrai nom du Maître de Jais avant l'acte III ; toute divination "
-            + "renvoie une image brouillée et un goût de cendre.";
+    private static final String LONG_NOTES = """
+            Points importants à garder en tête :
+            - Maëlis ment sur son passé (elle était scribe de la Tour).
+            - Le médaillon des PJ réagit à proximité des sceaux — décrire une chaleur diffuse.
+            - Si les joueurs interrogent le forgeron, il oriente vers la crypte SANS parler du pacte.
+            Ne pas révéler le vrai nom du Maître de Jais avant l'acte III ; toute divination \
+            renvoie une image brouillée et un goût de cendre.""";
 
     @Test
     void dumpPreviewPdf() throws Exception {
@@ -365,9 +365,10 @@ class PdfExportPreviewTest {
         when(imageStorage.download(anyString())).thenAnswer(inv -> placeholder(inv.getArgument(0), false));
         when(fileStorage.download(anyString())).thenAnswer(inv -> placeholder(inv.getArgument(0), true));
 
-        PdfExportService service = new PdfExportService(campaignRepo, arcRepo, chapterRepo, sceneRepo,
-                questRepo, npcRepo, enemyRepo, randomTableRepo, gameSystemRepo, imageRepo, storedFileRepo,
-                loreNodeRepo, pageRepo, templateRepo, imageStorage, fileStorage);
+        PdfImageEncoder imageEncoder = new PdfImageEncoder(imageRepo, storedFileRepo, imageStorage, fileStorage);
+        PdfStructureLoader structureLoader = new PdfStructureLoader(arcRepo, chapterRepo, sceneRepo, questRepo, enemyRepo);
+        PdfExportService service = new PdfExportService(campaignRepo, npcRepo, enemyRepo, randomTableRepo,
+                gameSystemRepo, loreNodeRepo, pageRepo, templateRepo, structureLoader, imageEncoder);
 
         byte[] pdf = service.export("1");
 

@@ -4,6 +4,8 @@ import com.loremind.domain.campaigncontext.structure.SceneBattlemap;
 import com.loremind.domain.shared.template.TemplateField;
 import com.loremind.infrastructure.persistence.entity.*;
 import com.loremind.infrastructure.persistence.jpa.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -35,126 +37,161 @@ class FoundryExportServiceTest {
     @Autowired private StoredFileJpaRepository fileRepo;
     @Autowired private RandomTableJpaRepository tableRepo;
 
-    @Test
-    void buildBundle_assemblesFullCampaign_withBattlemapAssetsAndResolvedNpcFields() {
-        // GameSystem avec template PNJ : un TEXT "Histoire" + un KEY_VALUE_LIST "Caracs".
-        GameSystemJpaEntity gs = gameSystemRepo.save(GameSystemJpaEntity.builder()
-                .name("Test System").isPublic(false)
-                .npcTemplate(List.of(
-                        TemplateField.text("Histoire"),
-                        TemplateField.keyValueList("Caracs", List.of("FOR", "DEX"))))
-                .build());
+    /**
+     * Assemble une campagne complete (arc/quete/scene, battlemap+illustration,
+     * PNJ avec template, table aleatoire) une seule fois en {@code @BeforeEach},
+     * puis verifie chaque facette du {@code BuiltBundle} dans un @Test dedie.
+     */
+    @Nested
+    class FullCampaignBundle {
 
-        CampaignJpaEntity camp = campaignRepo.save(CampaignJpaEntity.builder()
-                .name("Le baron de la drogue").description("desc").arcsCount(1)
-                .gameSystemId(String.valueOf(gs.getId())).build());
+        private ArcJpaEntity arc;
+        private ChapterJpaEntity quest;
+        private ImageJpaEntity img;
+        private StoredFileJpaEntity media;
+        private StoredFileJpaEntity sidecar;
+        private FoundryExportService.BuiltBundle bundle;
+        private FoundryBundle.Data data;
 
-        // Assets references par la scene : une image (illustration) + un media + un sidecar.
-        ImageJpaEntity img = imageRepo.save(ImageJpaEntity.builder()
-                .filename("baron.webp").contentType("image/webp").sizeBytes(100L)
-                .storageKey("images/aaa.webp").build());
-        StoredFileJpaEntity media = fileRepo.save(StoredFileJpaEntity.builder()
-                .filename("convoi.mp4").contentType("video/mp4").sizeBytes(2048L)
-                .storageKey("files/bbb.mp4").build());
-        StoredFileJpaEntity sidecar = fileRepo.save(StoredFileJpaEntity.builder()
-                .filename("convoi.dd2vtt").contentType("application/json").sizeBytes(512L)
-                .storageKey("files/ccc.json").build());
+        @BeforeEach
+        void buildFullCampaignBundle() {
+            // GameSystem avec template PNJ : un TEXT "Histoire" + un KEY_VALUE_LIST "Caracs".
+            GameSystemJpaEntity gs = gameSystemRepo.save(GameSystemJpaEntity.builder()
+                    .name("Test System").isPublic(false)
+                    .npcTemplate(List.of(
+                            TemplateField.text("Histoire"),
+                            TemplateField.keyValueList("Caracs", List.of("FOR", "DEX"))))
+                    .build());
 
-        ArcJpaEntity arc = arcRepo.save(ArcJpaEntity.builder()
-                .campaignId(camp.getId()).name("Acte I").order(0).build());
-        ChapterJpaEntity quest = chapterRepo.save(ChapterJpaEntity.builder()
-                .arcId(arc.getId()).name("Le convoi").order(0).build());
-        sceneRepo.save(SceneJpaEntity.builder()
-                .chapterId(quest.getId()).name("L'attaque du convoi").order(0)
-                .playerNarration("Le convoi s'arrete...")
-                .illustrationImageIds(List.of(String.valueOf(img.getId())))
-                .battlemaps(List.of(new SceneBattlemap("Nuit",
-                        String.valueOf(media.getId()), String.valueOf(sidecar.getId()))))
-                .build());
+            CampaignJpaEntity camp = campaignRepo.save(CampaignJpaEntity.builder()
+                    .name("Le baron de la drogue").description("desc").arcsCount(1)
+                    .gameSystemId(String.valueOf(gs.getId())).build());
 
-        npcRepo.save(NpcJpaEntity.builder()
-                .campaignId(camp.getId()).name("Le baron").order(0)
-                .values(Map.of("Histoire", "Ancien capitaine de la garde"))
-                .keyValueValues(Map.of("Caracs", Map.of("FOR", "16")))
-                .build());
+            // Assets references par la scene : une image (illustration) + un media + un sidecar.
+            img = imageRepo.save(ImageJpaEntity.builder()
+                    .filename("baron.webp").contentType("image/webp").sizeBytes(100L)
+                    .storageKey("images/aaa.webp").build());
+            media = fileRepo.save(StoredFileJpaEntity.builder()
+                    .filename("convoi.mp4").contentType("video/mp4").sizeBytes(2048L)
+                    .storageKey("files/bbb.mp4").build());
+            sidecar = fileRepo.save(StoredFileJpaEntity.builder()
+                    .filename("convoi.dd2vtt").contentType("application/json").sizeBytes(512L)
+                    .storageKey("files/ccc.json").build());
 
-        // Table aléatoire (1d6) avec 2 entrées -> RollTable Foundry.
-        RandomTableJpaEntity table = RandomTableJpaEntity.builder()
-                .campaignId(camp.getId()).name("Rencontres").description("Sur la route").diceFormula("1d6").order(0)
-                .build();
-        RandomTableEntryJpaEntity e1 = new RandomTableEntryJpaEntity();
-        e1.setMinRoll(1); e1.setMaxRoll(3); e1.setLabel("Gobelins"); e1.setDetail("3d4"); e1.setPosition(0);
-        e1.setRandomTable(table);
-        RandomTableEntryJpaEntity e2 = new RandomTableEntryJpaEntity();
-        e2.setMinRoll(4); e2.setMaxRoll(6); e2.setLabel("Rien"); e2.setPosition(1);
-        e2.setRandomTable(table);
-        table.setEntries(List.of(e1, e2));
-        tableRepo.save(table);
+            arc = arcRepo.save(ArcJpaEntity.builder()
+                    .campaignId(camp.getId()).name("Acte I").order(0).build());
+            quest = chapterRepo.save(ChapterJpaEntity.builder()
+                    .arcId(arc.getId()).name("Le convoi").order(0).build());
+            sceneRepo.save(SceneJpaEntity.builder()
+                    .chapterId(quest.getId()).name("L'attaque du convoi").order(0)
+                    .playerNarration("Le convoi s'arrete...")
+                    .illustrationImageIds(List.of(String.valueOf(img.getId())))
+                    .battlemaps(List.of(new SceneBattlemap("Nuit",
+                            String.valueOf(media.getId()), String.valueOf(sidecar.getId()))))
+                    .build());
 
-        FoundryExportService.BuiltBundle bundle = service.buildBundle(String.valueOf(camp.getId()), "2026-06-25T00:00:00Z");
-        FoundryBundle.Data data = bundle.data();
+            npcRepo.save(NpcJpaEntity.builder()
+                    .campaignId(camp.getId()).name("Le baron").order(0)
+                    .values(Map.of("Histoire", "Ancien capitaine de la garde"))
+                    .keyValueValues(Map.of("Caracs", Map.of("FOR", "16")))
+                    .build());
 
-        // Hierarchie
-        assertEquals("Le baron de la drogue", data.campaign().name());
-        assertEquals(1, data.arcs().size());
-        assertEquals(1, data.quests().size());
-        assertEquals(1, data.scenes().size());
-        assertEquals(String.valueOf(arc.getId()), data.quests().get(0).arcId());
-        assertEquals(String.valueOf(quest.getId()), data.scenes().get(0).questId());
+            // Table aléatoire (1d6) avec 2 entrées -> RollTable Foundry.
+            RandomTableJpaEntity table = RandomTableJpaEntity.builder()
+                    .campaignId(camp.getId()).name("Rencontres").description("Sur la route").diceFormula("1d6").order(0)
+                    .build();
+            RandomTableEntryJpaEntity e1 = new RandomTableEntryJpaEntity();
+            e1.setMinRoll(1); e1.setMaxRoll(3); e1.setLabel("Gobelins"); e1.setDetail("3d4"); e1.setPosition(0);
+            e1.setRandomTable(table);
+            RandomTableEntryJpaEntity e2 = new RandomTableEntryJpaEntity();
+            e2.setMinRoll(4); e2.setMaxRoll(6); e2.setLabel("Rien"); e2.setPosition(1);
+            e2.setRandomTable(table);
+            table.setEntries(List.of(e1, e2));
+            tableRepo.save(table);
 
-        // Battlemaps : refs vers les assets fichiers (prefixe "file-"), label preserve,
-        // et champ legacy `battlemap` (1re carte) maintenu pour les modules existants.
-        FoundryBundle.Scene scene = data.scenes().get(0);
-        assertEquals(1, scene.battlemaps().size());
-        assertEquals("Nuit", scene.battlemaps().get(0).label());
-        assertEquals("file-" + media.getId(), scene.battlemaps().get(0).mediaAssetId());
-        assertEquals("file-" + sidecar.getId(), scene.battlemaps().get(0).dataAssetId());
-        assertNotNull(scene.battlemap());
-        assertEquals("file-" + media.getId(), scene.battlemap().mediaAssetId());
-        assertEquals("file-" + sidecar.getId(), scene.battlemap().dataAssetId());
-        assertEquals(List.of("img-" + img.getId()), scene.illustrationAssetIds());
+            bundle = service.buildBundle(String.valueOf(camp.getId()), "2026-06-25T00:00:00Z");
+            data = bundle.data();
+        }
 
-        // Index des assets : 1 image + 2 fichiers, chacun avec un chemin coherent.
-        assertEquals(3, data.assets().size());
-        assertTrue(data.assets().stream().anyMatch(a ->
-                a.id().equals("file-" + media.getId()) && a.kind().equals("battlemapMedia")
-                        && a.path().equals("assets/battlemaps/file-" + media.getId() + ".mp4")));
-        assertTrue(data.assets().stream().anyMatch(a ->
-                a.id().equals("img-" + img.getId()) && a.kind().equals("image")
-                        && a.path().equals("assets/images/img-" + img.getId() + ".webp")));
+        @Test
+        void hierarchyIsAssembled() {
+            // Hierarchie
+            assertEquals("Le baron de la drogue", data.campaign().name());
+            assertEquals(1, data.arcs().size());
+            assertEquals(1, data.quests().size());
+            assertEquals(1, data.scenes().size());
+            assertEquals(String.valueOf(arc.getId()), data.quests().get(0).arcId());
+            assertEquals(String.valueOf(quest.getId()), data.scenes().get(0).questId());
+        }
 
-        // Binaires a copier : 3 (1 image + 2 fichiers).
-        assertEquals(3, bundle.binaries().size());
+        @Test
+        void battlemapsMapToAssetRefsWithLegacyFieldPreserved() {
+            // Battlemaps : refs vers les assets fichiers (prefixe "file-"), label preserve,
+            // et champ legacy `battlemap` (1re carte) maintenu pour les modules existants.
+            FoundryBundle.Scene scene = data.scenes().get(0);
+            assertEquals(1, scene.battlemaps().size());
+            assertEquals("Nuit", scene.battlemaps().get(0).label());
+            assertEquals("file-" + media.getId(), scene.battlemaps().get(0).mediaAssetId());
+            assertEquals("file-" + sidecar.getId(), scene.battlemaps().get(0).dataAssetId());
+            assertNotNull(scene.battlemap());
+            assertEquals("file-" + media.getId(), scene.battlemap().mediaAssetId());
+            assertEquals("file-" + sidecar.getId(), scene.battlemap().dataAssetId());
+            assertEquals(List.of("img-" + img.getId()), scene.illustrationAssetIds());
+        }
 
-        // PNJ : champs resolus via le template (TEXT + KEY_VALUE_LIST).
-        assertEquals(1, data.npcs().size());
-        List<FoundryBundle.Field> fields = data.npcs().get(0).fields();
-        assertTrue(fields.stream().anyMatch(f ->
-                "text".equals(f.type()) && "Histoire".equals(f.label())
-                        && "Ancien capitaine de la garde".equals(f.value())));
-        FoundryBundle.Field caracs = fields.stream()
-                .filter(f -> "keyValueList".equals(f.type()) && "Caracs".equals(f.label()))
-                .findFirst().orElseThrow();
-        assertEquals(1, caracs.entries().size());
-        assertEquals("FOR", caracs.entries().get(0).label());
-        assertEquals("16", caracs.entries().get(0).value());
+        @Test
+        void assetsAndBinariesAreIndexed() {
+            // Index des assets : 1 image + 2 fichiers, chacun avec un chemin coherent.
+            assertEquals(3, data.assets().size());
+            assertTrue(data.assets().stream().anyMatch(a ->
+                    a.id().equals("file-" + media.getId()) && a.kind().equals("battlemapMedia")
+                            && a.path().equals("assets/battlemaps/file-" + media.getId() + ".mp4")));
+            assertTrue(data.assets().stream().anyMatch(a ->
+                    a.id().equals("img-" + img.getId()) && a.kind().equals("image")
+                            && a.path().equals("assets/images/img-" + img.getId() + ".webp")));
 
-        // Table aléatoire -> RollTable (formule + entrées avec intervalles).
-        assertEquals(1, data.randomTables().size());
-        FoundryBundle.RandomTable rt = data.randomTables().get(0);
-        assertEquals("Rencontres", rt.name());
-        assertEquals("1d6", rt.diceFormula());
-        assertEquals(2, rt.entries().size());
-        assertEquals("Gobelins", rt.entries().get(0).label());
-        assertEquals(1, rt.entries().get(0).minRoll());
-        assertEquals(3, rt.entries().get(0).maxRoll());
+            // Binaires a copier : 3 (1 image + 2 fichiers).
+            assertEquals(3, bundle.binaries().size());
+        }
 
-        // Manifest
-        assertEquals("1.0", bundle.manifest().formatVersion());
-        assertEquals("plain", bundle.manifest().contentFormat());
-        assertEquals(1, bundle.manifest().counts().get("scenes"));
-        assertEquals(1, bundle.manifest().counts().get("randomTables"));
-        assertEquals(3, bundle.manifest().counts().get("assets"));
+        @Test
+        void npcFieldsAreResolvedFromTemplate() {
+            // PNJ : champs resolus via le template (TEXT + KEY_VALUE_LIST).
+            assertEquals(1, data.npcs().size());
+            List<FoundryBundle.Field> fields = data.npcs().get(0).fields();
+            assertTrue(fields.stream().anyMatch(f ->
+                    "text".equals(f.type()) && "Histoire".equals(f.label())
+                            && "Ancien capitaine de la garde".equals(f.value())));
+            FoundryBundle.Field caracs = fields.stream()
+                    .filter(f -> "keyValueList".equals(f.type()) && "Caracs".equals(f.label()))
+                    .findFirst().orElseThrow();
+            assertEquals(1, caracs.entries().size());
+            assertEquals("FOR", caracs.entries().get(0).label());
+            assertEquals("16", caracs.entries().get(0).value());
+        }
+
+        @Test
+        void randomTableMapsToRollTable() {
+            // Table aléatoire -> RollTable (formule + entrées avec intervalles).
+            assertEquals(1, data.randomTables().size());
+            FoundryBundle.RandomTable rt = data.randomTables().get(0);
+            assertEquals("Rencontres", rt.name());
+            assertEquals("1d6", rt.diceFormula());
+            assertEquals(2, rt.entries().size());
+            assertEquals("Gobelins", rt.entries().get(0).label());
+            assertEquals(1, rt.entries().get(0).minRoll());
+            assertEquals(3, rt.entries().get(0).maxRoll());
+        }
+
+        @Test
+        void manifestCountsAreCorrect() {
+            // Manifest
+            assertEquals("1.0", bundle.manifest().formatVersion());
+            assertEquals("plain", bundle.manifest().contentFormat());
+            assertEquals(1, bundle.manifest().counts().get("scenes"));
+            assertEquals(1, bundle.manifest().counts().get("randomTables"));
+            assertEquals(3, bundle.manifest().counts().get("assets"));
+        }
     }
 
     @Test

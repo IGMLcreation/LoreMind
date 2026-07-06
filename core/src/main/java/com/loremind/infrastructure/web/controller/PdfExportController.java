@@ -51,7 +51,10 @@ public class PdfExportController {
     private static String slug(String name) {
         if (name == null || name.isBlank()) return "campagne";
         String s = name.trim().replaceAll("[^a-zA-Z0-9-_]+", "_").replaceAll("_+", "_");
-        s = s.replaceAll("^_|_$", "");
+        // Les runs de "_" sont deja fusionnes ci-dessus : au plus un "_" de bord.
+        // On le retire par manipulation de chaine (pas de regex ancree : ni S5850 ni S5852).
+        if (s.startsWith("_")) s = s.substring(1);
+        if (s.endsWith("_")) s = s.substring(0, s.length() - 1);
         return s.isBlank() ? "campagne" : s;
     }
 }

@@ -9,7 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * Adaptateur d'infrastructure : implémente le Port SessionEntryRepository.
@@ -38,7 +37,7 @@ public class PostgresSessionEntryRepository implements SessionEntryRepository {
     public List<SessionEntry> findBySessionId(String sessionId) {
         return jpaRepository.findBySessionIdOrderByOccurredAtAsc(sessionId).stream()
                 .map(this::toDomain)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override

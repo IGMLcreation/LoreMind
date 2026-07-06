@@ -34,7 +34,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Endpoint AGRÉGÉ de l'arbre de campagne : tout ce dont la sidebar a besoin en UNE
@@ -65,6 +64,11 @@ public class CampaignTreeController {
     private final RandomTableMapper randomTableMapper;
     private final QuestMapper questMapper;
 
+    // S107 (trop de paramètres) : constructeur d'INJECTION pur, sans logique — l'endpoint
+    // est un agrégat volontaire (une requête pour toute la sidebar), il consomme donc
+    // naturellement les repos+mappers de chaque type. Grouper dans des holders ne ferait
+    // que déplacer le compte de paramètres sans rien clarifier.
+    @SuppressWarnings("java:S107")
     public CampaignTreeController(CampaignRepository campaignRepository,
                                   ArcRepository arcRepository,
                                   ChapterRepository chapterRepository,
@@ -124,25 +128,25 @@ public class CampaignTreeController {
         for (Arc arc : arcs) {
             List<Chapter> chapters = chapterRepository.findByArcId(arc.getId());
             chaptersByArc.put(arc.getId(),
-                    chapters.stream().map(chapterMapper::toDTO).collect(Collectors.toList()));
+                    chapters.stream().map(chapterMapper::toDTO).toList());
             for (Chapter chapter : chapters) {
                 scenesByChapter.put(chapter.getId(),
                         sceneRepository.findByChapterId(chapter.getId()).stream()
-                                .map(sceneMapper::toDTO).collect(Collectors.toList()));
+                                .map(sceneMapper::toDTO).toList());
             }
         }
 
         return ResponseEntity.ok(new CampaignTreeDTO(
-                arcs.stream().map(arcMapper::toDTO).collect(Collectors.toList()),
+                arcs.stream().map(arcMapper::toDTO).toList(),
                 chaptersByArc,
                 scenesByChapter,
                 npcRepository.findByCampaignId(campaignId).stream()
-                        .map(npcMapper::toDTO).collect(Collectors.toList()),
+                        .map(npcMapper::toDTO).toList(),
                 randomTableRepository.findByCampaignId(campaignId).stream()
-                        .map(randomTableMapper::toDTO).collect(Collectors.toList()),
+                        .map(randomTableMapper::toDTO).toList(),
                 enemyRepository.findByCampaignId(campaignId),
                 questRepository.findByCampaignId(campaignId).stream()
-                        .map(questMapper::toDTO).collect(Collectors.toList()),
+                        .map(questMapper::toDTO).toList(),
                 readinessService.assess(campaignId)));
     }
 }

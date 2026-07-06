@@ -34,7 +34,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -81,7 +80,7 @@ class ImageRefRemapOnImportTest {
     private static final String FILE_KEY = "files/remap-map.json";
 
     @Test
-    void importIntoDbWithFreshIds_remapsEveryImageAndFileRef() throws IOException {
+    void importIntoDbWithFreshIds_remapsEveryImageAndFileRef() {
         // ----- Seed : image + fichier référencés par un peu tout -----
         ImageJpaEntity image = imageRepo.save(ImageJpaEntity.builder()
                 .filename("portrait.png").contentType("image/png").sizeBytes(4).storageKey(IMG_KEY).build());

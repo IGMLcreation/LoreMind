@@ -40,6 +40,8 @@ class LegacyQuestConverter {
      * quête). Les prérequis / nœuds / relatedPageIds sont remappés en 2e passe, comme
      * pour les quêtes v2.
      */
+    // S125 : faux positif — commentaires explicatifs (prose), pas de code mort.
+    @SuppressWarnings("java:S125")
     void convertLegacyChaptersToQuests(ContentExport export, ImportIdMaps maps) {
         Map<Long, ContentExport.ArcDto> arcById = new HashMap<>();
         for (ContentExport.ArcDto a : nullSafe(export.arcs())) arcById.put(a.id(), a);

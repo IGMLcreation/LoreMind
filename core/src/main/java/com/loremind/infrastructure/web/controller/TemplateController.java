@@ -10,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * REST Controller pour le contexte Template.
@@ -63,7 +62,7 @@ public class TemplateController {
                 : templateService.getAllTemplates();
         List<TemplateDTO> dtos = templates.stream()
                 .map(templateMapper::toDTO)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(dtos);
     }
 
@@ -71,7 +70,7 @@ public class TemplateController {
     public ResponseEntity<List<TemplateDTO>> searchTemplates(@RequestParam("q") String query) {
         List<TemplateDTO> dtos = templateService.searchTemplates(query).stream()
                 .map(templateMapper::toDTO)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(dtos);
     }
 

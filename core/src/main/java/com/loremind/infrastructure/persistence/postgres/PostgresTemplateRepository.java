@@ -9,7 +9,6 @@ import org.springframework.stereotype.Repository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * Adaptateur d'infrastructure qui implémente le Port TemplateRepository.
@@ -40,14 +39,14 @@ public class PostgresTemplateRepository implements TemplateRepository {
     public List<Template> findAll() {
         return jpaRepository.findAll().stream()
                 .map(this::toDomainEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
     public List<Template> findByLoreId(String loreId) {
         return jpaRepository.findByLoreId(Long.parseLong(loreId)).stream()
                 .map(this::toDomainEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -64,7 +63,7 @@ public class PostgresTemplateRepository implements TemplateRepository {
     public List<Template> searchByName(String query) {
         return jpaRepository.findByNameContainingIgnoreCase(query).stream()
                 .map(this::toDomainEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     // --- Mapping ----------------------------------------------------------

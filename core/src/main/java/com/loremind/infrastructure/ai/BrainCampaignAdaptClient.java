@@ -26,22 +26,25 @@ import java.util.function.Consumer;
 @Component
 public class BrainCampaignAdaptClient implements CampaignPdfAdvisor {
 
-    private static final String ADAPT_PATH = "/adapt/campaign/stream";
     private static final ParameterizedTypeReference<ServerSentEvent<String>> SSE_STRING_TYPE =
             new ParameterizedTypeReference<>() {};
 
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
     private final long timeoutSeconds;
+    // Route du Brain surchargeable par config (défaut = contrat d'API actuel).
+    private final String adaptPath;
 
     public BrainCampaignAdaptClient(
             WebClient.Builder webClientBuilder,
             ObjectMapper objectMapper,
             @Value("${brain.base-url}") String baseUrl,
-            @Value("${brain.import-timeout-seconds:600}") long timeoutSeconds) {
+            @Value("${brain.import-timeout-seconds:600}") long timeoutSeconds,
+            @Value("${brain.paths.adapt-campaign:/adapt/campaign/stream}") String adaptPath) {
         this.webClient = webClientBuilder.baseUrl(baseUrl).build();
         this.objectMapper = objectMapper;
         this.timeoutSeconds = timeoutSeconds;
+        this.adaptPath = adaptPath;
     }
 
     @Override
@@ -65,7 +68,7 @@ public class BrainCampaignAdaptClient implements CampaignPdfAdvisor {
         parts.part("messages", (messagesJson == null || messagesJson.isBlank()) ? "[]" : messagesJson);
 
         Flux<ServerSentEvent<String>> flux = webClient.post()
-                .uri(ADAPT_PATH)
+                .uri(adaptPath)
                 .header(UserLanguageHolder.HEADER, UserLanguageHolder.get())
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .accept(MediaType.TEXT_EVENT_STREAM)

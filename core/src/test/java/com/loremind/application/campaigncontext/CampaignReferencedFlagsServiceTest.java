@@ -20,7 +20,7 @@ import static org.mockito.Mockito.*;
  * Vérifie l'énumération dédupliquée + triée des FlagSet référencés par les quêtes.
  */
 @ExtendWith(MockitoExtension.class)
-public class CampaignReferencedFlagsServiceTest {
+class CampaignReferencedFlagsServiceTest {
 
     @Mock
     private QuestRepository questRepository;

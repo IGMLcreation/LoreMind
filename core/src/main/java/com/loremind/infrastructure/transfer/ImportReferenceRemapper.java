@@ -58,7 +58,20 @@ class ImportReferenceRemapper {
     }
 
     void remap(ImportIdMaps maps) {
-        // LoreNode.parentId
+        remapLoreNodeParents(maps);
+        remapTemplateDefaultNodes(maps);
+        remapCampaignWeakRefs(maps);
+        remapPageRelatedPages(maps);
+        remapArcRelatedPages(maps);
+        remapChapterRelatedPages(maps);
+        remapNpcRelatedPages(maps);
+        remapSceneRefs(maps);
+        remapQuestRefs(maps);
+        remapClockTriggerRefs(maps);
+    }
+
+    /** LoreNode.parentId. */
+    private void remapLoreNodeParents(ImportIdMaps maps) {
         for (LoreNodeJpaEntity e : maps.loreNodesToFix) {
             Long newParent = maps.loreNodeMap.get(e.getParentId());
             if (newParent != null) {
@@ -66,8 +79,10 @@ class ImportReferenceRemapper {
                 loreNodeRepo.save(e);
             }
         }
+    }
 
-        // Template.defaultNodeId
+    /** Template.defaultNodeId. */
+    private void remapTemplateDefaultNodes(ImportIdMaps maps) {
         for (ContentExport.TemplateDto d : maps.templatesWithDefaultNode) {
             Long newTemplateId = maps.templateMap.get(d.id());
             Long newNode = maps.loreNodeMap.get(d.defaultNodeId());
@@ -78,8 +93,10 @@ class ImportReferenceRemapper {
                 });
             }
         }
+    }
 
-        // Campaign.loreId & gameSystemId (refs faibles String -> remap via maps Long).
+    /** Campaign.loreId & gameSystemId (refs faibles String -> remap via maps Long). */
+    private void remapCampaignWeakRefs(ImportIdMaps maps) {
         for (Long newCampaignId : maps.campaignMap.values()) {
             campaignRepo.findById(newCampaignId).ifPresent(c -> {
                 String newLore = IdRemapper.remapStringId(maps.loreMap, c.getLoreId());
@@ -89,40 +106,50 @@ class ImportReferenceRemapper {
                 campaignRepo.save(c);
             });
         }
+    }
 
-        // Page.relatedPageIds
+    /** Page.relatedPageIds. */
+    private void remapPageRelatedPages(ImportIdMaps maps) {
         for (Long newPageId : maps.pageMap.values()) {
             pageRepo.findById(newPageId).ifPresent(p -> {
                 p.setRelatedPageIds(IdRemapper.remapStringList(maps.pageMap, p.getRelatedPageIds()));
                 pageRepo.save(p);
             });
         }
+    }
 
-        // Arc.relatedPageIds
+    /** Arc.relatedPageIds. */
+    private void remapArcRelatedPages(ImportIdMaps maps) {
         for (Long newArcId : maps.arcMap.values()) {
             arcRepo.findById(newArcId).ifPresent(a -> {
                 a.setRelatedPageIds(IdRemapper.remapStringList(maps.pageMap, a.getRelatedPageIds()));
                 arcRepo.save(a);
             });
         }
+    }
 
-        // Chapter.relatedPageIds (les chapitres n'ont plus de prérequis depuis le Niveau 1)
+    /** Chapter.relatedPageIds (les chapitres n'ont plus de prérequis depuis le Niveau 1). */
+    private void remapChapterRelatedPages(ImportIdMaps maps) {
         for (Long newChapterId : maps.chapterMap.values()) {
             chapterRepo.findById(newChapterId).ifPresent(c -> {
                 c.setRelatedPageIds(IdRemapper.remapStringList(maps.pageMap, c.getRelatedPageIds()));
                 chapterRepo.save(c);
             });
         }
+    }
 
-        // Npc.relatedPageIds
+    /** Npc.relatedPageIds. */
+    private void remapNpcRelatedPages(ImportIdMaps maps) {
         for (Long newNpcId : maps.npcMap.values()) {
             npcRepo.findById(newNpcId).ifPresent(n -> {
                 n.setRelatedPageIds(IdRemapper.remapStringList(maps.pageMap, n.getRelatedPageIds()));
                 npcRepo.save(n);
             });
         }
+    }
 
-        // Scene.relatedPageIds + enemyIds(map Enemy) + branches.targetSceneId(map Scene)
+    /** Scene.relatedPageIds + enemyIds(map Enemy) + branches.targetSceneId(map Scene). */
+    private void remapSceneRefs(ImportIdMaps maps) {
         for (Long newSceneId : maps.sceneMap.values()) {
             sceneRepo.findById(newSceneId).ifPresent(s -> {
                 s.setRelatedPageIds(IdRemapper.remapStringList(maps.pageMap, s.getRelatedPageIds()));
@@ -131,9 +158,13 @@ class ImportReferenceRemapper {
                 sceneRepo.save(s);
             });
         }
+    }
 
-        // Quest : prereqs(QuestCompleted -> questMap), nodes(CHAPTER->chapterMap / SCENE->sceneMap),
-        //         relatedPageIds(pageMap). En 2e passe car sceneMap n'est prêt qu'ici.
+    /**
+     * Quest : prereqs(QuestCompleted -> questMap), nodes(CHAPTER->chapterMap / SCENE->sceneMap),
+     * relatedPageIds(pageMap). En 2e passe car sceneMap n'est prêt qu'ici.
+     */
+    private void remapQuestRefs(ImportIdMaps maps) {
         for (Long newQuestId : maps.questMap.values()) {
             questRepo.findById(newQuestId).ifPresent(q -> {
                 q.setPrerequisites(IdRemapper.remapPrerequisites(maps.questMap, q.getPrerequisites()));
@@ -142,9 +173,13 @@ class ImportReferenceRemapper {
                 questRepo.save(q);
             });
         }
+    }
 
-        // Clock : triggerRef d'une horloge QUEST_COMPLETED remappé vers la quête importée
-        // (FLAG_SET = nom de fait, SESSION_ENDED = sans ref : rien à remapper).
+    /**
+     * Clock : triggerRef d'une horloge QUEST_COMPLETED remappé vers la quête importée
+     * (FLAG_SET = nom de fait, SESSION_ENDED = sans ref : rien à remapper).
+     */
+    private void remapClockTriggerRefs(ImportIdMaps maps) {
         for (Long newClockId : maps.clockMap.values()) {
             clockRepo.findById(newClockId).ifPresent(c -> {
                 if (c.getTriggerType() == ClockTrigger.QUEST_COMPLETED) {

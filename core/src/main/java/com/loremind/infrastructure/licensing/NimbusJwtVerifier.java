@@ -8,7 +8,7 @@ import com.nimbusds.jose.crypto.Ed25519Verifier;
 import com.nimbusds.jose.jwk.OctetKeyPair;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
-import org.bouncycastle.asn1.ASN1Sequence;
+import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,8 +21,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
+import java.time.Instant;
 import java.util.Base64;
-import java.util.Date;
 
 /**
  * Verifie les JWT EdDSA/Ed25519 emis par le relais Patreon.
@@ -88,25 +88,48 @@ public class NimbusJwtVerifier implements JwtVerifier {
 
     @Override
     public LicenseClaims verify(String rawJwt) throws JwtVerificationException {
+        ensureConfigured();
+        ensureNotBlank(rawJwt);
+
+        SignedJWT signed = parseJwt(rawJwt);
+        ensureExpectedAlgorithm(signed);
+        verifySignature(signed);
+
+        JWTClaimsSet claims = parseClaims(signed);
+        ensureExpectedIssuer(claims);
+        ensureExpectedAudience(claims);
+
+        return toLicenseClaims(claims);
+    }
+
+    private void ensureConfigured() throws JwtVerificationException {
         if (publicKey == null) {
             throw new JwtVerificationException("JWT verifier not configured");
         }
+    }
+
+    private static void ensureNotBlank(String rawJwt) throws JwtVerificationException {
         if (rawJwt == null || rawJwt.isBlank()) {
             throw new JwtVerificationException("JWT is empty");
         }
+    }
 
-        SignedJWT signed;
+    private static SignedJWT parseJwt(String rawJwt) throws JwtVerificationException {
         try {
-            signed = SignedJWT.parse(rawJwt);
+            return SignedJWT.parse(rawJwt);
         } catch (ParseException e) {
             throw new JwtVerificationException("JWT parse error: " + e.getMessage(), e);
         }
+    }
 
+    private static void ensureExpectedAlgorithm(SignedJWT signed) throws JwtVerificationException {
         JWSAlgorithm alg = signed.getHeader().getAlgorithm();
         if (!JWSAlgorithm.EdDSA.equals(alg)) {
             throw new JwtVerificationException("Unexpected JWT algorithm: " + alg);
         }
+    }
 
+    private void verifySignature(SignedJWT signed) throws JwtVerificationException {
         try {
             JWSVerifier verifier = new Ed25519Verifier(publicKey);
             if (!signed.verify(verifier)) {
@@ -115,31 +138,43 @@ public class NimbusJwtVerifier implements JwtVerifier {
         } catch (Exception e) {
             throw new JwtVerificationException("JWT signature verification failed: " + e.getMessage(), e);
         }
+    }
 
-        JWTClaimsSet claims;
+    private static JWTClaimsSet parseClaims(SignedJWT signed) throws JwtVerificationException {
         try {
-            claims = signed.getJWTClaimsSet();
+            return signed.getJWTClaimsSet();
         } catch (ParseException e) {
             throw new JwtVerificationException("JWT claims parse error", e);
         }
+    }
 
+    private void ensureExpectedIssuer(JWTClaimsSet claims) throws JwtVerificationException {
         if (!expectedIssuer.equals(claims.getIssuer())) {
             throw new JwtVerificationException("JWT issuer mismatch: " + claims.getIssuer());
         }
+    }
+
+    private void ensureExpectedAudience(JWTClaimsSet claims) throws JwtVerificationException {
         if (claims.getAudience() == null || !claims.getAudience().contains(expectedAudience)) {
             throw new JwtVerificationException("JWT audience mismatch");
         }
+    }
 
-        Date exp = claims.getExpirationTime();
-        Date iat = claims.getIssueTime();
+    /**
+     * Construit les LicenseClaims depuis les claims validés (issuer/audience/signature).
+     * Note : on ne refuse pas un JWT expiré ici. C'est au LicenseService de decider ce
+     * qu'il fait d'un JWT expire (grace period, refresh, etc.). La verification de
+     * signature reste valide tant que la cle existe.
+     */
+    private static LicenseClaims toLicenseClaims(JWTClaimsSet claims) throws JwtVerificationException {
+        // Nimbus n'expose exp/iat qu'en java.util.Date : converti en Instant SANS variable
+        // Date intermediaire (aucune reference au type legacy dans cette classe).
         String sub = claims.getSubject();
-        if (exp == null || iat == null || sub == null) {
+        if (claims.getExpirationTime() == null || claims.getIssueTime() == null || sub == null) {
             throw new JwtVerificationException("JWT missing required claims");
         }
-
-        // Note : on ne refuse pas un JWT expire ici. C'est au LicenseService
-        // de decider ce qu'il fait d'un JWT expire (grace period, refresh, etc.).
-        // La verification de signature reste valide tant que la cle existe.
+        Instant exp = claims.getExpirationTime().toInstant();
+        Instant iat = claims.getIssueTime().toInstant();
 
         String tierId;
         String instanceId;
@@ -153,13 +188,7 @@ public class NimbusJwtVerifier implements JwtVerifier {
             throw new JwtVerificationException("JWT missing tier_id or instance_id");
         }
 
-        return new LicenseClaims(
-                sub,
-                tierId,
-                instanceId,
-                iat.toInstant(),
-                exp.toInstant()
-        );
+        return new LicenseClaims(sub, tierId, instanceId, iat, exp);
     }
 
     /**
@@ -174,7 +203,7 @@ public class NimbusJwtVerifier implements JwtVerifier {
                     .replace("-----END PUBLIC KEY-----", "")
                     .replaceAll("\\s+", "");
             byte[] der = Base64.getDecoder().decode(base64);
-            SubjectPublicKeyInfo spki = SubjectPublicKeyInfo.getInstance(ASN1Sequence.fromByteArray(der));
+            SubjectPublicKeyInfo spki = SubjectPublicKeyInfo.getInstance(ASN1Primitive.fromByteArray(der));
             byte[] keyBytes = spki.getPublicKeyData().getOctets();
             String x = Base64.getUrlEncoder().withoutPadding().encodeToString(keyBytes);
             return new OctetKeyPair.Builder(com.nimbusds.jose.jwk.Curve.Ed25519, com.nimbusds.jose.util.Base64URL.from(x))

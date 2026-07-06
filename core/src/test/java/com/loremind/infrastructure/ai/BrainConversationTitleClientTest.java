@@ -2,6 +2,8 @@ package com.loremind.infrastructure.ai;
 
 import com.loremind.domain.conversationcontext.ConversationMessage;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -85,31 +87,15 @@ class BrainConversationTitleClientTest {
         assertThat(result).isEqualTo("Ok");
     }
 
-    @Test
-    void titre_absent_renvoie_fallback() {
-        BrainConversationTitleClient client = clientReturning(jsonOk("{\"autre\":\"x\"}"));
-        String result = client.generate(List.of(msg("user", "Hello")));
-        assertThat(result).isEqualTo(FALLBACK);
-    }
-
-    @Test
-    void titre_vide_renvoie_fallback() {
-        BrainConversationTitleClient client = clientReturning(jsonOk("{\"title\":\"\"}"));
-        String result = client.generate(List.of(msg("user", "Hello")));
-        assertThat(result).isEqualTo(FALLBACK);
-    }
-
-    @Test
-    void titre_blanc_renvoie_fallback() {
-        BrainConversationTitleClient client = clientReturning(jsonOk("{\"title\":\"   \"}"));
-        String result = client.generate(List.of(msg("user", "Hello")));
-        assertThat(result).isEqualTo(FALLBACK);
-    }
-
-    @Test
-    void corps_json_vide_renvoie_fallback() {
-        // Map décodée non null mais sans clé "title".
-        BrainConversationTitleClient client = clientReturning(jsonOk("{}"));
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "{\"autre\":\"x\"}",   // titre absent
+            "{\"title\":\"\"}",    // titre vide
+            "{\"title\":\"   \"}", // titre blanc
+            "{}"                   // corps JSON vide (Map décodée non null mais sans clé "title")
+    })
+    void reponse_sans_titre_exploitable_renvoie_fallback(String jsonBody) {
+        BrainConversationTitleClient client = clientReturning(jsonOk(jsonBody));
         String result = client.generate(List.of(msg("user", "Hello")));
         assertThat(result).isEqualTo(FALLBACK);
     }

@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/npcs")
@@ -39,7 +38,7 @@ public class NpcController {
     public ResponseEntity<List<NpcDTO>> getNpcsByCampaign(@PathVariable String campaignId) {
         List<NpcDTO> dtos = npcService.getNpcsByCampaignId(campaignId).stream()
                 .map(npcMapper::toDTO)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(dtos);
     }
 
@@ -48,7 +47,7 @@ public class NpcController {
     public ResponseEntity<List<NpcDTO>> search(@RequestParam("q") String query) {
         List<NpcDTO> dtos = npcService.searchNpcs(query).stream()
                 .map(npcMapper::toDTO)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(dtos);
     }
 

@@ -24,6 +24,8 @@ class PostgresImageRepositoryTest {
 
     @Autowired private ImageRepository repository;
 
+    private static final LocalDateTime FIXED_TIME = LocalDateTime.of(2024, java.time.Month.JANUARY, 1, 0, 0);
+
     @Test
     void save_imageWithAllMetadata_roundTrips() {
         Image image = Image.builder()
@@ -31,7 +33,7 @@ class PostgresImageRepositoryTest {
                 .contentType("image/jpeg")
                 .sizeBytes(125_000L)
                 .storageKey("images/abc123.jpg")
-                .uploadedAt(LocalDateTime.now())
+                .uploadedAt(FIXED_TIME)
                 .build();
 
         Image saved = repository.save(image);
@@ -49,7 +51,7 @@ class PostgresImageRepositoryTest {
     void deleteById_removesImage() {
         Image saved = repository.save(Image.builder()
                 .filename("x.png").contentType("image/png").sizeBytes(100L)
-                .storageKey("k").uploadedAt(LocalDateTime.now()).build());
+                .storageKey("k").uploadedAt(FIXED_TIME).build());
 
         assertTrue(repository.existsById(saved.getId()));
         repository.deleteById(saved.getId());

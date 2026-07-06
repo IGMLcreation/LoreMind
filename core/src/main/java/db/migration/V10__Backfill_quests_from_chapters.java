@@ -22,9 +22,14 @@ import java.sql.Statement;
  * en Java (et non SQL) pour le seul point non portable : le reset de la séquence
  * d'identité côté Postgres après insertion d'ids explicites.</p>
  */
+@SuppressWarnings("java:S101") // Nommage V10__... IMPOSE par la convention Flyway des migrations Java.
 public class V10__Backfill_quests_from_chapters extends BaseJavaMigration {
 
     @Override
+    // S2077 : la seule valeur concatenee est `nextId`, un long calcule depuis MAX(id)
+    // de la base elle-meme (aucun input externe) ; setval/RESTART WITH ne sont pas
+    // parametrables en bind JDBC.
+    @SuppressWarnings("java:S2077")
     public void migrate(Context context) throws Exception {
         Connection conn = context.getConnection();
         try (Statement st = conn.createStatement()) {

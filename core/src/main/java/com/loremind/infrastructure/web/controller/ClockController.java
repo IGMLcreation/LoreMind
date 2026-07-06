@@ -9,7 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * API REST des Horloges de progression (Clocks) d'une Partie (Play Context).
@@ -37,7 +36,7 @@ public class ClockController {
     public ResponseEntity<List<ClockDTO>> list(@PathVariable String playthroughId) {
         List<ClockDTO> dtos = clockService.getByPlaythrough(playthroughId).stream()
                 .map(clockMapper::toDTO)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(dtos);
     }
 

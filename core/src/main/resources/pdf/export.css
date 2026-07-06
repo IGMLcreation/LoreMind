@@ -1,0 +1,108 @@
+@page { size: A4; margin: 2.2cm 1.7cm 2cm;
+  @top-center { content: '__HEADER__'; font-family: 'DejaVu Sans', sans-serif; font-size: 7.5pt;
+    letter-spacing: .22em; text-transform: uppercase; color: #b3a9d6; }
+  @bottom-center { content: counter(page); font-family: 'DejaVu Sans', sans-serif; font-size: 9pt; color: #999; } }
+@page:first { @top-center { content: none; } } /* NOSONAR css:S4662 — pseudo-page CSS paged media, supportee par openhtmltopdf */
+body { font-family: 'DejaVu Serif', serif; font-size: 10pt; color: #26243a; line-height: 1.5; }
+a { color: inherit; text-decoration: none; }
+/* --- Couverture --- */
+.cover { text-align: center; padding-top: 5.5cm; page-break-after: always; }
+.cover .subtitle { font-family: 'DejaVu Sans', sans-serif; font-size: 11pt; letter-spacing: .35em;
+  text-transform: uppercase; color: #8a7bc8; }
+.cover-title { font-family: 'DejaVu Sans', sans-serif; font-size: 30pt; text-transform: uppercase;
+  letter-spacing: .04em; color: #2e2a4a; margin: .45cm 0 0; }
+.cover-rule { width: 3.6cm; border-bottom: 2.5pt solid #8a7bc8; margin: .5cm auto; }
+.cover-meta { font-family: 'DejaVu Sans', sans-serif; font-size: 9.5pt; color: #8076a3; letter-spacing: .06em; }
+.cover-desc { margin: 1.1cm auto 0; max-width: 12.5cm; color: #444; }
+.cover-date { margin-top: 1.4cm; font-family: 'DejaVu Sans', sans-serif; font-size: 8.5pt; color: #b0aac4; }
+/* --- Sommaire --- */
+.toc-page { page-break-after: always; }
+h1.toc-title { font-family: 'DejaVu Sans', sans-serif; font-size: 20pt; text-transform: uppercase;
+  letter-spacing: .06em; color: #2e2a4a; border-bottom: 2pt solid #8a7bc8;
+  padding-bottom: 4pt; margin: 0 0 .55cm; }
+table.toc { width: 100%; border-collapse: collapse; font-family: 'DejaVu Sans', sans-serif; }
+.toc td { border-bottom: 1pt dotted #d8d2e8; padding: 3pt 0 2pt; vertical-align: bottom; }
+.toc td.p { width: 1.2cm; text-align: right; font-size: 9.5pt; color: #666; }
+.toc td.p a:after { content: target-counter(attr(href), page); }
+.toc tr.lvl0 td { font-weight: bold; font-size: 11pt; color: #2e2a4a; padding-top: 9pt;
+  border-bottom: 1pt solid #b9aede; }
+.toc tr.lvl1 td.t { padding-left: .55cm; font-size: 10pt; }
+.toc tr.lvl2 td.t { padding-left: 1.1cm; font-size: 9pt; color: #555; }
+/* --- Parties et hierarchie narrative : Arc (bandeau) > Chapitre (teinte) > Scene (carte). --- */
+h1.part { page-break-before: always; page-break-after: avoid; font-family: 'DejaVu Sans', sans-serif;
+  font-size: 20pt; text-transform: uppercase; letter-spacing: .06em; color: #2e2a4a;
+  border-bottom: 2pt solid #8a7bc8; padding-bottom: 4pt; margin: 0 0 .55cm; }
+h3.folder { page-break-after: avoid; font-family: 'DejaVu Sans', sans-serif; color: #8a7bc8;
+  text-transform: uppercase; letter-spacing: .05em; font-size: 10.5pt;
+  border-bottom: 1pt dotted #ccc; padding-bottom: 2pt; margin: .9em 0 .3em; }
+.arc { margin: .4cm 0 .3cm; }
+.arc-head { page-break-after: avoid; page-break-inside: avoid; font-family: 'DejaVu Sans', sans-serif; background: #2e2a4a; color: #fff;
+  font-size: 14pt; font-weight: bold; padding: .22cm .4cm; border-radius: 4pt; margin: 0 0 .35cm; }
+.chapter { margin: .5cm 0 .35cm; }
+.chapter-head { page-break-after: avoid; page-break-inside: avoid; font-family: 'DejaVu Sans', sans-serif; background: #f1eef9;
+  border-left: 5pt solid #8a7bc8; padding: .16cm .4cm; font-size: 12.5pt; font-weight: bold;
+  color: #463b78; margin: 0 0 .25cm; }
+.scene { margin: .3cm 0 .35cm .35cm; border: 1pt solid #e6e6ee; border-left: 3pt solid #9bb06a;
+  border-radius: 4pt; padding: .25cm .4cm; background: #fbfbfd; }
+.scene-head { page-break-after: avoid; page-break-inside: avoid; font-family: 'DejaVu Sans', sans-serif; font-size: 11.5pt;
+  font-weight: bold; color: #5a6e3a; margin-bottom: .12cm; }
+.room { margin: .22cm 0 .22cm .3cm; border: 1pt solid #ece7dc; border-left: 3pt solid #c9a86a;
+  border-radius: 4pt; padding: .2cm .35cm; background: #fdfcf8; }
+.room-head { page-break-after: avoid; page-break-inside: avoid; font-family: 'DejaVu Sans', sans-serif;
+  font-size: 10.5pt; font-weight: bold; color: #7a5f33; margin-bottom: .08cm; }
+.eyebrow { display: block; font-family: 'DejaVu Sans', sans-serif; font-size: 6.5pt; text-transform: uppercase;
+  letter-spacing: .16em; font-weight: normal; color: #9182bd; }
+.eyebrow-light { color: #c9c0e8; }
+.scene-meta { font-style: italic; color: #6d6787; margin: -.05cm 0 .16cm; }
+/* --- Encadres speciaux (codes visuels des livres de JdR) --- */
+.box { border-radius: 3pt; padding: .2cm .35cm; margin: .2cm 0; page-break-inside: avoid; }
+.box-label { font-family: 'DejaVu Sans', sans-serif; font-size: 7.5pt; text-transform: uppercase;
+  letter-spacing: .1em; font-weight: bold; font-style: normal; margin-bottom: .06cm; }
+.readaloud { background: #faf6ea; border-top: 2pt solid #cbbd93; border-bottom: 2pt solid #cbbd93;
+  border-radius: 0; font-style: italic; }
+.readaloud .box-label { color: #a08b4f; }
+.secret { background: #f5f2fa; border: 1pt dashed #ab9fd6; }
+.secret .box-label { color: #7d6fb0; }
+.combat { background: #fdf5f4; border-left: 3pt solid #c0605a; }
+.combat .box-label { color: #a84f49; }
+.field.ambiance { font-style: italic; }
+.field.ambiance .field-label { font-style: normal; }
+/* --- Champs : libelle en tete de ligne, texte a la suite (style stat-block). --- */
+.field { margin: .16cm 0; }
+.field-label { font-family: 'DejaVu Sans', sans-serif; font-size: 7.5pt; text-transform: uppercase;
+  letter-spacing: .08em; color: #7d6fb0; font-weight: bold; padding-right: .18cm; }
+div.field-label { margin: .12cm 0 .06cm; padding-right: 0; }
+.para { margin: .1cm 0 0; }
+.field ul { margin: .08cm 0; padding-left: .55cm; }
+.field li { margin: 0 0 .05cm; }
+/* --- Cartes (fiches PNJ/ennemis, pages de lore) --- */
+.card { page-break-inside: avoid; border: 1pt solid #e3e0ee; border-radius: 4pt;
+  padding: .32cm .4cm; margin: .32cm 0; background: #fcfcfe; }
+.card-body { display: block; }
+.persona { width: 100%; border-collapse: collapse; }
+.persona-portrait { width: 3cm; vertical-align: top; padding: 0 .45cm 0 0; }
+.persona-portrait img { border: 1pt solid #ccc; border-radius: 3pt; }
+.persona-content { vertical-align: top; }
+.persona-name { font-family: 'DejaVu Sans', sans-serif; font-size: 12pt; font-weight: bold; color: #2e2a4a;
+  margin-bottom: .1cm; }
+.level { font-size: 9pt; color: #8a7bc8; font-weight: normal; }
+/* --- Illustrations et battlemaps --- */
+.illus { margin: .3cm 0; text-align: center; page-break-inside: avoid; }
+.illus img { border: 1pt solid #cfc9e0; border-radius: 3pt; }
+.illus .caption { font-family: 'DejaVu Sans', sans-serif; font-size: 8pt; text-transform: uppercase;
+  letter-spacing: .12em; color: #8076a3; margin-top: .1cm; }
+/* --- Tables --- */
+.stats-table { width: 100%; border-collapse: collapse; font-family: 'DejaVu Sans', sans-serif; font-size: 9pt;
+  margin: .12cm 0 .28cm; }
+.stats-table th, .stats-table td { border-bottom: 1pt solid #e9e6f2; padding: 2.5pt 6pt;
+  text-align: left; vertical-align: top; }
+.stats-table thead th { background: #f1eef9; color: #4a3f7a; border-bottom: 1pt solid #d8d1ec; }
+.stats-table tbody th { width: 32%; color: #555; font-weight: bold; background: #f8f7fc; }
+.stats-table tr.alt td { background: #f6f5fa; }
+.stats-table .roll-col { width: 1.8cm; text-align: center; font-weight: bold; color: #4a3f7a; }
+.stats-table .entry-detail { color: #555; font-size: 8.5pt; }
+.stat-array { border-collapse: collapse; font-family: 'DejaVu Sans', sans-serif; font-size: 9pt;
+  margin: .12cm 0 .28cm; }
+.stat-array th { background: #f1eef9; color: #4a3f7a; border: 1pt solid #ddd6ee;
+  padding: 2.5pt 9pt; text-align: center; }
+.stat-array td { border: 1pt solid #e6e2f2; padding: 2.5pt 9pt; text-align: center; }

@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * REST Controller pour le contexte Arc.
@@ -47,7 +46,7 @@ public class ArcController {
                 : arcService.getAllArcs();
         List<ArcDTO> arcDTOs = arcs.stream()
                 .map(arcMapper::toDTO)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(arcDTOs);
     }
 

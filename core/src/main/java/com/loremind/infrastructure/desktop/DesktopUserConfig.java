@@ -1,5 +1,8 @@
 package com.loremind.infrastructure.desktop;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
@@ -29,6 +32,14 @@ import java.util.Properties;
  * l'ouverture du navigateur (instance gagnante OU 2e double-clic) cible la bonne URL.
  */
 public final class DesktopUserConfig {
+
+    // Utilisé AVANT SpringApplication.run() : Logback s'initialise avec sa config
+    // par défaut (console), puis Spring reprend la main — même destination que
+    // l'ancien System.out, mais horodaté et uniforme avec le reste des logs.
+    private static final Logger log = LoggerFactory.getLogger(DesktopUserConfig.class);
+
+    /** Clé partagée fichier utilisateur / propriété système / Spring. */
+    private static final String SERVER_PORT_PROPERTY = "server.port";
 
     private DesktopUserConfig() {}
 
@@ -69,10 +80,10 @@ public final class DesktopUserConfig {
         try {
             Files.createDirectories(file.getParent());
             Files.writeString(file, DEFAULT_TEMPLATE);
-            System.out.println("[Desktop] Config utilisateur creee : " + file);
+            log.info("[Desktop] Config utilisateur creee : {}", file);
         } catch (IOException e) {
-            System.err.println("[Desktop] Impossible de creer " + file + " : " + e.getMessage()
-                    + " — defauts utilises (port 8080, admin/admin).");
+            log.warn("[Desktop] Impossible de creer {} : {} — defauts utilises (port 8080, admin/admin).",
+                    file, e.getMessage());
         }
     }
 
@@ -87,13 +98,13 @@ public final class DesktopUserConfig {
         int wanted = configuredPort();
         int chosen = isPortFree(wanted) ? wanted : findFreePort(wanted);
         if (chosen != wanted) {
-            System.out.println("[Desktop] Port " + wanted + " occupe — repli sur le port libre " + chosen + ".");
+            log.info("[Desktop] Port {} occupe — repli sur le port libre {}.", wanted, chosen);
         }
-        System.setProperty("server.port", String.valueOf(chosen));
+        System.setProperty(SERVER_PORT_PROPERTY, String.valueOf(chosen));
         try {
             Files.writeString(portFile(), String.valueOf(chosen));
         } catch (IOException e) {
-            System.err.println("[Desktop] Ecriture du port impossible (" + e.getMessage() + ").");
+            log.warn("[Desktop] Ecriture du port impossible ({}).", e.getMessage());
         }
         return chosen;
     }
@@ -104,7 +115,7 @@ public final class DesktopUserConfig {
      * → port configuré → 8080.
      */
     public static int runningPort() {
-        String sys = System.getProperty("server.port");
+        String sys = System.getProperty(SERVER_PORT_PROPERTY);
         if (sys != null && !sys.isBlank()) {
             try { return Integer.parseInt(sys.trim()); } catch (NumberFormatException ignored) { /* fallthrough */ }
         }
@@ -124,7 +135,7 @@ public final class DesktopUserConfig {
             Properties props = new Properties();
             try (InputStream in = Files.newInputStream(file)) {
                 props.load(in);
-                String v = props.getProperty("server.port");
+                String v = props.getProperty(SERVER_PORT_PROPERTY);
                 if (v != null && !v.isBlank()) {
                     return Integer.parseInt(v.trim());
                 }

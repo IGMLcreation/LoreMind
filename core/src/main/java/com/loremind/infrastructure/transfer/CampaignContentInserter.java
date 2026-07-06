@@ -78,7 +78,19 @@ class CampaignContentInserter {
     }
 
     void insert(ContentExport export, ImportIdMaps maps, ImportResult.Builder result) {
-        // -- Campaign (loreId/gameSystemId String remappes en 2e passe)
+        insertCampaigns(export, maps, result);
+        insertArcs(export, maps, result);
+        insertItemCatalogs(export, maps, result);
+        insertRandomTables(export, maps, result);
+        insertChapters(export, maps, result);
+        insertQuests(export, maps, result);
+        insertNpcs(export, maps, result);
+        insertEnemies(export, maps, result);
+        insertScenes(export, maps, result);
+    }
+
+    /** Campaign (loreId/gameSystemId String remappes en 2e passe). */
+    private void insertCampaigns(ContentExport export, ImportIdMaps maps, ImportResult.Builder result) {
         for (ContentExport.CampaignDto d : nullSafe(export.campaigns())) {
             CampaignJpaEntity e = new CampaignJpaEntity();
             e.setName(d.name());
@@ -90,8 +102,10 @@ class CampaignContentInserter {
             maps.campaignMap.put(d.id(), campaignRepo.save(e).getId());
         }
         result.count("campaigns", maps.campaignMap.size());
+    }
 
-        // -- Arc (relatedPageIds remappe en 2e passe)
+    /** Arc (relatedPageIds remappe en 2e passe). */
+    private void insertArcs(ContentExport export, ImportIdMaps maps, ImportResult.Builder result) {
         for (ContentExport.ArcDto d : nullSafe(export.arcs())) {
             ArcJpaEntity e = new ArcJpaEntity();
             e.setName(d.name());
@@ -110,9 +124,12 @@ class CampaignContentInserter {
             maps.arcMap.put(d.id(), arcRepo.save(e).getId());
         }
         result.count("arcs", maps.arcMap.size());
+    }
 
-        // -- ItemCatalog (+ items en cascade)
-        int catalogCount = 0, itemCount = 0;
+    /** ItemCatalog (+ items en cascade). */
+    private void insertItemCatalogs(ContentExport export, ImportIdMaps maps, ImportResult.Builder result) {
+        int catalogCount = 0;
+        int itemCount = 0;
         for (ContentExport.ItemCatalogDto d : nullSafe(export.itemCatalogs())) {
             ItemCatalogJpaEntity e = new ItemCatalogJpaEntity();
             e.setName(d.name());
@@ -138,9 +155,12 @@ class CampaignContentInserter {
         }
         result.count("itemCatalogs", catalogCount);
         result.count("catalogItems", itemCount);
+    }
 
-        // -- RandomTable (+ entries en cascade)
-        int tableCount = 0, entryCount = 0;
+    /** RandomTable (+ entries en cascade). */
+    private void insertRandomTables(ContentExport export, ImportIdMaps maps, ImportResult.Builder result) {
+        int tableCount = 0;
+        int entryCount = 0;
         for (ContentExport.RandomTableDto d : nullSafe(export.randomTables())) {
             RandomTableJpaEntity e = new RandomTableJpaEntity();
             e.setName(d.name());
@@ -167,9 +187,13 @@ class CampaignContentInserter {
         }
         result.count("randomTables", tableCount);
         result.count("randomTableEntries", entryCount);
+    }
 
-        // -- Chapter (relatedPageIds remappes en 2e passe). Les chapitres n'ont plus de
-        //    prérequis (Niveau 1) : d.prerequisitesJson() reste lu par la conversion legacy.
+    /**
+     * Chapter (relatedPageIds remappes en 2e passe). Les chapitres n'ont plus de
+     * prérequis (Niveau 1) : d.prerequisitesJson() reste lu par la conversion legacy.
+     */
+    private void insertChapters(ContentExport export, ImportIdMaps maps, ImportResult.Builder result) {
         for (ContentExport.ChapterDto d : nullSafe(export.chapters())) {
             ChapterJpaEntity e = new ChapterJpaEntity();
             e.setName(d.name());
@@ -185,9 +209,16 @@ class CampaignContentInserter {
             maps.chapterMap.put(d.id(), chapterRepo.save(e).getId());
         }
         result.count("chapters", maps.chapterMap.size());
+    }
 
-        // -- Quest v2 (le bundle porte un champ quests) : campaignId remappé tout de suite ;
-        //    prereqs / nodes / relatedPageIds remappés en 2e passe (sceneMap pas encore prêt).
+    /**
+     * Quest v2 (le bundle porte un champ quests) : campaignId remappé tout de suite ;
+     * prereqs / nodes / relatedPageIds remappés en 2e passe (sceneMap pas encore prêt).
+     * Sans champ quests (bundle legacy) : conversion des chapitres qui jouaient le rôle
+     * de quête — questMap est alors clé par ANCIEN CHAPTER id (pas de collision : on
+     * compare chapter-id à chapter-id).
+     */
+    private void insertQuests(ContentExport export, ImportIdMaps maps, ImportResult.Builder result) {
         for (ContentExport.QuestDto d : nullSafe(export.quests())) {
             QuestJpaEntity e = new QuestJpaEntity();
             e.setCampaignId(IdRemapper.remapId(maps.campaignMap, d.campaignId()));
@@ -206,15 +237,14 @@ class CampaignContentInserter {
             maps.questMap.put(d.id(), questRepo.save(e).getId());
         }
 
-        // -- Quest legacy (bundle SANS champ quests) : conversion des chapitres qui jouaient
-        //    le rôle de quête. Ici questMap est clé par ANCIEN CHAPTER id (pas de collision :
-        //    on compare chapter-id à chapter-id).
         if (export.quests() == null) {
             legacyQuestConverter.convertLegacyChaptersToQuests(export, maps);
         }
         result.count("quests", maps.questMap.size());
+    }
 
-        // -- Npc (relatedPageIds remappe en 2e passe)
+    /** Npc (relatedPageIds remappe en 2e passe). */
+    private void insertNpcs(ContentExport export, ImportIdMaps maps, ImportResult.Builder result) {
         for (ContentExport.NpcDto d : nullSafe(export.npcs())) {
             NpcJpaEntity e = new NpcJpaEntity();
             e.setName(d.name());
@@ -230,8 +260,10 @@ class CampaignContentInserter {
             maps.npcMap.put(d.id(), npcRepo.save(e).getId());
         }
         result.count("npcs", maps.npcMap.size());
+    }
 
-        // -- Enemy
+    /** Enemy. */
+    private void insertEnemies(ContentExport export, ImportIdMaps maps, ImportResult.Builder result) {
         for (ContentExport.EnemyDto d : nullSafe(export.enemies())) {
             EnemyJpaEntity e = new EnemyJpaEntity();
             e.setName(d.name());
@@ -249,8 +281,10 @@ class CampaignContentInserter {
             maps.enemyMap.put(d.id(), enemyRepo.save(e).getId());
         }
         result.count("enemies", maps.enemyMap.size());
+    }
 
-        // -- Scene (enemyIds + relatedPageIds + branches remappes en 2e passe)
+    /** Scene (enemyIds + relatedPageIds + branches remappes en 2e passe). */
+    private void insertScenes(ContentExport export, ImportIdMaps maps, ImportResult.Builder result) {
         for (ContentExport.SceneDto d : nullSafe(export.scenes())) {
             SceneJpaEntity e = new SceneJpaEntity();
             e.setName(d.name());
@@ -270,15 +304,7 @@ class CampaignContentInserter {
             e.setEnemyIds(d.enemyIds());            // remappe en 2e passe
             e.setRelatedPageIds(d.relatedPageIds()); // remappe en 2e passe
             e.setIllustrationImageIds(IdRemapper.remapStringList(maps.imageMap, d.illustrationImageIds()));
-            // Battlemaps : ids StoredFile remappes via storedFileMap. Les exports anterieurs
-            // a V22 portaient une paire unique -> reconstituee en premiere entree de liste.
-            List<SceneBattlemap> battlemaps = d.battlemaps();
-            if ((battlemaps == null || battlemaps.isEmpty())
-                    && (d.battlemapMediaFileId() != null || d.battlemapDataFileId() != null)) {
-                battlemaps = List.of(new SceneBattlemap("", d.battlemapMediaFileId(), d.battlemapDataFileId()));
-            }
-            battlemaps = IdRemapper.remapBattlemaps(maps.storedFileMap, battlemaps);
-            e.setBattlemaps(battlemaps != null ? battlemaps : List.of());
+            e.setBattlemaps(resolveBattlemaps(d, maps));
             e.setGraphX(d.graphX());
             e.setGraphY(d.graphY());
             e.setBranches(d.branches());             // remappe en 2e passe
@@ -288,6 +314,20 @@ class CampaignContentInserter {
             maps.sceneMap.put(d.id(), sceneRepo.save(e).getId());
         }
         result.count("scenes", maps.sceneMap.size());
+    }
+
+    /**
+     * Battlemaps d'une scène, ids StoredFile remappes via storedFileMap. Les exports
+     * anterieurs a V22 portaient une paire unique -> reconstituee en premiere entree de liste.
+     */
+    private static List<SceneBattlemap> resolveBattlemaps(ContentExport.SceneDto d, ImportIdMaps maps) {
+        List<SceneBattlemap> battlemaps = d.battlemaps();
+        if ((battlemaps == null || battlemaps.isEmpty())
+                && (d.battlemapMediaFileId() != null || d.battlemapDataFileId() != null)) {
+            battlemaps = List.of(new SceneBattlemap("", d.battlemapMediaFileId(), d.battlemapDataFileId()));
+        }
+        battlemaps = IdRemapper.remapBattlemaps(maps.storedFileMap, battlemaps);
+        return battlemaps != null ? battlemaps : List.of();
     }
 
     private static <T> List<T> nullSafe(List<T> list) {

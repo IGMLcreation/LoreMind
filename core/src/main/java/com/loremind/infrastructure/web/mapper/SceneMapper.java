@@ -16,7 +16,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Mapper pour convertir entre Scene (entité de domaine) et SceneDTO.
@@ -106,14 +105,14 @@ public class SceneMapper {
         if (battlemaps == null) return new ArrayList<>();
         return battlemaps.stream()
                 .map(b -> new SceneBattlemapDTO(b.label(), b.mediaFileId(), b.dataFileId()))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private List<SceneBattlemap> toBattlemapDomain(List<SceneBattlemapDTO> dtos) {
         if (dtos == null) return new ArrayList<>();
         return dtos.stream()
                 .map(d -> new SceneBattlemap(d.getLabel(), d.getMediaFileId(), d.getDataFileId()))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     // ─────────────── Mapping des branches (VO <-> DTO) ───────────────
@@ -122,14 +121,14 @@ public class SceneMapper {
         if (branches == null) return new ArrayList<>();
         return branches.stream()
                 .map(b -> new SceneBranchDTO(b.label(), b.targetSceneId(), b.condition(), b.kind().name()))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private List<SceneBranch> toBranchDomain(List<SceneBranchDTO> dtos) {
         if (dtos == null) return new ArrayList<>();
         return dtos.stream()
                 .map(d -> new SceneBranch(d.getLabel(), d.getTargetSceneId(), d.getCondition(), parseLinkType(d.getKind())))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /** Parse tolérant d'un {@link SceneType} : null / valeur inconnue -> GENERIC. */
@@ -156,7 +155,7 @@ public class SceneMapper {
 
     private List<RoomDTO> toRoomDTOs(List<Room> rooms) {
         if (rooms == null) return new ArrayList<>();
-        return rooms.stream().map(this::toRoomDTO).collect(Collectors.toList());
+        return rooms.stream().map(this::toRoomDTO).toList();
     }
 
     private RoomDTO toRoomDTO(Room r) {
@@ -181,13 +180,13 @@ public class SceneMapper {
                 ? new ArrayList<>()
                 : r.getBranches().stream()
                     .map(b -> new RoomBranchDTO(b.label(), b.targetRoomId(), b.condition()))
-                    .collect(Collectors.toList()));
+                    .toList());
         return dto;
     }
 
     private List<Room> toRoomDomain(List<RoomDTO> dtos) {
         if (dtos == null) return new ArrayList<>();
-        return dtos.stream().map(this::toRoomDomain).collect(Collectors.toList());
+        return dtos.stream().map(this::toRoomDomain).toList();
     }
 
     private Room toRoomDomain(RoomDTO d) {
@@ -212,7 +211,7 @@ public class SceneMapper {
                         ? new ArrayList<>()
                         : d.getBranches().stream()
                             .map(b -> new RoomBranch(b.getLabel(), b.getTargetRoomId(), b.getCondition()))
-                            .collect(Collectors.toList()))
+                            .toList())
                 .build();
     }
 }

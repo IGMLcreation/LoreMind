@@ -9,7 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * REST Controller pour le contexte Quest (Niveau 1). Quêtes ORTHOGONALES à l'arbre,
@@ -48,7 +47,7 @@ public class QuestController {
             @PathVariable String campaignId,
             @RequestParam(value = "playthroughId", required = false) String playthroughId) {
         List<Quest> quests = questService.getQuestsByCampaignId(campaignId);
-        List<QuestDTO> dtos = quests.stream().map(questMapper::toDTO).collect(Collectors.toList());
+        List<QuestDTO> dtos = quests.stream().map(questMapper::toDTO).toList();
         if (playthroughId != null && !playthroughId.isBlank()) {
             statusEnricher.enrich(dtos, quests, playthroughId);
         }

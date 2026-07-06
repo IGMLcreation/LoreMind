@@ -17,7 +17,6 @@ import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Adapter de sortie : relaie le chat ANCRÉ (RAG) du Brain via SSE (WebClient).
@@ -26,23 +25,28 @@ import java.util.stream.Collectors;
 @Component
 public class BrainNotebookChatClient implements NotebookChatStreamer {
 
-    private static final String PATH = "/chat/notebook/stream";
-    private static final String DEEP_PATH = "/chat/notebook/deep/stream";
     private static final ParameterizedTypeReference<ServerSentEvent<String>> SSE_STRING_TYPE =
             new ParameterizedTypeReference<>() {};
 
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
     private final long timeoutSeconds;
+    // Routes du Brain surchargeables par config (défauts = contrat d'API actuel).
+    private final String chatPath;
+    private final String deepChatPath;
 
     public BrainNotebookChatClient(
             WebClient.Builder webClientBuilder,
             ObjectMapper objectMapper,
             @Value("${brain.base-url}") String baseUrl,
-            @Value("${brain.import-timeout-seconds:600}") long timeoutSeconds) {
+            @Value("${brain.import-timeout-seconds:600}") long timeoutSeconds,
+            @Value("${brain.paths.notebook-chat:/chat/notebook/stream}") String chatPath,
+            @Value("${brain.paths.notebook-chat-deep:/chat/notebook/deep/stream}") String deepChatPath) {
         this.webClient = webClientBuilder.baseUrl(baseUrl).build();
         this.objectMapper = objectMapper;
         this.timeoutSeconds = timeoutSeconds;
+        this.chatPath = chatPath;
+        this.deepChatPath = deepChatPath;
     }
 
     @Override
@@ -57,11 +61,11 @@ public class BrainNotebookChatClient implements NotebookChatStreamer {
         payload.put("source_ids", sourceIds);
         payload.put("messages", messages.stream()
                 .map(m -> Map.<String, Object>of("role", m.role(), "content", m.content()))
-                .collect(Collectors.toList()));
+                .toList());
         payload.put("context", context == null ? "" : context);
 
         Flux<ServerSentEvent<String>> flux = webClient.post()
-                .uri(deep ? DEEP_PATH : PATH)
+                .uri(deep ? deepChatPath : chatPath)
                 .header(UserLanguageHolder.HEADER, UserLanguageHolder.get())
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.TEXT_EVENT_STREAM)

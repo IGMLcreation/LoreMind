@@ -47,29 +47,44 @@ import java.util.function.Consumer;
 @Component
 public class BrainRulesImportClient implements RulesPdfImporter {
 
-    private static final String IMPORT_RULES_PATH = "/import/rules";
-    private static final String IMPORT_RULES_STREAM_PATH = "/import/rules/stream";
     private static final ParameterizedTypeReference<ServerSentEvent<String>> SSE_STRING_TYPE =
             new ParameterizedTypeReference<>() {};
+    /** Nom de fichier par défaut du PDF de règles (filename absent/vide). */
+    private static final String DEFAULT_FILENAME = "rules.pdf";
 
     private final RestTemplate restTemplate;
     private final WebClient webClient;
     private final BrainSseImportSupport sse;
     private final String baseUrl;
     private final long importTimeoutSeconds;
+    // Routes du Brain surchargeables par config (défauts = contrat d'API actuel).
+    private final String importRulesPath;
+    private final String importRulesStreamPath;
 
     public BrainRulesImportClient(
             @Qualifier("brainImportRestTemplate") RestTemplate restTemplate,
             WebClient.Builder webClientBuilder,
             ObjectMapper objectMapper,
             @Value("${brain.base-url}") String baseUrl,
-            @Value("${brain.import-timeout-seconds:600}") long importTimeoutSeconds) {
+            @Value("${brain.import-timeout-seconds:600}") long importTimeoutSeconds,
+            @Value("${brain.paths.import-rules:/import/rules}") String importRulesPath,
+            @Value("${brain.paths.import-rules-stream:/import/rules/stream}") String importRulesStreamPath) {
         this.restTemplate = restTemplate;
         this.webClient = webClientBuilder.baseUrl(baseUrl).build();
         this.sse = new BrainSseImportSupport(objectMapper);
         this.baseUrl = baseUrl;
         this.importTimeoutSeconds = importTimeoutSeconds;
+        this.importRulesPath = importRulesPath;
+        this.importRulesStreamPath = importRulesStreamPath;
     }
+
+    /** Callbacks de streaming groupés (réduit le nombre de paramètres de handleEvent). */
+    private record ImportCallbacks(
+            Consumer<RulesImportProgress> onProgress,
+            Runnable onHeartbeat,
+            Consumer<String> onStatus,
+            Consumer<RulesImportResult> onDone,
+            Consumer<Throwable> onError) {}
 
     // --- One-shot (bloquant) -------------------------------------------------
 
@@ -79,12 +94,12 @@ public class BrainRulesImportClient implements RulesPdfImporter {
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-        body.add("file", sse.filePart(pdfBytes, filename, "rules.pdf"));
+        body.add("file", sse.filePart(pdfBytes, filename, DEFAULT_FILENAME));
         HttpEntity<MultiValueMap<String, Object>> entity = new HttpEntity<>(body, headers);
 
         try {
             BrainRulesImportResponse response = restTemplate.postForObject(
-                    baseUrl + IMPORT_RULES_PATH, entity, BrainRulesImportResponse.class);
+                    baseUrl + importRulesPath, entity, BrainRulesImportResponse.class);
             if (response == null || response.getSections() == null) {
                 throw new RulesImportException("Le Brain a renvoyé une réponse vide.");
             }
@@ -119,11 +134,11 @@ public class BrainRulesImportClient implements RulesPdfImporter {
             Consumer<Throwable> onError) {
 
         MultipartBodyBuilder parts = new MultipartBodyBuilder();
-        parts.part("file", sse.filePart(pdfBytes, filename, "rules.pdf"))
-                .filename(filename == null || filename.isBlank() ? "rules.pdf" : filename);
+        parts.part("file", sse.filePart(pdfBytes, filename, DEFAULT_FILENAME))
+                .filename(filename == null || filename.isBlank() ? DEFAULT_FILENAME : filename);
 
         Flux<ServerSentEvent<String>> flux = webClient.post()
-                .uri(IMPORT_RULES_STREAM_PATH)
+                .uri(importRulesStreamPath)
                 .header(UserLanguageHolder.HEADER, UserLanguageHolder.get())
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .accept(MediaType.TEXT_EVENT_STREAM)
@@ -136,12 +151,11 @@ public class BrainRulesImportClient implements RulesPdfImporter {
         int[] pageCount = {0};
         int[] ocrPageCount = {0};
         boolean[] terminated = {false};
+        ImportCallbacks callbacks = new ImportCallbacks(onProgress, onHeartbeat, onStatus, onDone, onError);
 
         sse.runStream(
                 flux, importTimeoutSeconds, terminated,
-                event -> handleEvent(
-                        event, pageCount, ocrPageCount, terminated,
-                        onProgress, onHeartbeat, onStatus, onDone, onError),
+                event -> handleEvent(event, pageCount, ocrPageCount, terminated, callbacks),
                 onError, RulesImportException::new);
     }
 
@@ -150,11 +164,7 @@ public class BrainRulesImportClient implements RulesPdfImporter {
             int[] pageCount,
             int[] ocrPageCount,
             boolean[] terminated,
-            Consumer<RulesImportProgress> onProgress,
-            Runnable onHeartbeat,
-            Consumer<String> onStatus,
-            Consumer<RulesImportResult> onDone,
-            Consumer<Throwable> onError) {
+            ImportCallbacks callbacks) {
 
         String event = ssEvent.event();
         String data = ssEvent.data() == null ? "" : ssEvent.data();
@@ -163,28 +173,28 @@ public class BrainRulesImportClient implements RulesPdfImporter {
             // Keep-alive du Brain pendant un appel LLM long : à PROPAGER jusqu'au
             // navigateur, sinon nginx (proxy_read_timeout) coupe le SSE Core→front
             // resté silencieux pendant tout le traitement du morceau.
-            onHeartbeat.run();
+            callbacks.onHeartbeat().run();
             return;
         }
         if ("status".equals(event)) {
             // Message d'attente lisible (retry sur fournisseur saturé, morceau
             // re-découpé…) : affiché par l'UI au lieu de n'exister qu'en logs.
-            onStatus.accept(sse.readMessage(data));
+            callbacks.onStatus().accept(sse.readMessage(data));
             return;
         }
         if ("chunk_failed".equals(event)) {
-            onStatus.accept(sse.chunkFailedStatus(data));
+            callbacks.onStatus().accept(sse.chunkFailedStatus(data));
             return;
         }
         if ("error".equals(event)) {
             terminated[0] = true;
-            onError.accept(new RulesImportException(
+            callbacks.onError().accept(new RulesImportException(
                     "Le Brain a signalé une erreur : " + sse.readMessage(data)));
             return;
         }
         if ("extracting".equals(event)) {
             // Phase d'extraction : total inconnu (0) → l'UI affiche "Extraction…".
-            onProgress.accept(new RulesImportProgress(0, 0, 0, 0, List.of()));
+            callbacks.onProgress().accept(new RulesImportProgress(0, 0, 0, 0, List.of()));
             return;
         }
 
@@ -194,10 +204,10 @@ public class BrainRulesImportClient implements RulesPdfImporter {
         if ("start".equals(event)) {
             pageCount[0] = node.path("page_count").asInt();
             ocrPageCount[0] = node.path("ocr_page_count").asInt();
-            onProgress.accept(new RulesImportProgress(
+            callbacks.onProgress().accept(new RulesImportProgress(
                     0, node.path("total").asInt(), pageCount[0], ocrPageCount[0], List.of()));
         } else if ("progress".equals(event)) {
-            onProgress.accept(new RulesImportProgress(
+            callbacks.onProgress().accept(new RulesImportProgress(
                     node.path("current").asInt(),
                     node.path("total").asInt(),
                     pageCount[0],
@@ -205,7 +215,7 @@ public class BrainRulesImportClient implements RulesPdfImporter {
                     toStringList(node.path("new_sections"))));
         } else if ("done".equals(event)) {
             terminated[0] = true;
-            onDone.accept(new RulesImportResult(
+            callbacks.onDone().accept(new RulesImportResult(
                     toStringMap(node.path("sections")),
                     node.path("page_count").asInt(),
                     node.path("ocr_page_count").asInt()));

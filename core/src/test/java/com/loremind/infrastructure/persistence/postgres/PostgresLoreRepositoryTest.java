@@ -17,21 +17,23 @@ import static org.junit.jupiter.api.Assertions.*;
  * Utilise PostgreSQL (loremind_test) pour les tests d'intégration.
  */
 @SpringBootTest
-public class PostgresLoreRepositoryTest {
+class PostgresLoreRepositoryTest {
+
+    private static final LocalDateTime FIXED_TIME = LocalDateTime.of(2024, java.time.Month.JANUARY, 1, 0, 0);
 
     @Autowired
     private LoreRepository loreRepository;
 
     @Test
-    public void testSaveAndFindLore() {
+    void testSaveAndFindLore() {
         // Créer un Lore
         Lore lore = Lore.builder()
                 .name("Lore Test")
                 .description("Description test")
                 .nodeCount(0)
                 .pageCount(0)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
+                .createdAt(FIXED_TIME)
+                .updatedAt(FIXED_TIME)
                 .build();
 
         // Sauvegarder
@@ -48,15 +50,15 @@ public class PostgresLoreRepositoryTest {
     }
 
     @Test
-    public void testFindAllLores() {
+    void testFindAllLores() {
         // Créer deux Lores
         Lore lore1 = Lore.builder()
                 .name("Lore 1")
                 .description("Description 1")
                 .nodeCount(0)
                 .pageCount(0)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
+                .createdAt(FIXED_TIME)
+                .updatedAt(FIXED_TIME)
                 .build();
 
         Lore lore2 = Lore.builder()
@@ -64,8 +66,8 @@ public class PostgresLoreRepositoryTest {
                 .description("Description 2")
                 .nodeCount(0)
                 .pageCount(0)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
+                .createdAt(FIXED_TIME)
+                .updatedAt(FIXED_TIME)
                 .build();
 
         Lore saved1 = loreRepository.save(lore1);
@@ -81,15 +83,15 @@ public class PostgresLoreRepositoryTest {
     }
 
     @Test
-    public void testDeleteLore() {
+    void testDeleteLore() {
         // Créer un Lore
         Lore lore = Lore.builder()
                 .name("Lore to delete")
                 .description("Description")
                 .nodeCount(0)
                 .pageCount(0)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
+                .createdAt(FIXED_TIME)
+                .updatedAt(FIXED_TIME)
                 .build();
 
         Lore savedLore = loreRepository.save(lore);

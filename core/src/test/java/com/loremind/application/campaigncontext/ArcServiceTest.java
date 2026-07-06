@@ -29,7 +29,7 @@ import static org.mockito.Mockito.*;
  * Teste la logique d'orchestration de la couche Application.
  */
 @ExtendWith(MockitoExtension.class)
-public class ArcServiceTest {
+class ArcServiceTest {
 
     @Mock
     private ArcRepository arcRepository;

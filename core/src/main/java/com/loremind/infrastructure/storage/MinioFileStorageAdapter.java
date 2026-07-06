@@ -6,6 +6,8 @@ import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.RemoveObjectArgs;
 import io.minio.errors.ErrorResponseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -23,6 +25,8 @@ import java.util.UUID;
 @Component
 @ConditionalOnProperty(name = "storage.backend", havingValue = "minio", matchIfMissing = true)
 public class MinioFileStorageAdapter implements FileStorage {
+
+    private static final Logger log = LoggerFactory.getLogger(MinioFileStorageAdapter.class);
 
     private final MinioClient minioClient;
     private final String bucket;
@@ -90,7 +94,7 @@ public class MinioFileStorageAdapter implements FileStorage {
                     RemoveObjectArgs.builder().bucket(bucket).object(storageKey).build()
             );
         } catch (Exception e) {
-            System.err.println("[MinIO] Erreur suppression fichier (non bloquante) : " + e.getMessage());
+            log.warn("[MinIO] Erreur suppression fichier (non bloquante) : {}", e.getMessage());
         }
     }
 

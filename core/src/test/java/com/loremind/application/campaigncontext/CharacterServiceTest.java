@@ -22,7 +22,7 @@ import static org.mockito.Mockito.*;
  * Mock du port CharacterRepository.
  */
 @ExtendWith(MockitoExtension.class)
-public class CharacterServiceTest {
+class CharacterServiceTest {
 
     @Mock
     private CharacterRepository characterRepository;
@@ -147,9 +147,10 @@ public class CharacterServiceTest {
     @Test
     void testUpdateCharacter_NotFound() {
         when(characterRepository.findById("missing")).thenReturn(Optional.empty());
+        CharacterService.CharacterData toUpdate = data(1, "pt-1");
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> service.updateCharacter("missing", data(1, "pt-1")));
+                () -> service.updateCharacter("missing", toUpdate));
         assertEquals("Character non trouvé avec l'ID: missing", ex.getMessage());
         verify(characterRepository, never()).save(any());
     }

@@ -22,7 +22,6 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * REST Controller pour le chat IA streamé (Server-Sent Events).
@@ -100,10 +99,9 @@ public class AiChatController {
             SseEmitter emitter, String loreId, String pageId, List<ChatMessage> messages) {
         try {
             streamChatForLoreUseCase.execute(loreId, pageId, messages, callbacksFor(emitter));
-        } catch (IllegalArgumentException e) {
-            // Lore ou Page introuvable : on envoie un event error puis on termine proprement.
-            fail(emitter, e);
         } catch (Exception e) {
+            // Inclut IllegalArgumentException (Lore ou Page introuvable) : dans tous
+            // les cas on envoie un event error puis on termine proprement.
             fail(emitter, e);
         }
     }
@@ -192,6 +190,6 @@ public class AiChatController {
         if (dtos == null) return List.of();
         return dtos.stream()
                 .map(dto -> new ChatMessage(dto.getRole(), dto.getContent()))
-                .collect(Collectors.toList());
+                .toList();
     }
 }

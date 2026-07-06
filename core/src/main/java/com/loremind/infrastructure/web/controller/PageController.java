@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * REST Controller pour le contexte Page.
@@ -61,7 +60,7 @@ public class PageController {
         } else {
             pages = pageService.getAllPages();
         }
-        List<PageDTO> dtos = pages.stream().map(pageMapper::toDTO).collect(Collectors.toList());
+        List<PageDTO> dtos = pages.stream().map(pageMapper::toDTO).toList();
         return ResponseEntity.ok(dtos);
     }
 
@@ -69,7 +68,7 @@ public class PageController {
     public ResponseEntity<List<PageDTO>> searchPages(@RequestParam("q") String query) {
         List<PageDTO> dtos = pageService.searchPages(query).stream()
                 .map(pageMapper::toDTO)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(dtos);
     }
 

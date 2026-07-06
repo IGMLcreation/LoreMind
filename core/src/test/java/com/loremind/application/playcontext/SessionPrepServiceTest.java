@@ -32,10 +32,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -115,11 +115,11 @@ class SessionPrepServiceTest {
         SessionPrepReport report = service.prepare(PT);
 
         assertEquals(List.of("q-run"), report.questsInProgress().stream()
-                .map(SessionPrepReport.QuestInfo::id).collect(Collectors.toList()));
+                .map(SessionPrepReport.QuestInfo::id).toList());
         assertEquals(List.of("q-next"), report.questsAvailable().stream()
-                .map(SessionPrepReport.QuestInfo::id).collect(Collectors.toList()));
+                .map(SessionPrepReport.QuestInfo::id).toList());
         assertEquals(List.of("q-done"), report.questsCompleted().stream()
-                .map(SessionPrepReport.QuestInfo::id).collect(Collectors.toList()));
+                .map(SessionPrepReport.QuestInfo::id).toList());
         // Hotspots : chapitre + scène résolus (avec contexte de navigation), ref morte ignorée.
         assertEquals(2, report.hotspots().size());
         SessionPrepReport.NodeInfo chapterNode = report.hotspots().get(0);
@@ -196,8 +196,8 @@ class SessionPrepServiceTest {
         when(questRepository.findByCampaignId(CAMP)).thenReturn(List.of());
         when(statusEnricher.computeAll(anyList(), eq(PT))).thenReturn(Map.of());
         stubEmptyAssessment();
-        LocalDateTime old = LocalDateTime.of(2026, 6, 1, 20, 0);
-        LocalDateTime recent = LocalDateTime.of(2026, 6, 23, 20, 0);
+        LocalDateTime old = LocalDateTime.of(2026, Month.JUNE, 1, 20, 0);
+        LocalDateTime recent = LocalDateTime.of(2026, Month.JUNE, 23, 20, 0);
         when(sessionRepository.findByPlaythroughId(PT)).thenReturn(List.of(
                 Session.builder().id("s-old").name("Séance 1").playthroughId(PT).startedAt(old).endedAt(old.plusHours(4)).build(),
                 Session.builder().id("s-new").name("Séance 2").playthroughId(PT).startedAt(recent).endedAt(recent.plusHours(3)).build()));

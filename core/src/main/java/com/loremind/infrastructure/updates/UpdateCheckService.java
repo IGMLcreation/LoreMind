@@ -227,8 +227,8 @@ public class UpdateCheckService {
         try {
             body = tagsCall(url, headers);
         } catch (HttpClientErrorException.Unauthorized e) {
-            String www = e.getResponseHeaders() == null ? null
-                    : e.getResponseHeaders().getFirst(HttpHeaders.WWW_AUTHENTICATE);
+            HttpHeaders respHeaders = e.getResponseHeaders();
+            String www = respHeaders == null ? null : respHeaders.getFirst(HttpHeaders.WWW_AUTHENTICATE);
             String token = obtainBearerToken(www, authHeader);
             if (token == null) {
                 log.warn("Cannot obtain bearer token for {} (registry response: {})", image, www);
@@ -239,8 +239,8 @@ public class UpdateCheckService {
             bearerHeaders.setBearerAuth(token);
             body = tagsCall(url, bearerHeaders);
         }
-        if (body == null || body.tags == null || body.tags.isEmpty()) return null;
-        return SemverComparator.findMaxSemver(body.tags);
+        if (body == null || body.tags() == null || body.tags().isEmpty()) return null;
+        return SemverComparator.findMaxSemver(body.tags());
     }
 
     private TagsListResponse tagsCall(String url, HttpHeaders headers) {
@@ -357,8 +357,5 @@ public class UpdateCheckService {
     }
 
     /** DTO pour deserialisation Jackson de /v2/.../tags/list. */
-    static class TagsListResponse {
-        public String name;
-        public List<String> tags;
-    }
+    record TagsListResponse(String name, List<String> tags) {}
 }

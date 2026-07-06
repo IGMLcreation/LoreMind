@@ -68,7 +68,7 @@ public class PostgresRandomTableRepository implements RandomTableRepository {
     public List<RandomTable> findByCampaignId(String campaignId) {
         return jpaRepository.findByCampaignIdOrderByOrderAsc(Long.parseLong(campaignId)).stream()
                 .map(this::toDomainEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -86,7 +86,7 @@ public class PostgresRandomTableRepository implements RandomTableRepository {
     public List<RandomTable> searchByName(String query) {
         return jpaRepository.findTop20ByNameContainingIgnoreCaseOrderByNameAsc(query).stream()
                 .map(this::toDomainEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private RandomTable toDomainEntity(RandomTableJpaEntity e) {

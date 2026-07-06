@@ -124,13 +124,37 @@ public class FoundryExportService {
 
         AssetRegistry assets = new AssetRegistry();
 
-        // Arcs -> Quetes -> Scenes (a plat + refs parent, tries par order).
+        ArcsQuestsScenes structure = buildArcsQuestsScenes(campaign, opts, assets);
+        List<FoundryBundle.Persona> npcs = buildNpcs(campaign, opts, npcTemplate, assets);
+        List<FoundryBundle.Persona> enemies = buildEnemies(campaign, opts, enemyTemplate, foundryActorType, assets);
+        List<FoundryBundle.RandomTable> randomTables = buildRandomTables(campaign, opts);
+
+        FoundryBundle.Campaign campaignNode = new FoundryBundle.Campaign(
+                str(campaign.getId()), campaign.getName(), campaign.getDescription(), campaign.getGameSystemId());
+
+        FoundryBundle.Data data = new FoundryBundle.Data(
+                FORMAT_VERSION, campaignNode,
+                new FoundryBundle.Options(opts.maps(), opts.journals(), opts.tables()),
+                structure.arcs(), structure.quests(), structure.scenes(),
+                npcs, enemies, randomTables, assets.assets());
+
+        FoundryBundle.Manifest manifest =
+                buildManifest(campaign, exportedAt, structure, npcs, enemies, randomTables, assets);
+
+        return new BuiltBundle(manifest, data, assets.binaries());
+    }
+
+    /** Arcs -> Quetes -> Scenes, a plat + refs parent (regroupes : construits par la meme triple boucle). */
+    private record ArcsQuestsScenes(
+            List<FoundryBundle.Arc> arcs, List<FoundryBundle.Quest> quests, List<FoundryBundle.Scene> scenes) {}
+
+    /** Arcs -> Quetes -> Scenes (a plat + refs parent, tries par order). */
+    private ArcsQuestsScenes buildArcsQuestsScenes(CampaignJpaEntity campaign, ExportOptions opts, AssetRegistry assets) {
         List<FoundryBundle.Arc> arcs = new ArrayList<>();
         List<FoundryBundle.Quest> quests = new ArrayList<>();
         List<FoundryBundle.Scene> scenes = new ArrayList<>();
 
-        List<ArcJpaEntity> arcEntities = sortByOrder(arcRepo.findByCampaignId(campaign.getId()), ArcJpaEntity::getOrder);
-        for (ArcJpaEntity arc : arcEntities) {
+        for (ArcJpaEntity arc : sortByOrder(arcRepo.findByCampaignId(campaign.getId()), ArcJpaEntity::getOrder)) {
             // Sans journaux, arcs/quetes ne servent que d'ossature (dossiers des Scenes) :
             // leurs illustrations ne sont pas embarquees.
             arcs.add(new FoundryBundle.Arc(
@@ -150,40 +174,51 @@ public class FoundryExportService {
                 }
             }
         }
+        return new ArcsQuestsScenes(arcs, quests, scenes);
+    }
 
-        // PNJ : purement journal — hors perimetre sans les journaux.
+    /** PNJ : purement journal — hors perimetre sans les journaux. */
+    private List<FoundryBundle.Persona> buildNpcs(CampaignJpaEntity campaign, ExportOptions opts,
+                                                  List<TemplateField> npcTemplate, AssetRegistry assets) {
         List<FoundryBundle.Persona> npcs = new ArrayList<>();
-        if (opts.journals()) {
-            for (NpcJpaEntity n : npcRepo.findByCampaignIdOrderByOrderAsc(campaign.getId())) {
-                npcs.add(new FoundryBundle.Persona(
-                        str(n.getId()), n.getName(), n.getFolder(), n.getOrder(),
-                        assets.image(n.getPortraitImageId()), assets.image(n.getHeaderImageId()), null, null, null,
-                        fields(npcTemplate, n.getValues(), n.getKeyValueValues(), n.getImageValues(), assets)));
-            }
+        if (!opts.journals()) return npcs;
+        for (NpcJpaEntity n : npcRepo.findByCampaignIdOrderByOrderAsc(campaign.getId())) {
+            npcs.add(new FoundryBundle.Persona(
+                    str(n.getId()), n.getName(), n.getFolder(), n.getOrder(),
+                    assets.image(n.getPortraitImageId()), assets.image(n.getHeaderImageId()), null, null, null,
+                    fields(npcTemplate, n.getValues(), n.getKeyValueValues(), n.getImageValues(), assets)));
         }
+        return npcs;
+    }
 
-        // Ennemis : necessaires aux cartes (acteurs/tokens, portrait = image du token)
-        // ET aux journaux (bestiaire). Les galeries d'images des champs ne servent que
-        // les journaux -> non embarquees en mode cartes seules.
+    /**
+     * Ennemis : necessaires aux cartes (acteurs/tokens, portrait = image du token)
+     * ET aux journaux (bestiaire). Les galeries d'images des champs ne servent que
+     * les journaux -> non embarquees en mode cartes seules.
+     */
+    private List<FoundryBundle.Persona> buildEnemies(CampaignJpaEntity campaign, ExportOptions opts,
+                                                     List<TemplateField> enemyTemplate, String foundryActorType,
+                                                     AssetRegistry assets) {
         List<FoundryBundle.Persona> enemies = new ArrayList<>();
-        if (opts.maps() || opts.journals()) {
-            for (EnemyJpaEntity e : enemyRepo.findByCampaignIdOrderByOrderAsc(campaign.getId())) {
-                enemies.add(new FoundryBundle.Persona(
-                        str(e.getId()), e.getName(), e.getFolder(), e.getOrder(),
-                        assets.image(e.getPortraitImageId()),
-                        opts.journals() ? assets.image(e.getHeaderImageId()) : null,
-                        e.getLevel(),
-                        e.getFoundryRef(),
-                        buildFoundryActor(e, enemyTemplate, foundryActorType),
-                        fields(enemyTemplate, e.getValues(), e.getKeyValueValues(),
-                                opts.journals() ? e.getImageValues() : null, assets)));
-            }
+        if (!opts.maps() && !opts.journals()) return enemies;
+        for (EnemyJpaEntity e : enemyRepo.findByCampaignIdOrderByOrderAsc(campaign.getId())) {
+            enemies.add(new FoundryBundle.Persona(
+                    str(e.getId()), e.getName(), e.getFolder(), e.getOrder(),
+                    assets.image(e.getPortraitImageId()),
+                    opts.journals() ? assets.image(e.getHeaderImageId()) : null,
+                    e.getLevel(),
+                    e.getFoundryRef(),
+                    buildFoundryActor(e, enemyTemplate, foundryActorType),
+                    fields(enemyTemplate, e.getValues(), e.getKeyValueValues(),
+                            opts.journals() ? e.getImageValues() : null, assets)));
         }
+        return enemies;
+    }
 
+    private List<FoundryBundle.RandomTable> buildRandomTables(CampaignJpaEntity campaign, ExportOptions opts) {
         List<FoundryBundle.RandomTable> randomTables = new ArrayList<>();
-        for (RandomTableJpaEntity t : opts.tables()
-                ? randomTableRepo.findByCampaignIdOrderByOrderAsc(campaign.getId())
-                : List.<RandomTableJpaEntity>of()) {
+        if (!opts.tables()) return randomTables;
+        for (RandomTableJpaEntity t : randomTableRepo.findByCampaignIdOrderByOrderAsc(campaign.getId())) {
             List<FoundryBundle.RandomTableEntry> entries = new ArrayList<>();
             if (t.getEntries() != null) {
                 for (RandomTableEntryJpaEntity en : t.getEntries()) {
@@ -194,29 +229,25 @@ public class FoundryExportService {
             randomTables.add(new FoundryBundle.RandomTable(
                     str(t.getId()), t.getName(), t.getDescription(), t.getDiceFormula(), entries));
         }
+        return randomTables;
+    }
 
-        FoundryBundle.Campaign campaignNode = new FoundryBundle.Campaign(
-                str(campaign.getId()), campaign.getName(), campaign.getDescription(), campaign.getGameSystemId());
-
-        FoundryBundle.Data data = new FoundryBundle.Data(
-                FORMAT_VERSION, campaignNode,
-                new FoundryBundle.Options(opts.maps(), opts.journals(), opts.tables()),
-                arcs, quests, scenes, npcs, enemies, randomTables, assets.assets());
-
+    private FoundryBundle.Manifest buildManifest(CampaignJpaEntity campaign, String exportedAt,
+                                                 ArcsQuestsScenes structure, List<FoundryBundle.Persona> npcs,
+                                                 List<FoundryBundle.Persona> enemies,
+                                                 List<FoundryBundle.RandomTable> randomTables, AssetRegistry assets) {
         Map<String, Integer> counts = new LinkedHashMap<>();
-        counts.put("arcs", arcs.size());
-        counts.put("quests", quests.size());
-        counts.put("scenes", scenes.size());
+        counts.put("arcs", structure.arcs().size());
+        counts.put("quests", structure.quests().size());
+        counts.put("scenes", structure.scenes().size());
         counts.put("npcs", npcs.size());
         counts.put("enemies", enemies.size());
         counts.put("randomTables", randomTables.size());
         counts.put("assets", assets.assets().size());
 
-        FoundryBundle.Manifest manifest = new FoundryBundle.Manifest(
+        return new FoundryBundle.Manifest(
                 FORMAT_VERSION, "loremind", appVersion, exportedAt,
                 str(campaign.getId()), campaign.getName(), CONTENT_FORMAT, counts);
-
-        return new BuiltBundle(manifest, data, assets.binaries());
     }
 
     /** Serialise le bundle dans le flux au format .zip (binaires streames a la volee). */
@@ -233,21 +264,33 @@ public class FoundryExportService {
             zip.write(writer.writeValueAsBytes(bundle.data()));
             zip.closeEntry();
 
-            Set<String> written = new HashSet<>();
-            for (BinaryRef ref : bundle.binaries()) {
-                if (!written.add(ref.path())) continue; // dedup defensif
-                InputStream data = ref.image()
-                        ? imageStorage.download(ref.storageKey())
-                        : fileStorage.download(ref.storageKey());
-                if (data == null) continue; // cle orpheline : on ignore
-                try (data) {
-                    zip.putNextEntry(new ZipEntry(ref.path()));
-                    data.transferTo(zip);
-                    zip.closeEntry();
-                }
-            }
+            writeBinaries(zip, bundle.binaries());
         } catch (IOException e) {
             throw new UncheckedIOException("Echec de la generation du bundle Foundry", e);
+        }
+    }
+
+    /** Ecrit chaque binaire reference, dedup par chemin cible (cle orpheline ignoree). */
+    private void writeBinaries(ZipOutputStream zip, List<BinaryRef> binaries) throws IOException {
+        Set<String> written = new HashSet<>();
+        for (BinaryRef ref : binaries) {
+            if (written.add(ref.path())) {
+                writeBinaryEntry(zip, ref);
+            }
+        }
+    }
+
+    private void writeBinaryEntry(ZipOutputStream zip, BinaryRef ref) throws IOException {
+        InputStream data = ref.image()
+                ? imageStorage.download(ref.storageKey())
+                : fileStorage.download(ref.storageKey());
+        if (data == null) {
+            return; // cle orpheline : on ignore
+        }
+        try (data) {
+            zip.putNextEntry(new ZipEntry(ref.path()));
+            data.transferTo(zip);
+            zip.closeEntry();
         }
     }
 
@@ -326,19 +369,31 @@ public class FoundryExportService {
     private FoundryBundle.FoundryActor buildFoundryActor(EnemyJpaEntity e, List<TemplateField> template, String actorType) {
         if (actorType == null || actorType.isBlank() || template == null) return null;
         if (e.getFoundryRef() != null && !e.getFoundryRef().isBlank()) return null;
+
         Map<String, Object> system = new LinkedHashMap<>();
         Map<String, String> values = e.getValues();
         boolean any = false;
         for (TemplateField f : template) {
-            if (f == null || f.getName() == null) continue;
-            String path = f.getFoundryPath();
-            if (path == null || path.isBlank()) continue;
-            String raw = values != null ? values.get(f.getName()) : null;
-            if (raw == null || raw.isBlank()) continue;
-            setPath(system, path, f.getType() == FieldType.NUMBER ? parseNumber(raw) : raw);
-            any = true;
+            FieldContribution c = foundryFieldContribution(f, values);
+            if (c != null) {
+                setPath(system, c.path(), c.value());
+                any = true;
+            }
         }
         return any ? new FoundryBundle.FoundryActor(actorType, system) : null;
+    }
+
+    /** Chemin Foundry ("a.b.c") + valeur d'un champ template pour {@link #buildFoundryActor}. */
+    private record FieldContribution(String path, Object value) {}
+
+    /** Contribution d'un champ, ou null si non mappe/sans valeur (nom, chemin Foundry ou valeur absent). */
+    private static FieldContribution foundryFieldContribution(TemplateField f, Map<String, String> values) {
+        if (f == null || f.getName() == null) return null;
+        String path = f.getFoundryPath();
+        if (path == null || path.isBlank()) return null;
+        String raw = values != null ? values.get(f.getName()) : null;
+        if (raw == null || raw.isBlank()) return null;
+        return new FieldContribution(path, f.getType() == FieldType.NUMBER ? parseNumber(raw) : raw);
     }
 
     /** Pose une valeur dans un objet imbriqué selon un chemin pointé ("a.b.c"). */
@@ -370,50 +425,70 @@ public class FoundryExportService {
                                              Map<String, Map<String, String>> keyValueValues,
                                              Map<String, List<String>> imageValues,
                                              AssetRegistry assets) {
-        List<FoundryBundle.Field> out = new ArrayList<>();
-        // Repli : pas de template -> paires brutes label=cle.
         if (template == null || template.isEmpty()) {
-            if (values != null) {
-                for (Map.Entry<String, String> e : values.entrySet()) {
-                    if (e.getValue() != null && !e.getValue().isBlank()) {
-                        out.add(new FoundryBundle.Field("text", e.getKey(), e.getValue(), null, null));
-                    }
-                }
-            }
-            return out;
+            return rawFields(values);
         }
+        List<FoundryBundle.Field> out = new ArrayList<>();
         for (TemplateField f : template) {
-            if (f == null || f.getName() == null || f.getType() == null) continue;
-            FieldType type = f.getType();
-            if (type == FieldType.TEXT || type == FieldType.NUMBER) {
-                String v = values != null ? values.get(f.getName()) : null;
-                if (v != null && !v.isBlank()) {
-                    out.add(new FoundryBundle.Field(type == FieldType.NUMBER ? "number" : "text",
-                            f.getName(), v, null, null));
-                }
-            } else if (type == FieldType.KEY_VALUE_LIST) {
-                Map<String, String> inner = keyValueValues != null ? keyValueValues.get(f.getName()) : null;
-                List<String> labels = f.getLabels();
-                if (inner != null && labels != null) {
-                    List<FoundryBundle.Entry> entries = new ArrayList<>();
-                    for (String label : labels) {
-                        String v = inner.get(label);
-                        if (v != null && !v.isBlank()) entries.add(new FoundryBundle.Entry(label, v));
-                    }
-                    if (!entries.isEmpty()) {
-                        out.add(new FoundryBundle.Field("keyValueList", f.getName(), null, entries, null));
-                    }
-                }
-            } else if (type == FieldType.IMAGE) {
-                List<String> ids = imageValues != null ? imageValues.get(f.getName()) : null;
-                List<String> assetIds = assets.images(ids);
-                if (!assetIds.isEmpty()) {
-                    out.add(new FoundryBundle.Field("image", f.getName(), null, null, assetIds));
-                }
+            FoundryBundle.Field field = toField(f, values, keyValueValues, imageValues, assets);
+            if (field != null) {
+                out.add(field);
             }
-            // TABLE : pas de stockage cote PNJ/Ennemi -> ignore.
         }
         return out;
+    }
+
+    /** Repli sans template : paires brutes label=cle (valeurs non vides uniquement). */
+    private static List<FoundryBundle.Field> rawFields(Map<String, String> values) {
+        List<FoundryBundle.Field> out = new ArrayList<>();
+        if (values != null) {
+            for (Map.Entry<String, String> e : values.entrySet()) {
+                if (e.getValue() != null && !e.getValue().isBlank()) {
+                    out.add(new FoundryBundle.Field("text", e.getKey(), e.getValue(), null, null));
+                }
+            }
+        }
+        return out;
+    }
+
+    /** Un champ Foundry pour ce TemplateField (dispatch par type), ou null si non mappe/non applicable/vide. */
+    private static FoundryBundle.Field toField(TemplateField f,
+                                               Map<String, String> values,
+                                               Map<String, Map<String, String>> keyValueValues,
+                                               Map<String, List<String>> imageValues,
+                                               AssetRegistry assets) {
+        if (f == null || f.getName() == null || f.getType() == null) return null;
+        return switch (f.getType()) {
+            case TEXT, NUMBER -> textOrNumberField(f, values);
+            case KEY_VALUE_LIST -> keyValueField(f, keyValueValues);
+            case IMAGE -> imageField(f, imageValues, assets);
+            case TABLE -> null; // pas de stockage cote PNJ/Ennemi -> ignore.
+        };
+    }
+
+    private static FoundryBundle.Field textOrNumberField(TemplateField f, Map<String, String> values) {
+        String v = values != null ? values.get(f.getName()) : null;
+        if (v == null || v.isBlank()) return null;
+        return new FoundryBundle.Field(f.getType() == FieldType.NUMBER ? "number" : "text", f.getName(), v, null, null);
+    }
+
+    private static FoundryBundle.Field keyValueField(TemplateField f, Map<String, Map<String, String>> keyValueValues) {
+        Map<String, String> inner = keyValueValues != null ? keyValueValues.get(f.getName()) : null;
+        List<String> labels = f.getLabels();
+        if (inner == null || labels == null) return null;
+        List<FoundryBundle.Entry> entries = new ArrayList<>();
+        for (String label : labels) {
+            String v = inner.get(label);
+            if (v != null && !v.isBlank()) entries.add(new FoundryBundle.Entry(label, v));
+        }
+        return entries.isEmpty() ? null : new FoundryBundle.Field("keyValueList", f.getName(), null, entries, null);
+    }
+
+    private static FoundryBundle.Field imageField(TemplateField f, Map<String, List<String>> imageValues,
+                                                  AssetRegistry assets) {
+        List<String> ids = imageValues != null ? imageValues.get(f.getName()) : null;
+        List<String> assetIds = assets.images(ids);
+        return assetIds.isEmpty() ? null : new FoundryBundle.Field("image", f.getName(), null, null, assetIds);
     }
 
     // ----- Registre des assets (images + battlemaps), dedup + index -----

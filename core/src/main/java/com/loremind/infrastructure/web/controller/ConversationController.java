@@ -13,7 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * API REST des conversations persistees.
@@ -47,7 +46,7 @@ public class ConversationController {
             @RequestParam(required = false) String entityType,
             @RequestParam(required = false) String entityId) {
         List<Conversation> rows = service.listByContext(loreId, campaignId, entityType, entityId);
-        return ResponseEntity.ok(rows.stream().map(mapper::toListDTO).collect(Collectors.toList()));
+        return ResponseEntity.ok(rows.stream().map(mapper::toListDTO).toList());
     }
 
     @GetMapping("/{id}")

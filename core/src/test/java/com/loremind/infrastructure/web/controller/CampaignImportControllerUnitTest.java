@@ -58,11 +58,23 @@ class CampaignImportControllerUnitTest {
             // 1) Termine proprement le flux (event "done" + complete()).
             onDone.accept(new CampaignImportProposal(List.of(), List.of()));
             // 2) Envoi post-complete : send échoue -> catch -> clientGone=true.
-            try { onProgress.accept(progress()); } catch (RuntimeException ignored) { }
+            try {
+                onProgress.accept(progress());
+            } catch (RuntimeException ignored) {
+                // Attendu : l'emitter est déjà complété, l'exception est volontairement avalée.
+            }
             // 3) clientGone=true -> sendHeartbeat lève ClientGoneException (branche garde).
-            try { onHeartbeat.run(); } catch (RuntimeException ignored) { }
+            try {
+                onHeartbeat.run();
+            } catch (RuntimeException ignored) {
+                // Attendu : ClientGoneException interne, volontairement avalée par le test.
+            }
             // 4) clientGone=true -> sendEvent lève ClientGoneException (branche garde).
-            try { onProgress.accept(progress()); } catch (RuntimeException ignored) { }
+            try {
+                onProgress.accept(progress());
+            } catch (RuntimeException ignored) {
+                // Attendu : ClientGoneException interne, volontairement avalée par le test.
+            }
             // 5) clientGone=true -> le callback d'erreur prend l'early-return (pas d'envoi).
             onError.accept(new RuntimeException("tardif"));
             return null;

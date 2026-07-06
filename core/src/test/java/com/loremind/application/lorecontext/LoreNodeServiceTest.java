@@ -26,7 +26,7 @@ import static org.mockito.Mockito.*;
  * l'immuabilité de loreId en update.
  */
 @ExtendWith(MockitoExtension.class)
-public class LoreNodeServiceTest {
+class LoreNodeServiceTest {
 
     @Mock private LoreNodeRepository loreNodeRepository;
     @Mock private PageRepository pageRepository;

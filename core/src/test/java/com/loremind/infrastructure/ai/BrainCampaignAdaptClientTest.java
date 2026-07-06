@@ -35,13 +35,13 @@ class BrainCampaignAdaptClientTest {
                         .body(sseBody)
                         .build());
         WebClient.Builder builder = WebClient.builder().exchangeFunction(ef);
-        return new BrainCampaignAdaptClient(builder, MAPPER, "http://brain", 30);
+        return new BrainCampaignAdaptClient(builder, MAPPER, "http://brain", 30, "/adapt/campaign/stream");
     }
 
     private BrainCampaignAdaptClient clientFailingWith(Throwable boom) {
         ExchangeFunction ef = req -> Mono.error(boom);
         WebClient.Builder builder = WebClient.builder().exchangeFunction(ef);
-        return new BrainCampaignAdaptClient(builder, MAPPER, "http://brain", 30);
+        return new BrainCampaignAdaptClient(builder, MAPPER, "http://brain", 30, "/adapt/campaign/stream");
     }
 
     /** Collecteur de callbacks + déclenchement de adviseStreaming. */
@@ -68,10 +68,17 @@ class BrainCampaignAdaptClientTest {
 
     @Test
     void streame_tokens_puis_done() {
-        String sse =
-                "event:token\ndata:{\"token\":\"Conseil\"}\n\n" +
-                "event:token\ndata:{\"token\":\" final\"}\n\n" +
-                "event:done\ndata:{}\n\n";
+        String sse = """
+                event:token
+                data:{"token":"Conseil"}
+
+                event:token
+                data:{"token":" final"}
+
+                event:done
+                data:{}
+
+                """;
         Collector c = new Collector();
         c.invoke(clientReturning(sse));
 
@@ -84,10 +91,17 @@ class BrainCampaignAdaptClientTest {
     void token_vide_ou_absent_ignore() {
         // token "" -> non émis ; champ token absent -> readField renvoie data (non vide)
         // donc émis tel quel : on vérifie ce comportement réel.
-        String sse =
-                "event:token\ndata:{\"token\":\"\"}\n\n" +
-                "event:token\ndata:{\"token\":\"OK\"}\n\n" +
-                "event:done\ndata:{}\n\n";
+        String sse = """
+                event:token
+                data:{"token":""}
+
+                event:token
+                data:{"token":"OK"}
+
+                event:done
+                data:{}
+
+                """;
         Collector c = new Collector();
         c.invoke(clientReturning(sse));
 
@@ -97,9 +111,14 @@ class BrainCampaignAdaptClientTest {
 
     @Test
     void event_error_appelle_onError_avec_runtimeexception() {
-        String sse =
-                "event:token\ndata:{\"token\":\"avant\"}\n\n" +
-                "event:error\ndata:{\"message\":\"PDF illisible\"}\n\n";
+        String sse = """
+                event:token
+                data:{"token":"avant"}
+
+                event:error
+                data:{"message":"PDF illisible"}
+
+                """;
         Collector c = new Collector();
         c.invoke(clientReturning(sse));
 

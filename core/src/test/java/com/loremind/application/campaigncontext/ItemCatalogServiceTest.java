@@ -16,7 +16,6 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 /**
@@ -24,7 +23,7 @@ import static org.mockito.Mockito.*;
  * Mocks des ports (repository, générateur IA, campagne, système de jeu).
  */
 @ExtendWith(MockitoExtension.class)
-public class ItemCatalogServiceTest {
+class ItemCatalogServiceTest {
 
     @Mock
     private ItemCatalogRepository repository;
@@ -143,9 +142,10 @@ public class ItemCatalogServiceTest {
     @Test
     void testUpdateCatalog_NotFound() {
         when(repository.findById("missing")).thenReturn(Optional.empty());
+        ItemCatalogService.CatalogData data = data(1, "camp-1");
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> service.updateCatalog("missing", data(1, "camp-1")));
+                () -> service.updateCatalog("missing", data));
         assertEquals("Catalogue d'objets introuvable: missing", ex.getMessage());
         verify(repository, never()).save(any());
     }
@@ -183,7 +183,7 @@ public class ItemCatalogServiceTest {
     void testGenerateProposal_CopiesItemsAndContext() {
         CatalogItem item = CatalogItem.builder().name("Potion").build();
         when(campaignContextFormatter.format("camp-1")).thenReturn("Campagne : Camp");
-        when(generator.generate(eq("desc"), eq("Campagne : Camp")))
+        when(generator.generate("desc", "Campagne : Camp"))
                 .thenReturn(new ItemCatalogGenerator.GeneratedCatalog("Nom IA", "Desc IA", List.of(item)));
 
         ItemCatalog result = service.generateProposal("camp-1", "desc");
@@ -214,6 +214,6 @@ public class ItemCatalogServiceTest {
 
         service.generateProposal("camp-1", "desc");
 
-        verify(generator).generate(eq("desc"), eq("Campagne : Camp — Aventure\nSystème de jeu : Pathfinder"));
+        verify(generator).generate("desc", "Campagne : Camp — Aventure\nSystème de jeu : Pathfinder");
     }
 }

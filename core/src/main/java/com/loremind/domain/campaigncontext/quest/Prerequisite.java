@@ -2,11 +2,9 @@ package com.loremind.domain.campaigncontext.quest;
 
 /**
  * Condition de déblocage d'une quête (Chapter dans un Arc HUB).
- *
  * Sealed : la liste des types est CLOSE et connue à la compilation. Pour ajouter
  * un nouveau type (ex : NpcMet), il faudra l'ajouter ici ET dans
  * {@link PrerequisiteEvaluator}.
- *
  * Sémantique MVP : une quête a une LISTE de prérequis, tous combinés en ET logique
  * (pas de OR pour le moment).
  */

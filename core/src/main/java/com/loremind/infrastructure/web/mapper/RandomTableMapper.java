@@ -7,7 +7,6 @@ import com.loremind.infrastructure.web.dto.campaigncontext.RandomTableEntryDTO;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 public class RandomTableMapper {
@@ -22,13 +21,13 @@ public class RandomTableMapper {
         dto.setIcon(t.getIcon());
         dto.setCampaignId(t.getCampaignId());
         dto.setOrder(t.getOrder());
-        dto.setEntries(t.getEntries().stream().map(this::toEntryDTO).collect(Collectors.toList()));
+        dto.setEntries(t.getEntries().stream().map(this::toEntryDTO).toList());
         return dto;
     }
 
     public List<RandomTableEntry> toDomainEntries(List<RandomTableEntryDTO> dtos) {
         if (dtos == null) return List.of();
-        return dtos.stream().map(this::toDomainEntry).collect(Collectors.toList());
+        return dtos.stream().map(this::toDomainEntry).toList();
     }
 
     private RandomTableEntryDTO toEntryDTO(RandomTableEntry e) {

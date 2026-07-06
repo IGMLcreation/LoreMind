@@ -28,7 +28,7 @@ import static org.mockito.Mockito.*;
  * en cas d'échec DB après upload MinIO réussi, download et delete.
  */
 @ExtendWith(MockitoExtension.class)
-public class ImageServiceTest {
+class ImageServiceTest {
 
     @Mock private ImageRepository imageRepository;
     @Mock private ImageStorage imageStorage;

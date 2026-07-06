@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.function.ToIntFunction;
 
 /**
  * Helper d'infrastructure : traduit un ChatRequest (domaine) vers le dict JSON
@@ -40,11 +40,14 @@ import java.util.stream.Collectors;
 @Component
 public class BrainChatPayloadBuilder {
 
+    private static final String KEY_DESCRIPTION = "description";
+    private static final String KEY_TITLE = "title";
+
     public Map<String, Object> build(ChatRequest request) {
         Map<String, Object> root = new LinkedHashMap<>();
         root.put("messages", request.messages().stream()
                 .map(this::messageToMap)
-                .collect(Collectors.toList()));
+                .toList());
 
         if (request.loreContext() != null) {
             root.put("lore_context", loreContextToMap(request.loreContext()));
@@ -75,25 +78,25 @@ public class BrainChatPayloadBuilder {
             map.put("started_at", sc.startedAt().toString());
         }
         map.put("entries", sc.entries() != null
-                ? sc.entries().stream().map(this::journalEntryToMap).collect(Collectors.toList())
+                ? sc.entries().stream().map(this::journalEntryToMap).toList()
                 : List.of());
         // Évènements des sessions précédentes : omis si vide (campagne sur sa 1re session).
         if (sc.previousEvents() != null && !sc.previousEvents().isEmpty()) {
             map.put("previous_events", sc.previousEvents().stream()
                     .map(this::journalEntryToMap)
-                    .collect(Collectors.toList()));
+                    .toList());
         }
         // État Hub (quêtes / flags). Toutes les listes sont omises si vides pour ne pas
         // saturer le prompt sur les campagnes sans Hub.
         if (sc.availableQuests() != null && !sc.availableQuests().isEmpty()) {
             map.put("available_quests", sc.availableQuests().stream()
                     .map(this::questSummaryToMap)
-                    .collect(Collectors.toList()));
+                    .toList());
         }
         if (sc.inProgressQuests() != null && !sc.inProgressQuests().isEmpty()) {
             map.put("in_progress_quests", sc.inProgressQuests().stream()
                     .map(this::questSummaryToMap)
-                    .collect(Collectors.toList()));
+                    .toList());
         }
         if (sc.lockedQuestTitles() != null && !sc.lockedQuestTitles().isEmpty()) {
             map.put("locked_quest_titles", sc.lockedQuestTitles());
@@ -108,7 +111,7 @@ public class BrainChatPayloadBuilder {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("name", q.name());
         map.put("arc_name", q.arcName());
-        putIfText(map, "description", q.description());
+        putIfText(map, KEY_DESCRIPTION, q.description());
         return map;
     }
 
@@ -147,7 +150,7 @@ public class BrainChatPayloadBuilder {
         for (Map.Entry<String, List<PageSummary>> e : ctx.folders().entrySet()) {
             foldersMap.put(e.getKey(), e.getValue().stream()
                     .map(this::pageSummaryToMap)
-                    .collect(Collectors.toList()));
+                    .toList());
         }
         map.put("folders", foldersMap);
         map.put("tags", ctx.tags());
@@ -156,7 +159,7 @@ public class BrainChatPayloadBuilder {
 
     private Map<String, Object> pageSummaryToMap(PageSummary ps) {
         Map<String, Object> map = new LinkedHashMap<>();
-        map.put("title", ps.title());
+        map.put(KEY_TITLE, ps.title());
         map.put("template_name", ps.templateName());
         // values/tags/related_page_titles : omis si vides pour alléger le payload.
         if (ps.values() != null && !ps.values().isEmpty()) {
@@ -173,7 +176,7 @@ public class BrainChatPayloadBuilder {
 
     private Map<String, Object> pageContextToMap(PageContext pc) {
         Map<String, Object> map = new LinkedHashMap<>();
-        map.put("title", pc.title());
+        map.put(KEY_TITLE, pc.title());
         map.put("template_name", pc.templateName());
         map.put("template_fields", pc.templateFields());
         map.put("values", pc.values());
@@ -186,18 +189,18 @@ public class BrainChatPayloadBuilder {
         map.put("campaign_description", ctx.campaignDescription());
         map.put("arcs", ctx.arcs().stream()
                 .map(this::arcSummaryToMap)
-                .collect(Collectors.toList()));
+                .toList());
         // Liste des PJ : omise si aucun pour alléger le prompt des campagnes sans fiches.
         if (ctx.characters() != null && !ctx.characters().isEmpty()) {
             map.put("characters", ctx.characters().stream()
                     .map(this::characterSummaryToMap)
-                    .collect(Collectors.toList()));
+                    .toList());
         }
         // Liste des PNJ : symétrique aux PJ, omise si vide pour alléger le payload.
         if (ctx.npcs() != null && !ctx.npcs().isEmpty()) {
             map.put("npcs", ctx.npcs().stream()
                     .map(this::npcSummaryToMap)
-                    .collect(Collectors.toList()));
+                    .toList());
         }
         return map;
     }
@@ -224,13 +227,14 @@ public class BrainChatPayloadBuilder {
             T entity,
             Function<T, String> nameExtractor,
             Function<T, String> descriptionExtractor,
-            Function<T, Integer> illustrationCountExtractor,
+            ToIntFunction<T> illustrationCountExtractor,
             BiConsumer<Map<String, Object>, T> childSerializer) {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("name", nameExtractor.apply(entity));
-        map.put("description", descriptionExtractor.apply(entity));
-        if (illustrationCountExtractor.apply(entity) > 0) {
-            map.put("illustration_count", illustrationCountExtractor.apply(entity));
+        map.put(KEY_DESCRIPTION, descriptionExtractor.apply(entity));
+        int illustrationCount = illustrationCountExtractor.applyAsInt(entity);
+        if (illustrationCount > 0) {
+            map.put("illustration_count", illustrationCount);
         }
         childSerializer.accept(map, entity);
         return map;
@@ -249,7 +253,7 @@ public class BrainChatPayloadBuilder {
                     }
                     map.put("chapters", arc.chapters().stream()
                             .map(this::chapterSummaryToMap)
-                            .collect(Collectors.toList()));
+                            .toList());
                 });
     }
 
@@ -261,7 +265,7 @@ public class BrainChatPayloadBuilder {
                 ChapterSummary::illustrationCount,
                 (map, chapter) -> map.put("scenes", chapter.scenes().stream()
                         .map(this::sceneSummaryToMap)
-                        .collect(Collectors.toList())));
+                        .toList()));
     }
 
     private Map<String, Object> sceneSummaryToMap(SceneSummary s) {
@@ -275,13 +279,13 @@ public class BrainChatPayloadBuilder {
                     if (s.branches() != null && !s.branches().isEmpty()) {
                         map.put("branches", s.branches().stream()
                                 .map(this::branchHintToMap)
-                                .collect(Collectors.toList()));
+                                .toList());
                     }
                     // Pièces du lieu explorable : omises si scène classique.
                     if (s.rooms() != null && !s.rooms().isEmpty()) {
                         map.put("rooms", s.rooms().stream()
                                 .map(this::roomSummaryToMap)
-                                .collect(Collectors.toList()));
+                                .toList());
                     }
                 });
     }
@@ -298,7 +302,7 @@ public class BrainChatPayloadBuilder {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("name", r.name());
         if (r.floor() != null) map.put("floor", r.floor());
-        putIfText(map, "description", r.description());
+        putIfText(map, KEY_DESCRIPTION, r.description());
         putIfText(map, "enemies", r.enemies());
         if (r.branches() != null && !r.branches().isEmpty()) {
             map.put("branches", r.branches().stream().map(b -> {
@@ -307,7 +311,7 @@ public class BrainChatPayloadBuilder {
                 bm.put("target_room_name", b.targetRoomName());
                 putIfText(bm, "condition", b.condition());
                 return bm;
-            }).collect(Collectors.toList()));
+            }).toList());
         }
         return map;
     }
@@ -315,7 +319,7 @@ public class BrainChatPayloadBuilder {
     private Map<String, Object> narrativeEntityToMap(NarrativeEntityContext ne) {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("entity_type", ne.entityType());
-        map.put("title", ne.title());
+        map.put(KEY_TITLE, ne.title());
         map.put("fields", ne.fields());
         return map;
     }

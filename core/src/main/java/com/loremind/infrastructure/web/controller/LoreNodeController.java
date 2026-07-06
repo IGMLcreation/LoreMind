@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * REST Controller pour le contexte LoreNode.
@@ -55,7 +54,7 @@ public class LoreNodeController {
                 : loreNodeService.getAllLoreNodes();
         List<LoreNodeDTO> loreNodeDTOs = loreNodes.stream()
                 .map(loreNodeMapper::toDTO)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(loreNodeDTOs);
     }
 
@@ -63,7 +62,7 @@ public class LoreNodeController {
     public ResponseEntity<List<LoreNodeDTO>> searchLoreNodes(@RequestParam("q") String query) {
         List<LoreNodeDTO> dtos = loreNodeService.searchLoreNodes(query).stream()
                 .map(loreNodeMapper::toDTO)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(dtos);
     }
 
@@ -72,7 +71,7 @@ public class LoreNodeController {
         List<LoreNode> loreNodes = loreNodeService.getLoreNodesByLoreId(loreId);
         List<LoreNodeDTO> loreNodeDTOs = loreNodes.stream()
                 .map(loreNodeMapper::toDTO)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(loreNodeDTOs);
     }
 
@@ -81,7 +80,7 @@ public class LoreNodeController {
         List<LoreNode> loreNodes = loreNodeService.getLoreNodesByParentId(parentId);
         List<LoreNodeDTO> loreNodeDTOs = loreNodes.stream()
                 .map(loreNodeMapper::toDTO)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(loreNodeDTOs);
     }
 

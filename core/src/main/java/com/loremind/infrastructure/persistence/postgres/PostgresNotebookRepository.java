@@ -15,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Repository
 public class PostgresNotebookRepository implements NotebookRepository {
@@ -53,7 +52,7 @@ public class PostgresNotebookRepository implements NotebookRepository {
     @Override
     public List<Notebook> findByCampaignId(String campaignId) {
         return notebookJpa.findByCampaignIdOrderByUpdatedAtDesc(Long.parseLong(campaignId)).stream()
-                .map(this::toNotebook).collect(Collectors.toList());
+                .map(this::toNotebook).toList();
     }
 
     @Override
@@ -93,7 +92,7 @@ public class PostgresNotebookRepository implements NotebookRepository {
     @Override
     public List<NotebookSource> findSourcesByNotebookId(String notebookId) {
         return sourceJpa.findByNotebookIdOrderByCreatedAtAsc(Long.parseLong(notebookId)).stream()
-                .map(this::toSource).collect(Collectors.toList());
+                .map(this::toSource).toList();
     }
 
     @Override
@@ -116,19 +115,20 @@ public class PostgresNotebookRepository implements NotebookRepository {
     @Override
     public List<NotebookMessage> findMessagesByNotebookId(String notebookId) {
         return messageJpa.findByNotebookIdAndArchivedAtIsNullOrderByCreatedAtAsc(Long.parseLong(notebookId)).stream()
-                .map(this::toMessage).collect(Collectors.toList());
+                .map(this::toMessage).toList();
     }
 
     @Override
     @Transactional
     public void archiveMessagesByNotebookId(String notebookId) {
-        messageJpa.archiveActiveMessages(Long.parseLong(notebookId), java.time.LocalDateTime.now());
+        messageJpa.archiveActiveMessages(Long.parseLong(notebookId),
+                java.time.LocalDateTime.now(java.time.ZoneId.systemDefault()));
     }
 
     @Override
     public List<NotebookMessage> findArchivedMessagesByNotebookId(String notebookId) {
         return messageJpa.findByNotebookIdAndArchivedAtIsNotNullOrderByCreatedAtAsc(Long.parseLong(notebookId)).stream()
-                .map(this::toMessage).collect(Collectors.toList());
+                .map(this::toMessage).toList();
     }
 
     // --- Mapping ---

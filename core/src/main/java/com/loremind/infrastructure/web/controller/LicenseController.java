@@ -29,6 +29,9 @@ import java.util.Map;
 @RequestMapping("/api/license")
 public class LicenseController {
 
+    /** Clé du message d'erreur dans le body JSON — contrat lu par le frontend. */
+    private static final String ERROR_KEY = "error";
+
     private final LicenseService licenseService;
     private final ChannelSwitcherService channelSwitcher;
 
@@ -50,15 +53,15 @@ public class LicenseController {
     }
 
     @PostMapping("/install")
-    public ResponseEntity<?> install(@RequestBody InstallRequest request) {
+    public ResponseEntity<Object> install(@RequestBody InstallRequest request) {
         if (request == null || request.jwt() == null || request.jwt().isBlank()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "missing jwt"));
+            return ResponseEntity.badRequest().body(Map.of(ERROR_KEY, "missing jwt"));
         }
         try {
             LicenseSnapshot snap = licenseService.installToken(request.jwt());
             return ResponseEntity.ok(LicenseStatusDTO.from(true, snap));
         } catch (InstallException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of(ERROR_KEY, e.getMessage()));
         }
     }
 
@@ -76,15 +79,15 @@ public class LicenseController {
     }
 
     @PutMapping("/beta-channel")
-    public ResponseEntity<?> setBetaChannel(@RequestBody BetaChannelRequest request) {
+    public ResponseEntity<Object> setBetaChannel(@RequestBody BetaChannelRequest request) {
         if (request == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "missing body"));
+            return ResponseEntity.badRequest().body(Map.of(ERROR_KEY, "missing body"));
         }
         try {
             LicenseSnapshot snap = licenseService.setBetaChannelEnabled(request.enabled());
             return ResponseEntity.ok(LicenseStatusDTO.from(true, snap));
         } catch (IllegalStateException e) {
-            return ResponseEntity.status(409).body(Map.of("error", e.getMessage()));
+            return ResponseEntity.status(409).body(Map.of(ERROR_KEY, e.getMessage()));
         }
     }
 
@@ -98,6 +101,8 @@ public class LicenseController {
     //  5. UI poll GET /api/license/channel pour suivre le status
 
     /** Etat courant : canal actuel + dispo du sidecar + dernier resultat. */
+    // S125 : faux positif — le flux numerote ci-dessus est de la prose explicative, pas du code mort.
+    @SuppressWarnings("java:S125")
     @GetMapping("/channel")
     public ChannelStatusDTO getChannel() {
         return ChannelStatusDTO.from(channelSwitcher);
@@ -105,9 +110,9 @@ public class LicenseController {
 
     /** Declenche un switch de canal. Renvoie l'ID de la commande pour le polling. */
     @PostMapping("/channel/switch")
-    public ResponseEntity<?> switchChannel(@RequestBody ChannelSwitchRequest request) {
+    public ResponseEntity<Object> switchChannel(@RequestBody ChannelSwitchRequest request) {
         if (request == null || request.channel() == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "missing channel"));
+            return ResponseEntity.badRequest().body(Map.of(ERROR_KEY, "missing channel"));
         }
 
         ChannelSwitcherService.Channel target;
@@ -115,7 +120,7 @@ public class LicenseController {
             target = ChannelSwitcherService.Channel.valueOf(request.channel().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of(
-                    "error", "invalid channel (allowed: stable, beta)"));
+                    ERROR_KEY, "invalid channel (allowed: stable, beta)"));
         }
 
         // Garde : pas de switch vers beta sans licence Patreon valide.
@@ -129,13 +134,13 @@ public class LicenseController {
                            || s == com.loremind.domain.licensing.LicenseStatus.GRACE;
             if (!allowed) {
                 return ResponseEntity.status(403).body(Map.of(
-                        "error", "Aucune licence Patreon active — impossible de basculer sur le canal beta."));
+                        ERROR_KEY, "Aucune licence Patreon active — impossible de basculer sur le canal beta."));
             }
         }
 
         if (!channelSwitcher.isSwitcherAvailable()) {
             return ResponseEntity.status(503).body(Map.of(
-                    "error", "Sidecar switcher non disponible (mise a jour requise du docker-compose.yml)."));
+                    ERROR_KEY, "Sidecar switcher non disponible (mise a jour requise du docker-compose.yml)."));
         }
 
         try {
@@ -145,7 +150,7 @@ public class LicenseController {
                     "channel", target.name().toLowerCase(Locale.ROOT)));
         } catch (IOException e) {
             return ResponseEntity.status(500).body(Map.of(
-                    "error", "Impossible d'ecrire la commande de switch: " + e.getMessage()));
+                    ERROR_KEY, "Impossible d'ecrire la commande de switch: " + e.getMessage()));
         }
     }
 

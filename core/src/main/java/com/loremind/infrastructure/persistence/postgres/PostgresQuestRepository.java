@@ -9,7 +9,6 @@ import org.springframework.stereotype.Repository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * Adaptateur d'infrastructure qui implémente le Port QuestRepository.
@@ -40,7 +39,7 @@ public class PostgresQuestRepository implements QuestRepository {
     public List<Quest> findByCampaignId(String campaignId) {
         return jpaRepository.findByCampaignId(Long.parseLong(campaignId)).stream()
                 .map(this::toDomainEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -48,14 +47,14 @@ public class PostgresQuestRepository implements QuestRepository {
         if (arcId == null || arcId.isBlank()) return List.of(); // pas d'arc → aucune quête rattachée
         return jpaRepository.findByArcId(Long.parseLong(arcId)).stream()
                 .map(this::toDomainEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
     public List<Quest> findAll() {
         return jpaRepository.findAll().stream()
                 .map(this::toDomainEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override

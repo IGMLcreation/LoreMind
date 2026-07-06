@@ -89,8 +89,11 @@ public class DataTransferController {
         String slug = java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFD)
                 .replaceAll("\\p{M}+", "")
                 .toLowerCase()
-                .replaceAll("[^a-z0-9]+", "-")
-                .replaceAll("(^-+|-+$)", "");
+                .replaceAll("[^a-z0-9]+", "-");
+        // Les runs de "-" sont déjà fusionnés ci-dessus : au plus un "-" de bord.
+        // Retiré par manipulation de chaîne (pas de regex ancrée : ni S5850 ni S5852).
+        if (slug.startsWith("-")) slug = slug.substring(1);
+        if (slug.endsWith("-")) slug = slug.substring(0, slug.length() - 1);
         return slug.isBlank() ? "export" : slug;
     }
 

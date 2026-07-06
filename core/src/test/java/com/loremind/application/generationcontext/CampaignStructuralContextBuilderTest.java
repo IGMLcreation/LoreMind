@@ -35,7 +35,7 @@ import static org.mockito.Mockito.*;
  * null-safe des illustrations.
  */
 @ExtendWith(MockitoExtension.class)
-public class CampaignStructuralContextBuilderTest {
+class CampaignStructuralContextBuilderTest {
 
     @Mock
     private CampaignRepository campaignRepository;

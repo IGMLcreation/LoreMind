@@ -32,7 +32,7 @@ import static org.mockito.Mockito.*;
  *  - UNKNOWN quand BuildProperties est absent (currentVersion = null)
  *  - parseSemver / findMaxSemver / compareSemver utilitaires
  */
-public class UpdateCheckServiceTest {
+class UpdateCheckServiceTest {
 
     private static UpdateCheckService newService(String token, String currentVersion) {
         BuildProperties bp = null;
@@ -62,9 +62,7 @@ public class UpdateCheckServiceTest {
     }
 
     private static void stubTags(RestTemplate http, String image, List<String> tags) {
-        TagsListResponse body = new TagsListResponse();
-        body.name = image;
-        body.tags = tags;
+        TagsListResponse body = new TagsListResponse(image, tags);
         ResponseEntity<TagsListResponse> resp = new ResponseEntity<>(body, HttpStatus.OK);
         when(http.exchange(eq("https://ghcr.io/v2/" + image + "/tags/list"),
                 eq(HttpMethod.GET), any(), eq(TagsListResponse.class)))

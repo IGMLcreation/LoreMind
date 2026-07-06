@@ -14,6 +14,7 @@ import com.loremind.domain.playcontext.EntryType;
 import com.loremind.infrastructure.persistence.entity.*;
 import com.loremind.infrastructure.persistence.jpa.*;
 import com.loremind.infrastructure.transfer.dto.ContentExport;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -24,6 +25,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -48,6 +50,12 @@ import static org.mockito.Mockito.when;
  *   <li>les références sont remappées : l'arc importé pointe la page importée, et la feuille
  *       de perso / séance / progression importées pointent la Partie / le chapitre importés.</li>
  * </ul>
+ * <p>
+ * Le seed + export + import (étapes 1 à 3) est coûteux et partagé par toutes les assertions
+ * ci-dessous : il est rejoué dans {@link #seedExportAndImport()} avant chaque {@code @Test},
+ * de sorte que chaque méthode reste focalisée sur une seule tranche logique du round-trip tout
+ * en conservant l'isolation transactionnelle habituelle (une transaction par méthode de test,
+ * rollback à la fin — {@code @BeforeAll} n'aurait pas bénéficié de cette isolation).
  */
 @SpringBootTest
 @Transactional
@@ -87,8 +95,45 @@ class ContentExportImportRoundTripTest {
     private static final String IMG_KEY = "images/round-trip-abc.png";
     private static final String FILE_KEY = "files/round-trip-map.json";
 
-    @Test
-    void roundTrip_duplicatesEveryContentTypeIncludingPlayAndRemapsReferences() throws IOException {
+    // Comptes AVANT export (l'export complet est GLOBAL → tout sera doublé).
+    private long campaignsBefore;
+    private long arcsBefore;
+    private long pagesBefore;
+    private long imagesBefore;
+    private long playthroughsBefore;
+    private long sessionsBefore;
+    private long entriesBefore;
+    private long flagsBefore;
+    private long questsBefore;
+    private long questEntitiesBefore;
+    private long charactersBefore;
+
+    private Long campaignId0;
+    private Long pageId0;
+    private Long ptId0;
+    private Long chapterAId0;
+
+    private ContentExport export;
+    private Map<String, byte[]> zip;
+    private ImportResult result;
+
+    private Long importedCampaignId;
+    private Long importedPageId;
+    private Long importedPtId;
+    private Long importedChapterAId;
+
+    private ArcJpaEntity importedArc;
+    private CharacterJpaEntity importedHero;
+    private SessionJpaEntity importedSession;
+    private SessionEntryJpaEntity importedEntry;
+    private QuestJpaEntity importedQuestEntity;
+    private QuestProgressionJpaEntity importedQuestProg;
+    private List<SceneJpaEntity> rtScenes;
+    private ClockJpaEntity importedClock;
+    private FrontJpaEntity importedFront;
+
+    @BeforeEach
+    void seedExportAndImport() throws IOException {
         // ----- 1. Prep -----
         GameSystemJpaEntity gs = gameSystemRepo.save(GameSystemJpaEntity.builder()
                 .name("RT System").description("d").foundryActorType("npc").isPublic(true).build());
@@ -174,10 +219,10 @@ class ContentExportImportRoundTripTest {
                 .campaignId(campaign.getId()).name("RT Partie").description("d").build());
         SessionJpaEntity session = sessionRepo.save(SessionJpaEntity.builder()
                 .name("RT Séance").campaignId(String.valueOf(campaign.getId())).playthroughId(pt.getId())
-                .startedAt(LocalDateTime.of(2026, 1, 1, 20, 0)).build());
+                .startedAt(LocalDateTime.of(2026, Month.JANUARY, 1, 20, 0)).build());
         sessionEntryRepo.save(SessionEntryJpaEntity.builder()
                 .sessionId(String.valueOf(session.getId())).type(EntryType.NOTE).content("Début")
-                .occurredAt(LocalDateTime.of(2026, 1, 1, 20, 5)).build());
+                .occurredAt(LocalDateTime.of(2026, Month.JANUARY, 1, 20, 5)).build());
         playthroughFlagRepo.save(PlaythroughFlagJpaEntity.builder()
                 .playthroughId(pt.getId()).name("porte_ouverte").value(true).build());
         FrontJpaEntity front = frontRepo.save(FrontJpaEntity.builder()
@@ -194,43 +239,105 @@ class ContentExportImportRoundTripTest {
                 .name("RT Hero").campaignId(campaign.getId()).playthroughId(pt.getId()).order(0).build());
 
         // Comptes AVANT export (l'export complet est GLOBAL → tout sera doublé).
-        long campaignsBefore = campaignRepo.count();
-        long arcsBefore = arcRepo.count();
-        long pagesBefore = pageRepo.count();
-        long imagesBefore = imageRepo.count();
-        long playthroughsBefore = playthroughRepo.count();
-        long sessionsBefore = sessionRepo.count();
-        long entriesBefore = sessionEntryRepo.count();
-        long flagsBefore = playthroughFlagRepo.count();
-        long questsBefore = questProgressionRepo.count();
-        long questEntitiesBefore = questRepo.count();
-        long charactersBefore = characterRepo.count();
-        Long campaignId0 = campaign.getId();
-        Long pageId0 = page.getId();
-        Long ptId0 = pt.getId();
-        Long chapterAId0 = chapterA.getId();
+        campaignsBefore = campaignRepo.count();
+        arcsBefore = arcRepo.count();
+        pagesBefore = pageRepo.count();
+        imagesBefore = imageRepo.count();
+        playthroughsBefore = playthroughRepo.count();
+        sessionsBefore = sessionRepo.count();
+        entriesBefore = sessionEntryRepo.count();
+        flagsBefore = playthroughFlagRepo.count();
+        questsBefore = questProgressionRepo.count();
+        questEntitiesBefore = questRepo.count();
+        charactersBefore = characterRepo.count();
+        campaignId0 = campaign.getId();
+        pageId0 = page.getId();
+        ptId0 = pt.getId();
+        chapterAId0 = chapterA.getId();
 
         when(imageStorage.download(IMG_KEY)).thenAnswer(inv -> new ByteArrayInputStream("PNGDATA".getBytes()));
         when(fileStorage.download(FILE_KEY)).thenAnswer(inv -> new ByteArrayInputStream("{\"x\":1}".getBytes()));
 
         // ----- 2. Export + ZIP -----
-        ContentExport export = exportService.buildExport("2026-01-02T03:04:05Z");
+        export = exportService.buildExport("2026-01-02T03:04:05Z");
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        exportService.writeZip(export, baos);
+        zip = readZip(baos.toByteArray());
+
+        // ----- 3. Import (fusion) -----
+        result = importService.importZip(new ByteArrayInputStream(baos.toByteArray()));
+
+        // ----- 4. Remapping -----
+        importedCampaignId = onlyOther(idsByName(campaignRepo.findAll(), CampaignJpaEntity::getName,
+                "RT Campaign", CampaignJpaEntity::getId), campaignId0);
+        importedPageId = onlyOther(idsByName(pageRepo.findAll(), PageJpaEntity::getTitle,
+                "RT Page", PageJpaEntity::getId), pageId0);
+        importedPtId = onlyOther(idsByName(playthroughRepo.findAll(), PlaythroughJpaEntity::getName,
+                "RT Partie", PlaythroughJpaEntity::getId), ptId0);
+        importedChapterAId = onlyOther(idsByName(chapterRepo.findAll(), ChapterJpaEntity::getName,
+                "RT Chapter A", ChapterJpaEntity::getId), chapterAId0);
+
+        // 4a. Prep : l'arc importé pointe la page importée (pas l'originale).
+        importedArc = arcRepo.findAll().stream()
+                .filter(a -> "RT Arc".equals(a.getName()) && importedCampaignId.equals(a.getCampaignId()))
+                .findFirst().orElseThrow();
+
+        // 4b. Jeu : la feuille de perso importée pointe la Partie importée (playthroughId préservé, pas null).
+        importedHero = characterRepo.findAll().stream()
+                .filter(c -> "RT Hero".equals(c.getName()) && importedPtId.equals(c.getPlaythroughId()))
+                .findFirst().orElseThrow();
+
+        // 4c. Jeu : la séance importée pointe la Partie importée ; la progression importée le chapitre importé.
+        importedSession = sessionRepo.findAll().stream()
+                .filter(s -> "RT Séance".equals(s.getName()) && importedPtId.equals(s.getPlaythroughId()))
+                .findFirst().orElseThrow();
+        // L'entrée de journal importée pointe la séance importée (ref faible String sessionId).
+        importedEntry = sessionEntryRepo.findAll().stream()
+                .filter(e -> String.valueOf(importedSession.getId()).equals(e.getSessionId()))
+                .findFirst().orElseThrow();
+
+        // 4d. Quête (Niveau 1) : dupliquée + références remappées (nœud chapitre, page liée).
+        importedQuestEntity = questRepo.findAll().stream()
+                .filter(q -> "RT Quest".equals(q.getName()) && importedCampaignId.equals(q.getCampaignId()))
+                .findFirst().orElseThrow();
+
+        // 4e. quest_progression importée pointe la QUÊTE importée (remap v2 via questMap).
+        importedQuestProg = questProgressionRepo.findAll().stream()
+                .filter(q -> importedPtId.equals(q.getPlaythroughId()))
+                .findFirst().orElseThrow();
+
+        // 4f. Battlemaps : la liste étiquetée survit au round-trip (originale ET importée —
+        // le binaire est réutilisé par clé, la ref StoredFile reste valide telle quelle).
+        rtScenes = sceneRepo.findAll().stream()
+                .filter(s -> "RT Scene".equals(s.getName())).toList();
+
+        // 4f. Horloge importée : pointe la Partie importée + valeurs (segments/filled) préservées.
+        importedClock = clockRepo.findAll().stream()
+                .filter(c -> "RT Horloge".equals(c.getName()) && importedPtId.equals(c.getPlaythroughId()))
+                .findFirst().orElseThrow();
+
+        // 4g. Front importé + horloge rattachée à ce front (frontId remappé).
+        importedFront = frontRepo.findAll().stream()
+                .filter(f -> "RT Front".equals(f.getName()) && importedPtId.equals(f.getPlaythroughId()))
+                .findFirst().orElseThrow();
+    }
+
+    @Test
+    void export_producesManifestAndZipWithBinaries() {
         assertEquals(2, export.manifest().formatVersion());
         assertEquals("complète", export.manifest().scope());
         assertFalse(export.playthroughs().isEmpty());
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        exportService.writeZip(export, baos);
-        Map<String, byte[]> zip = readZip(baos.toByteArray());
         assertTrue(zip.containsKey("manifest.json"));
         assertTrue(zip.containsKey("data.json"));
         // Le binaire image référencé par ID est bien résolu vers sa clé puis embarqué.
         assertTrue(zip.containsKey("images/" + IMG_KEY), "binaire image (réf par ID) attendu dans le zip");
         assertTrue(zip.containsKey("files/" + FILE_KEY), "binaire fichier référencé attendu dans le zip");
+    }
 
-        // ----- 3. Import (fusion) -----
-        ImportResult result = importService.importZip(new ByteArrayInputStream(baos.toByteArray()));
-
+    @Test
+    void import_duplicatesEveryContentTypeIncludingPlay() {
         assertEquals(2 * campaignsBefore, campaignRepo.count());
         assertEquals(2 * arcsBefore, arcRepo.count());
         assertEquals(2 * pagesBefore, pageRepo.count());
@@ -244,83 +351,50 @@ class ContentExportImportRoundTripTest {
         assertEquals(2 * questsBefore, questProgressionRepo.count());
         assertEquals(2 * charactersBefore, characterRepo.count());
         assertEquals((int) playthroughsBefore, result.created().get("playthroughs"));
+    }
 
-        // ----- 4. Remapping -----
-        Long importedCampaignId = onlyOther(idsByName(campaignRepo.findAll(), CampaignJpaEntity::getName,
-                "RT Campaign", CampaignJpaEntity::getId), campaignId0);
-        Long importedPageId = onlyOther(idsByName(pageRepo.findAll(), PageJpaEntity::getTitle,
-                "RT Page", PageJpaEntity::getId), pageId0);
-        Long importedPtId = onlyOther(idsByName(playthroughRepo.findAll(), PlaythroughJpaEntity::getName,
-                "RT Partie", PlaythroughJpaEntity::getId), ptId0);
-        Long importedChapterAId = onlyOther(idsByName(chapterRepo.findAll(), ChapterJpaEntity::getName,
-                "RT Chapter A", ChapterJpaEntity::getId), chapterAId0);
-
-        // 4a. Prep : l'arc importé pointe la page importée (pas l'originale).
-        ArcJpaEntity importedArc = arcRepo.findAll().stream()
-                .filter(a -> "RT Arc".equals(a.getName()) && importedCampaignId.equals(a.getCampaignId()))
-                .findFirst().orElseThrow();
+    @Test
+    void import_remapsPrepEntities_arcPointsToImportedPage() {
         assertTrue(importedArc.getRelatedPageIds().contains(String.valueOf(importedPageId)));
         assertFalse(importedArc.getRelatedPageIds().contains(String.valueOf(pageId0)));
+    }
 
-        // 4b. Jeu : la feuille de perso importée pointe la Partie importée (playthroughId préservé, pas null).
-        CharacterJpaEntity importedHero = characterRepo.findAll().stream()
-                .filter(c -> "RT Hero".equals(c.getName()) && importedPtId.equals(c.getPlaythroughId()))
-                .findFirst().orElseThrow();
+    @Test
+    void import_remapsEspaceDeJeu_playthroughSessionJournal() {
         assertNotNull(importedHero);
-
-        // 4c. Jeu : la séance importée pointe la Partie importée ; la progression importée le chapitre importé.
-        SessionJpaEntity importedSession = sessionRepo.findAll().stream()
-                .filter(s -> "RT Séance".equals(s.getName()) && importedPtId.equals(s.getPlaythroughId()))
-                .findFirst().orElseThrow();
         // La ref faible String campaignId de la séance est remappée vers la campagne importée.
         assertEquals(String.valueOf(importedCampaignId), importedSession.getCampaignId());
-        // L'entrée de journal importée pointe la séance importée (ref faible String sessionId).
-        SessionEntryJpaEntity importedEntry = sessionEntryRepo.findAll().stream()
-                .filter(e -> String.valueOf(importedSession.getId()).equals(e.getSessionId()))
-                .findFirst().orElseThrow();
         assertEquals("Début", importedEntry.getContent());
+    }
 
-        // 4d. Quête (Niveau 1) : dupliquée + références remappées (nœud chapitre, page liée).
+    @Test
+    void import_remapsQuestReferences() {
         assertEquals(2 * questEntitiesBefore, questRepo.count());
-        QuestJpaEntity importedQuestEntity = questRepo.findAll().stream()
-                .filter(q -> "RT Quest".equals(q.getName()) && importedCampaignId.equals(q.getCampaignId()))
-                .findFirst().orElseThrow();
         assertEquals(1, importedQuestEntity.getNodes().size());
         assertEquals(String.valueOf(importedChapterAId), importedQuestEntity.getNodes().get(0).nodeId(),
                 "Le nœud CHAPTER de la quête doit pointer le chapitre importé.");
         assertTrue(importedQuestEntity.getRelatedPageIds().contains(String.valueOf(importedPageId)),
                 "relatedPageIds de la quête remappé vers la page importée.");
         assertEquals(1, importedQuestEntity.getPrerequisites().size());
-
-        // 4e. quest_progression importée pointe la QUÊTE importée (remap v2 via questMap).
-        QuestProgressionJpaEntity importedQuestProg = questProgressionRepo.findAll().stream()
-                .filter(q -> importedPtId.equals(q.getPlaythroughId()))
-                .findFirst().orElseThrow();
         assertEquals(importedQuestEntity.getId(), importedQuestProg.getQuestId());
+    }
 
-        // 4f. Battlemaps : la liste étiquetée survit au round-trip (originale ET importée —
-        // le binaire est réutilisé par clé, la ref StoredFile reste valide telle quelle).
-        List<SceneJpaEntity> rtScenes = sceneRepo.findAll().stream()
-                .filter(s -> "RT Scene".equals(s.getName())).toList();
+    @Test
+    void import_preservesBattlemapsAcrossDuplication() {
         assertEquals(2, rtScenes.size());
         for (SceneJpaEntity s : rtScenes) {
             assertEquals(1, s.getBattlemaps().size(), "1 battlemap attendue sur " + s.getId());
             assertEquals("Nuit", s.getBattlemaps().get(0).label());
         }
+    }
 
-        // 4f. Horloge importée : pointe la Partie importée + valeurs (segments/filled) préservées.
-        ClockJpaEntity importedClock = clockRepo.findAll().stream()
-                .filter(c -> "RT Horloge".equals(c.getName()) && importedPtId.equals(c.getPlaythroughId()))
-                .findFirst().orElseThrow();
+    @Test
+    void import_remapsClockAndFrontReferences() {
         assertEquals(6, importedClock.getSegments());
         assertEquals(2, importedClock.getFilled());
         // Trigger QUEST_COMPLETED : le triggerRef (id de quête) est remappé vers la quête importée.
         assertEquals(ClockTrigger.QUEST_COMPLETED, importedClock.getTriggerType());
         assertEquals(String.valueOf(importedQuestEntity.getId()), importedClock.getTriggerRef());
-        // 4g. Front importé + horloge rattachée à ce front (frontId remappé).
-        FrontJpaEntity importedFront = frontRepo.findAll().stream()
-                .filter(f -> "RT Front".equals(f.getName()) && importedPtId.equals(f.getPlaythroughId()))
-                .findFirst().orElseThrow();
         assertEquals(importedFront.getId(), importedClock.getFrontId());
     }
 

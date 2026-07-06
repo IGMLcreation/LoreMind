@@ -46,36 +46,53 @@ class StoredFileImporter {
                      ImportResult.Builder result) {
         int imported = 0;
         for (ContentExport.StoredFileDto meta : nullSafe(export.storedFiles())) {
-            String storageKey = meta.storageKey();
-            if (storageKey == null || storageKey.isBlank()) continue;
-
-            var existing = fileRepo.findByStorageKey(storageKey);
-            if (existing.isPresent()) {
-                // Deja present : reutilise (pas de reupload). L'ancien id pointe la ligne existante.
-                mapId(maps, meta.id(), existing.get().getId());
-                continue;
+            if (importOne(meta, fileBinaries, maps)) {
+                imported++;
             }
-
-            byte[] data = fileBinaries.get(storageKey);
-            if (data == null) {
-                continue; // metadonnee sans binaire : rien a materialiser
-            }
-
-            String contentType = meta.contentType() != null
-                    ? meta.contentType() : "application/octet-stream";
-            long size = meta.sizeBytes() > 0 ? meta.sizeBytes() : data.length;
-
-            fileStorage.store(storageKey, contentType, new ByteArrayInputStream(data), data.length);
-
-            StoredFileJpaEntity e = new StoredFileJpaEntity();
-            e.setFilename(meta.filename() != null ? meta.filename() : fileNameOf(storageKey));
-            e.setContentType(contentType);
-            e.setSizeBytes(size);
-            e.setStorageKey(storageKey);
-            mapId(maps, meta.id(), fileRepo.save(e).getId());
-            imported++;
         }
         result.count("storedFiles", imported);
+    }
+
+    /**
+     * Traite une metadonnee de fichier. Reutilise la ligne existante si la cle est deja
+     * connue, sinon materialise le binaire et cree la ligne.
+     *
+     * @return {@code true} si un nouveau binaire a ete stocke + une ligne creee (a compter
+     *         dans les imports), {@code false} sinon (cle vide, reutilisation, binaire absent)
+     */
+    private boolean importOne(ContentExport.StoredFileDto meta,
+                              Map<String, byte[]> fileBinaries,
+                              ImportIdMaps maps) {
+        String storageKey = meta.storageKey();
+        if (storageKey == null || storageKey.isBlank()) {
+            return false;
+        }
+
+        var existing = fileRepo.findByStorageKey(storageKey);
+        if (existing.isPresent()) {
+            // Deja present : reutilise (pas de reupload). L'ancien id pointe la ligne existante.
+            mapId(maps, meta.id(), existing.get().getId());
+            return false;
+        }
+
+        byte[] data = fileBinaries.get(storageKey);
+        if (data == null) {
+            return false; // metadonnee sans binaire : rien a materialiser
+        }
+
+        String contentType = meta.contentType() != null
+                ? meta.contentType() : "application/octet-stream";
+        long size = meta.sizeBytes() > 0 ? meta.sizeBytes() : data.length;
+
+        fileStorage.store(storageKey, contentType, new ByteArrayInputStream(data), data.length);
+
+        StoredFileJpaEntity e = new StoredFileJpaEntity();
+        e.setFilename(meta.filename() != null ? meta.filename() : fileNameOf(storageKey));
+        e.setContentType(contentType);
+        e.setSizeBytes(size);
+        e.setStorageKey(storageKey);
+        mapId(maps, meta.id(), fileRepo.save(e).getId());
+        return true;
     }
 
     private static void mapId(ImportIdMaps maps, Long oldId, Long newId) {

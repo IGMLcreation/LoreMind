@@ -6,6 +6,8 @@ import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.RemoveObjectArgs;
 import io.minio.errors.ErrorResponseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -26,6 +28,8 @@ import java.util.UUID;
 @Component
 @ConditionalOnProperty(name = "storage.backend", havingValue = "minio", matchIfMissing = true)
 public class MinioImageStorageAdapter implements ImageStorage {
+
+    private static final Logger log = LoggerFactory.getLogger(MinioImageStorageAdapter.class);
 
     private final MinioClient minioClient;
     private final String bucket;
@@ -95,7 +99,7 @@ public class MinioImageStorageAdapter implements ImageStorage {
             );
         } catch (Exception e) {
             // Suppression idempotente : on loggue mais on ne propage pas.
-            System.err.println("[MinIO] Erreur suppression (non bloquante) : " + e.getMessage());
+            log.warn("[MinIO] Erreur suppression (non bloquante) : {}", e.getMessage());
         }
     }
 

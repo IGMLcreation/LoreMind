@@ -22,6 +22,9 @@ import java.util.function.Consumer;
  */
 final class BrainSseImportSupport {
 
+    /** Champ JSON standard des events SSE du Brain portant un message lisible. */
+    private static final String MESSAGE_FIELD = "message";
+
     private final ObjectMapper objectMapper;
 
     BrainSseImportSupport(ObjectMapper objectMapper) {
@@ -50,8 +53,8 @@ final class BrainSseImportSupport {
     /** Champ {@code message} du JSON, ou la {@code data} brute si non-JSON / champ absent. */
     String readMessage(String data) {
         JsonNode node = readJson(data);
-        if (node != null && node.hasNonNull("message")) {
-            return node.get("message").asText();
+        if (node != null && node.hasNonNull(MESSAGE_FIELD)) {
+            return node.get(MESSAGE_FIELD).asText();
         }
         return data;
     }
@@ -59,8 +62,8 @@ final class BrainSseImportSupport {
     /** Statut lisible « Morceau x/y ignoré[ : message] » depuis un payload {@code chunk_failed}. */
     String chunkFailedStatus(String data) {
         JsonNode node = readJson(data);
-        String msg = node != null && node.hasNonNull("message")
-                ? node.get("message").asText() : "";
+        String msg = node != null && node.hasNonNull(MESSAGE_FIELD)
+                ? node.get(MESSAGE_FIELD).asText() : "";
         int current = node != null ? node.path("current").asInt() : 0;
         int total = node != null ? node.path("total").asInt() : 0;
         return "Morceau " + current + "/" + total + " ignoré"

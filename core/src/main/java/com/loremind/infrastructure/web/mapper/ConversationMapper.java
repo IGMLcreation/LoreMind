@@ -7,7 +7,6 @@ import com.loremind.infrastructure.web.dto.conversationcontext.ConversationMessa
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Conversion Domaine <-> DTO pour le contexte Conversation.
@@ -21,7 +20,7 @@ public class ConversationMapper {
     public ConversationDTO toDTO(Conversation c) {
         List<ConversationMessageDTO> msgs = c.getMessages() == null
                 ? List.of()
-                : c.getMessages().stream().map(this::toMessageDTO).collect(Collectors.toList());
+                : c.getMessages().stream().map(this::toMessageDTO).toList();
         return ConversationDTO.builder()
                 .id(c.getId())
                 .title(c.getTitle())

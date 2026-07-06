@@ -25,7 +25,7 @@ import static org.mockito.Mockito.*;
  * (incl. cas non trouvé), la suppression, et le calcul d'order.
  */
 @ExtendWith(MockitoExtension.class)
-public class NpcServiceTest {
+class NpcServiceTest {
 
     @Mock
     private NpcRepository npcRepository;
@@ -152,9 +152,10 @@ public class NpcServiceTest {
     void testUpdateNpc_NotFoundThrows() {
         when(npcRepository.findById("missing")).thenReturn(Optional.empty());
 
+        NpcService.NpcData missingData =
+                new NpcService.NpcData("x", null, null, null, null, null, "camp-1", null, null, null);
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> npcService.updateNpc("missing",
-                        new NpcService.NpcData("x", null, null, null, null, null, "camp-1", null, null, null)));
+                () -> npcService.updateNpc("missing", missingData));
         assertTrue(ex.getMessage().contains("missing"));
         verify(npcRepository, never()).save(any());
     }

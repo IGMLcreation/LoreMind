@@ -8,7 +8,6 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Repository
 public class PostgresGameSystemRepository implements GameSystemRepository {
@@ -35,7 +34,7 @@ public class PostgresGameSystemRepository implements GameSystemRepository {
     public List<GameSystem> findAll() {
         return jpaRepository.findAll().stream()
                 .map(this::toDomainEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -52,7 +51,7 @@ public class PostgresGameSystemRepository implements GameSystemRepository {
     public List<GameSystem> searchByName(String query) {
         return jpaRepository.findByNameContainingIgnoreCase(query).stream()
                 .map(this::toDomainEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private GameSystem toDomainEntity(GameSystemJpaEntity e) {

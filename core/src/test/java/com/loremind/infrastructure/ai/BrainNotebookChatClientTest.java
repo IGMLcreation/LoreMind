@@ -42,14 +42,14 @@ class BrainNotebookChatClientTest {
                         .body(sseBody)
                         .build());
         WebClient.Builder builder = WebClient.builder().exchangeFunction(ef);
-        return new BrainNotebookChatClient(builder, MAPPER, "http://brain", 30);
+        return new BrainNotebookChatClient(builder, MAPPER, "http://brain", 30, "/chat/notebook/stream", "/chat/notebook/deep/stream");
     }
 
     /** Construit un client dont le transport échoue immédiatement. */
     private BrainNotebookChatClient clientFailingWith(Throwable boom) {
         ExchangeFunction ef = req -> Mono.error(boom);
         WebClient.Builder builder = WebClient.builder().exchangeFunction(ef);
-        return new BrainNotebookChatClient(builder, MAPPER, "http://brain", 30);
+        return new BrainNotebookChatClient(builder, MAPPER, "http://brain", 30, "/chat/notebook/stream", "/chat/notebook/deep/stream");
     }
 
     /** Collecteur réutilisable pour les callbacks. */
@@ -78,12 +78,23 @@ class BrainNotebookChatClientTest {
     @Test
     void streame_tous_les_events_token_sources_progress_done() {
         // SSE déclenchant chaque branche de handleEvent : sources, progress, token, done.
-        String sse =
-                "event:sources\ndata:{\"passages\":[1,2]}\n\n" +
-                "event:progress\ndata:{\"current\":2,\"total\":5}\n\n" +
-                "event:token\ndata:{\"token\":\"Salut\"}\n\n" +
-                "event:token\ndata:{\"token\":\" toi\"}\n\n" +
-                "event:done\ndata:{}\n\n";
+        String sse = """
+                event:sources
+                data:{"passages":[1,2]}
+
+                event:progress
+                data:{"current":2,"total":5}
+
+                event:token
+                data:{"token":"Salut"}
+
+                event:token
+                data:{"token":" toi"}
+
+                event:done
+                data:{}
+
+                """;
         Collector c = new Collector();
         c.invoke(clientReturning(sse), true);
 
@@ -99,11 +110,20 @@ class BrainNotebookChatClientTest {
     @Test
     void token_vide_ou_absent_ignore() {
         // token vide -> non émis ; token absent -> readField null -> non émis.
-        String sse =
-                "event:token\ndata:{\"token\":\"\"}\n\n" +
-                "event:token\ndata:{\"foo\":\"bar\"}\n\n" +
-                "event:token\ndata:{\"token\":\"X\"}\n\n" +
-                "event:done\ndata:{}\n\n";
+        String sse = """
+                event:token
+                data:{"token":""}
+
+                event:token
+                data:{"foo":"bar"}
+
+                event:token
+                data:{"token":"X"}
+
+                event:done
+                data:{}
+
+                """;
         Collector c = new Collector();
         c.invoke(clientReturning(sse), false);
 
@@ -114,9 +134,14 @@ class BrainNotebookChatClientTest {
     @Test
     void progress_avec_json_invalide_donne_zero() {
         // data non-JSON -> readInt catch -> 0/0 (couvre la branche d'exception).
-        String sse =
-                "event:progress\ndata:pas-du-json\n\n" +
-                "event:done\ndata:{}\n\n";
+        String sse = """
+                event:progress
+                data:pas-du-json
+
+                event:done
+                data:{}
+
+                """;
         Collector c = new Collector();
         c.invoke(clientReturning(sse), true);
 
@@ -127,9 +152,14 @@ class BrainNotebookChatClientTest {
 
     @Test
     void event_error_appelle_onError_avec_NotebookException() {
-        String sse =
-                "event:token\ndata:{\"token\":\"avant\"}\n\n" +
-                "event:error\ndata:{\"message\":\"oups modèle\"}\n\n";
+        String sse = """
+                event:token
+                data:{"token":"avant"}
+
+                event:error
+                data:{"message":"oups modèle"}
+
+                """;
         Collector c = new Collector();
         c.invoke(clientReturning(sse), false);
 
@@ -183,7 +213,7 @@ class BrainNotebookChatClientTest {
                         .body(sse)
                         .build());
         BrainNotebookChatClient client =
-                new BrainNotebookChatClient(WebClient.builder().exchangeFunction(ef), MAPPER, "http://brain", 30);
+                new BrainNotebookChatClient(WebClient.builder().exchangeFunction(ef), MAPPER, "http://brain", 30, "/chat/notebook/stream", "/chat/notebook/deep/stream");
 
         AtomicBoolean done = new AtomicBoolean(false);
         client.stream(

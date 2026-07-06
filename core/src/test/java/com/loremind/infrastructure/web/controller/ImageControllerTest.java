@@ -13,6 +13,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -51,7 +52,7 @@ class ImageControllerTest {
                 .contentType("image/png")
                 .sizeBytes(3)
                 .storageKey("images/img-1.png")
-                .uploadedAt(LocalDateTime.of(2026, 1, 1, 12, 0))
+                .uploadedAt(LocalDateTime.of(2026, Month.JANUARY, 1, 12, 0))
                 .build();
     }
 

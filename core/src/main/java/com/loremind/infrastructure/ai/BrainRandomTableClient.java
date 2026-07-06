@@ -49,23 +49,7 @@ public class BrainRandomTableClient implements RandomTableGenerator {
         if (resp == null) {
             throw new RandomTableGenerationException("Le Brain a renvoyé une réponse vide.");
         }
-        List<RandomTableEntry> entries = new ArrayList<>();
-        Object rawEntries = resp.get("entries");
-        if (rawEntries instanceof List<?> list) {
-            for (Object item : list) {
-                if (!(item instanceof Map<?, ?> m)) continue;
-                Integer min = asInt(m.get("min_roll"));
-                Integer max = asInt(m.get("max_roll"));
-                String label = asString(m.get("label"));
-                if (min == null || max == null || label == null || label.isBlank()) continue;
-                entries.add(RandomTableEntry.builder()
-                        .minRoll(min)
-                        .maxRoll(Math.max(min, max))
-                        .label(label)
-                        .detail(asString(m.get("detail")))
-                        .build());
-            }
-        }
+        List<RandomTableEntry> entries = parseEntries(resp.get("entries"));
         if (entries.isEmpty()) {
             throw new RandomTableGenerationException("Aucune entrée générée — réessaie ou reformule.");
         }
@@ -74,6 +58,39 @@ public class BrainRandomTableClient implements RandomTableGenerator {
                 name != null && !name.isBlank() ? name : description,
                 asString(resp.get("description")),
                 entries);
+    }
+
+    /** Entrées valides de la réponse (entrées malformées ou incomplètes ignorées). */
+    private static List<RandomTableEntry> parseEntries(Object rawEntries) {
+        List<RandomTableEntry> entries = new ArrayList<>();
+        if (rawEntries instanceof List<?> list) {
+            for (Object raw : list) {
+                RandomTableEntry entry = toEntry(raw);
+                if (entry != null) {
+                    entries.add(entry);
+                }
+            }
+        }
+        return entries;
+    }
+
+    /** Une RandomTableEntry depuis une entrée brute, ou null si malformée / bornes ou label absents. */
+    private static RandomTableEntry toEntry(Object raw) {
+        if (!(raw instanceof Map<?, ?> m)) {
+            return null;
+        }
+        Integer min = asInt(m.get("min_roll"));
+        Integer max = asInt(m.get("max_roll"));
+        String label = asString(m.get("label"));
+        if (min == null || max == null || label == null || label.isBlank()) {
+            return null;
+        }
+        return RandomTableEntry.builder()
+                .minRoll(min)
+                .maxRoll(Math.max(min, max))
+                .label(label)
+                .detail(asString(m.get("detail")))
+                .build();
     }
 
     @Override

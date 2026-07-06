@@ -11,12 +11,13 @@ import java.util.List;
 public record CampaignImportProposal(List<ArcProposal> arcs, List<NpcProposal> npcs) {
 
     /**
-     * {@code existingId} (nullable) : si présent, le nœud existe DÉJÀ dans la
-     * campagne (rempli côté UI lors de la revue pré-chargée) → l'apply ne le
-     * recrée pas, il l'utilise comme parent des nouveaux enfants. Null = à créer.
+     * {@code type} = "LINEAR" ou "HUB" (mappé sur {@link ArcType} à l'apply).
+     * <p>
+     * {@code existingId} (nullable, porté aussi par Chapter/SceneProposal) : si présent,
+     * le nœud existe DÉJÀ dans la campagne (rempli côté UI lors de la revue pré-chargée)
+     * → l'apply ne le recrée pas, il l'utilise comme parent des nouveaux enfants.
+     * Null = à créer.
      */
-
-    /** {@code type} = "LINEAR" ou "HUB" (mappé sur {@link ArcType} à l'apply). */
     public record ArcProposal(
             String name, String description, String type,
             List<ChapterProposal> chapters, String existingId) {

@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * REST Controller pour le contexte Campaign.
@@ -48,7 +47,7 @@ public class CampaignController {
         List<Campaign> campaigns = campaignService.getAllCampaigns();
         List<CampaignDTO> campaignDTOs = campaigns.stream()
                 .map(campaignMapper::toDTO)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(campaignDTOs);
     }
 
@@ -56,7 +55,7 @@ public class CampaignController {
     public ResponseEntity<List<CampaignDTO>> searchCampaigns(@RequestParam("q") String query) {
         List<CampaignDTO> dtos = campaignService.searchCampaigns(query).stream()
                 .map(campaignMapper::toDTO)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(dtos);
     }
 

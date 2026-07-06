@@ -52,39 +52,45 @@ class ImageImporter {
                       ImportIdMaps maps,
                       ImportResult.Builder result) {
         for (ContentExport.ImageDto meta : nullSafe(export.images())) {
-            String storageKey = meta.storageKey();
-            if (storageKey == null || storageKey.isBlank()) continue;
-
-            var existing = imageRepo.findByStorageKey(storageKey);
-            if (existing.isPresent()) {
-                // Image déjà présente : réutilisée (pas de réupload). L'ancien id pointe
-                // désormais la ligne existante.
-                mapId(maps, meta.id(), existing.get().getId());
-                result.imageReused();
-                continue;
-            }
-
-            byte[] data = imageBinaries.get(storageKey);
-            if (data == null) {
-                // Métadonnée sans binaire (ex. image orpheline non embarquée) : rien à
-                // matérialiser, pas de cible de remap.
-                continue;
-            }
-
-            String contentType = meta.contentType() != null
-                    ? meta.contentType() : guessContentType(storageKey);
-            long size = meta.sizeBytes() > 0 ? meta.sizeBytes() : data.length;
-
-            imageStorage.store(storageKey, contentType, new ByteArrayInputStream(data), data.length);
-
-            ImageJpaEntity e = new ImageJpaEntity();
-            e.setFilename(meta.filename() != null ? meta.filename() : fileNameOf(storageKey));
-            e.setContentType(contentType);
-            e.setSizeBytes(size);
-            e.setStorageKey(storageKey);
-            mapId(maps, meta.id(), imageRepo.save(e).getId());
-            result.imageUploaded();
+            importImage(meta, imageBinaries, maps, result);
         }
+    }
+
+    /** Traite une métadonnée d'image : réutilise la ligne existante, sinon matérialise le binaire. */
+    private void importImage(ContentExport.ImageDto meta, Map<String, byte[]> imageBinaries,
+                             ImportIdMaps maps, ImportResult.Builder result) {
+        String storageKey = meta.storageKey();
+        if (storageKey == null || storageKey.isBlank()) return;
+
+        var existing = imageRepo.findByStorageKey(storageKey);
+        if (existing.isPresent()) {
+            // Image déjà présente : réutilisée (pas de réupload). L'ancien id pointe
+            // désormais la ligne existante.
+            mapId(maps, meta.id(), existing.get().getId());
+            result.imageReused();
+            return;
+        }
+
+        byte[] data = imageBinaries.get(storageKey);
+        if (data == null) {
+            // Métadonnée sans binaire (ex. image orpheline non embarquée) : rien à
+            // matérialiser, pas de cible de remap.
+            return;
+        }
+
+        String contentType = meta.contentType() != null
+                ? meta.contentType() : guessContentType(storageKey);
+        long size = meta.sizeBytes() > 0 ? meta.sizeBytes() : data.length;
+
+        imageStorage.store(storageKey, contentType, new ByteArrayInputStream(data), data.length);
+
+        ImageJpaEntity e = new ImageJpaEntity();
+        e.setFilename(meta.filename() != null ? meta.filename() : fileNameOf(storageKey));
+        e.setContentType(contentType);
+        e.setSizeBytes(size);
+        e.setStorageKey(storageKey);
+        mapId(maps, meta.id(), imageRepo.save(e).getId());
+        result.imageUploaded();
     }
 
     private static void mapId(ImportIdMaps maps, Long oldId, Long newId) {

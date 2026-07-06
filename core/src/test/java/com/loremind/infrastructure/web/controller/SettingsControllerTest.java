@@ -2,6 +2,8 @@ package com.loremind.infrastructure.web.controller;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -126,46 +128,14 @@ class SettingsControllerTest {
         brain.verify();
     }
 
-    @Test
-    void listOneMinModels_forwards() throws Exception {
-        brain.expect(requestTo(endsWith("/models/onemin")))
+    @ParameterizedTest
+    @ValueSource(strings = {"onemin", "openrouter", "mistral", "gemini"})
+    void listModels_forwards(String provider) throws Exception {
+        brain.expect(requestTo(endsWith("/models/" + provider)))
                 .andExpect(method(HttpMethod.GET))
                 .andRespond(withSuccess("{\"models\":[]}", MediaType.APPLICATION_JSON));
 
-        mockMvc.perform(get("/api/settings/models/onemin").header(HttpHeaders.AUTHORIZATION, ADMIN_AUTH))
-                .andExpect(status().isOk());
-        brain.verify();
-    }
-
-    @Test
-    void listOpenRouterModels_forwards() throws Exception {
-        brain.expect(requestTo(endsWith("/models/openrouter")))
-                .andExpect(method(HttpMethod.GET))
-                .andRespond(withSuccess("{\"models\":[]}", MediaType.APPLICATION_JSON));
-
-        mockMvc.perform(get("/api/settings/models/openrouter").header(HttpHeaders.AUTHORIZATION, ADMIN_AUTH))
-                .andExpect(status().isOk());
-        brain.verify();
-    }
-
-    @Test
-    void listMistralModels_forwards() throws Exception {
-        brain.expect(requestTo(endsWith("/models/mistral")))
-                .andExpect(method(HttpMethod.GET))
-                .andRespond(withSuccess("{\"models\":[]}", MediaType.APPLICATION_JSON));
-
-        mockMvc.perform(get("/api/settings/models/mistral").header(HttpHeaders.AUTHORIZATION, ADMIN_AUTH))
-                .andExpect(status().isOk());
-        brain.verify();
-    }
-
-    @Test
-    void listGeminiModels_forwards() throws Exception {
-        brain.expect(requestTo(endsWith("/models/gemini")))
-                .andExpect(method(HttpMethod.GET))
-                .andRespond(withSuccess("{\"models\":[]}", MediaType.APPLICATION_JSON));
-
-        mockMvc.perform(get("/api/settings/models/gemini").header(HttpHeaders.AUTHORIZATION, ADMIN_AUTH))
+        mockMvc.perform(get("/api/settings/models/" + provider).header(HttpHeaders.AUTHORIZATION, ADMIN_AUTH))
                 .andExpect(status().isOk());
         brain.verify();
     }

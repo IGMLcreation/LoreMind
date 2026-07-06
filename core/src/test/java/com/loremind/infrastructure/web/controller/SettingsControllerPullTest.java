@@ -56,8 +56,10 @@ class SettingsControllerPullTest {
             // On consomme la requête (le body JSON sérialisé par le controller) puis on
             // renvoie un flux NDJSON de progression, comme le ferait le Brain/Ollama.
             exchange.getRequestBody().readAllBytes();
-            byte[] body = ("{\"status\":\"pulling manifest\"}\n"
-                    + "{\"status\":\"success\"}\n").getBytes(StandardCharsets.UTF_8);
+            byte[] body = """
+                    {"status":"pulling manifest"}
+                    {"status":"success"}
+                    """.getBytes(StandardCharsets.UTF_8);
             exchange.getResponseHeaders().set("Content-Type", "application/x-ndjson");
             exchange.sendResponseHeaders(200, body.length);
             exchange.getResponseBody().write(body);

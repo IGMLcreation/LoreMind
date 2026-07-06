@@ -52,11 +52,11 @@ class GameSystemControllerUnitTest {
             // 1) Termine le flux (event "done" + complete()).
             onDone.accept(new RulesImportResult(Map.of(), 0, 0));
             // 2) Envoi post-complete : send échoue -> catch -> clientGone=true.
-            try { onProgress.accept(progress()); } catch (RuntimeException ignored) { }
+            try { onProgress.accept(progress()); } catch (RuntimeException ignored) { /* attendu : branche exercée */ }
             // 3) clientGone=true -> sendImportHeartbeat lève ClientGoneException.
-            try { onHeartbeat.run(); } catch (RuntimeException ignored) { }
+            try { onHeartbeat.run(); } catch (RuntimeException ignored) { /* attendu : branche exercée */ }
             // 4) clientGone=true -> sendImportEvent lève ClientGoneException.
-            try { onProgress.accept(progress()); } catch (RuntimeException ignored) { }
+            try { onProgress.accept(progress()); } catch (RuntimeException ignored) { /* attendu : branche exercée */ }
             // 5) clientGone=true -> callback d'erreur en early-return.
             onError.accept(new RuntimeException("tardif"));
             return null;

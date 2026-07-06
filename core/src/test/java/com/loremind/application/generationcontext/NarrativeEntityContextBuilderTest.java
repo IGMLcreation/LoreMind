@@ -29,7 +29,7 @@ import static org.mockito.Mockito.*;
  * champs null (remplacés par ""), et les erreurs (type inconnu, entité absente).
  */
 @ExtendWith(MockitoExtension.class)
-public class NarrativeEntityContextBuilderTest {
+class NarrativeEntityContextBuilderTest {
 
     @Mock private ArcRepository arcRepository;
     @Mock private ChapterRepository chapterRepository;

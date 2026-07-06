@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/playthroughs")
@@ -41,7 +40,7 @@ public class PlaythroughController {
         List<Playthrough> list = (campaignId != null && !campaignId.isBlank())
                 ? service.getByCampaignId(campaignId)
                 : List.of();
-        return ResponseEntity.ok(list.stream().map(mapper::toDTO).collect(Collectors.toList()));
+        return ResponseEntity.ok(list.stream().map(mapper::toDTO).toList());
     }
 
     @PutMapping("/{id}")

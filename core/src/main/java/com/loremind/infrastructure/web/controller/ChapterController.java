@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * REST Controller pour le contexte Chapter.
@@ -50,7 +49,7 @@ public class ChapterController {
                 : chapterService.getAllChapters();
         List<ChapterDTO> chapterDTOs = chapters.stream()
                 .map(chapterMapper::toDTO)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(chapterDTOs);
     }
 

@@ -24,7 +24,7 @@ import static org.mockito.Mockito.*;
  * Mocks des ports (repository, générateur IA, campagne, système de jeu).
  */
 @ExtendWith(MockitoExtension.class)
-public class RandomTableServiceTest {
+class RandomTableServiceTest {
 
     @Mock
     private RandomTableRepository repository;
@@ -145,8 +145,9 @@ public class RandomTableServiceTest {
     void testUpdateTable_NotFound() {
         when(repository.findById("missing")).thenReturn(Optional.empty());
 
+        RandomTableService.TableData missingData = data(1, "camp-1");
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> service.updateTable("missing", data(1, "camp-1")));
+                () -> service.updateTable("missing", missingData));
         assertEquals("Table aléatoire introuvable: missing", ex.getMessage());
         verify(repository, never()).save(any());
     }
@@ -202,7 +203,7 @@ public class RandomTableServiceTest {
     void testGenerateProposal_DefaultsFormulaAndCopiesEntries() {
         RandomTableEntry e = RandomTableEntry.builder().minRoll(1).maxRoll(1).label("X").build();
         when(campaignContextFormatter.format("camp-1")).thenReturn("Campagne : Ma Campagne");
-        when(generator.generate(eq("desc"), eq("1d20"), eq("Campagne : Ma Campagne")))
+        when(generator.generate("desc", "1d20", "Campagne : Ma Campagne"))
                 .thenReturn(new RandomTableGenerator.GeneratedTable("Nom IA", "Desc IA", List.of(e)));
 
         RandomTable result = service.generateProposal("camp-1", "desc", " ");
@@ -234,7 +235,7 @@ public class RandomTableServiceTest {
 
         service.generateProposal("camp-1", "desc", "1d8");
 
-        verify(generator).generate(eq("desc"), eq("1d8"), eq("Campagne : Camp — Une aventure\nSystème de jeu : D&D 5e"));
+        verify(generator).generate("desc", "1d8", "Campagne : Camp — Une aventure\nSystème de jeu : D&D 5e");
     }
 
     // --- improviseRoll ---

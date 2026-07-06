@@ -12,7 +12,6 @@ import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Adaptateur : appelle le Brain POST /summarize/conversation-title pour
@@ -45,7 +44,7 @@ public class BrainConversationTitleClient implements ConversationTitleGenerator 
                 .map(m -> Map.<String, Object>of(
                         "role", m.getRole(),
                         "content", m.getContent() == null ? "" : m.getContent()))
-                .collect(Collectors.toList()));
+                .toList());
 
         try {
             @SuppressWarnings("unchecked")

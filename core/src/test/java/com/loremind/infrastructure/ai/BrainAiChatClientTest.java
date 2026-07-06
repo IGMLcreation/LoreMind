@@ -76,10 +76,16 @@ class BrainAiChatClientTest {
 
     @Test
     void flux_complet_parse_usage_et_token_puis_complete() {
-        String sse =
-                "event:usage\ndata:{\"system\":1,\"history\":2,\"current\":3,\"max\":100}\n\n" +
-                "data:{\"token\":\"Bonjour\"}\n\n" +
-                "event:done\ndata:{}\n\n";
+        String sse = """
+                event:usage
+                data:{"system":1,"history":2,"current":3,"max":100}
+
+                data:{"token":"Bonjour"}
+
+                event:done
+                data:{}
+
+                """;
         BrainAiChatClient client = clientWithSse(sse);
 
         client.streamChat(minimalRequest(), callbacks);
@@ -97,10 +103,15 @@ class BrainAiChatClientTest {
 
     @Test
     void plusieurs_tokens_propages_dans_l_ordre() {
-        String sse =
-                "data:{\"token\":\"Bon\"}\n\n" +
-                "data:{\"token\":\"jour\"}\n\n" +
-                "event:done\ndata:{}\n\n";
+        String sse = """
+                data:{"token":"Bon"}
+
+                data:{"token":"jour"}
+
+                event:done
+                data:{}
+
+                """;
         BrainAiChatClient client = clientWithSse(sse);
 
         client.streamChat(minimalRequest(), callbacks);
@@ -112,9 +123,14 @@ class BrainAiChatClientTest {
 
     @Test
     void event_error_declenche_onError_avec_AiProviderException() {
-        String sse =
-                "event:error\ndata:boom\n\n" +
-                "event:done\ndata:{}\n\n";
+        String sse = """
+                event:error
+                data:boom
+
+                event:done
+                data:{}
+
+                """;
         BrainAiChatClient client = clientWithSse(sse);
 
         client.streamChat(minimalRequest(), callbacks);
@@ -128,9 +144,13 @@ class BrainAiChatClientTest {
 
     @Test
     void token_vide_n_est_pas_propage() {
-        String sse =
-                "data:{\"token\":\"\"}\n\n" +
-                "event:done\ndata:{}\n\n";
+        String sse = """
+                data:{"token":""}
+
+                event:done
+                data:{}
+
+                """;
         BrainAiChatClient client = clientWithSse(sse);
 
         client.streamChat(minimalRequest(), callbacks);
@@ -143,9 +163,14 @@ class BrainAiChatClientTest {
     void usage_illisible_n_est_pas_propage() {
         // data usage sans champs numériques -> parser renvoie ChatUsage(0,0,0,0),
         // donc propagé ; ici on teste un usage avec data non-null mais vide d'entiers.
-        String sse =
-                "event:usage\ndata:{\"system\":5}\n\n" +
-                "event:done\ndata:{}\n\n";
+        String sse = """
+                event:usage
+                data:{"system":5}
+
+                event:done
+                data:{}
+
+                """;
         BrainAiChatClient client = clientWithSse(sse);
 
         client.streamChat(minimalRequest(), callbacks);

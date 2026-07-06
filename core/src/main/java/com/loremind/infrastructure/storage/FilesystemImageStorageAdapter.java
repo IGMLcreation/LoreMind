@@ -1,6 +1,8 @@
 package com.loremind.infrastructure.storage;
 
 import com.loremind.domain.images.ports.ImageStorage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -31,6 +33,8 @@ import java.util.UUID;
 @ConditionalOnProperty(name = "storage.backend", havingValue = "filesystem")
 public class FilesystemImageStorageAdapter implements ImageStorage {
 
+    private static final Logger log = LoggerFactory.getLogger(FilesystemImageStorageAdapter.class);
+
     private final Path root;
 
     public FilesystemImageStorageAdapter(@Value("${storage.filesystem.path}") String basePath) {
@@ -41,7 +45,7 @@ public class FilesystemImageStorageAdapter implements ImageStorage {
     void ensureRootExists() {
         try {
             Files.createDirectories(root);
-            System.out.println("[Storage] Backend filesystem actif — racine : " + root);
+            log.info("[Storage] Backend filesystem actif — racine : {}", root);
         } catch (IOException e) {
             throw new UncheckedIOException("Impossible de creer le dossier de stockage : " + root, e);
         }
@@ -92,7 +96,7 @@ public class FilesystemImageStorageAdapter implements ImageStorage {
             Files.deleteIfExists(resolveKey(storageKey));
         } catch (IOException e) {
             // Suppression idempotente : on loggue mais on ne propage pas (cf. MinIO).
-            System.err.println("[Storage] Erreur suppression (non bloquante) : " + e.getMessage());
+            log.warn("[Storage] Erreur suppression (non bloquante) : {}", e.getMessage());
         }
     }
 

@@ -31,6 +31,24 @@ public class CharacterNpcMarkdownBackfill {
 
     private static final Logger log = LoggerFactory.getLogger(CharacterNpcMarkdownBackfill.class);
 
+    // SQL en CONSTANTES de compilation (pas de concaténation avec un paramètre) :
+    // les noms de table sont figés dans les littéraux, aucune donnée dynamique
+    // n'entre dans la requête hors placeholders '?'.
+    // Sélection : fiches avec markdown non vide ET field_values vide ou absent.
+    // field_values peut etre NULL (legacy avant refonte) ou "{}" (refonte appliquee mais sans data).
+    private static final String BACKFILL_WHERE =
+            " WHERE markdown_content IS NOT NULL "
+            + "  AND markdown_content <> '' "
+            + "  AND (field_values IS NULL OR field_values = '' OR field_values = '{}')";
+    private static final String SELECT_CHARACTERS =
+            "SELECT id, markdown_content FROM characters" + BACKFILL_WHERE;
+    private static final String SELECT_NPCS =
+            "SELECT id, markdown_content FROM npcs" + BACKFILL_WHERE;
+    private static final String UPDATE_CHARACTERS =
+            "UPDATE characters SET field_values = ? WHERE id = ?";
+    private static final String UPDATE_NPCS =
+            "UPDATE npcs SET field_values = ? WHERE id = ?";
+
     private final JdbcTemplate jdbc;
     private final ObjectMapper mapper = new ObjectMapper();
 
@@ -44,8 +62,8 @@ public class CharacterNpcMarkdownBackfill {
             log.debug("Backfill skip : colonne markdown_content absente (deja migre ou install propre).");
             return;
         }
-        int chars = backfillTable("characters");
-        int npcs = backfillTable("npcs");
+        int chars = backfillTable("characters", SELECT_CHARACTERS, UPDATE_CHARACTERS);
+        int npcs = backfillTable("npcs", SELECT_NPCS, UPDATE_NPCS);
         if (chars + npcs > 0) {
             log.info("Backfill markdown -> field_values : {} character(s), {} npc(s) migre(s).", chars, npcs);
         }
@@ -65,14 +83,7 @@ public class CharacterNpcMarkdownBackfill {
         }
     }
 
-    private int backfillTable(String table) {
-        // Selection : fiches avec markdown non vide ET field_values vide ou absent.
-        // field_values peut etre NULL (legacy avant refonte) ou "{}" (refonte appliquee mais sans data).
-        String selectSql = "SELECT id, markdown_content FROM " + table
-                + " WHERE markdown_content IS NOT NULL "
-                + "   AND markdown_content <> '' "
-                + "   AND (field_values IS NULL OR field_values = '' OR field_values = '{}')";
-
+    private int backfillTable(String label, String selectSql, String updateSql) {
         var rows = jdbc.queryForList(selectSql);
         int migrated = 0;
         for (var row : rows) {
@@ -82,10 +93,10 @@ public class CharacterNpcMarkdownBackfill {
             try {
                 json = mapper.writeValueAsString(Map.of("Notes", markdown));
             } catch (Exception e) {
-                log.error("Backfill {} id={} : echec serialisation JSON, ignore. {}", table, id, e.getMessage());
+                log.error("Backfill {} id={} : echec serialisation JSON, ignore. {}", label, id, e.getMessage());
                 continue;
             }
-            jdbc.update("UPDATE " + table + " SET field_values = ? WHERE id = ?", json, id);
+            jdbc.update(updateSql, json, id);
             migrated++;
         }
         return migrated;

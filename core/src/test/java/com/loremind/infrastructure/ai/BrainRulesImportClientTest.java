@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -56,7 +57,7 @@ class BrainRulesImportClientTest {
     /** Construit le client avec un WebClient câblé sur l'ExchangeFunction fournie. */
     private BrainRulesImportClient client(ExchangeFunction ef) {
         WebClient.Builder builder = WebClient.builder().exchangeFunction(ef);
-        return new BrainRulesImportClient(restTemplate, builder, objectMapper, BASE_URL, 30);
+        return new BrainRulesImportClient(restTemplate, builder, objectMapper, BASE_URL, 30, "/import/rules", "/import/rules/stream");
     }
 
     /** Client one-shot : l'ExchangeFunction n'est jamais utilisée. */
@@ -104,8 +105,9 @@ class BrainRulesImportClientTest {
         when(restTemplate.postForObject(anyString(), any(), eq(BrainRulesImportResponse.class)))
                 .thenReturn(null);
 
+        BrainRulesImportClient client = oneShotClient();
         RulesImportException ex = assertThrows(RulesImportException.class,
-                () -> oneShotClient().importRules(new byte[]{1}, "r.pdf"));
+                () -> client.importRules(new byte[]{1}, "r.pdf"));
         assertTrue(ex.getMessage().contains("vide"));
     }
 
@@ -116,8 +118,9 @@ class BrainRulesImportClientTest {
         when(restTemplate.postForObject(anyString(), any(), eq(BrainRulesImportResponse.class)))
                 .thenReturn(wire);
 
+        BrainRulesImportClient client = oneShotClient();
         assertThrows(RulesImportException.class,
-                () -> oneShotClient().importRules(new byte[]{1}, "r.pdf"));
+                () -> client.importRules(new byte[]{1}, "r.pdf"));
     }
 
     @Test
@@ -125,8 +128,9 @@ class BrainRulesImportClientTest {
         when(restTemplate.postForObject(anyString(), any(), eq(BrainRulesImportResponse.class)))
                 .thenThrow(new ResourceAccessException("timeout"));
 
+        BrainRulesImportClient client = oneShotClient();
         RulesImportException ex = assertThrows(RulesImportException.class,
-                () -> oneShotClient().importRules(new byte[]{1}, "r.pdf"));
+                () -> client.importRules(new byte[]{1}, "r.pdf"));
         assertTrue(ex.getMessage().contains("injoignable"));
     }
 
@@ -137,8 +141,9 @@ class BrainRulesImportClientTest {
         when(restTemplate.postForObject(anyString(), any(), eq(BrainRulesImportResponse.class)))
                 .thenThrow(http);
 
+        BrainRulesImportClient client = oneShotClient();
         RulesImportException ex = assertThrows(RulesImportException.class,
-                () -> oneShotClient().importRules(new byte[]{1}, "r.pdf"));
+                () -> client.importRules(new byte[]{1}, "r.pdf"));
         assertTrue(ex.getMessage().contains("502"));
     }
 
@@ -147,8 +152,9 @@ class BrainRulesImportClientTest {
         when(restTemplate.postForObject(anyString(), any(), eq(BrainRulesImportResponse.class)))
                 .thenThrow(new IllegalStateException("boom"));
 
+        BrainRulesImportClient client = oneShotClient();
         RulesImportException ex = assertThrows(RulesImportException.class,
-                () -> oneShotClient().importRules(new byte[]{1}, "r.pdf"));
+                () -> client.importRules(new byte[]{1}, "r.pdf"));
         assertTrue(ex.getMessage().contains("inattendue"));
     }
 
@@ -181,14 +187,29 @@ class BrainRulesImportClientTest {
 
     @Test
     void streaming_tousLesEvenements_declenchentLesBonsCallbacks() {
-        String sse =
-                "event:extracting\ndata:{}\n\n" +
-                "event:start\ndata:{\"total\":2,\"page_count\":10,\"ocr_page_count\":1}\n\n" +
-                "event:progress\ndata:{\"current\":1,\"total\":2,\"new_sections\":[\"Combat\"]}\n\n" +
-                "event:heartbeat\ndata:{}\n\n" +
-                "event:status\ndata:{\"message\":\"retry\"}\n\n" +
-                "event:chunk_failed\ndata:{\"current\":2,\"total\":2,\"message\":\"timeout\"}\n\n" +
-                "event:done\ndata:{\"sections\":{\"Combat\":\"## Combat\"},\"page_count\":10,\"ocr_page_count\":1}\n\n";
+        String sse = """
+                event:extracting
+                data:{}
+
+                event:start
+                data:{"total":2,"page_count":10,"ocr_page_count":1}
+
+                event:progress
+                data:{"current":1,"total":2,"new_sections":["Combat"]}
+
+                event:heartbeat
+                data:{}
+
+                event:status
+                data:{"message":"retry"}
+
+                event:chunk_failed
+                data:{"current":2,"total":2,"message":"timeout"}
+
+                event:done
+                data:{"sections":{"Combat":"## Combat"},"page_count":10,"ocr_page_count":1}
+
+                """;
 
         Collector c = new Collector();
         runStreaming(sse, c);
@@ -227,7 +248,7 @@ class BrainRulesImportClientTest {
         assertEquals(1, c.done.get().ocrPageCount());
 
         // done a positionné terminated -> pas d'onError.
-        assertEquals(null, c.error.get());
+        assertNull(c.error.get());
     }
 
     @Test
@@ -325,10 +346,5 @@ class BrainRulesImportClientTest {
         assertNotNull(c.done.get());
         assertTrue(c.done.get().sections().isEmpty());
         assertNull(c.error.get());
-    }
-
-    // petits helpers d'assertion null/non-null (évite import statique supplémentaire)
-    private static void assertNull(Object o) {
-        assertTrue(o == null, "attendu null");
     }
 }

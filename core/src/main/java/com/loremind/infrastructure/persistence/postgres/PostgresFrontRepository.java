@@ -8,7 +8,6 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * Adaptateur d'infrastructure : implémente le port {@link FrontRepository} via JPA/Postgres.
@@ -36,7 +35,7 @@ public class PostgresFrontRepository implements FrontRepository {
     public List<Front> findByPlaythroughId(String playthroughId) {
         return jpaRepository.findByPlaythroughIdOrderByOrderAsc(Long.parseLong(playthroughId)).stream()
                 .map(this::toDomain)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override

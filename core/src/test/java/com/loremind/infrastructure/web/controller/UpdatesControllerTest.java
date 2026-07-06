@@ -41,17 +41,19 @@ class UpdatesControllerTest {
     private static final String ADMIN_AUTH = "Basic " + Base64.getEncoder()
             .encodeToString("test-admin:test-admin-password".getBytes(StandardCharsets.UTF_8));
 
+    private static final Instant FIXED_INSTANT = Instant.parse("2024-01-01T00:00:00Z");
+
     @Autowired private MockMvc mockMvc;
     @MockitoBean private UpdateCheckService updates;
 
     private UpdateStatus sampleUpdate() {
         return new UpdateStatus(true, true, false, "1.0.0",
                 List.of(new ImageStatus("img", "1.0.0", "1.1.0", ImageStatusKind.UPDATE_AVAILABLE)),
-                Instant.now());
+                FIXED_INSTANT);
     }
 
     private BetaStatus sampleBeta() {
-        return new BetaStatus(true, false, false, List.of(), Instant.now(), null);
+        return new BetaStatus(true, false, false, List.of(), FIXED_INSTANT, null);
     }
 
     // --- GET /check ---------------------------------------------------------

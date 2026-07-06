@@ -120,8 +120,9 @@ class BrainAiClientTest {
         when(rt.postForObject(anyString(), any(), eq(BrainGeneratePageResponse.class)))
                 .thenReturn(null);
 
+        GenerationContext context = sampleContext();
         AiProviderException ex = assertThrows(AiProviderException.class,
-                () -> client.generatePage(sampleContext()));
+                () -> client.generatePage(context));
         assertTrue(ex.getMessage().contains("reponse vide")
                 || ex.getMessage().contains("réponse vide"));
     }
@@ -137,8 +138,9 @@ class BrainAiClientTest {
         when(rt.postForObject(anyString(), any(), eq(BrainGeneratePageResponse.class)))
                 .thenReturn(responseWith(null));
 
+        GenerationContext context = sampleContext();
         assertThrows(AiProviderException.class,
-                () -> client.generatePage(sampleContext()));
+                () -> client.generatePage(context));
     }
 
     // --- Branche ResourceAccessException (Brain injoignable) -----------------
@@ -152,8 +154,9 @@ class BrainAiClientTest {
         when(rt.postForObject(anyString(), any(), eq(BrainGeneratePageResponse.class)))
                 .thenThrow(cause);
 
+        GenerationContext context = sampleContext();
         AiProviderException ex = assertThrows(AiProviderException.class,
-                () -> client.generatePage(sampleContext()));
+                () -> client.generatePage(context));
         assertTrue(ex.getMessage().contains("injoignable"));
         assertSame(cause, ex.getCause());
     }
@@ -171,8 +174,9 @@ class BrainAiClientTest {
         when(rt.postForObject(anyString(), any(), eq(BrainGeneratePageResponse.class)))
                 .thenThrow(cause);
 
+        GenerationContext context = sampleContext();
         AiProviderException ex = assertThrows(AiProviderException.class,
-                () -> client.generatePage(sampleContext()));
+                () -> client.generatePage(context));
         assertTrue(ex.getMessage().contains("502"));
         assertSame(cause, ex.getCause());
     }
@@ -188,8 +192,9 @@ class BrainAiClientTest {
         when(rt.postForObject(anyString(), any(), eq(BrainGeneratePageResponse.class)))
                 .thenThrow(original);
 
+        GenerationContext context = sampleContext();
         AiProviderException ex = assertThrows(AiProviderException.class,
-                () -> client.generatePage(sampleContext()));
+                () -> client.generatePage(context));
         // Pas de re-enveloppement : c'est exactement la meme instance
         assertSame(original, ex);
     }
@@ -205,8 +210,9 @@ class BrainAiClientTest {
         when(rt.postForObject(anyString(), any(), eq(BrainGeneratePageResponse.class)))
                 .thenThrow(cause);
 
+        GenerationContext context = sampleContext();
         AiProviderException ex = assertThrows(AiProviderException.class,
-                () -> client.generatePage(sampleContext()));
+                () -> client.generatePage(context));
         assertTrue(ex.getMessage().contains("inattendue"));
         assertSame(cause, ex.getCause());
     }

@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 /**
  * Entite JPA pour les metadonnees de fichiers generiques en PostgreSQL.
@@ -44,7 +45,7 @@ public class StoredFileJpaEntity {
     @PrePersist
     protected void onCreate() {
         if (uploadedAt == null) {
-            uploadedAt = LocalDateTime.now();
+            uploadedAt = LocalDateTime.now(ZoneId.systemDefault());
         }
     }
 }

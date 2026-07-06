@@ -64,7 +64,7 @@ public class PostgresItemCatalogRepository implements ItemCatalogRepository {
     public List<ItemCatalog> findByCampaignId(String campaignId) {
         return jpaRepository.findByCampaignIdOrderByOrderAsc(Long.parseLong(campaignId)).stream()
                 .map(this::toDomainEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -82,7 +82,7 @@ public class PostgresItemCatalogRepository implements ItemCatalogRepository {
     public List<ItemCatalog> searchByName(String query) {
         return jpaRepository.findTop20ByNameContainingIgnoreCaseOrderByNameAsc(query).stream()
                 .map(this::toDomainEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private ItemCatalog toDomainEntity(ItemCatalogJpaEntity e) {

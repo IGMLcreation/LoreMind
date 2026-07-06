@@ -60,77 +60,109 @@ public class TemplateFieldListJsonConverter
             }
             List<TemplateField> result = new ArrayList<>();
             for (JsonNode item : root) {
-                if (item.isTextual()) {
-                    // Format legacy : chaine simple, on suppose TEXT par defaut.
-                    // L'id stable est retro-rempli avec le nom (les valeurs de Page
-                    // sont deja rangees par nom -> id == name, aucune migration).
-                    String name = item.asText();
-                    TemplateField legacy = TemplateField.text(name);
-                    legacy.setId(name);
-                    result.add(legacy);
-                } else if (item.isObject()) {
-                    // Nouveau format : {id?, name, type, layout?, labels?, foundryPath?, pos?}
-                    String name = item.path("name").asText(null);
-                    String typeStr = item.path("type").asText("TEXT");
-                    FieldType type;
-                    try {
-                        type = FieldType.valueOf(typeStr);
-                    } catch (IllegalArgumentException ex) {
-                        // Type inconnu (ajoute par une version future) : fallback TEXT.
-                        type = FieldType.TEXT;
-                    }
-                    ImageLayout layout = null;
-                    if (type == FieldType.IMAGE) {
-                        String layoutStr = item.path("layout").asText(null);
-                        if (layoutStr != null && !layoutStr.isBlank()) {
-                            try {
-                                layout = ImageLayout.valueOf(layoutStr);
-                            } catch (IllegalArgumentException ex) {
-                                // Layout inconnu : on laisse null → rendu GALLERY par defaut cote UI.
-                                layout = null;
-                            }
-                        }
-                    }
-                    List<String> labels = null;
-                    if (type == FieldType.KEY_VALUE_LIST || type == FieldType.TABLE) {
-                        JsonNode labelsNode = item.path("labels");
-                        if (labelsNode.isArray()) {
-                            labels = new ArrayList<>();
-                            for (JsonNode label : labelsNode) {
-                                if (label.isTextual()) labels.add(label.asText());
-                            }
-                        }
-                    }
-                    // foundryPath : lu via hasNonNull pour eviter le piege NullNode
-                    // (asText() renverrait la chaine "null"). Historiquement omis a la
-                    // relecture -> il etait perdu au save+reload : corrige ici.
-                    String foundryPath = item.hasNonNull("foundryPath")
-                            ? item.get("foundryPath").asText() : null;
-                    // id : explicite si present, sinon retro-rempli avec le nom.
-                    String id = item.hasNonNull("id") ? item.get("id").asText() : null;
-                    if (id == null || id.isBlank()) {
-                        id = name;
-                    }
-                    BlockPosition pos = readPos(item.path("pos"));
-                    if (name != null && !name.isBlank()) {
-                        result.add(TemplateField.builder()
-                                .id(id)
-                                .name(name)
-                                .type(type)
-                                .layout(layout)
-                                .labels(labels)
-                                .foundryPath(foundryPath)
-                                .pos(pos)
-                                .build());
-                    }
-                }
-                // Autres types de noeuds (nombre, booleen...) : ignores silencieusement.
+                TemplateField field = parseField(item);
+                if (field != null) result.add(field);
             }
             return result;
         } catch (Exception e) {
             throw new IllegalStateException(
                     "Erreur deserialisation JSON -> List<TemplateField>", e);
         }
+    }
+
+    /** Un element du tableau JSON -> TemplateField, ou null si non convertible (ignore). */
+    private static TemplateField parseField(JsonNode item) {
+        if (item.isTextual()) {
+            return parseLegacyField(item.asText());
+        }
+        if (item.isObject()) {
+            return parseObjectField(item);
+        }
+        // Autres types de noeuds (nombre, booleen...) : ignores silencieusement.
+        return null;
+    }
+
+    /**
+     * Format legacy : chaine simple, on suppose TEXT par defaut. L'id stable est
+     * retro-rempli avec le nom (les valeurs de Page sont deja rangees par nom ->
+     * id == name, aucune migration).
+     */
+    private static TemplateField parseLegacyField(String name) {
+        TemplateField legacy = TemplateField.text(name);
+        legacy.setId(name);
+        return legacy;
+    }
+
+    /** Nouveau format : {id?, name, type, layout?, labels?, foundryPath?, pos?}. Null si nom vide. */
+    private static TemplateField parseObjectField(JsonNode item) {
+        String name = item.path("name").asText(null);
+        if (name == null || name.isBlank()) {
+            return null;
+        }
+        FieldType type = parseType(item.path("type").asText("TEXT"));
+        // foundryPath : lu via hasNonNull pour eviter le piege NullNode
+        // (asText() renverrait la chaine "null"). Historiquement omis a la
+        // relecture -> il etait perdu au save+reload : corrige ici.
+        String foundryPath = item.hasNonNull("foundryPath")
+                ? item.get("foundryPath").asText() : null;
+        // id : explicite si present, sinon retro-rempli avec le nom.
+        String id = item.hasNonNull("id") ? item.get("id").asText() : null;
+        if (id == null || id.isBlank()) {
+            id = name;
+        }
+        return TemplateField.builder()
+                .id(id)
+                .name(name)
+                .type(type)
+                .layout(parseLayout(item, type))
+                .labels(parseLabels(item, type))
+                .foundryPath(foundryPath)
+                .pos(readPos(item.path("pos")))
+                .build();
+    }
+
+    /** Type du champ ; fallback TEXT si inconnu (ajoute par une version future). */
+    private static FieldType parseType(String typeStr) {
+        try {
+            return FieldType.valueOf(typeStr);
+        } catch (IllegalArgumentException ex) {
+            return FieldType.TEXT;
+        }
+    }
+
+    /** Layout d'un champ IMAGE ; null si absent/inconnu (-> rendu GALLERY par defaut cote UI). */
+    private static ImageLayout parseLayout(JsonNode item, FieldType type) {
+        if (type != FieldType.IMAGE) {
+            return null;
+        }
+        String layoutStr = item.path("layout").asText(null);
+        if (layoutStr == null || layoutStr.isBlank()) {
+            return null;
+        }
+        try {
+            return ImageLayout.valueOf(layoutStr);
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
+    }
+
+    /** Libelles d'un champ KEY_VALUE_LIST/TABLE ; null pour les autres types. */
+    // S1168 : null est ici SEMANTIQUE ("champ sans libelles"), distinct d'une liste vide —
+    // le JSON persiste ecrit "labels":null (compat ascendante) et le front distingue null/[].
+    @SuppressWarnings("java:S1168")
+    private static List<String> parseLabels(JsonNode item, FieldType type) {
+        if (type != FieldType.KEY_VALUE_LIST && type != FieldType.TABLE) {
+            return null;
+        }
+        JsonNode labelsNode = item.path("labels");
+        if (!labelsNode.isArray()) {
+            return null;
+        }
+        List<String> labels = new ArrayList<>();
+        for (JsonNode label : labelsNode) {
+            if (label.isTextual()) labels.add(label.asText());
+        }
+        return labels;
     }
 
     /**

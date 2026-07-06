@@ -19,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,7 +33,7 @@ import static org.mockito.Mockito.*;
  * Mocks des ports (repository, indexer Brain, campagne, brief builder, système).
  */
 @ExtendWith(MockitoExtension.class)
-public class NotebookServiceTest {
+class NotebookServiceTest {
 
     @Mock
     private NotebookRepository repository;
@@ -264,7 +265,7 @@ public class NotebookServiceTest {
 
     @Test
     void testBuildArchiveContext_NoMatchingKeysReturnsEmpty() {
-        LocalDateTime at = LocalDateTime.of(2026, 1, 1, 10, 0);
+        LocalDateTime at = LocalDateTime.of(2026, Month.JANUARY, 1, 10, 0);
         when(repository.findArchivedMessagesByNotebookId("nb-1")).thenReturn(List.of(
                 NotebookMessage.builder().role("user").content("hi").archivedAt(at).build()));
 
@@ -275,7 +276,7 @@ public class NotebookServiceTest {
 
     @Test
     void testBuildArchiveContext_FormatsSelectedArchive() {
-        LocalDateTime at = LocalDateTime.of(2026, 1, 1, 10, 0);
+        LocalDateTime at = LocalDateTime.of(2026, Month.JANUARY, 1, 10, 0);
         when(repository.findArchivedMessagesByNotebookId("nb-1")).thenReturn(List.of(
                 NotebookMessage.builder().role("user").content("Question ?").archivedAt(at).build(),
                 NotebookMessage.builder().role("assistant").content("Réponse.").archivedAt(at).build()));
@@ -291,7 +292,7 @@ public class NotebookServiceTest {
 
     @Test
     void testBuildArchiveContext_TruncatesFromStartWhenTooLong() {
-        LocalDateTime at = LocalDateTime.of(2026, 1, 1, 10, 0);
+        LocalDateTime at = LocalDateTime.of(2026, Month.JANUARY, 1, 10, 0);
         // Budget pour 1 seule archive = max(2000, 16000/1) = 16000 chars. Au-delà,
         // la troncature se fait PAR LE DÉBUT : la fin (conclusion) doit survivre.
         String head = "A".repeat(17000);

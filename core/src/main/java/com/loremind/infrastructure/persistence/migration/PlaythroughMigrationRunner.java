@@ -10,6 +10,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 /**
@@ -35,7 +36,11 @@ public class PlaythroughMigrationRunner {
     private static final Logger LOG = LoggerFactory.getLogger(PlaythroughMigrationRunner.class);
 
     private static final String DEFAULT_PLAYTHROUGH_NAME = "Partie principale";
+    private static final String COLUMN_CAMPAIGN_ID = "campaign_id";
 
+    // S6809 : auto-invocation assumee — "corriger" (auto-injection/@Lazy) changerait la semantique
+    // transactionnelle reelle de cette migration one-shot idempotente.
+    @SuppressWarnings("java:S6809")
     @Bean
     public ApplicationRunner runPlaythroughMigration(JdbcTemplate jdbc) {
         return args -> migrate(jdbc);
@@ -73,7 +78,7 @@ public class PlaythroughMigrationRunner {
         );
         if (campaignsWithoutPlaythrough.isEmpty()) return 0;
 
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(ZoneId.systemDefault());
         for (Long campaignId : campaignsWithoutPlaythrough) {
             jdbc.update(
                     "INSERT INTO playthroughs (campaign_id, name, description, created_at, updated_at) " +
@@ -85,7 +90,7 @@ public class PlaythroughMigrationRunner {
     }
 
     private int migrateSessions(JdbcTemplate jdbc) {
-        if (!columnExists(jdbc, "sessions", "campaign_id")) return 0;
+        if (!columnExists(jdbc, "sessions", COLUMN_CAMPAIGN_ID)) return 0;
         return jdbc.update(
                 "UPDATE sessions s " +
                 "SET playthrough_id = (SELECT p.id FROM playthroughs p WHERE p.campaign_id = CAST(s.campaign_id AS BIGINT) LIMIT 1) " +
@@ -94,7 +99,7 @@ public class PlaythroughMigrationRunner {
     }
 
     private int migrateCharacters(JdbcTemplate jdbc) {
-        if (!columnExists(jdbc, "characters", "campaign_id")) return 0;
+        if (!columnExists(jdbc, "characters", COLUMN_CAMPAIGN_ID)) return 0;
         return jdbc.update(
                 "UPDATE characters c " +
                 "SET playthrough_id = (SELECT p.id FROM playthroughs p WHERE p.campaign_id = c.campaign_id LIMIT 1) " +
@@ -145,11 +150,13 @@ public class PlaythroughMigrationRunner {
      * Idempotent : PostgreSQL ne bronche pas si la colonne est déjà NULLABLE.
      */
     private void relaxLegacyNotNullConstraints(JdbcTemplate jdbc) {
-        relaxNotNull(jdbc, "sessions", "campaign_id");
-        relaxNotNull(jdbc, "characters", "campaign_id");
+        relaxNotNull(jdbc, "sessions", COLUMN_CAMPAIGN_ID);
+        relaxNotNull(jdbc, "characters", COLUMN_CAMPAIGN_ID);
         relaxNotNull(jdbc, "chapters", "progression_status");
     }
 
+    // S2077 : DDL non parametrable ; table/colonne proviennent exclusivement d'appels internes hardcodes.
+    @SuppressWarnings("java:S2077")
     private void relaxNotNull(JdbcTemplate jdbc, String table, String column) {
         if (!columnExists(jdbc, table, column)) return;
         try {

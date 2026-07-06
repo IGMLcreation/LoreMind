@@ -16,6 +16,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 /**
  * Persistance d'un message appartenant a une {@link ConversationJpaEntity}.
@@ -54,6 +55,6 @@ public class ConversationMessageJpaEntity {
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
+        createdAt = LocalDateTime.now(ZoneId.systemDefault());
     }
 }

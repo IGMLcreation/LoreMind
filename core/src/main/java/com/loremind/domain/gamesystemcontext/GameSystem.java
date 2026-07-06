@@ -158,7 +158,7 @@ public class GameSystem {
     }
 
     private static boolean equalsIgnoreCase(String a, String b) {
-        if (a == null || b == null) return a == b;
+        if (a == null || b == null) return a == null && b == null;
         return a.toLowerCase(Locale.ROOT).equals(b.toLowerCase(Locale.ROOT));
     }
 }

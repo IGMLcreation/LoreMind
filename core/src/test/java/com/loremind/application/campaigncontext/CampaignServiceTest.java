@@ -32,7 +32,9 @@ import static org.mockito.Mockito.*;
  * Teste la logique d'orchestration de la couche Application.
  */
 @ExtendWith(MockitoExtension.class)
-public class CampaignServiceTest {
+// S125 : faux positif — commentaire explicatif (prose), pas de code mort.
+@SuppressWarnings("java:S125")
+class CampaignServiceTest {
 
     @Mock
     private CampaignRepository campaignRepository;
@@ -221,7 +223,7 @@ public class CampaignServiceTest {
 
     @Test
     void testDeleteCampaign_EmptyCampaign() {
-        // Arrange : aucune dépendance ; Mockito renvoie List.of() par défaut.
+        // Arrange : aucune dépendance ; Mockito renvoie une liste vide par défaut.
         // Act
         campaignService.deleteCampaign("campaign-1");
 

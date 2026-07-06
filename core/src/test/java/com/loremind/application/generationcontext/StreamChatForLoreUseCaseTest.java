@@ -37,7 +37,7 @@ import static org.mockito.Mockito.*;
  * template), et délégation au port AiChatProvider avec la bonne ChatRequest.
  */
 @ExtendWith(MockitoExtension.class)
-public class StreamChatForLoreUseCaseTest {
+class StreamChatForLoreUseCaseTest {
 
     @Mock private LoreStructuralContextBuilder loreContextBuilder;
     @Mock private PageRepository pageRepository;

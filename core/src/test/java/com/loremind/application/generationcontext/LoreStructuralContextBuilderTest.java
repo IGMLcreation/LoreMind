@@ -32,7 +32,7 @@ import static org.mockito.Mockito.*;
  * filtrage des valeurs vides, et extraction unique des tags.
  */
 @ExtendWith(MockitoExtension.class)
-public class LoreStructuralContextBuilderTest {
+class LoreStructuralContextBuilderTest {
 
     @Mock private LoreRepository loreRepository;
     @Mock private LoreNodeRepository loreNodeRepository;

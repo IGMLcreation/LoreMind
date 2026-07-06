@@ -26,6 +26,8 @@ public class DesktopBrowserOpener {
     private static final Logger log = LoggerFactory.getLogger(DesktopBrowserOpener.class);
 
     @EventListener(ApplicationReadyEvent.class)
+    // S125 : faux positif — commentaire explicatif (prose), pas de code mort.
+    @SuppressWarnings("java:S125")
     public void onReady() {
         // Ferme le splash natif (affiche par la JVM via -splash des le double-clic)
         // juste avant d'ouvrir le navigateur : le relais visuel est assure.

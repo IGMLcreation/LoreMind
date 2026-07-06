@@ -7,7 +7,6 @@ import com.loremind.infrastructure.web.dto.campaigncontext.ItemCatalogDTO;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 public class ItemCatalogMapper {
@@ -21,13 +20,13 @@ public class ItemCatalogMapper {
         dto.setIcon(c.getIcon());
         dto.setCampaignId(c.getCampaignId());
         dto.setOrder(c.getOrder());
-        dto.setItems(c.getItems().stream().map(this::toItemDTO).collect(Collectors.toList()));
+        dto.setItems(c.getItems().stream().map(this::toItemDTO).toList());
         return dto;
     }
 
     public List<CatalogItem> toDomainItems(List<CatalogItemDTO> dtos) {
         if (dtos == null) return List.of();
-        return dtos.stream().map(this::toDomainItem).collect(Collectors.toList());
+        return dtos.stream().map(this::toDomainItem).toList();
     }
 
     private CatalogItemDTO toItemDTO(CatalogItem i) {

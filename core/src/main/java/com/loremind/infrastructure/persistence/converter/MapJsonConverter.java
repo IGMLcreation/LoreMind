@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -32,8 +33,11 @@ public class MapJsonConverter implements AttributeConverter<Map<String, Object>,
     @Override
     @SuppressWarnings("unchecked")
     public Map<String, Object> convertToEntityAttribute(String dbData) {
-        if (dbData == null) {
-            return null;
+        // Map vide (mutable) plutôt que null : les consommateurs itèrent/écrivent
+        // sans avoir à se défendre contre le null (même contrat que les autres
+        // converters de ce package).
+        if (dbData == null || dbData.isBlank()) {
+            return new HashMap<>();
         }
         try {
             return objectMapper.readValue(dbData, Map.class);

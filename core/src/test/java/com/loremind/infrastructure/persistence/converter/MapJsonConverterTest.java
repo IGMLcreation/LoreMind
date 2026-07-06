@@ -10,9 +10,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Tests pour MapJsonConverter (Map<String,Object> generique).
- * ATTENTION : contrairement aux autres converters, celui-ci renvoie null pour
- * null (pas "{}"), et "autoApply=false" ne s'applique qu'aux champs annotes
- * explicitement. Design historique — les tests documentent cette specificite.
+ * Contrat aligne sur les autres converters du package : null/blanc en base
+ * -> map vide (jamais null), les consommateurs iterent sans garde.
+ * "autoApply=false" : ne s'applique qu'aux champs annotes explicitement.
  */
 class MapJsonConverterTest {
 
@@ -35,8 +35,13 @@ class MapJsonConverterTest {
     }
 
     @Test
-    void fromDb_nullString_returnsNull() {
-        assertNull(converter.convertToEntityAttribute(null));
+    void fromDb_nullString_returnsEmptyMap() {
+        assertEquals(Map.of(), converter.convertToEntityAttribute(null));
+    }
+
+    @Test
+    void fromDb_blankString_returnsEmptyMap() {
+        assertEquals(Map.of(), converter.convertToEntityAttribute("  "));
     }
 
     @Test

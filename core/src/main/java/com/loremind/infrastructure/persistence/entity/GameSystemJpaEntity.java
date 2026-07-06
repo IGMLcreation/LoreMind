@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -69,8 +70,8 @@ public class GameSystemJpaEntity {
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        createdAt = LocalDateTime.now(ZoneId.systemDefault());
+        updatedAt = createdAt;
         if (characterTemplate == null) characterTemplate = new ArrayList<>();
         if (npcTemplate == null) npcTemplate = new ArrayList<>();
         if (enemyTemplate == null) enemyTemplate = new ArrayList<>();
@@ -78,6 +79,6 @@ public class GameSystemJpaEntity {
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now(ZoneId.systemDefault());
     }
 }

@@ -35,6 +35,10 @@ public class GameSystemSeeder {
 
     private static final Logger log = LoggerFactory.getLogger(GameSystemSeeder.class);
 
+    private static final String AUTHOR_SEED = "LoreMind seed";
+    private static final String FIELD_HISTOIRE = "Histoire";
+    private static final String FIELD_GALERIE = "Galerie";
+
     private final GameSystemRepository gameSystemRepository;
 
     public GameSystemSeeder(GameSystemRepository gameSystemRepository) {
@@ -81,7 +85,7 @@ public class GameSystemSeeder {
                 GameSystem.builder()
                         .name("Nimble (extrait)")
                         .description("Système léger et narratif, résolution rapide des combats.")
-                        .author("LoreMind seed")
+                        .author(AUTHOR_SEED)
                         .isPublic(false)
                         .rulesMarkdown(NIMBLE_RULES)
                         .characterTemplate(nimbleCharacterTemplate())
@@ -90,7 +94,7 @@ public class GameSystemSeeder {
                 GameSystem.builder()
                         .name("D&D 5e SRD (extrait)")
                         .description("Extrait libre des bases du System Reference Document 5.1.")
-                        .author("LoreMind seed")
+                        .author(AUTHOR_SEED)
                         .isPublic(false)
                         .rulesMarkdown(DND_SRD_RULES)
                         .characterTemplate(dndCharacterTemplate())
@@ -99,7 +103,7 @@ public class GameSystemSeeder {
                 GameSystem.builder()
                         .name("Homebrew Exemple")
                         .description("Template minimaliste à dupliquer pour créer votre propre système.")
-                        .author("LoreMind seed")
+                        .author(AUTHOR_SEED)
                         .isPublic(false)
                         .rulesMarkdown(HOMEBREW_EXAMPLE)
                         .characterTemplate(genericCharacterTemplate())
@@ -113,10 +117,10 @@ public class GameSystemSeeder {
     /** Template generique PJ — utilise pour Homebrew, backfill, et fallback. */
     private static List<TemplateField> genericCharacterTemplate() {
         return List.of(
-                TemplateField.text("Histoire"),
+                TemplateField.text(FIELD_HISTOIRE),
                 TemplateField.text("Personnalite"),
                 TemplateField.text("Apparence"),
-                TemplateField.image("Galerie", ImageLayout.GALLERY),
+                TemplateField.image(FIELD_GALERIE, ImageLayout.GALLERY),
                 TemplateField.text("Notes")
         );
     }
@@ -137,9 +141,9 @@ public class GameSystemSeeder {
                 TemplateField.number("Blessures graves max"),
                 TemplateField.text("Capacites de classe"),
                 TemplateField.text("Equipement"),
-                TemplateField.text("Histoire"),
+                TemplateField.text(FIELD_HISTOIRE),
                 TemplateField.text("Objectifs personnels"),
-                TemplateField.image("Galerie", ImageLayout.GALLERY)
+                TemplateField.image(FIELD_GALERIE, ImageLayout.GALLERY)
         );
     }
 
@@ -157,8 +161,8 @@ public class GameSystemSeeder {
                 TemplateField.text("Competences"),
                 TemplateField.text("Equipement"),
                 TemplateField.text("Sorts"),
-                TemplateField.text("Histoire"),
-                TemplateField.image("Galerie", ImageLayout.GALLERY)
+                TemplateField.text(FIELD_HISTOIRE),
+                TemplateField.image(FIELD_GALERIE, ImageLayout.GALLERY)
         );
     }
 

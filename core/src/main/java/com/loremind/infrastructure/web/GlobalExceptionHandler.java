@@ -39,25 +39,28 @@ public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    /** Clé du message d'erreur dans le body JSON — contrat lu par le frontend. */
+    private static final String ERROR_KEY = "error";
+
     /**
      * Violation d'invariant domaine (doublons, valeurs invalides, etc.) -> 400.
      * Concentre ici la logique qui etait dupliquee dans GameSystemController.
      */
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException ex) {
-        return ResponseEntity.badRequest().body(Map.of("error", safeMessage(ex)));
+        return ResponseEntity.badRequest().body(Map.of(ERROR_KEY, safeMessage(ex)));
     }
 
     /** Entite JPA introuvable -> 404. */
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<Map<String, String>> handleNotFound(EntityNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", safeMessage(ex)));
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(ERROR_KEY, safeMessage(ex)));
     }
 
     /** JSON malforme dans le body de la requete -> 400. */
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<Map<String, String>> handleUnreadable(HttpMessageNotReadableException ex) {
-        return ResponseEntity.badRequest().body(Map.of("error", "Malformed request body"));
+        return ResponseEntity.badRequest().body(Map.of(ERROR_KEY, "Malformed request body"));
     }
 
     /** Validation @Valid echouee -> 400 avec liste des erreurs par champ. */
@@ -67,7 +70,7 @@ public class GlobalExceptionHandler {
         ex.getBindingResult().getFieldErrors().forEach(e ->
                 fields.put(e.getField(), e.getDefaultMessage() != null ? e.getDefaultMessage() : "invalid"));
         return ResponseEntity.badRequest().body(Map.of(
-                "error", "Validation failed",
+                ERROR_KEY, "Validation failed",
                 "fields", fields
         ));
     }
@@ -84,7 +87,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> handleResponseStatus(ResponseStatusException ex) {
         String reason = ex.getReason();
         return ResponseEntity.status(ex.getStatusCode())
-                .body(Map.of("error", reason != null ? reason : ex.getStatusCode().toString()));
+                .body(Map.of(ERROR_KEY, reason != null ? reason : ex.getStatusCode().toString()));
     }
 
     /**
@@ -112,7 +115,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> handleUnexpected(HttpServletRequest request, Throwable ex) {
         log.error("Unhandled exception on {} {}", request.getMethod(), request.getRequestURI(), ex);
         Map<String, String> body = new LinkedHashMap<>();
-        body.put("error", "Internal server error");
+        body.put(ERROR_KEY, "Internal server error");
         body.put("type", ex.getClass().getSimpleName());
         String msg = safeMessage(ex);
         if (!msg.isEmpty()) body.put("message", msg);

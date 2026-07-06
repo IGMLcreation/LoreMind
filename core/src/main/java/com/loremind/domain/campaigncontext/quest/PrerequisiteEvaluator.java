@@ -7,7 +7,6 @@ import java.util.Set;
 /**
  * Service de domaine (pur, sans effet de bord) : évalue les prérequis d'une quête
  * et en dérive le {@link QuestStatus} effectif.
- *
  * NB Java 17 : on utilise instanceof pattern matching (finalisé en Java 16) plutôt que
  * switch pattern matching (preview en 17, final en 21). La perte de l'exhaustivité
  * compile-time est compensée par le throw final qui fait crasher tout nouvel
@@ -51,15 +50,12 @@ public final class PrerequisiteEvaluator {
             List<Prerequisite> prerequisites,
             EvaluationContext ctx
     ) {
-        switch (progression) {
-            case COMPLETED:   return QuestStatus.COMPLETED;
-            case IN_PROGRESS: return QuestStatus.IN_PROGRESS;
-            case NOT_STARTED:
-                return areAllSatisfied(prerequisites, ctx)
-                        ? QuestStatus.AVAILABLE
-                        : QuestStatus.LOCKED;
-            default:
-                throw new IllegalStateException("ProgressionStatus non géré : " + progression);
-        }
+        return switch (progression) {
+            case COMPLETED -> QuestStatus.COMPLETED;
+            case IN_PROGRESS -> QuestStatus.IN_PROGRESS;
+            case NOT_STARTED -> areAllSatisfied(prerequisites, ctx)
+                    ? QuestStatus.AVAILABLE
+                    : QuestStatus.LOCKED;
+        };
     }
 }

@@ -25,7 +25,7 @@ import static org.mockito.Mockito.*;
  * Teste la logique d'orchestration de la couche Application.
  */
 @ExtendWith(MockitoExtension.class)
-public class SceneServiceTest {
+class SceneServiceTest {
 
     @Mock
     private SceneRepository sceneRepository;

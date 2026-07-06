@@ -8,7 +8,6 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * Adaptateur d'infrastructure qui implémente le Port LoreRepository.
@@ -42,7 +41,7 @@ public class PostgresLoreRepository implements LoreRepository {
     public List<Lore> findAll() {
         return jpaRepository.findAll().stream()
                 .map(this::toDomainEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -61,7 +60,7 @@ public class PostgresLoreRepository implements LoreRepository {
     public List<Lore> searchByName(String query) {
         return jpaRepository.findByNameContainingIgnoreCase(query).stream()
                 .map(this::toDomainEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     // Méthodes de conversion

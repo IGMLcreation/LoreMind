@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * REST Controller pour le contexte Scene.
@@ -47,7 +46,7 @@ public class SceneController {
                 : sceneService.getAllScenes();
         List<SceneDTO> sceneDTOs = scenes.stream()
                 .map(sceneMapper::toDTO)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(sceneDTOs);
     }
 

@@ -44,6 +44,8 @@ class SessionControllerTest {
 
     private String playthroughId;
 
+    private static final LocalDateTime FIXED_TIME = LocalDateTime.of(2024, java.time.Month.JANUARY, 1, 0, 0);
+
     @BeforeEach
     void setUp() {
         String campaignId = campaignRepository.save(
@@ -56,7 +58,7 @@ class SessionControllerTest {
         return sessionRepository.save(Session.builder()
                 .name("Session test")
                 .playthroughId(playthroughId)
-                .startedAt(LocalDateTime.now())
+                .startedAt(FIXED_TIME)
                 .build());
     }
 
@@ -117,8 +119,8 @@ class SessionControllerTest {
         // Session terminée -> aucune active
         sessionRepository.save(Session.builder()
                 .name("ended").playthroughId(playthroughId)
-                .startedAt(LocalDateTime.now().minusHours(2))
-                .endedAt(LocalDateTime.now().minusHours(1))
+                .startedAt(FIXED_TIME.minusHours(2))
+                .endedAt(FIXED_TIME.minusHours(1))
                 .build());
         mockMvc.perform(get("/api/sessions/active").param("playthroughId", playthroughId))
                 .andExpect(status().isNoContent());

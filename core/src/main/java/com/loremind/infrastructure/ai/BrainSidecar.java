@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicReference;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
@@ -41,7 +42,7 @@ public class BrainSidecar {
     private final BrainSidecarProperties props;
     private final String internalSecret;
 
-    private volatile Process process;
+    private final AtomicReference<Process> process = new AtomicReference<>();
 
     public BrainSidecar(BrainSidecarProperties props,
                         @Value("${brain.internal-secret:}") String internalSecret) {
@@ -75,9 +76,10 @@ public class BrainSidecar {
             // (cf. Settings.internal_shared_secret cote Python -> env INTERNAL_SHARED_SECRET)
             pb.environment().put("INTERNAL_SHARED_SECRET", internalSecret);
 
-            this.process = pb.start();
+            Process started = pb.start();
+            this.process.set(started);
             log.info("[Brain] Sidecar demarre (pid={}, cwd={}).",
-                    process.pid(), workingDir != null ? workingDir : "<heritee>");
+                    started.pid(), workingDir != null ? workingDir : "<heritee>");
         } catch (IOException e) {
             log.error("[Brain] Echec du lancement du sidecar (commande={}). "
                             + "Les fonctions IA seront indisponibles. Cause : {}",
@@ -87,7 +89,7 @@ public class BrainSidecar {
 
     @PreDestroy
     public void stop() {
-        Process p = this.process;
+        Process p = this.process.get();
         if (p == null || !p.isAlive()) {
             return;
         }

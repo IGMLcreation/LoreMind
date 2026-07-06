@@ -39,6 +39,8 @@ import static org.mockito.Mockito.when;
  * Couvre chaque règle du périmètre MVP + l'agrégation de statut + le mode plat.
  */
 @ExtendWith(MockitoExtension.class)
+// S125 : faux positif — commentaire explicatif (prose), pas de code mort.
+@SuppressWarnings("java:S125")
 class CampaignReadinessServiceTest {
 
     private static final String CAMP = "camp";
@@ -106,7 +108,7 @@ class CampaignReadinessServiceTest {
     @Test
     void emptyArc_yieldsArcGap() {
         when(arcRepository.findByCampaignId(CAMP)).thenReturn(List.of(arc("arc-1")));
-        // chapterRepository.findByArcId -> vide par défaut
+        // Aucun chapitre rattaché à l'arc (défaut Mockito : liste vide).
         // Une quête porte le contenu pour ne pas déclencher CAMP-001.
         Quest q = Quest.builder().id("q-1").name("Q").campaignId(CAMP)
                 .nodes(List.of(new QuestNodeRef(NodeType.CHAPTER, "chap-x", 0))).build();
@@ -155,7 +157,7 @@ class CampaignReadinessServiceTest {
     void chapterWithoutScene_yieldsChapterGap() {
         when(arcRepository.findByCampaignId(CAMP)).thenReturn(List.of(arc("arc-1")));
         when(chapterRepository.findByArcId("arc-1")).thenReturn(List.of(chapter("chap-1", "arc-1")));
-        // sceneRepository.findByChapterId -> vide par défaut
+        // Aucune scène rattachée au chapitre (défaut Mockito : liste vide).
         Quest q = Quest.builder().id("q-1").name("Q").campaignId(CAMP)
                 .nodes(List.of(new QuestNodeRef(NodeType.CHAPTER, "chap-1", 0))).build();
         when(questRepository.findByCampaignId(CAMP)).thenReturn(List.of(q));

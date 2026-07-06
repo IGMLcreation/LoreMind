@@ -31,7 +31,7 @@ import static org.mockito.Mockito.*;
  * Vérifie l'assemblage du markdown : titres, vocabulaire HUB/LINEAR, PNJ, lore conditionnel.
  */
 @ExtendWith(MockitoExtension.class)
-public class CampaignBriefBuilderTest {
+class CampaignBriefBuilderTest {
 
     @Mock
     private CampaignStructuralContextBuilder campaignContextBuilder;

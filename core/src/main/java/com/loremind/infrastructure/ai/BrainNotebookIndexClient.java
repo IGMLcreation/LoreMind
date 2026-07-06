@@ -55,7 +55,7 @@ public class BrainNotebookIndexClient implements NotebookIndexer {
             if (resp == null) {
                 throw new NotebookException("Le Brain a renvoyé une réponse vide à l'indexation.");
             }
-            return new IndexResult(resp.chunks, resp.pageCount, resp.ocrPageCount);
+            return new IndexResult(resp.getChunks(), resp.getPageCount(), resp.getOcrPageCount());
         } catch (ResourceAccessException e) {
             throw new NotebookException("Le Brain est injoignable (timeout ou arrêté).", e);
         } catch (RestClientResponseException e) {
@@ -89,12 +89,22 @@ public class BrainNotebookIndexClient implements NotebookIndexer {
         };
     }
 
-    /** Réponse JSON du Brain (snake_case). */
+    /**
+     * Réponse JSON du Brain (snake_case). Champs privés + @JsonProperty explicite
+     * sur CHAQUE champ : Jackson n'auto-détecte que les champs publics par défaut,
+     * l'annotation reste nécessaire pour que la désérialisation continue de fonctionner
+     * une fois les champs rendus privés.
+     */
     private static class IndexResponse {
-        public int chunks;
+        @JsonProperty("chunks")
+        private int chunks;
         @JsonProperty("page_count")
-        public int pageCount;
+        private int pageCount;
         @JsonProperty("ocr_page_count")
-        public int ocrPageCount;
+        private int ocrPageCount;
+
+        int getChunks() { return chunks; }
+        int getPageCount() { return pageCount; }
+        int getOcrPageCount() { return ocrPageCount; }
     }
 }

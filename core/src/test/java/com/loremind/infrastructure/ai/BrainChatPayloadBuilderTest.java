@@ -22,6 +22,7 @@ import com.loremind.domain.generationcontext.SessionContext.QuestSummary;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.List;
 import java.util.Map;
 
@@ -446,7 +447,7 @@ class BrainChatPayloadBuilderTest {
     @Test
     @SuppressWarnings("unchecked")
     void build_sessionContext_complet_inclutToutesLesListesPeuplees() {
-        LocalDateTime now = LocalDateTime.of(2026, 6, 14, 20, 0);
+        LocalDateTime now = LocalDateTime.of(2026, Month.JUNE, 14, 20, 0);
         JournalEntrySummary entry = new JournalEntrySummary(
                 "combat", "Le dragon attaque", now, null);
         JournalEntrySummary prev = new JournalEntrySummary(

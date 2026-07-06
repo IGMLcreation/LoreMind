@@ -3,6 +3,7 @@ package com.loremind.domain.conversationcontext;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -15,9 +16,12 @@ import static org.junit.jupiter.api.Assertions.assertNull;
  */
 class ConversationMessageTest {
 
+    /** Horodatage fixe : la valeur exacte n'importe pas, seul le round-trip est testé. */
+    private static final LocalDateTime FIXED_NOW = LocalDateTime.of(2026, Month.JANUARY, 1, 12, 0);
+
     @Test
     void builder_preservesAllFields() {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = FIXED_NOW;
         ConversationMessage msg = ConversationMessage.builder()
                 .id("msg-1")
                 .role("user")
@@ -41,8 +45,7 @@ class ConversationMessageTest {
 
     @Test
     void allArgsConstructor_populatesEveryField() {
-        LocalDateTime now = LocalDateTime.now();
-        ConversationMessage msg = new ConversationMessage("m-1", "assistant", "Reponse", now);
+        ConversationMessage msg = new ConversationMessage("m-1", "assistant", "Reponse", FIXED_NOW);
         assertNotNull(msg);
         assertEquals("assistant", msg.getRole());
         assertEquals("Reponse", msg.getContent());

@@ -39,15 +39,15 @@ class GameSystemTest {
 
         // Doublon de cle dans Character.values garanti casse-insensible :
         // "Histoire" et "histoire" produiraient la meme cle JSON.
-        assertThrows(IllegalArgumentException.class,
-                () -> gs.addCharacterField(TemplateField.number("HISTOIRE")));
+        TemplateField duplicate = TemplateField.number("HISTOIRE");
+        assertThrows(IllegalArgumentException.class, () -> gs.addCharacterField(duplicate));
     }
 
     @Test
     void addCharacterField_rejectsBlankName() {
         GameSystem gs = GameSystem.builder().build();
-        assertThrows(IllegalArgumentException.class,
-                () -> gs.addCharacterField(new TemplateField("  ", FieldType.TEXT)));
+        TemplateField blank = new TemplateField("  ", FieldType.TEXT);
+        assertThrows(IllegalArgumentException.class, () -> gs.addCharacterField(blank));
     }
 
     // --- removeCharacterField ----------------------------------------------
@@ -98,10 +98,8 @@ class GameSystemTest {
     @Test
     void replaceCharacterTemplate_rejectsDuplicates() {
         GameSystem gs = GameSystem.builder().build();
-        assertThrows(IllegalArgumentException.class,
-                () -> gs.replaceCharacterTemplate(List.of(
-                        TemplateField.text("a"),
-                        TemplateField.text("A"))));
+        List<TemplateField> withDuplicates = List.of(TemplateField.text("a"), TemplateField.text("A"));
+        assertThrows(IllegalArgumentException.class, () -> gs.replaceCharacterTemplate(withDuplicates));
     }
 
     @Test
@@ -130,8 +128,8 @@ class GameSystemTest {
         GameSystem gs = GameSystem.builder().build();
 
         gs.addNpcField(TemplateField.text("Motivation"));
-        assertThrows(IllegalArgumentException.class,
-                () -> gs.addNpcField(TemplateField.text("motivation")));
+        TemplateField duplicate = TemplateField.text("motivation");
+        assertThrows(IllegalArgumentException.class, () -> gs.addNpcField(duplicate));
 
         gs.removeNpcField("Motivation");
         assertTrue(gs.getNpcTemplate().isEmpty());

@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 /**
  * Entite JPA pour les metadonnees d'images en PostgreSQL.
@@ -43,7 +44,7 @@ public class ImageJpaEntity {
     @PrePersist
     protected void onCreate() {
         if (uploadedAt == null) {
-            uploadedAt = LocalDateTime.now();
+            uploadedAt = LocalDateTime.now(ZoneId.systemDefault());
         }
     }
 }

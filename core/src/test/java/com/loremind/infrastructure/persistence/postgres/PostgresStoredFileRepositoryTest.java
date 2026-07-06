@@ -25,6 +25,8 @@ class PostgresStoredFileRepositoryTest {
 
     @Autowired private StoredFileRepository repository;
 
+    private static final LocalDateTime FIXED_TIME = LocalDateTime.of(2024, java.time.Month.JANUARY, 1, 0, 0);
+
     @Test
     void save_fileWithAllMetadata_roundTrips() {
         StoredFile file = StoredFile.builder()
@@ -32,7 +34,7 @@ class PostgresStoredFileRepositoryTest {
                 .contentType("video/mp4")
                 .sizeBytes(8_123_456L)
                 .storageKey("files/abc123.mp4")
-                .uploadedAt(LocalDateTime.now())
+                .uploadedAt(FIXED_TIME)
                 .build();
 
         StoredFile saved = repository.save(file);
@@ -50,7 +52,7 @@ class PostgresStoredFileRepositoryTest {
     void findByStorageKey_returnsMatch() {
         repository.save(StoredFile.builder()
                 .filename("map.dd2vtt").contentType("application/json").sizeBytes(2048L)
-                .storageKey("files/sidecar.json").uploadedAt(LocalDateTime.now()).build());
+                .storageKey("files/sidecar.json").uploadedAt(FIXED_TIME).build());
 
         assertTrue(repository.findByStorageKey("files/sidecar.json").isPresent());
         assertTrue(repository.findByStorageKey("files/inconnu.json").isEmpty());
@@ -60,7 +62,7 @@ class PostgresStoredFileRepositoryTest {
     void deleteById_removesFile() {
         StoredFile saved = repository.save(StoredFile.builder()
                 .filename("x.webm").contentType("video/webm").sizeBytes(100L)
-                .storageKey("files/k.webm").uploadedAt(LocalDateTime.now()).build());
+                .storageKey("files/k.webm").uploadedAt(FIXED_TIME).build());
 
         assertTrue(repository.existsById(saved.getId()));
         repository.deleteById(saved.getId());

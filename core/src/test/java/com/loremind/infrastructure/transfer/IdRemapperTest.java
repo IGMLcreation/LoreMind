@@ -74,8 +74,8 @@ class IdRemapperTest {
     // --- remapStringList -----------------------------------------------------
 
     @Test
-    void remapStringList_null_resteNull() {
-        assertNull(IdRemapper.remapStringList(MAP, null));
+    void remapStringList_null_donneListeVide() {
+        assertEquals(List.of(), IdRemapper.remapStringList(MAP, null));
     }
 
     @Test
@@ -87,8 +87,8 @@ class IdRemapperTest {
     // --- remapPrerequisites --------------------------------------------------
 
     @Test
-    void remapPrerequisites_null_resteNull() {
-        assertNull(IdRemapper.remapPrerequisites(MAP, null));
+    void remapPrerequisites_null_donneListeVide() {
+        assertEquals(List.of(), IdRemapper.remapPrerequisites(MAP, null));
     }
 
     @Test
@@ -111,8 +111,8 @@ class IdRemapperTest {
     // --- remapBranches -------------------------------------------------------
 
     @Test
-    void remapBranches_null_resteNull() {
-        assertNull(IdRemapper.remapBranches(MAP, null));
+    void remapBranches_null_donneListeVide() {
+        assertEquals(List.of(), IdRemapper.remapBranches(MAP, null));
     }
 
     @Test

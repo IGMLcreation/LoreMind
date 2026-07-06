@@ -191,30 +191,96 @@ public class ExportService {
         CampaignJpaEntity campaign = campaignRepo.findById(cid)
                 .orElseThrow(() -> new java.util.NoSuchElementException("Campagne introuvable : " + cid));
 
-        // Prep : clôture structurelle de la campagne.
+        StructuralClosure structure = loadStructuralClosure(cid);
+        // Système de jeu lié : TOUJOURS inclus (templates/PDF en dépendent).
+        List<GameSystemJpaEntity> gsEntities = singleton(gameSystemRepo, parseLongOrNull(campaign.getGameSystemId()));
+        LoreClosure lore = loadLoreClosure(campaign, req);
+        PlayClosure play = loadPlayClosure(cid, req);
+        // Quêtes de la campagne (Niveau 1) — toujours incluses dans la clôture.
+        List<QuestJpaEntity> campaignQuests = questRepo.findByCampaignId(cid);
+        // Images/fichiers : uniquement les binaires RÉFÉRENCÉS par la clôture (si option active).
+        BinaryClosure binaries = req.includeImages()
+                ? loadBinaryClosure(structure, lore, play, campaignQuests) : BinaryClosure.EMPTY;
+
+        ContentExport.CampaignDto campaignDto = campaignDto(campaign, req.includeLore());
+
+        ContentExport.Manifest manifest =
+                new ContentExport.Manifest(FORMAT_VERSION, appVersion, exportedAt, campaign.getName());
+        return new ContentExport(manifest,
+                map(gsEntities, this::toGameSystemDto),
+                map(lore.lores(), this::toLoreDto),
+                map(lore.loreNodes(), this::toLoreNodeDto),
+                map(lore.templates(), this::toTemplateDto),
+                map(lore.pages(), this::toPageDto),
+                List.of(campaignDto),
+                map(structure.arcs(), this::toArcDto),
+                map(structure.chapters(), this::toChapterDto),
+                map(structure.scenes(), this::toSceneDto),
+                map(play.characters(), this::toCharacterDto),
+                map(structure.npcs(), this::toNpcDto),
+                map(structure.enemies(), this::toEnemyDto),
+                map(structure.catalogs(), this::toItemCatalogDto),
+                map(structure.tables(), this::toRandomTableDto),
+                map(binaries.images(), this::toImageDto),
+                map(binaries.files(), this::toStoredFileDto),
+                map(play.playthroughs(), this::toPlaythroughDto),
+                map(play.sessions(), this::toSessionDto),
+                map(play.entries(), this::toSessionEntryDto),
+                map(play.flags(), this::toFlagDto),
+                map(play.questProgressions(), this::toQuestProgressionDto),
+                map(campaignQuests, this::toQuestDto),
+                map(play.clocks(), this::toClockDto),
+                map(play.fronts(), this::toFrontDto));
+    }
+
+    /** Clôture structurelle de la campagne : arcs -> chapitres -> scènes, PNJ, ennemis, catalogues, tables. */
+    private record StructuralClosure(
+            List<ArcJpaEntity> arcs, List<ChapterJpaEntity> chapters, List<SceneJpaEntity> scenes,
+            List<NpcJpaEntity> npcs, List<EnemyJpaEntity> enemies,
+            List<ItemCatalogJpaEntity> catalogs, List<RandomTableJpaEntity> tables) {}
+
+    private StructuralClosure loadStructuralClosure(Long cid) {
         List<ArcJpaEntity> arcEntities = arcRepo.findByCampaignId(cid);
         List<ChapterJpaEntity> chapterEntities = arcEntities.stream()
                 .flatMap(a -> chapterRepo.findByArcId(a.getId()).stream()).toList();
         List<SceneJpaEntity> sceneEntities = chapterEntities.stream()
                 .flatMap(c -> sceneRepo.findByChapterId(c.getId()).stream()).toList();
-        List<NpcJpaEntity> npcEntities = npcRepo.findByCampaignIdOrderByOrderAsc(cid);
-        List<EnemyJpaEntity> enemyEntities = enemyRepo.findByCampaignIdOrderByOrderAsc(cid);
-        List<ItemCatalogJpaEntity> catalogEntities = itemCatalogRepo.findByCampaignIdOrderByOrderAsc(cid);
-        List<RandomTableJpaEntity> tableEntities = randomTableRepo.findByCampaignIdOrderByOrderAsc(cid);
+        return new StructuralClosure(arcEntities, chapterEntities, sceneEntities,
+                npcRepo.findByCampaignIdOrderByOrderAsc(cid), enemyRepo.findByCampaignIdOrderByOrderAsc(cid),
+                itemCatalogRepo.findByCampaignIdOrderByOrderAsc(cid), randomTableRepo.findByCampaignIdOrderByOrderAsc(cid));
+    }
 
-        // Système de jeu lié : TOUJOURS inclus (templates/PDF en dépendent).
-        List<GameSystemJpaEntity> gsEntities = singleton(gameSystemRepo, parseLongOrNull(campaign.getGameSystemId()));
+    /** Univers (lore) lié à la campagne : optionnel selon {@code req.includeLore()}. */
+    private record LoreClosure(
+            List<LoreJpaEntity> lores, List<LoreNodeJpaEntity> loreNodes,
+            List<TemplateJpaEntity> templates, List<PageJpaEntity> pages) {
+        private static final LoreClosure EMPTY = new LoreClosure(List.of(), List.of(), List.of(), List.of());
+    }
 
-        // Univers (lore) lié : optionnel.
+    private LoreClosure loadLoreClosure(CampaignJpaEntity campaign, ExportRequest req) {
         Long lid = req.includeLore() ? parseLongOrNull(campaign.getLoreId()) : null;
-        List<LoreJpaEntity> loreEntities = lid != null ? singleton(loreRepo, lid) : List.of();
-        List<LoreNodeJpaEntity> loreNodeEntities = lid != null ? loreNodeRepo.findByLoreId(lid) : List.of();
-        List<TemplateJpaEntity> templateEntities = lid != null ? templateRepo.findByLoreId(lid) : List.of();
-        List<PageJpaEntity> pageEntities = lid != null ? pageRepo.findByLoreId(lid) : List.of();
+        if (lid == null) return LoreClosure.EMPTY;
+        return new LoreClosure(singleton(loreRepo, lid), loreNodeRepo.findByLoreId(lid),
+                templateRepo.findByLoreId(lid), pageRepo.findByLoreId(lid));
+    }
 
-        // Espace de jeu : optionnel. Les feuilles de perso appartiennent à une Partie,
-        // donc « sans jeu » = sans feuilles de perso.
-        List<PlaythroughJpaEntity> ptEntities = req.includePlay() ? playthroughRepo.findByCampaignId(cid) : List.of();
+    /**
+     * Espace de jeu (parties -> séances/journal/flags/quêtes + feuilles de perso) : optionnel
+     * selon {@code req.includePlay()}. Les feuilles de perso appartiennent à une Partie, donc
+     * « sans jeu » = sans feuilles de perso.
+     */
+    private record PlayClosure(
+            List<PlaythroughJpaEntity> playthroughs, List<SessionJpaEntity> sessions,
+            List<SessionEntryJpaEntity> entries, List<PlaythroughFlagJpaEntity> flags,
+            List<QuestProgressionJpaEntity> questProgressions, List<ClockJpaEntity> clocks,
+            List<FrontJpaEntity> fronts, List<CharacterJpaEntity> characters) {
+        private static final PlayClosure EMPTY = new PlayClosure(
+                List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of());
+    }
+
+    private PlayClosure loadPlayClosure(Long cid, ExportRequest req) {
+        if (!req.includePlay()) return PlayClosure.EMPTY;
+        List<PlaythroughJpaEntity> ptEntities = playthroughRepo.findByCampaignId(cid);
         List<SessionJpaEntity> sessionEntities = ptEntities.stream()
                 .flatMap(p -> sessionRepo.findByPlaythroughIdOrderByStartedAtDesc(p.getId()).stream()).toList();
         List<SessionEntryJpaEntity> entryEntities = sessionEntities.stream()
@@ -229,74 +295,52 @@ public class ExportService {
                 .flatMap(p -> frontRepo.findByPlaythroughIdOrderByOrderAsc(p.getId()).stream()).toList();
         List<CharacterJpaEntity> characterEntities = ptEntities.stream()
                 .flatMap(p -> characterRepo.findByPlaythroughIdOrderByOrderAsc(p.getId()).stream()).toList();
+        return new PlayClosure(ptEntities, sessionEntities, entryEntities, flagEntities,
+                questEntities, clockEntities, frontEntities, characterEntities);
+    }
 
-        // Quêtes de la campagne (Niveau 1) — toujours incluses dans la clôture.
-        List<QuestJpaEntity> campaignQuests = questRepo.findByCampaignId(cid);
+    /** Binaires (images/fichiers) référencés par la clôture exportée. */
+    private record BinaryClosure(List<ImageJpaEntity> images, List<StoredFileJpaEntity> files) {
+        private static final BinaryClosure EMPTY = new BinaryClosure(List.of(), List.of());
+    }
 
-        // Images/fichiers : uniquement les binaires RÉFÉRENCÉS par la clôture (si option active).
-        List<ImageJpaEntity> imageEntities = List.of();
-        List<StoredFileJpaEntity> fileEntities = List.of();
-        if (req.includeImages()) {
-            Set<String> imageRefs = new LinkedHashSet<>();
-            arcEntities.forEach(a -> addAll(imageRefs, a.getIllustrationImageIds()));
-            chapterEntities.forEach(c -> addAll(imageRefs, c.getIllustrationImageIds()));
-            campaignQuests.forEach(q -> addAll(imageRefs, q.getIllustrationImageIds()));
-            sceneEntities.forEach(s -> addAll(imageRefs, s.getIllustrationImageIds()));
-            sceneEntities.forEach(s -> addRoomImageRefs(imageRefs, s.getRooms()));
-            npcEntities.forEach(n -> { add(imageRefs, n.getPortraitImageId()); add(imageRefs, n.getHeaderImageId()); addImageValues(imageRefs, n.getImageValues()); });
-            enemyEntities.forEach(e -> { add(imageRefs, e.getPortraitImageId()); add(imageRefs, e.getHeaderImageId()); addImageValues(imageRefs, e.getImageValues()); });
-            characterEntities.forEach(c -> { add(imageRefs, c.getPortraitImageId()); add(imageRefs, c.getHeaderImageId()); addImageValues(imageRefs, c.getImageValues()); });
-            pageEntities.forEach(p -> addImageValues(imageRefs, p.getImageValues()));
-            imageEntities = imageRefs.stream()
-                    .map(ExportService::parseLongOrNull).filter(java.util.Objects::nonNull)
-                    .map(id -> imageRepo.findById(id).orElse(null)).filter(java.util.Objects::nonNull)
-                    .distinct().toList();
+    private BinaryClosure loadBinaryClosure(StructuralClosure structure, LoreClosure lore, PlayClosure play,
+                                            List<QuestJpaEntity> campaignQuests) {
+        Set<String> imageRefs = new LinkedHashSet<>();
+        structure.arcs().forEach(a -> addAll(imageRefs, a.getIllustrationImageIds()));
+        structure.chapters().forEach(c -> addAll(imageRefs, c.getIllustrationImageIds()));
+        campaignQuests.forEach(q -> addAll(imageRefs, q.getIllustrationImageIds()));
+        structure.scenes().forEach(s -> addAll(imageRefs, s.getIllustrationImageIds()));
+        structure.scenes().forEach(s -> addRoomImageRefs(imageRefs, s.getRooms()));
+        structure.npcs().forEach(n -> { add(imageRefs, n.getPortraitImageId()); add(imageRefs, n.getHeaderImageId()); addImageValues(imageRefs, n.getImageValues()); });
+        structure.enemies().forEach(e -> { add(imageRefs, e.getPortraitImageId()); add(imageRefs, e.getHeaderImageId()); addImageValues(imageRefs, e.getImageValues()); });
+        play.characters().forEach(c -> { add(imageRefs, c.getPortraitImageId()); add(imageRefs, c.getHeaderImageId()); addImageValues(imageRefs, c.getImageValues()); });
+        lore.pages().forEach(p -> addImageValues(imageRefs, p.getImageValues()));
+        List<ImageJpaEntity> imageEntities = imageRefs.stream()
+                .map(ExportService::parseLongOrNull).filter(java.util.Objects::nonNull)
+                .map(id -> imageRepo.findById(id).orElse(null)).filter(java.util.Objects::nonNull)
+                .distinct().toList();
 
-            Set<Long> fileRefs = new LinkedHashSet<>();
-            sceneEntities.forEach(s -> {
-                if (s.getBattlemaps() == null) return;
-                s.getBattlemaps().forEach(bm -> { addLong(fileRefs, bm.mediaFileId()); addLong(fileRefs, bm.dataFileId()); });
-            });
-            fileEntities = fileRefs.stream()
-                    .map(id -> storedFileRepo.findById(id).orElse(null)).filter(java.util.Objects::nonNull).toList();
-        }
+        Set<Long> fileRefs = new LinkedHashSet<>();
+        structure.scenes().forEach(s -> {
+            if (s.getBattlemaps() == null) return;
+            s.getBattlemaps().forEach(bm -> { addLong(fileRefs, bm.mediaFileId()); addLong(fileRefs, bm.dataFileId()); });
+        });
+        List<StoredFileJpaEntity> fileEntities = fileRefs.stream()
+                .map(id -> storedFileRepo.findById(id).orElse(null)).filter(java.util.Objects::nonNull).toList();
 
-        // Campaign DTO : si le lore n'est pas exporté, on neutralise loreId (évite une
-        // référence pendante vers un univers absent à l'import).
-        ContentExport.CampaignDto campaignDto = toCampaignDto(campaign);
-        if (!req.includeLore()) {
-            campaignDto = new ContentExport.CampaignDto(campaignDto.id(), campaignDto.name(),
-                    campaignDto.description(), campaignDto.arcsCount(), campaignDto.playerCount(),
-                    null, campaignDto.gameSystemId());
-        }
+        return new BinaryClosure(imageEntities, fileEntities);
+    }
 
-        ContentExport.Manifest manifest =
-                new ContentExport.Manifest(FORMAT_VERSION, appVersion, exportedAt, campaign.getName());
-        return new ContentExport(manifest,
-                map(gsEntities, this::toGameSystemDto),
-                map(loreEntities, this::toLoreDto),
-                map(loreNodeEntities, this::toLoreNodeDto),
-                map(templateEntities, this::toTemplateDto),
-                map(pageEntities, this::toPageDto),
-                List.of(campaignDto),
-                map(arcEntities, this::toArcDto),
-                map(chapterEntities, this::toChapterDto),
-                map(sceneEntities, this::toSceneDto),
-                map(characterEntities, this::toCharacterDto),
-                map(npcEntities, this::toNpcDto),
-                map(enemyEntities, this::toEnemyDto),
-                map(catalogEntities, this::toItemCatalogDto),
-                map(tableEntities, this::toRandomTableDto),
-                map(imageEntities, this::toImageDto),
-                map(fileEntities, this::toStoredFileDto),
-                map(ptEntities, this::toPlaythroughDto),
-                map(sessionEntities, this::toSessionDto),
-                map(entryEntities, this::toSessionEntryDto),
-                map(flagEntities, this::toFlagDto),
-                map(questEntities, this::toQuestProgressionDto),
-                map(campaignQuests, this::toQuestDto),
-                map(clockEntities, this::toClockDto),
-                map(frontEntities, this::toFrontDto));
+    /**
+     * DTO Campaign : si le lore n'est pas exporté, on neutralise loreId (évite une
+     * référence pendante vers un univers absent à l'import).
+     */
+    private ContentExport.CampaignDto campaignDto(CampaignJpaEntity campaign, boolean includeLore) {
+        ContentExport.CampaignDto dto = toCampaignDto(campaign);
+        if (includeLore) return dto;
+        return new ContentExport.CampaignDto(dto.id(), dto.name(), dto.description(),
+                dto.arcsCount(), dto.playerCount(), null, dto.gameSystemId());
     }
 
     // ----- Helpers de chargement -----
@@ -345,42 +389,61 @@ public class ExportService {
             zip.closeEntry();
 
             // Binaires images : uniquement ceux reellement references.
-            Set<String> referenced = collectReferencedStorageKeys(export);
-            Set<String> written = new LinkedHashSet<>();
-            for (String key : referenced) {
-                if (key == null || key.isBlank() || !written.add(key)) {
-                    continue;
-                }
-                try (InputStream data = imageStorage.download(key)) {
-                    if (data == null) {
-                        continue; // cle orpheline : on ignore silencieusement
-                    }
-                    zip.putNextEntry(new ZipEntry("images/" + key));
-                    data.transferTo(zip);
-                    zip.closeEntry();
-                }
-            }
+            writeImageBinaries(zip, collectReferencedStorageKeys(export));
 
             // Binaires fichiers (battlemaps : media + sidecar) : ceux references par
             // les scenes. Stockes a part sous "files/<storageKey>".
-            Set<String> referencedFiles = collectReferencedFileStorageKeys(export);
-            Set<String> filesWritten = new LinkedHashSet<>();
-            for (String key : referencedFiles) {
-                if (key == null || key.isBlank() || !filesWritten.add(key)) {
-                    continue;
-                }
-                try (InputStream data = fileStorage.download(key)) {
-                    if (data == null) {
-                        continue; // cle orpheline : on ignore silencieusement
-                    }
-                    zip.putNextEntry(new ZipEntry("files/" + key));
-                    data.transferTo(zip);
-                    zip.closeEntry();
-                }
-            }
+            writeFileBinaries(zip, collectReferencedFileStorageKeys(export));
         } catch (IOException e) {
             throw new UncheckedIOException("Echec de la generation du zip d'export", e);
         }
+    }
+
+    /** Ecrit un binaire d'image par cle REFERENCEE (deduplique, cles orphelines/vides ignorees). */
+    private void writeImageBinaries(ZipOutputStream zip, Set<String> referenced) throws IOException {
+        Set<String> written = new LinkedHashSet<>();
+        for (String key : referenced) {
+            if (isWritable(key, written)) {
+                writeImageEntry(zip, key);
+            }
+        }
+    }
+
+    private void writeImageEntry(ZipOutputStream zip, String key) throws IOException {
+        try (InputStream data = imageStorage.download(key)) {
+            if (data == null) {
+                return; // cle orpheline : on ignore silencieusement
+            }
+            zip.putNextEntry(new ZipEntry("images/" + key));
+            data.transferTo(zip);
+            zip.closeEntry();
+        }
+    }
+
+    /** Ecrit un binaire de fichier (battlemap) par cle REFERENCEE (deduplique, cles orphelines/vides ignorees). */
+    private void writeFileBinaries(ZipOutputStream zip, Set<String> referenced) throws IOException {
+        Set<String> written = new LinkedHashSet<>();
+        for (String key : referenced) {
+            if (isWritable(key, written)) {
+                writeFileEntry(zip, key);
+            }
+        }
+    }
+
+    private void writeFileEntry(ZipOutputStream zip, String key) throws IOException {
+        try (InputStream data = fileStorage.download(key)) {
+            if (data == null) {
+                return; // cle orpheline : on ignore silencieusement
+            }
+            zip.putNextEntry(new ZipEntry("files/" + key));
+            data.transferTo(zip);
+            zip.closeEntry();
+        }
+    }
+
+    /** Vrai si la cle est ecrivable : non nulle/vide, et pas deja ecrite (marque au passage). */
+    private static boolean isWritable(String key, Set<String> written) {
+        return key != null && !key.isBlank() && written.add(key);
     }
 
     /**
@@ -392,35 +455,58 @@ public class ExportService {
         // Les entités référencent les images par ID (cf. Image.getId() renvoyé à l'upload),
         // PAS par clé de stockage. On résout donc ID -> storageKey via l'index des images
         // exportées — même logique que collectReferencedFileStorageKeys pour les fichiers.
+        java.util.Map<String, String> keyByImageId = indexImagesById(export);
+        Set<String> refs = collectImageIdRefs(export);
+        return resolveStorageKeys(refs, keyByImageId);
+    }
+
+    private static java.util.Map<String, String> indexImagesById(ContentExport export) {
         java.util.Map<String, String> keyByImageId = new java.util.HashMap<>();
         for (ContentExport.ImageDto img : export.images()) {
             if (img.id() != null) keyByImageId.put(img.id().toString(), img.storageKey());
         }
+        return keyByImageId;
+    }
+
+    /** Collecte les IDs d'images référencés par toutes les entités exportées (avant résolution en storageKey). */
+    private Set<String> collectImageIdRefs(ContentExport export) {
         Set<String> refs = new LinkedHashSet<>();
         for (ContentExport.ArcDto a : export.arcs()) addAll(refs, a.illustrationImageIds());
         for (ContentExport.ChapterDto c : export.chapters()) addAll(refs, c.illustrationImageIds());
-        if (export.quests() != null) {
-            for (ContentExport.QuestDto q : export.quests()) addAll(refs, q.illustrationImageIds());
-        }
+        addQuestImageRefs(refs, export.quests());
         for (ContentExport.SceneDto s : export.scenes()) addAll(refs, s.illustrationImageIds());
         for (ContentExport.SceneDto s : export.scenes()) addRoomImageRefs(refs, s.rooms());
-        for (ContentExport.CharacterDto c : export.characters()) {
-            add(refs, c.portraitImageId());
-            add(refs, c.headerImageId());
-            addImageValues(refs, c.imageValues());
-        }
-        for (ContentExport.NpcDto n : export.npcs()) {
-            add(refs, n.portraitImageId());
-            add(refs, n.headerImageId());
-            addImageValues(refs, n.imageValues());
-        }
-        for (ContentExport.EnemyDto e : export.enemies()) {
-            add(refs, e.portraitImageId());
-            add(refs, e.headerImageId());
-            addImageValues(refs, e.imageValues());
-        }
+        for (ContentExport.CharacterDto c : export.characters()) addCharacterImageRefs(refs, c);
+        for (ContentExport.NpcDto n : export.npcs()) addNpcImageRefs(refs, n);
+        for (ContentExport.EnemyDto e : export.enemies()) addEnemyImageRefs(refs, e);
         for (ContentExport.PageDto p : export.pages()) addImageValues(refs, p.imageValues());
+        return refs;
+    }
 
+    private void addQuestImageRefs(Set<String> refs, List<ContentExport.QuestDto> quests) {
+        if (quests == null) return;
+        for (ContentExport.QuestDto q : quests) addAll(refs, q.illustrationImageIds());
+    }
+
+    private void addCharacterImageRefs(Set<String> refs, ContentExport.CharacterDto c) {
+        add(refs, c.portraitImageId());
+        add(refs, c.headerImageId());
+        addImageValues(refs, c.imageValues());
+    }
+
+    private void addNpcImageRefs(Set<String> refs, ContentExport.NpcDto n) {
+        add(refs, n.portraitImageId());
+        add(refs, n.headerImageId());
+        addImageValues(refs, n.imageValues());
+    }
+
+    private void addEnemyImageRefs(Set<String> refs, ContentExport.EnemyDto e) {
+        add(refs, e.portraitImageId());
+        add(refs, e.headerImageId());
+        addImageValues(refs, e.imageValues());
+    }
+
+    private static Set<String> resolveStorageKeys(Set<String> refs, java.util.Map<String, String> keyByImageId) {
         Set<String> keys = new LinkedHashSet<>();
         for (String ref : refs) {
             String key = keyByImageId.get(ref);

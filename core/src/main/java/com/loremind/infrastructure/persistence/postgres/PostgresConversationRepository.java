@@ -7,13 +7,13 @@ import com.loremind.infrastructure.persistence.entity.ConversationJpaEntity;
 import com.loremind.infrastructure.persistence.entity.ConversationMessageJpaEntity;
 import com.loremind.infrastructure.persistence.jpa.ConversationJpaRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.hibernate.Hibernate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * Adaptateur Postgres pour ConversationRepository.
@@ -46,7 +46,7 @@ public class PostgresConversationRepository implements ConversationRepository {
         return jpa.findById(Long.parseLong(id))
                 .map(e -> {
                     // Force l'initialisation LAZY avant de sortir de la transaction.
-                    e.getMessages().size();
+                    Hibernate.initialize(e.getMessages());
                     return toDomain(e, true);
                 });
     }
@@ -66,7 +66,7 @@ public class PostgresConversationRepository implements ConversationRepository {
         } else {
             return Collections.emptyList();
         }
-        return rows.stream().map(e -> toDomain(e, false)).collect(Collectors.toList());
+        return rows.stream().map(e -> toDomain(e, false)).toList();
     }
 
     @Override
@@ -88,7 +88,7 @@ public class PostgresConversationRepository implements ConversationRepository {
                 .build();
         conv.getMessages().add(msg);
         // Force updatedAt via @PreUpdate en modifiant la conv (touch).
-        conv.setUpdatedAt(java.time.LocalDateTime.now());
+        conv.setUpdatedAt(java.time.LocalDateTime.now(java.time.ZoneId.systemDefault()));
 
         ConversationJpaEntity saved = jpa.save(conv);
         ConversationMessageJpaEntity persisted = saved.getMessages().get(saved.getMessages().size() - 1);
@@ -122,7 +122,7 @@ public class PostgresConversationRepository implements ConversationRepository {
 
     private Conversation toDomain(ConversationJpaEntity e, boolean withMessages) {
         List<ConversationMessage> msgs = withMessages
-                ? e.getMessages().stream().map(this::toDomainMessage).collect(Collectors.toList())
+                ? e.getMessages().stream().map(this::toDomainMessage).toList()
                 : new java.util.ArrayList<>();
         return Conversation.builder()
                 .id(e.getId().toString())

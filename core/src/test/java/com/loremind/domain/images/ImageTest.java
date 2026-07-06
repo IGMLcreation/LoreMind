@@ -3,6 +3,7 @@ package com.loremind.domain.images;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -15,7 +16,7 @@ class ImageTest {
 
     @Test
     void builder_preservesAllFields() {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.of(2026, Month.JANUARY, 1, 12, 0);
         Image image = Image.builder()
                 .id("img-1")
                 .filename("portrait-elfe.jpg")

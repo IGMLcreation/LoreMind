@@ -36,7 +36,7 @@ import static org.mockito.Mockito.*;
  * ChatRequest correcte.
  */
 @ExtendWith(MockitoExtension.class)
-public class StreamChatForCampaignUseCaseTest {
+class StreamChatForCampaignUseCaseTest {
 
     @Mock private CampaignRepository campaignRepository;
     @Mock private CampaignStructuralContextBuilder campaignContextBuilder;

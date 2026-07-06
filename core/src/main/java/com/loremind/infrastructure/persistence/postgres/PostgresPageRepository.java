@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * Adaptateur d'infrastructure qui implémente le Port PageRepository.
@@ -42,7 +41,7 @@ public class PostgresPageRepository implements PageRepository {
     public List<Page> findByLoreId(String loreId) {
         return jpaRepository.findByLoreId(Long.parseLong(loreId)).stream()
                 .map(this::toDomainEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -50,14 +49,14 @@ public class PostgresPageRepository implements PageRepository {
         Long longNodeId = Long.parseLong(nodeId);
         return jpaRepository.findByNodeId(longNodeId).stream()
                 .map(this::toDomainEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
     public List<Page> findAll() {
         return jpaRepository.findAll().stream()
                 .map(this::toDomainEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -81,7 +80,7 @@ public class PostgresPageRepository implements PageRepository {
     public List<Page> searchByTitle(String query) {
         return jpaRepository.findByTitleContainingIgnoreCase(query).stream()
                 .map(this::toDomainEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private Page toDomainEntity(PageJpaEntity e) {

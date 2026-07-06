@@ -62,21 +62,36 @@ public class BrainSceneDraftClient implements SceneDraftAssistant {
         if (resp == null) {
             throw new NarrativeAssistException("Le Brain a renvoyé une réponse vide.");
         }
+        return parseScenes(resp.get("scenes"));
+    }
 
+    /** Ébauches valides de la réponse (entrées malformées ou sans titre ignorées). */
+    private static List<SceneDraft> parseScenes(Object rawScenes) {
         List<SceneDraft> out = new ArrayList<>();
-        Object rawScenes = resp.get("scenes");
         if (rawScenes instanceof List<?> list) {
-            for (Object item : list) {
-                if (!(item instanceof Map<?, ?> m)) continue;
-                String name = asString(m.get("name"));
-                if (name == null || name.isBlank()) continue;      // un titre est obligatoire
-                out.add(new SceneDraft(
-                        name.trim(),
-                        trimOrNull(asString(m.get("description"))),
-                        trimOrNull(asString(m.get("playerNarration")))));
+            for (Object raw : list) {
+                SceneDraft draft = toSceneDraft(raw);
+                if (draft != null) {
+                    out.add(draft);
+                }
             }
         }
         return out;
+    }
+
+    /** Une SceneDraft depuis une entrée brute, ou null si malformée / sans titre. */
+    private static SceneDraft toSceneDraft(Object raw) {
+        if (!(raw instanceof Map<?, ?> m)) {
+            return null;
+        }
+        String name = asString(m.get("name"));
+        if (name == null || name.isBlank()) {
+            return null; // un titre est obligatoire
+        }
+        return new SceneDraft(
+                name.trim(),
+                trimOrNull(asString(m.get("description"))),
+                trimOrNull(asString(m.get("playerNarration"))));
     }
 
     private static String asString(Object o) {

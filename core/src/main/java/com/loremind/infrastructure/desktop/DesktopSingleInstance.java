@@ -1,5 +1,8 @@
 package com.loremind.infrastructure.desktop;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
@@ -26,12 +29,26 @@ import java.nio.file.StandardOpenOption;
  * ({@code java.desktop}) pourrait etre absent du runtime reduit par jlink.
  * On passe donc par la commande systeme d'ouverture d'URL.
  */
+// S4036 : app desktop locale mono-utilisateur — lancement d'utilitaires systeme via PATH
+// assume, sans contexte d'elevation ni d'input externe.
+@SuppressWarnings("java:S4036")
 public final class DesktopSingleInstance {
 
-    /** Conserve le verrou ouvert pour TOUTE la duree de vie du process (sinon GC = relache). */
+    // Utilisé avant SpringApplication.run() : Logback démarre en config console par
+    // défaut — même destination que l'ancien System.err (cf. DesktopUserConfig).
+    private static final Logger log = LoggerFactory.getLogger(DesktopSingleInstance.class);
+
+    private static final String OS_NAME_PROPERTY = "os.name";
+    /** Ouvre URL/fichier/dossier avec l'application par défaut sur Linux. */
+    private static final String XDG_OPEN = "xdg-open";
+
+    /**
+     * Conserve le CHANNEL ouvert pour toute la duree de vie du process : un FileLock
+     * reste detenu tant que son channel est ouvert (le verrou est libere a la fermeture
+     * du channel ou a la sortie de la JVM, pas au GC de l'objet FileLock).
+     */
     @SuppressWarnings("unused")
     private static FileChannel lockChannel;
-    private static FileLock lock;
 
     private DesktopSingleInstance() {}
 
@@ -71,11 +88,11 @@ public final class DesktopSingleInstance {
             Path lockFile = dir.resolve(".instance.lock");
             lockChannel = FileChannel.open(lockFile,
                     StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-            lock = lockChannel.tryLock();
+            FileLock lock = lockChannel.tryLock();
             return lock != null; // null = deja verrouille par une autre instance
         } catch (IOException e) {
-            System.err.println("[Desktop] Verrou d'instance indisponible (" + e.getMessage()
-                    + ") — on tente de demarrer quand meme.");
+            log.warn("[Desktop] Verrou d'instance indisponible ({}) — on tente de demarrer quand meme.",
+                    e.getMessage());
             return true;
         }
     }
@@ -88,7 +105,7 @@ public final class DesktopSingleInstance {
     /** Ouvre le navigateur par defaut sur une URL quelconque (sans dependance AWT). */
     public static void openUrl(String url) {
         try {
-            String os = System.getProperty("os.name", "").toLowerCase();
+            String os = System.getProperty(OS_NAME_PROPERTY, "").toLowerCase();
             ProcessBuilder pb;
             if (os.contains("win")) {
                 // rundll32 : ouverture d'URL fiable sans dependance graphique Java.
@@ -96,12 +113,12 @@ public final class DesktopSingleInstance {
             } else if (os.contains("mac")) {
                 pb = new ProcessBuilder("open", url);
             } else {
-                pb = new ProcessBuilder("xdg-open", url);
+                pb = new ProcessBuilder(XDG_OPEN, url);
             }
             pb.start();
         } catch (IOException e) {
-            System.err.println("[Desktop] Impossible d'ouvrir le navigateur sur " + url
-                    + " : " + e.getMessage() + ". Ouvrez-le manuellement.");
+            log.warn("[Desktop] Impossible d'ouvrir le navigateur sur {} : {}. Ouvrez-le manuellement.",
+                    url, e.getMessage());
         }
     }
 
@@ -109,25 +126,25 @@ public final class DesktopSingleInstance {
     public static void openFolder(Path dir) {
         try {
             Files.createDirectories(dir);
-            String os = System.getProperty("os.name", "").toLowerCase();
+            String os = System.getProperty(OS_NAME_PROPERTY, "").toLowerCase();
             ProcessBuilder pb;
             if (os.contains("win")) {
                 pb = new ProcessBuilder("explorer.exe", dir.toString());
             } else if (os.contains("mac")) {
                 pb = new ProcessBuilder("open", dir.toString());
             } else {
-                pb = new ProcessBuilder("xdg-open", dir.toString());
+                pb = new ProcessBuilder(XDG_OPEN, dir.toString());
             }
             pb.start();
         } catch (IOException e) {
-            System.err.println("[Desktop] Ouverture du dossier impossible : " + e.getMessage());
+            log.warn("[Desktop] Ouverture du dossier impossible : {}", e.getMessage());
         }
     }
 
     /** Ouvre un fichier texte dans l'editeur par defaut (Bloc-notes sous Windows). */
     public static void openInEditor(Path file) {
         try {
-            String os = System.getProperty("os.name", "").toLowerCase();
+            String os = System.getProperty(OS_NAME_PROPERTY, "").toLowerCase();
             ProcessBuilder pb;
             if (os.contains("win")) {
                 // notepad : toujours present, ouvre proprement un .properties
@@ -136,11 +153,11 @@ public final class DesktopSingleInstance {
             } else if (os.contains("mac")) {
                 pb = new ProcessBuilder("open", "-t", file.toString());
             } else {
-                pb = new ProcessBuilder("xdg-open", file.toString());
+                pb = new ProcessBuilder(XDG_OPEN, file.toString());
             }
             pb.start();
         } catch (IOException e) {
-            System.err.println("[Desktop] Ouverture du fichier impossible : " + e.getMessage());
+            log.warn("[Desktop] Ouverture du fichier impossible : {}", e.getMessage());
         }
     }
 

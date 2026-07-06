@@ -8,7 +8,6 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Repository
 public class PostgresPlaythroughRepository implements PlaythroughRepository {
@@ -34,12 +33,12 @@ public class PostgresPlaythroughRepository implements PlaythroughRepository {
     public List<Playthrough> findByCampaignId(String campaignId) {
         return jpa.findByCampaignId(Long.parseLong(campaignId)).stream()
                 .map(this::toDomain)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
     public List<Playthrough> findAll() {
-        return jpa.findAll().stream().map(this::toDomain).collect(Collectors.toList());
+        return jpa.findAll().stream().map(this::toDomain).toList();
     }
 
     @Override

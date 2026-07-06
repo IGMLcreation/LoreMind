@@ -26,7 +26,7 @@ import static org.mockito.Mockito.*;
  * la gestion null-safe des collections.
  */
 @ExtendWith(MockitoExtension.class)
-public class PageServiceTest {
+class PageServiceTest {
 
     @Mock private PageRepository pageRepository;
 

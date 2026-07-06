@@ -15,6 +15,7 @@ import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -69,12 +70,14 @@ class BrainMultipartFilenameTest {
         RestTemplate rt = mock(RestTemplate.class);
         BrainNotebookIndexClient client = new BrainNotebookIndexClient(rt, "http://brain");
 
-        try { client.index("src-1", new byte[]{1, 2}, "doc.pdf"); } catch (RuntimeException ignored) { }
+        // Le mock renvoie null -> le client lève (réponse vide) ; seule la requête envoyée nous intéresse ici.
+        try { client.index("src-1", new byte[]{1, 2}, "doc.pdf"); } catch (RuntimeException ignored) { /* réponse vide attendue */ }
         assertEquals("doc.pdf", capturedFilename(rt));
 
         RestTemplate rt2 = mock(RestTemplate.class);
         BrainNotebookIndexClient client2 = new BrainNotebookIndexClient(rt2, "http://brain");
-        try { client2.index("src-1", new byte[]{1, 2}, null); } catch (RuntimeException ignored) { }
+        // Idem : réponse vide attendue, seul le filename par défaut envoyé nous intéresse.
+        try { client2.index("src-1", new byte[]{1, 2}, null); } catch (RuntimeException ignored) { /* réponse vide attendue */ }
         assertEquals("source.pdf", capturedFilename(rt2));
     }
 
@@ -84,15 +87,17 @@ class BrainMultipartFilenameTest {
     void rulesImport_filePart_usesGivenFilename_elseDefault() {
         RestTemplate rt = mock(RestTemplate.class);
         BrainRulesImportClient client = new BrainRulesImportClient(
-                rt, WebClient.builder(), new ObjectMapper(), "http://brain", 600);
+                rt, WebClient.builder(), new ObjectMapper(), "http://brain", 600, "/import/rules", "/import/rules/stream");
 
-        try { client.importRules(new byte[]{1, 2}, "regles.pdf"); } catch (RuntimeException ignored) { }
+        // Le mock renvoie null -> le client lève (réponse vide) ; seule la requête envoyée nous intéresse ici.
+        try { client.importRules(new byte[]{1, 2}, "regles.pdf"); } catch (RuntimeException ignored) { /* réponse vide attendue */ }
         assertEquals("regles.pdf", capturedFilename(rt));
 
         RestTemplate rt2 = mock(RestTemplate.class);
         BrainRulesImportClient client2 = new BrainRulesImportClient(
-                rt2, WebClient.builder(), new ObjectMapper(), "http://brain", 600);
-        try { client2.importRules(new byte[]{1, 2}, "  "); } catch (RuntimeException ignored) { }
+                rt2, WebClient.builder(), new ObjectMapper(), "http://brain", 600, "/import/rules", "/import/rules/stream");
+        // Idem : réponse vide attendue, seul le filename par défaut envoyé nous intéresse.
+        try { client2.importRules(new byte[]{1, 2}, "  "); } catch (RuntimeException ignored) { /* réponse vide attendue */ }
         assertEquals("rules.pdf", capturedFilename(rt2));
     }
 
@@ -102,13 +107,17 @@ class BrainMultipartFilenameTest {
     void campaignAdapt_filePart_serializedFilename() {
         ExchangeFunction ef = serializingExchange("event:done\ndata:{}\n\n");
         BrainCampaignAdaptClient client = new BrainCampaignAdaptClient(
-                WebClient.builder().exchangeFunction(ef), new ObjectMapper(), "http://brain", 30);
+                WebClient.builder().exchangeFunction(ef), new ObjectMapper(), "http://brain", 30, "/adapt/campaign/stream");
 
         // filename présent puis null : les deux branches de getFilename sont sérialisées.
-        client.adviseStreaming(new byte[]{1, 2}, "doc.pdf", "brief", "[]",
-                t -> { }, () -> { }, e -> { });
-        client.adviseStreaming(new byte[]{1, 2}, null, null, null,
-                t -> { }, () -> { }, e -> { });
+        assertDoesNotThrow(() -> client.adviseStreaming(new byte[]{1, 2}, "doc.pdf", "brief", "[]",
+                t -> { /* callback content irrelevant à ce test de sérialisation du filename */ },
+                () -> { /* callback content irrelevant à ce test de sérialisation du filename */ },
+                e -> { /* callback content irrelevant à ce test de sérialisation du filename */ }));
+        assertDoesNotThrow(() -> client.adviseStreaming(new byte[]{1, 2}, null, null, null,
+                t -> { /* callback content irrelevant à ce test de sérialisation du filename */ },
+                () -> { /* callback content irrelevant à ce test de sérialisation du filename */ },
+                e -> { /* callback content irrelevant à ce test de sérialisation du filename */ }));
     }
 
     // --- BrainCampaignImportClient (WebClient multipart) --------------------
@@ -117,11 +126,19 @@ class BrainMultipartFilenameTest {
     void campaignImport_filePart_serializedFilename() {
         ExchangeFunction ef = serializingExchange("event:done\ndata:{\"sections\":{}}\n\n");
         BrainCampaignImportClient client = new BrainCampaignImportClient(
-                WebClient.builder().exchangeFunction(ef), new ObjectMapper(), "http://brain", 30);
+                WebClient.builder().exchangeFunction(ef), new ObjectMapper(), "http://brain", 30, "/import/campaign/stream");
 
-        client.importCampaignStreaming(new byte[]{1, 2}, "doc.pdf",
-                p -> { }, () -> { }, s -> { }, r -> { }, e -> { });
-        client.importCampaignStreaming(new byte[]{1, 2}, null,
-                p -> { }, () -> { }, s -> { }, r -> { }, e -> { });
+        assertDoesNotThrow(() -> client.importCampaignStreaming(new byte[]{1, 2}, "doc.pdf",
+                p -> { /* callback content irrelevant à ce test de sérialisation du filename */ },
+                () -> { /* callback content irrelevant à ce test de sérialisation du filename */ },
+                s -> { /* callback content irrelevant à ce test de sérialisation du filename */ },
+                r -> { /* callback content irrelevant à ce test de sérialisation du filename */ },
+                e -> { /* callback content irrelevant à ce test de sérialisation du filename */ }));
+        assertDoesNotThrow(() -> client.importCampaignStreaming(new byte[]{1, 2}, null,
+                p -> { /* callback content irrelevant à ce test de sérialisation du filename */ },
+                () -> { /* callback content irrelevant à ce test de sérialisation du filename */ },
+                s -> { /* callback content irrelevant à ce test de sérialisation du filename */ },
+                r -> { /* callback content irrelevant à ce test de sérialisation du filename */ },
+                e -> { /* callback content irrelevant à ce test de sérialisation du filename */ }));
     }
 }

@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * API REST des Fronts (menaces regroupant des horloges) d'une Partie (Play Context).
@@ -32,7 +31,7 @@ public class FrontController {
     public ResponseEntity<List<FrontDTO>> list(@PathVariable String playthroughId) {
         List<FrontDTO> dtos = frontService.getByPlaythrough(playthroughId).stream()
                 .map(frontMapper::toDTO)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(dtos);
     }
 

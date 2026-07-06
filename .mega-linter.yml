@@ -1,0 +1,37 @@
+# Configuration MegaLinter — https://megalinter.io/latest/config-file/
+#
+# Périmètre volontairement resserré (liste ENABLE_LINTERS exclusive) : on
+# active les linters au fil de l'eau plutôt que de subir les ~100 par défaut.
+# Le scan CVE des dépendances n'est PAS ici : il est porté par le job Trivy
+# (cf. .gitea/workflows/quality.yml).
+
+APPLY_FIXES: none
+DEFAULT_BRANCH: main
+SHOW_ELAPSED_TIME: true
+PRINT_ALPACA: false
+
+# Liste EXCLUSIVE : tout linter absent d'ici est désactivé.
+ENABLE_LINTERS:
+  # --- core (Java) : bugs + code smells "à la Sonar" sur les sources.
+  #     (Sonar for IDE reste pertinent en local pour l'analyse de flux fine.)
+  - JAVA_PMD
+  # --- brain (Python) ---
+  - PYTHON_RUFF        # remplace flake8/pylint/isort, très rapide
+  - PYTHON_BANDIT      # sécurité du code Python
+  # - PYTHON_MYPY      # à activer quand le brain aura des annotations de types
+  # --- repo entier ---
+  - REPOSITORY_GITLEAKS   # secrets committés (tokens, mots de passe…)
+  - DOCKERFILE_HADOLINT   # bonnes pratiques Dockerfile
+  # --- web (TypeScript) : PAS via MegaLinter. Le lint tourne avec la
+  #     toolchain du projet (job "web-lint" de quality.yml → ng lint,
+  #     config web/eslint.config.js avec angular-eslint + sonarjs).
+
+# Jamais d'analyse des artefacts de build, dépendances et sites docs.
+FILTER_REGEX_EXCLUDE: '(^|/)(node_modules|target|dist|coverage|\.angular|\.mvn|docusaurus)/'
+
+# Rapports déposés là où le workflow les publie en artefact CI.
+REPORT_OUTPUT_FOLDER: megalinter-reports
+
+# Phase de rodage : passer temporairement à true pour rendre le job
+# informatif (rapport sans échec CI) le temps de purger l'existant.
+DISABLE_ERRORS: false

@@ -176,12 +176,9 @@ public class NotebookController {
         }
         // Contexte = brief de campagne + archives cochées en référence (le tout
         // dans une variable finale : capturée par la lambda du taskExecutor).
-        String campaignContext = service.buildContext(nb.getCampaignId());
-        String archiveContext = service.buildArchiveContext(id, req.archiveIds());
-        final String context = archiveContext.isEmpty()
-                ? campaignContext
-                : (campaignContext.isEmpty() ? archiveContext
-                        : campaignContext + "\n\n" + archiveContext);
+        final String context = joinContexts(
+                service.buildContext(nb.getCampaignId()),
+                service.buildArchiveContext(id, req.archiveIds()));
 
         boolean deep = req.deep() != null && req.deep();
         taskExecutor.execute(() -> {
@@ -192,7 +189,7 @@ public class NotebookController {
                     progress -> sendProgress(emitter, progress),
                     () -> {
                         // Persiste la réponse de l'assistant à la fin du stream.
-                        if (assistant.length() > 0) {
+                        if (!assistant.isEmpty()) {
                             service.addMessage(id, "assistant", assistant.toString());
                         }
                         complete(emitter);
@@ -200,6 +197,13 @@ public class NotebookController {
                     error -> fail(emitter, error)));
         });
         return emitter;
+    }
+
+    /** Concatène brief de campagne et contexte d'archives (séparés d'une ligne vide), en ignorant les vides. */
+    private static String joinContexts(String campaignContext, String archiveContext) {
+        if (archiveContext.isEmpty()) return campaignContext;
+        if (campaignContext.isEmpty()) return archiveContext;
+        return campaignContext + "\n\n" + archiveContext;
     }
 
     // --- Helpers SSE ---

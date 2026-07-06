@@ -5,6 +5,9 @@ import com.loremind.domain.campaigncontext.generation.CampaignImportProgress;
 import com.loremind.domain.campaigncontext.generation.CampaignImportProposal;
 import com.loremind.domain.campaigncontext.ports.exceptions.CampaignImportException;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -17,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -33,6 +37,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * On injecte donc un WebClient.Builder dont l'ExchangeFunction renvoie un corps SSE
  * canned (ou échoue), ce qui couvre {@code handleEvent} et tous les helpers de parsing.
  */
+// S125 : faux positif — commentaires explicatifs (prose), pas de code mort.
+@SuppressWarnings("java:S125")
 class BrainCampaignImportClientTest {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -45,14 +51,14 @@ class BrainCampaignImportClientTest {
                         .body(sseBody)
                         .build());
         WebClient.Builder builder = WebClient.builder().exchangeFunction(ef);
-        return new BrainCampaignImportClient(builder, MAPPER, "http://brain", 30);
+        return new BrainCampaignImportClient(builder, MAPPER, "http://brain", 30, "/import/campaign/stream");
     }
 
     /** Construit un client dont le transport échoue immédiatement (Mono.error). */
     private BrainCampaignImportClient clientFailingWith(Throwable boom) {
         ExchangeFunction ef = req -> Mono.error(boom);
         WebClient.Builder builder = WebClient.builder().exchangeFunction(ef);
-        return new BrainCampaignImportClient(builder, MAPPER, "http://brain", 30);
+        return new BrainCampaignImportClient(builder, MAPPER, "http://brain", 30, "/import/campaign/stream");
     }
 
     /** Collecteur mutable réunissant tous les callbacks de l'import streamé. */
@@ -81,40 +87,57 @@ class BrainCampaignImportClientTest {
 
     // ---------- flux nominal : start -> progress -> done --------------------
 
-    @Test
-    void streame_start_progress_done_construit_la_proposition() {
-        // SSE déclenchant start (page/ocr counts), progress (compteurs), puis done (arbre complet).
+    /** Regroupe les artefacts d'un flux nominal (start -> progress -> done) partagés par les tests ci-dessous. */
+    private record NominalStream(Collector collector, CampaignImportProgress start,
+                                  CampaignImportProgress progress, CampaignImportProposal proposal) {
+    }
+
+    /** Arrange commun : SSE déclenchant start (page/ocr counts), progress (compteurs), puis done (arbre complet). */
+    private NominalStream streamNominal() {
         String sse =
                 "event:start\ndata:{\"total\":5,\"page_count\":12,\"ocr_page_count\":3}\n\n" +
                 "event:progress\ndata:{\"current\":2,\"total\":5,\"arc_count\":1,\"chapter_count\":2,\"scene_count\":4,\"npc_count\":6}\n\n" +
                 "event:done\ndata:" + doneJson() + "\n\n";
         Collector c = new Collector();
         c.invoke(clientReturning(sse));
+        return new NominalStream(c, c.progresses.get(0), c.progresses.get(1), c.done.get());
+    }
+
+    @Test
+    void streame_start_emet_les_compteurs_initiaux() {
+        NominalStream r = streamNominal();
 
         // start : current=0, total=5, pageCount=12, ocrPageCount=3, reste 0.
-        assertEquals(2, c.progresses.size());
-        CampaignImportProgress start = c.progresses.get(0);
-        assertEquals(0, start.current());
-        assertEquals(5, start.total());
-        assertEquals(12, start.pageCount());
-        assertEquals(3, start.ocrPageCount());
+        assertEquals(2, r.collector().progresses.size());
+        assertEquals(0, r.start().current());
+        assertEquals(5, r.start().total());
+        assertEquals(12, r.start().pageCount());
+        assertEquals(3, r.start().ocrPageCount());
+    }
+
+    @Test
+    void streame_progress_propage_les_compteurs_agreges() {
+        NominalStream r = streamNominal();
 
         // progress : compteurs propagés + pageCount/ocr mémorisés depuis start.
-        CampaignImportProgress prog = c.progresses.get(1);
-        assertEquals(2, prog.current());
-        assertEquals(5, prog.total());
-        assertEquals(12, prog.pageCount());
-        assertEquals(3, prog.ocrPageCount());
-        assertEquals(1, prog.arcCount());
-        assertEquals(2, prog.chapterCount());
-        assertEquals(4, prog.sceneCount());
-        assertEquals(6, prog.npcCount());
+        assertEquals(2, r.progress().current());
+        assertEquals(5, r.progress().total());
+        assertEquals(12, r.progress().pageCount());
+        assertEquals(3, r.progress().ocrPageCount());
+        assertEquals(1, r.progress().arcCount());
+        assertEquals(2, r.progress().chapterCount());
+        assertEquals(4, r.progress().sceneCount());
+        assertEquals(6, r.progress().npcCount());
+    }
 
-        // done : arbre désérialisé (arcs/chapters/scenes/rooms + npcs).
-        CampaignImportProposal proposal = c.done.get();
-        assertNotNull(proposal);
-        assertEquals(1, proposal.arcs().size());
-        var arc = proposal.arcs().get(0);
+    @Test
+    void streame_done_construit_l_arborescence_arcs_chapitres_scenes_et_rooms() {
+        NominalStream r = streamNominal();
+
+        // done : arbre désérialisé (arcs/chapters/scenes/rooms).
+        assertNotNull(r.proposal());
+        assertEquals(1, r.proposal().arcs().size());
+        var arc = r.proposal().arcs().get(0);
         assertEquals("Acte I", arc.name());
         assertEquals("Mise en place", arc.description());
         assertEquals("LINEAR", arc.type());
@@ -131,28 +154,36 @@ class BrainCampaignImportClientTest {
         assertEquals("Cave", room.name());
         assertEquals("2 gobelins", room.enemies());
         assertEquals("50 po", room.loot());
-        assertEquals(1, proposal.npcs().size());
-        assertEquals("Thorin", proposal.npcs().get(0).name());
-        assertEquals("Nain bougon", proposal.npcs().get(0).description());
+    }
 
-        assertNull(c.error.get(), "aucune erreur sur un flux terminé par done");
+    @Test
+    void streame_done_inclut_les_npcs_et_ne_signale_aucune_erreur() {
+        NominalStream r = streamNominal();
+
+        // done : npcs désérialisés.
+        assertEquals(1, r.proposal().npcs().size());
+        assertEquals("Thorin", r.proposal().npcs().get(0).name());
+        assertEquals("Nain bougon", r.proposal().npcs().get(0).description());
+
+        assertNull(r.collector().error.get(), "aucune erreur sur un flux terminé par done");
     }
 
     private static String doneJson() {
-        return "{"
-                + "\"arcs\":[{"
-                + "  \"name\":\"Acte I\",\"description\":\"Mise en place\",\"type\":\"LINEAR\","
-                + "  \"chapters\":[{"
-                + "    \"name\":\"Chapitre 1\",\"description\":\"intro\","
-                + "    \"scenes\":[{"
-                + "      \"name\":\"L'auberge\",\"description\":\"tendue\","
-                + "      \"player_narration\":\"Lisez ceci\",\"gm_notes\":\"Secret MJ\","
-                + "      \"rooms\":[{\"name\":\"Cave\",\"description\":\"sombre\",\"enemies\":\"2 gobelins\",\"loot\":\"50 po\"}]"
-                + "    }]"
-                + "  }]"
-                + "}],"
-                + "\"npcs\":[{\"name\":\"Thorin\",\"description\":\"Nain bougon\"}]"
-                + "}";
+        return """
+                {\
+                "arcs":[{\
+                  "name":"Acte I","description":"Mise en place","type":"LINEAR",\
+                  "chapters":[{\
+                    "name":"Chapitre 1","description":"intro",\
+                    "scenes":[{\
+                      "name":"L'auberge","description":"tendue",\
+                      "player_narration":"Lisez ceci","gm_notes":"Secret MJ",\
+                      "rooms":[{"name":"Cave","description":"sombre","enemies":"2 gobelins","loot":"50 po"}]\
+                    }]\
+                  }]\
+                }],\
+                "npcs":[{"name":"Thorin","description":"Nain bougon"}]\
+                }""";
     }
 
     // ---------- events simples : heartbeat / status / chunk_failed / extracting
@@ -182,51 +213,26 @@ class BrainCampaignImportClientTest {
         assertEquals("Fournisseur saturé, nouvelle tentative", c.statuses.get(0));
     }
 
-    @Test
-    void event_status_sans_champ_message_relaie_data_brut() {
-        // readMessage : pas de champ "message" -> renvoie la data brute.
-        String sse =
-                "event:status\ndata:texte-brut\n\n" +
-                "event:done\ndata:" + emptyDoneJson() + "\n\n";
+    @ParameterizedTest
+    @MethodSource("statusExtractionCases")
+    void event_sans_message_structure_relaie_le_statut_attendu(String eventBlock, String expectedStatus) {
+        String sse = eventBlock + "event:done\ndata:" + emptyDoneJson() + "\n\n";
         Collector c = new Collector();
         c.invoke(clientReturning(sse));
 
-        assertEquals("texte-brut", c.statuses.get(0));
+        assertEquals(expectedStatus, c.statuses.get(0));
     }
 
-    @Test
-    void event_chunk_failed_compose_un_status_avec_compteurs_et_message() {
-        String sse =
-                "event:chunk_failed\ndata:{\"current\":3,\"total\":10,\"message\":\"timeout LLM\"}\n\n" +
-                "event:done\ndata:" + emptyDoneJson() + "\n\n";
-        Collector c = new Collector();
-        c.invoke(clientReturning(sse));
-
-        assertEquals("Morceau 3/10 ignoré : timeout LLM", c.statuses.get(0));
-    }
-
-    @Test
-    void event_chunk_failed_sans_message_termine_par_un_point() {
-        // Branche msg.isEmpty() -> suffixe "." au lieu de " : <msg>".
-        String sse =
-                "event:chunk_failed\ndata:{\"current\":1,\"total\":4}\n\n" +
-                "event:done\ndata:" + emptyDoneJson() + "\n\n";
-        Collector c = new Collector();
-        c.invoke(clientReturning(sse));
-
-        assertEquals("Morceau 1/4 ignoré.", c.statuses.get(0));
-    }
-
-    @Test
-    void event_chunk_failed_avec_json_invalide_donne_zero_zero() {
-        // data non-JSON -> readJson renvoie null -> current/total à 0, suffixe ".".
-        String sse =
-                "event:chunk_failed\ndata:pas-du-json\n\n" +
-                "event:done\ndata:" + emptyDoneJson() + "\n\n";
-        Collector c = new Collector();
-        c.invoke(clientReturning(sse));
-
-        assertEquals("Morceau 0/0 ignoré.", c.statuses.get(0));
+    private static Stream<Arguments> statusExtractionCases() {
+        return Stream.of(
+                // readMessage : pas de champ "message" -> renvoie la data brute.
+                Arguments.of("event:status\ndata:texte-brut\n\n", "texte-brut"),
+                Arguments.of("event:chunk_failed\ndata:{\"current\":3,\"total\":10,\"message\":\"timeout LLM\"}\n\n",
+                        "Morceau 3/10 ignoré : timeout LLM"),
+                // Branche msg.isEmpty() -> suffixe "." au lieu de " : <msg>".
+                Arguments.of("event:chunk_failed\ndata:{\"current\":1,\"total\":4}\n\n", "Morceau 1/4 ignoré."),
+                // data non-JSON -> readJson renvoie null -> current/total à 0, suffixe ".".
+                Arguments.of("event:chunk_failed\ndata:pas-du-json\n\n", "Morceau 0/0 ignoré."));
     }
 
     @Test
@@ -253,9 +259,14 @@ class BrainCampaignImportClientTest {
 
     @Test
     void event_error_appelle_onError_et_n_appelle_pas_onDone() {
-        String sse =
-                "event:start\ndata:{\"total\":2,\"page_count\":1,\"ocr_page_count\":0}\n\n" +
-                "event:error\ndata:{\"message\":\"PDF illisible\"}\n\n";
+        String sse = """
+                event:start
+                data:{"total":2,"page_count":1,"ocr_page_count":0}
+
+                event:error
+                data:{"message":"PDF illisible"}
+
+                """;
         Collector c = new Collector();
         c.invoke(clientReturning(sse));
 
@@ -322,10 +333,11 @@ class BrainCampaignImportClientTest {
     void done_avec_arc_sans_chapitres_et_npc_sans_description() {
         // toChapters sur noeud absent (path -> MissingNode, non-array) -> liste vide ;
         // text() sur "description" absent -> "".
-        String sse = "event:done\ndata:{"
-                + "\"arcs\":[{\"name\":\"Solo\"}],"
-                + "\"npcs\":[{\"name\":\"Anon\"}]"
-                + "}\n\n";
+        String sse = """
+                event:done
+                data:{"arcs":[{"name":"Solo"}],"npcs":[{"name":"Anon"}]}
+
+                """;
         Collector c = new Collector();
         c.invoke(clientReturning(sse));
 
@@ -343,10 +355,11 @@ class BrainCampaignImportClientTest {
     @Test
     void done_avec_champ_explicitement_null_donne_chaine_vide() {
         // text() : valeur JSON null -> "" (branche v.isNull()).
-        String sse = "event:done\ndata:{"
-                + "\"arcs\":[{\"name\":null,\"description\":\"d\"}],"
-                + "\"npcs\":[]"
-                + "}\n\n";
+        String sse = """
+                event:done
+                data:{"arcs":[{"name":null,"description":"d"}],"npcs":[]}
+
+                """;
         Collector c = new Collector();
         c.invoke(clientReturning(sse));
 

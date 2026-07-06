@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,9 +30,9 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 class SessionRecapServiceTest {
 
-    private static final LocalDateTime T1 = LocalDateTime.of(2026, 6, 1, 20, 0);
-    private static final LocalDateTime T2 = LocalDateTime.of(2026, 6, 23, 20, 0);
-    private static final LocalDateTime T3 = LocalDateTime.of(2026, 7, 3, 20, 0);
+    private static final LocalDateTime T1 = LocalDateTime.of(2026, Month.JUNE, 1, 20, 0);
+    private static final LocalDateTime T2 = LocalDateTime.of(2026, Month.JUNE, 23, 20, 0);
+    private static final LocalDateTime T3 = LocalDateTime.of(2026, Month.JULY, 3, 20, 0);
 
     @Mock private SessionRepository sessionRepository;
     @Mock private SessionEntryRepository entryRepository;

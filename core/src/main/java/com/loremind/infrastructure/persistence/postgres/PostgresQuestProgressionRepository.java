@@ -10,7 +10,6 @@ import org.springframework.stereotype.Repository;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Repository
 public class PostgresQuestProgressionRepository implements QuestProgressionRepository {
@@ -25,7 +24,7 @@ public class PostgresQuestProgressionRepository implements QuestProgressionRepos
     public List<QuestProgression> findByPlaythroughId(String playthroughId) {
         return jpa.findByPlaythroughId(Long.parseLong(playthroughId)).stream()
                 .map(this::toDomain)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override

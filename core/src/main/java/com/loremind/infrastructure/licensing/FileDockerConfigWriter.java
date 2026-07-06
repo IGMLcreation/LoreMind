@@ -37,6 +37,9 @@ public class FileDockerConfigWriter implements DockerConfigWriter {
 
     private static final Logger log = LoggerFactory.getLogger(FileDockerConfigWriter.class);
 
+    /** Cle racine du config.json Docker portant les registres authentifies. */
+    private static final String AUTHS_KEY = "auths";
+
     private final Path configPath;
     private final ObjectMapper mapper = new ObjectMapper();
 
@@ -62,9 +65,9 @@ public class FileDockerConfigWriter implements DockerConfigWriter {
             root = mapper.createObjectNode();
         }
 
-        ObjectNode auths = root.has("auths") && root.get("auths").isObject()
-                ? (ObjectNode) root.get("auths")
-                : root.putObject("auths");
+        ObjectNode auths = root.has(AUTHS_KEY) && root.get(AUTHS_KEY).isObject()
+                ? (ObjectNode) root.get(AUTHS_KEY)
+                : root.putObject(AUTHS_KEY);
 
         String b64 = Base64.getEncoder().encodeToString(
                 (credentials.username() + ":" + credentials.password()).getBytes(StandardCharsets.UTF_8));

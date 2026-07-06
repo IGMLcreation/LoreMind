@@ -1,0 +1,77 @@
+name: Qualité & Sécurité
+
+# Analyse statique (MegaLinter, config racine .mega-linter.yml) + CVE des
+# dépendances (Trivy). Workflow SÉPARÉ de ci.yml : un rouge qualité ne bloque
+# pas la chaîne tests → release pendant la phase de rodage. Une fois la base
+# assainie, on pourra l'ajouter aux checks requis de la branch protection.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  megalinter:
+    name: MegaLinter (PMD · Ruff · Bandit · gitleaks · hadolint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Historique complet : requis par gitleaks (scan de l'historique)
+          # et par le mode "fichiers modifiés seulement" en PR.
+          fetch-depth: 0
+      # Flavor "cupcake" : image allégée couvrant les langages courants
+      # (Java/Python/TS inclus). Si un linter activé manquait à la flavor,
+      # MegaLinter échoue en l'indiquant → remplacer par oxsecurity/megalinter@v9
+      # (image complète, plus lourde).
+      - name: MegaLinter
+        uses: oxsecurity/megalinter/flavors/cupcake@v9
+        env:
+          # push sur main → tout le dépôt ; PR → seulement les fichiers modifiés.
+          VALIDATE_ALL_CODEBASE: ${{ github.event_name == 'push' }}
+      - name: Publier les rapports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: megalinter-reports
+          path: megalinter-reports/
+
+  web-lint:
+    name: Web (ESLint · angular-eslint + sonarjs)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: npm ci
+        working-directory: web
+        run: npm ci --no-audit --no-fund
+      # Lint via la toolchain du projet (et non via MegaLinter : ESLint a
+      # besoin des plugins de web/node_modules et du contexte Angular).
+      # Config + règles : web/eslint.config.js (sonarjs = règles "à la Sonar").
+      - name: ng lint
+        working-directory: web
+        run: npm run lint
+
+  trivy:
+    name: Trivy (CVE dépendances Maven / pip / npm)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Installer Trivy
+        run: curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+      # Scanne les manifestes du dépôt (pom.xml, requirements*.txt,
+      # package-lock.json) contre les bases CVE. --ignore-unfixed : on ne
+      # bloque que sur les vulnérabilités qui ONT un correctif publié.
+      - name: Scan des dépendances (HIGH/CRITICAL bloquants)
+        run: |
+          trivy fs . \
+            --scanners vuln \
+            --severity HIGH,CRITICAL \
+            --ignore-unfixed \
+            --skip-dirs node_modules \
+            --skip-dirs docusaurus \
+            --exit-code 1

@@ -32,7 +32,7 @@ import static org.mockito.Mockito.*;
  * Vérifie la construction du snapshot d'évaluation + le calcul du statut effectif.
  */
 @ExtendWith(MockitoExtension.class)
-public class QuestStatusEnricherTest {
+class QuestStatusEnricherTest {
 
     @Mock private PlaythroughRepository playthroughRepository;
     @Mock private QuestProgressionRepository progressionRepository;

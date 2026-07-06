@@ -24,7 +24,7 @@ import static org.mockito.Mockito.*;
  * comportement null-safe de fields, et l'immuabilité de loreId.
  */
 @ExtendWith(MockitoExtension.class)
-public class TemplateServiceTest {
+class TemplateServiceTest {
 
     @Mock private TemplateRepository templateRepository;
 

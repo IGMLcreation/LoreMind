@@ -36,23 +36,36 @@ import java.util.function.Consumer;
 @Component
 public class BrainCampaignImportClient implements CampaignPdfImporter {
 
-    private static final String IMPORT_CAMPAIGN_STREAM_PATH = "/import/campaign/stream";
     private static final ParameterizedTypeReference<ServerSentEvent<String>> SSE_STRING_TYPE =
             new ParameterizedTypeReference<>() {};
+    /** Champ JSON répété du proposal d'arbre (arc/chapitre/scène/salle/PNJ). */
+    private static final String FIELD_DESCRIPTION = "description";
 
     private final WebClient webClient;
     private final BrainSseImportSupport sse;
     private final long importTimeoutSeconds;
+    // Route du Brain surchargeable par config (défaut = contrat d'API actuel).
+    private final String importCampaignStreamPath;
 
     public BrainCampaignImportClient(
             WebClient.Builder webClientBuilder,
             ObjectMapper objectMapper,
             @Value("${brain.base-url}") String baseUrl,
-            @Value("${brain.import-timeout-seconds:600}") long importTimeoutSeconds) {
+            @Value("${brain.import-timeout-seconds:600}") long importTimeoutSeconds,
+            @Value("${brain.paths.import-campaign:/import/campaign/stream}") String importCampaignStreamPath) {
         this.webClient = webClientBuilder.baseUrl(baseUrl).build();
         this.sse = new BrainSseImportSupport(objectMapper);
         this.importTimeoutSeconds = importTimeoutSeconds;
+        this.importCampaignStreamPath = importCampaignStreamPath;
     }
+
+    /** Callbacks de streaming groupés (réduit le nombre de paramètres de handleEvent). */
+    private record ImportCallbacks(
+            Consumer<CampaignImportProgress> onProgress,
+            Runnable onHeartbeat,
+            Consumer<String> onStatus,
+            Consumer<CampaignImportProposal> onDone,
+            Consumer<Throwable> onError) {}
 
     @Override
     public void importCampaignStreaming(
@@ -69,7 +82,7 @@ public class BrainCampaignImportClient implements CampaignPdfImporter {
                 .filename(filename == null || filename.isBlank() ? "campaign.pdf" : filename);
 
         Flux<ServerSentEvent<String>> flux = webClient.post()
-                .uri(IMPORT_CAMPAIGN_STREAM_PATH)
+                .uri(importCampaignStreamPath)
                 .header(UserLanguageHolder.HEADER, UserLanguageHolder.get())
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .accept(MediaType.TEXT_EVENT_STREAM)
@@ -80,12 +93,11 @@ public class BrainCampaignImportClient implements CampaignPdfImporter {
         int[] pageCount = {0};
         int[] ocrPageCount = {0};
         boolean[] terminated = {false};
+        ImportCallbacks callbacks = new ImportCallbacks(onProgress, onHeartbeat, onStatus, onDone, onError);
 
         sse.runStream(
                 flux, importTimeoutSeconds, terminated,
-                event -> handleEvent(
-                        event, pageCount, ocrPageCount, terminated,
-                        onProgress, onHeartbeat, onStatus, onDone, onError),
+                event -> handleEvent(event, pageCount, ocrPageCount, terminated, callbacks),
                 onError, CampaignImportException::new);
     }
 
@@ -94,11 +106,7 @@ public class BrainCampaignImportClient implements CampaignPdfImporter {
             int[] pageCount,
             int[] ocrPageCount,
             boolean[] terminated,
-            Consumer<CampaignImportProgress> onProgress,
-            Runnable onHeartbeat,
-            Consumer<String> onStatus,
-            Consumer<CampaignImportProposal> onDone,
-            Consumer<Throwable> onError) {
+            ImportCallbacks callbacks) {
 
         String event = ssEvent.event();
         String data = ssEvent.data() == null ? "" : ssEvent.data();
@@ -106,27 +114,27 @@ public class BrainCampaignImportClient implements CampaignPdfImporter {
         if ("heartbeat".equals(event)) {
             // Keep-alive du Brain pendant un appel LLM long : à PROPAGER jusqu'au
             // navigateur, sinon nginx (proxy_read_timeout) coupe le SSE Core→front.
-            onHeartbeat.run();
+            callbacks.onHeartbeat().run();
             return;
         }
         if ("status".equals(event)) {
             // Message d'attente lisible (retry sur fournisseur saturé, morceau
             // re-découpé…) : affiché par l'UI au lieu de n'exister qu'en logs.
-            onStatus.accept(sse.readMessage(data));
+            callbacks.onStatus().accept(sse.readMessage(data));
             return;
         }
         if ("chunk_failed".equals(event)) {
-            onStatus.accept(sse.chunkFailedStatus(data));
+            callbacks.onStatus().accept(sse.chunkFailedStatus(data));
             return;
         }
         if ("error".equals(event)) {
             terminated[0] = true;
-            onError.accept(new CampaignImportException(
+            callbacks.onError().accept(new CampaignImportException(
                     "Le Brain a signalé une erreur : " + sse.readMessage(data)));
             return;
         }
         if ("extracting".equals(event)) {
-            onProgress.accept(new CampaignImportProgress(0, 0, 0, 0, 0, 0, 0, 0));
+            callbacks.onProgress().accept(new CampaignImportProgress(0, 0, 0, 0, 0, 0, 0, 0));
             return;
         }
 
@@ -136,10 +144,10 @@ public class BrainCampaignImportClient implements CampaignPdfImporter {
         if ("start".equals(event)) {
             pageCount[0] = node.path("page_count").asInt();
             ocrPageCount[0] = node.path("ocr_page_count").asInt();
-            onProgress.accept(new CampaignImportProgress(
+            callbacks.onProgress().accept(new CampaignImportProgress(
                     0, node.path("total").asInt(), pageCount[0], ocrPageCount[0], 0, 0, 0, 0));
         } else if ("progress".equals(event)) {
-            onProgress.accept(new CampaignImportProgress(
+            callbacks.onProgress().accept(new CampaignImportProgress(
                     node.path("current").asInt(),
                     node.path("total").asInt(),
                     pageCount[0],
@@ -150,7 +158,7 @@ public class BrainCampaignImportClient implements CampaignPdfImporter {
                     node.path("npc_count").asInt()));
         } else if ("done".equals(event)) {
             terminated[0] = true;
-            onDone.accept(new CampaignImportProposal(
+            callbacks.onDone().accept(new CampaignImportProposal(
                     toArcs(node.path("arcs")), toNpcs(node.path("npcs"))));
         }
     }
@@ -163,7 +171,7 @@ public class BrainCampaignImportClient implements CampaignPdfImporter {
             for (JsonNode arc : arcsNode) {
                 arcs.add(new ArcProposal(
                         text(arc, "name"),
-                        text(arc, "description"),
+                        text(arc, FIELD_DESCRIPTION),
                         text(arc, "type"),
                         toChapters(arc.path("chapters")),
                         null));
@@ -178,7 +186,7 @@ public class BrainCampaignImportClient implements CampaignPdfImporter {
             for (JsonNode ch : chaptersNode) {
                 chapters.add(new ChapterProposal(
                         text(ch, "name"),
-                        text(ch, "description"),
+                        text(ch, FIELD_DESCRIPTION),
                         toScenes(ch.path("scenes")),
                         null));
             }
@@ -191,7 +199,7 @@ public class BrainCampaignImportClient implements CampaignPdfImporter {
         if (scenesNode != null && scenesNode.isArray()) {
             for (JsonNode sc : scenesNode) {
                 scenes.add(new SceneProposal(
-                        text(sc, "name"), text(sc, "description"),
+                        text(sc, "name"), text(sc, FIELD_DESCRIPTION),
                         text(sc, "player_narration"), text(sc, "gm_notes"),
                         toRooms(sc.path("rooms")), null));
             }
@@ -204,7 +212,7 @@ public class BrainCampaignImportClient implements CampaignPdfImporter {
         if (roomsNode != null && roomsNode.isArray()) {
             for (JsonNode rm : roomsNode) {
                 rooms.add(new RoomProposal(
-                        text(rm, "name"), text(rm, "description"),
+                        text(rm, "name"), text(rm, FIELD_DESCRIPTION),
                         text(rm, "enemies"), text(rm, "loot")));
             }
         }
@@ -215,7 +223,7 @@ public class BrainCampaignImportClient implements CampaignPdfImporter {
         List<NpcProposal> npcs = new ArrayList<>();
         if (npcsNode != null && npcsNode.isArray()) {
             for (JsonNode n : npcsNode) {
-                npcs.add(new NpcProposal(text(n, "name"), text(n, "description")));
+                npcs.add(new NpcProposal(text(n, "name"), text(n, FIELD_DESCRIPTION)));
             }
         }
         return npcs;

@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/game-systems")
@@ -75,7 +74,7 @@ public class GameSystemController {
     public ResponseEntity<List<GameSystemDTO>> getAllGameSystems() {
         List<GameSystemDTO> dtos = gameSystemService.getAllGameSystems().stream()
                 .map(gameSystemMapper::toDTO)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(dtos);
     }
 
@@ -83,7 +82,7 @@ public class GameSystemController {
     public ResponseEntity<List<GameSystemDTO>> searchGameSystems(@RequestParam("q") String query) {
         List<GameSystemDTO> dtos = gameSystemService.searchGameSystems(query).stream()
                 .map(gameSystemMapper::toDTO)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(dtos);
     }
 
@@ -278,7 +277,7 @@ public class GameSystemController {
         List<GameSystemService.FoundryStructField> fields =
                 (req.fields() == null ? List.<StructFieldDto>of() : req.fields()).stream()
                         .map(f -> new GameSystemService.FoundryStructField(f.path(), f.label(), f.type()))
-                        .collect(Collectors.toList());
+                        .toList();
         GameSystem updated = gameSystemService.importFoundryStructure(id, req.actorType(), fields);
         return ResponseEntity.ok(gameSystemMapper.toDTO(updated));
     }

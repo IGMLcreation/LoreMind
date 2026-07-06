@@ -10,7 +10,6 @@ import org.springframework.stereotype.Repository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * Adaptateur d'infrastructure qui implémente le Port SceneRepository.
@@ -43,14 +42,14 @@ public class PostgresSceneRepository implements SceneRepository {
         Long longChapterId = Long.parseLong(chapterId);
         return jpaRepository.findByChapterId(longChapterId).stream()
                 .map(this::toDomainEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
     public List<Scene> findAll() {
         return jpaRepository.findAll().stream()
                 .map(this::toDomainEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override

@@ -25,9 +25,14 @@ import java.util.List;
  * après le baseline (scene_type V13, clocks V15…), qui vivent sans CHECK — la valeur
  * est bornée par l'enum Java.</p>
  */
+@SuppressWarnings("java:S101") // Nommage V21__... IMPOSE par la convention Flyway des migrations Java.
 public class V21__Drop_arc_type_check_constraint extends BaseJavaMigration {
 
     @Override
+    // S2077 : DDL non parametrable (DROP CONSTRAINT n'accepte pas de bind) ; le nom vient
+    // d'information_schema de la base ELLE-MEME (pas d'input externe), et l'identifiant
+    // est quote + echappe ("" ci-dessous) par defense en profondeur.
+    @SuppressWarnings("java:S2077")
     public void migrate(Context context) throws Exception {
         Connection conn = context.getConnection();
         List<String> names = new ArrayList<>();
@@ -41,8 +46,10 @@ public class V21__Drop_arc_type_check_constraint extends BaseJavaMigration {
         }
         try (Statement st = conn.createStatement()) {
             for (String name : names) {
-                st.executeUpdate("ALTER TABLE arcs DROP CONSTRAINT \"" + name + "\"");
+                String quoted = name.replace("\"", "\"\"");
+                st.addBatch("ALTER TABLE arcs DROP CONSTRAINT \"" + quoted + "\"");
             }
+            st.executeBatch();
         }
     }
 }

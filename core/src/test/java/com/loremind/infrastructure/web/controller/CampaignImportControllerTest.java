@@ -53,6 +53,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
+// S125 : faux positif — commentaire explicatif (prose), pas de code mort.
+@SuppressWarnings("java:S125")
 class CampaignImportControllerTest {
 
     @Autowired private MockMvc mockMvc;
@@ -186,7 +188,7 @@ class CampaignImportControllerTest {
 
     @Test
     void importStream_nullStatus_emitsEmptyMessage() throws Exception {
-        // onStatus(null) -> branche "status != null ? status : \"\"" du controleur.
+        // Vérifie le cas où le statut est null : le contrôleur retombe sur une chaîne vide.
         doAnswer(inv -> {
             Consumer<String> onStatus = inv.getArgument(4);
             Consumer<CampaignImportProposal> onDone = inv.getArgument(5);

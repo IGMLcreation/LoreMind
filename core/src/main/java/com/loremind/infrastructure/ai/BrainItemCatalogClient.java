@@ -24,6 +24,7 @@ import java.util.Map;
 public class BrainItemCatalogClient implements ItemCatalogGenerator {
 
     private static final String GENERATE_PATH = "/generate/item-catalog";
+    private static final String KEY_DESCRIPTION = "description";
 
     private final RestTemplate restTemplate;
     private final String baseUrl;
@@ -36,10 +37,25 @@ public class BrainItemCatalogClient implements ItemCatalogGenerator {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public GeneratedCatalog generate(String description, String context) {
+        Map<String, Object> resp = callBrain(description, context);
+
+        List<CatalogItem> items = parseItems(resp.get("items"));
+        if (items.isEmpty()) {
+            throw new ItemCatalogGenerationException("Aucun objet généré — réessaie ou reformule.");
+        }
+        String name = asString(resp.get("name"));
+        return new GeneratedCatalog(
+                name != null && !name.isBlank() ? name : description,
+                asString(resp.get(KEY_DESCRIPTION)),
+                items);
+    }
+
+    /** POST one-shot vers le Brain ; toute erreur devient une ItemCatalogGenerationException parlante. */
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> callBrain(String description, String context) {
         Map<String, Object> req = new LinkedHashMap<>();
-        req.put("description", description == null ? "" : description);
+        req.put(KEY_DESCRIPTION, description == null ? "" : description);
         req.put("context", context == null ? "" : context);
 
         HttpHeaders headers = new HttpHeaders();
@@ -60,30 +76,38 @@ public class BrainItemCatalogClient implements ItemCatalogGenerator {
         if (resp == null) {
             throw new ItemCatalogGenerationException("Le Brain a renvoyé une réponse vide.");
         }
+        return resp;
+    }
 
+    /** Items valides de la réponse (entrées malformées ou sans nom ignorées). */
+    private static List<CatalogItem> parseItems(Object rawItems) {
         List<CatalogItem> items = new ArrayList<>();
-        Object rawItems = resp.get("items");
         if (rawItems instanceof List<?> list) {
-            for (Object item : list) {
-                if (!(item instanceof Map<?, ?> m)) continue;
-                String name = asString(m.get("name"));
-                if (name == null || name.isBlank()) continue;
-                items.add(CatalogItem.builder()
-                        .name(name)
-                        .price(asString(m.get("price")))
-                        .category(asString(m.get("category")))
-                        .description(asString(m.get("description")))
-                        .build());
+            for (Object raw : list) {
+                CatalogItem item = toItem(raw);
+                if (item != null) {
+                    items.add(item);
+                }
             }
         }
-        if (items.isEmpty()) {
-            throw new ItemCatalogGenerationException("Aucun objet généré — réessaie ou reformule.");
+        return items;
+    }
+
+    /** Un CatalogItem depuis une entrée brute, ou null si malformée / sans nom. */
+    private static CatalogItem toItem(Object raw) {
+        if (!(raw instanceof Map<?, ?> m)) {
+            return null;
         }
-        String name = asString(resp.get("name"));
-        return new GeneratedCatalog(
-                name != null && !name.isBlank() ? name : description,
-                asString(resp.get("description")),
-                items);
+        String name = asString(m.get("name"));
+        if (name == null || name.isBlank()) {
+            return null;
+        }
+        return CatalogItem.builder()
+                .name(name)
+                .price(asString(m.get("price")))
+                .category(asString(m.get("category")))
+                .description(asString(m.get(KEY_DESCRIPTION)))
+                .build();
     }
 
     private static String asString(Object o) {

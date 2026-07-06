@@ -14,7 +14,6 @@ import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 /**
@@ -23,7 +22,7 @@ import static org.mockito.Mockito.*;
  * Vérifie la délégation streamée et l'échec quand la campagne est introuvable.
  */
 @ExtendWith(MockitoExtension.class)
-public class CampaignAdaptServiceTest {
+class CampaignAdaptServiceTest {
 
     @Mock
     private CampaignRepository campaignRepository;
@@ -49,9 +48,7 @@ public class CampaignAdaptServiceTest {
         service.adviseStreaming("camp-1", pdf, "doc.pdf", "[]", onToken, onComplete, onError);
 
         // Le brief construit doit être relayé tel quel à l'advisor, avec les mêmes callbacks.
-        verify(advisor).adviseStreaming(
-                eq(pdf), eq("doc.pdf"), eq("BRIEF"), eq("[]"),
-                eq(onToken), eq(onComplete), eq(onError));
+        verify(advisor).adviseStreaming(pdf, "doc.pdf", "BRIEF", "[]", onToken, onComplete, onError);
     }
 
     @Test

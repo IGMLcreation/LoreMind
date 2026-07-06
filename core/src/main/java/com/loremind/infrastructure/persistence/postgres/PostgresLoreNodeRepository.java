@@ -8,7 +8,6 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * Adaptateur d'infrastructure qui implémente le Port LoreNodeRepository.
@@ -41,7 +40,7 @@ public class PostgresLoreNodeRepository implements LoreNodeRepository {
         Long longLoreId = Long.parseLong(loreId);
         return jpaRepository.findByLoreId(longLoreId).stream()
                 .map(this::toDomainEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -49,19 +48,19 @@ public class PostgresLoreNodeRepository implements LoreNodeRepository {
         if (parentId == null || parentId.isEmpty()) {
             return jpaRepository.findByParentId(null).stream()
                     .map(this::toDomainEntity)
-                    .collect(Collectors.toList());
+                    .toList();
         }
         Long longParentId = Long.parseLong(parentId);
         return jpaRepository.findByParentId(longParentId).stream()
                 .map(this::toDomainEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
     public List<LoreNode> findAll() {
         return jpaRepository.findAll().stream()
                 .map(this::toDomainEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -85,7 +84,7 @@ public class PostgresLoreNodeRepository implements LoreNodeRepository {
     public List<LoreNode> searchByName(String query) {
         return jpaRepository.findByNameContainingIgnoreCase(query).stream()
                 .map(this::toDomainEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private LoreNode toDomainEntity(LoreNodeJpaEntity jpaEntity) {

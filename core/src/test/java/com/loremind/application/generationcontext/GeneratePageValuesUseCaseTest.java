@@ -35,7 +35,7 @@ import static org.mockito.Mockito.*;
  * introuvables), et la validation métier (template sans champ texte).
  */
 @ExtendWith(MockitoExtension.class)
-public class GeneratePageValuesUseCaseTest {
+class GeneratePageValuesUseCaseTest {
 
     @Mock private PageRepository pageRepository;
     @Mock private TemplateRepository templateRepository;

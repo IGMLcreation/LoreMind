@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * REST Controller du Pilier A (capacité « create ») : peuple un chapitre en scènes.
@@ -72,7 +71,7 @@ public class SceneDraftController {
             throw new IllegalArgumentException("Chapitre non trouvé: " + chapterId);
         }
         List<Scene> created = sceneService.createDraftScenes(chapterId, proposal.scenes());
-        List<SceneDTO> dtos = created.stream().map(sceneMapper::toDTO).collect(Collectors.toList());
+        List<SceneDTO> dtos = created.stream().map(sceneMapper::toDTO).toList();
         return ResponseEntity.ok(dtos);
     }
 

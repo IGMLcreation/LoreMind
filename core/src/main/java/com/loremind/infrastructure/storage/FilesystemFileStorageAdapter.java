@@ -1,6 +1,8 @@
 package com.loremind.infrastructure.storage;
 
 import com.loremind.domain.files.ports.FileStorage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -26,6 +28,8 @@ import java.util.UUID;
 @ConditionalOnProperty(name = "storage.backend", havingValue = "filesystem")
 public class FilesystemFileStorageAdapter implements FileStorage {
 
+    private static final Logger log = LoggerFactory.getLogger(FilesystemFileStorageAdapter.class);
+
     private final Path root;
 
     public FilesystemFileStorageAdapter(@Value("${storage.filesystem.path}") String basePath) {
@@ -36,7 +40,7 @@ public class FilesystemFileStorageAdapter implements FileStorage {
     void ensureRootExists() {
         try {
             Files.createDirectories(root.resolve("files"));
-            System.out.println("[Storage] Backend filesystem (fichiers) actif — racine : " + root);
+            log.info("[Storage] Backend filesystem (fichiers) actif — racine : {}", root);
         } catch (IOException e) {
             throw new UncheckedIOException("Impossible de creer le dossier de stockage : " + root, e);
         }
@@ -84,7 +88,7 @@ public class FilesystemFileStorageAdapter implements FileStorage {
         try {
             Files.deleteIfExists(resolveKey(storageKey));
         } catch (IOException e) {
-            System.err.println("[Storage] Erreur suppression fichier (non bloquante) : " + e.getMessage());
+            log.warn("[Storage] Erreur suppression fichier (non bloquante) : {}", e.getMessage());
         }
     }
 

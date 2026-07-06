@@ -9,7 +9,6 @@ import org.springframework.stereotype.Repository;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Repository
 public class PostgresEnemyRepository implements EnemyRepository {
@@ -34,7 +33,7 @@ public class PostgresEnemyRepository implements EnemyRepository {
     public List<Enemy> findByCampaignId(String campaignId) {
         return jpaRepository.findByCampaignIdOrderByOrderAsc(Long.parseLong(campaignId)).stream()
                 .map(this::toDomainEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -46,7 +45,7 @@ public class PostgresEnemyRepository implements EnemyRepository {
     public List<Enemy> searchByName(String query) {
         return jpaRepository.findTop20ByNameContainingIgnoreCaseOrderByNameAsc(query).stream()
                 .map(this::toDomainEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private Enemy toDomainEntity(EnemyJpaEntity e) {

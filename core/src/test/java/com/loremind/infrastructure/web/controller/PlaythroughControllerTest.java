@@ -146,7 +146,7 @@ class PlaythroughControllerTest {
         Playthrough p = savePlaythrough();
         sessionRepository.save(Session.builder()
                 .name("S").playthroughId(p.getId())
-                .startedAt(java.time.LocalDateTime.now()).build());
+                .startedAt(java.time.LocalDateTime.of(2024, java.time.Month.JANUARY, 1, 0, 0)).build());
         mockMvc.perform(get("/api/playthroughs/{id}/deletion-impact", p.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sessions").value(1));

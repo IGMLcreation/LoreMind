@@ -11,7 +11,6 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Map;
 
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -40,7 +39,7 @@ class PageGenerationControllerTest {
 
     @Test
     void generate_returns200_withSuggestions() throws Exception {
-        when(generatePageValuesUseCase.execute(eq("p1")))
+        when(generatePageValuesUseCase.execute("p1"))
                 .thenReturn(Map.of("nom", "Aldric", "race", "Elfe"));
 
         mockMvc.perform(post("/api/pages/{id}/generate", "p1"))
@@ -51,7 +50,7 @@ class PageGenerationControllerTest {
 
     @Test
     void generate_returns404_whenPageMissing() throws Exception {
-        when(generatePageValuesUseCase.execute(eq("missing")))
+        when(generatePageValuesUseCase.execute("missing"))
                 .thenThrow(new IllegalArgumentException("Page non trouvée"));
 
         mockMvc.perform(post("/api/pages/{id}/generate", "missing"))
@@ -60,7 +59,7 @@ class PageGenerationControllerTest {
 
     @Test
     void generate_returns502_whenBrainDown() throws Exception {
-        when(generatePageValuesUseCase.execute(eq("p1")))
+        when(generatePageValuesUseCase.execute("p1"))
                 .thenThrow(new AiProviderException("Brain unreachable"));
 
         mockMvc.perform(post("/api/pages/{id}/generate", "p1"))
@@ -69,7 +68,7 @@ class PageGenerationControllerTest {
 
     @Test
     void generate_returns422_whenTemplateHasNoFields() throws Exception {
-        when(generatePageValuesUseCase.execute(eq("p1")))
+        when(generatePageValuesUseCase.execute("p1"))
                 .thenThrow(new IllegalStateException("Le template 'X' n'a aucun champ texte à générer."));
 
         mockMvc.perform(post("/api/pages/{id}/generate", "p1"))
@@ -78,7 +77,7 @@ class PageGenerationControllerTest {
 
     @Test
     void generate_returns500_whenBddInconsistent() throws Exception {
-        when(generatePageValuesUseCase.execute(eq("p1")))
+        when(generatePageValuesUseCase.execute("p1"))
                 .thenThrow(new IllegalStateException("Template introuvable (id=t1)"));
 
         mockMvc.perform(post("/api/pages/{id}/generate", "p1"))

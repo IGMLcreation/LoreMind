@@ -21,7 +21,6 @@ import java.time.Instant;
 import java.util.Base64;
 
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -52,6 +51,9 @@ class LicenseControllerTest {
     private static final String ADMIN_AUTH = "Basic " + Base64.getEncoder()
             .encodeToString("test-admin:test-admin-password".getBytes(StandardCharsets.UTF_8));
 
+    /** Horodatage fixe : la valeur exacte n'importe pas, seule la sérialisation JSON est testée. */
+    private static final Instant FIXED_NOW = Instant.parse("2026-01-01T12:00:00Z");
+
     @Autowired private MockMvc mockMvc;
 
     @MockitoBean private LicenseService licenseService;
@@ -60,7 +62,7 @@ class LicenseControllerTest {
     private LicenseSnapshot validSnapshot() {
         return new LicenseSnapshot(
                 LicenseStatus.VALID, "user-42", "tier-1", "li-xyz",
-                Instant.now().plusSeconds(3600), Instant.now(), true, true);
+                FIXED_NOW.plusSeconds(3600), FIXED_NOW, true, true);
     }
 
     @BeforeEach
@@ -155,7 +157,7 @@ class LicenseControllerTest {
 
     @Test
     void setBetaChannel_returns200() throws Exception {
-        when(licenseService.setBetaChannelEnabled(eq(false))).thenReturn(validSnapshot());
+        when(licenseService.setBetaChannelEnabled(false)).thenReturn(validSnapshot());
         mockMvc.perform(put("/api/license/beta-channel")
                         .header(HttpHeaders.AUTHORIZATION, ADMIN_AUTH)
                         .contentType(MediaType.APPLICATION_JSON)

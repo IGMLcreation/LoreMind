@@ -26,8 +26,7 @@ final class SemverComparator {
         String maxTag = null;
         int[] maxParts = null;
         for (String t : tags) {
-            if (t == null || t.isBlank()) continue;
-            int[] parts = parseSemver(t);
+            int[] parts = (t == null || t.isBlank()) ? null : parseSemver(t);
             if (parts == null) continue;
             if (maxParts == null || compareParts(parts, maxParts) > 0) {
                 maxParts = parts;

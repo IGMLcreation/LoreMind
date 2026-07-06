@@ -46,7 +46,7 @@ final class IdRemapper {
     }
 
     static List<String> remapStringList(Map<Long, Long> map, List<String> ids) {
-        if (ids == null) return null;
+        if (ids == null) return List.of();
         List<String> out = new ArrayList<>(ids.size());
         for (String id : ids) out.add(remapStringId(map, id));
         return out;
@@ -58,7 +58,7 @@ final class IdRemapper {
      */
     static Map<String, List<String>> remapImageValues(Map<Long, Long> imageMap,
                                                       Map<String, List<String>> imageValues) {
-        if (imageValues == null) return null;
+        if (imageValues == null) return Map.of();
         Map<String, List<String>> out = new LinkedHashMap<>();
         for (Map.Entry<String, List<String>> e : imageValues.entrySet()) {
             out.put(e.getKey(), remapStringList(imageMap, e.getValue()));
@@ -75,7 +75,7 @@ final class IdRemapper {
      */
     static <V> Map<String, Map<String, V>> remapImageFraming(Map<Long, Long> imageMap,
                                                              Map<String, Map<String, V>> framing) {
-        if (framing == null) return null;
+        if (framing == null) return Map.of();
         Map<String, Map<String, V>> out = new LinkedHashMap<>();
         for (Map.Entry<String, Map<String, V>> outer : framing.entrySet()) {
             Map<String, V> inner = outer.getValue();
@@ -98,7 +98,7 @@ final class IdRemapper {
      * mutable (Lombok), on réécrit EN PLACE — la liste vient d'une désérialisation jetable.
      */
     static List<Room> remapRoomImages(Map<Long, Long> imageMap, List<Room> rooms) {
-        if (rooms == null) return null;
+        if (rooms == null) return List.of();
         for (Room r : rooms) {
             if (r == null) continue;
             r.setIllustrationImageIds(remapStringList(imageMap, r.getIllustrationImageIds()));
@@ -113,7 +113,7 @@ final class IdRemapper {
      * on reconstruit chaque entrée.
      */
     static List<SceneBattlemap> remapBattlemaps(Map<Long, Long> fileMap, List<SceneBattlemap> battlemaps) {
-        if (battlemaps == null) return null;
+        if (battlemaps == null) return List.of();
         List<SceneBattlemap> out = new ArrayList<>(battlemaps.size());
         for (SceneBattlemap bm : battlemaps) {
             out.add(new SceneBattlemap(bm.label(),
@@ -129,7 +129,7 @@ final class IdRemapper {
      * Quête (v2), {@code chapterMap} pour des prérequis de Chapitre legacy (v1).
      */
     static List<Prerequisite> remapPrerequisites(Map<Long, Long> idMap, List<Prerequisite> prereqs) {
-        if (prereqs == null) return null;
+        if (prereqs == null) return List.of();
         List<Prerequisite> out = new ArrayList<>(prereqs.size());
         for (Prerequisite p : prereqs) {
             if (p instanceof Prerequisite.QuestCompleted qc) {
@@ -144,7 +144,7 @@ final class IdRemapper {
     /** Remap des nœuds d'une quête : nodeId via {@code sceneMap} (SCENE) ou {@code chapterMap} (CHAPTER). */
     static List<QuestNodeRef> remapQuestNodes(Map<Long, Long> chapterMap, Map<Long, Long> sceneMap,
                                               List<QuestNodeRef> nodes) {
-        if (nodes == null) return null;
+        if (nodes == null) return List.of();
         List<QuestNodeRef> out = new ArrayList<>(nodes.size());
         for (QuestNodeRef n : nodes) {
             Map<Long, Long> map = (n.nodeType() == NodeType.SCENE) ? sceneMap : chapterMap;
@@ -154,7 +154,7 @@ final class IdRemapper {
     }
 
     static List<SceneBranch> remapBranches(Map<Long, Long> sceneMap, List<SceneBranch> branches) {
-        if (branches == null) return null;
+        if (branches == null) return List.of();
         List<SceneBranch> out = new ArrayList<>(branches.size());
         for (SceneBranch b : branches) {
             out.add(new SceneBranch(b.label(), remapStringId(sceneMap, b.targetSceneId()), b.condition(), b.kind()));

@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/characters")
@@ -42,7 +41,7 @@ public class CharacterController {
     public ResponseEntity<List<CharacterDTO>> getCharactersByPlaythrough(@PathVariable String playthroughId) {
         List<CharacterDTO> dtos = characterService.getCharactersByPlaythroughId(playthroughId).stream()
                 .map(characterMapper::toDTO)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(dtos);
     }
 
@@ -64,7 +63,7 @@ public class CharacterController {
                                         .orElse(null)
                                 : null))
                 .filter(r -> r.campaignId() != null) // PJ orphelin (legacy) : non navigable → exclu
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(out);
     }
 

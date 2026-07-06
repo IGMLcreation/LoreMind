@@ -45,6 +45,9 @@ class SessionEntryControllerTest {
     @Autowired private SessionRepository sessionRepository;
     @Autowired private SessionEntryRepository entryRepository;
 
+    private static final LocalDateTime FIXED_TIME =
+            LocalDateTime.of(2024, java.time.Month.JANUARY, 1, 0, 0);
+
     private String sessionId;
 
     @BeforeEach
@@ -56,7 +59,7 @@ class SessionEntryControllerTest {
         sessionId = sessionRepository.save(Session.builder()
                 .name("Session")
                 .playthroughId(playthroughId)
-                .startedAt(LocalDateTime.now())
+                .startedAt(FIXED_TIME)
                 .build()).getId();
     }
 
@@ -65,7 +68,7 @@ class SessionEntryControllerTest {
                 .sessionId(sessionId)
                 .type(EntryType.NOTE)
                 .content("Contenu initial")
-                .occurredAt(LocalDateTime.now())
+                .occurredAt(FIXED_TIME)
                 .build());
     }
 
@@ -79,7 +82,7 @@ class SessionEntryControllerTest {
 
     @Test
     void createEntry_returns200() throws Exception {
-        EntryRequest req = new EntryRequest(EntryType.EVENT, "Combat gagné", LocalDateTime.now());
+        EntryRequest req = new EntryRequest(EntryType.EVENT, "Combat gagné", FIXED_TIME);
         mockMvc.perform(post("/api/sessions/{sessionId}/entries", sessionId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
@@ -119,7 +122,7 @@ class SessionEntryControllerTest {
     @Test
     void updateEntry_returns200() throws Exception {
         SessionEntry e = saveEntry();
-        EntryRequest req = new EntryRequest(EntryType.DICE_ROLL, "Jet modifié", LocalDateTime.now());
+        EntryRequest req = new EntryRequest(EntryType.DICE_ROLL, "Jet modifié", FIXED_TIME);
         mockMvc.perform(put("/api/sessions/{sessionId}/entries/{entryId}", sessionId, e.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))

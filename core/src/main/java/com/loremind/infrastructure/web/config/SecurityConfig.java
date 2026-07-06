@@ -29,6 +29,8 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 public class SecurityConfig {
 
+    private static final String ROLE_ADMIN = "ADMIN";
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -48,11 +50,13 @@ public class SecurityConfig {
         UserDetails admin = User.builder()
                 .username(username)
                 .password(encoder.encode(password))
-                .roles("ADMIN")
+                .roles(ROLE_ADMIN)
                 .build();
         return new InMemoryUserDetailsManager(admin);
     }
 
+    // S4502 : API stateless en HTTP Basic sans cookie — CSRF sans objet (voir javadoc de classe).
+    @SuppressWarnings("java:S4502")
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -65,9 +69,9 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Preflight CORS toujours libre (le browser n'envoie pas Authorization sur OPTIONS)
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers("/api/settings/**").hasRole("ADMIN")
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                .requestMatchers("/api/license/**").hasRole("ADMIN")
+                .requestMatchers("/api/settings/**").hasRole(ROLE_ADMIN)
+                .requestMatchers("/api/admin/**").hasRole(ROLE_ADMIN)
+                .requestMatchers("/api/license/**").hasRole(ROLE_ADMIN)
                 .anyRequest().permitAll()
             )
             .httpBasic(basic -> {});

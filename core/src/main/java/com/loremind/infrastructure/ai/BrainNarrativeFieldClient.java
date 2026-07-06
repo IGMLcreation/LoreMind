@@ -39,20 +39,9 @@ public class BrainNarrativeFieldClient implements NarrativeFieldAssistant {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public List<ProposedField> assist(String entityType, String context, String instruction, List<FieldSpec> fields) {
-        List<Map<String, String>> fieldPayload = new ArrayList<>();
-        Set<String> allowed = new HashSet<>();
-        if (fields != null) {
-            for (FieldSpec f : fields) {
-                if (f == null || f.key() == null) continue;
-                allowed.add(f.key());
-                Map<String, String> fm = new LinkedHashMap<>();
-                fm.put("key", f.key());
-                fm.put("label", f.label() == null ? f.key() : f.label());
-                fieldPayload.add(fm);
-            }
-        }
+        List<Map<String, String>> fieldPayload = buildFieldPayload(fields);
+        Set<String> allowed = allowedKeys(fields);
 
         Map<String, Object> req = new LinkedHashMap<>();
         req.put("entity_type", entityType == null ? "" : entityType);
@@ -60,6 +49,38 @@ public class BrainNarrativeFieldClient implements NarrativeFieldAssistant {
         req.put("instruction", instruction == null ? "" : instruction);
         req.put("fields", fieldPayload);
 
+        Map<String, Object> resp = callBrain(req);
+        return parseProposedFields(resp.get("fields"), allowed);
+    }
+
+    /** Payload des champs à étoffer : {key, label} par champ valide (libellé = clé à défaut). */
+    private static List<Map<String, String>> buildFieldPayload(List<FieldSpec> fields) {
+        List<Map<String, String>> payload = new ArrayList<>();
+        for (FieldSpec f : nullSafe(fields)) {
+            if (f != null && f.key() != null) {
+                Map<String, String> fm = new LinkedHashMap<>();
+                fm.put("key", f.key());
+                fm.put("label", f.label() == null ? f.key() : f.label());
+                payload.add(fm);
+            }
+        }
+        return payload;
+    }
+
+    /** Whitelist des clés autorisées en retour (garde-fou contre les clés inventées). */
+    private static Set<String> allowedKeys(List<FieldSpec> fields) {
+        Set<String> allowed = new HashSet<>();
+        for (FieldSpec f : nullSafe(fields)) {
+            if (f != null && f.key() != null) {
+                allowed.add(f.key());
+            }
+        }
+        return allowed;
+    }
+
+    /** POST one-shot vers le Brain ; toute erreur devient une NarrativeAssistException parlante. */
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> callBrain(Map<String, Object> req) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(req, headers);
@@ -78,18 +99,37 @@ public class BrainNarrativeFieldClient implements NarrativeFieldAssistant {
         if (resp == null) {
             throw new NarrativeAssistException("Le Brain a renvoyé une réponse vide.");
         }
+        return resp;
+    }
 
+    /** Champs proposés retenus : clé dans la whitelist ET valeur non vide (trim). */
+    private static List<ProposedField> parseProposedFields(Object rawFields, Set<String> allowed) {
         List<ProposedField> out = new ArrayList<>();
-        Object rawFields = resp.get("fields");
         if (rawFields instanceof Map<?, ?> m) {
             for (Map.Entry<?, ?> e : m.entrySet()) {
-                String key = e.getKey() == null ? null : e.getKey().toString();
-                if (key == null || !allowed.contains(key)) continue;      // whitelist stricte
-                String value = e.getValue() == null ? null : e.getValue().toString();
-                if (value == null || value.isBlank()) continue;           // pas de remplissage vide
-                out.add(new ProposedField(key, value.trim()));
+                ProposedField field = toProposedField(e, allowed);
+                if (field != null) {
+                    out.add(field);
+                }
             }
         }
         return out;
+    }
+
+    /** Un ProposedField depuis une entrée brute, ou null si clé hors whitelist / valeur vide. */
+    private static ProposedField toProposedField(Map.Entry<?, ?> e, Set<String> allowed) {
+        String key = e.getKey() == null ? null : e.getKey().toString();
+        if (key == null || !allowed.contains(key)) {
+            return null; // whitelist stricte
+        }
+        String value = e.getValue() == null ? null : e.getValue().toString();
+        if (value == null || value.isBlank()) {
+            return null; // pas de remplissage vide
+        }
+        return new ProposedField(key, value.trim());
+    }
+
+    private static List<FieldSpec> nullSafe(List<FieldSpec> fields) {
+        return fields != null ? fields : List.of();
     }
 }

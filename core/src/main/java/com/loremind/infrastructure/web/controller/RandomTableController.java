@@ -12,7 +12,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/random-tables")
@@ -43,7 +42,7 @@ public class RandomTableController {
     public ResponseEntity<List<RandomTableDTO>> getByCampaign(@PathVariable String campaignId) {
         List<RandomTableDTO> dtos = service.getTablesByCampaignId(campaignId).stream()
                 .map(mapper::toDTO)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(dtos);
     }
 
@@ -64,7 +63,7 @@ public class RandomTableController {
     public ResponseEntity<List<RandomTableDTO>> search(@RequestParam("q") String query) {
         return ResponseEntity.ok(service.searchTables(query).stream()
                 .map(mapper::toDTO)
-                .collect(java.util.stream.Collectors.toList()));
+                .toList());
     }
 
     /** Génère une PROPOSITION de table via l'IA (non persistée) — l'UI préremplit le formulaire. */
