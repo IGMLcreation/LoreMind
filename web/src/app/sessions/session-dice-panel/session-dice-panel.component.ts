@@ -58,7 +58,9 @@ export class SessionDicePanelComponent {
     }
     const sumRolls = rolls.reduce((s, n) => s + n, 0);
     const total = sumRolls + this.modifier;
-    const modPart = this.modifier === 0 ? '' : (this.modifier > 0 ? `+${this.modifier}` : `${this.modifier}`);
+    let modPart = '';
+    if (this.modifier > 0) modPart = `+${this.modifier}`;
+    else if (this.modifier < 0) modPart = `${this.modifier}`;
     const notation = `${safeCount}d${this.selectedFace}${modPart}`;
     const detailsPart = rolls.length > 1 ? ` [${rolls.join(', ')}]` : '';
     const summary = `🎲 ${notation}${detailsPart} = ${total}`;

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 
 import { LucideAngularModule, ChevronDown, ChevronUp } from 'lucide-angular';
 
@@ -17,7 +17,7 @@ import { LucideAngularModule, ChevronDown, ChevronUp } from 'lucide-angular';
     templateUrl: './expandable-section.component.html',
     styleUrls: ['./expandable-section.component.scss']
 })
-export class ExpandableSectionComponent {
+export class ExpandableSectionComponent implements OnInit {
   readonly ChevronDown = ChevronDown;
   readonly ChevronUp = ChevronUp;
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, DestroyRef } from '@angular/core';
+import { Component, OnInit, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -67,7 +67,7 @@ interface BattlemapEdit {
     templateUrl: './scene-edit.component.html',
     styleUrls: ['./scene-edit.component.scss']
 })
-export class SceneEditComponent implements OnInit, OnDestroy {
+export class SceneEditComponent implements OnInit {
   readonly Trash2 = Trash2;
   readonly Sparkles = Sparkles;
   readonly campaignIconOptions = CAMPAIGN_ICON_OPTIONS;
@@ -251,7 +251,7 @@ export class SceneEditComponent implements OnInit, OnDestroy {
         };
         if (entry.mediaFileId) {
           this.storedFileService.getById(entry.mediaFileId)
-            .subscribe({ next: f => entry.mediaName = f.filename, error: () => {} });
+            .subscribe({ next: f => entry.mediaName = f.filename, error: () => { /* best-effort : erreur ignorée volontairement */ } });
         }
         if (entry.dataFileId) {
           this.storedFileService.getById(entry.dataFileId).subscribe({
@@ -260,7 +260,7 @@ export class SceneEditComponent implements OnInit, OnDestroy {
               // Deduit la source : un .dd2vtt/.uvtt => DungeonDraft.
               if (/\.(dd2vtt|uvtt)$/i.test(f.filename)) entry.source = 'DUNGEONDRAFT';
             },
-            error: () => {}
+            error: () => { /* best-effort : erreur ignorée volontairement */ }
           });
         }
         return entry;
@@ -480,12 +480,14 @@ export class SceneEditComponent implements OnInit, OnDestroy {
   onDd2vttSelected(bm: BattlemapEdit, event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-    if (file) void this.uploadDd2vtt(bm, file);
+    // Fire-and-forget : uploadDd2vtt gère lui-même ses erreurs.
+    if (file) this.uploadDd2vtt(bm, file);
     input.value = '';
   }
 
   onDd2vttDropped(bm: BattlemapEdit, files: File[]): void {
-    if (files[0]) void this.uploadDd2vtt(bm, files[0]);
+    // Fire-and-forget : uploadDd2vtt gère lui-même ses erreurs.
+    if (files[0]) this.uploadDd2vtt(bm, files[0]);
   }
 
   /**
@@ -552,13 +554,7 @@ export class SceneEditComponent implements OnInit, OnDestroy {
   }
 
   private extForType(type: string): string {
-    return type === 'image/jpeg' ? '.jpg' : type === 'image/webp' ? '.webp' : '.png';
-  }
-
-  ngOnDestroy(): void {
-    // Volontairement vide : la sidebar reste prise en charge par le composant
-    // suivant (autre sous-route ou le composant detail parent) qui appellera
-    // show(). Eviter d'appeler hide() ici previent le clignotement / la
-    // disparition de la sidebar lors des navigations internes a la section.
+    if (type === 'image/jpeg') return '.jpg';
+    return type === 'image/webp' ? '.webp' : '.png';
   }
 }

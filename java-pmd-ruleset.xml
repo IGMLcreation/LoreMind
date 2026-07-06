@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         name="LoreMind"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+
+    <description>
+        Ruleset PMD LoreMind — détecté automatiquement par MegaLinter (JAVA_PMD).
+        Philosophie : bugs et pièges réels uniquement. Les catégories de STYLE
+        (codestyle/design/documentation) sont exclues : le défaut MegaLinter y
+        générait ~11 000 violations hors sujet (conventions incompatibles avec
+        l'idiome Lombok/slf4j/Spring du projet : champ `log`, DI constructeur…).
+    </description>
+
+    <!-- Bugs probables : null, equals/hashCode, ressources, casts douteux… -->
+    <rule ref="category/java/errorprone.xml">
+        <!-- Chaque littéral dupliqué = une violation : du bruit, pas un bug. -->
+        <exclude name="AvoidDuplicateLiterals"/>
+        <exclude name="AvoidLiteralsInIfCondition"/>
+        <!-- Entités JPA/DTO : pas de sérialisation Java native ici. -->
+        <exclude name="MissingSerialVersionUID"/>
+        <!-- `this.name = name` en DI/setters : idiome standard. -->
+        <exclude name="AvoidFieldNameMatchingMethodName"/>
+        <exclude name="AvoidFieldNameMatchingTypeName"/>
+        <!-- `while ((x = read()) != null)` : idiome de lecture standard. -->
+        <exclude name="AssignmentInOperand"/>
+        <!-- catch(Exception) best-effort : choix assumé du projet (imports,
+             exports, best-effort serveur) — pas un gate. -->
+        <exclude name="AvoidCatchingGenericException"/>
+        <!-- TODO backlog : réactiver et passer les toLowerCase/UpperCase en
+             Locale.ROOT (27 sites) — bug potentiel (locale turque) mais
+             changement de comportement à valider posément. -->
+        <exclude name="UseLocaleWithCaseConversions"/>
+    </rule>
+
+    <!-- Concurrence -->
+    <rule ref="category/java/multithreading.xml">
+        <!-- Règle d'époque J2EE : les threads sont légitimes (sidecar, SSE…). -->
+        <exclude name="DoNotUseThreads"/>
+        <!-- Flaguerait CHAQUE HashMap, y compris locales à une méthode (×135). -->
+        <exclude name="UseConcurrentHashMap"/>
+    </rule>
+
+    <!-- Performance (sans les micro-optimisations StringBuilder : le rendu
+         PDF/HTML fait des milliers d'appends, aucun n'est un point chaud). -->
+    <rule ref="category/java/performance.xml">
+        <exclude name="AvoidInstantiatingObjectsInLoops"/>
+        <exclude name="AppendCharacterWithChar"/>
+        <exclude name="ConsecutiveLiteralAppends"/>
+        <exclude name="ConsecutiveAppendsShouldReuse"/>
+        <exclude name="InsufficientStringBufferDeclaration"/>
+    </rule>
+
+    <!-- Sécurité -->
+    <rule ref="category/java/security.xml"/>
+
+    <!-- Bonnes pratiques (sous-ensemble non-style) -->
+    <rule ref="category/java/bestpractices.xml">
+        <!-- slf4j paramétré ({} + args) rend le guard inutile. -->
+        <exclude name="GuardLogStatement"/>
+        <!-- Les ports hexagonaux à méthode unique ne sont pas des lambdas. -->
+        <exclude name="ImplicitFunctionalInterface"/>
+        <!-- Déclarer List vs ArrayList : style, pas un bug. -->
+        <exclude name="LooseCoupling"/>
+        <!-- StringBuilder en champ : pattern builder assumé (export PDF). -->
+        <exclude name="AvoidStringBufferField"/>
+        <!-- Style de tests : à l'appréciation du projet, pas un gate. -->
+        <exclude name="UnitTestAssertionsShouldIncludeMessage"/>
+        <exclude name="UnitTestContainsTooManyAsserts"/>
+        <exclude name="UnitTestShouldIncludeAssert"/>
+    </rule>
+
+</ruleset>

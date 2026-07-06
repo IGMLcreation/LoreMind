@@ -15,6 +15,11 @@ import { Page } from '../../../services/page.model';
 import { PersonaViewComponent } from '../../../shared/persona-view/persona-view.component';
 import { AiChatDrawerComponent } from '../../../shared/ai-chat-drawer/ai-chat-drawer.component';
 
+/** Indexe des pages par id (les pages venant du serveur ont toujours un id). */
+function indexPagesById(pages: Page[]): Map<string, Page> {
+  return new Map(pages.map(p => [p.id!, p]));
+}
+
 /**
  * Vue lecture seule "WorldAnvil" d'une fiche PNJ.
  * Route : /campaigns/:campaignId/npcs/:npcId
@@ -89,7 +94,7 @@ export class NpcViewComponent implements OnInit, OnDestroy {
           if (camp.loreId) {
             this.loreId = camp.loreId;
             this.pageService.getByLoreId(camp.loreId).subscribe(pages => {
-              this.lorePagesById = new Map(pages.map(p => [p.id!, p]));
+              this.lorePagesById = indexPagesById(pages);
             });
           }
         });

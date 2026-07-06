@@ -130,7 +130,7 @@ export class ImageBlockComponent implements OnDestroy {
     const id = this.currentId;
     if (!id) return;
     // Best-effort côté serveur (pas d'orpheline) ; on n'attend pas la réponse.
-    this.imageService.delete(id).subscribe({ error: () => {} });
+    this.imageService.delete(id).subscribe({ error: () => { /* best-effort : erreur ignorée volontairement */ } });
     const ids = this.imageIds.filter(i => i !== id);
     if (this.framing?.[id]) {
       const next = { ...this.framing };

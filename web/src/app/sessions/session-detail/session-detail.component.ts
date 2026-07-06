@@ -281,11 +281,14 @@ export class SessionDetailComponent implements OnInit, OnDestroy {
     if (!this.session) return;
     const session = this.session;
     const entryCount = this.entries.length;
-    const entriesDetail = entryCount === 0
-      ? this.translate.instant('sessionDetail.deleteConfirm.noEntries')
-      : entryCount === 1
-        ? this.translate.instant('sessionDetail.deleteConfirm.entriesOne')
-        : this.translate.instant('sessionDetail.deleteConfirm.entriesMany', { n: entryCount });
+    let entriesDetail: string;
+    if (entryCount === 0) {
+      entriesDetail = this.translate.instant('sessionDetail.deleteConfirm.noEntries');
+    } else if (entryCount === 1) {
+      entriesDetail = this.translate.instant('sessionDetail.deleteConfirm.entriesOne');
+    } else {
+      entriesDetail = this.translate.instant('sessionDetail.deleteConfirm.entriesMany', { n: entryCount });
+    }
     const details = [
       entriesDetail,
       this.translate.instant('sessionDetail.deleteConfirm.irreversible')

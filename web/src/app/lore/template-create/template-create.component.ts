@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -24,7 +24,7 @@ import { popReturnTo } from '../return-stack.helper';
     templateUrl: './template-create.component.html',
     styleUrls: ['./template-create.component.scss']
 })
-export class TemplateCreateComponent implements OnInit, OnDestroy {
+export class TemplateCreateComponent implements OnInit {
   form: FormGroup;
   loreId = '';
   nodes: LoreNode[] = [];
@@ -85,7 +85,7 @@ export class TemplateCreateComponent implements OnInit, OnDestroy {
   }
 
   private restoreDraft(): void {
-    let raw: string | null = null;
+    let raw: string | null;
     try { raw = sessionStorage.getItem(this.draftKey); } catch { return; }
     if (!raw) return;
     sessionStorage.removeItem(this.draftKey);
@@ -145,12 +145,5 @@ export class TemplateCreateComponent implements OnInit, OnDestroy {
       return;
     }
     this.router.navigate(['/lore', this.loreId]);
-  }
-
-  ngOnDestroy(): void {
-    // Volontairement vide : la sidebar reste prise en charge par le composant
-    // suivant (autre sous-route ou le composant detail parent) qui appellera
-    // show(). Eviter d'appeler hide() ici previent le clignotement / la
-    // disparition de la sidebar lors des navigations internes a la section.
   }
 }

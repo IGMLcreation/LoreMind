@@ -6,6 +6,13 @@ import { Notebook, NotebookArchive, NotebookDetail, NotebookSource, NotebookChat
 import { LanguageService } from './language.service';
 import { parseSseStream } from '../shared/sse.util';
 
+/** Normalise les sources renvoyées par le Brain (événement SSE `sources`). */
+function mapSseSources(sources: { source_id?: string; page?: number | null; score?: number }[] | undefined) {
+  return (sources ?? []).map(s => ({
+    sourceId: s.source_id ?? '', page: s.page ?? null, score: s.score ?? 0
+  }));
+}
+
 /**
  * Service des notebooks (atelier RAG) : CRUD, upload/indexation de sources,
  * et chat ancré STREAMÉ (SSE via fetch, comme ai-chat.service).
@@ -96,12 +103,7 @@ export class NotebookService {
             } else if (event === 'sources') {
               try {
                 const o = JSON.parse(data) as { sources?: { source_id?: string; page?: number | null; score?: number }[] };
-                emit({
-                  type: 'sources',
-                  sources: (o.sources ?? []).map(s => ({
-                    sourceId: s.source_id ?? '', page: s.page ?? null, score: s.score ?? 0
-                  }))
-                });
+                emit({ type: 'sources', sources: mapSseSources(o.sources) });
               } catch { /* ignore */ }
             } else if (event === 'progress') {
               try {

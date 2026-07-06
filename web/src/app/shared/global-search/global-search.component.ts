@@ -12,24 +12,34 @@ import { PageService } from '../../services/page.service';
 import { TemplateService } from '../../services/template.service';
 import { CampaignService } from '../../services/campaign.service';
 import { NpcService } from '../../services/npc.service';
-import { CharacterService } from '../../services/character.service';
+import { CharacterService, CharacterSearchResult } from '../../services/character.service';
 import { RandomTableService } from '../../services/random-table.service';
 import { ItemCatalogService } from '../../services/item-catalog.service';
 import { EnemyService } from '../../services/enemy.service';
+import { Lore, LoreNode } from '../../services/lore.model';
+import { Template } from '../../services/template.model';
+import { Page } from '../../services/page.model';
+import { Campaign } from '../../services/campaign.model';
+import { Npc } from '../../services/npc.model';
+import { RandomTable } from '../../services/random-table.model';
+import { ItemCatalog } from '../../services/item-catalog.model';
+import { Enemy } from '../../services/enemy.model';
 
 type ResultKind =
   | 'lore' | 'node' | 'template' | 'page' | 'campaign'
   | 'npc' | 'character' | 'random-table' | 'item-catalog' | 'enemy';
 
 interface SearchResult {
-  id: string;
+  /** Optionnel dans les DTOs (objets pas encore persistés) mais toujours
+   *  présent sur des résultats de recherche serveur. */
+  id: string | undefined;
   kind: ResultKind;
   title: string;
   subtitle: string;
   /** Tag affiché sous le titre (ex: "Lore", "Dossier", "Template", "Page"). */
   tag: string;
   /** Route Angular (array pour router.navigate). */
-  route: any[];
+  route: (string | undefined)[];
 }
 
 /**
@@ -140,8 +150,8 @@ export class GlobalSearchComponent implements OnInit, OnDestroy {
    * noeuds/templates, et enfin les racines (campagnes, lores).
    */
   private buildResults(r: {
-    lores: any[]; nodes: any[]; templates: any[]; pages: any[]; campaigns: any[];
-    npcs: any[]; characters: any[]; tables: any[]; catalogs: any[]; enemies: any[];
+    lores: Lore[]; nodes: LoreNode[]; templates: Template[]; pages: Page[]; campaigns: Campaign[];
+    npcs: Npc[]; characters: CharacterSearchResult[]; tables: RandomTable[]; catalogs: ItemCatalog[]; enemies: Enemy[];
   }): SearchResult[] {
     const { lores, nodes, templates, pages, campaigns, npcs, characters, tables, catalogs, enemies } = r;
     const pageResults: SearchResult[] = pages.map(p => ({

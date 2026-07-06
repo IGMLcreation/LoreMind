@@ -26,7 +26,9 @@ export class DiceUtils {
 
   /** Parse une formule simple `[N]dM`. Renvoie null si invalide. */
   static parse(formula: string | null | undefined): ParsedDice | null {
-    const m = /^\s*(\d*)\s*[dD]\s*(\d+)\s*$/.exec(formula ?? '');
+    // trim() préalable au lieu de \s* aux extrémités : `\s*(\d*)\s*` était
+    // ambigu (quadratique) quand \d* est vide. Même langage accepté.
+    const m = /^(\d*)\s*[dD]\s*(\d+)$/.exec((formula ?? '').trim());
     if (!m) return null;
     const count = m[1] ? parseInt(m[1], 10) : 1;
     const faces = parseInt(m[2], 10);

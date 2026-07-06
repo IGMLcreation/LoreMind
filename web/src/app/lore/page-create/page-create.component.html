@@ -111,7 +111,7 @@
   [systemPromptAddon]="wizardSystemPrompt"
   [quickSuggestions]="wizardSuggestions"
   [primaryAction]="wizardPrimaryAction"
-  (close)="closeWizard()"
+  (closed)="closeWizard()"
   (assistantReply)="onWizardReply($event)"
   (primaryActionClick)="applyWizardAndCreate()">
 </app-ai-chat-drawer>

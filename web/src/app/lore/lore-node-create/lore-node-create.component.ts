@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -11,7 +11,7 @@ import { LayoutService } from '../../services/layout.service';
 import { LoreNode } from '../../services/lore.model';
 import { loadLoreSidebarData, buildLoreSidebarConfig } from '../lore-sidebar.helper';
 import { popReturnTo } from '../return-stack.helper';
-import { LORE_ICON_OPTIONS, IconOption, resolveIcon } from '../lore-icons';
+import { LORE_ICON_OPTIONS, IconOption } from '../lore-icons';
 
 @Component({
     selector: 'app-lore-node-create',
@@ -19,7 +19,7 @@ import { LORE_ICON_OPTIONS, IconOption, resolveIcon } from '../lore-icons';
     templateUrl: './lore-node-create.component.html',
     styleUrls: ['./lore-node-create.component.scss']
 })
-export class LoreNodeCreateComponent implements OnInit, OnDestroy {
+export class LoreNodeCreateComponent implements OnInit {
 
   readonly iconOptions: IconOption[] = LORE_ICON_OPTIONS;
 
@@ -108,12 +108,5 @@ export class LoreNodeCreateComponent implements OnInit, OnDestroy {
       return;
     }
     this.router.navigate(['/lore', this.loreId]);
-  }
-
-  ngOnDestroy(): void {
-    // Volontairement vide : la sidebar reste prise en charge par le composant
-    // suivant (autre sous-route ou le composant detail parent) qui appellera
-    // show(). Eviter d'appeler hide() ici previent le clignotement / la
-    // disparition de la sidebar lors des navigations internes a la section.
   }
 }

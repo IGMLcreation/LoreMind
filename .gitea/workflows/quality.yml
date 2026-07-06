@@ -32,9 +32,11 @@ jobs:
           # main → scan complet du dépôt ; beta et PR → seulement les fichiers
           # modifiés par rapport à main (rapide, feedback ciblé).
           VALIDATE_ALL_CODEBASE: ${{ github.ref == 'refs/heads/main' }}
+      # v3 obligatoire : l'API artifacts v4 (@actions/artifact 2.x) n'est pas
+      # supportée par Gitea (GHESNotSupportedError constaté avec v4).
       - name: Publier les rapports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: megalinter-reports
           path: megalinter-reports/
@@ -64,11 +66,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # Pour résoudre pom.xml (versions héritées du parent Spring Boot), Trivy
+      # télécharge les BOMs depuis Maven Central — qui finit par rate-limiter
+      # l'IP du runner (429). Parade officielle : peupler ~/.m2 AVANT le scan,
+      # Trivy lit le cache local en priorité. Le cache setup-java (clé pom.xml)
+      # rend l'étape quasi gratuite d'un run à l'autre.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - name: Précharger le cache Maven (~/.m2)
+        working-directory: core
+        run: |
+          chmod +x ./mvnw
+          ./mvnw -B -q dependency:go-offline
       - name: Installer Trivy
         run: curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
       # Scanne les manifestes du dépôt (pom.xml, requirements*.txt,
       # package-lock.json) contre les bases CVE. --ignore-unfixed : on ne
       # bloque que sur les vulnérabilités qui ONT un correctif publié.
+      # Si un 429 Maven Central réapparaît malgré le cache : ajouter
+      # --offline-scan (aucun accès réseau pendant la résolution, au prix
+      # d'ignorer silencieusement ce qui manquerait dans ~/.m2).
       - name: Scan des dépendances (HIGH/CRITICAL bloquants)
         run: |
           trivy fs . \

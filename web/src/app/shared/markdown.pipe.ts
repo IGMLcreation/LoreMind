@@ -18,6 +18,10 @@ export class MarkdownPipe implements PipeTransform {
     if (!value) return '';
     const html = marked.parse(value, { async: false, gfm: true, breaks: true }) as string;
     const clean = DOMPurify.sanitize(html);
+    // Revue sécurité : le bypass est sûr ICI car le HTML vient d'être passé
+    // par DOMPurify juste au-dessus (le sanitizer Angular, moins permissif,
+    // casserait le rendu markdown). Ne jamais bypasser sans DOMPurify amont.
+    // eslint-disable-next-line sonarjs/no-angular-bypass-sanitization
     return this.sanitizer.bypassSecurityTrustHtml(clean);
   }
 }

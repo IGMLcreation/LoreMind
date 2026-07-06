@@ -361,7 +361,10 @@ export class GameSystemEditComponent implements OnInit {
     };
 
     for (const line of lines) {
-      const match = line.match(/^##\s+(.+?)\s*$/);
+      // `\S` force un début de titre non-blanc : frontière déterministe entre
+      // `\s+` et la capture (l'ancien `.+?`+`\s*$` backtrackait). Le trim()
+      // en aval retire les espaces de fin.
+      const match = line.match(/^##\s+(\S.*)$/);
       if (match) {
         flush();
         current = { title: match[1].trim(), content: '', collapsed: false };

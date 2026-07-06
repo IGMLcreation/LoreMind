@@ -42,6 +42,23 @@ module.exports = defineConfig([
       // Math.random() est légitime ici : tables aléatoires / jets de dés = le
       // domaine métier. Aucun usage cryptographique côté front.
       "sonarjs/pseudo-random": "off",
+      // 9 fonctions historiques dépassent le seuil de 15 (jusqu'à 39 sur les
+      // graphes campagne/chapitre). Les refactorer "pour le lint" sans filet de
+      // tests serait plus risqué qu'utile → warn (visible, non bloquant).
+      // Backlog : campaign-graph (×3), chapter-graph (×2), campaign-import,
+      // settings, persona-view, sse.util. Repasser en "error" une fois résorbé.
+      "sonarjs/cognitive-complexity": "warn",
+      // Convention TS standard : un préfixe `_` marque un paramètre/variable
+      // volontairement inutilisé (ex. paramètres conservés pour ne pas casser
+      // les appelants — cf. campaign-tree.helper.ts).
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+        },
+      ],
     },
   },
   {

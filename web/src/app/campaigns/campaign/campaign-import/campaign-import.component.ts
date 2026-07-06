@@ -52,6 +52,19 @@ interface NpcNode { name: string; description: string; selected: boolean; existi
  * Flux : upload → progression streamée → arbre éditable (revue) → création.
  * Rien n'est créé tant que l'utilisateur n'a pas validé « Créer dans la campagne ».
  */
+
+/** Nettoie les pièces (rooms) d'une scène pour le payload de création. */
+function cleanRooms(rooms: { name: string; description: string; enemies: string; loot: string }[]) {
+  return rooms
+    .filter(r => r.name.trim())
+    .map(r => ({
+      name: r.name.trim(),
+      description: r.description.trim(),
+      enemies: r.enemies.trim(),
+      loot: r.loot.trim()
+    }));
+}
+
 @Component({
     selector: 'app-campaign-import',
     imports: [FormsModule, LucideAngularModule, TranslatePipe, FileDropDirective],
@@ -401,14 +414,7 @@ export class CampaignImportComponent implements OnInit {
                   playerNarration: s.playerNarration.trim(),
                   gmNotes: s.gmNotes.trim(),
                   existingId: s.existingId ?? null,
-                  rooms: s.rooms
-                    .filter(r => r.name.trim())
-                    .map(r => ({
-                      name: r.name.trim(),
-                      description: r.description.trim(),
-                      enemies: r.enemies.trim(),
-                      loot: r.loot.trim()
-                    }))
+                  rooms: cleanRooms(s.rooms)
                 }))
             }))
         })),

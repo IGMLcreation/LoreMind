@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, DestroyRef } from '@angular/core';
+import { Component, OnInit, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -42,7 +42,7 @@ import { FieldProposal } from '../../../services/entity-assist.model';
     templateUrl: './arc-edit.component.html',
     styleUrls: ['./arc-edit.component.scss']
 })
-export class ArcEditComponent implements OnInit, OnDestroy {
+export class ArcEditComponent implements OnInit {
   readonly Trash2 = Trash2;
   readonly Sparkles = Sparkles;
   readonly campaignIconOptions = CAMPAIGN_ICON_OPTIONS;
@@ -220,12 +220,5 @@ export class ArcEditComponent implements OnInit, OnDestroy {
 
   cancel(): void {
     this.router.navigate(['/campaigns', this.campaignId, 'arcs', this.arcId]);
-  }
-
-  ngOnDestroy(): void {
-    // Volontairement vide : la sidebar reste prise en charge par le composant
-    // suivant (autre sous-route ou le composant detail parent) qui appellera
-    // show(). Eviter d'appeler hide() ici previent le clignotement / la
-    // disparition de la sidebar lors des navigations internes a la section.
   }
 }

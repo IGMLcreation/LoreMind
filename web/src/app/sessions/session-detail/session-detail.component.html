@@ -24,7 +24,7 @@
               name="editName"
               (keydown.enter)="saveRename()"
               (keydown.escape)="cancelRename()"
-              autofocus />
+              />
             <button type="button" class="btn-icon" (click)="saveRename()" [disabled]="!editName.trim()" [title]="'common.validate' | translate">
               <lucide-icon [img]="Check" [size]="14"></lucide-icon>
             </button>

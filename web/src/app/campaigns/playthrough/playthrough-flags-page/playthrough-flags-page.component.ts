@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, DestroyRef } from '@angular/core';
+import { Component, OnInit, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -26,7 +26,7 @@ import { PlaythroughFlagsManagerComponent } from '../../../shared/playthrough-fl
     templateUrl: './playthrough-flags-page.component.html',
     styleUrls: ['./playthrough-flags-page.component.scss']
 })
-export class PlaythroughFlagsPageComponent implements OnInit, OnDestroy {
+export class PlaythroughFlagsPageComponent implements OnInit {
   readonly ArrowLeft = ArrowLeft;
 
   campaignId = '';
@@ -75,6 +75,4 @@ export class PlaythroughFlagsPageComponent implements OnInit, OnDestroy {
   back(): void {
     this.router.navigate(['/campaigns', this.campaignId]);
   }
-
-  ngOnDestroy(): void {}
 }

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, DestroyRef } from '@angular/core';
+import { Component, OnInit, DestroyRef } from '@angular/core';
 
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
@@ -33,7 +33,7 @@ import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog
     templateUrl: './folder-view.component.html',
     styleUrls: ['./folder-view.component.scss']
 })
-export class FolderViewComponent implements OnInit, OnDestroy {
+export class FolderViewComponent implements OnInit {
   readonly Folder = Folder;
   readonly FileText = FileText;
   readonly Pencil = Pencil;
@@ -236,12 +236,5 @@ export class FolderViewComponent implements OnInit, OnDestroy {
       },
       error: () => console.error('Impossible de récupérer les dépendances du dossier')
     });
-  }
-
-  ngOnDestroy(): void {
-    // Volontairement vide : la sidebar reste prise en charge par le composant
-    // suivant (autre sous-route ou le composant detail parent) qui appellera
-    // show(). Eviter d'appeler hide() ici previent le clignotement / la
-    // disparition de la sidebar lors des navigations internes a la section.
   }
 }

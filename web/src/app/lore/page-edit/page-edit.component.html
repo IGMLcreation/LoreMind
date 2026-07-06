@@ -195,6 +195,6 @@
   [isOpen]="chatOpen"
   [quickSuggestions]="chatQuickSuggestions"
   [primaryAction]="chatPrimaryAction"
-  (close)="chatOpen = false"
+  (closed)="chatOpen = false"
   (primaryActionClick)="onChatFillRequested()">
 </app-ai-chat-drawer>

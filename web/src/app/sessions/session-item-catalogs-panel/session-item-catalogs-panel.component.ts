@@ -52,7 +52,11 @@ export class SessionItemCatalogsPanelComponent implements OnInit {
       map.get(cat)!.push(it);
     }
     return [...map.entries()]
-      .sort(([a], [b]) => (a === '—' ? 1 : b === '—' ? -1 : a.localeCompare(b, 'fr')))
+      .sort(([a], [b]) => {
+        if (a === '—') return 1;   // catégorie "sans catégorie" toujours en dernier
+        if (b === '—') return -1;
+        return a.localeCompare(b, 'fr');
+      })
       .map(([category, items]) => ({ category, items }));
   }
 

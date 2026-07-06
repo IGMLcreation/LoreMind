@@ -29,7 +29,7 @@ export interface CampaignCreatePayload {
     styleUrls: ['./campaign-create.component.scss']
 })
 export class CampaignCreateComponent implements OnInit {
-  @Output() close = new EventEmitter<void>();
+  @Output() closed = new EventEmitter<void>();
   @Output() created = new EventEmitter<CampaignCreatePayload>();
 
   readonly BookCopy = BookCopy;
@@ -131,6 +131,6 @@ export class CampaignCreateComponent implements OnInit {
   }
 
   onCancel(): void {
-    this.close.emit();
+    this.closed.emit();
   }
 }

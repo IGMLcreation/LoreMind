@@ -39,7 +39,7 @@
 
 @if (showCreateModal) {
   <app-campaign-create
-    (close)="onModalClose()"
+    (closed)="onModalClose()"
     (created)="onCampaignCreated($event)">
   </app-campaign-create>
 }

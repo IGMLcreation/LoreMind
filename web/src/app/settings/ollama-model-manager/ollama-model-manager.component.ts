@@ -209,9 +209,10 @@ export class OllamaModelManagerComponent implements OnDestroy {
     });
   }
 
-  private extractError(err: any, fallback: string): string {
-    if (err?.error?.detail) return String(err.error.detail);
-    if (err?.message) return err.message;
+  private extractError(err: unknown, fallback: string): string {
+    const e = err as { error?: { detail?: unknown }; message?: string } | null;
+    if (e?.error?.detail) return String(e.error.detail);
+    if (e?.message) return e.message;
     return fallback;
   }
 }

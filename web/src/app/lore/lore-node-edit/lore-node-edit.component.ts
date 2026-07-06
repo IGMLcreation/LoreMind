@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, DestroyRef } from '@angular/core';
+import { Component, OnInit, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -38,7 +38,7 @@ import { LORE_ICON_OPTIONS, IconOption } from '../lore-icons';
     templateUrl: './lore-node-edit.component.html',
     styleUrls: ['./lore-node-edit.component.scss']
 })
-export class LoreNodeEditComponent implements OnInit, OnDestroy {
+export class LoreNodeEditComponent implements OnInit {
 
   readonly iconOptions: IconOption[] = LORE_ICON_OPTIONS;
 
@@ -146,12 +146,5 @@ export class LoreNodeEditComponent implements OnInit, OnDestroy {
   getIcon(key: string | null): LucideIconData | null {
     if (!key) return null;
     return this.iconOptions.find(o => o.key === key)?.icon ?? null;
-  }
-
-  ngOnDestroy(): void {
-    // Volontairement vide : la sidebar reste prise en charge par le composant
-    // suivant (autre sous-route ou le composant detail parent) qui appellera
-    // show(). Eviter d'appeler hide() ici previent le clignotement / la
-    // disparition de la sidebar lors des navigations internes a la section.
   }
 }

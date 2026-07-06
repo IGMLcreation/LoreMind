@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -24,7 +24,7 @@ import { CAMPAIGN_ICON_OPTIONS } from '../../campaign-icons';
     templateUrl: './chapter-create.component.html',
     styleUrls: ['./chapter-create.component.scss']
 })
-export class ChapterCreateComponent implements OnInit, OnDestroy {
+export class ChapterCreateComponent implements OnInit {
   readonly campaignIconOptions = CAMPAIGN_ICON_OPTIONS;
   selectedIcon: string | null = null;
 
@@ -87,12 +87,5 @@ export class ChapterCreateComponent implements OnInit, OnDestroy {
 
   cancel(): void {
     this.router.navigate(['/campaigns', this.campaignId]);
-  }
-
-  ngOnDestroy(): void {
-    // Volontairement vide : la sidebar reste prise en charge par le composant
-    // suivant (autre sous-route ou le composant detail parent) qui appellera
-    // show(). Eviter d'appeler hide() ici previent le clignotement / la
-    // disparition de la sidebar lors des navigations internes a la section.
   }
 }

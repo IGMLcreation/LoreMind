@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, DestroyRef } from '@angular/core';
+import { Component, OnInit, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
@@ -33,7 +33,7 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
     templateUrl: './quest-view.component.html',
     styleUrls: ['./quest-view.component.scss']
 })
-export class QuestViewComponent implements OnInit, OnDestroy {
+export class QuestViewComponent implements OnInit {
   readonly Pencil = Pencil;
   readonly Trash2 = Trash2;
   readonly BookOpen = BookOpen;
@@ -198,9 +198,5 @@ export class QuestViewComponent implements OnInit, OnDestroy {
         error: () => console.error('Erreur lors de la suppression de la quête')
       });
     });
-  }
-
-  ngOnDestroy(): void {
-    // Volontairement vide : la sidebar reste prise en charge par le composant suivant.
   }
 }

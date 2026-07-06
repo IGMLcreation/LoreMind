@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, DestroyRef } from '@angular/core';
+import { Component, OnInit, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -32,7 +32,7 @@ import { AiChatDrawerComponent, ChatPrimaryAction } from '../../shared/ai-chat-d
     templateUrl: './page-create.component.html',
     styleUrls: ['./page-create.component.scss']
 })
-export class PageCreateComponent implements OnInit, OnDestroy {
+export class PageCreateComponent implements OnInit {
   readonly FileText = FileText;
   readonly Sparkles = Sparkles;
   readonly Plus = Plus;
@@ -165,7 +165,7 @@ export class PageCreateComponent implements OnInit, OnDestroy {
   }
 
   private restoreDraft(): void {
-    let raw: string | null = null;
+    let raw: string | null;
     try { raw = sessionStorage.getItem(this.draftKey); } catch { return; }
     if (!raw) return;
     sessionStorage.removeItem(this.draftKey);
@@ -328,7 +328,9 @@ Les clés du JSON doivent correspondre EXACTEMENT aux noms de champs indiqués. 
    * Retourne null si absent ou JSON invalide.
    */
   private extractValuesBlock(reply: string): Record<string, string> | null {
-    const match = reply.match(/<values>\s*([\s\S]*?)\s*<\/values>/i);
+    // Pas de \s* autour de la capture (backtracking quadratique) :
+    // JSON.parse tolère nativement les blancs en tête/queue.
+    const match = reply.match(/<values>([\s\S]*?)<\/values>/i);
     if (!match) return null;
     try {
       const parsed = JSON.parse(match[1]) as Record<string, unknown>;
@@ -341,12 +343,5 @@ Les clés du JSON doivent correspondre EXACTEMENT aux noms de champs indiqués. 
     } catch {
       return null;
     }
-  }
-
-  ngOnDestroy(): void {
-    // Volontairement vide : la sidebar reste prise en charge par le composant
-    // suivant (autre sous-route ou le composant detail parent) qui appellera
-    // show(). Eviter d'appeler hide() ici previent le clignotement / la
-    // disparition de la sidebar lors des navigations internes a la section.
   }
 }

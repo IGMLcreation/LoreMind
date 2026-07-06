@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, DestroyRef } from '@angular/core';
+import { Component, OnInit, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -52,7 +52,7 @@ import { SceneDraftPanelComponent } from '../../../shared/scene-draft-panel/scen
     templateUrl: './chapter-edit.component.html',
     styleUrls: ['./chapter-edit.component.scss']
 })
-export class ChapterEditComponent implements OnInit, OnDestroy {
+export class ChapterEditComponent implements OnInit {
   readonly Trash2 = Trash2;
   readonly Sparkles = Sparkles;
   readonly campaignIconOptions = CAMPAIGN_ICON_OPTIONS;
@@ -220,6 +220,4 @@ export class ChapterEditComponent implements OnInit, OnDestroy {
   cancel(): void {
     this.router.navigate(['/campaigns', this.campaignId, 'arcs', this.arcId, 'chapters', this.chapterId]);
   }
-
-  ngOnDestroy(): void {}
 }

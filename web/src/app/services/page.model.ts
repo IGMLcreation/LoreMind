@@ -40,7 +40,7 @@ export interface Page {
    * Pour chaque champ TABLE (colonnes figees au template, lignes libres) :
    * fieldName → lignes ordonnees, chaque ligne = colonne → cellule.
    */
-  tableValues?: Record<string, Array<Record<string, string>>>;
+  tableValues?: Record<string, Record<string, string>[]>;
   notes?: string | null;
   tags?: string[];
   relatedPageIds?: string[];

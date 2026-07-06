@@ -48,7 +48,9 @@ export interface NotebookAction {
   resolution?: string;
 }
 
-const ACTION_RE = /```loremind-action\s*([\s\S]*?)```/g;
+// Pas de \s* avant la capture (backtracking quadratique) : la capture est
+// trim()ée avant JSON.parse de toute façon.
+const ACTION_RE = /```loremind-action([\s\S]*?)```/g;
 const VALID_TYPES = new Set(['npc', 'scene', 'chapter', 'arc', 'table']);
 
 /**

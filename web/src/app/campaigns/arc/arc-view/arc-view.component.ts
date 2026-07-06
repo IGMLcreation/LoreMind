@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, DestroyRef } from '@angular/core';
+import { Component, OnInit, DestroyRef } from '@angular/core';
 
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
@@ -35,7 +35,7 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
     templateUrl: './arc-view.component.html',
     styleUrls: ['./arc-view.component.scss']
 })
-export class ArcViewComponent implements OnInit, OnDestroy {
+export class ArcViewComponent implements OnInit {
   readonly Pencil = Pencil;
   readonly Trash2 = Trash2;
   readonly Plus = Plus;
@@ -161,9 +161,5 @@ export class ArcViewComponent implements OnInit, OnDestroy {
       },
       error: () => console.error('Impossible de récupérer les dépendances de l\'arc')
     });
-  }
-
-  ngOnDestroy(): void {
-    // Volontairement vide : la sidebar reste prise en charge par le composant suivant.
   }
 }

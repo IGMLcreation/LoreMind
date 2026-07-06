@@ -92,7 +92,7 @@ export class CampaignGraphComponent implements OnInit, OnDestroy {
   private readonly DRAG_THRESHOLD = 4;
 
   // Adjacence (ids de nœuds) — sert à recalculer les arêtes après un drag.
-  private adjacency: Array<{ key: string; kind: NodeKind; a: string; b: string }> = [];
+  private adjacency: { key: string; kind: NodeKind; a: string; b: string }[] = [];
 
   // Disposition personnalisée : positions sauvegardées sur la campagne, sauvegarde
   // différée après un drag (évite un PUT par pixel déplacé).
@@ -174,7 +174,10 @@ export class CampaignGraphComponent implements OnInit, OnDestroy {
     if (this.draggingId) return; // pas de changement de focus en plein drag
     this.hoveredId = node.id;
     this.hoverNeighbors = new Set(
-      this.adjacency.flatMap(e => e.a === node.id ? [e.b] : e.b === node.id ? [e.a] : []));
+      this.adjacency.flatMap(e => {
+        if (e.a === node.id) return [e.b];
+        return e.b === node.id ? [e.a] : [];
+      }));
   }
 
   onNodeLeave(): void {
@@ -230,7 +233,7 @@ export class CampaignGraphComponent implements OnInit, OnDestroy {
     for (const [arcId, chapters] of Object.entries(treeData.chaptersByArc)) {
       for (const ch of chapters) arcOfChapter.set(ch.id!, arcId);
     }
-    const linkedScenes: Array<{ scene: Scene; chapterId: string }> = [];
+    const linkedScenes: { scene: Scene; chapterId: string }[] = [];
     if (!this.hiddenKinds.has('scene')) {
       for (const [chapterId, scenes] of Object.entries(treeData.scenesByChapter)) {
         if (!arcOfChapter.has(chapterId)) continue;
@@ -268,7 +271,7 @@ export class CampaignGraphComponent implements OnInit, OnDestroy {
 
     // Arêtes. Les liens page↔page sont dé-dupliqués par paire non-orientée
     // (A→B et B→A = un seul trait) ; les liens entité→page portent le type de l'entité.
-    const adjacency: Array<{ key: string; kind: NodeKind; a: string; b: string }> = [];
+    const adjacency: { key: string; kind: NodeKind; a: string; b: string }[] = [];
     const seenPairs = new Set<string>();
     for (const p of pages) {
       for (const targetId of p.relatedPageIds ?? []) {
@@ -530,14 +533,16 @@ export class CampaignGraphComponent implements OnInit, OnDestroy {
           if (Math.abs(dx) >= needX || Math.abs(dy) >= needY) continue;
           const overlapX = needX - Math.abs(dx);
           const overlapY = needY - Math.abs(dy);
+          // Départage déterministe quand les centres coïncident (dx/dy = 0).
+          const tieBreak = i % 2 === 0 ? 1 : -1;
           if (overlapX / needX < overlapY / needY) {
             const shift = overlapX / 2 + 0.5;
-            const sign = dx !== 0 ? Math.sign(dx) : (i % 2 === 0 ? 1 : -1);
+            const sign = dx !== 0 ? Math.sign(dx) : tieBreak;
             a.x -= sign * shift;
             b.x += sign * shift;
           } else {
             const shift = overlapY / 2 + 0.5;
-            const sign = dy !== 0 ? Math.sign(dy) : (i % 2 === 0 ? 1 : -1);
+            const sign = dy !== 0 ? Math.sign(dy) : tieBreak;
             a.y -= sign * shift;
             b.y += sign * shift;
           }

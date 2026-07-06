@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, DestroyRef } from '@angular/core';
+import { Component, OnInit, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -41,7 +41,7 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
     templateUrl: './quest-edit.component.html',
     styleUrls: ['./quest-edit.component.scss']
 })
-export class QuestEditComponent implements OnInit, OnDestroy {
+export class QuestEditComponent implements OnInit {
   readonly Trash2 = Trash2;
   readonly campaignIconOptions = CAMPAIGN_ICON_OPTIONS;
   selectedIcon: string | null = null;
@@ -232,6 +232,4 @@ export class QuestEditComponent implements OnInit, OnDestroy {
   cancel(): void {
     this.router.navigate(['/campaigns', this.campaignId, 'quests']);
   }
-
-  ngOnDestroy(): void {}
 }

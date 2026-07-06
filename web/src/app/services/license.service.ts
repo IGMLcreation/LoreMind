@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, catchError, of } from 'rxjs';
+import { Observable, catchError, map, of } from 'rxjs';
 
 /**
  * Reflet de LicenseStatus (enum cote backend).
@@ -44,13 +44,13 @@ export interface BetaStatusDTO {
   enabled: boolean;
   updateAvailable: boolean;
   anyUnknown: boolean;
-  images: Array<{
+  images: {
     image: string;
     localVersion: string | null;
     remoteVersion: string | null;
     status: 'UP_TO_DATE' | 'UPDATE_AVAILABLE' | 'UNKNOWN';
     updateAvailable: boolean;
-  }>;
+  }[];
   checkedAt: string;
   disabledReason: string | null;
 }
@@ -86,10 +86,13 @@ export class LicenseService {
 
   disconnect(): Observable<boolean> {
     return this.http.delete<void>(this.apiUrl, this.authOptions).pipe(
-      // Convertit en boolean : true = succes, false = erreur
-      // (catchError plus bas masque les detail HTTP)
-      catchError(() => of(false as any))
-    ) as unknown as Observable<boolean>;
+      // Convertit en boolean : true = succes, false = erreur.
+      // (Avant : le cast `as unknown as` masquait l'absence de map() — le
+      // succes emettait `undefined`, donc falsy. Consommateur actuel ignore
+      // la valeur, mais le type est desormais honnete.)
+      map(() => true),
+      catchError(() => of(false))
+    );
   }
 
   refresh(): Observable<LicenseStatusDTO | null> {

@@ -10,7 +10,7 @@ import { TranslatePipe } from '@ngx-translate/core';
  */
 export interface BreadcrumbItem {
   label: string;
-  route?: string | any[];
+  route?: string | unknown[];
 }
 
 /**

@@ -88,7 +88,7 @@ export class AiChatDrawerComponent implements OnInit, OnChanges, OnDestroy {
   /** Persistance activee ? false = mode wizard ephemere. */
   @Input() persistent = true;
 
-  @Output() close = new EventEmitter<void>();
+  @Output() closed = new EventEmitter<void>();
   @Output() primaryActionClick = new EventEmitter<void>();
   @Output() assistantReply = new EventEmitter<string>();
 
@@ -180,7 +180,7 @@ export class AiChatDrawerComponent implements OnInit, OnChanges, OnDestroy {
     this.isWide = !this.isWide;
     try {
       localStorage.setItem(this.LS_WIDE, this.isWide ? '1' : '0');
-    } catch {}
+    } catch { /* localStorage indisponible : ignoré */ }
   }
 
   /** Debut du drag : enregistre la position de depart + abonne listeners globaux. */
@@ -216,7 +216,7 @@ export class AiChatDrawerComponent implements OnInit, OnChanges, OnDestroy {
     if (this.customWidth !== null) {
       try {
         localStorage.setItem(this.LS_WIDTH, String(this.customWidth));
-      } catch {}
+      } catch { /* localStorage indisponible : ignoré */ }
     }
   }
 
@@ -231,7 +231,7 @@ export class AiChatDrawerComponent implements OnInit, OnChanges, OnDestroy {
         }
       }
       this.isWide = localStorage.getItem(this.LS_WIDE) === '1';
-    } catch {}
+    } catch { /* localStorage indisponible : ignoré */ }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -374,7 +374,7 @@ export class AiChatDrawerComponent implements OnInit, OnChanges, OnDestroy {
 
   onClose(): void {
     this.abortStream();
-    this.close.emit();
+    this.closed.emit();
   }
 
   send(): void {
@@ -450,7 +450,7 @@ export class AiChatDrawerComponent implements OnInit, OnChanges, OnDestroy {
     this.scrollToBottom();
 
     if (convId) {
-      this.conversationService.appendMessage(convId, 'user', text).subscribe({ error: () => {} });
+      this.conversationService.appendMessage(convId, 'user', text).subscribe({ error: () => { /* best-effort : erreur ignorée volontairement */ } });
     }
 
     this.streamSub = this.buildStream().subscribe({
@@ -477,7 +477,7 @@ export class AiChatDrawerComponent implements OnInit, OnChanges, OnDestroy {
               next: () => {
                 if (wasEmpty) this.triggerAutoTitle(convId);
               },
-              error: () => {},
+              error: () => { /* best-effort : erreur ignorée volontairement */ },
             });
           }
         }
@@ -505,7 +505,7 @@ export class AiChatDrawerComponent implements OnInit, OnChanges, OnDestroy {
           c.id === convId ? { ...c, title } : c,
         );
       },
-      error: () => {},
+      error: () => { /* best-effort : erreur ignorée volontairement */ },
     });
   }
 

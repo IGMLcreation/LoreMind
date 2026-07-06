@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, DestroyRef } from '@angular/core';
+import { Component, OnInit, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -30,7 +30,7 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
     templateUrl: './chapter-view.component.html',
     styleUrls: ['./chapter-view.component.scss']
 })
-export class ChapterViewComponent implements OnInit, OnDestroy {
+export class ChapterViewComponent implements OnInit {
   readonly Pencil = Pencil;
   readonly Network = Network;
   readonly Trash2 = Trash2;
@@ -146,12 +146,5 @@ export class ChapterViewComponent implements OnInit, OnDestroy {
       },
       error: () => console.error('Impossible de récupérer les dépendances du chapitre')
     });
-  }
-
-  ngOnDestroy(): void {
-    // Volontairement vide : la sidebar reste prise en charge par le composant
-    // suivant (autre sous-route ou le composant detail parent) qui appellera
-    // show(). Eviter d'appeler hide() ici previent le clignotement / la
-    // disparition de la sidebar lors des navigations internes a la section.
   }
 }

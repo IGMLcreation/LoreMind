@@ -46,9 +46,10 @@ export class VersionCheckerService {
    */
   start(): void {
     if (this.timer !== null) return;
-    void this.fetchInitial();
+    // Fire-and-forget : fetchInitial/poll gèrent leurs erreurs en interne.
+    this.fetchInitial();
     this.timer = setInterval(
-      () => void this.poll(),
+      () => { this.poll(); },
       VersionCheckerService.POLL_INTERVAL_MS,
     );
   }

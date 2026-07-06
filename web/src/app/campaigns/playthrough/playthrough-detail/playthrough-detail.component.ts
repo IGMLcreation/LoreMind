@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, DestroyRef } from '@angular/core';
+import { Component, OnInit, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -34,7 +34,7 @@ import { SessionPrepPanelComponent } from '../../../shared/session-prep-panel/se
     templateUrl: './playthrough-detail.component.html',
     styleUrls: ['./playthrough-detail.component.scss']
 })
-export class PlaythroughDetailComponent implements OnInit, OnDestroy {
+export class PlaythroughDetailComponent implements OnInit {
   readonly ArrowLeft = ArrowLeft;
   readonly Play = Play;
   readonly Flag = Flag;
@@ -155,6 +155,4 @@ export class PlaythroughDetailComponent implements OnInit, OnDestroy {
       }
     });
   }
-
-  ngOnDestroy(): void {}
 }

@@ -96,7 +96,7 @@ export class ImageGalleryComponent {
     event.stopPropagation(); // Evite d'ouvrir le lightbox en cliquant sur X.
     // On supprime aussi cote serveur pour ne pas laisser d'image orpheline.
     // Best-effort : on n'attend pas le retour pour emettre la nouvelle liste.
-    this.imageService.delete(id).subscribe({ error: () => {} });
+    this.imageService.delete(id).subscribe({ error: () => { /* best-effort : erreur ignorée volontairement */ } });
     this.imageIdsChange.emit(this.imageIds.filter(i => i !== id));
   }
 

@@ -11,7 +11,7 @@ import { TranslatePipe } from '@ngx-translate/core';
     styleUrls: ['./lore-create.component.scss']
 })
 export class LoreCreateComponent {
-  @Output() close = new EventEmitter<void>();
+  @Output() closed = new EventEmitter<void>();
   @Output() created = new EventEmitter<{ name: string; description: string }>();
 
   readonly BookCopy = BookCopy;
@@ -32,6 +32,6 @@ export class LoreCreateComponent {
   }
 
   onCancel(): void {
-    this.close.emit();
+    this.closed.emit();
   }
 }

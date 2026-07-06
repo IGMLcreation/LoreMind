@@ -130,11 +130,12 @@ export class UpdatesSectionComponent implements OnInit, OnDestroy {
     }
     this.licenseError = '';
     this.licenseService.install(jwt).subscribe((res) => {
-      if ((res as any)?.error) {
-        this.licenseError = (res as any).error;
+      // install() renvoie une union typée : le garde `in` suffit à discriminer.
+      if ('error' in res) {
+        this.licenseError = res.error;
         return;
       }
-      this.licenseStatus = res as LicenseStatusDTO;
+      this.licenseStatus = res;
       this.licenseJwtInput = '';
       this.licenseSuccess = this.translate.instant('updatesSection.patreonConnectedSuccess');
       if (this.licenseStatus.betaChannelEnabled) {

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, DestroyRef } from '@angular/core';
+import { Component, OnInit, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { FormsModule } from '@angular/forms';
@@ -44,7 +44,7 @@ import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog
     templateUrl: './page-edit.component.html',
     styleUrls: ['./page-edit.component.scss']
 })
-export class PageEditComponent implements OnInit, OnDestroy {
+export class PageEditComponent implements OnInit {
   readonly Sparkles = Sparkles;
   readonly Plus = Plus;
   readonly Trash2 = Trash2;
@@ -84,7 +84,7 @@ export class PageEditComponent implements OnInit, OnDestroy {
   /** Valeurs des champs KEY_VALUE_LIST (liste clé/valeur) : fieldName → (label → valeur). */
   keyValueValues: Record<string, Record<string, string>> = {};
   /** Valeurs des champs TABLE : fieldName → lignes (colonne → cellule). */
-  tableValues: Record<string, Array<Record<string, string>>> = {};
+  tableValues: Record<string, Record<string, string>[]> = {};
   /** Étiquettes libres (Phase 5B). */
   tags: string[] = [];
   /** IDs des pages liées (Phase 5B). */
@@ -200,7 +200,7 @@ export class PageEditComponent implements OnInit, OnDestroy {
     const imageBase: Record<string, string[]> = {};
     const framingBase: Record<string, Record<string, ImageFraming>> = {};
     const kvBase: Record<string, Record<string, string>> = {};
-    const tableBase: Record<string, Array<Record<string, string>>> = {};
+    const tableBase: Record<string, Record<string, string>[]> = {};
     // Les valeurs sont rangées par clé STABLE (id) ; on relit d'abord par clé,
     // puis par nom (pages dont les valeurs étaient encore rangées par nom — elles
     // sont ainsi migrées vers la clé id à la prochaine sauvegarde).
@@ -259,7 +259,9 @@ export class PageEditComponent implements OnInit, OnDestroy {
   addTableRow(fieldName: string, columns: string[] | null | undefined): void {
     const row: Record<string, string> = {};
     for (const col of columns ?? []) row[col] = '';
-    (this.tableValues[fieldName] ??= []).push(row);
+    const rows = this.tableValues[fieldName] ?? [];
+    rows.push(row);
+    this.tableValues[fieldName] = rows;
   }
 
   removeTableRow(fieldName: string, rowIndex: number): void {
@@ -267,7 +269,7 @@ export class PageEditComponent implements OnInit, OnDestroy {
   }
 
   /** Lignes du tableau d'un champ — toujours un tableau (jamais undefined) pour le `@for`. */
-  tableRows(fieldName: string): Array<Record<string, string>> {
+  tableRows(fieldName: string): Record<string, string>[] {
     return this.tableValues[fieldName] ?? [];
   }
 
@@ -342,12 +344,5 @@ export class PageEditComponent implements OnInit, OnDestroy {
         error: () => console.error('Erreur lors de la suppression de la page')
       });
     });
-  }
-
-  ngOnDestroy(): void {
-    // Volontairement vide : la sidebar reste prise en charge par le composant
-    // suivant (autre sous-route ou le composant detail parent) qui appellera
-    // show(). Eviter d'appeler hide() ici previent le clignotement / la
-    // disparition de la sidebar lors des navigations internes a la section.
   }
 }

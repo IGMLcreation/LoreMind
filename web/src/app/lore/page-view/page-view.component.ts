@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, DestroyRef } from '@angular/core';
+import { Component, OnInit, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -36,7 +36,7 @@ import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog
     templateUrl: './page-view.component.html',
     styleUrls: ['./page-view.component.scss']
 })
-export class PageViewComponent implements OnInit, OnDestroy {
+export class PageViewComponent implements OnInit {
   readonly Pencil = Pencil;
   readonly Trash2 = Trash2;
 
@@ -155,7 +155,7 @@ export class PageViewComponent implements OnInit, OnDestroy {
   }
 
   /** Lignes d'un champ TABLE (liste vide si jamais rempli). */
-  tableRowsOf(field: TemplateField): Array<Record<string, string>> {
+  tableRowsOf(field: TemplateField): Record<string, string>[] {
     const v = this.page?.tableValues;
     return v?.[blockKey(field)] ?? v?.[field.name] ?? [];
   }
@@ -195,12 +195,5 @@ export class PageViewComponent implements OnInit, OnDestroy {
         error: () => console.error('Erreur lors de la suppression de la page')
       });
     });
-  }
-
-  ngOnDestroy(): void {
-    // Volontairement vide : la sidebar reste prise en charge par le composant
-    // suivant (autre sous-route ou le composant detail parent) qui appellera
-    // show(). Eviter d'appeler hide() ici previent le clignotement / la
-    // disparition de la sidebar lors des navigations internes a la section.
   }
 }

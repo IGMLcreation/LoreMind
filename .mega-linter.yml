@@ -35,3 +35,9 @@ REPORT_OUTPUT_FOLDER: megalinter-reports
 # Phase de rodage : passer temporairement à true pour rendre le job
 # informatif (rapport sans échec CI) le temps de purger l'existant.
 DISABLE_ERRORS: false
+
+# PMD : ruleset projet à la racine (java-pmd-ruleset.xml, détecté
+# automatiquement) — orienté bugs réels, sans style. Non-bloquant le temps
+# de purger le backlog (~65 findings : PreserveStackTrace, EmptyCatchBlock,
+# CheckResultSet, RelianceOnDefaultCharset…). Repasser à false ensuite.
+JAVA_PMD_DISABLE_ERRORS: true

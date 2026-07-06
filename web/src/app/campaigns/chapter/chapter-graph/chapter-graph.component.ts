@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ElementRef, ViewChild, HostListener, DestroyRef } from '@angular/core';
+import { Component, OnInit, ElementRef, ViewChild, HostListener, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { FormsModule } from '@angular/forms';
@@ -29,7 +29,7 @@ interface GraphEdge { key: string; label: string; kind: LinkType; x1: number; y1
     templateUrl: './chapter-graph.component.html',
     styleUrls: ['./chapter-graph.component.scss']
 })
-export class ChapterGraphComponent implements OnInit, OnDestroy {
+export class ChapterGraphComponent implements OnInit {
   readonly ArrowLeft = ArrowLeft;
   readonly Plus = Plus;
   readonly ZoomIn = ZoomIn;
@@ -507,7 +507,7 @@ export class ChapterGraphComponent implements OnInit, OnDestroy {
     scene.graphX = node.x;
     scene.graphY = node.y;
     this.campaignService.updateScene(nodeId, { ...scene, order: scene.order ?? 0 })
-      .subscribe({ error: () => {} });
+      .subscribe({ error: () => { /* best-effort : erreur ignorée volontairement */ } });
   }
 
   private truncate(text: string): string {
@@ -548,7 +548,7 @@ export class ChapterGraphComponent implements OnInit, OnDestroy {
     };
     this.campaignService.createScene(payload).subscribe({
       next: () => this.load(),
-      error: () => {}
+      error: () => { /* best-effort : erreur ignorée volontairement */ }
     });
   }
 
@@ -592,7 +592,7 @@ export class ChapterGraphComponent implements OnInit, OnDestroy {
     node.name = name;
     node.displayName = this.truncate(name);
     scene.name = name;
-    this.campaignService.updateScene(id, { ...scene, order: scene.order ?? 0 }).subscribe({ error: () => {} });
+    this.campaignService.updateScene(id, { ...scene, order: scene.order ?? 0 }).subscribe({ error: () => { /* best-effort : erreur ignorée volontairement */ } });
   }
 
   cancelRename(): void {
@@ -635,7 +635,7 @@ export class ChapterGraphComponent implements OnInit, OnDestroy {
     if (existing.some(b => b.targetSceneId === toId)) return;
     const next: SceneBranch[] = [...existing, { label: '', targetSceneId: toId, condition: '', kind: 'EXIT' }];
     this.campaignService.updateScene(fromId, { ...scene, order: scene.order ?? 0, branches: next })
-      .subscribe({ next: () => this.load(), error: () => {} });
+      .subscribe({ next: () => this.load(), error: () => { /* best-effort : erreur ignorée volontairement */ } });
   }
 
   // ─────────────── Sélection / édition / suppression d'un lien ───────────────
@@ -698,7 +698,7 @@ export class ChapterGraphComponent implements OnInit, OnDestroy {
         ? { ...b, label: this.editEdgeLabel.trim(), condition: this.editEdgeCondition.trim(), kind: this.editEdgeKind }
         : b);
     this.campaignService.updateScene(scene.id!, { ...scene, order: scene.order ?? 0, branches })
-      .subscribe({ next: () => { this.selectedEdgeKey = null; this.load(); }, error: () => {} });
+      .subscribe({ next: () => { this.selectedEdgeKey = null; this.load(); }, error: () => { /* best-effort : erreur ignorée volontairement */ } });
   }
 
   /** Supprime (sépare) le lien sélectionné. */
@@ -709,10 +709,6 @@ export class ChapterGraphComponent implements OnInit, OnDestroy {
     const { scene, branchIndex } = found;
     const branches = (scene.branches ?? []).filter((_, i) => i !== branchIndex);
     this.campaignService.updateScene(scene.id!, { ...scene, order: scene.order ?? 0, branches })
-      .subscribe({ next: () => { this.selectedEdgeKey = null; this.load(); }, error: () => {} });
-  }
-
-  ngOnDestroy(): void {
-    // Volontairement vide : la sidebar reste prise en charge par le composant suivant.
+      .subscribe({ next: () => { this.selectedEdgeKey = null; this.load(); }, error: () => { /* best-effort : erreur ignorée volontairement */ } });
   }
 }

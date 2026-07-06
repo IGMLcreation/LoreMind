@@ -56,7 +56,7 @@ export class SettingsComponent implements OnInit {
   /** Catalogue Gemini (dynamique si cle configuree, repli statique sinon). */
   geminiModels: GeminiModel[] = [];
   /** Fournisseur 1min.ai actuellement selectionne (filtre la liste des modeles). */
-  oneminProvider: string = '';
+  oneminProvider = '';
 
   loadingModels = false;
   saving = false;
@@ -419,9 +419,10 @@ export class SettingsComponent implements OnInit {
     });
   }
 
-  private extractError(err: any, fallback: string): string {
-    if (err?.error?.detail) return String(err.error.detail);
-    if (err?.message) return err.message;
+  private extractError(err: unknown, fallback: string): string {
+    const e = err as { error?: { detail?: unknown }; message?: string } | null;
+    if (e?.error?.detail) return String(e.error.detail);
+    if (e?.message) return e.message;
     return fallback;
   }
 }

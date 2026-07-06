@@ -82,7 +82,10 @@ export function buildCampaignTree(
   // Clé TYPE|ID obligatoire : chaque table a sa propre séquence IDENTITY (une quête
   // id 6 et une scène id 6 coexistent) — sans le type, un manque de quête allumerait
   // à tort la pastille d'une scène/PNJ portant le même numéro.
-  const sevRank = (s: ReadinessSeverity): number => (s === 'BLOCKING' ? 2 : s === 'RECOMMENDED' ? 1 : 0);
+  const sevRank = (s: ReadinessSeverity): number => {
+    if (s === 'BLOCKING') return 2;
+    return s === 'RECOMMENDED' ? 1 : 0;
+  };
   const gapsByKey = new Map<string, ReadinessGap[]>();
   for (const g of readinessGaps) {
     const key = `${g.entityType}|${g.entityId}`;

@@ -36,8 +36,9 @@
     </button>
   }
 
-  <!-- Mode normal : spacer + outils -->
-  @if (!(layoutConfig$ | async)) {
+  <!-- Mode normal : spacer + outils. `=== null` (et pas `!`) : l'async pipe
+       émet null tant que rien n'est reçu, la négation brute serait ambiguë. -->
+  @if ((layoutConfig$ | async) === null) {
     <div class="spacer"></div>
   }
 

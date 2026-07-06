@@ -154,10 +154,14 @@ export class BlockGridBuilderComponent implements OnDestroy {
 
   addLabel(block: TemplateField): void { block.labels = [...(block.labels ?? []), '']; this.emit(); }
   updateLabel(block: TemplateField, i: number, value: string): void {
-    if (!block.labels) return; block.labels[i] = value; this.emit();
+    if (!block.labels) return;
+    block.labels[i] = value;
+    this.emit();
   }
   removeLabel(block: TemplateField, i: number): void {
-    if (!block.labels) return; block.labels = block.labels.filter((_, k) => k !== i); this.emit();
+    if (!block.labels) return;
+    block.labels = block.labels.filter((_, k) => k !== i);
+    this.emit();
   }
 
   // --- Glisser : création / déplacement / redimensionnement ---------------

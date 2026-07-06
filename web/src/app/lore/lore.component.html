@@ -39,7 +39,7 @@
 
 @if (showCreateModal) {
   <app-lore-create
-    (close)="onModalClose()"
+    (closed)="onModalClose()"
     (created)="onLoreCreated($event)">
   </app-lore-create>
 }
