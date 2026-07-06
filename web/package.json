@@ -1,6 +1,6 @@
 {
   "name": "loremind-web",
-  "version": "1.0.1-beta",
+  "version": "1.0.2-beta",
   "description": "LoreMind Frontend - Angular",
   "scripts": {
     "ng": "ng",
