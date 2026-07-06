@@ -24,6 +24,19 @@
              >= 3.18 : corrige CVE-2025-48924 (recursion infinie ClassUtils.getClass).
              Propriete reconnue par le BOM Spring Boot → s'applique partout. -->
         <commons-lang3.version>3.20.0</commons-lang3.version>
+        <!-- Overrides CVE (detectes par Trivy en CI — job quality.yml) :
+             proprietes reconnues par le BOM Spring Boot, comme ci-dessus. -->
+        <!-- >= 2.21.4 : CVE-2026-54512 / CVE-2026-54513 (execution de code
+             arbitraire via contournement du PolymorphicTypeValidator). -->
+        <jackson-bom.version>2.21.4</jackson-bom.version>
+        <!-- >= 4.1.135 : lot de CVE netty (DoS codec/handler, bypass de
+             verification hostname CVE-2026-50010, DNS CVE-2026-45674/47691). -->
+        <netty.version>4.1.135.Final</netty.version>
+        <!-- >= 10.1.55 : 3 CRITICAL Tomcat (CVE-2026-41293 headers HTTP/2 non
+             valides, CVE-2026-43512 bypass auth digest, CVE-2026-43515). -->
+        <tomcat.version>10.1.55</tomcat.version>
+        <!-- >= 42.7.11 : CVE-2026-42198 (DoS client via SCRAM-SHA-256). -->
+        <postgresql.version>42.7.11</postgresql.version>
     </properties>
 
     <dependencies>
