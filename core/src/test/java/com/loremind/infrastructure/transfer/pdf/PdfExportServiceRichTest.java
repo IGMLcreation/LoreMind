@@ -1,9 +1,9 @@
 package com.loremind.infrastructure.transfer.pdf;
 
-import com.loremind.domain.campaigncontext.NodeType;
-import com.loremind.domain.campaigncontext.Prerequisite;
-import com.loremind.domain.campaigncontext.QuestNodeRef;
-import com.loremind.domain.campaigncontext.SceneBattlemap;
+import com.loremind.domain.campaigncontext.quest.NodeType;
+import com.loremind.domain.campaigncontext.quest.Prerequisite;
+import com.loremind.domain.campaigncontext.quest.QuestNodeRef;
+import com.loremind.domain.campaigncontext.structure.SceneBattlemap;
 import com.loremind.domain.files.ports.FileStorage;
 import com.loremind.domain.images.ports.ImageStorage;
 import com.loremind.domain.shared.template.FieldType;

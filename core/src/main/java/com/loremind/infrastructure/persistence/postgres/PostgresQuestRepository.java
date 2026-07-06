@@ -1,6 +1,6 @@
 package com.loremind.infrastructure.persistence.postgres;
 
-import com.loremind.domain.campaigncontext.Quest;
+import com.loremind.domain.campaigncontext.quest.Quest;
 import com.loremind.domain.campaigncontext.ports.QuestRepository;
 import com.loremind.infrastructure.persistence.entity.QuestJpaEntity;
 import com.loremind.infrastructure.persistence.jpa.QuestJpaRepository;

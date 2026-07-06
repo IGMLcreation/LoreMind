@@ -1,8 +1,8 @@
 package com.loremind.infrastructure.web.controller;
 
 import com.loremind.application.campaigncontext.ItemCatalogService;
-import com.loremind.domain.campaigncontext.ItemCatalog;
-import com.loremind.domain.campaigncontext.ports.ItemCatalogGenerationException;
+import com.loremind.domain.campaigncontext.itemcatalog.ItemCatalog;
+import com.loremind.domain.campaigncontext.ports.exceptions.ItemCatalogGenerationException;
 import com.loremind.infrastructure.web.dto.campaigncontext.ItemCatalogDTO;
 import com.loremind.infrastructure.web.mapper.ItemCatalogMapper;
 import org.springframework.http.HttpStatus;

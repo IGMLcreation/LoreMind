@@ -1,8 +1,8 @@
 package com.loremind.infrastructure.web.controller;
 
 import com.loremind.application.campaigncontext.RandomTableService;
-import com.loremind.domain.campaigncontext.RandomTable;
-import com.loremind.domain.campaigncontext.ports.RandomTableGenerationException;
+import com.loremind.domain.campaigncontext.randomtable.RandomTable;
+import com.loremind.domain.campaigncontext.ports.exceptions.RandomTableGenerationException;
 import com.loremind.infrastructure.web.dto.campaigncontext.RandomTableDTO;
 import com.loremind.infrastructure.web.mapper.RandomTableMapper;
 import org.springframework.http.HttpStatus;

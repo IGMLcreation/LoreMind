@@ -2,7 +2,7 @@ package com.loremind.infrastructure.transfer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.loremind.domain.campaigncontext.Room;
+import com.loremind.domain.campaigncontext.structure.Room;
 import com.loremind.domain.files.ports.FileStorage;
 import com.loremind.domain.images.ports.ImageStorage;
 import com.loremind.infrastructure.persistence.converter.PrerequisiteListJsonConverter;
@@ -240,6 +240,7 @@ public class ExportService {
             Set<String> imageRefs = new LinkedHashSet<>();
             arcEntities.forEach(a -> addAll(imageRefs, a.getIllustrationImageIds()));
             chapterEntities.forEach(c -> addAll(imageRefs, c.getIllustrationImageIds()));
+            campaignQuests.forEach(q -> addAll(imageRefs, q.getIllustrationImageIds()));
             sceneEntities.forEach(s -> addAll(imageRefs, s.getIllustrationImageIds()));
             sceneEntities.forEach(s -> addRoomImageRefs(imageRefs, s.getRooms()));
             npcEntities.forEach(n -> { add(imageRefs, n.getPortraitImageId()); add(imageRefs, n.getHeaderImageId()); addImageValues(imageRefs, n.getImageValues()); });
@@ -398,6 +399,9 @@ public class ExportService {
         Set<String> refs = new LinkedHashSet<>();
         for (ContentExport.ArcDto a : export.arcs()) addAll(refs, a.illustrationImageIds());
         for (ContentExport.ChapterDto c : export.chapters()) addAll(refs, c.illustrationImageIds());
+        if (export.quests() != null) {
+            for (ContentExport.QuestDto q : export.quests()) addAll(refs, q.illustrationImageIds());
+        }
         for (ContentExport.SceneDto s : export.scenes()) addAll(refs, s.illustrationImageIds());
         for (ContentExport.SceneDto s : export.scenes()) addRoomImageRefs(refs, s.rooms());
         for (ContentExport.CharacterDto c : export.characters()) {

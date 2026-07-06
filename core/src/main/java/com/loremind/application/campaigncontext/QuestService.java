@@ -1,11 +1,11 @@
 package com.loremind.application.campaigncontext;
 
-import com.loremind.domain.campaigncontext.Arc;
-import com.loremind.domain.campaigncontext.ArcType;
-import com.loremind.domain.campaigncontext.Chapter;
-import com.loremind.domain.campaigncontext.NodeType;
-import com.loremind.domain.campaigncontext.Quest;
-import com.loremind.domain.campaigncontext.QuestNodeRef;
+import com.loremind.domain.campaigncontext.structure.Arc;
+import com.loremind.domain.campaigncontext.structure.ArcType;
+import com.loremind.domain.campaigncontext.structure.Chapter;
+import com.loremind.domain.campaigncontext.quest.NodeType;
+import com.loremind.domain.campaigncontext.quest.Quest;
+import com.loremind.domain.campaigncontext.quest.QuestNodeRef;
 import com.loremind.domain.campaigncontext.ports.ArcRepository;
 import com.loremind.domain.campaigncontext.ports.ChapterRepository;
 import com.loremind.domain.campaigncontext.ports.QuestRepository;
@@ -119,15 +119,6 @@ public class QuestService {
         return questRepository.findByCampaignId(campaignId);
     }
 
-    /** Quêtes rattachées à un arc HUB. */
-    public List<Quest> getQuestsByArcId(String arcId) {
-        return questRepository.findByArcId(arcId);
-    }
-
-    public List<Quest> getAllQuests() {
-        return questRepository.findAll();
-    }
-
     /** Met à jour une Quest (Parameter Object pattern, comme ChapterService). */
     @Transactional
     public Quest updateQuest(String id, Quest updated) {
@@ -165,9 +156,10 @@ public class QuestService {
     /**
      * Supprime la quête et, en cascade, ses {@code QuestProgression} dans toutes les Parties.
      *
-     * <p>TODO (Phase 5) : signaler/nettoyer les {@code Prerequisite.QuestCompleted} pendants
-     * d'autres quêtes qui pointaient celle-ci. Échec sûr aujourd'hui : un prérequis vers une
-     * quête supprimée n'est jamais satisfait → la quête dépendante reste LOCKED (pas de corruption).</p>
+     * <p>Limite connue (nettoyage prévu Phase 5) : les {@code Prerequisite.QuestCompleted}
+     * d'autres quêtes qui pointaient celle-ci restent pendants, sans être signalés ni
+     * nettoyés. Échec sûr aujourd'hui : un prérequis vers une quête supprimée n'est jamais
+     * satisfait → la quête dépendante reste LOCKED (pas de corruption).</p>
      */
     @Transactional
     public void deleteQuest(String id) {
@@ -201,15 +193,11 @@ public class QuestService {
         return nodes != null ? nodes : List.of();
     }
 
-    public boolean questExists(String id) {
-        return questRepository.existsById(id);
-    }
-
     /** Réordonne les quêtes d'une campagne : {@code order} = position. Transactionnel. */
     @Transactional
     public void reorderQuests(String campaignId, List<String> orderedIds) {
         ReorderSupport.reorder(orderedIds,
-                id -> questRepository.findById(id).orElse(null),
+                questRepository::findById,
                 (quest, i) -> {
                     if (campaignId != null && !campaignId.isBlank()) quest.setCampaignId(campaignId);
                     quest.setOrder(i);

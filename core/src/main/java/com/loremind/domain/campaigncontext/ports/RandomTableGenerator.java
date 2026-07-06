@@ -1,6 +1,6 @@
 package com.loremind.domain.campaigncontext.ports;
 
-import com.loremind.domain.campaigncontext.RandomTableEntry;
+import com.loremind.domain.campaigncontext.randomtable.RandomTableEntry;
 
 import java.util.List;
 

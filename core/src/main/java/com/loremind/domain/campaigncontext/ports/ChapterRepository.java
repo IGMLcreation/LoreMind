@@ -1,6 +1,6 @@
 package com.loremind.domain.campaigncontext.ports;
 
-import com.loremind.domain.campaigncontext.Chapter;
+import com.loremind.domain.campaigncontext.structure.Chapter;
 import java.util.List;
 import java.util.Optional;
 

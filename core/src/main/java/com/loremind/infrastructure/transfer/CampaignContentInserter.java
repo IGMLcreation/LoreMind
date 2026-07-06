@@ -1,7 +1,7 @@
 package com.loremind.infrastructure.transfer;
 
-import com.loremind.domain.campaigncontext.SceneBattlemap;
-import com.loremind.domain.campaigncontext.SceneType;
+import com.loremind.domain.campaigncontext.structure.SceneBattlemap;
+import com.loremind.domain.campaigncontext.structure.SceneType;
 import com.loremind.infrastructure.persistence.converter.PrerequisiteListJsonConverter;
 import com.loremind.infrastructure.persistence.converter.QuestNodeListJsonConverter;
 import com.loremind.infrastructure.persistence.entity.ArcJpaEntity;
@@ -106,7 +106,7 @@ class CampaignContentInserter {
             e.setRewards(d.rewards());
             e.setResolution(d.resolution());
             e.setRelatedPageIds(d.relatedPageIds()); // remappe en 2e passe
-            e.setIllustrationImageIds(d.illustrationImageIds());
+            e.setIllustrationImageIds(IdRemapper.remapStringList(maps.imageMap, d.illustrationImageIds()));
             maps.arcMap.put(d.id(), arcRepo.save(e).getId());
         }
         result.count("arcs", maps.arcMap.size());
@@ -181,7 +181,7 @@ class CampaignContentInserter {
             e.setPlayerObjectives(d.playerObjectives());
             e.setNarrativeStakes(d.narrativeStakes());
             e.setRelatedPageIds(d.relatedPageIds()); // remappe en 2e passe
-            e.setIllustrationImageIds(d.illustrationImageIds());
+            e.setIllustrationImageIds(IdRemapper.remapStringList(maps.imageMap, d.illustrationImageIds()));
             maps.chapterMap.put(d.id(), chapterRepo.save(e).getId());
         }
         result.count("chapters", maps.chapterMap.size());
@@ -202,7 +202,7 @@ class CampaignContentInserter {
             e.setPlayerObjectives(d.playerObjectives());
             e.setNarrativeStakes(d.narrativeStakes());
             e.setRelatedPageIds(d.relatedPageIds());                                               // remappé 2e passe
-            e.setIllustrationImageIds(d.illustrationImageIds());
+            e.setIllustrationImageIds(IdRemapper.remapStringList(maps.imageMap, d.illustrationImageIds()));
             maps.questMap.put(d.id(), questRepo.save(e).getId());
         }
 
@@ -218,10 +218,10 @@ class CampaignContentInserter {
         for (ContentExport.NpcDto d : nullSafe(export.npcs())) {
             NpcJpaEntity e = new NpcJpaEntity();
             e.setName(d.name());
-            e.setPortraitImageId(d.portraitImageId());
-            e.setHeaderImageId(d.headerImageId());
+            e.setPortraitImageId(IdRemapper.remapStringId(maps.imageMap, d.portraitImageId()));
+            e.setHeaderImageId(IdRemapper.remapStringId(maps.imageMap, d.headerImageId()));
             e.setValues(d.values());
-            e.setImageValues(d.imageValues());
+            e.setImageValues(IdRemapper.remapImageValues(maps.imageMap, d.imageValues()));
             e.setKeyValueValues(d.keyValueValues());
             e.setCampaignId(IdRemapper.remapId(maps.campaignMap, d.campaignId()));
             e.setRelatedPageIds(d.relatedPageIds()); // remappe en 2e passe
@@ -237,10 +237,10 @@ class CampaignContentInserter {
             e.setName(d.name());
             e.setLevel(d.level());
             e.setFolder(d.folder());
-            e.setPortraitImageId(d.portraitImageId());
-            e.setHeaderImageId(d.headerImageId());
+            e.setPortraitImageId(IdRemapper.remapStringId(maps.imageMap, d.portraitImageId()));
+            e.setHeaderImageId(IdRemapper.remapStringId(maps.imageMap, d.headerImageId()));
             e.setValues(d.values());
-            e.setImageValues(d.imageValues());
+            e.setImageValues(IdRemapper.remapImageValues(maps.imageMap, d.imageValues()));
             e.setKeyValueValues(d.keyValueValues());
             e.setCampaignId(IdRemapper.remapId(maps.campaignMap, d.campaignId()));
             e.setFoundryRef(d.foundryRef()); // ref externe Foundry : conservee telle quelle
@@ -269,20 +269,22 @@ class CampaignContentInserter {
             e.setEnemies(d.enemies());
             e.setEnemyIds(d.enemyIds());            // remappe en 2e passe
             e.setRelatedPageIds(d.relatedPageIds()); // remappe en 2e passe
-            e.setIllustrationImageIds(d.illustrationImageIds());
-            // Battlemaps : ids StoredFile passes tels quels (meme logique que les refs
-            // d'images illustration, non remappees). Les exports anterieurs a V22
-            // portaient une paire unique -> reconstituee en premiere entree de liste.
+            e.setIllustrationImageIds(IdRemapper.remapStringList(maps.imageMap, d.illustrationImageIds()));
+            // Battlemaps : ids StoredFile remappes via storedFileMap. Les exports anterieurs
+            // a V22 portaient une paire unique -> reconstituee en premiere entree de liste.
             List<SceneBattlemap> battlemaps = d.battlemaps();
             if ((battlemaps == null || battlemaps.isEmpty())
                     && (d.battlemapMediaFileId() != null || d.battlemapDataFileId() != null)) {
                 battlemaps = List.of(new SceneBattlemap("", d.battlemapMediaFileId(), d.battlemapDataFileId()));
             }
+            battlemaps = IdRemapper.remapBattlemaps(maps.storedFileMap, battlemaps);
             e.setBattlemaps(battlemaps != null ? battlemaps : List.of());
             e.setGraphX(d.graphX());
             e.setGraphY(d.graphY());
             e.setBranches(d.branches());             // remappe en 2e passe
-            e.setRooms(d.rooms());                   // Rooms: UUID, non remappes
+            // Rooms : l'id (UUID) et les branches restent tels quels ; seules leurs refs
+            // d'images (galerie + plan) sont remappees vers les images importees.
+            e.setRooms(IdRemapper.remapRoomImages(maps.imageMap, d.rooms()));
             maps.sceneMap.put(d.id(), sceneRepo.save(e).getId());
         }
         result.count("scenes", maps.sceneMap.size());

@@ -7,7 +7,6 @@ import com.loremind.infrastructure.transfer.dto.ContentExport;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -16,7 +15,9 @@ import java.util.Map;
  * <p>
  * Pendant de {@link ImageImporter} pour la table {@code stored_files}. Les binaires
  * sont stockes sous LEUR CLE D'ORIGINE ; un fichier dont la cle existe deja est
- * REUTILISE (pas de reupload).
+ * REUTILISE (pas de reupload). L'id de ligne est REMAPPE dans
+ * {@link ImportIdMaps#storedFileMap} pour que les battlemaps des scenes importees
+ * pointent le bon fichier sur la machine cible.
  */
 @Component
 class StoredFileImporter {
@@ -30,44 +31,55 @@ class StoredFileImporter {
     }
 
     /**
-     * Reecrit les binaires de fichiers (cle preservee) et leurs metadonnees.
+     * Reecrit les binaires de fichiers (cle preservee) + metadonnees, et remplit la map de
+     * remapping des ids de fichiers. Itere sur les METADONNEES (source de l'ancien id),
+     * pas sur les binaires (meme logique que {@link ImageImporter}).
      *
-     * @param export       contenu importe (source des metadonnees par cle)
+     * @param export       contenu importe (source des metadonnees, dont l'ancien id)
      * @param fileBinaries {@code storageKey -> binaire} lus depuis le zip (prefixe files/)
+     * @param maps         etat de remapping : {@code storedFileMap} est alimentee ici
      * @param result       compteurs a incrementer
      */
     void importFiles(ContentExport export,
                      Map<String, byte[]> fileBinaries,
+                     ImportIdMaps maps,
                      ImportResult.Builder result) {
-        Map<String, ContentExport.StoredFileDto> metaByKey = new HashMap<>();
-        for (ContentExport.StoredFileDto f : nullSafe(export.storedFiles())) {
-            if (f.storageKey() != null) metaByKey.put(f.storageKey(), f);
-        }
-
         int imported = 0;
-        for (Map.Entry<String, byte[]> bin : fileBinaries.entrySet()) {
-            String storageKey = bin.getKey();
-            byte[] data = bin.getValue();
-            if (fileRepo.findByStorageKey(storageKey).isPresent()) {
-                continue; // deja present : reutilise, pas de reupload
+        for (ContentExport.StoredFileDto meta : nullSafe(export.storedFiles())) {
+            String storageKey = meta.storageKey();
+            if (storageKey == null || storageKey.isBlank()) continue;
+
+            var existing = fileRepo.findByStorageKey(storageKey);
+            if (existing.isPresent()) {
+                // Deja present : reutilise (pas de reupload). L'ancien id pointe la ligne existante.
+                mapId(maps, meta.id(), existing.get().getId());
+                continue;
             }
-            ContentExport.StoredFileDto meta = metaByKey.get(storageKey);
-            String contentType = meta != null && meta.contentType() != null
+
+            byte[] data = fileBinaries.get(storageKey);
+            if (data == null) {
+                continue; // metadonnee sans binaire : rien a materialiser
+            }
+
+            String contentType = meta.contentType() != null
                     ? meta.contentType() : "application/octet-stream";
-            long size = meta != null ? meta.sizeBytes() : data.length;
+            long size = meta.sizeBytes() > 0 ? meta.sizeBytes() : data.length;
 
             fileStorage.store(storageKey, contentType, new ByteArrayInputStream(data), data.length);
 
             StoredFileJpaEntity e = new StoredFileJpaEntity();
-            e.setFilename(meta != null && meta.filename() != null
-                    ? meta.filename() : fileNameOf(storageKey));
+            e.setFilename(meta.filename() != null ? meta.filename() : fileNameOf(storageKey));
             e.setContentType(contentType);
             e.setSizeBytes(size);
             e.setStorageKey(storageKey);
-            fileRepo.save(e);
+            mapId(maps, meta.id(), fileRepo.save(e).getId());
             imported++;
         }
         result.count("storedFiles", imported);
+    }
+
+    private static void mapId(ImportIdMaps maps, Long oldId, Long newId) {
+        if (oldId != null && newId != null) maps.storedFileMap.put(oldId, newId);
     }
 
     private static <T> List<T> nullSafe(List<T> list) {

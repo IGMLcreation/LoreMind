@@ -1,7 +1,7 @@
 package com.loremind.infrastructure.web.controller;
 
 import com.loremind.application.campaigncontext.NpcService;
-import com.loremind.domain.campaigncontext.Npc;
+import com.loremind.domain.campaigncontext.bestiary.Npc;
 import com.loremind.infrastructure.web.dto.campaigncontext.NpcDTO;
 import com.loremind.infrastructure.web.mapper.NpcMapper;
 import org.springframework.http.ResponseEntity;

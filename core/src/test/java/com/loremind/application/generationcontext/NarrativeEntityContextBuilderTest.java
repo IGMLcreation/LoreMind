@@ -1,10 +1,10 @@
 package com.loremind.application.generationcontext;
 
-import com.loremind.domain.campaigncontext.Arc;
-import com.loremind.domain.campaigncontext.Chapter;
-import com.loremind.domain.campaigncontext.Character;
-import com.loremind.domain.campaigncontext.Npc;
-import com.loremind.domain.campaigncontext.Scene;
+import com.loremind.domain.campaigncontext.structure.Arc;
+import com.loremind.domain.campaigncontext.structure.Chapter;
+import com.loremind.domain.campaigncontext.bestiary.Character;
+import com.loremind.domain.campaigncontext.bestiary.Npc;
+import com.loremind.domain.campaigncontext.structure.Scene;
 import com.loremind.domain.campaigncontext.ports.ArcRepository;
 import com.loremind.domain.campaigncontext.ports.ChapterRepository;
 import com.loremind.domain.campaigncontext.ports.CharacterRepository;

@@ -2,7 +2,7 @@ package com.loremind.infrastructure.web.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loremind.domain.campaigncontext.Campaign;
-import com.loremind.domain.campaigncontext.Character;
+import com.loremind.domain.campaigncontext.bestiary.Character;
 import com.loremind.domain.campaigncontext.ports.CampaignRepository;
 import com.loremind.domain.campaigncontext.ports.CharacterRepository;
 import com.loremind.domain.playcontext.Playthrough;

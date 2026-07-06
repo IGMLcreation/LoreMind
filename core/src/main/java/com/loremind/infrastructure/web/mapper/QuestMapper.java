@@ -1,8 +1,8 @@
 package com.loremind.infrastructure.web.mapper;
 
-import com.loremind.domain.campaigncontext.NodeType;
-import com.loremind.domain.campaigncontext.Quest;
-import com.loremind.domain.campaigncontext.QuestNodeRef;
+import com.loremind.domain.campaigncontext.quest.NodeType;
+import com.loremind.domain.campaigncontext.quest.Quest;
+import com.loremind.domain.campaigncontext.quest.QuestNodeRef;
 import com.loremind.infrastructure.web.dto.campaigncontext.QuestDTO;
 import com.loremind.infrastructure.web.dto.campaigncontext.QuestNodeRefDTO;
 import org.springframework.stereotype.Component;

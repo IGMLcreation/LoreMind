@@ -3,7 +3,7 @@ package com.loremind.infrastructure.web.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loremind.domain.gamesystemcontext.RulesImportProgress;
 import com.loremind.domain.gamesystemcontext.RulesImportResult;
-import com.loremind.domain.gamesystemcontext.ports.RulesImportException;
+import com.loremind.domain.gamesystemcontext.ports.exceptions.RulesImportException;
 import com.loremind.domain.gamesystemcontext.ports.RulesPdfImporter;
 import com.loremind.infrastructure.web.dto.gamesystemcontext.GameSystemDTO;
 import com.loremind.infrastructure.web.dto.shared.TemplateFieldDTO;

@@ -2,7 +2,7 @@ package com.loremind.infrastructure.web.controller;
 
 import com.loremind.application.campaigncontext.QuestService;
 import com.loremind.application.campaigncontext.QuestStatusEnricher;
-import com.loremind.domain.campaigncontext.Quest;
+import com.loremind.domain.campaigncontext.quest.Quest;
 import com.loremind.infrastructure.web.dto.campaigncontext.QuestDTO;
 import com.loremind.infrastructure.web.mapper.QuestMapper;
 import org.springframework.http.ResponseEntity;

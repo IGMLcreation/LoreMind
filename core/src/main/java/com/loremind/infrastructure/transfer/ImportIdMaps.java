@@ -16,6 +16,13 @@ import java.util.Map;
  */
 final class ImportIdMaps {
 
+    // Images/fichiers : remappés dès la 1re phase (importés AVANT les inserters), pour
+    // que toute réf d'image (portrait, illustration, imageValues, plan de salle) ou de
+    // fichier (battlemap) porte le NOUVEL id dans la base cible. Sans ça, un import
+    // inter-machines laisse des refs pendantes ou pointant l'image d'un autre id.
+    final Map<Long, Long> imageMap = new HashMap<>();
+    final Map<Long, Long> storedFileMap = new HashMap<>();
+
     final Map<Long, Long> gameSystemMap = new HashMap<>();
     final Map<Long, Long> loreMap = new HashMap<>();
     final Map<Long, Long> loreNodeMap = new HashMap<>();

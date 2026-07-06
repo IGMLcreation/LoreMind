@@ -3,7 +3,7 @@ package com.loremind.infrastructure.ai;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loremind.domain.campaigncontext.ports.NotebookChatStreamer;
-import com.loremind.domain.campaigncontext.ports.NotebookException;
+import com.loremind.domain.campaigncontext.ports.exceptions.NotebookException;
 import com.loremind.infrastructure.web.config.UserLanguageHolder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -17,7 +17,6 @@ import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -52,11 +51,7 @@ public class BrainNotebookChatClient implements NotebookChatStreamer {
             List<Msg> messages,
             String context,
             boolean deep,
-            Consumer<String> onSourcesJson,
-            Consumer<String> onToken,
-            Consumer<Progress> onProgress,
-            Runnable onDone,
-            Consumer<Throwable> onError) {
+            Callbacks callbacks) {
 
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("source_ids", sourceIds);
@@ -78,48 +73,39 @@ public class BrainNotebookChatClient implements NotebookChatStreamer {
         try {
             flux
                 .timeout(Duration.ofSeconds(timeoutSeconds))
-                .doOnNext(sse -> handleEvent(
-                        sse, terminated, onSourcesJson, onToken, onProgress, onDone, onError))
+                .doOnNext(sse -> handleEvent(sse, terminated, callbacks))
                 .blockLast();
             if (!terminated[0]) {
-                onDone.run();  // flux terminé sans event done explicite
+                callbacks.onDone().run();  // flux terminé sans event done explicite
             }
         } catch (Exception e) {
             if (!terminated[0]) {
                 String cause = e.getClass().getSimpleName()
                         + (e.getMessage() != null ? " — " + e.getMessage() : "");
-                onError.accept(new NotebookException(
+                callbacks.onError().accept(new NotebookException(
                         "Erreur lors du streaming du chat depuis le Brain : " + cause, e));
             }
         }
     }
 
-    private void handleEvent(
-            ServerSentEvent<String> sse,
-            boolean[] terminated,
-            Consumer<String> onSourcesJson,
-            Consumer<String> onToken,
-            Consumer<Progress> onProgress,
-            Runnable onDone,
-            Consumer<Throwable> onError) {
-
+    private void handleEvent(ServerSentEvent<String> sse, boolean[] terminated, Callbacks callbacks) {
         String event = sse.event();
         String data = sse.data() == null ? "" : sse.data();
         if ("token".equals(event)) {
             String token = readField(data, "token");
-            if (token != null && !token.isEmpty()) onToken.accept(token);
+            if (token != null && !token.isEmpty()) callbacks.onToken().accept(token);
         } else if ("sources".equals(event)) {
             // Passages utilisés par le RAG : relayés tels quels (JSON brut) — le
             // Core n'a pas besoin de les comprendre, seulement de les transmettre.
-            onSourcesJson.accept(data);
+            callbacks.onSourcesJson().accept(data);
         } else if ("progress".equals(event)) {
-            onProgress.accept(new Progress(readInt(data, "current"), readInt(data, "total")));
+            callbacks.onProgress().accept(new Progress(readInt(data, "current"), readInt(data, "total")));
         } else if ("done".equals(event)) {
             terminated[0] = true;
-            onDone.run();
+            callbacks.onDone().run();
         } else if ("error".equals(event)) {
             terminated[0] = true;
-            onError.accept(new NotebookException("Le Brain a signalé une erreur : " + readMessage(data)));
+            callbacks.onError().accept(new NotebookException("Le Brain a signalé une erreur : " + readMessage(data)));
         }
     }
 

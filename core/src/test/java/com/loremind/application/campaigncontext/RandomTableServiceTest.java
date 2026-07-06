@@ -1,16 +1,11 @@
 package com.loremind.application.campaigncontext;
 
-import com.loremind.domain.campaigncontext.Campaign;
-import com.loremind.domain.campaigncontext.RandomTable;
-import com.loremind.domain.campaigncontext.RandomTableEntry;
-import com.loremind.domain.campaigncontext.ports.CampaignRepository;
+import com.loremind.domain.campaigncontext.randomtable.RandomTable;
+import com.loremind.domain.campaigncontext.randomtable.RandomTableEntry;
 import com.loremind.domain.campaigncontext.ports.RandomTableGenerator;
 import com.loremind.domain.campaigncontext.ports.RandomTableRepository;
-import com.loremind.domain.gamesystemcontext.GameSystem;
-import com.loremind.domain.gamesystemcontext.ports.GameSystemRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -36,9 +31,7 @@ public class RandomTableServiceTest {
     @Mock
     private RandomTableGenerator generator;
     @Mock
-    private CampaignRepository campaignRepository;
-    @Mock
-    private GameSystemRepository gameSystemRepository;
+    private CampaignContextFormatter campaignContextFormatter;
 
     @InjectMocks
     private RandomTableService service;
@@ -208,10 +201,9 @@ public class RandomTableServiceTest {
     @Test
     void testGenerateProposal_DefaultsFormulaAndCopiesEntries() {
         RandomTableEntry e = RandomTableEntry.builder().minRoll(1).maxRoll(1).label("X").build();
-        when(generator.generate(eq("desc"), eq("1d20"), anyString()))
+        when(campaignContextFormatter.format("camp-1")).thenReturn("Campagne : Ma Campagne");
+        when(generator.generate(eq("desc"), eq("1d20"), eq("Campagne : Ma Campagne")))
                 .thenReturn(new RandomTableGenerator.GeneratedTable("Nom IA", "Desc IA", List.of(e)));
-        when(campaignRepository.findById("camp-1"))
-                .thenReturn(Optional.of(Campaign.builder().id("camp-1").name("Ma Campagne").build()));
 
         RandomTable result = service.generateProposal("camp-1", "desc", " ");
 
@@ -223,9 +215,9 @@ public class RandomTableServiceTest {
 
     @Test
     void testGenerateProposal_NullGeneratedEntries() {
+        when(campaignContextFormatter.format("camp-1")).thenReturn("");
         when(generator.generate(anyString(), eq("2d6"), anyString()))
                 .thenReturn(new RandomTableGenerator.GeneratedTable("N", "D", null));
-        when(campaignRepository.findById("camp-1")).thenReturn(Optional.empty());
 
         RandomTable result = service.generateProposal("camp-1", "desc", "2d6");
 
@@ -234,29 +226,22 @@ public class RandomTableServiceTest {
     }
 
     @Test
-    void testGenerateProposal_BuildsContextWithGameSystem() {
-        when(campaignRepository.findById("camp-1")).thenReturn(Optional.of(Campaign.builder()
-                .id("camp-1").name("Camp").description(" Une aventure ").gameSystemId("gs-1").build()));
-        when(gameSystemRepository.findById("gs-1"))
-                .thenReturn(Optional.of(GameSystem.builder().id("gs-1").name("D&D 5e").build()));
+    void testGenerateProposal_DelegatesContextToFormatter() {
+        when(campaignContextFormatter.format("camp-1"))
+                .thenReturn("Campagne : Camp — Une aventure\nSystème de jeu : D&D 5e");
         when(generator.generate(anyString(), anyString(), any()))
                 .thenReturn(new RandomTableGenerator.GeneratedTable("N", "D", List.of()));
 
         service.generateProposal("camp-1", "desc", "1d8");
 
-        ArgumentCaptor<String> ctxCaptor = ArgumentCaptor.forClass(String.class);
-        verify(generator).generate(eq("desc"), eq("1d8"), ctxCaptor.capture());
-        String ctx = ctxCaptor.getValue();
-        assertTrue(ctx.contains("Camp"));
-        assertTrue(ctx.contains("Une aventure"));
-        assertTrue(ctx.contains("D&D 5e"));
+        verify(generator).generate(eq("desc"), eq("1d8"), eq("Campagne : Camp — Une aventure\nSystème de jeu : D&D 5e"));
     }
 
     // --- improviseRoll ---
 
     @Test
     void testImproviseRoll_DelegatesToGenerator() {
-        when(campaignRepository.findById("camp-1")).thenReturn(Optional.empty());
+        when(campaignContextFormatter.format("camp-1")).thenReturn("");
         when(generator.improvise(eq("Rencontres"), eq("Gobelins"), eq("detail"), anyString()))
                 .thenReturn("Un récit improvisé.");
 

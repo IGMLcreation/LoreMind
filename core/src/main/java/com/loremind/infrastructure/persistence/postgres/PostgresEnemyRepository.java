@@ -1,6 +1,6 @@
 package com.loremind.infrastructure.persistence.postgres;
 
-import com.loremind.domain.campaigncontext.Enemy;
+import com.loremind.domain.campaigncontext.bestiary.Enemy;
 import com.loremind.domain.campaigncontext.ports.EnemyRepository;
 import com.loremind.infrastructure.persistence.entity.EnemyJpaEntity;
 import com.loremind.infrastructure.persistence.jpa.EnemyJpaRepository;

@@ -1,7 +1,7 @@
 package com.loremind.infrastructure.web.controller;
 
 import com.loremind.application.campaigncontext.ArcService;
-import com.loremind.domain.campaigncontext.Arc;
+import com.loremind.domain.campaigncontext.structure.Arc;
 import com.loremind.infrastructure.web.dto.campaigncontext.ArcDTO;
 import com.loremind.infrastructure.web.mapper.ArcMapper;
 import org.springframework.http.ResponseEntity;

@@ -2,6 +2,7 @@ package com.loremind.domain.generationcontext.ports;
 
 import com.loremind.domain.generationcontext.GenerationContext;
 import com.loremind.domain.generationcontext.GenerationResult;
+import com.loremind.domain.generationcontext.ports.exceptions.AiProviderException;
 
 /**
  * Port de sortie pour la génération IA.

@@ -1,6 +1,6 @@
 package com.loremind.infrastructure.transfer;
 
-import com.loremind.domain.campaigncontext.ProgressionStatus;
+import com.loremind.domain.campaigncontext.quest.ProgressionStatus;
 import com.loremind.domain.playcontext.ClockTrigger;
 import com.loremind.domain.playcontext.EntryType;
 import com.loremind.infrastructure.persistence.entity.CharacterJpaEntity;
@@ -166,10 +166,10 @@ class PlayStateInserter {
         for (ContentExport.CharacterDto d : nullSafe(export.characters())) {
             CharacterJpaEntity e = new CharacterJpaEntity();
             e.setName(d.name());
-            e.setPortraitImageId(d.portraitImageId());
-            e.setHeaderImageId(d.headerImageId());
+            e.setPortraitImageId(IdRemapper.remapStringId(maps.imageMap, d.portraitImageId()));
+            e.setHeaderImageId(IdRemapper.remapStringId(maps.imageMap, d.headerImageId()));
             e.setValues(d.values());
-            e.setImageValues(d.imageValues());
+            e.setImageValues(IdRemapper.remapImageValues(maps.imageMap, d.imageValues()));
             e.setKeyValueValues(d.keyValueValues());
             e.setCampaignId(IdRemapper.remapId(maps.campaignMap, d.campaignId()));
             // playthroughId remappe vers la Partie importee (ou null si le jeu n'etait pas

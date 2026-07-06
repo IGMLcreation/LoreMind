@@ -1,7 +1,7 @@
 package com.loremind.infrastructure.ai;
 
-import com.loremind.domain.campaigncontext.SceneDraft;
-import com.loremind.domain.campaigncontext.ports.NarrativeAssistException;
+import com.loremind.domain.campaigncontext.generation.SceneDraft;
+import com.loremind.domain.campaigncontext.ports.exceptions.NarrativeAssistException;
 import com.loremind.domain.campaigncontext.ports.SceneDraftAssistant;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;

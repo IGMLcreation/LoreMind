@@ -7,7 +7,7 @@ import com.loremind.domain.gamesystemcontext.GenerationIntent;
 import com.loremind.domain.generationcontext.CampaignStructuralContext;
 import com.loremind.domain.generationcontext.ChatMessage;
 import com.loremind.domain.generationcontext.ChatRequest;
-import com.loremind.domain.generationcontext.ChatUsage;
+import com.loremind.domain.generationcontext.ChatStreamCallbacks;
 import com.loremind.domain.generationcontext.GameSystemContext;
 import com.loremind.domain.generationcontext.LoreStructuralContext;
 import com.loremind.domain.generationcontext.NarrativeEntityContext;
@@ -15,7 +15,6 @@ import com.loremind.domain.generationcontext.ports.AiChatProvider;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.function.Consumer;
 
 /**
  * Use case applicatif : chat conversationnel pour une Campagne avec Structural Context.
@@ -72,10 +71,7 @@ public class StreamChatForCampaignUseCase {
             String entityType,
             String entityId,
             List<ChatMessage> messages,
-            Consumer<ChatUsage> onUsage,
-            Consumer<String> onToken,
-            Runnable onComplete,
-            Consumer<Throwable> onError) {
+            ChatStreamCallbacks callbacks) {
 
         Campaign campaign = campaignRepository.findById(campaignId)
                 .orElseThrow(() -> new IllegalArgumentException(
@@ -94,7 +90,7 @@ public class StreamChatForCampaignUseCase {
                 .gameSystemContext(gameSystemContext)
                 .build();
 
-        aiChatProvider.streamChat(request, onUsage, onToken, onComplete, onError);
+        aiChatProvider.streamChat(request, callbacks);
     }
 
     /**

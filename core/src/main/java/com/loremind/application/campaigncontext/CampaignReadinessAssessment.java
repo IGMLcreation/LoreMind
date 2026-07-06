@@ -1,6 +1,6 @@
 package com.loremind.application.campaigncontext;
 
-import com.loremind.domain.campaigncontext.ReadinessStatus;
+import com.loremind.domain.campaigncontext.readiness.ReadinessStatus;
 
 import java.util.List;
 import java.util.Map;

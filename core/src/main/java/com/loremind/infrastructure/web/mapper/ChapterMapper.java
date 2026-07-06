@@ -1,6 +1,6 @@
 package com.loremind.infrastructure.web.mapper;
 
-import com.loremind.domain.campaigncontext.Chapter;
+import com.loremind.domain.campaigncontext.structure.Chapter;
 import com.loremind.infrastructure.web.dto.campaigncontext.ChapterDTO;
 import org.springframework.stereotype.Component;
 

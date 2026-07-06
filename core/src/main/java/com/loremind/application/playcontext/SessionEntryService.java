@@ -7,6 +7,7 @@ import com.loremind.domain.playcontext.ports.SessionRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,7 +39,7 @@ public class SessionEntryService {
         }
         validateContent(data.content());
 
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(ZoneId.systemDefault());
         SessionEntry entry = SessionEntry.builder()
                 .sessionId(sessionId)
                 .type(data.type() != null ? data.type() : EntryType.NOTE)

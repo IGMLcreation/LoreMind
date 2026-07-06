@@ -1,7 +1,7 @@
 package com.loremind.infrastructure.persistence.postgres;
 
-import com.loremind.domain.campaigncontext.Scene;
-import com.loremind.domain.campaigncontext.SceneType;
+import com.loremind.domain.campaigncontext.structure.Scene;
+import com.loremind.domain.campaigncontext.structure.SceneType;
 import com.loremind.domain.campaigncontext.ports.SceneRepository;
 import com.loremind.infrastructure.persistence.entity.SceneJpaEntity;
 import com.loremind.infrastructure.persistence.jpa.SceneJpaRepository;

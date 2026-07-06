@@ -7,7 +7,7 @@ import com.loremind.domain.gamesystemcontext.GenerationIntent;
 import com.loremind.domain.generationcontext.CampaignStructuralContext;
 import com.loremind.domain.generationcontext.ChatMessage;
 import com.loremind.domain.generationcontext.ChatRequest;
-import com.loremind.domain.generationcontext.ChatUsage;
+import com.loremind.domain.generationcontext.ChatStreamCallbacks;
 import com.loremind.domain.generationcontext.GameSystemContext;
 import com.loremind.domain.generationcontext.LoreStructuralContext;
 import com.loremind.domain.generationcontext.SessionContext;
@@ -19,7 +19,6 @@ import com.loremind.domain.playcontext.ports.SessionRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.function.Consumer;
 
 /**
  * Use case applicatif : chat IA pendant une Session de jeu.
@@ -71,10 +70,7 @@ public class StreamChatForSessionUseCase {
     public void execute(
             String sessionId,
             List<ChatMessage> messages,
-            Consumer<ChatUsage> onUsage,
-            Consumer<String> onToken,
-            Runnable onComplete,
-            Consumer<Throwable> onError) {
+            ChatStreamCallbacks callbacks) {
 
         Session session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new IllegalArgumentException("Session introuvable : " + sessionId));
@@ -102,7 +98,7 @@ public class StreamChatForSessionUseCase {
                 .sessionContext(sessionContext)
                 .build();
 
-        aiChatProvider.streamChat(request, onUsage, onToken, onComplete, onError);
+        aiChatProvider.streamChat(request, callbacks);
     }
 
     private LoreStructuralContext loadLoreContextOrNull(Campaign campaign) {

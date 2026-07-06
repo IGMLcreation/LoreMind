@@ -1,6 +1,6 @@
 package com.loremind.infrastructure.ai;
 
-import com.loremind.domain.campaigncontext.ports.NotebookException;
+import com.loremind.domain.campaigncontext.ports.exceptions.NotebookException;
 import com.loremind.domain.campaigncontext.ports.NotebookIndexer.IndexResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

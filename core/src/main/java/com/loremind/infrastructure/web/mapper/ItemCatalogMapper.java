@@ -1,7 +1,7 @@
 package com.loremind.infrastructure.web.mapper;
 
-import com.loremind.domain.campaigncontext.CatalogItem;
-import com.loremind.domain.campaigncontext.ItemCatalog;
+import com.loremind.domain.campaigncontext.itemcatalog.CatalogItem;
+import com.loremind.domain.campaigncontext.itemcatalog.ItemCatalog;
 import com.loremind.infrastructure.web.dto.campaigncontext.CatalogItemDTO;
 import com.loremind.infrastructure.web.dto.campaigncontext.ItemCatalogDTO;
 import org.springframework.stereotype.Component;

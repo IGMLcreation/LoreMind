@@ -1,6 +1,6 @@
 package com.loremind.domain.playcontext.ports;
 
-import com.loremind.domain.campaigncontext.ProgressionStatus;
+import com.loremind.domain.campaigncontext.quest.ProgressionStatus;
 import com.loremind.domain.playcontext.QuestProgression;
 
 import java.util.List;

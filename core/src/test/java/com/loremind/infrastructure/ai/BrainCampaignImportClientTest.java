@@ -1,9 +1,9 @@
 package com.loremind.infrastructure.ai;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.loremind.domain.campaigncontext.CampaignImportProgress;
-import com.loremind.domain.campaigncontext.CampaignImportProposal;
-import com.loremind.domain.campaigncontext.ports.CampaignImportException;
+import com.loremind.domain.campaigncontext.generation.CampaignImportProgress;
+import com.loremind.domain.campaigncontext.generation.CampaignImportProposal;
+import com.loremind.domain.campaigncontext.ports.exceptions.CampaignImportException;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;

@@ -1,6 +1,6 @@
 package com.loremind.application.campaigncontext;
 
-import com.loremind.domain.campaigncontext.Enemy;
+import com.loremind.domain.campaigncontext.bestiary.Enemy;
 import com.loremind.domain.shared.ReorderSupport;
 import com.loremind.domain.campaigncontext.ports.EnemyRepository;
 import com.loremind.domain.images.Image;
@@ -10,11 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Service d'application pour les fiches d'ennemis (bestiaire de campagne).
@@ -48,18 +44,10 @@ public class EnemyService {
 
     public Enemy createEnemy(EnemyData data) {
         int order = data.order() != null ? data.order() : nextOrderFor(data.campaignId());
-        Enemy enemy = Enemy.builder()
-                .name(data.name())
-                .level(normalize(data.level()))
-                .folder(normalize(data.folder()))
-                .portraitImageId(data.portraitImageId())
-                .headerImageId(data.headerImageId())
-                .values(data.values() != null ? new HashMap<>(data.values()) : new HashMap<>())
-                .imageValues(data.imageValues() != null ? new HashMap<>(data.imageValues()) : new HashMap<>())
-                .keyValueValues(data.keyValueValues() != null ? new HashMap<>(data.keyValueValues()) : new HashMap<>())
-                .campaignId(data.campaignId())
-                .order(order)
-                .build();
+        Enemy enemy = Enemy.builder().build();
+        applyCommonEnemyFields(enemy, data);
+        enemy.setCampaignId(data.campaignId());
+        enemy.setOrder(order);
         return enemyRepository.save(enemy);
     }
 
@@ -74,17 +62,11 @@ public class EnemyService {
     public Enemy updateEnemy(String id, EnemyData data) {
         Enemy existing = enemyRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Enemy non trouvé avec l'ID: " + id));
-        existing.setName(data.name());
-        existing.setLevel(normalize(data.level()));
-        existing.setFolder(normalize(data.folder()));
-        existing.setPortraitImageId(data.portraitImageId());
-        existing.setHeaderImageId(data.headerImageId());
-        existing.setValues(data.values() != null ? new HashMap<>(data.values()) : new HashMap<>());
-        existing.setImageValues(data.imageValues() != null ? new HashMap<>(data.imageValues()) : new HashMap<>());
-        existing.setKeyValueValues(data.keyValueValues() != null ? new HashMap<>(data.keyValueValues()) : new HashMap<>());
+        applyCommonEnemyFields(existing, data);
         if (data.order() != null) {
             existing.setOrder(data.order());
         }
+        // campaignId immuable après création.
         return enemyRepository.save(existing);
     }
 
@@ -100,7 +82,7 @@ public class EnemyService {
     public void reorderEnemies(String folder, List<String> orderedIds) {
         String f = normalize(folder);
         ReorderSupport.reorder(orderedIds,
-                id -> enemyRepository.findById(id).orElse(null),
+                enemyRepository::findById,
                 (enemy, i) -> { enemy.setFolder(f); enemy.setOrder(i); },
                 enemyRepository::save);
     }
@@ -141,9 +123,7 @@ public class EnemyService {
             return null;
         }
         if (bytes.length == 0) return null;
-        String ext = contentType.contains("png") ? "png"
-                : contentType.contains("jpeg") || contentType.contains("jpg") ? "jpg"
-                : contentType.contains("gif") ? "gif" : "webp";
+        String ext = pickExtension(contentType);
         // Type MIME canonique dérivé de l'extension : un data URL "image/jpg" (non
         // standard) serait rejeté par ImageService (qui n'accepte que "image/jpeg").
         String mimeType = "jpg".equals(ext) ? "image/jpeg" : "image/" + ext;
@@ -156,6 +136,14 @@ public class EnemyService {
             log.warn("Portrait de monstre ignoré (\"{}\") : {}", name, e.getMessage());
             return null;
         }
+    }
+
+    /** Extension déduite du content-type ; "webp" par défaut si non reconnu. */
+    private static String pickExtension(String contentType) {
+        if (contentType.contains("png")) return "png";
+        if (contentType.contains("jpeg") || contentType.contains("jpg")) return "jpg";
+        if (contentType.contains("gif")) return "gif";
+        return "webp";
     }
 
     public record MonsterImportResult(int created, int updated) {}
@@ -174,44 +162,49 @@ public class EnemyService {
         }
         int order = existing.stream().mapToInt(Enemy::getOrder).max().orElse(-1) + 1;
 
-        int created = 0, updated = 0;
+        int created = 0;
+        int updated = 0;
         for (MonsterImport m : monsters) {
-            if (m.foundryRef() == null || m.foundryRef().isBlank()
-                    || m.name() == null || m.name().isBlank()) {
-                continue;
-            }
+            if (isBlank(m.foundryRef()) || isBlank(m.name())) continue;
             Map<String, String> stats = m.stats() != null ? new HashMap<>(m.stats()) : new HashMap<>();
-            String folder = foundryFolder(m.folder());
             Enemy ex = byRef.get(m.foundryRef());
             if (ex != null) {
-                ex.setName(m.name());
-                ex.setFoundryStats(stats); // rafraîchit le snapshot
-                ex.setFolder(folder);      // ré-aligne sur l'arborescence Foundry
-                // Portrait : seulement s'il manque (pas de ré-upload à chaque import).
-                if (ex.getPortraitImageId() == null) {
-                    String portrait = storePortrait(m.imgData(), m.name());
-                    if (portrait != null) ex.setPortraitImageId(portrait);
-                }
-                enemyRepository.save(ex);
+                updateMonster(ex, m, stats);
                 updated++;
             } else {
-                Enemy saved = enemyRepository.save(Enemy.builder()
-                        .name(m.name())
-                        .foundryRef(m.foundryRef())
-                        .foundryStats(stats)
-                        .folder(folder)
-                        .portraitImageId(storePortrait(m.imgData(), m.name()))
-                        .campaignId(campaignId)
-                        .order(order++)
-                        .values(new HashMap<>())
-                        .imageValues(new HashMap<>())
-                        .keyValueValues(new HashMap<>())
-                        .build());
-                byRef.put(m.foundryRef(), saved);
+                byRef.put(m.foundryRef(), createMonster(campaignId, m, stats, order++));
                 created++;
             }
         }
         return new MonsterImportResult(created, updated);
+    }
+
+    /** Met à jour un monstre déjà importé : nom, snapshot de stats, dossier, portrait manquant. */
+    private void updateMonster(Enemy ex, MonsterImport m, Map<String, String> stats) {
+        ex.setName(m.name());
+        ex.setFoundryStats(stats); // rafraîchit le snapshot
+        ex.setFolder(foundryFolder(m.folder())); // ré-aligne sur l'arborescence Foundry
+        // Portrait : seulement s'il manque (pas de ré-upload à chaque import).
+        if (ex.getPortraitImageId() == null) {
+            String portrait = storePortrait(m.imgData(), m.name());
+            if (portrait != null) ex.setPortraitImageId(portrait);
+        }
+        enemyRepository.save(ex);
+    }
+
+    private Enemy createMonster(String campaignId, MonsterImport m, Map<String, String> stats, int order) {
+        return enemyRepository.save(Enemy.builder()
+                .name(m.name())
+                .foundryRef(m.foundryRef())
+                .foundryStats(stats)
+                .folder(foundryFolder(m.folder()))
+                .portraitImageId(storePortrait(m.imgData(), m.name()))
+                .campaignId(campaignId)
+                .order(order)
+                .values(new HashMap<>())
+                .imageValues(new HashMap<>())
+                .keyValueValues(new HashMap<>())
+                .build());
     }
 
     public List<Enemy> searchEnemies(String query) {
@@ -226,10 +219,37 @@ public class EnemyService {
         return trimmed.isEmpty() ? null : trimmed;
     }
 
+    private static boolean isBlank(String s) {
+        return s == null || s.isBlank();
+    }
+
     private int nextOrderFor(String campaignId) {
         return enemyRepository.findByCampaignId(campaignId).stream()
                 .mapToInt(Enemy::getOrder)
                 .max()
                 .orElse(-1) + 1;
+    }
+
+    private static Map<String, String> copyStringMap(Map<String, String> map) {
+        return map != null ? new HashMap<>(map) : new HashMap<>();
+    }
+
+    private static Map<String, List<String>> copyStringListMap(Map<String, List<String>> map) {
+        return map != null ? new HashMap<>(map) : new HashMap<>();
+    }
+
+    private static Map<String, Map<String, String>> copyStringMapMap(Map<String, Map<String, String>> map) {
+        return map != null ? new HashMap<>(map) : new HashMap<>();
+    }
+
+    private static void applyCommonEnemyFields(Enemy enemy, EnemyData data) {
+        enemy.setName(data.name());
+        enemy.setLevel(normalize(data.level()));
+        enemy.setFolder(normalize(data.folder()));
+        enemy.setPortraitImageId(data.portraitImageId());
+        enemy.setHeaderImageId(data.headerImageId());
+        enemy.setValues(copyStringMap(data.values()));
+        enemy.setImageValues(copyStringListMap(data.imageValues()));
+        enemy.setKeyValueValues(copyStringMapMap(data.keyValueValues()));
     }
 }

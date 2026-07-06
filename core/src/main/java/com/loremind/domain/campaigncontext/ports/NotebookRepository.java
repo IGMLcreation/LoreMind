@@ -1,8 +1,8 @@
 package com.loremind.domain.campaigncontext.ports;
 
-import com.loremind.domain.campaigncontext.Notebook;
-import com.loremind.domain.campaigncontext.NotebookMessage;
-import com.loremind.domain.campaigncontext.NotebookSource;
+import com.loremind.domain.campaigncontext.notebook.Notebook;
+import com.loremind.domain.campaigncontext.notebook.NotebookMessage;
+import com.loremind.domain.campaigncontext.notebook.NotebookSource;
 
 import java.util.List;
 import java.util.Optional;

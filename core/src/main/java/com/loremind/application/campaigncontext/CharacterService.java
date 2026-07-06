@@ -1,6 +1,6 @@
 package com.loremind.application.campaigncontext;
 
-import com.loremind.domain.campaigncontext.Character;
+import com.loremind.domain.campaigncontext.bestiary.Character;
 import com.loremind.domain.campaigncontext.ports.CharacterRepository;
 import org.springframework.stereotype.Service;
 
@@ -41,9 +41,9 @@ public class CharacterService {
                 .name(data.name())
                 .portraitImageId(data.portraitImageId())
                 .headerImageId(data.headerImageId())
-                .values(data.values() != null ? new HashMap<>(data.values()) : new HashMap<>())
-                .imageValues(data.imageValues() != null ? new HashMap<>(data.imageValues()) : new HashMap<>())
-                .keyValueValues(data.keyValueValues() != null ? new HashMap<>(data.keyValueValues()) : new HashMap<>())
+                .values(copyStringMap(data.values()))
+                .imageValues(copyStringListMap(data.imageValues()))
+                .keyValueValues(copyStringMapMap(data.keyValueValues()))
                 .playthroughId(data.playthroughId())
                 .order(order)
                 .build();
@@ -64,9 +64,9 @@ public class CharacterService {
         existing.setName(data.name());
         existing.setPortraitImageId(data.portraitImageId());
         existing.setHeaderImageId(data.headerImageId());
-        existing.setValues(data.values() != null ? new HashMap<>(data.values()) : new HashMap<>());
-        existing.setImageValues(data.imageValues() != null ? new HashMap<>(data.imageValues()) : new HashMap<>());
-        existing.setKeyValueValues(data.keyValueValues() != null ? new HashMap<>(data.keyValueValues()) : new HashMap<>());
+        existing.setValues(copyStringMap(data.values()));
+        existing.setImageValues(copyStringListMap(data.imageValues()));
+        existing.setKeyValueValues(copyStringMapMap(data.keyValueValues()));
         if (data.order() != null) {
             existing.setOrder(data.order());
         }
@@ -88,5 +88,17 @@ public class CharacterService {
                 .mapToInt(Character::getOrder)
                 .max()
                 .orElse(-1) + 1;
+    }
+
+    private static Map<String, String> copyStringMap(Map<String, String> map) {
+        return map != null ? new HashMap<>(map) : new HashMap<>();
+    }
+
+    private static Map<String, List<String>> copyStringListMap(Map<String, List<String>> map) {
+        return map != null ? new HashMap<>(map) : new HashMap<>();
+    }
+
+    private static Map<String, Map<String, String>> copyStringMapMap(Map<String, Map<String, String>> map) {
+        return map != null ? new HashMap<>(map) : new HashMap<>();
     }
 }

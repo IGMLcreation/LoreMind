@@ -1,7 +1,7 @@
 package com.loremind.infrastructure.ai;
 
 import com.loremind.domain.playcontext.ports.SessionRecapAssistant;
-import com.loremind.domain.playcontext.ports.SessionRecapException;
+import com.loremind.domain.playcontext.ports.exceptions.SessionRecapException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;

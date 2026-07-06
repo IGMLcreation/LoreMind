@@ -1,7 +1,7 @@
 package com.loremind.infrastructure.ai;
 
-import com.loremind.domain.campaigncontext.RandomTableEntry;
-import com.loremind.domain.campaigncontext.ports.RandomTableGenerationException;
+import com.loremind.domain.campaigncontext.randomtable.RandomTableEntry;
+import com.loremind.domain.campaigncontext.ports.exceptions.RandomTableGenerationException;
 import com.loremind.domain.campaigncontext.ports.RandomTableGenerator;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;

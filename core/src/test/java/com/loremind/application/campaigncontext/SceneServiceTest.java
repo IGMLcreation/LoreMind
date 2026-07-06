@@ -1,9 +1,9 @@
 package com.loremind.application.campaigncontext;
 
-import com.loremind.domain.campaigncontext.FieldProposal;
-import com.loremind.domain.campaigncontext.Scene;
-import com.loremind.domain.campaigncontext.SceneBranch;
-import com.loremind.domain.campaigncontext.SceneDraft;
+import com.loremind.domain.campaigncontext.generation.FieldProposal;
+import com.loremind.domain.campaigncontext.structure.Scene;
+import com.loremind.domain.campaigncontext.structure.SceneBranch;
+import com.loremind.domain.campaigncontext.generation.SceneDraft;
 import com.loremind.domain.campaigncontext.ports.SceneRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

@@ -1,11 +1,11 @@
 package com.loremind.infrastructure.web.controller;
 
-import com.loremind.domain.campaigncontext.Arc;
-import com.loremind.domain.campaigncontext.ArcType;
+import com.loremind.domain.campaigncontext.structure.Arc;
+import com.loremind.domain.campaigncontext.structure.ArcType;
 import com.loremind.domain.campaigncontext.Campaign;
-import com.loremind.domain.campaigncontext.Chapter;
-import com.loremind.domain.campaigncontext.Quest;
-import com.loremind.domain.campaigncontext.Scene;
+import com.loremind.domain.campaigncontext.structure.Chapter;
+import com.loremind.domain.campaigncontext.quest.Quest;
+import com.loremind.domain.campaigncontext.structure.Scene;
 import com.loremind.domain.campaigncontext.ports.ArcRepository;
 import com.loremind.domain.campaigncontext.ports.CampaignRepository;
 import com.loremind.domain.campaigncontext.ports.ChapterRepository;

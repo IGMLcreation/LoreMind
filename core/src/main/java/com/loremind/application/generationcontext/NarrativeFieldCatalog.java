@@ -1,8 +1,8 @@
 package com.loremind.application.generationcontext;
 
-import com.loremind.domain.campaigncontext.Arc;
-import com.loremind.domain.campaigncontext.Chapter;
-import com.loremind.domain.campaigncontext.Scene;
+import com.loremind.domain.campaigncontext.structure.Arc;
+import com.loremind.domain.campaigncontext.structure.Chapter;
+import com.loremind.domain.campaigncontext.structure.Scene;
 import com.loremind.domain.campaigncontext.ports.ArcRepository;
 import com.loremind.domain.campaigncontext.ports.ChapterRepository;
 import com.loremind.domain.campaigncontext.ports.SceneRepository;
@@ -29,22 +29,25 @@ public class NarrativeFieldCatalog {
     public record Snapshot(String entityType, String title,
                            LinkedHashMap<String, String> current, List<FieldDef> defs) {}
 
+    private static final String FIELD_DESCRIPTION = "description";
+    private static final String FIELD_GM_NOTES = "gmNotes";
+
     private static final List<FieldDef> ARC_DEFS = List.of(
-            new FieldDef("description", "description / synopsis de l'arc"),
+            new FieldDef(FIELD_DESCRIPTION, "description / synopsis de l'arc"),
             new FieldDef("themes", "thèmes explorés"),
             new FieldDef("stakes", "enjeux globaux pour les personnages"),
             new FieldDef("rewards", "récompenses et progression"),
             new FieldDef("resolution", "dénouement prévu"),
-            new FieldDef("gmNotes", "notes privées du MJ"));
+            new FieldDef(FIELD_GM_NOTES, "notes privées du MJ"));
 
     private static final List<FieldDef> CHAPTER_DEFS = List.of(
-            new FieldDef("description", "synopsis du chapitre"),
+            new FieldDef(FIELD_DESCRIPTION, "synopsis du chapitre"),
             new FieldDef("playerObjectives", "objectifs des joueurs"),
             new FieldDef("narrativeStakes", "enjeux narratifs dramatiques"),
-            new FieldDef("gmNotes", "notes privées du MJ"));
+            new FieldDef(FIELD_GM_NOTES, "notes privées du MJ"));
 
     private static final List<FieldDef> SCENE_DEFS = List.of(
-            new FieldDef("description", "description courte de la scène"),
+            new FieldDef(FIELD_DESCRIPTION, "description courte de la scène"),
             new FieldDef("location", "lieu où se déroule la scène"),
             new FieldDef("timing", "moment / temporalité"),
             new FieldDef("atmosphere", "ambiance (sons, odeurs, émotions, lumière)"),
@@ -80,12 +83,12 @@ public class NarrativeFieldCatalog {
         Arc a = arcRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Arc non trouvé: " + id));
         LinkedHashMap<String, String> cur = new LinkedHashMap<>();
-        cur.put("description", nz(a.getDescription()));
+        cur.put(FIELD_DESCRIPTION, nz(a.getDescription()));
         cur.put("themes", nz(a.getThemes()));
         cur.put("stakes", nz(a.getStakes()));
         cur.put("rewards", nz(a.getRewards()));
         cur.put("resolution", nz(a.getResolution()));
-        cur.put("gmNotes", nz(a.getGmNotes()));
+        cur.put(FIELD_GM_NOTES, nz(a.getGmNotes()));
         return new Snapshot("arc", a.getName(), cur, ARC_DEFS);
     }
 
@@ -93,10 +96,10 @@ public class NarrativeFieldCatalog {
         Chapter c = chapterRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Chapitre non trouvé: " + id));
         LinkedHashMap<String, String> cur = new LinkedHashMap<>();
-        cur.put("description", nz(c.getDescription()));
+        cur.put(FIELD_DESCRIPTION, nz(c.getDescription()));
         cur.put("playerObjectives", nz(c.getPlayerObjectives()));
         cur.put("narrativeStakes", nz(c.getNarrativeStakes()));
-        cur.put("gmNotes", nz(c.getGmNotes()));
+        cur.put(FIELD_GM_NOTES, nz(c.getGmNotes()));
         return new Snapshot("chapter", c.getName(), cur, CHAPTER_DEFS);
     }
 
@@ -104,7 +107,7 @@ public class NarrativeFieldCatalog {
         Scene s = sceneRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Scène non trouvée: " + id));
         LinkedHashMap<String, String> cur = new LinkedHashMap<>();
-        cur.put("description", nz(s.getDescription()));
+        cur.put(FIELD_DESCRIPTION, nz(s.getDescription()));
         cur.put("location", nz(s.getLocation()));
         cur.put("timing", nz(s.getTiming()));
         cur.put("atmosphere", nz(s.getAtmosphere()));

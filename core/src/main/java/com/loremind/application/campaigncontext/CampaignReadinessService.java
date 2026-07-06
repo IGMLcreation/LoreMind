@@ -1,20 +1,19 @@
 package com.loremind.application.campaigncontext;
 
-import com.loremind.domain.campaigncontext.Arc;
-import com.loremind.domain.campaigncontext.ArcType;
+import com.loremind.domain.campaigncontext.structure.Arc;
+import com.loremind.domain.campaigncontext.structure.ArcType;
 import com.loremind.domain.campaigncontext.Campaign;
-import com.loremind.domain.campaigncontext.Chapter;
-import com.loremind.domain.campaigncontext.Enemy;
-import com.loremind.domain.campaigncontext.NodeType;
-import com.loremind.domain.campaigncontext.Prerequisite;
-import com.loremind.domain.campaigncontext.Quest;
-import com.loremind.domain.campaigncontext.ReadinessEntityType;
-import com.loremind.domain.campaigncontext.ReadinessSeverity;
-import com.loremind.domain.campaigncontext.ReadinessStatus;
-import com.loremind.domain.campaigncontext.Room;
-import com.loremind.domain.campaigncontext.RoomBranch;
-import com.loremind.domain.campaigncontext.Scene;
-import com.loremind.domain.campaigncontext.SceneBranch;
+import com.loremind.domain.campaigncontext.structure.Chapter;
+import com.loremind.domain.campaigncontext.bestiary.Enemy;
+import com.loremind.domain.campaigncontext.quest.NodeType;
+import com.loremind.domain.campaigncontext.quest.Prerequisite;
+import com.loremind.domain.campaigncontext.quest.Quest;
+import com.loremind.domain.campaigncontext.readiness.ReadinessEntityType;
+import com.loremind.domain.campaigncontext.readiness.ReadinessSeverity;
+import com.loremind.domain.campaigncontext.readiness.ReadinessStatus;
+import com.loremind.domain.campaigncontext.structure.Room;
+import com.loremind.domain.campaigncontext.structure.Scene;
+import com.loremind.domain.campaigncontext.structure.SceneBranch;
 import com.loremind.domain.campaigncontext.ports.ArcRepository;
 import com.loremind.domain.campaigncontext.ports.CampaignRepository;
 import com.loremind.domain.campaigncontext.ports.ChapterRepository;
@@ -55,6 +54,8 @@ import java.util.stream.Collectors;
 @Service
 public class CampaignReadinessService {
 
+    private static final String SCENE_FALLBACK_NAME = "Scène";
+
     private final CampaignRepository campaignRepository;
     private final ArcRepository arcRepository;
     private final ChapterRepository chapterRepository;
@@ -88,11 +89,6 @@ public class CampaignReadinessService {
         Set<String> enemyIds = enemyRepository.findByCampaignId(campaignId).stream()
                 .map(Enemy::getId).filter(id -> !isBlank(id)).collect(Collectors.toSet());
 
-        // Index global chapitres / scènes (cibles possibles des nœuds de quête).
-        Set<String> allChapterIds = new HashSet<>();
-        Set<String> allSceneIds = new HashSet<>();
-        int totalScenes = 0;
-
         List<Quest> quests = questRepository.findByCampaignId(campaignId);
         // Arcs HUB « portés » par ≥1 quête rattachée : ne comptent PAS comme vides
         // (un arc HUB contient des quêtes, un arc LINÉAIRE des chapitres).
@@ -102,50 +98,28 @@ public class CampaignReadinessService {
 
         List<Arc> arcs = new ArrayList<>(arcRepository.findByCampaignId(campaignId));
         arcs.sort(Comparator.comparingInt(Arc::getOrder));
+
+        // Index global chapitres / scènes (cibles possibles des nœuds de quête).
+        Set<String> allChapterIds = new HashSet<>();
+        Set<String> allSceneIds = new HashSet<>();
+        int totalScenes = 0;
         for (Arc arc : arcs) {
-            List<Chapter> chapters = chapterRepository.findByArcId(arc.getId());
-            // Arc SYSTEM (conteneurs des quêtes libres) : jamais « vide » — c'est de la
-            // plomberie invisible. Ses chapitres restent analysés (CHAP-001 des conteneurs).
-            boolean hubCoveredByQuest = arc.getType() == ArcType.HUB && arcsWithQuests.contains(arc.getId());
-            if (chapters.isEmpty() && !hubCoveredByQuest && arc.getType() != ArcType.SYSTEM) {
-                String msg = arc.getType() == ArcType.HUB
-                        ? "Arc vide : ajoutez une quête (ou un chapitre), ou supprimez-le."
-                        : "Arc vide : ajoutez un chapitre, ou supprimez-le.";
-                gaps.add(new ReadinessGap(ReadinessEntityType.ARC, arc.getId(), labelOr(arc.getName(), "Arc"),
-                        "ARC-001-EMPTY", msg, ReadinessSeverity.BLOCKING, arc.getId(), null));
-            }
-            for (Chapter chapter : chapters) {
-                allChapterIds.add(chapter.getId());
-                List<Scene> scenes = sceneRepository.findByChapterId(chapter.getId());
-                if (scenes.isEmpty()) {
-                    gaps.add(new ReadinessGap(ReadinessEntityType.CHAPTER, chapter.getId(),
-                            labelOr(chapter.getName(), "Chapitre"), "CHAP-001-NO-SCENE",
-                            "Chapitre vide : ajoutez au moins une scène pour pouvoir le jouer.",
-                            ReadinessSeverity.BLOCKING, arc.getId(), chapter.getId()));
-                }
-                Set<String> chapterSceneIds = scenes.stream()
-                        .map(Scene::getId).filter(Objects::nonNull).collect(Collectors.toSet());
-                totalScenes += scenes.size();
-                for (Scene scene : scenes) {
-                    allSceneIds.add(scene.getId());
-                    checkScene(scene, arc.getId(), chapter.getId(), chapterSceneIds, enemyIds, gaps);
-                }
-            }
+            ArcScan scan = checkArc(arc, arcsWithQuests, enemyIds, gaps);
+            allChapterIds.addAll(scan.chapterIds());
+            allSceneIds.addAll(scan.sceneIds());
+            totalScenes += scan.sceneCount();
         }
 
-        Set<String> questIds = quests.stream()
-                .map(Quest::getId).filter(Objects::nonNull).collect(Collectors.toSet());
-
         // Campagne vide : ni scène jouable, ni quête porteuse de contenu (couvre le mode plat).
-        boolean anyQuestWithNodes = quests.stream()
-                .anyMatch(q -> q.getNodes() != null && !q.getNodes().isEmpty());
-        if (totalScenes == 0 && !anyQuestWithNodes) {
+        if (totalScenes == 0 && !anyQuestHasNodes(quests)) {
             gaps.add(new ReadinessGap(ReadinessEntityType.CAMPAIGN, campaignId, campaignName,
                     "CAMP-001-NO-CONTENT",
                     "Campagne vide : ajoutez un arc avec une scène, ou créez une quête, pour commencer à jouer.",
                     ReadinessSeverity.BLOCKING, null, null));
         }
 
+        Set<String> questIds = quests.stream()
+                .map(Quest::getId).filter(Objects::nonNull).collect(Collectors.toSet());
         for (Quest quest : quests) {
             checkQuest(quest, allChapterIds, allSceneIds, questIds, gaps);
         }
@@ -153,88 +127,149 @@ public class CampaignReadinessService {
         return aggregate(campaignId, gaps);
     }
 
+    /** Résultat du scan d'un arc : chapitres/scènes indexés (cibles des nœuds de quête) + total scènes. */
+    private record ArcScan(Set<String> chapterIds, Set<String> sceneIds, int sceneCount) {}
+
+    private ArcScan checkArc(Arc arc, Set<String> arcsWithQuests, Set<String> enemyIds, List<ReadinessGap> gaps) {
+        List<Chapter> chapters = chapterRepository.findByArcId(arc.getId());
+        // Arc SYSTEM (conteneurs des quêtes libres) : jamais « vide » — c'est de la
+        // plomberie invisible. Ses chapitres restent analysés (CHAP-001 des conteneurs).
+        boolean hubCoveredByQuest = arc.getType() == ArcType.HUB && arcsWithQuests.contains(arc.getId());
+        if (chapters.isEmpty() && !hubCoveredByQuest && arc.getType() != ArcType.SYSTEM) {
+            gaps.add(emptyArcGap(arc));
+        }
+
+        Set<String> chapterIds = new HashSet<>();
+        Set<String> sceneIds = new HashSet<>();
+        int sceneCount = 0;
+        for (Chapter chapter : chapters) {
+            chapterIds.add(chapter.getId());
+            List<Scene> scenes = sceneRepository.findByChapterId(chapter.getId());
+            if (scenes.isEmpty()) {
+                gaps.add(new ReadinessGap(ReadinessEntityType.CHAPTER, chapter.getId(),
+                        labelOr(chapter.getName(), "Chapitre"), "CHAP-001-NO-SCENE",
+                        "Chapitre vide : ajoutez au moins une scène pour pouvoir le jouer.",
+                        ReadinessSeverity.BLOCKING, arc.getId(), chapter.getId()));
+            }
+            Set<String> chapterSceneIds = scenes.stream()
+                    .map(Scene::getId).filter(Objects::nonNull).collect(Collectors.toSet());
+            sceneCount += scenes.size();
+            for (Scene scene : scenes) {
+                sceneIds.add(scene.getId());
+                checkScene(scene, arc.getId(), chapter.getId(), chapterSceneIds, enemyIds, gaps);
+            }
+        }
+        return new ArcScan(chapterIds, sceneIds, sceneCount);
+    }
+
+    private ReadinessGap emptyArcGap(Arc arc) {
+        String msg = arc.getType() == ArcType.HUB
+                ? "Arc vide : ajoutez une quête (ou un chapitre), ou supprimez-le."
+                : "Arc vide : ajoutez un chapitre, ou supprimez-le.";
+        return new ReadinessGap(ReadinessEntityType.ARC, arc.getId(), labelOr(arc.getName(), "Arc"),
+                "ARC-001-EMPTY", msg, ReadinessSeverity.BLOCKING, arc.getId(), null);
+    }
+
+    private static boolean anyQuestHasNodes(List<Quest> quests) {
+        return quests.stream().anyMatch(q -> q.getNodes() != null && !q.getNodes().isEmpty());
+    }
+
     private void checkScene(Scene scene, String arcId, String chapterId,
                             Set<String> chapterSceneIds, Set<String> enemyIds, List<ReadinessGap> gaps) {
-        String name = labelOr(scene.getName(), "Scène");
+        checkSceneName(scene, arcId, chapterId, gaps);
+        checkSceneBranches(scene, arcId, chapterId, chapterSceneIds, gaps);
+        checkSceneCombat(scene, arcId, chapterId, enemyIds, gaps);
+        checkSceneEnemyRefs(scene, arcId, chapterId, enemyIds, gaps);
+        checkSceneRooms(scene, arcId, chapterId, enemyIds, gaps);
+    }
 
-        // SCENE-001 — scène sans titre.
+    /** SCENE-001 — scène sans titre. */
+    private void checkSceneName(Scene scene, String arcId, String chapterId, List<ReadinessGap> gaps) {
         if (isBlank(scene.getName())) {
             gaps.add(sceneGap(scene, arcId, chapterId, "SCENE-001-NO-NAME",
                     "Scène sans titre : donnez-lui un nom pour l'identifier et la jouer.",
                     ReadinessSeverity.BLOCKING));
         }
+    }
 
-        // SCENE-010 — branche de sortie cassée (vide / hors chapitre / auto-référence).
+    /** SCENE-010 — branche de sortie cassée (vide / hors chapitre / auto-référence). */
+    private void checkSceneBranches(Scene scene, String arcId, String chapterId,
+                                     Set<String> chapterSceneIds, List<ReadinessGap> gaps) {
         List<SceneBranch> branches = scene.getBranches();
-        if (branches != null && branches.stream().anyMatch(b ->
+        if (branches == null) return;
+        boolean invalid = branches.stream().anyMatch(b ->
                 isBlank(b.targetSceneId())
                         || b.targetSceneId().equals(scene.getId())
-                        || !chapterSceneIds.contains(b.targetSceneId()))) {
+                        || !chapterSceneIds.contains(b.targetSceneId()));
+        if (invalid) {
             gaps.add(sceneGap(scene, arcId, chapterId, "SCENE-010-BRANCH-INVALID",
-                    "Branche cassée : une sortie de « " + name
+                    "Branche cassée : une sortie de « " + labelOr(scene.getName(), SCENE_FALLBACK_NAME)
                             + " » pointe dans le vide, hors du chapitre, ou sur elle-même.",
                     ReadinessSeverity.BLOCKING));
         }
+    }
 
-        // SCENE-011 — combat annoncé sans adversaire (règle produit clé).
-        if (!isBlank(scene.getCombatDifficulty())) {
-            boolean hasEnemyText = !isBlank(scene.getEnemies());
-            boolean hasResolvedEnemy = scene.getEnemyIds() != null
-                    && scene.getEnemyIds().stream().anyMatch(id -> !isBlank(id) && enemyIds.contains(id));
-            if (!hasEnemyText && !hasResolvedEnemy) {
-                gaps.add(sceneGap(scene, arcId, chapterId, "SCENE-011-COMBAT-NO-ENEMY",
-                        "Combat annoncé sans adversaire : ajoutez une fiche du bestiaire ou décrivez les ennemis.",
-                        ReadinessSeverity.RECOMMENDED));
-            }
+    /** SCENE-011 — combat annoncé sans adversaire (règle produit clé). */
+    private void checkSceneCombat(Scene scene, String arcId, String chapterId,
+                                   Set<String> enemyIds, List<ReadinessGap> gaps) {
+        if (isBlank(scene.getCombatDifficulty())) return;
+        boolean hasEnemyText = !isBlank(scene.getEnemies());
+        boolean hasResolvedEnemy = scene.getEnemyIds() != null
+                && scene.getEnemyIds().stream().anyMatch(id -> !isBlank(id) && enemyIds.contains(id));
+        if (!hasEnemyText && !hasResolvedEnemy) {
+            gaps.add(sceneGap(scene, arcId, chapterId, "SCENE-011-COMBAT-NO-ENEMY",
+                    "Combat annoncé sans adversaire : ajoutez une fiche du bestiaire ou décrivez les ennemis.",
+                    ReadinessSeverity.RECOMMENDED));
         }
+    }
 
-        // SCENE-012 — référence d'ennemi cassée (fiche supprimée).
-        if (scene.getEnemyIds() != null
-                && scene.getEnemyIds().stream().anyMatch(id -> !isBlank(id) && !enemyIds.contains(id))) {
+    /** SCENE-012 — référence d'ennemi cassée (fiche supprimée). */
+    private void checkSceneEnemyRefs(Scene scene, String arcId, String chapterId,
+                                      Set<String> enemyIds, List<ReadinessGap> gaps) {
+        if (scene.getEnemyIds() == null) return;
+        boolean broken = scene.getEnemyIds().stream().anyMatch(id -> !isBlank(id) && !enemyIds.contains(id));
+        if (broken) {
             gaps.add(sceneGap(scene, arcId, chapterId, "SCENE-012-ENEMY-REF-BROKEN",
-                    "Ennemi introuvable : « " + name
+                    "Ennemi introuvable : « " + labelOr(scene.getName(), SCENE_FALLBACK_NAME)
                             + " » référence une fiche du bestiaire supprimée. Retirez la référence ou recréez la fiche.",
                     ReadinessSeverity.RECOMMENDED));
         }
+    }
 
-        // SCENE-041 / SCENE-042 — pièces explorables : portes cassées + ennemis fantômes.
+    /** SCENE-041 / SCENE-042 — pièces explorables : portes cassées + ennemis fantômes. */
+    private void checkSceneRooms(Scene scene, String arcId, String chapterId,
+                                  Set<String> enemyIds, List<ReadinessGap> gaps) {
         List<Room> rooms = scene.getRooms();
-        if (rooms != null && !rooms.isEmpty()) {
-            Set<String> roomIds = rooms.stream()
-                    .map(Room::getId).filter(Objects::nonNull).collect(Collectors.toSet());
-            boolean roomBranchInvalid = false;
-            boolean roomEnemyBroken = false;
-            for (Room room : rooms) {
-                if (room.getBranches() != null) {
-                    for (RoomBranch rb : room.getBranches()) {
-                        if (isBlank(rb.targetRoomId())
-                                || rb.targetRoomId().equals(room.getId())
-                                || !roomIds.contains(rb.targetRoomId())) {
-                            roomBranchInvalid = true;
-                        }
-                    }
-                }
-                if (room.getEnemyIds() != null) {
-                    for (String id : room.getEnemyIds()) {
-                        if (!isBlank(id) && !enemyIds.contains(id)) {
-                            roomEnemyBroken = true;
-                        }
-                    }
-                }
-            }
-            if (roomBranchInvalid) {
-                gaps.add(sceneGap(scene, arcId, chapterId, "SCENE-041-ROOMBRANCH-INVALID",
-                        "Porte cassée : dans « " + name
-                                + " », une sortie de pièce pointe hors de la scène ou dans le vide.",
-                        ReadinessSeverity.BLOCKING));
-            }
-            if (roomEnemyBroken) {
-                gaps.add(sceneGap(scene, arcId, chapterId, "SCENE-042-ROOM-ENEMY-BROKEN",
-                        "Ennemi introuvable dans une pièce de « " + name
-                                + " » : la référence pointe vers une fiche supprimée.",
-                        ReadinessSeverity.RECOMMENDED));
-            }
+        if (rooms == null || rooms.isEmpty()) return;
+        String name = labelOr(scene.getName(), SCENE_FALLBACK_NAME);
+        Set<String> roomIds = rooms.stream()
+                .map(Room::getId).filter(Objects::nonNull).collect(Collectors.toSet());
+
+        if (rooms.stream().anyMatch(room -> hasInvalidBranch(room, roomIds))) {
+            gaps.add(sceneGap(scene, arcId, chapterId, "SCENE-041-ROOMBRANCH-INVALID",
+                    "Porte cassée : dans « " + name
+                            + " », une sortie de pièce pointe hors de la scène ou dans le vide.",
+                    ReadinessSeverity.BLOCKING));
         }
+        if (rooms.stream().anyMatch(room -> hasBrokenEnemyRef(room, enemyIds))) {
+            gaps.add(sceneGap(scene, arcId, chapterId, "SCENE-042-ROOM-ENEMY-BROKEN",
+                    "Ennemi introuvable dans une pièce de « " + name
+                            + " » : la référence pointe vers une fiche supprimée.",
+                    ReadinessSeverity.RECOMMENDED));
+        }
+    }
+
+    private static boolean hasInvalidBranch(Room room, Set<String> roomIds) {
+        if (room.getBranches() == null) return false;
+        return room.getBranches().stream().anyMatch(rb ->
+                isBlank(rb.targetRoomId())
+                        || rb.targetRoomId().equals(room.getId())
+                        || !roomIds.contains(rb.targetRoomId()));
+    }
+
+    private static boolean hasBrokenEnemyRef(Room room, Set<String> enemyIds) {
+        if (room.getEnemyIds() == null) return false;
+        return room.getEnemyIds().stream().anyMatch(id -> !isBlank(id) && !enemyIds.contains(id));
     }
 
     private void checkQuest(Quest quest, Set<String> allChapterIds, Set<String> allSceneIds,
@@ -244,8 +279,7 @@ public class CampaignReadinessService {
         // QUEST-001 — quête sans nœud ; sinon QUEST-010 — nœud pointant dans le vide.
         if (quest.getNodes() == null || quest.getNodes().isEmpty()) {
             gaps.add(questGap(quest, "QUEST-001-NO-NODES",
-                    "Quête sans contenu : ajoutez au moins un chapitre ou une scène à « " + name + " ».",
-                    ReadinessSeverity.BLOCKING));
+                    "Quête sans contenu : ajoutez au moins un chapitre ou une scène à « " + name + " »."));
         } else if (quest.getNodes().stream().anyMatch(n ->
                 n.nodeType() == null
                         || isBlank(n.nodeId())
@@ -253,8 +287,7 @@ public class CampaignReadinessService {
                         || (n.nodeType() == NodeType.SCENE && !allSceneIds.contains(n.nodeId())))) {
             gaps.add(questGap(quest, "QUEST-010-NODE-REF-BROKEN",
                     "Nœud de quête cassé : dans « " + name
-                            + " », un chapitre ou une scène référencé n'existe plus.",
-                    ReadinessSeverity.BLOCKING));
+                            + " », un chapitre ou une scène référencé n'existe plus."));
         }
 
         // CAMP-010 — prérequis QuestCompleted pointant une quête disparue.
@@ -264,8 +297,7 @@ public class CampaignReadinessService {
                 .anyMatch(qid -> isBlank(qid) || !questIds.contains(qid))) {
             gaps.add(questGap(quest, "CAMP-010-DANGLING-QUEST-PREREQ",
                     "Prérequis cassé : « " + name
-                            + " » dépend d'une quête qui n'existe plus. Corrigez la condition de déblocage.",
-                    ReadinessSeverity.BLOCKING));
+                            + " » dépend d'une quête qui n'existe plus. Corrigez la condition de déblocage."));
         }
     }
 
@@ -294,12 +326,12 @@ public class CampaignReadinessService {
     private ReadinessGap sceneGap(Scene scene, String arcId, String chapterId,
                                   String ruleId, String message, ReadinessSeverity severity) {
         return new ReadinessGap(ReadinessEntityType.SCENE, scene.getId(),
-                labelOr(scene.getName(), "Scène"), ruleId, message, severity, arcId, chapterId);
+                labelOr(scene.getName(), SCENE_FALLBACK_NAME), ruleId, message, severity, arcId, chapterId);
     }
 
-    private ReadinessGap questGap(Quest quest, String ruleId, String message, ReadinessSeverity severity) {
+    private ReadinessGap questGap(Quest quest, String ruleId, String message) {
         return new ReadinessGap(ReadinessEntityType.QUEST, quest.getId(),
-                labelOr(quest.getName(), "Quête"), ruleId, message, severity, null, null);
+                labelOr(quest.getName(), "Quête"), ruleId, message, ReadinessSeverity.BLOCKING, null, null);
     }
 
     private static int severityRank(ReadinessSeverity severity) {

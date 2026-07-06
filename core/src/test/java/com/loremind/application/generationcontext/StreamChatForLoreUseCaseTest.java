@@ -2,6 +2,7 @@ package com.loremind.application.generationcontext;
 
 import com.loremind.domain.generationcontext.ChatMessage;
 import com.loremind.domain.generationcontext.ChatRequest;
+import com.loremind.domain.generationcontext.ChatStreamCallbacks;
 import com.loremind.domain.generationcontext.ChatUsage;
 import com.loremind.domain.generationcontext.LoreStructuralContext;
 import com.loremind.domain.generationcontext.ports.AiChatProvider;
@@ -51,6 +52,7 @@ public class StreamChatForLoreUseCaseTest {
     private Consumer<String> onToken;
     private Runnable onComplete;
     private Consumer<Throwable> onError;
+    private ChatStreamCallbacks callbacks;
 
     @SuppressWarnings("unchecked")
     @BeforeEach
@@ -61,16 +63,17 @@ public class StreamChatForLoreUseCaseTest {
         onToken = mock(Consumer.class);
         onComplete = mock(Runnable.class);
         onError = mock(Consumer.class);
+        callbacks = new ChatStreamCallbacks(onUsage, onToken, onComplete, onError);
     }
 
     @Test
     void testExecute_NoPageId_SendsRequestWithoutPageContext() {
         when(loreContextBuilder.build("lore-1")).thenReturn(loreCtx);
 
-        useCase.execute("lore-1", null, messages, onUsage, onToken, onComplete, onError);
+        useCase.execute("lore-1", null, messages, callbacks);
 
         ArgumentCaptor<ChatRequest> captor = ArgumentCaptor.forClass(ChatRequest.class);
-        verify(aiChatProvider).streamChat(captor.capture(), eq(onUsage), eq(onToken), eq(onComplete), eq(onError));
+        verify(aiChatProvider).streamChat(captor.capture(), eq(callbacks));
         ChatRequest req = captor.getValue();
         assertSame(loreCtx, req.loreContext());
         assertNull(req.pageContext());
@@ -81,10 +84,10 @@ public class StreamChatForLoreUseCaseTest {
     void testExecute_BlankPageId_TreatedAsNoPage() {
         when(loreContextBuilder.build("lore-1")).thenReturn(loreCtx);
 
-        useCase.execute("lore-1", "   ", messages, onUsage, onToken, onComplete, onError);
+        useCase.execute("lore-1", "   ", messages, callbacks);
 
         ArgumentCaptor<ChatRequest> captor = ArgumentCaptor.forClass(ChatRequest.class);
-        verify(aiChatProvider).streamChat(captor.capture(), any(), any(), any(), any());
+        verify(aiChatProvider).streamChat(captor.capture(), any());
         assertNull(captor.getValue().pageContext());
         verifyNoInteractions(pageRepository);
     }
@@ -108,10 +111,10 @@ public class StreamChatForLoreUseCaseTest {
         when(pageRepository.findById("p-1")).thenReturn(Optional.of(page));
         when(templateRepository.findById("tpl-1")).thenReturn(Optional.of(tpl));
 
-        useCase.execute("lore-1", "p-1", messages, onUsage, onToken, onComplete, onError);
+        useCase.execute("lore-1", "p-1", messages, callbacks);
 
         ArgumentCaptor<ChatRequest> captor = ArgumentCaptor.forClass(ChatRequest.class);
-        verify(aiChatProvider).streamChat(captor.capture(), any(), any(), any(), any());
+        verify(aiChatProvider).streamChat(captor.capture(), any());
         ChatRequest req = captor.getValue();
         assertNotNull(req.pageContext());
         assertEquals("Alice", req.pageContext().title());
@@ -130,10 +133,10 @@ public class StreamChatForLoreUseCaseTest {
         when(loreContextBuilder.build("lore-1")).thenReturn(loreCtx);
         when(pageRepository.findById("p-1")).thenReturn(Optional.of(page));
 
-        useCase.execute("lore-1", "p-1", messages, onUsage, onToken, onComplete, onError);
+        useCase.execute("lore-1", "p-1", messages, callbacks);
 
         ArgumentCaptor<ChatRequest> captor = ArgumentCaptor.forClass(ChatRequest.class);
-        verify(aiChatProvider).streamChat(captor.capture(), any(), any(), any(), any());
+        verify(aiChatProvider).streamChat(captor.capture(), any());
         var pageCtx = captor.getValue().pageContext();
         assertNotNull(pageCtx);
         assertEquals("Orphan", pageCtx.title());
@@ -153,10 +156,10 @@ public class StreamChatForLoreUseCaseTest {
         when(pageRepository.findById("p-1")).thenReturn(Optional.of(page));
         when(templateRepository.findById("tpl-ghost")).thenReturn(Optional.empty());
 
-        useCase.execute("lore-1", "p-1", messages, onUsage, onToken, onComplete, onError);
+        useCase.execute("lore-1", "p-1", messages, callbacks);
 
         ArgumentCaptor<ChatRequest> captor = ArgumentCaptor.forClass(ChatRequest.class);
-        verify(aiChatProvider).streamChat(captor.capture(), any(), any(), any(), any());
+        verify(aiChatProvider).streamChat(captor.capture(), any());
         var pageCtx = captor.getValue().pageContext();
         assertEquals("?", pageCtx.templateName());
         assertTrue(pageCtx.templateFields().isEmpty());
@@ -168,7 +171,7 @@ public class StreamChatForLoreUseCaseTest {
         when(pageRepository.findById("missing")).thenReturn(Optional.empty());
 
         assertThrows(IllegalArgumentException.class,
-                () -> useCase.execute("lore-1", "missing", messages, onUsage, onToken, onComplete, onError));
+                () -> useCase.execute("lore-1", "missing", messages, callbacks));
         verifyNoInteractions(aiChatProvider);
     }
 }

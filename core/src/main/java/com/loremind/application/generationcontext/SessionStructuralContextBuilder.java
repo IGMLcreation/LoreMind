@@ -1,9 +1,9 @@
 package com.loremind.application.generationcontext;
 
-import com.loremind.domain.campaigncontext.PrerequisiteEvaluator;
-import com.loremind.domain.campaigncontext.ProgressionStatus;
-import com.loremind.domain.campaigncontext.Quest;
-import com.loremind.domain.campaigncontext.QuestStatus;
+import com.loremind.domain.campaigncontext.quest.PrerequisiteEvaluator;
+import com.loremind.domain.campaigncontext.quest.ProgressionStatus;
+import com.loremind.domain.campaigncontext.quest.Quest;
+import com.loremind.domain.campaigncontext.quest.QuestStatus;
 import com.loremind.domain.campaigncontext.ports.QuestRepository;
 import com.loremind.domain.generationcontext.SessionContext;
 import com.loremind.domain.generationcontext.SessionContext.JournalEntrySummary;
@@ -26,7 +26,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * Construit le SessionContext injecté dans le prompt IA pendant une partie.
@@ -62,10 +61,6 @@ public class SessionStructuralContextBuilder {
         this.questProgressionRepository = questProgressionRepository;
     }
 
-    public Optional<SessionContext> buildOptional(String sessionId) {
-        return sessionRepository.findById(sessionId).map(this::toContext);
-    }
-
     public SessionContext build(String sessionId) {
         Session session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new IllegalArgumentException("Session introuvable : " + sessionId));
@@ -97,7 +92,7 @@ public class SessionStructuralContextBuilder {
 
         return kept.stream()
                 .map(e -> toSummary(e, null))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -209,6 +204,6 @@ public class SessionStructuralContextBuilder {
                 .filter(Map.Entry::getValue)
                 .map(Map.Entry::getKey)
                 .sorted()
-                .collect(Collectors.toList());
+                .toList();
     }
 }

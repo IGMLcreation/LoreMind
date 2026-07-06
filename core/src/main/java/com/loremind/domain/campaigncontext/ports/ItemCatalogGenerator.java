@@ -1,6 +1,6 @@
 package com.loremind.domain.campaigncontext.ports;
 
-import com.loremind.domain.campaigncontext.CatalogItem;
+import com.loremind.domain.campaigncontext.itemcatalog.CatalogItem;
 
 import java.util.List;
 

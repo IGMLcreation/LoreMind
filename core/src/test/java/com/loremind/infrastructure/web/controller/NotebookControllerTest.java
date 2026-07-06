@@ -2,11 +2,11 @@ package com.loremind.infrastructure.web.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loremind.domain.campaigncontext.Campaign;
-import com.loremind.domain.campaigncontext.Notebook;
-import com.loremind.domain.campaigncontext.NotebookSource;
+import com.loremind.domain.campaigncontext.notebook.Notebook;
+import com.loremind.domain.campaigncontext.notebook.NotebookSource;
 import com.loremind.domain.campaigncontext.ports.CampaignRepository;
 import com.loremind.domain.campaigncontext.ports.NotebookChatStreamer;
-import com.loremind.domain.campaigncontext.ports.NotebookException;
+import com.loremind.domain.campaigncontext.ports.exceptions.NotebookException;
 import com.loremind.domain.campaigncontext.ports.NotebookIndexer;
 import com.loremind.domain.campaigncontext.ports.NotebookRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -216,13 +216,11 @@ class NotebookControllerTest {
         Notebook nb = persistNotebook();
         // Le streamer mocke joue : 1 token puis fin.
         doAnswer(inv -> {
-            java.util.function.Consumer<String> onToken = inv.getArgument(5);
-            Runnable onDone = inv.getArgument(7);
-            onToken.accept("Bonjour");
-            onDone.run();
+            NotebookChatStreamer.Callbacks callbacks = inv.getArgument(4);
+            callbacks.onToken().accept("Bonjour");
+            callbacks.onDone().run();
             return null;
-        }).when(chatStreamer).stream(any(), any(), any(), org.mockito.ArgumentMatchers.anyBoolean(),
-                any(), any(), any(), any(), any());
+        }).when(chatStreamer).stream(any(), any(), any(), org.mockito.ArgumentMatchers.anyBoolean(), any());
 
         var req = new NotebookController.ChatRequest("Salut ?", false, null, null);
         MvcResult result = mockMvc.perform(post("/api/notebooks/{id}/chat/stream", nb.getId())
@@ -261,11 +259,10 @@ class NotebookControllerTest {
     void chatStream_streamerError_emitsError() throws Exception {
         Notebook nb = persistNotebook();
         doAnswer(inv -> {
-            java.util.function.Consumer<Throwable> onError = inv.getArgument(8);
-            onError.accept(new RuntimeException("boom"));
+            NotebookChatStreamer.Callbacks callbacks = inv.getArgument(4);
+            callbacks.onError().accept(new RuntimeException("boom"));
             return null;
-        }).when(chatStreamer).stream(any(), any(), any(), org.mockito.ArgumentMatchers.anyBoolean(),
-                any(), any(), any(), any(), any());
+        }).when(chatStreamer).stream(any(), any(), any(), org.mockito.ArgumentMatchers.anyBoolean(), any());
 
         var req = new NotebookController.ChatRequest("Salut ?", false, null, null);
         MvcResult result = mockMvc.perform(post("/api/notebooks/{id}/chat/stream", nb.getId())
@@ -297,17 +294,13 @@ class NotebookControllerTest {
 
         // Le streamer mocke joue, en mode approfondi : sources -> progress -> token -> fin.
         doAnswer(inv -> {
-            java.util.function.Consumer<String> onSourcesJson = inv.getArgument(4);
-            java.util.function.Consumer<String> onToken = inv.getArgument(5);
-            java.util.function.Consumer<NotebookChatStreamer.Progress> onProgress = inv.getArgument(6);
-            Runnable onDone = inv.getArgument(7);
-            onSourcesJson.accept("{\"sources\":[{\"source_id\":\"" + src.getId() + "\",\"page\":1}]}");
-            onProgress.accept(new NotebookChatStreamer.Progress(1, 3));
-            onToken.accept("Reponse");
-            onDone.run();
+            NotebookChatStreamer.Callbacks callbacks = inv.getArgument(4);
+            callbacks.onSourcesJson().accept("{\"sources\":[{\"source_id\":\"" + src.getId() + "\",\"page\":1}]}");
+            callbacks.onProgress().accept(new NotebookChatStreamer.Progress(1, 3));
+            callbacks.onToken().accept("Reponse");
+            callbacks.onDone().run();
             return null;
-        }).when(chatStreamer).stream(any(), any(), any(), org.mockito.ArgumentMatchers.anyBoolean(),
-                any(), any(), any(), any(), any());
+        }).when(chatStreamer).stream(any(), any(), any(), org.mockito.ArgumentMatchers.anyBoolean(), any());
 
         // deep=true + sourceIds (filtrage) + archiveIds non nuls (branche buildArchiveContext).
         var req = new NotebookController.ChatRequest(

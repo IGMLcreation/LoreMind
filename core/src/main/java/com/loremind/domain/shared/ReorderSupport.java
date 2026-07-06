@@ -1,6 +1,7 @@
 package com.loremind.domain.shared;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.ObjIntConsumer;
@@ -17,22 +18,22 @@ public final class ReorderSupport {
 
     /**
      * @param orderedIds liste ordonnée des ids (null = no-op)
-     * @param finder     id → entité (ou null si introuvable)
+     * @param finder     id → entité, absente si introuvable (typiquement {@code repository::findById})
      * @param applyOrder (entité, index) → pose l'ordre et l'éventuel parent
      * @param saver      persiste l'entité
      */
     public static <T> void reorder(List<String> orderedIds,
-                                   Function<String, T> finder,
+                                   Function<String, Optional<T>> finder,
                                    ObjIntConsumer<T> applyOrder,
                                    Consumer<T> saver) {
         if (orderedIds == null) return;
         int i = 0;
         for (String id : orderedIds) {
-            T entity = finder.apply(id);
-            if (entity != null) {
-                applyOrder.accept(entity, i);
+            int index = i;
+            finder.apply(id).ifPresent(entity -> {
+                applyOrder.accept(entity, index);
                 saver.accept(entity);
-            }
+            });
             i++;
         }
     }

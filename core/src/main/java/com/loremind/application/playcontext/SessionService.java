@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
@@ -23,6 +24,7 @@ import java.util.Optional;
 public class SessionService {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final String SESSION_NOT_FOUND = "Session introuvable : ";
 
     private final SessionRepository sessionRepository;
     private final SessionEntryRepository entryRepository;
@@ -57,7 +59,7 @@ public class SessionService {
                     "). Termine-la avant d'en lancer une nouvelle.");
         });
 
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(ZoneId.systemDefault());
         Session session = Session.builder()
                 .name(generateDefaultName(now))
                 .playthroughId(playthroughId)
@@ -68,11 +70,11 @@ public class SessionService {
 
     public Session endSession(String id) {
         Session session = sessionRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Session introuvable : " + id));
+                .orElseThrow(() -> new IllegalArgumentException(SESSION_NOT_FOUND + id));
         if (!session.isActive()) {
             throw new IllegalStateException("Cette session est déjà terminée.");
         }
-        session.setEndedAt(LocalDateTime.now());
+        session.setEndedAt(LocalDateTime.now(ZoneId.systemDefault()));
         Session saved = sessionRepository.save(session);
         // Co-MJ : la séance se clôture -> avancer les horloges « fin de séance » de la Partie.
         clockService.onSessionEnded(saved.getPlaythroughId());
@@ -86,7 +88,7 @@ public class SessionService {
      */
     public Session setCurrentScene(String id, String sceneId) {
         Session session = sessionRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Session introuvable : " + id));
+                .orElseThrow(() -> new IllegalArgumentException(SESSION_NOT_FOUND + id));
         session.setCurrentSceneId(sceneId != null && !sceneId.isBlank() ? sceneId : null);
         return sessionRepository.save(session);
     }
@@ -96,7 +98,7 @@ public class SessionService {
             throw new IllegalArgumentException("Le nom de la session ne peut pas être vide.");
         }
         Session session = sessionRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Session introuvable : " + id));
+                .orElseThrow(() -> new IllegalArgumentException(SESSION_NOT_FOUND + id));
         session.setName(newName.trim());
         return sessionRepository.save(session);
     }
@@ -124,7 +126,7 @@ public class SessionService {
     @Transactional
     public void deleteSession(String id) {
         if (!sessionRepository.existsById(id)) {
-            throw new IllegalArgumentException("Session introuvable : " + id);
+            throw new IllegalArgumentException(SESSION_NOT_FOUND + id);
         }
         entryRepository.deleteBySessionId(id);
         sessionRepository.deleteById(id);

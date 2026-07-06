@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -60,7 +61,7 @@ public class ImageService {
                     .contentType(contentType)
                     .sizeBytes(sizeBytes)
                     .storageKey(storageKey)
-                    .uploadedAt(LocalDateTime.now())
+                    .uploadedAt(LocalDateTime.now(ZoneId.systemDefault()))
                     .build();
             return imageRepository.save(image);
         } catch (RuntimeException ex) {

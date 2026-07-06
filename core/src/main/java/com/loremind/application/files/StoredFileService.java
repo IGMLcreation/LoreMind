@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Optional;
 import java.util.Set;
 
@@ -24,17 +25,17 @@ import java.util.Set;
 @Service
 public class StoredFileService {
 
+    private static final String DEFAULT_CONTENT_TYPE = "application/octet-stream";
+
     /** Types MIME explicitement autorises (en plus de tout {@code image/*} et {@code video/*}). */
     private static final Set<String> ALLOWED_EXACT_MIME = Set.of(
             "application/json",
-            "application/octet-stream",
+            DEFAULT_CONTENT_TYPE,
             "text/plain"
     );
 
     /** Coherent avec spring.servlet.multipart.max-file-size (application.properties). */
     private static final long MAX_SIZE_BYTES = 128L * 1024 * 1024; // 128 Mo
-
-    private static final String DEFAULT_CONTENT_TYPE = "application/octet-stream";
 
     private final StoredFileRepository repository;
     private final FileStorage storage;
@@ -60,7 +61,7 @@ public class StoredFileService {
                     .contentType(resolvedType)
                     .sizeBytes(sizeBytes)
                     .storageKey(storageKey)
-                    .uploadedAt(LocalDateTime.now())
+                    .uploadedAt(LocalDateTime.now(ZoneId.systemDefault()))
                     .build();
             return repository.save(file);
         } catch (RuntimeException ex) {

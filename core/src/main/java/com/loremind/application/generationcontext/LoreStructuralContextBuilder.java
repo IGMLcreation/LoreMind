@@ -110,7 +110,7 @@ public class LoreStructuralContextBuilder {
         return allPages.stream()
                 .filter(p -> nodeId.equals(p.getNodeId()))
                 .map(p -> toPageSummary(p, templateNameById, pageTitleById))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private PageSummary toPageSummary(
@@ -160,7 +160,7 @@ public class LoreStructuralContextBuilder {
         return relatedIds.stream()
                 .map(pageTitleById::get)
                 .filter(title -> title != null && !title.isBlank())
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private List<String> extractUniqueTags(List<Page> pages) {
@@ -168,6 +168,6 @@ public class LoreStructuralContextBuilder {
                 .filter(p -> p.getTags() != null)
                 .flatMap(p -> p.getTags().stream())
                 .distinct()
-                .collect(Collectors.toList());
+                .toList();
     }
 }

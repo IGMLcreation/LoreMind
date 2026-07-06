@@ -1,6 +1,6 @@
 package com.loremind.application.campaigncontext;
 
-import com.loremind.domain.campaigncontext.Character;
+import com.loremind.domain.campaigncontext.bestiary.Character;
 import com.loremind.domain.campaigncontext.ports.CharacterRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

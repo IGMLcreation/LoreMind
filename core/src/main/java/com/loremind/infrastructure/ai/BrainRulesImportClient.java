@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loremind.domain.gamesystemcontext.RulesImportProgress;
 import com.loremind.domain.gamesystemcontext.RulesImportResult;
-import com.loremind.domain.gamesystemcontext.ports.RulesImportException;
+import com.loremind.domain.gamesystemcontext.ports.exceptions.RulesImportException;
 import com.loremind.domain.gamesystemcontext.ports.RulesPdfImporter;
 import com.loremind.infrastructure.web.config.UserLanguageHolder;
 import org.springframework.beans.factory.annotation.Qualifier;

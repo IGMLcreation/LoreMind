@@ -1,6 +1,6 @@
 package com.loremind.infrastructure.web.mapper;
 
-import com.loremind.domain.campaigncontext.Npc;
+import com.loremind.domain.campaigncontext.bestiary.Npc;
 import com.loremind.infrastructure.web.dto.campaigncontext.NpcDTO;
 import org.springframework.stereotype.Component;
 

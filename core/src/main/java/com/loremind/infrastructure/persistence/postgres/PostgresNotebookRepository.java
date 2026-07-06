@@ -1,8 +1,8 @@
 package com.loremind.infrastructure.persistence.postgres;
 
-import com.loremind.domain.campaigncontext.Notebook;
-import com.loremind.domain.campaigncontext.NotebookMessage;
-import com.loremind.domain.campaigncontext.NotebookSource;
+import com.loremind.domain.campaigncontext.notebook.Notebook;
+import com.loremind.domain.campaigncontext.notebook.NotebookMessage;
+import com.loremind.domain.campaigncontext.notebook.NotebookSource;
 import com.loremind.domain.campaigncontext.ports.NotebookRepository;
 import com.loremind.infrastructure.persistence.entity.NotebookJpaEntity;
 import com.loremind.infrastructure.persistence.entity.NotebookMessageJpaEntity;

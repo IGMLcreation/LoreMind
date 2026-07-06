@@ -1,7 +1,7 @@
 package com.loremind.infrastructure.persistence.entity;
 
-import com.loremind.domain.campaigncontext.Prerequisite;
-import com.loremind.domain.campaigncontext.QuestNodeRef;
+import com.loremind.domain.campaigncontext.quest.Prerequisite;
+import com.loremind.domain.campaigncontext.quest.QuestNodeRef;
 import com.loremind.infrastructure.persistence.converter.PrerequisiteListJsonConverter;
 import com.loremind.infrastructure.persistence.converter.QuestNodeListJsonConverter;
 import com.loremind.infrastructure.persistence.converter.StringListJsonConverter;

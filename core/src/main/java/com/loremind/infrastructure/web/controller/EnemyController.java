@@ -1,7 +1,7 @@
 package com.loremind.infrastructure.web.controller;
 
 import com.loremind.application.campaigncontext.EnemyService;
-import com.loremind.domain.campaigncontext.Enemy;
+import com.loremind.domain.campaigncontext.bestiary.Enemy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

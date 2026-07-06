@@ -1,9 +1,7 @@
 package com.loremind.domain.generationcontext.ports;
 
 import com.loremind.domain.generationcontext.ChatRequest;
-import com.loremind.domain.generationcontext.ChatUsage;
-
-import java.util.function.Consumer;
+import com.loremind.domain.generationcontext.ChatStreamCallbacks;
 
 /**
  * Port de sortie pour le chat streamé avec un LLM.
@@ -26,22 +24,8 @@ public interface AiChatProvider {
      * de l'exécuter dans un thread adapté (ex: thread dédié à la requête
      * HTTP côté controller SSE).
      *
-     * @param request    messages + contexte Lore
-     * @param onUsage    invoqué une fois au début du stream avec le bilan
-     *                   d'occupation de la fenêtre de contexte (tokens system /
-     *                   history / current / max). Peut ne jamais être invoqué
-     *                   si le provider ne supporte pas le comptage.
-     * @param onToken    invoqué à chaque token reçu du LLM (peut être appelé
-     *                   de nombreuses fois)
-     * @param onComplete invoqué une fois le stream terminé avec succès
-     * @param onError    invoqué en cas d'erreur (Brain injoignable, timeout,
-     *                   réponse invalide). Exclusif avec onComplete.
+     * @param request   messages + contexte Lore
+     * @param callbacks onUsage / onToken / onComplete / onError du stream
      */
-    void streamChat(
-            ChatRequest request,
-            Consumer<ChatUsage> onUsage,
-            Consumer<String> onToken,
-            Runnable onComplete,
-            Consumer<Throwable> onError
-    );
+    void streamChat(ChatRequest request, ChatStreamCallbacks callbacks);
 }

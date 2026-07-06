@@ -1,7 +1,7 @@
 package com.loremind.infrastructure.ai;
 
-import com.loremind.domain.campaigncontext.CatalogItem;
-import com.loremind.domain.campaigncontext.ports.ItemCatalogGenerationException;
+import com.loremind.domain.campaigncontext.itemcatalog.CatalogItem;
+import com.loremind.domain.campaigncontext.ports.exceptions.ItemCatalogGenerationException;
 import com.loremind.domain.campaigncontext.ports.ItemCatalogGenerator.GeneratedCatalog;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

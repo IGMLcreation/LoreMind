@@ -4,7 +4,6 @@ import com.loremind.domain.lorecontext.Page;
 import com.loremind.domain.lorecontext.ports.PageRepository;
 import org.springframework.stereotype.Service;
 
-import com.loremind.domain.shared.CollectionUtils;
 import com.loremind.domain.shared.ReorderSupport;
 
 import java.util.ArrayList;
@@ -84,14 +83,7 @@ public class PageService {
 
         existing.setTitle(changes.getTitle());
         existing.setNodeId(changes.getNodeId());
-        existing.setValues(CollectionUtils.copyMap(changes.getValues()));
-        existing.setImageValues(CollectionUtils.copyMap(changes.getImageValues()));
-        existing.setImageFraming(CollectionUtils.copyMap(changes.getImageFraming()));
-        existing.setKeyValueValues(CollectionUtils.copyMap(changes.getKeyValueValues()));
-        existing.setTableValues(CollectionUtils.copyMap(changes.getTableValues()));
-        existing.setNotes(changes.getNotes());
-        existing.setTags(CollectionUtils.copyList(changes.getTags()));
-        existing.setRelatedPageIds(CollectionUtils.copyList(changes.getRelatedPageIds()));
+        existing.applyEditableContent(changes);
         return pageRepository.save(existing);
     }
 
@@ -106,7 +98,7 @@ public class PageService {
     @org.springframework.transaction.annotation.Transactional
     public void reorderPages(String nodeId, List<String> orderedIds) {
         ReorderSupport.reorder(orderedIds,
-                id -> pageRepository.findById(id).orElse(null),
+                pageRepository::findById,
                 (page, i) -> {
                     if (nodeId != null && !nodeId.isBlank()) page.setNodeId(nodeId);
                     page.setOrder(i);

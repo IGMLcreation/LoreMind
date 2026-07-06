@@ -2,7 +2,7 @@ package com.loremind.infrastructure.web.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loremind.domain.campaigncontext.Campaign;
-import com.loremind.domain.campaigncontext.Npc;
+import com.loremind.domain.campaigncontext.bestiary.Npc;
 import com.loremind.domain.campaigncontext.ports.CampaignRepository;
 import com.loremind.domain.campaigncontext.ports.NpcRepository;
 import com.loremind.infrastructure.web.dto.campaigncontext.NpcDTO;

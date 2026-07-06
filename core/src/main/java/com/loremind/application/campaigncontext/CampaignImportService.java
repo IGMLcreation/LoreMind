@@ -1,17 +1,17 @@
 package com.loremind.application.campaigncontext;
 
-import com.loremind.domain.campaigncontext.Arc;
-import com.loremind.domain.campaigncontext.ArcType;
-import com.loremind.domain.campaigncontext.CampaignImportProgress;
-import com.loremind.domain.campaigncontext.CampaignImportProposal;
-import com.loremind.domain.campaigncontext.CampaignImportProposal.ArcProposal;
-import com.loremind.domain.campaigncontext.CampaignImportProposal.ChapterProposal;
-import com.loremind.domain.campaigncontext.CampaignImportProposal.NpcProposal;
-import com.loremind.domain.campaigncontext.CampaignImportProposal.RoomProposal;
-import com.loremind.domain.campaigncontext.CampaignImportProposal.SceneProposal;
-import com.loremind.domain.campaigncontext.Chapter;
-import com.loremind.domain.campaigncontext.Room;
-import com.loremind.domain.campaigncontext.Scene;
+import com.loremind.domain.campaigncontext.structure.Arc;
+import com.loremind.domain.campaigncontext.structure.ArcType;
+import com.loremind.domain.campaigncontext.generation.CampaignImportProgress;
+import com.loremind.domain.campaigncontext.generation.CampaignImportProposal;
+import com.loremind.domain.campaigncontext.generation.CampaignImportProposal.ArcProposal;
+import com.loremind.domain.campaigncontext.generation.CampaignImportProposal.ChapterProposal;
+import com.loremind.domain.campaigncontext.generation.CampaignImportProposal.NpcProposal;
+import com.loremind.domain.campaigncontext.generation.CampaignImportProposal.RoomProposal;
+import com.loremind.domain.campaigncontext.generation.CampaignImportProposal.SceneProposal;
+import com.loremind.domain.campaigncontext.structure.Chapter;
+import com.loremind.domain.campaigncontext.structure.Room;
+import com.loremind.domain.campaigncontext.structure.Scene;
 import com.loremind.domain.campaigncontext.ports.CampaignPdfImporter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -83,64 +83,93 @@ public class CampaignImportService {
             throw new IllegalArgumentException("Campagne introuvable : " + campaignId);
         }
 
-        int arcsCreated = 0, chaptersCreated = 0, scenesCreated = 0;
+        int arcsCreated = 0;
+        int chaptersCreated = 0;
+        int scenesCreated = 0;
 
         // Les nouveaux nœuds sont ordonnés APRÈS les frères existants (déjà comptés
         // via leur existingId dans l'arbre fusionné venu de la revue).
         int arcOrder = countExisting(proposal.arcs(), ArcProposal::existingId);
         for (ArcProposal arcP : proposal.arcs()) {
             if (isBlank(arcP.name())) continue;
-            String arcId;
-            if (!isBlank(arcP.existingId())) {
-                arcId = arcP.existingId();  // arc déjà présent → on s'y rattache
-            } else {
-                arcOrder++;
-                Arc arc = arcService.createArc(Arc.builder()
-                        .name(arcP.name().trim())
-                        .description(nullIfBlank(arcP.description()))
-                        .campaignId(campaignId)
-                        .order(arcOrder)
-                        .type(parseArcType(arcP.type()))
-                        .build());
-                arcId = arc.getId();
-                arcsCreated++;
-            }
-
-            int chapterOrder = countExisting(arcP.chapters(), ChapterProposal::existingId);
-            for (ChapterProposal chapP : safe(arcP.chapters())) {
-                if (isBlank(chapP.name())) continue;
-                String chapId;
-                if (!isBlank(chapP.existingId())) {
-                    chapId = chapP.existingId();
-                } else {
-                    chapterOrder++;
-                    Chapter chapter = chapterService.createChapter(
-                            chapP.name().trim(), nullIfBlank(chapP.description()), arcId, chapterOrder);
-                    chapId = chapter.getId();
-                    chaptersCreated++;
-                }
-
-                int sceneOrder = countExisting(chapP.scenes(), SceneProposal::existingId);
-                for (SceneProposal sceneP : safe(chapP.scenes())) {
-                    if (isBlank(sceneP.name())) continue;
-                    if (!isBlank(sceneP.existingId())) continue;  // scène déjà présente
-                    sceneOrder++;
-                    sceneService.createScene(Scene.builder()
-                            .name(sceneP.name().trim())
-                            .description(nullIfBlank(sceneP.description()))
-                            .playerNarration(nullIfBlank(sceneP.playerNarration()))
-                            .gmSecretNotes(nullIfBlank(sceneP.gmNotes()))
-                            .chapterId(chapId)
-                            .order(sceneOrder)
-                            .rooms(toRooms(sceneP.rooms()))
-                            .build());
-                    scenesCreated++;
-                }
-            }
+            ArcOutcome outcome = applyArc(campaignId, arcP, arcOrder);
+            arcOrder = outcome.nextOrder();
+            arcsCreated += outcome.arcsCreated();
+            chaptersCreated += outcome.chaptersCreated();
+            scenesCreated += outcome.scenesCreated();
         }
 
         int npcsCreated = createNpcs(campaignId, proposal.npcs());
         return new ApplyResult(arcsCreated, chaptersCreated, scenesCreated, npcsCreated);
+    }
+
+    /** Ordre d'arc suivant + compteurs créés (arc et, en cascade, ses chapitres/scènes). */
+    private record ArcOutcome(int nextOrder, int arcsCreated, int chaptersCreated, int scenesCreated) {}
+
+    private ArcOutcome applyArc(String campaignId, ArcProposal arcP, int arcOrder) {
+        String arcId;
+        int arcsCreated = 0;
+        if (!isBlank(arcP.existingId())) {
+            arcId = arcP.existingId();  // arc déjà présent → on s'y rattache
+        } else {
+            arcOrder++;
+            Arc arc = arcService.createArc(Arc.builder()
+                    .name(arcP.name().trim())
+                    .description(nullIfBlank(arcP.description()))
+                    .campaignId(campaignId)
+                    .order(arcOrder)
+                    .type(parseArcType(arcP.type()))
+                    .build());
+            arcId = arc.getId();
+            arcsCreated = 1;
+        }
+
+        int chapterOrder = countExisting(arcP.chapters(), ChapterProposal::existingId);
+        int chaptersCreated = 0;
+        int scenesCreated = 0;
+        for (ChapterProposal chapP : safe(arcP.chapters())) {
+            if (isBlank(chapP.name())) continue;
+            ChapterOutcome outcome = applyChapter(arcId, chapP, chapterOrder);
+            chapterOrder = outcome.nextOrder();
+            chaptersCreated += outcome.chaptersCreated();
+            scenesCreated += outcome.scenesCreated();
+        }
+        return new ArcOutcome(arcOrder, arcsCreated, chaptersCreated, scenesCreated);
+    }
+
+    /** Ordre de chapitre suivant + compteurs créés (chapitre et, en cascade, ses scènes). */
+    private record ChapterOutcome(int nextOrder, int chaptersCreated, int scenesCreated) {}
+
+    private ChapterOutcome applyChapter(String arcId, ChapterProposal chapP, int chapterOrder) {
+        String chapId;
+        int chaptersCreated = 0;
+        if (!isBlank(chapP.existingId())) {
+            chapId = chapP.existingId();
+        } else {
+            chapterOrder++;
+            Chapter chapter = chapterService.createChapter(
+                    chapP.name().trim(), nullIfBlank(chapP.description()), arcId, chapterOrder);
+            chapId = chapter.getId();
+            chaptersCreated = 1;
+        }
+
+        int sceneOrder = countExisting(chapP.scenes(), SceneProposal::existingId);
+        int scenesCreated = 0;
+        for (SceneProposal sceneP : safe(chapP.scenes())) {
+            if (isBlank(sceneP.name()) || !isBlank(sceneP.existingId())) continue;  // vide ou déjà présente
+            sceneOrder++;
+            sceneService.createScene(Scene.builder()
+                    .name(sceneP.name().trim())
+                    .description(nullIfBlank(sceneP.description()))
+                    .playerNarration(nullIfBlank(sceneP.playerNarration()))
+                    .gmSecretNotes(nullIfBlank(sceneP.gmNotes()))
+                    .chapterId(chapId)
+                    .order(sceneOrder)
+                    .rooms(toRooms(sceneP.rooms()))
+                    .build());
+            scenesCreated++;
+        }
+        return new ChapterOutcome(chapterOrder, chaptersCreated, scenesCreated);
     }
 
     /**
@@ -182,7 +211,8 @@ public class CampaignImportService {
 
     /** "HUB" (insensible à la casse) → {@link ArcType#HUB} ; tout le reste → LINEAR. */
     private static ArcType parseArcType(String type) {
-        return "HUB".equalsIgnoreCase(type == null ? "" : type.trim()) ? ArcType.HUB : ArcType.LINEAR;
+        String normalized = type == null ? "" : type.trim();
+        return "HUB".equalsIgnoreCase(normalized) ? ArcType.HUB : ArcType.LINEAR;
     }
 
     /** Convertit les pièces proposées en {@link Room} (ID généré, ordre = index). */

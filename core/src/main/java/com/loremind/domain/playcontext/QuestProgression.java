@@ -1,6 +1,6 @@
 package com.loremind.domain.playcontext;
 
-import com.loremind.domain.campaigncontext.ProgressionStatus;
+import com.loremind.domain.campaigncontext.quest.ProgressionStatus;
 import lombok.Builder;
 import lombok.Data;
 

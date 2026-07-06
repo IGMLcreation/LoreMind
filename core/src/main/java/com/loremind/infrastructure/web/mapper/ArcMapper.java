@@ -1,7 +1,7 @@
 package com.loremind.infrastructure.web.mapper;
 
-import com.loremind.domain.campaigncontext.Arc;
-import com.loremind.domain.campaigncontext.ArcType;
+import com.loremind.domain.campaigncontext.structure.Arc;
+import com.loremind.domain.campaigncontext.structure.ArcType;
 import com.loremind.infrastructure.web.dto.campaigncontext.ArcDTO;
 import org.springframework.stereotype.Component;
 

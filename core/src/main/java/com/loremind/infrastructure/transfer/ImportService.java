@@ -19,7 +19,10 @@ import java.io.InputStream;
  *   <li>{@link ImportArchiveParser} : {@code data.json} -> {@link ContentExport},
  *       binaires gardes en memoire.</li>
  *   <li>{@link ImageImporter} / {@link StoredFileImporter} : reecrit les binaires
- *       sous LEUR CLE D'ORIGINE (pas de remapping de cle) ; skip si la cle existe deja.</li>
+ *       sous LEUR CLE D'ORIGINE (pas de remapping de cle) ; skip si la cle existe deja.
+ *       L'id de ligne image/fichier est en revanche REMAPPE oldId -> newId (maps
+ *       {@link ImportIdMaps#imageMap}/{@link ImportIdMaps#storedFileMap}) pour que les
+ *       entites inserees ensuite pointent la bonne image/fichier dans la base cible.</li>
  *   <li>Insertion top-down en construisant les maps de remapping par type
  *       ({@link ImportIdMaps}) : {@link LoreContentInserter} (referentiel lore + systemes),
  *       {@link CampaignContentInserter} (contenu de campagne, quetes legacy comprises),
@@ -65,13 +68,14 @@ public class ImportService {
         ContentExport export = archive.export();
 
         ImportResult.Builder result = new ImportResult.Builder();
+        ImportIdMaps maps = new ImportIdMaps();
 
-        // 2. Reecriture des images + fichiers (cle preservee).
-        imageImporter.importImages(export, archive.imageBinaries(), result);
-        storedFileImporter.importFiles(export, archive.fileBinaries(), result);
+        // 2. Reecriture des images + fichiers (cle preservee) + remap des ids (image/fichier)
+        //    dans maps, consomme par les inserters ci-dessous.
+        imageImporter.importImages(export, archive.imageBinaries(), maps, result);
+        storedFileImporter.importFiles(export, archive.fileBinaries(), maps, result);
 
         // 3. Insertion top-down + maps de remapping.
-        ImportIdMaps maps = new ImportIdMaps();
         loreContentInserter.insert(export, maps, result);
         campaignContentInserter.insert(export, maps, result);
         playStateInserter.insert(export, maps, result);

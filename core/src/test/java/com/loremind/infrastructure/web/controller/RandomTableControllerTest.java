@@ -2,10 +2,10 @@ package com.loremind.infrastructure.web.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loremind.domain.campaigncontext.Campaign;
-import com.loremind.domain.campaigncontext.RandomTable;
-import com.loremind.domain.campaigncontext.RandomTableEntry;
+import com.loremind.domain.campaigncontext.randomtable.RandomTable;
+import com.loremind.domain.campaigncontext.randomtable.RandomTableEntry;
 import com.loremind.domain.campaigncontext.ports.CampaignRepository;
-import com.loremind.domain.campaigncontext.ports.RandomTableGenerationException;
+import com.loremind.domain.campaigncontext.ports.exceptions.RandomTableGenerationException;
 import com.loremind.domain.campaigncontext.ports.RandomTableGenerator;
 import com.loremind.domain.campaigncontext.ports.RandomTableRepository;
 import com.loremind.infrastructure.web.controller.RandomTableController.GenerateRequest;

@@ -3,7 +3,7 @@ package com.loremind.infrastructure.web.controller;
 import com.loremind.application.playcontext.SessionRecapService;
 import com.loremind.application.playcontext.SessionService;
 import com.loremind.domain.playcontext.Session;
-import com.loremind.domain.playcontext.ports.SessionRecapException;
+import com.loremind.domain.playcontext.ports.exceptions.SessionRecapException;
 import com.loremind.infrastructure.web.dto.playcontext.SessionDTO;
 import com.loremind.infrastructure.web.mapper.SessionMapper;
 import org.springframework.http.HttpStatus;

@@ -1,12 +1,9 @@
 package com.loremind.application.campaigncontext;
 
-import com.loremind.domain.campaigncontext.Campaign;
-import com.loremind.domain.campaigncontext.CatalogItem;
-import com.loremind.domain.campaigncontext.ItemCatalog;
-import com.loremind.domain.campaigncontext.ports.CampaignRepository;
+import com.loremind.domain.campaigncontext.itemcatalog.CatalogItem;
+import com.loremind.domain.campaigncontext.itemcatalog.ItemCatalog;
 import com.loremind.domain.campaigncontext.ports.ItemCatalogGenerator;
 import com.loremind.domain.campaigncontext.ports.ItemCatalogRepository;
-import com.loremind.domain.gamesystemcontext.ports.GameSystemRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -21,18 +18,15 @@ public class ItemCatalogService {
 
     private final ItemCatalogRepository repository;
     private final ItemCatalogGenerator generator;
-    private final CampaignRepository campaignRepository;
-    private final GameSystemRepository gameSystemRepository;
+    private final CampaignContextFormatter campaignContextFormatter;
 
     public ItemCatalogService(
             ItemCatalogRepository repository,
             ItemCatalogGenerator generator,
-            CampaignRepository campaignRepository,
-            GameSystemRepository gameSystemRepository) {
+            CampaignContextFormatter campaignContextFormatter) {
         this.repository = repository;
         this.generator = generator;
-        this.campaignRepository = campaignRepository;
-        this.gameSystemRepository = gameSystemRepository;
+        this.campaignContextFormatter = campaignContextFormatter;
     }
 
     public record CatalogData(
@@ -89,7 +83,8 @@ public class ItemCatalogService {
 
     /** Génère une PROPOSITION de catalogue (non persistée) via l'IA, contextualisée campagne. */
     public ItemCatalog generateProposal(String campaignId, String description) {
-        ItemCatalogGenerator.GeneratedCatalog g = generator.generate(description, buildContext(campaignId));
+        ItemCatalogGenerator.GeneratedCatalog g = generator.generate(
+                description, campaignContextFormatter.format(campaignId));
         return ItemCatalog.builder()
                 .name(g.name())
                 .description(g.description())
@@ -100,22 +95,6 @@ public class ItemCatalogService {
 
     private static List<CatalogItem> copyItems(List<CatalogItem> items) {
         return items != null ? new ArrayList<>(items) : new ArrayList<>();
-    }
-
-    private String buildContext(String campaignId) {
-        if (campaignId == null) return "";
-        Campaign campaign = campaignRepository.findById(campaignId).orElse(null);
-        if (campaign == null) return "";
-        StringBuilder sb = new StringBuilder();
-        sb.append("Campagne : ").append(campaign.getName());
-        if (campaign.getDescription() != null && !campaign.getDescription().isBlank()) {
-            sb.append(" — ").append(campaign.getDescription().trim());
-        }
-        if (campaign.getGameSystemId() != null && !campaign.getGameSystemId().isBlank()) {
-            gameSystemRepository.findById(campaign.getGameSystemId())
-                    .ifPresent(gs -> sb.append("\nSystème de jeu : ").append(gs.getName()));
-        }
-        return sb.toString();
     }
 
     private int nextOrderFor(String campaignId) {

@@ -2,10 +2,10 @@ package com.loremind.infrastructure.web.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loremind.domain.campaigncontext.Campaign;
-import com.loremind.domain.campaigncontext.CatalogItem;
-import com.loremind.domain.campaigncontext.ItemCatalog;
+import com.loremind.domain.campaigncontext.itemcatalog.CatalogItem;
+import com.loremind.domain.campaigncontext.itemcatalog.ItemCatalog;
 import com.loremind.domain.campaigncontext.ports.CampaignRepository;
-import com.loremind.domain.campaigncontext.ports.ItemCatalogGenerationException;
+import com.loremind.domain.campaigncontext.ports.exceptions.ItemCatalogGenerationException;
 import com.loremind.domain.campaigncontext.ports.ItemCatalogGenerator;
 import com.loremind.domain.campaigncontext.ports.ItemCatalogRepository;
 import com.loremind.infrastructure.web.controller.ItemCatalogController.GenerateRequest;

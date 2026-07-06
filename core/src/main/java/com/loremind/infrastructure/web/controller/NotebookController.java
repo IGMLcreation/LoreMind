@@ -1,10 +1,10 @@
 package com.loremind.infrastructure.web.controller;
 
 import com.loremind.application.campaigncontext.NotebookService;
-import com.loremind.domain.campaigncontext.Notebook;
-import com.loremind.domain.campaigncontext.NotebookSource;
+import com.loremind.domain.campaigncontext.notebook.Notebook;
+import com.loremind.domain.campaigncontext.notebook.NotebookSource;
 import com.loremind.domain.campaigncontext.ports.NotebookChatStreamer;
-import com.loremind.domain.campaigncontext.ports.NotebookException;
+import com.loremind.domain.campaigncontext.ports.exceptions.NotebookException;
 import com.loremind.infrastructure.web.sse.SseJson;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.task.TaskExecutor;
@@ -186,8 +186,7 @@ public class NotebookController {
         boolean deep = req.deep() != null && req.deep();
         taskExecutor.execute(() -> {
             StringBuilder assistant = new StringBuilder();
-            chatStreamer.stream(
-                    sourceIds, history, context, deep,
+            chatStreamer.stream(sourceIds, history, context, deep, new NotebookChatStreamer.Callbacks(
                     sourcesJson -> sendSources(emitter, sourcesJson),
                     token -> { assistant.append(token); sendToken(emitter, token); },
                     progress -> sendProgress(emitter, progress),
@@ -198,7 +197,7 @@ public class NotebookController {
                         }
                         complete(emitter);
                     },
-                    error -> fail(emitter, error));
+                    error -> fail(emitter, error)));
         });
         return emitter;
     }

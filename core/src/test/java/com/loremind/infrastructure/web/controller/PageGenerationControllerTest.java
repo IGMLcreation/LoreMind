@@ -1,7 +1,7 @@
 package com.loremind.infrastructure.web.controller;
 
 import com.loremind.application.generationcontext.GeneratePageValuesUseCase;
-import com.loremind.domain.generationcontext.ports.AiProviderException;
+import com.loremind.domain.generationcontext.ports.exceptions.AiProviderException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;

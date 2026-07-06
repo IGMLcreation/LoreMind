@@ -2,8 +2,8 @@ package com.loremind.infrastructure.persistence.converter;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.loremind.domain.campaigncontext.NodeType;
-import com.loremind.domain.campaigncontext.QuestNodeRef;
+import com.loremind.domain.campaigncontext.quest.NodeType;
+import com.loremind.domain.campaigncontext.quest.QuestNodeRef;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 

@@ -5,6 +5,7 @@ import com.loremind.domain.campaigncontext.ports.CampaignRepository;
 import com.loremind.domain.generationcontext.CampaignStructuralContext;
 import com.loremind.domain.generationcontext.ChatMessage;
 import com.loremind.domain.generationcontext.ChatRequest;
+import com.loremind.domain.generationcontext.ChatStreamCallbacks;
 import com.loremind.domain.generationcontext.ChatUsage;
 import com.loremind.domain.generationcontext.LoreStructuralContext;
 import com.loremind.domain.generationcontext.NarrativeEntityContext;
@@ -51,6 +52,7 @@ public class StreamChatForCampaignUseCaseTest {
     private Consumer<String> onToken;
     private Runnable onComplete;
     private Consumer<Throwable> onError;
+    private ChatStreamCallbacks callbacks;
 
     @SuppressWarnings("unchecked")
     @BeforeEach
@@ -61,6 +63,7 @@ public class StreamChatForCampaignUseCaseTest {
         onToken = mock(Consumer.class);
         onComplete = mock(Runnable.class);
         onError = mock(Consumer.class);
+        callbacks = new ChatStreamCallbacks(onUsage, onToken, onComplete, onError);
     }
 
     @Test
@@ -68,7 +71,7 @@ public class StreamChatForCampaignUseCaseTest {
         when(campaignRepository.findById("missing")).thenReturn(Optional.empty());
 
         assertThrows(IllegalArgumentException.class,
-                () -> useCase.execute("missing", null, null, messages, onUsage, onToken, onComplete, onError));
+                () -> useCase.execute("missing", null, null, messages, callbacks));
         verifyNoInteractions(aiChatProvider);
     }
 
@@ -78,10 +81,10 @@ public class StreamChatForCampaignUseCaseTest {
         when(campaignRepository.findById("c-1")).thenReturn(Optional.of(standalone));
         when(campaignContextBuilder.build("c-1")).thenReturn(campaignCtx);
 
-        useCase.execute("c-1", null, null, messages, onUsage, onToken, onComplete, onError);
+        useCase.execute("c-1", null, null, messages, callbacks);
 
         ArgumentCaptor<ChatRequest> captor = ArgumentCaptor.forClass(ChatRequest.class);
-        verify(aiChatProvider).streamChat(captor.capture(), eq(onUsage), eq(onToken), eq(onComplete), eq(onError));
+        verify(aiChatProvider).streamChat(captor.capture(), eq(callbacks));
         ChatRequest req = captor.getValue();
         assertSame(campaignCtx, req.campaignContext());
         assertNull(req.loreContext());
@@ -101,10 +104,10 @@ public class StreamChatForCampaignUseCaseTest {
         when(campaignContextBuilder.build("c-1")).thenReturn(campaignCtx);
         when(loreContextBuilder.buildOptional("lore-1")).thenReturn(Optional.of(loreCtx));
 
-        useCase.execute("c-1", null, null, messages, onUsage, onToken, onComplete, onError);
+        useCase.execute("c-1", null, null, messages, callbacks);
 
         ArgumentCaptor<ChatRequest> captor = ArgumentCaptor.forClass(ChatRequest.class);
-        verify(aiChatProvider).streamChat(captor.capture(), any(), any(), any(), any());
+        verify(aiChatProvider).streamChat(captor.capture(), any());
         assertSame(loreCtx, captor.getValue().loreContext());
     }
 
@@ -116,10 +119,10 @@ public class StreamChatForCampaignUseCaseTest {
         when(campaignContextBuilder.build("c-1")).thenReturn(campaignCtx);
         when(loreContextBuilder.buildOptional("lore-ghost")).thenReturn(Optional.empty());
 
-        useCase.execute("c-1", null, null, messages, onUsage, onToken, onComplete, onError);
+        useCase.execute("c-1", null, null, messages, callbacks);
 
         ArgumentCaptor<ChatRequest> captor = ArgumentCaptor.forClass(ChatRequest.class);
-        verify(aiChatProvider).streamChat(captor.capture(), any(), any(), any(), any());
+        verify(aiChatProvider).streamChat(captor.capture(), any());
         assertNull(captor.getValue().loreContext());
         // La requete doit tout de meme partir (pas d'exception).
     }
@@ -133,10 +136,10 @@ public class StreamChatForCampaignUseCaseTest {
         when(campaignContextBuilder.build("c-1")).thenReturn(campaignCtx);
         when(narrativeEntityContextBuilder.build("scene", "s-1")).thenReturn(entity);
 
-        useCase.execute("c-1", "scene", "s-1", messages, onUsage, onToken, onComplete, onError);
+        useCase.execute("c-1", "scene", "s-1", messages, callbacks);
 
         ArgumentCaptor<ChatRequest> captor = ArgumentCaptor.forClass(ChatRequest.class);
-        verify(aiChatProvider).streamChat(captor.capture(), any(), any(), any(), any());
+        verify(aiChatProvider).streamChat(captor.capture(), any());
         assertSame(entity, captor.getValue().narrativeEntity());
     }
 
@@ -146,10 +149,10 @@ public class StreamChatForCampaignUseCaseTest {
         when(campaignRepository.findById("c-1")).thenReturn(Optional.of(standalone));
         when(campaignContextBuilder.build("c-1")).thenReturn(campaignCtx);
 
-        useCase.execute("c-1", "scene", "   ", messages, onUsage, onToken, onComplete, onError);
+        useCase.execute("c-1", "scene", "   ", messages, callbacks);
 
         ArgumentCaptor<ChatRequest> captor = ArgumentCaptor.forClass(ChatRequest.class);
-        verify(aiChatProvider).streamChat(captor.capture(), any(), any(), any(), any());
+        verify(aiChatProvider).streamChat(captor.capture(), any());
         assertNull(captor.getValue().narrativeEntity());
         verifyNoInteractions(narrativeEntityContextBuilder);
     }

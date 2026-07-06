@@ -1,7 +1,7 @@
 package com.loremind.application.campaigncontext;
 
-import com.loremind.domain.campaigncontext.ReadinessEntityType;
-import com.loremind.domain.campaigncontext.ReadinessSeverity;
+import com.loremind.domain.campaigncontext.readiness.ReadinessEntityType;
+import com.loremind.domain.campaigncontext.readiness.ReadinessSeverity;
 
 /**
  * Un manque de préparation détecté sur une entité de scénario (read-model, Pilier B).

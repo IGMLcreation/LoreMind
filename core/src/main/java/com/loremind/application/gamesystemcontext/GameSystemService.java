@@ -119,27 +119,29 @@ public class GameSystemService {
 
         List<TemplateField> template = new ArrayList<>();
         Set<String> usedNames = new HashSet<>();
-        for (FoundryStructField f : fields == null ? List.<FoundryStructField>of() : fields) {
-            if (f.path() == null || f.path().isBlank()) continue;
-            String label = (f.label() != null && !f.label().isBlank()) ? f.label().trim() : f.path();
-            // Nom unique : libellé si libre, sinon le chemin (toujours unique).
-            String name = usedNames.contains(label.toLowerCase()) ? f.path() : label;
-            if (usedNames.contains(name.toLowerCase())) continue;
-            usedNames.add(name.toLowerCase());
-            FieldType type = "number".equalsIgnoreCase(f.type()) ? FieldType.NUMBER : FieldType.TEXT;
-            template.add(new TemplateField(name, type, null, null, f.path()));
+        for (FoundryStructField f : fields != null ? fields : List.<FoundryStructField>of()) {
+            TemplateField field = toTemplateField(f, usedNames);
+            if (field != null) template.add(field);
         }
         gs.replaceEnemyTemplate(template);
         gs.setFoundryActorType(normalize(actorType));
         return gameSystemRepository.save(gs);
     }
 
-    public void deleteGameSystem(String id) {
-        gameSystemRepository.deleteById(id);
+    /** Convertit un champ Foundry en TemplateField, ou null si son chemin est vide ou son nom déjà pris. */
+    private static TemplateField toTemplateField(FoundryStructField f, Set<String> usedNames) {
+        if (f.path() == null || f.path().isBlank()) return null;
+        String label = (f.label() != null && !f.label().isBlank()) ? f.label().trim() : f.path();
+        // Nom unique : libellé si libre, sinon le chemin (toujours unique).
+        String name = usedNames.contains(label.toLowerCase()) ? f.path() : label;
+        if (usedNames.contains(name.toLowerCase())) return null;
+        usedNames.add(name.toLowerCase());
+        FieldType type = "number".equalsIgnoreCase(f.type()) ? FieldType.NUMBER : FieldType.TEXT;
+        return new TemplateField(name, type, null, null, f.path());
     }
 
-    public boolean gameSystemExists(String id) {
-        return gameSystemRepository.existsById(id);
+    public void deleteGameSystem(String id) {
+        gameSystemRepository.deleteById(id);
     }
 
     public List<GameSystem> searchGameSystems(String query) {

@@ -1,7 +1,7 @@
 package com.loremind.infrastructure.persistence.postgres;
 
-import com.loremind.domain.campaigncontext.CatalogItem;
-import com.loremind.domain.campaigncontext.ItemCatalog;
+import com.loremind.domain.campaigncontext.itemcatalog.CatalogItem;
+import com.loremind.domain.campaigncontext.itemcatalog.ItemCatalog;
 import com.loremind.domain.campaigncontext.ports.ItemCatalogRepository;
 import com.loremind.infrastructure.persistence.entity.CatalogItemJpaEntity;
 import com.loremind.infrastructure.persistence.entity.ItemCatalogJpaEntity;

@@ -1,14 +1,13 @@
 package com.loremind.application.generationcontext;
 
-import com.loremind.domain.campaigncontext.Chapter;
-import com.loremind.domain.campaigncontext.Scene;
-import com.loremind.domain.campaigncontext.SceneDraft;
-import com.loremind.domain.campaigncontext.SceneDraftProposal;
-import com.loremind.domain.campaigncontext.ports.CampaignRepository;
+import com.loremind.application.campaigncontext.CampaignContextFormatter;
+import com.loremind.domain.campaigncontext.structure.Chapter;
+import com.loremind.domain.campaigncontext.structure.Scene;
+import com.loremind.domain.campaigncontext.generation.SceneDraft;
+import com.loremind.domain.campaigncontext.generation.SceneDraftProposal;
 import com.loremind.domain.campaigncontext.ports.ChapterRepository;
 import com.loremind.domain.campaigncontext.ports.SceneDraftAssistant;
 import com.loremind.domain.campaigncontext.ports.SceneRepository;
-import com.loremind.domain.gamesystemcontext.ports.GameSystemRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -30,19 +29,16 @@ public class DraftScenesUseCase {
 
     private final ChapterRepository chapterRepository;
     private final SceneRepository sceneRepository;
-    private final CampaignRepository campaignRepository;
-    private final GameSystemRepository gameSystemRepository;
+    private final CampaignContextFormatter campaignContextFormatter;
     private final SceneDraftAssistant assistant;
 
     public DraftScenesUseCase(ChapterRepository chapterRepository,
                               SceneRepository sceneRepository,
-                              CampaignRepository campaignRepository,
-                              GameSystemRepository gameSystemRepository,
+                              CampaignContextFormatter campaignContextFormatter,
                               SceneDraftAssistant assistant) {
         this.chapterRepository = chapterRepository;
         this.sceneRepository = sceneRepository;
-        this.campaignRepository = campaignRepository;
-        this.gameSystemRepository = gameSystemRepository;
+        this.campaignContextFormatter = campaignContextFormatter;
         this.assistant = assistant;
     }
 
@@ -55,13 +51,13 @@ public class DraftScenesUseCase {
         List<SceneDraft> drafts = assistant.draftScenes(context, instruction, n).stream()
                 .filter(d -> d != null && d.name() != null && !d.name().isBlank())
                 .limit(n)
-                .collect(Collectors.toList());
+                .toList();
         return new SceneDraftProposal(chapterId, drafts);
     }
 
     private String buildContext(Chapter chapter, String campaignId) {
         StringBuilder sb = new StringBuilder();
-        sb.append("Chapitre : ").append(blankToLabel(chapter.getName(), "(sans titre)")).append("\n");
+        sb.append("Chapitre : ").append(blankToLabel(chapter.getName())).append("\n");
         appendIf(sb, "Synopsis", chapter.getDescription());
         appendIf(sb, "Objectifs des joueurs", chapter.getPlayerObjectives());
         appendIf(sb, "Enjeux narratifs", chapter.getNarrativeStakes());
@@ -78,17 +74,10 @@ public class DraftScenesUseCase {
         }
 
         if (campaignId != null && !campaignId.isBlank()) {
-            campaignRepository.findById(campaignId).ifPresent(c -> {
-                sb.append("Campagne : ").append(c.getName());
-                if (c.getDescription() != null && !c.getDescription().isBlank()) {
-                    sb.append(" — ").append(c.getDescription().trim());
-                }
-                sb.append("\n");
-                if (c.getGameSystemId() != null && !c.getGameSystemId().isBlank()) {
-                    gameSystemRepository.findById(c.getGameSystemId())
-                            .ifPresent(gs -> sb.append("Système de jeu : ").append(gs.getName()).append("\n"));
-                }
-            });
+            String campaignBlock = campaignContextFormatter.format(campaignId);
+            if (!campaignBlock.isBlank()) {
+                sb.append(campaignBlock).append("\n");
+            }
         }
         return sb.toString();
     }
@@ -99,7 +88,7 @@ public class DraftScenesUseCase {
         }
     }
 
-    private static String blankToLabel(String value, String fallback) {
-        return value == null || value.isBlank() ? fallback : value;
+    private static String blankToLabel(String value) {
+        return value == null || value.isBlank() ? "(sans titre)" : value;
     }
 }

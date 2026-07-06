@@ -1,10 +1,10 @@
 package com.loremind.application.generationcontext;
 
-import com.loremind.domain.campaigncontext.Arc;
-import com.loremind.domain.campaigncontext.Chapter;
-import com.loremind.domain.campaigncontext.Character;
-import com.loremind.domain.campaigncontext.Npc;
-import com.loremind.domain.campaigncontext.Scene;
+import com.loremind.domain.campaigncontext.structure.Arc;
+import com.loremind.domain.campaigncontext.structure.Chapter;
+import com.loremind.domain.campaigncontext.bestiary.Character;
+import com.loremind.domain.campaigncontext.bestiary.Npc;
+import com.loremind.domain.campaigncontext.structure.Scene;
 import com.loremind.domain.campaigncontext.ports.ArcRepository;
 import com.loremind.domain.campaigncontext.ports.ChapterRepository;
 import com.loremind.domain.campaigncontext.ports.CharacterRepository;
@@ -27,6 +27,9 @@ import java.util.Map;
  */
 @Component
 public class NarrativeEntityContextBuilder {
+
+    /** Longueur max d'une valeur de stat dans le résumé d'ennemi lié (contexte focus compact). */
+    private static final int STAT_VALUE_MAX_LEN = 100;
 
     private final ArcRepository arcRepository;
     private final ChapterRepository chapterRepository;
@@ -144,14 +147,14 @@ public class NarrativeEntityContextBuilder {
         StringBuilder sb = new StringBuilder();
         for (String enemyId : s.getEnemyIds()) {
             enemyRepository.findById(enemyId).ifPresent(e -> {
-                if (sb.length() > 0) sb.append("\n");
+                if (!sb.isEmpty()) sb.append("\n");
                 sb.append("- ").append(e.getName());
                 if (e.getLevel() != null && !e.getLevel().isBlank()) {
                     sb.append(" (").append(e.getLevel().trim()).append(")");
                 }
                 String stats = e.getValues().entrySet().stream()
                         .filter(en -> en.getValue() != null && !en.getValue().isBlank())
-                        .map(en -> en.getKey() + ": " + truncate(en.getValue().trim(), 100))
+                        .map(en -> en.getKey() + ": " + truncate(en.getValue().trim()))
                         .collect(java.util.stream.Collectors.joining(" ; "));
                 if (!stats.isEmpty()) sb.append(" — ").append(stats);
             });
@@ -159,8 +162,8 @@ public class NarrativeEntityContextBuilder {
         return sb.toString();
     }
 
-    private static String truncate(String value, int maxLen) {
-        return value.length() <= maxLen ? value : value.substring(0, maxLen - 1).stripTrailing() + "…";
+    private static String truncate(String value) {
+        return value.length() <= STAT_VALUE_MAX_LEN ? value : value.substring(0, STAT_VALUE_MAX_LEN - 1).stripTrailing() + "…";
     }
 
     private NarrativeEntityContext fromCharacter(Character c) {

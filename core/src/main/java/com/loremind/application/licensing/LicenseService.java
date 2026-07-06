@@ -52,8 +52,8 @@ public class LicenseService {
         this.repository = repository;
         this.jwtVerifier = jwtVerifier;
         this.relay = relay;
-        this.gracePeriodSeconds = (long) gracePeriodDays * 86_400L;
-        this.refreshBeforeExpirySeconds = (long) refreshBeforeExpiryDays * 86_400L;
+        this.gracePeriodSeconds = gracePeriodDays * 86_400L;
+        this.refreshBeforeExpirySeconds = refreshBeforeExpiryDays * 86_400L;
         this.licensingEnabled = licensingEnabled;
     }
 
@@ -134,9 +134,9 @@ public class LicenseService {
      * Etat courant de la licence pour exposition UI / decision technique.
      */
     public LicenseSnapshot getCurrentSnapshot() {
-        Optional<License> opt = repository.findCurrent();
-        if (opt.isEmpty()) return LicenseSnapshot.none();
-        return snapshotOf(opt.get(), Instant.now());
+        return repository.findCurrent()
+                .map(l -> snapshotOf(l, Instant.now()))
+                .orElseGet(LicenseSnapshot::none);
     }
 
     /**
@@ -161,31 +161,32 @@ public class LicenseService {
     /**
      * Tente un refresh si la licence est proche de l'expiration. Idempotent.
      * Appele par le daemon planifie + manuellement via l'UI ("Reessayer").
-     *
-     * @return true si un refresh a ete tente (avec ou sans succes)
      */
-    public boolean refreshIfNeeded() {
+    public void refreshIfNeeded() {
         Optional<License> opt = repository.findCurrent();
-        if (opt.isEmpty()) return false;
+        if (opt.isEmpty()) return;
         License current = opt.get();
         Instant now = Instant.now();
         long secondsUntilExpiry = Duration.between(now, current.getExpiresAt()).getSeconds();
         if (secondsUntilExpiry > refreshBeforeExpirySeconds) {
-            return false;
+            return;
         }
-        return doRefresh(current, now);
+        doRefresh(current, now);
     }
 
     /**
      * Force un refresh immediat (bouton UI "Reessayer maintenant").
      */
-    public boolean forceRefresh() {
-        return repository.findCurrent()
-                .map(license -> doRefresh(license, Instant.now()))
-                .orElse(false);
+    public void forceRefresh() {
+        repository.findCurrent().ifPresent(license -> doRefresh(license, Instant.now()));
     }
 
-    private boolean doRefresh(License current, Instant now) {
+    /**
+     * Tente le refresh aupres du relais et persiste le resultat (succes ou echec) sur
+     * la licence. Le succes/echec est lu depuis {@code lastRefreshSucceeded}, pas
+     * depuis un retour de methode : le tentative est deja actee cote persistance.
+     */
+    private void doRefresh(License current, Instant now) {
         log.info("Refreshing Patreon license (current expires {})", current.getExpiresAt());
         try {
             String newJwt = relay.refreshToken(current.getRawJwt());
@@ -199,7 +200,6 @@ public class LicenseService {
             current.setLastRefreshSucceeded(true);
             repository.save(current);
             log.info("License refreshed successfully (new expiry {})", claims.expiresAt());
-            return true;
         } catch (LicenseRelay.RelayException e) {
             current.setLastRefreshAttemptAt(now);
             current.setLastRefreshSucceeded(false);
@@ -209,13 +209,11 @@ public class LicenseService {
             } else {
                 log.warn("Relay refresh transient failure ({}): {}", e.getKind(), e.getMessage());
             }
-            return true;
         } catch (JwtVerifier.JwtVerificationException e) {
             current.setLastRefreshAttemptAt(now);
             current.setLastRefreshSucceeded(false);
             repository.save(current);
             log.error("Relay returned a JWT that fails verification: {}", e.getMessage());
-            return true;
         }
     }
 

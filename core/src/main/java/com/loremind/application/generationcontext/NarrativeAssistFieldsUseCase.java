@@ -1,10 +1,9 @@
 package com.loremind.application.generationcontext;
 
-import com.loremind.domain.campaigncontext.EntityFieldPatchProposal;
-import com.loremind.domain.campaigncontext.FieldProposal;
-import com.loremind.domain.campaigncontext.ports.CampaignRepository;
+import com.loremind.application.campaigncontext.CampaignContextFormatter;
+import com.loremind.domain.campaigncontext.generation.EntityFieldPatchProposal;
+import com.loremind.domain.campaigncontext.generation.FieldProposal;
 import com.loremind.domain.campaigncontext.ports.NarrativeFieldAssistant;
-import com.loremind.domain.gamesystemcontext.ports.GameSystemRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -26,18 +25,15 @@ import java.util.stream.Collectors;
 public class NarrativeAssistFieldsUseCase {
 
     private final NarrativeFieldCatalog catalog;
-    private final CampaignRepository campaignRepository;
-    private final GameSystemRepository gameSystemRepository;
+    private final CampaignContextFormatter campaignContextFormatter;
     private final NarrativeFieldAssistant assistant;
 
     public NarrativeAssistFieldsUseCase(
             NarrativeFieldCatalog catalog,
-            CampaignRepository campaignRepository,
-            GameSystemRepository gameSystemRepository,
+            CampaignContextFormatter campaignContextFormatter,
             NarrativeFieldAssistant assistant) {
         this.catalog = catalog;
-        this.campaignRepository = campaignRepository;
-        this.gameSystemRepository = gameSystemRepository;
+        this.campaignContextFormatter = campaignContextFormatter;
         this.assistant = assistant;
     }
 
@@ -46,7 +42,7 @@ public class NarrativeAssistFieldsUseCase {
 
         List<NarrativeFieldAssistant.FieldSpec> specs = snap.defs().stream()
                 .map(d -> new NarrativeFieldAssistant.FieldSpec(d.key(), d.label()))
-                .collect(Collectors.toList());
+                .toList();
         Set<String> allowed = snap.defs().stream()
                 .map(NarrativeFieldCatalog.FieldDef::key).collect(Collectors.toSet());
 
@@ -56,19 +52,26 @@ public class NarrativeAssistFieldsUseCase {
 
         List<FieldProposal> fields = new ArrayList<>();
         for (NarrativeFieldAssistant.ProposedField pf : proposed) {
-            if (pf.key() == null || !allowed.contains(pf.key())) continue;
-            if (pf.value() == null || pf.value().isBlank()) continue;
-            String current = snap.current().getOrDefault(pf.key(), "");
-            fields.add(new FieldProposal(pf.key(), current, pf.value()));
+            FieldProposal proposal = toFieldProposal(pf, allowed, snap);
+            if (proposal != null) fields.add(proposal);
         }
         return new EntityFieldPatchProposal(snap.entityType(), entityId, "patch", fields);
+    }
+
+    /** Convertit un champ proposé par l'IA en FieldProposal, ou null si sa clé n'est pas autorisée ou sa valeur vide. */
+    private static FieldProposal toFieldProposal(
+            NarrativeFieldAssistant.ProposedField pf, Set<String> allowed, NarrativeFieldCatalog.Snapshot snap) {
+        if (pf.key() == null || !allowed.contains(pf.key())) return null;
+        if (pf.value() == null || pf.value().isBlank()) return null;
+        String current = snap.current().getOrDefault(pf.key(), "");
+        return new FieldProposal(pf.key(), current, pf.value());
     }
 
     /** Contexte compact : type + titre + valeurs actuelles non vides + méta campagne. */
     private String buildContext(String campaignId, NarrativeFieldCatalog.Snapshot snap) {
         StringBuilder sb = new StringBuilder();
         sb.append(entityLabel(snap.entityType())).append(" : ")
-                .append(blankToLabel(snap.title(), "(sans titre)")).append("\n");
+                .append(blankToLabel(snap.title())).append("\n");
         sb.append("État actuel des champs :\n");
         boolean any = false;
         for (Map.Entry<String, String> e : snap.current().entrySet()) {
@@ -82,17 +85,10 @@ public class NarrativeAssistFieldsUseCase {
             sb.append("- (tous les champs sont vides — à créer de zéro)\n");
         }
         if (campaignId != null && !campaignId.isBlank()) {
-            campaignRepository.findById(campaignId).ifPresent(c -> {
-                sb.append("Campagne : ").append(c.getName());
-                if (c.getDescription() != null && !c.getDescription().isBlank()) {
-                    sb.append(" — ").append(c.getDescription().trim());
-                }
-                sb.append("\n");
-                if (c.getGameSystemId() != null && !c.getGameSystemId().isBlank()) {
-                    gameSystemRepository.findById(c.getGameSystemId())
-                            .ifPresent(gs -> sb.append("Système de jeu : ").append(gs.getName()).append("\n"));
-                }
-            });
+            String campaignBlock = campaignContextFormatter.format(campaignId);
+            if (!campaignBlock.isBlank()) {
+                sb.append(campaignBlock).append("\n");
+            }
         }
         return sb.toString();
     }
@@ -106,7 +102,7 @@ public class NarrativeAssistFieldsUseCase {
         };
     }
 
-    private static String blankToLabel(String value, String fallback) {
-        return value == null || value.isBlank() ? fallback : value;
+    private static String blankToLabel(String value) {
+        return value == null || value.isBlank() ? "(sans titre)" : value;
     }
 }

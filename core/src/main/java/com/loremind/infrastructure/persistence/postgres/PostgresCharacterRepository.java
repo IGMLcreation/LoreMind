@@ -1,6 +1,6 @@
 package com.loremind.infrastructure.persistence.postgres;
 
-import com.loremind.domain.campaigncontext.Character;
+import com.loremind.domain.campaigncontext.bestiary.Character;
 import com.loremind.domain.campaigncontext.ports.CharacterRepository;
 import com.loremind.infrastructure.persistence.entity.CharacterJpaEntity;
 import com.loremind.infrastructure.persistence.jpa.CharacterJpaRepository;

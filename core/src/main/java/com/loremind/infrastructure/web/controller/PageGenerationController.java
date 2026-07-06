@@ -1,7 +1,7 @@
 package com.loremind.infrastructure.web.controller;
 
 import com.loremind.application.generationcontext.GeneratePageValuesUseCase;
-import com.loremind.domain.generationcontext.ports.AiProviderException;
+import com.loremind.domain.generationcontext.ports.exceptions.AiProviderException;
 import com.loremind.infrastructure.web.dto.generationcontext.GenerationSuggestionsDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

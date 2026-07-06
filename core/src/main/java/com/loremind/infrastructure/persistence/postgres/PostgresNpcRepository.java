@@ -1,6 +1,6 @@
 package com.loremind.infrastructure.persistence.postgres;
 
-import com.loremind.domain.campaigncontext.Npc;
+import com.loremind.domain.campaigncontext.bestiary.Npc;
 import com.loremind.domain.campaigncontext.ports.NpcRepository;
 import com.loremind.infrastructure.persistence.entity.NpcJpaEntity;
 import com.loremind.infrastructure.persistence.jpa.NpcJpaRepository;

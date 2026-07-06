@@ -1,6 +1,6 @@
 package com.loremind.domain.campaigncontext.ports;
 
-import com.loremind.domain.campaigncontext.SceneDraft;
+import com.loremind.domain.campaigncontext.generation.SceneDraft;
 
 import java.util.List;
 

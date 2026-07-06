@@ -1,7 +1,7 @@
 package com.loremind.infrastructure.ai;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.loremind.domain.campaigncontext.ports.NotebookException;
+import com.loremind.domain.campaigncontext.ports.exceptions.NotebookException;
 import com.loremind.domain.campaigncontext.ports.NotebookIndexer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

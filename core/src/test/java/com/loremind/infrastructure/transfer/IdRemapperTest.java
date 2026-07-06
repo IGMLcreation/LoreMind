@@ -1,8 +1,8 @@
 package com.loremind.infrastructure.transfer;
 
-import com.loremind.domain.campaigncontext.ArcType;
-import com.loremind.domain.campaigncontext.Prerequisite;
-import com.loremind.domain.campaigncontext.SceneBranch;
+import com.loremind.domain.campaigncontext.structure.ArcType;
+import com.loremind.domain.campaigncontext.quest.Prerequisite;
+import com.loremind.domain.campaigncontext.structure.SceneBranch;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

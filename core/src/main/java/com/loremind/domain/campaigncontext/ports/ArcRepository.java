@@ -1,6 +1,6 @@
 package com.loremind.domain.campaigncontext.ports;
 
-import com.loremind.domain.campaigncontext.Arc;
+import com.loremind.domain.campaigncontext.structure.Arc;
 import java.util.List;
 import java.util.Optional;
 

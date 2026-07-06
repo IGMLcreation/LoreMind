@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loremind.application.gamesystemcontext.GameSystemService;
 import com.loremind.domain.gamesystemcontext.GameSystem;
 import com.loremind.domain.gamesystemcontext.RulesImportResult;
-import com.loremind.domain.gamesystemcontext.ports.RulesImportException;
+import com.loremind.domain.gamesystemcontext.ports.exceptions.RulesImportException;
 import com.loremind.infrastructure.web.dto.gamesystemcontext.GameSystemDTO;
 import com.loremind.infrastructure.web.dto.gamesystemcontext.RulesImportResponseDTO;
 import com.loremind.infrastructure.web.mapper.GameSystemMapper;

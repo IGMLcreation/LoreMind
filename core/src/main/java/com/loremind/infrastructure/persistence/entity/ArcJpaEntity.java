@@ -1,6 +1,6 @@
 package com.loremind.infrastructure.persistence.entity;
 
-import com.loremind.domain.campaigncontext.ArcType;
+import com.loremind.domain.campaigncontext.structure.ArcType;
 import com.loremind.infrastructure.persistence.converter.StringListJsonConverter;
 import jakarta.persistence.*;
 import org.hibernate.annotations.ColumnDefault;

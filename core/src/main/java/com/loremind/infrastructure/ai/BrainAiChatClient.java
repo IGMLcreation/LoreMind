@@ -1,9 +1,10 @@
 package com.loremind.infrastructure.ai;
 
 import com.loremind.domain.generationcontext.ChatRequest;
+import com.loremind.domain.generationcontext.ChatStreamCallbacks;
 import com.loremind.domain.generationcontext.ChatUsage;
 import com.loremind.domain.generationcontext.ports.AiChatProvider;
-import com.loremind.domain.generationcontext.ports.AiProviderException;
+import com.loremind.domain.generationcontext.ports.exceptions.AiProviderException;
 import com.loremind.infrastructure.web.config.UserLanguageHolder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -15,7 +16,6 @@ import reactor.core.publisher.Flux;
 
 import java.time.Duration;
 import java.util.Map;
-import java.util.function.Consumer;
 
 /**
  * Adapter de sortie (Architecture Hexagonale) : implémente AiChatProvider
@@ -54,13 +54,7 @@ public class BrainAiChatClient implements AiChatProvider {
     }
 
     @Override
-    public void streamChat(
-            ChatRequest request,
-            Consumer<ChatUsage> onUsage,
-            Consumer<String> onToken,
-            Runnable onComplete,
-            Consumer<Throwable> onError) {
-
+    public void streamChat(ChatRequest request, ChatStreamCallbacks callbacks) {
         Map<String, Object> payload = payloadBuilder.build(request);
 
         Flux<ServerSentEvent<String>> flux = webClient.post()
@@ -77,26 +71,22 @@ public class BrainAiChatClient implements AiChatProvider {
             // au contrat synchrone du port. L'appelant choisit le thread.
             flux
                 .timeout(Duration.ofSeconds(120))
-                .doOnNext(sse -> handleEvent(sse, onUsage, onToken, onError))
+                .doOnNext(sse -> handleEvent(sse, callbacks))
                 .blockLast();
-            onComplete.run();
+            callbacks.onComplete().run();
         } catch (Exception e) {
-            onError.accept(new AiProviderException(
+            callbacks.onError().accept(new AiProviderException(
                     "Erreur lors du streaming chat depuis le Brain.", e));
         }
     }
 
     /** Dispatch selon le type d'évènement SSE (data par défaut, done, error, usage). */
-    private void handleEvent(
-            ServerSentEvent<String> sse,
-            Consumer<ChatUsage> onUsage,
-            Consumer<String> onToken,
-            Consumer<Throwable> onError) {
+    private void handleEvent(ServerSentEvent<String> sse, ChatStreamCallbacks callbacks) {
         String event = sse.event();  // null si pas d'event: xxx -> data par défaut
         String data = sse.data();
 
         if ("error".equals(event)) {
-            onError.accept(new AiProviderException(
+            callbacks.onError().accept(new AiProviderException(
                     "Le Brain a signalé une erreur : " + data));
             return;
         }
@@ -105,13 +95,13 @@ public class BrainAiChatClient implements AiChatProvider {
         }
         if ("usage".equals(event)) {
             ChatUsage usage = sseParser.parseUsage(data);
-            if (usage != null) onUsage.accept(usage);
+            if (usage != null) callbacks.onUsage().accept(usage);
             return;
         }
         // Défaut : évènement data avec JSON {"token":"..."}.
         String token = sseParser.parseToken(data);
         if (token != null && !token.isEmpty()) {
-            onToken.accept(token);
+            callbacks.onToken().accept(token);
         }
     }
 }

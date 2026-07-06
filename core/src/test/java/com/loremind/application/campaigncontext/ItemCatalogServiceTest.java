@@ -1,16 +1,11 @@
 package com.loremind.application.campaigncontext;
 
-import com.loremind.domain.campaigncontext.Campaign;
-import com.loremind.domain.campaigncontext.CatalogItem;
-import com.loremind.domain.campaigncontext.ItemCatalog;
-import com.loremind.domain.campaigncontext.ports.CampaignRepository;
+import com.loremind.domain.campaigncontext.itemcatalog.CatalogItem;
+import com.loremind.domain.campaigncontext.itemcatalog.ItemCatalog;
 import com.loremind.domain.campaigncontext.ports.ItemCatalogGenerator;
 import com.loremind.domain.campaigncontext.ports.ItemCatalogRepository;
-import com.loremind.domain.gamesystemcontext.GameSystem;
-import com.loremind.domain.gamesystemcontext.ports.GameSystemRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -36,9 +31,7 @@ public class ItemCatalogServiceTest {
     @Mock
     private ItemCatalogGenerator generator;
     @Mock
-    private CampaignRepository campaignRepository;
-    @Mock
-    private GameSystemRepository gameSystemRepository;
+    private CampaignContextFormatter campaignContextFormatter;
 
     @InjectMocks
     private ItemCatalogService service;
@@ -189,10 +182,9 @@ public class ItemCatalogServiceTest {
     @Test
     void testGenerateProposal_CopiesItemsAndContext() {
         CatalogItem item = CatalogItem.builder().name("Potion").build();
-        when(generator.generate(eq("desc"), anyString()))
+        when(campaignContextFormatter.format("camp-1")).thenReturn("Campagne : Camp");
+        when(generator.generate(eq("desc"), eq("Campagne : Camp")))
                 .thenReturn(new ItemCatalogGenerator.GeneratedCatalog("Nom IA", "Desc IA", List.of(item)));
-        when(campaignRepository.findById("camp-1"))
-                .thenReturn(Optional.of(Campaign.builder().id("camp-1").name("Camp").build()));
 
         ItemCatalog result = service.generateProposal("camp-1", "desc");
 
@@ -203,9 +195,9 @@ public class ItemCatalogServiceTest {
 
     @Test
     void testGenerateProposal_NullGeneratedItems() {
+        when(campaignContextFormatter.format("camp-1")).thenReturn("");
         when(generator.generate(anyString(), anyString()))
                 .thenReturn(new ItemCatalogGenerator.GeneratedCatalog("N", "D", null));
-        when(campaignRepository.findById("camp-1")).thenReturn(Optional.empty());
 
         ItemCatalog result = service.generateProposal("camp-1", "desc");
 
@@ -214,21 +206,14 @@ public class ItemCatalogServiceTest {
     }
 
     @Test
-    void testGenerateProposal_BuildsContextWithGameSystem() {
-        when(campaignRepository.findById("camp-1")).thenReturn(Optional.of(Campaign.builder()
-                .id("camp-1").name("Camp").description(" Aventure ").gameSystemId("gs-1").build()));
-        when(gameSystemRepository.findById("gs-1"))
-                .thenReturn(Optional.of(GameSystem.builder().id("gs-1").name("Pathfinder").build()));
+    void testGenerateProposal_DelegatesContextToFormatter() {
+        when(campaignContextFormatter.format("camp-1"))
+                .thenReturn("Campagne : Camp — Aventure\nSystème de jeu : Pathfinder");
         when(generator.generate(anyString(), any()))
                 .thenReturn(new ItemCatalogGenerator.GeneratedCatalog("N", "D", List.of()));
 
         service.generateProposal("camp-1", "desc");
 
-        ArgumentCaptor<String> ctxCaptor = ArgumentCaptor.forClass(String.class);
-        verify(generator).generate(eq("desc"), ctxCaptor.capture());
-        String ctx = ctxCaptor.getValue();
-        assertTrue(ctx.contains("Camp"));
-        assertTrue(ctx.contains("Aventure"));
-        assertTrue(ctx.contains("Pathfinder"));
+        verify(generator).generate(eq("desc"), eq("Campagne : Camp — Aventure\nSystème de jeu : Pathfinder"));
     }
 }

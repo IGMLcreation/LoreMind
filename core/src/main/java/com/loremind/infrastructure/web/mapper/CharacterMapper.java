@@ -1,6 +1,6 @@
 package com.loremind.infrastructure.web.mapper;
 
-import com.loremind.domain.campaigncontext.Character;
+import com.loremind.domain.campaigncontext.bestiary.Character;
 import com.loremind.infrastructure.web.dto.campaigncontext.CharacterDTO;
 import org.springframework.stereotype.Component;
 

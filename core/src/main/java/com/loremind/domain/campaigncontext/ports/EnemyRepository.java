@@ -1,6 +1,6 @@
 package com.loremind.domain.campaigncontext.ports;
 
-import com.loremind.domain.campaigncontext.Enemy;
+import com.loremind.domain.campaigncontext.bestiary.Enemy;
 
 import java.util.List;
 import java.util.Optional;

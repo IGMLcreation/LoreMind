@@ -1,13 +1,10 @@
 package com.loremind.application.campaigncontext;
 
-import com.loremind.domain.campaigncontext.Campaign;
-import com.loremind.domain.campaigncontext.RandomTable;
+import com.loremind.domain.campaigncontext.randomtable.RandomTable;
 import com.loremind.domain.shared.ReorderSupport;
-import com.loremind.domain.campaigncontext.RandomTableEntry;
-import com.loremind.domain.campaigncontext.ports.CampaignRepository;
+import com.loremind.domain.campaigncontext.randomtable.RandomTableEntry;
 import com.loremind.domain.campaigncontext.ports.RandomTableGenerator;
 import com.loremind.domain.campaigncontext.ports.RandomTableRepository;
-import com.loremind.domain.gamesystemcontext.ports.GameSystemRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -22,18 +19,15 @@ public class RandomTableService {
 
     private final RandomTableRepository repository;
     private final RandomTableGenerator generator;
-    private final CampaignRepository campaignRepository;
-    private final GameSystemRepository gameSystemRepository;
+    private final CampaignContextFormatter campaignContextFormatter;
 
     public RandomTableService(
             RandomTableRepository repository,
             RandomTableGenerator generator,
-            CampaignRepository campaignRepository,
-            GameSystemRepository gameSystemRepository) {
+            CampaignContextFormatter campaignContextFormatter) {
         this.repository = repository;
         this.generator = generator;
-        this.campaignRepository = campaignRepository;
-        this.gameSystemRepository = gameSystemRepository;
+        this.campaignContextFormatter = campaignContextFormatter;
     }
 
     public record TableData(
@@ -90,8 +84,8 @@ public class RandomTableService {
     @org.springframework.transaction.annotation.Transactional
     public void reorderTables(List<String> orderedIds) {
         ReorderSupport.reorder(orderedIds,
-                id -> repository.findById(id).orElse(null),
-                (table, i) -> table.setOrder(i),
+                repository::findById,
+                RandomTable::setOrder,
                 repository::save);
     }
 
@@ -103,7 +97,8 @@ public class RandomTableService {
     /** Génère une PROPOSITION de table (non persistée) via l'IA, contextualisée campagne. */
     public RandomTable generateProposal(String campaignId, String description, String diceFormula) {
         String formula = (diceFormula == null || diceFormula.isBlank()) ? "1d20" : diceFormula;
-        RandomTableGenerator.GeneratedTable g = generator.generate(description, formula, buildContext(campaignId));
+        RandomTableGenerator.GeneratedTable g = generator.generate(
+                description, formula, campaignContextFormatter.format(campaignId));
         return RandomTable.builder()
                 .name(g.name())
                 .description(g.description())
@@ -115,24 +110,7 @@ public class RandomTableService {
 
     /** Brode un court récit IA sur un résultat tiré (pour la partie). */
     public String improviseRoll(String campaignId, String tableName, String resultLabel, String resultDetail) {
-        return generator.improvise(tableName, resultLabel, resultDetail, buildContext(campaignId));
-    }
-
-    /** Contexte libre (nom de campagne + description + système) pour orienter l'IA. */
-    private String buildContext(String campaignId) {
-        if (campaignId == null) return "";
-        Campaign campaign = campaignRepository.findById(campaignId).orElse(null);
-        if (campaign == null) return "";
-        StringBuilder sb = new StringBuilder();
-        sb.append("Campagne : ").append(campaign.getName());
-        if (campaign.getDescription() != null && !campaign.getDescription().isBlank()) {
-            sb.append(" — ").append(campaign.getDescription().trim());
-        }
-        if (campaign.getGameSystemId() != null && !campaign.getGameSystemId().isBlank()) {
-            gameSystemRepository.findById(campaign.getGameSystemId())
-                    .ifPresent(gs -> sb.append("\nSystème de jeu : ").append(gs.getName()));
-        }
-        return sb.toString();
+        return generator.improvise(tableName, resultLabel, resultDetail, campaignContextFormatter.format(campaignId));
     }
 
     private static List<RandomTableEntry> copyEntries(List<RandomTableEntry> entries) {

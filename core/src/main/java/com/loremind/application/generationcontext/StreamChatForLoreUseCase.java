@@ -2,7 +2,7 @@ package com.loremind.application.generationcontext;
 
 import com.loremind.domain.generationcontext.ChatMessage;
 import com.loremind.domain.generationcontext.ChatRequest;
-import com.loremind.domain.generationcontext.ChatUsage;
+import com.loremind.domain.generationcontext.ChatStreamCallbacks;
 import com.loremind.domain.generationcontext.LoreStructuralContext;
 import com.loremind.domain.generationcontext.PageContext;
 import com.loremind.domain.generationcontext.ports.AiChatProvider;
@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
 /**
  * Use case applicatif : chat conversationnel avec Structural Context d'un Lore.
@@ -61,10 +60,7 @@ public class StreamChatForLoreUseCase {
             String loreId,
             String pageId,
             List<ChatMessage> messages,
-            Consumer<ChatUsage> onUsage,
-            Consumer<String> onToken,
-            Runnable onComplete,
-            Consumer<Throwable> onError) {
+            ChatStreamCallbacks callbacks) {
 
         LoreStructuralContext loreContext = loreContextBuilder.build(loreId);
         PageContext pageContext = (pageId == null || pageId.isBlank())
@@ -77,7 +73,7 @@ public class StreamChatForLoreUseCase {
                 .pageContext(pageContext)
                 .build();
 
-        aiChatProvider.streamChat(request, onUsage, onToken, onComplete, onError);
+        aiChatProvider.streamChat(request, callbacks);
     }
 
     /**

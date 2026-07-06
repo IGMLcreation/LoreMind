@@ -1,6 +1,6 @@
 package com.loremind.infrastructure.persistence.postgres;
 
-import com.loremind.domain.campaigncontext.ProgressionStatus;
+import com.loremind.domain.campaigncontext.quest.ProgressionStatus;
 import com.loremind.domain.playcontext.QuestProgression;
 import com.loremind.domain.playcontext.ports.QuestProgressionRepository;
 import com.loremind.infrastructure.persistence.entity.QuestProgressionJpaEntity;

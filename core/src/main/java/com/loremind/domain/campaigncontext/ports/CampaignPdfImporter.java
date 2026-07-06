@@ -1,7 +1,7 @@
 package com.loremind.domain.campaigncontext.ports;
 
-import com.loremind.domain.campaigncontext.CampaignImportProgress;
-import com.loremind.domain.campaigncontext.CampaignImportProposal;
+import com.loremind.domain.campaigncontext.generation.CampaignImportProgress;
+import com.loremind.domain.campaigncontext.generation.CampaignImportProposal;
 
 import java.util.function.Consumer;
 

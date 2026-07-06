@@ -1,12 +1,12 @@
 package com.loremind.application.generationcontext;
 
-import com.loremind.domain.campaigncontext.Arc;
-import com.loremind.domain.campaigncontext.ArcType;
+import com.loremind.domain.campaigncontext.structure.Arc;
+import com.loremind.domain.campaigncontext.structure.ArcType;
 import com.loremind.domain.campaigncontext.Campaign;
-import com.loremind.domain.campaigncontext.Chapter;
-import com.loremind.domain.campaigncontext.Character;
-import com.loremind.domain.campaigncontext.Npc;
-import com.loremind.domain.campaigncontext.Scene;
+import com.loremind.domain.campaigncontext.structure.Chapter;
+import com.loremind.domain.campaigncontext.bestiary.Character;
+import com.loremind.domain.campaigncontext.bestiary.Npc;
+import com.loremind.domain.campaigncontext.structure.Scene;
 import com.loremind.domain.campaigncontext.ports.ArcRepository;
 import com.loremind.domain.campaigncontext.ports.CampaignRepository;
 import com.loremind.domain.campaigncontext.ports.ChapterRepository;
@@ -93,26 +93,26 @@ public class CampaignStructuralContextBuilder {
         // les enemyIds des pièces sans N+1 sur le repo.
         Map<String, String> enemyLabelById = enemyRepository.findByCampaignId(campaignId).stream()
                 .collect(Collectors.toMap(
-                        com.loremind.domain.campaigncontext.Enemy::getId,
+                        com.loremind.domain.campaigncontext.bestiary.Enemy::getId,
                         CampaignStructuralContextBuilder::enemyLabel,
                         (a, b) -> a));
 
         List<ArcSummary> arcs = arcRepository.findByCampaignId(campaignId).stream()
                 .sorted(Comparator.comparingInt(Arc::getOrder))
                 .map(arc -> toArcSummary(arc, enemyLabelById))
-                .collect(Collectors.toList());
+                .toList();
 
         List<CharacterSummary> characters = (playthroughId == null || playthroughId.isBlank())
                 ? List.of()
                 : characterRepository.findByPlaythroughId(playthroughId).stream()
                         .sorted(Comparator.comparingInt(Character::getOrder))
                         .map(this::toCharacterSummary)
-                        .collect(Collectors.toList());
+                        .toList();
 
         List<NpcSummary> npcs = npcRepository.findByCampaignId(campaignId).stream()
                 .sorted(Comparator.comparingInt(Npc::getOrder))
                 .map(this::toNpcSummary)
-                .collect(Collectors.toList());
+                .toList();
 
         return new CampaignStructuralContext(
                 campaign.getName(),
@@ -140,27 +140,36 @@ public class CampaignStructuralContextBuilder {
      * Snippet pour le resume IA : 1re ligne signifiante de la 1re valeur non vide
      * du template (refonte 2026-04-30 — remplace l'ancien parsing markdown).
      */
-    private static String extractSnippet(java.util.Map<String, String> values) {
+    private static String extractSnippet(Map<String, String> values) {
         if (values == null || values.isEmpty()) return "";
-        for (String value : values.values()) {
-            if (value == null || value.isBlank()) continue;
-            String firstLine = value.lines()
-                    .map(String::strip)
-                    .filter(l -> !l.isEmpty() && !l.startsWith("#"))
-                    .findFirst()
-                    .orElse("");
-            if (firstLine.isEmpty()) continue;
-            if (firstLine.length() <= CHARACTER_SNIPPET_MAX_LEN) return firstLine;
-            return firstLine.substring(0, CHARACTER_SNIPPET_MAX_LEN - 1).stripTrailing() + "…";
-        }
-        return "";
+        return values.values().stream()
+                .filter(v -> v != null && !v.isBlank())
+                .map(CampaignStructuralContextBuilder::firstMeaningfulLine)
+                .filter(l -> !l.isEmpty())
+                .findFirst()
+                .map(CampaignStructuralContextBuilder::truncateSnippet)
+                .orElse("");
+    }
+
+    /** 1re ligne non vide et non-titre ("# ...") d'une valeur de template, ou "" si aucune. */
+    private static String firstMeaningfulLine(String value) {
+        return value.lines()
+                .map(String::strip)
+                .filter(l -> !l.isEmpty() && !l.startsWith("#"))
+                .findFirst()
+                .orElse("");
+    }
+
+    private static String truncateSnippet(String firstLine) {
+        if (firstLine.length() <= CHARACTER_SNIPPET_MAX_LEN) return firstLine;
+        return firstLine.substring(0, CHARACTER_SNIPPET_MAX_LEN - 1).stripTrailing() + "…";
     }
 
     private ArcSummary toArcSummary(Arc arc, Map<String, String> enemyLabelById) {
         List<ChapterSummary> chapters = chapterRepository.findByArcId(arc.getId()).stream()
                 .sorted(Comparator.comparingInt(Chapter::getOrder))
                 .map(chapter -> toChapterSummary(chapter, enemyLabelById))
-                .collect(Collectors.toList());
+                .toList();
         return new ArcSummary(
                 arc.getName(),
                 arc.getDescription(),
@@ -181,7 +190,7 @@ public class CampaignStructuralContextBuilder {
 
         List<SceneSummary> summaries = scenes.stream()
                 .map(s -> toSceneSummary(s, nameById, enemyLabelById))
-                .collect(Collectors.toList());
+                .toList();
 
         return new ChapterSummary(
                 chapter.getName(),
@@ -199,7 +208,7 @@ public class CampaignStructuralContextBuilder {
                             b.label(),
                             nameById.getOrDefault(b.targetSceneId(), "(scène inconnue)"),
                             b.condition()))
-                    .collect(Collectors.toList());
+                    .toList();
 
         List<RoomSummary> rooms = toRoomSummaries(scene, enemyLabelById);
 
@@ -221,8 +230,8 @@ public class CampaignStructuralContextBuilder {
         if (scene.getRooms() == null || scene.getRooms().isEmpty()) return List.of();
         Map<String, String> nameById = scene.getRooms().stream()
                 .collect(Collectors.toMap(
-                        com.loremind.domain.campaigncontext.Room::getId,
-                        com.loremind.domain.campaigncontext.Room::getName,
+                        com.loremind.domain.campaigncontext.structure.Room::getId,
+                        com.loremind.domain.campaigncontext.structure.Room::getName,
                         (a, b) -> a));
         return scene.getRooms().stream()
                 .map(r -> {
@@ -233,12 +242,12 @@ public class CampaignStructuralContextBuilder {
                                         b.label(),
                                         nameById.getOrDefault(b.targetRoomId(), "(pièce inconnue)"),
                                         b.condition()))
-                                .collect(Collectors.toList());
+                                .toList();
                     return new RoomSummary(
                             r.getName(), r.getFloor(), r.getDescription(),
                             roomEnemiesText(r, enemyLabelById), hints);
                 })
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -247,7 +256,7 @@ public class CampaignStructuralContextBuilder {
      * libre. L'un ou l'autre peut être vide.
      */
     private static String roomEnemiesText(
-            com.loremind.domain.campaigncontext.Room room, Map<String, String> enemyLabelById) {
+            com.loremind.domain.campaigncontext.structure.Room room, Map<String, String> enemyLabelById) {
         String linked = room.getEnemyIds() == null ? "" : room.getEnemyIds().stream()
                 .map(enemyLabelById::get)
                 .filter(l -> l != null && !l.isBlank())
@@ -259,7 +268,7 @@ public class CampaignStructuralContextBuilder {
     }
 
     /** Libellé court d'une fiche du bestiaire : « Nom (niveau) » ou « Nom ». */
-    private static String enemyLabel(com.loremind.domain.campaigncontext.Enemy enemy) {
+    private static String enemyLabel(com.loremind.domain.campaigncontext.bestiary.Enemy enemy) {
         String level = enemy.getLevel() == null ? "" : enemy.getLevel().strip();
         return level.isEmpty() ? enemy.getName() : enemy.getName() + " (" + level + ")";
     }

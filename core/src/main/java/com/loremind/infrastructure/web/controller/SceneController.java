@@ -1,7 +1,7 @@
 package com.loremind.infrastructure.web.controller;
 
 import com.loremind.application.campaigncontext.SceneService;
-import com.loremind.domain.campaigncontext.Scene;
+import com.loremind.domain.campaigncontext.structure.Scene;
 import com.loremind.infrastructure.web.dto.campaigncontext.SceneDTO;
 import com.loremind.infrastructure.web.mapper.SceneMapper;
 import org.springframework.http.ResponseEntity;

@@ -2,7 +2,7 @@ package com.loremind.infrastructure.web.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loremind.application.campaigncontext.CampaignImportService;
-import com.loremind.domain.campaigncontext.CampaignImportProposal;
+import com.loremind.domain.campaigncontext.generation.CampaignImportProposal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;

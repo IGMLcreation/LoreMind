@@ -5,6 +5,7 @@ import com.loremind.application.generationcontext.StreamChatForCampaignUseCase;
 import com.loremind.application.generationcontext.StreamChatForLoreUseCase;
 import com.loremind.application.generationcontext.StreamChatForSessionUseCase;
 import com.loremind.domain.generationcontext.ChatMessage;
+import com.loremind.domain.generationcontext.ChatStreamCallbacks;
 import com.loremind.domain.generationcontext.ChatUsage;
 import com.loremind.infrastructure.web.dto.generationcontext.ChatMessageDTO;
 import com.loremind.infrastructure.web.dto.generationcontext.ChatStreamCampaignRequestDTO;
@@ -22,7 +23,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.util.List;
-import java.util.function.Consumer;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
@@ -79,14 +79,12 @@ class AiChatControllerTest {
     void chatStream_streamsUsageTokenDone() throws Exception {
         // Le use case mocke joue : usage -> 1 token -> fin.
         doAnswer(inv -> {
-            Consumer<ChatUsage> onUsage = inv.getArgument(3);
-            Consumer<String> onToken = inv.getArgument(4);
-            Runnable onComplete = inv.getArgument(5);
-            onUsage.accept(new ChatUsage(10, 20, 30, 8000));
-            onToken.accept("Bonjour");
-            onComplete.run();
+            ChatStreamCallbacks callbacks = inv.getArgument(3);
+            callbacks.onUsage().accept(new ChatUsage(10, 20, 30, 8000));
+            callbacks.onToken().accept("Bonjour");
+            callbacks.onComplete().run();
             return null;
-        }).when(loreUseCase).execute(any(), any(), any(), any(), any(), any(), any());
+        }).when(loreUseCase).execute(any(), any(), any(), any());
 
         ChatStreamRequestDTO body = new ChatStreamRequestDTO();
         body.setLoreId("lore-1");
@@ -104,8 +102,8 @@ class AiChatControllerTest {
 
     @Test
     void chatStream_passesDomainMessagesToUseCase() throws Exception {
-        doAnswer(inv -> { ((Runnable) inv.getArgument(5)).run(); return null; })
-                .when(loreUseCase).execute(any(), any(), any(), any(), any(), any(), any());
+        doAnswer(inv -> { ((ChatStreamCallbacks) inv.getArgument(3)).onComplete().run(); return null; })
+                .when(loreUseCase).execute(any(), any(), any(), any());
 
         ChatStreamRequestDTO body = new ChatStreamRequestDTO();
         body.setLoreId("lore-1");
@@ -123,7 +121,7 @@ class AiChatControllerTest {
         verify(loreUseCase).execute(
                 org.mockito.ArgumentMatchers.eq("lore-1"),
                 org.mockito.ArgumentMatchers.eq("page-9"),
-                captor.capture(), any(), any(), any(), any());
+                captor.capture(), any());
         List<ChatMessage> passed = captor.getValue();
         org.junit.jupiter.api.Assertions.assertEquals(2, passed.size());
         org.junit.jupiter.api.Assertions.assertEquals("user", passed.get(0).role());
@@ -133,10 +131,10 @@ class AiChatControllerTest {
     @Test
     void chatStream_useCaseInvokesError_emitsError() throws Exception {
         doAnswer(inv -> {
-            Consumer<Throwable> onError = inv.getArgument(6);
-            onError.accept(new RuntimeException("brain HS"));
+            ChatStreamCallbacks callbacks = inv.getArgument(3);
+            callbacks.onError().accept(new RuntimeException("brain HS"));
             return null;
-        }).when(loreUseCase).execute(any(), any(), any(), any(), any(), any(), any());
+        }).when(loreUseCase).execute(any(), any(), any(), any());
 
         ChatStreamRequestDTO body = new ChatStreamRequestDTO();
         body.setLoreId("lore-1");
@@ -152,7 +150,7 @@ class AiChatControllerTest {
     void chatStream_useCaseThrows_emitsError() throws Exception {
         // Lore introuvable -> le use case leve, le controller catch et fail(emitter).
         doThrow(new IllegalArgumentException("Lore introuvable"))
-                .when(loreUseCase).execute(any(), any(), any(), any(), any(), any(), any());
+                .when(loreUseCase).execute(any(), any(), any(), any());
 
         ChatStreamRequestDTO body = new ChatStreamRequestDTO();
         body.setLoreId("missing");
@@ -168,12 +166,11 @@ class AiChatControllerTest {
     @Test
     void chatStreamCampaign_streamsTokenThenDone() throws Exception {
         doAnswer(inv -> {
-            Consumer<String> onToken = inv.getArgument(5);
-            Runnable onComplete = inv.getArgument(6);
-            onToken.accept("Campagne");
-            onComplete.run();
+            ChatStreamCallbacks callbacks = inv.getArgument(4);
+            callbacks.onToken().accept("Campagne");
+            callbacks.onComplete().run();
             return null;
-        }).when(campaignUseCase).execute(any(), any(), any(), any(), any(), any(), any(), any());
+        }).when(campaignUseCase).execute(any(), any(), any(), any(), any());
 
         ChatStreamCampaignRequestDTO body = new ChatStreamCampaignRequestDTO();
         body.setCampaignId("camp-1");
@@ -191,7 +188,7 @@ class AiChatControllerTest {
     @Test
     void chatStreamCampaign_useCaseThrows_emitsError() throws Exception {
         doThrow(new IllegalArgumentException("Campagne introuvable"))
-                .when(campaignUseCase).execute(any(), any(), any(), any(), any(), any(), any(), any());
+                .when(campaignUseCase).execute(any(), any(), any(), any(), any());
 
         ChatStreamCampaignRequestDTO body = new ChatStreamCampaignRequestDTO();
         body.setCampaignId("missing");
@@ -207,12 +204,11 @@ class AiChatControllerTest {
     @Test
     void chatStreamSession_streamsTokenThenDone() throws Exception {
         doAnswer(inv -> {
-            Consumer<String> onToken = inv.getArgument(3);
-            Runnable onComplete = inv.getArgument(4);
-            onToken.accept("Session");
-            onComplete.run();
+            ChatStreamCallbacks callbacks = inv.getArgument(2);
+            callbacks.onToken().accept("Session");
+            callbacks.onComplete().run();
             return null;
-        }).when(sessionUseCase).execute(any(), any(), any(), any(), any(), any());
+        }).when(sessionUseCase).execute(any(), any(), any());
 
         ChatStreamSessionRequestDTO body = new ChatStreamSessionRequestDTO();
         body.setSessionId("sess-1");
@@ -228,7 +224,7 @@ class AiChatControllerTest {
     @Test
     void chatStreamSession_useCaseThrows_emitsError() throws Exception {
         doThrow(new IllegalArgumentException("Session introuvable"))
-                .when(sessionUseCase).execute(any(), any(), any(), any(), any(), any());
+                .when(sessionUseCase).execute(any(), any(), any());
 
         ChatStreamSessionRequestDTO body = new ChatStreamSessionRequestDTO();
         body.setSessionId("missing");

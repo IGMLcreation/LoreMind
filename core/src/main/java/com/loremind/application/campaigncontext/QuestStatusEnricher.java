@@ -1,9 +1,9 @@
 package com.loremind.application.campaigncontext;
 
-import com.loremind.domain.campaigncontext.PrerequisiteEvaluator;
-import com.loremind.domain.campaigncontext.ProgressionStatus;
-import com.loremind.domain.campaigncontext.Quest;
-import com.loremind.domain.campaigncontext.QuestStatus;
+import com.loremind.domain.campaigncontext.quest.PrerequisiteEvaluator;
+import com.loremind.domain.campaigncontext.quest.ProgressionStatus;
+import com.loremind.domain.campaigncontext.quest.Quest;
+import com.loremind.domain.campaigncontext.quest.QuestStatus;
 import com.loremind.domain.playcontext.QuestProgression;
 import com.loremind.domain.playcontext.ports.PlaythroughFlagRepository;
 import com.loremind.domain.playcontext.ports.PlaythroughRepository;

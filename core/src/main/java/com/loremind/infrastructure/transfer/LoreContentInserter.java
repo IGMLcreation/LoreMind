@@ -104,8 +104,8 @@ class LoreContentInserter {
             e.setTemplateId(IdRemapper.remapId(maps.templateMap, d.templateId()));
             e.setTitle(d.title());
             e.setValues(d.values());
-            e.setImageValues(d.imageValues());
-            e.setImageFraming(d.imageFraming());
+            e.setImageValues(IdRemapper.remapImageValues(maps.imageMap, d.imageValues()));
+            e.setImageFraming(IdRemapper.remapImageFraming(maps.imageMap, d.imageFraming()));
             e.setKeyValueValues(d.keyValueValues());
             e.setTableValues(d.tableValues());
             e.setNotes(d.notes());

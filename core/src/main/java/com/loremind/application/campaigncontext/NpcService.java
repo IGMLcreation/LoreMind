@@ -1,15 +1,11 @@
 package com.loremind.application.campaigncontext;
 
-import com.loremind.domain.campaigncontext.Npc;
+import com.loremind.domain.campaigncontext.bestiary.Npc;
 import com.loremind.domain.shared.ReorderSupport;
 import com.loremind.domain.campaigncontext.ports.NpcRepository;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Service d'application pour les fiches de PNJ (campagne).
@@ -92,7 +88,7 @@ public class NpcService {
     public void reorderNpcs(String folder, List<String> orderedIds) {
         String f = normalizeFolder(folder);
         ReorderSupport.reorder(orderedIds,
-                id -> npcRepository.findById(id).orElse(null),
+                npcRepository::findById,
                 (npc, i) -> { npc.setFolder(f); npc.setOrder(i); },
                 npcRepository::save);
     }

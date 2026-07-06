@@ -3,7 +3,7 @@ package com.loremind.infrastructure.ai;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loremind.domain.campaigncontext.ports.NotebookChatStreamer.Msg;
 import com.loremind.domain.campaigncontext.ports.NotebookChatStreamer.Progress;
-import com.loremind.domain.campaigncontext.ports.NotebookException;
+import com.loremind.domain.campaigncontext.ports.exceptions.NotebookException;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -66,11 +66,12 @@ class BrainNotebookChatClientTest {
                     List.of(new Msg("user", "Bonjour")),
                     "ctx",
                     deep,
-                    sources::set,
-                    tokens::append,
-                    progresses::add,
-                    () -> done.set(true),
-                    error::set);
+                    new BrainNotebookChatClient.Callbacks(
+                            sources::set,
+                            tokens::append,
+                            progresses::add,
+                            () -> done.set(true),
+                            error::set));
         }
     }
 
@@ -190,11 +191,8 @@ class BrainNotebookChatClientTest {
                 List.of(new Msg("user", "hi")),
                 null,
                 false,
-                json -> {},
-                tok -> {},
-                p -> {},
-                () -> done.set(true),
-                err -> {});
+                new BrainNotebookChatClient.Callbacks(
+                        json -> {}, tok -> {}, p -> {}, () -> done.set(true), err -> {}));
 
         assertTrue(done.get());
     }

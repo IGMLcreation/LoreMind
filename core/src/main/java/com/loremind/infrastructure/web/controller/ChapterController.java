@@ -1,7 +1,7 @@
 package com.loremind.infrastructure.web.controller;
 
 import com.loremind.application.campaigncontext.ChapterService;
-import com.loremind.domain.campaigncontext.Chapter;
+import com.loremind.domain.campaigncontext.structure.Chapter;
 import com.loremind.infrastructure.web.dto.campaigncontext.ChapterDTO;
 import com.loremind.infrastructure.web.mapper.ChapterMapper;
 import org.springframework.http.ResponseEntity;

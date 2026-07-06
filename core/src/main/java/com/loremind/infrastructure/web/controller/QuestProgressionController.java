@@ -1,7 +1,7 @@
 package com.loremind.infrastructure.web.controller;
 
 import com.loremind.application.playcontext.ClockService;
-import com.loremind.domain.campaigncontext.ProgressionStatus;
+import com.loremind.domain.campaigncontext.quest.ProgressionStatus;
 import com.loremind.domain.playcontext.ports.QuestProgressionRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

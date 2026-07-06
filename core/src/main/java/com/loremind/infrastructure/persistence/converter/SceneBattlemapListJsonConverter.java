@@ -2,7 +2,7 @@ package com.loremind.infrastructure.persistence.converter;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.loremind.domain.campaigncontext.SceneBattlemap;
+import com.loremind.domain.campaigncontext.structure.SceneBattlemap;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 

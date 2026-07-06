@@ -2,8 +2,8 @@ package com.loremind.infrastructure.web.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loremind.application.campaigncontext.CampaignImportService;
-import com.loremind.domain.campaigncontext.CampaignImportProgress;
-import com.loremind.domain.campaigncontext.CampaignImportProposal;
+import com.loremind.domain.campaigncontext.generation.CampaignImportProgress;
+import com.loremind.domain.campaigncontext.generation.CampaignImportProposal;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.mock.web.MockMultipartFile;

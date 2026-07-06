@@ -4,6 +4,7 @@ import com.loremind.application.generationcontext.StreamChatForCampaignUseCase;
 import com.loremind.application.generationcontext.StreamChatForLoreUseCase;
 import com.loremind.application.generationcontext.StreamChatForSessionUseCase;
 import com.loremind.domain.generationcontext.ChatMessage;
+import com.loremind.domain.generationcontext.ChatStreamCallbacks;
 import com.loremind.domain.generationcontext.ChatUsage;
 import com.loremind.infrastructure.web.dto.generationcontext.ChatMessageDTO;
 import com.loremind.infrastructure.web.dto.generationcontext.ChatStreamCampaignRequestDTO;
@@ -98,12 +99,7 @@ public class AiChatController {
     private void runLoreStreaming(
             SseEmitter emitter, String loreId, String pageId, List<ChatMessage> messages) {
         try {
-            streamChatForLoreUseCase.execute(
-                    loreId, pageId, messages,
-                    usage -> sendUsage(emitter, usage),
-                    token -> sendToken(emitter, token),
-                    () -> complete(emitter),
-                    error -> fail(emitter, error));
+            streamChatForLoreUseCase.execute(loreId, pageId, messages, callbacksFor(emitter));
         } catch (IllegalArgumentException e) {
             // Lore ou Page introuvable : on envoie un event error puis on termine proprement.
             fail(emitter, e);
@@ -120,11 +116,7 @@ public class AiChatController {
             List<ChatMessage> messages) {
         try {
             streamChatForCampaignUseCase.execute(
-                    campaignId, entityType, entityId, messages,
-                    usage -> sendUsage(emitter, usage),
-                    token -> sendToken(emitter, token),
-                    () -> complete(emitter),
-                    error -> fail(emitter, error));
+                    campaignId, entityType, entityId, messages, callbacksFor(emitter));
         } catch (Exception e) {
             fail(emitter, e);
         }
@@ -135,15 +127,19 @@ public class AiChatController {
             String sessionId,
             List<ChatMessage> messages) {
         try {
-            streamChatForSessionUseCase.execute(
-                    sessionId, messages,
-                    usage -> sendUsage(emitter, usage),
-                    token -> sendToken(emitter, token),
-                    () -> complete(emitter),
-                    error -> fail(emitter, error));
+            streamChatForSessionUseCase.execute(sessionId, messages, callbacksFor(emitter));
         } catch (Exception e) {
             fail(emitter, e);
         }
+    }
+
+    /** Callbacks de streaming qui écrivent chaque évènement sur cet emitter SSE. */
+    private ChatStreamCallbacks callbacksFor(SseEmitter emitter) {
+        return new ChatStreamCallbacks(
+                usage -> sendUsage(emitter, usage),
+                token -> sendToken(emitter, token),
+                () -> complete(emitter),
+                error -> fail(emitter, error));
     }
 
     // --- Helpers SSE (un seul point d'écriture par type d'événement) --------

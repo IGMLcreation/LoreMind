@@ -1,7 +1,7 @@
 package com.loremind.infrastructure.persistence.postgres;
 
-import com.loremind.domain.campaigncontext.RandomTable;
-import com.loremind.domain.campaigncontext.RandomTableEntry;
+import com.loremind.domain.campaigncontext.randomtable.RandomTable;
+import com.loremind.domain.campaigncontext.randomtable.RandomTableEntry;
 import com.loremind.domain.campaigncontext.ports.RandomTableRepository;
 import com.loremind.infrastructure.persistence.entity.RandomTableEntryJpaEntity;
 import com.loremind.infrastructure.persistence.entity.RandomTableJpaEntity;

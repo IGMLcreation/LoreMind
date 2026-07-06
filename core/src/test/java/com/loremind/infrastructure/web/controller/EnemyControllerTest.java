@@ -2,7 +2,7 @@ package com.loremind.infrastructure.web.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loremind.domain.campaigncontext.Campaign;
-import com.loremind.domain.campaigncontext.Enemy;
+import com.loremind.domain.campaigncontext.bestiary.Enemy;
 import com.loremind.domain.campaigncontext.ports.CampaignRepository;
 import com.loremind.domain.campaigncontext.ports.EnemyRepository;
 import org.junit.jupiter.api.BeforeEach;

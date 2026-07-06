@@ -1,9 +1,9 @@
 package com.loremind.application.campaigncontext;
 
 import com.loremind.application.playcontext.PlaythroughService;
-import com.loremind.domain.campaigncontext.Arc;
+import com.loremind.domain.campaigncontext.structure.Arc;
 import com.loremind.domain.campaigncontext.Campaign;
-import com.loremind.domain.campaigncontext.Chapter;
+import com.loremind.domain.campaigncontext.structure.Chapter;
 import com.loremind.domain.campaigncontext.ports.ArcRepository;
 import com.loremind.domain.campaigncontext.ports.CampaignRepository;
 import com.loremind.domain.campaigncontext.ports.ChapterRepository;

@@ -1,8 +1,9 @@
 package com.loremind.infrastructure.ai;
 
 import com.loremind.domain.generationcontext.ChatRequest;
+import com.loremind.domain.generationcontext.ChatStreamCallbacks;
 import com.loremind.domain.generationcontext.ChatUsage;
-import com.loremind.domain.generationcontext.ports.AiProviderException;
+import com.loremind.domain.generationcontext.ports.exceptions.AiProviderException;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -71,6 +72,7 @@ class BrainAiChatClientTest {
     private final Consumer<String> onToken = tokens::add;
     private final Runnable onComplete = () -> completed.set(true);
     private final Consumer<Throwable> onError = error::set;
+    private final ChatStreamCallbacks callbacks = new ChatStreamCallbacks(onUsage, onToken, onComplete, onError);
 
     @Test
     void flux_complet_parse_usage_et_token_puis_complete() {
@@ -80,7 +82,7 @@ class BrainAiChatClientTest {
                 "event:done\ndata:{}\n\n";
         BrainAiChatClient client = clientWithSse(sse);
 
-        client.streamChat(minimalRequest(), onUsage, onToken, onComplete, onError);
+        client.streamChat(minimalRequest(), callbacks);
 
         // usage parsé et propagé
         assertThat(usages).hasSize(1);
@@ -101,7 +103,7 @@ class BrainAiChatClientTest {
                 "event:done\ndata:{}\n\n";
         BrainAiChatClient client = clientWithSse(sse);
 
-        client.streamChat(minimalRequest(), onUsage, onToken, onComplete, onError);
+        client.streamChat(minimalRequest(), callbacks);
 
         assertThat(tokens).containsExactly("Bon", "jour");
         assertThat(completed).isTrue();
@@ -115,7 +117,7 @@ class BrainAiChatClientTest {
                 "event:done\ndata:{}\n\n";
         BrainAiChatClient client = clientWithSse(sse);
 
-        client.streamChat(minimalRequest(), onUsage, onToken, onComplete, onError);
+        client.streamChat(minimalRequest(), callbacks);
 
         assertThat(error.get())
                 .isInstanceOf(AiProviderException.class)
@@ -131,7 +133,7 @@ class BrainAiChatClientTest {
                 "event:done\ndata:{}\n\n";
         BrainAiChatClient client = clientWithSse(sse);
 
-        client.streamChat(minimalRequest(), onUsage, onToken, onComplete, onError);
+        client.streamChat(minimalRequest(), callbacks);
 
         assertThat(tokens).isEmpty();
         assertThat(completed).isTrue();
@@ -146,7 +148,7 @@ class BrainAiChatClientTest {
                 "event:done\ndata:{}\n\n";
         BrainAiChatClient client = clientWithSse(sse);
 
-        client.streamChat(minimalRequest(), onUsage, onToken, onComplete, onError);
+        client.streamChat(minimalRequest(), callbacks);
 
         // Les champs absents tombent à 0 (parser tolérant).
         assertThat(usages).containsExactly(new ChatUsage(5, 0, 0, 0));
@@ -156,7 +158,7 @@ class BrainAiChatClientTest {
     void erreur_transport_declenche_onError_avec_AiProviderException() {
         BrainAiChatClient client = clientErroring();
 
-        client.streamChat(minimalRequest(), onUsage, onToken, onComplete, onError);
+        client.streamChat(minimalRequest(), callbacks);
 
         assertThat(error.get())
                 .isInstanceOf(AiProviderException.class)
@@ -170,7 +172,7 @@ class BrainAiChatClientTest {
         // Flux SSE vide : aucun évènement, blockLast renvoie null, onComplete appelé.
         BrainAiChatClient client = clientWithSse("");
 
-        client.streamChat(minimalRequest(), onUsage, onToken, onComplete, onError);
+        client.streamChat(minimalRequest(), callbacks);
 
         assertThat(tokens).isEmpty();
         assertThat(usages).isEmpty();

@@ -27,8 +27,13 @@ import java.util.regex.Pattern;
 @Service
 public class GameSystemContextBuilder {
 
-    /** Matche "## Titre" en début de ligne (multiline). Capture le titre en groupe 1. */
-    private static final Pattern H2_HEADER = Pattern.compile("(?m)^##\\s+(.+?)\\s*$");
+    /**
+     * Matche "## Titre" en début de ligne (multiline). Capture le titre en groupe 1.
+     * Le titre est forcé à commencer par un caractère non-blanc ({@code \S.*}) : la
+     * frontière entre les espaces de tête et le titre devient non ambiguë (classes de
+     * caractères disjointes), ce qui élimine tout risque de backtracking polynomial.
+     */
+    private static final Pattern H2_HEADER = Pattern.compile("(?m)^##\\s+(\\S.*)$");
 
     private final GameSystemRepository gameSystemRepository;
 

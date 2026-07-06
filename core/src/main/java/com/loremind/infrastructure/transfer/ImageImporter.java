@@ -7,7 +7,6 @@ import com.loremind.infrastructure.transfer.dto.ContentExport;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -17,6 +16,12 @@ import java.util.Map;
  * Les binaires sont stockés sous LEUR CLÉ D'ORIGINE (pas de remapping de clé) :
  * une image dont la clé existe déjà est RÉUTILISÉE (pas de réupload), pour éviter
  * les doublons quand on agrège plusieurs exports dans la même base.
+ * <p>
+ * En revanche l'ID de ligne {@code images} est REMAPPÉ (comme tout le reste en mode
+ * fusion) : on alimente {@link ImportIdMaps#imageMap} {@code ancienId → nouvelId} pour
+ * que les entités importées (portraits, illustrations, galeries, plans de salle)
+ * pointent la bonne image sur la machine cible. Sans ce remap, un export repris sur
+ * une autre base montre des images absentes ou mélangées.
  */
 @Component
 class ImageImporter {
@@ -30,45 +35,60 @@ class ImageImporter {
     }
 
     /**
-     * Réécrit les binaires d'images (clé préservée) et leurs métadonnées.
+     * Réécrit les binaires d'images (clé préservée) + métadonnées, et remplit la map de
+     * remapping des ids d'images.
+     * <p>
+     * On itère sur les MÉTADONNÉES ({@code export.images()}) et non sur les binaires, car
+     * c'est là que vit l'{@code ancien id} nécessaire au remapping. Une image déjà présente
+     * (même clé) est réutilisée : son id EXISTANT devient la cible du remap.
      *
-     * @param export        contenu importé (source des métadonnées par clé)
-     * @param imageBinaries  {@code storageKey → binaire} lus depuis le zip
-     * @param result         compteurs d'images (uploadées / réutilisées) à incrémenter
+     * @param export        contenu importé (source des métadonnées, dont l'ancien id)
+     * @param imageBinaries {@code storageKey → binaire} lus depuis le zip
+     * @param maps          état de remapping : {@code imageMap} est alimentée ici
+     * @param result        compteurs d'images (uploadées / réutilisées) à incrémenter
      */
     void importImages(ContentExport export,
                       Map<String, byte[]> imageBinaries,
+                      ImportIdMaps maps,
                       ImportResult.Builder result) {
-        // Index des métadonnées d'image par clé (depuis le data.json).
-        Map<String, ContentExport.ImageDto> metaByKey = new HashMap<>();
-        for (ContentExport.ImageDto img : nullSafe(export.images())) {
-            if (img.storageKey() != null) metaByKey.put(img.storageKey(), img);
-        }
+        for (ContentExport.ImageDto meta : nullSafe(export.images())) {
+            String storageKey = meta.storageKey();
+            if (storageKey == null || storageKey.isBlank()) continue;
 
-        for (Map.Entry<String, byte[]> bin : imageBinaries.entrySet()) {
-            String storageKey = bin.getKey();
-            byte[] data = bin.getValue();
-            if (imageRepo.findByStorageKey(storageKey).isPresent()) {
-                // Image déjà présente : on réutilise, pas de réupload (éviter doublon).
+            var existing = imageRepo.findByStorageKey(storageKey);
+            if (existing.isPresent()) {
+                // Image déjà présente : réutilisée (pas de réupload). L'ancien id pointe
+                // désormais la ligne existante.
+                mapId(maps, meta.id(), existing.get().getId());
                 result.imageReused();
                 continue;
             }
-            ContentExport.ImageDto meta = metaByKey.get(storageKey);
-            String contentType = meta != null && meta.contentType() != null
+
+            byte[] data = imageBinaries.get(storageKey);
+            if (data == null) {
+                // Métadonnée sans binaire (ex. image orpheline non embarquée) : rien à
+                // matérialiser, pas de cible de remap.
+                continue;
+            }
+
+            String contentType = meta.contentType() != null
                     ? meta.contentType() : guessContentType(storageKey);
-            long size = meta != null ? meta.sizeBytes() : data.length;
+            long size = meta.sizeBytes() > 0 ? meta.sizeBytes() : data.length;
 
             imageStorage.store(storageKey, contentType, new ByteArrayInputStream(data), data.length);
 
             ImageJpaEntity e = new ImageJpaEntity();
-            e.setFilename(meta != null && meta.filename() != null
-                    ? meta.filename() : fileNameOf(storageKey));
+            e.setFilename(meta.filename() != null ? meta.filename() : fileNameOf(storageKey));
             e.setContentType(contentType);
             e.setSizeBytes(size);
             e.setStorageKey(storageKey);
-            imageRepo.save(e);
+            mapId(maps, meta.id(), imageRepo.save(e).getId());
             result.imageUploaded();
         }
+    }
+
+    private static void mapId(ImportIdMaps maps, Long oldId, Long newId) {
+        if (oldId != null && newId != null) maps.imageMap.put(oldId, newId);
     }
 
     private static <T> List<T> nullSafe(List<T> list) {

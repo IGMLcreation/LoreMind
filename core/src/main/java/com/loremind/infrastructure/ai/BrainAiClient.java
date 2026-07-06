@@ -3,7 +3,7 @@ package com.loremind.infrastructure.ai;
 import com.loremind.domain.generationcontext.GenerationContext;
 import com.loremind.domain.generationcontext.GenerationResult;
 import com.loremind.domain.generationcontext.ports.AiProvider;
-import com.loremind.domain.generationcontext.ports.AiProviderException;
+import com.loremind.domain.generationcontext.ports.exceptions.AiProviderException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;

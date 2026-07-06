@@ -1,7 +1,7 @@
 package com.loremind.infrastructure.transfer;
 
-import com.loremind.domain.campaigncontext.ArcType;
-import com.loremind.domain.campaigncontext.Room;
+import com.loremind.domain.campaigncontext.structure.ArcType;
+import com.loremind.domain.campaigncontext.structure.Room;
 import com.loremind.infrastructure.persistence.entity.*;
 import com.loremind.infrastructure.persistence.jpa.*;
 import com.loremind.infrastructure.transfer.dto.ContentExport;

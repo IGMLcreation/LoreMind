@@ -1,6 +1,6 @@
 package com.loremind.infrastructure.web.mapper;
 
-import com.loremind.domain.campaigncontext.Prerequisite;
+import com.loremind.domain.campaigncontext.quest.Prerequisite;
 import com.loremind.infrastructure.web.dto.campaigncontext.PrerequisiteDTO;
 import org.springframework.stereotype.Component;
 

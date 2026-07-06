@@ -1,6 +1,6 @@
 package com.loremind.infrastructure.persistence.postgres;
 
-import com.loremind.domain.campaigncontext.Arc;
+import com.loremind.domain.campaigncontext.structure.Arc;
 import com.loremind.domain.campaigncontext.ports.ArcRepository;
 import com.loremind.infrastructure.persistence.entity.ArcJpaEntity;
 import com.loremind.infrastructure.persistence.jpa.ArcJpaRepository;

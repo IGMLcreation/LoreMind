@@ -1,9 +1,9 @@
 package com.loremind.infrastructure.persistence.entity;
 
-import com.loremind.domain.campaigncontext.Room;
-import com.loremind.domain.campaigncontext.SceneBattlemap;
-import com.loremind.domain.campaigncontext.SceneBranch;
-import com.loremind.domain.campaigncontext.SceneType;
+import com.loremind.domain.campaigncontext.structure.Room;
+import com.loremind.domain.campaigncontext.structure.SceneBattlemap;
+import com.loremind.domain.campaigncontext.structure.SceneBranch;
+import com.loremind.domain.campaigncontext.structure.SceneType;
 import com.loremind.infrastructure.persistence.converter.RoomListJsonConverter;
 import com.loremind.infrastructure.persistence.converter.SceneBattlemapListJsonConverter;
 import com.loremind.infrastructure.persistence.converter.SceneBranchListJsonConverter;

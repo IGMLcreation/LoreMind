@@ -1,12 +1,12 @@
 package com.loremind.infrastructure.web.mapper;
 
-import com.loremind.domain.campaigncontext.LinkType;
-import com.loremind.domain.campaigncontext.Room;
-import com.loremind.domain.campaigncontext.RoomBranch;
-import com.loremind.domain.campaigncontext.Scene;
-import com.loremind.domain.campaigncontext.SceneBattlemap;
-import com.loremind.domain.campaigncontext.SceneBranch;
-import com.loremind.domain.campaigncontext.SceneType;
+import com.loremind.domain.campaigncontext.structure.LinkType;
+import com.loremind.domain.campaigncontext.structure.Room;
+import com.loremind.domain.campaigncontext.structure.RoomBranch;
+import com.loremind.domain.campaigncontext.structure.Scene;
+import com.loremind.domain.campaigncontext.structure.SceneBattlemap;
+import com.loremind.domain.campaigncontext.structure.SceneBranch;
+import com.loremind.domain.campaigncontext.structure.SceneType;
 import com.loremind.infrastructure.web.dto.campaigncontext.RoomBranchDTO;
 import com.loremind.infrastructure.web.dto.campaigncontext.RoomDTO;
 import com.loremind.infrastructure.web.dto.campaigncontext.SceneBattlemapDTO;

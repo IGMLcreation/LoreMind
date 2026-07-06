@@ -1,8 +1,8 @@
 package com.loremind.infrastructure.web.controller;
 
 import com.loremind.domain.campaigncontext.Campaign;
-import com.loremind.domain.campaigncontext.Prerequisite;
-import com.loremind.domain.campaigncontext.Quest;
+import com.loremind.domain.campaigncontext.quest.Prerequisite;
+import com.loremind.domain.campaigncontext.quest.Quest;
 import com.loremind.domain.campaigncontext.ports.CampaignRepository;
 import com.loremind.domain.campaigncontext.ports.QuestRepository;
 import org.junit.jupiter.api.BeforeEach;

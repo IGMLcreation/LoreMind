@@ -1,7 +1,7 @@
 package com.loremind.infrastructure.web.controller;
 
 import com.loremind.application.campaigncontext.CharacterService;
-import com.loremind.domain.campaigncontext.Character;
+import com.loremind.domain.campaigncontext.bestiary.Character;
 import com.loremind.infrastructure.web.dto.campaigncontext.CharacterDTO;
 import com.loremind.infrastructure.web.mapper.CharacterMapper;
 import org.springframework.http.ResponseEntity;

@@ -1,7 +1,7 @@
 package com.loremind.infrastructure.web.mapper;
 
-import com.loremind.domain.campaigncontext.RandomTable;
-import com.loremind.domain.campaigncontext.RandomTableEntry;
+import com.loremind.domain.campaigncontext.randomtable.RandomTable;
+import com.loremind.domain.campaigncontext.randomtable.RandomTableEntry;
 import com.loremind.infrastructure.web.dto.campaigncontext.RandomTableDTO;
 import com.loremind.infrastructure.web.dto.campaigncontext.RandomTableEntryDTO;
 import org.springframework.stereotype.Component;

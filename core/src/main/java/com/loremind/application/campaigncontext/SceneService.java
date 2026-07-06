@@ -1,10 +1,10 @@
 package com.loremind.application.campaigncontext;
 
-import com.loremind.domain.campaigncontext.FieldProposal;
-import com.loremind.domain.campaigncontext.Scene;
-import com.loremind.domain.campaigncontext.SceneDraft;
+import com.loremind.domain.campaigncontext.generation.FieldProposal;
+import com.loremind.domain.campaigncontext.structure.Scene;
+import com.loremind.domain.campaigncontext.generation.SceneDraft;
 import com.loremind.domain.shared.ReorderSupport;
-import com.loremind.domain.campaigncontext.SceneBranch;
+import com.loremind.domain.campaigncontext.structure.SceneBranch;
 import com.loremind.domain.campaigncontext.ports.SceneRepository;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -171,7 +171,7 @@ public class SceneService {
                 if (id.equals(sibling.getId()) || branches == null || branches.isEmpty()) continue;
                 List<SceneBranch> kept = branches.stream()
                         .filter(b -> !id.equals(b.targetSceneId()))
-                        .collect(Collectors.toList());
+                        .toList();
                 if (kept.size() != branches.size()) {
                     sibling.setBranches(kept);
                     sceneRepository.save(sibling);
@@ -193,7 +193,7 @@ public class SceneService {
     @Transactional
     public void reorderScenes(String chapterId, List<String> orderedIds) {
         ReorderSupport.reorder(orderedIds,
-                id -> sceneRepository.findById(id).orElse(null),
+                sceneRepository::findById,
                 (scene, i) -> {
                     if (chapterId != null && !chapterId.isBlank() && !chapterId.equals(scene.getChapterId())) {
                         scene.setChapterId(chapterId);

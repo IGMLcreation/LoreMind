@@ -41,6 +41,16 @@ public class CampaignBriefBuilder {
         sb.append("# Campagne : ").append(cc.campaignName()).append("\n");
         if (notBlank(cc.campaignDescription())) sb.append(cc.campaignDescription()).append("\n");
 
+        appendStructure(sb, cc);
+        appendNpcs(sb, cc);
+
+        if (campaign.isLinkedToLore()) {
+            loreContextBuilder.buildOptional(campaign.getLoreId()).ifPresent(lore -> appendLore(sb, lore));
+        }
+        return sb.toString();
+    }
+
+    private void appendStructure(StringBuilder sb, CampaignStructuralContext cc) {
         sb.append("\n## Structure (arcs → chapitres → scènes)\n");
         sb.append("_Un arc HUB contient des chapitres parallèles appelés « quêtes » ; ")
                 .append("un arc LINEAR contient des chapitres en séquence._\n");
@@ -48,34 +58,38 @@ public class CampaignBriefBuilder {
             sb.append("_(aucun arc pour le moment)_\n");
         }
         for (ArcSummary arc : cc.arcs()) {
-            sb.append(arc.hub() ? "### Arc HUB (à quêtes) : " : "### Arc : ").append(arc.name());
-            if (notBlank(arc.description())) sb.append(" — ").append(arc.description());
+            appendArc(sb, arc);
+        }
+    }
+
+    private void appendArc(StringBuilder sb, ArcSummary arc) {
+        sb.append(arc.hub() ? "### Arc HUB (à quêtes) : " : "### Arc : ").append(arc.name());
+        if (notBlank(arc.description())) sb.append(" — ").append(arc.description());
+        sb.append("\n");
+        for (ChapterSummary ch : arc.chapters()) {
+            appendChapter(sb, arc.hub(), ch);
+        }
+    }
+
+    private void appendChapter(StringBuilder sb, boolean hub, ChapterSummary ch) {
+        sb.append(hub ? "- Quête : " : "- Chapitre : ").append(ch.name());
+        if (notBlank(ch.description())) sb.append(" — ").append(ch.description());
+        sb.append("\n");
+        for (SceneSummary sc : ch.scenes()) {
+            sb.append("  - Scène : ").append(sc.name());
+            if (notBlank(sc.description())) sb.append(" — ").append(sc.description());
             sb.append("\n");
-            for (ChapterSummary ch : arc.chapters()) {
-                sb.append(arc.hub() ? "- Quête : " : "- Chapitre : ").append(ch.name());
-                if (notBlank(ch.description())) sb.append(" — ").append(ch.description());
-                sb.append("\n");
-                for (SceneSummary sc : ch.scenes()) {
-                    sb.append("  - Scène : ").append(sc.name());
-                    if (notBlank(sc.description())) sb.append(" — ").append(sc.description());
-                    sb.append("\n");
-                }
-            }
         }
+    }
 
-        if (!cc.npcs().isEmpty()) {
-            sb.append("\n## PNJ existants\n");
-            for (NpcSummary n : cc.npcs()) {
-                sb.append("- ").append(n.name());
-                if (notBlank(n.snippet())) sb.append(" : ").append(n.snippet());
-                sb.append("\n");
-            }
+    private void appendNpcs(StringBuilder sb, CampaignStructuralContext cc) {
+        if (cc.npcs().isEmpty()) return;
+        sb.append("\n## PNJ existants\n");
+        for (NpcSummary n : cc.npcs()) {
+            sb.append("- ").append(n.name());
+            if (notBlank(n.snippet())) sb.append(" : ").append(n.snippet());
+            sb.append("\n");
         }
-
-        if (campaign.isLinkedToLore()) {
-            loreContextBuilder.buildOptional(campaign.getLoreId()).ifPresent(lore -> appendLore(sb, lore));
-        }
-        return sb.toString();
     }
 
     private void appendLore(StringBuilder sb, LoreStructuralContext lore) {

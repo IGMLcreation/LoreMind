@@ -77,7 +77,7 @@ public class LoreNodeService {
     public void reorderNodes(String parentId, List<String> orderedIds) {
         String parent = (parentId == null || parentId.isBlank()) ? null : parentId;
         ReorderSupport.reorder(orderedIds,
-                id -> loreNodeRepository.findById(id).orElse(null),
+                loreNodeRepository::findById,
                 (node, i) -> {
                     if (parent == null || !isSelfOrDescendant(parent, node.getId())) {
                         node.setParentId(parent);

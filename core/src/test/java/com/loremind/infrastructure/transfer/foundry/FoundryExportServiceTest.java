@@ -1,6 +1,6 @@
 package com.loremind.infrastructure.transfer.foundry;
 
-import com.loremind.domain.campaigncontext.SceneBattlemap;
+import com.loremind.domain.campaigncontext.structure.SceneBattlemap;
 import com.loremind.domain.shared.template.TemplateField;
 import com.loremind.infrastructure.persistence.entity.*;
 import com.loremind.infrastructure.persistence.jpa.*;

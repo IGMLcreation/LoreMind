@@ -3,7 +3,7 @@ package com.loremind.infrastructure.ai;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loremind.domain.gamesystemcontext.RulesImportProgress;
 import com.loremind.domain.gamesystemcontext.RulesImportResult;
-import com.loremind.domain.gamesystemcontext.ports.RulesImportException;
+import com.loremind.domain.gamesystemcontext.ports.exceptions.RulesImportException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;

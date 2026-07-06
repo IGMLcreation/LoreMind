@@ -1,5 +1,6 @@
 package com.loremind.domain.lorecontext;
 
+import com.loremind.domain.shared.CollectionUtils;
 import lombok.Builder;
 import lombok.Data;
 
@@ -77,5 +78,21 @@ public class Page {
 
     public boolean hasTemplate() {
         return templateId != null && !templateId.isBlank();
+    }
+
+    /**
+     * Applique le contenu éditable (valeurs de champs + métadonnées) depuis une
+     * autre Page, avec copies défensives. Ne touche pas aux champs structurels
+     * (id, loreId, nodeId, templateId, order) : à la charge de l'appelant.
+     */
+    public void applyEditableContent(Page changes) {
+        this.values = CollectionUtils.copyMap(changes.values);
+        this.imageValues = CollectionUtils.copyMap(changes.imageValues);
+        this.imageFraming = CollectionUtils.copyMap(changes.imageFraming);
+        this.keyValueValues = CollectionUtils.copyMap(changes.keyValueValues);
+        this.tableValues = CollectionUtils.copyMap(changes.tableValues);
+        this.notes = changes.notes;
+        this.tags = CollectionUtils.copyList(changes.tags);
+        this.relatedPageIds = CollectionUtils.copyList(changes.relatedPageIds);
     }
 }

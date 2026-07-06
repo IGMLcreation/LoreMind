@@ -1,6 +1,6 @@
 package com.loremind.infrastructure.persistence.converter;
 
-import com.loremind.domain.campaigncontext.SceneBranch;
+import com.loremind.domain.campaigncontext.structure.SceneBranch;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

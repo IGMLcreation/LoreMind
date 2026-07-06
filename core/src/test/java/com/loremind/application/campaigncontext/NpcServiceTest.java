@@ -1,6 +1,6 @@
 package com.loremind.application.campaigncontext;
 
-import com.loremind.domain.campaigncontext.Npc;
+import com.loremind.domain.campaigncontext.bestiary.Npc;
 import com.loremind.domain.campaigncontext.ports.CampaignRepository;
 import com.loremind.domain.campaigncontext.ports.NpcRepository;
 import org.junit.jupiter.api.BeforeEach;

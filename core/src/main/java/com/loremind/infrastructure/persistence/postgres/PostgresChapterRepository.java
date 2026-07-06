@@ -1,6 +1,6 @@
 package com.loremind.infrastructure.persistence.postgres;
 
-import com.loremind.domain.campaigncontext.Chapter;
+import com.loremind.domain.campaigncontext.structure.Chapter;
 import com.loremind.domain.campaigncontext.ports.ChapterRepository;
 import com.loremind.infrastructure.persistence.entity.ChapterJpaEntity;
 import com.loremind.infrastructure.persistence.jpa.ChapterJpaRepository;

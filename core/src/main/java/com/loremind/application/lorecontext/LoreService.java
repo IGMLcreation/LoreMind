@@ -15,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * Service d'application pour le contexte Lore.
@@ -72,7 +71,7 @@ public class LoreService {
     public List<Lore> getAllLores() {
         return loreRepository.findAll().stream()
                 .map(this::withCounts)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**

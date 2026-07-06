@@ -1,6 +1,6 @@
 package com.loremind.infrastructure.ai;
 
-import com.loremind.domain.campaigncontext.ports.NarrativeAssistException;
+import com.loremind.domain.campaigncontext.ports.exceptions.NarrativeAssistException;
 import com.loremind.domain.campaigncontext.ports.NarrativeFieldAssistant;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;

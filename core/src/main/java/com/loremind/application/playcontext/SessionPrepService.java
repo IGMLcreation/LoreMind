@@ -4,10 +4,10 @@ import com.loremind.application.campaigncontext.CampaignReadinessAssessment;
 import com.loremind.application.campaigncontext.CampaignReadinessService;
 import com.loremind.application.campaigncontext.QuestStatusEnricher;
 import com.loremind.application.campaigncontext.ReadinessGap;
-import com.loremind.domain.campaigncontext.Chapter;
-import com.loremind.domain.campaigncontext.Quest;
-import com.loremind.domain.campaigncontext.QuestNodeRef;
-import com.loremind.domain.campaigncontext.QuestStatus;
+import com.loremind.domain.campaigncontext.structure.Chapter;
+import com.loremind.domain.campaigncontext.quest.Quest;
+import com.loremind.domain.campaigncontext.quest.QuestNodeRef;
+import com.loremind.domain.campaigncontext.quest.QuestStatus;
 import com.loremind.domain.campaigncontext.ports.ChapterRepository;
 import com.loremind.domain.campaigncontext.ports.QuestRepository;
 import com.loremind.domain.campaigncontext.ports.SceneRepository;
@@ -20,7 +20,6 @@ import com.loremind.domain.playcontext.ports.PlaythroughRepository;
 import com.loremind.domain.playcontext.ports.SessionRepository;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
@@ -111,7 +110,7 @@ public class SessionPrepService {
         } else {
             focused = assessment.gaps().stream()
                     .filter(g -> isFocused(g, hotspotChapterIds, hotspotSceneIds, hotspotQuestIds))
-                    .collect(Collectors.toList());
+                    .toList();
         }
         int otherGapCount = assessment.gaps().size() - focused.size();
 
@@ -122,7 +121,7 @@ public class SessionPrepService {
                 .filter(c -> c.getFilled() > 0)
                 .map(c -> new SessionPrepReport.ClockInfo(c.getId(), c.getName(), c.getSegments(),
                         c.getFilled(), c.getFrontId() != null ? frontNames.get(c.getFrontId()) : null))
-                .collect(Collectors.toList());
+                .toList();
 
         return new SessionPrepReport(
                 playthroughId,
@@ -173,7 +172,7 @@ public class SessionPrepService {
         List<Session> sessions = sessionRepository.findByPlaythroughId(playthroughId);
         return sessions.stream()
                 .max(Comparator.comparing(Session::getStartedAt,
-                        Comparator.nullsFirst(Comparator.<LocalDateTime>naturalOrder())))
+                        Comparator.nullsFirst(Comparator.naturalOrder())))
                 .map(s -> new SessionPrepReport.LastSessionInfo(
                         s.getId(), s.getName(), s.getStartedAt(), s.getEndedAt(), s.isActive()))
                 .orElse(null);
@@ -183,13 +182,13 @@ public class SessionPrepService {
         return quests.stream()
                 .filter(q -> statusById.get(q.getId()) == wanted)
                 .sorted(Comparator.comparingInt(Quest::getOrder))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private static List<SessionPrepReport.QuestInfo> toQuestInfos(List<Quest> quests) {
         return quests.stream()
                 .map(q -> new SessionPrepReport.QuestInfo(q.getId(), q.getName(), q.getIcon()))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private static List<Quest> concat(List<Quest> a, List<Quest> b) {

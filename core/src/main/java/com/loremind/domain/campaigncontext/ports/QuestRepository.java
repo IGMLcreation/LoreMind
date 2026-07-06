@@ -1,6 +1,6 @@
 package com.loremind.domain.campaigncontext.ports;
 
-import com.loremind.domain.campaigncontext.Quest;
+import com.loremind.domain.campaigncontext.quest.Quest;
 import java.util.List;
 import java.util.Optional;
 

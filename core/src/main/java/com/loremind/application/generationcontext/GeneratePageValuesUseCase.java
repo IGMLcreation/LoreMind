@@ -30,6 +30,8 @@ import java.util.Map;
 @Service
 public class GeneratePageValuesUseCase {
 
+    private static final String FOR_PAGE = ") pour la page ";
+
     private final PageRepository pageRepository;
     private final TemplateRepository templateRepository;
     private final LoreRepository loreRepository;
@@ -96,22 +98,19 @@ public class GeneratePageValuesUseCase {
         }
         return templateRepository.findById(templateId)
                 .orElseThrow(() -> new IllegalStateException(
-                        "Template introuvable (id=" + templateId
-                                + ") pour la page " + pageId));
+                        "Template introuvable (id=" + templateId + FOR_PAGE + pageId));
     }
 
     private Lore loadLore(String loreId, String pageId) {
         return loreRepository.findById(loreId)
                 .orElseThrow(() -> new IllegalStateException(
-                        "Lore introuvable (id=" + loreId
-                                + ") pour la page " + pageId));
+                        "Lore introuvable (id=" + loreId + FOR_PAGE + pageId));
     }
 
     private LoreNode loadFolder(String nodeId, String pageId) {
         return loreNodeRepository.findById(nodeId)
                 .orElseThrow(() -> new IllegalStateException(
-                        "Dossier parent introuvable (id=" + nodeId
-                                + ") pour la page " + pageId));
+                        "Dossier parent introuvable (id=" + nodeId + FOR_PAGE + pageId));
     }
 
     private void requireNonEmptyFields(Template template) {

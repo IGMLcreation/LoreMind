@@ -1,7 +1,7 @@
 package com.loremind.application.campaigncontext;
 
-import com.loremind.domain.campaigncontext.Prerequisite;
-import com.loremind.domain.campaigncontext.Quest;
+import com.loremind.domain.campaigncontext.quest.Prerequisite;
+import com.loremind.domain.campaigncontext.quest.Quest;
 import com.loremind.domain.campaigncontext.ports.QuestRepository;
 import org.springframework.stereotype.Service;
 

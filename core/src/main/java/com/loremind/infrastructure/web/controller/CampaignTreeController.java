@@ -2,9 +2,9 @@ package com.loremind.infrastructure.web.controller;
 
 import com.loremind.application.campaigncontext.CampaignReadinessAssessment;
 import com.loremind.application.campaigncontext.CampaignReadinessService;
-import com.loremind.domain.campaigncontext.Arc;
-import com.loremind.domain.campaigncontext.Chapter;
-import com.loremind.domain.campaigncontext.Enemy;
+import com.loremind.domain.campaigncontext.structure.Arc;
+import com.loremind.domain.campaigncontext.structure.Chapter;
+import com.loremind.domain.campaigncontext.bestiary.Enemy;
 import com.loremind.domain.campaigncontext.ports.ArcRepository;
 import com.loremind.domain.campaigncontext.ports.CampaignRepository;
 import com.loremind.domain.campaigncontext.ports.ChapterRepository;

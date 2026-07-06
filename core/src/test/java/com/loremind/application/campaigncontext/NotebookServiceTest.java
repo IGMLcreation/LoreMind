@@ -1,9 +1,9 @@
 package com.loremind.application.campaigncontext;
 
 import com.loremind.domain.campaigncontext.Campaign;
-import com.loremind.domain.campaigncontext.Notebook;
-import com.loremind.domain.campaigncontext.NotebookMessage;
-import com.loremind.domain.campaigncontext.NotebookSource;
+import com.loremind.domain.campaigncontext.notebook.Notebook;
+import com.loremind.domain.campaigncontext.notebook.NotebookMessage;
+import com.loremind.domain.campaigncontext.notebook.NotebookSource;
 import com.loremind.domain.campaigncontext.ports.CampaignRepository;
 import com.loremind.domain.campaigncontext.ports.NotebookIndexer;
 import com.loremind.domain.campaigncontext.ports.NotebookRepository;
