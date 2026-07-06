@@ -6,7 +6,9 @@ name: Qualité & Sécurité
 # assainie, on pourra l'ajouter aux checks requis de la branch protection.
 on:
   push:
-    branches: [main]
+    # beta inclus : c'est la branche de dev, le feedback qualité doit y vivre
+    # (ci.yml/e2e.yml, eux, restent volontairement sur main + PR).
+    branches: [main, beta]
   pull_request:
     branches: [main]
 
@@ -27,8 +29,9 @@ jobs:
       - name: MegaLinter
         uses: oxsecurity/megalinter/flavors/cupcake@v9
         env:
-          # push sur main → tout le dépôt ; PR → seulement les fichiers modifiés.
-          VALIDATE_ALL_CODEBASE: ${{ github.event_name == 'push' }}
+          # main → scan complet du dépôt ; beta et PR → seulement les fichiers
+          # modifiés par rapport à main (rapide, feedback ciblé).
+          VALIDATE_ALL_CODEBASE: ${{ github.ref == 'refs/heads/main' }}
       - name: Publier les rapports
         if: always()
         uses: actions/upload-artifact@v4
