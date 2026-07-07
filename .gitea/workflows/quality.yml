@@ -86,15 +86,19 @@ jobs:
       # Scanne les manifestes du dépôt (pom.xml, requirements*.txt,
       # package-lock.json) contre les bases CVE. --ignore-unfixed : on ne
       # bloque que sur les vulnérabilités qui ONT un correctif publié.
-      # Si un 429 Maven Central réapparaît malgré le cache : ajouter
-      # --offline-scan (aucun accès réseau pendant la résolution, au prix
-      # d'ignorer silencieusement ce qui manquerait dans ~/.m2).
+      # --offline-scan : AUCUNE requête vers Maven Central pendant la
+      # résolution — Trivy allait y chercher les POMs parents même avec le
+      # cache rempli, et l'IP du runner finissait rate-limitée (429, 30 min).
+      # Tout est déjà dans ~/.m2 grâce au dependency:go-offline ci-dessus ;
+      # contrepartie : une dépendance absente du cache serait ignorée en
+      # silence (impossible ici, go-offline échouerait d'abord).
       - name: Scan des dépendances (HIGH/CRITICAL bloquants)
         run: |
           trivy fs . \
             --scanners vuln \
             --severity HIGH,CRITICAL \
             --ignore-unfixed \
+            --offline-scan \
             --skip-dirs node_modules \
             --skip-dirs docusaurus \
             --exit-code 1
