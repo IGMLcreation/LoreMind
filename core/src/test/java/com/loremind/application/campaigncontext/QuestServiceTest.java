@@ -230,11 +230,110 @@ class QuestServiceTest {
                 .thenReturn(Optional.of(Chapter.builder().id("chap-real").arcId("arc-lin").name("Réel").build()));
         when(arcRepository.findById("arc-lin"))
                 .thenReturn(Optional.of(Arc.builder().id("arc-lin").type(ArcType.LINEAR).build()));
-        when(sceneRepository.findByChapterId("chap-real")).thenReturn(List.of());
+        // NB : pas de stub sceneRepository — un chapitre non-conteneur est écarté avant toute lecture des scènes.
 
         service.deleteQuest("q-1");
 
         verify(chapterRepository, never()).deleteById(anyString());
+    }
+
+    @Test
+    void deleteQuest_freeQuest_cascadesScenesOfSystemContainer() {
+        // Conteneur d'arc SYSTEM : INVISIBLE une fois la quête supprimée -> il part avec
+        // ses scènes (sinon il pourrit en fantôme inaccessible qui ressort dans les exports).
+        Quest quest = Quest.builder().id("q-1").campaignId("camp").name("Libre")
+                .nodes(List.of(new QuestNodeRef(NodeType.CHAPTER, "chap-free", 0))).build();
+        when(questRepository.findById("q-1")).thenReturn(Optional.of(quest));
+        when(questRepository.findByCampaignId("camp")).thenReturn(List.of());
+        when(chapterRepository.findById("chap-free"))
+                .thenReturn(Optional.of(Chapter.builder().id("chap-free").arcId("arc-sys").name("Libre").build()));
+        when(arcRepository.findById("arc-sys"))
+                .thenReturn(Optional.of(Arc.builder().id("arc-sys").type(ArcType.SYSTEM).build()));
+        when(sceneRepository.findByChapterId("chap-free")).thenReturn(List.of(
+                Scene.builder().id("s-1").chapterId("chap-free").name("S1").build(),
+                Scene.builder().id("s-2").chapterId("chap-free").name("S2").build()));
+
+        service.deleteQuest("q-1");
+
+        verify(sceneRepository).deleteById("s-1");
+        verify(sceneRepository).deleteById("s-2");
+        verify(chapterRepository).deleteById("chap-free");
+    }
+
+    @Test
+    void deletionImpact_freeQuestWithScenes_countsThem() {
+        Quest quest = Quest.builder().id("q-1").campaignId("camp").name("Libre")
+                .nodes(List.of(new QuestNodeRef(NodeType.CHAPTER, "chap-free", 0))).build();
+        when(questRepository.findById("q-1")).thenReturn(Optional.of(quest));
+        when(questRepository.findByCampaignId("camp")).thenReturn(List.of(quest)); // filtrée par id
+        when(chapterRepository.findById("chap-free"))
+                .thenReturn(Optional.of(Chapter.builder().id("chap-free").arcId("arc-sys").name("Libre").build()));
+        when(arcRepository.findById("arc-sys"))
+                .thenReturn(Optional.of(Arc.builder().id("arc-sys").type(ArcType.SYSTEM).build()));
+        when(sceneRepository.findByChapterId("chap-free")).thenReturn(List.of(
+                Scene.builder().id("s-1").chapterId("chap-free").name("S1").build(),
+                Scene.builder().id("s-2").chapterId("chap-free").name("S2").build()));
+
+        assertEquals(2, service.getDeletionImpact("q-1").scenes());
+    }
+
+    @Test
+    void deletionImpact_unknownQuest_returnsZero() {
+        when(questRepository.findById("inconnue")).thenReturn(Optional.empty());
+
+        assertEquals(0, service.getDeletionImpact("inconnue").scenes());
+    }
+
+    @Test
+    void deletionImpact_systemContainerReferencedByAnotherQuest_reportsZero() {
+        // Conteneur PARTAGÉ (autre quête le référence) : il survivra -> impact 0.
+        Quest quest = Quest.builder().id("q-1").campaignId("camp").name("Libre")
+                .nodes(List.of(new QuestNodeRef(NodeType.CHAPTER, "chap-free", 0))).build();
+        Quest other = Quest.builder().id("q-2").campaignId("camp").name("Autre")
+                .nodes(List.of(new QuestNodeRef(NodeType.CHAPTER, "chap-free", 0))).build();
+        when(questRepository.findById("q-1")).thenReturn(Optional.of(quest));
+        when(questRepository.findByCampaignId("camp")).thenReturn(List.of(quest, other));
+        when(chapterRepository.findById("chap-free"))
+                .thenReturn(Optional.of(Chapter.builder().id("chap-free").arcId("arc-sys").name("Libre").build()));
+        when(arcRepository.findById("arc-sys"))
+                .thenReturn(Optional.of(Arc.builder().id("arc-sys").type(ArcType.SYSTEM).build()));
+
+        assertEquals(0, service.getDeletionImpact("q-1").scenes());
+    }
+
+    @Test
+    void deleteQuest_freeQuest_systemContainerReferencedElsewhere_keptWithScenes() {
+        // Même partagé en arc SYSTEM, un conteneur encore référencé n'est JAMAIS cascadé.
+        Quest quest = Quest.builder().id("q-1").campaignId("camp").name("Libre")
+                .nodes(List.of(new QuestNodeRef(NodeType.CHAPTER, "chap-free", 0))).build();
+        Quest other = Quest.builder().id("q-2").campaignId("camp").name("Autre")
+                .nodes(List.of(new QuestNodeRef(NodeType.CHAPTER, "chap-free", 0))).build();
+        when(questRepository.findById("q-1")).thenReturn(Optional.of(quest));
+        when(questRepository.findByCampaignId("camp")).thenReturn(List.of(other));
+        when(chapterRepository.findById("chap-free"))
+                .thenReturn(Optional.of(Chapter.builder().id("chap-free").arcId("arc-sys").name("Libre").build()));
+        when(arcRepository.findById("arc-sys"))
+                .thenReturn(Optional.of(Arc.builder().id("arc-sys").type(ArcType.SYSTEM).build()));
+
+        service.deleteQuest("q-1");
+
+        verify(chapterRepository, never()).deleteById(anyString());
+        verify(sceneRepository, never()).deleteById(anyString());
+    }
+
+    @Test
+    void deletionImpact_hubQuest_reportsZero() {
+        // Jumeau de hub : GARDÉ à la suppression (il reste visible dans l'arc) -> impact 0.
+        Quest quest = Quest.builder().id("q-1").campaignId("camp").arcId("arc-h").name("Q")
+                .nodes(List.of(new QuestNodeRef(NodeType.CHAPTER, "chap-1", 0))).build();
+        when(questRepository.findById("q-1")).thenReturn(Optional.of(quest));
+        when(questRepository.findByCampaignId("camp")).thenReturn(List.of(quest));
+        when(chapterRepository.findById("chap-1"))
+                .thenReturn(Optional.of(Chapter.builder().id("chap-1").arcId("arc-h").name("Q").build()));
+        when(arcRepository.findById("arc-h"))
+                .thenReturn(Optional.of(Arc.builder().id("arc-h").type(ArcType.HUB).build()));
+
+        assertEquals(0, service.getDeletionImpact("q-1").scenes());
     }
 
     @Test
@@ -247,7 +346,7 @@ class QuestServiceTest {
         when(questRepository.findByCampaignId("camp")).thenReturn(List.of(other));
         when(chapterRepository.findById("chap-1"))
                 .thenReturn(Optional.of(Chapter.builder().id("chap-1").arcId("arc-h").name("Q").build()));
-        when(sceneRepository.findByChapterId("chap-1")).thenReturn(List.of());
+        // NB : pas de stub sceneRepository — un conteneur encore référencé est écarté avant toute lecture.
 
         service.deleteQuest("q-1");
 

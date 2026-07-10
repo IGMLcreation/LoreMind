@@ -86,6 +86,16 @@ public class QuestController {
         return ResponseEntity.noContent().build();
     }
 
+    /** Impact d'une suppression : scènes du conteneur (quête libre) qui partiront avec. */
+    @GetMapping("/{questId}/deletion-impact")
+    public ResponseEntity<QuestService.DeletionImpact> getDeletionImpact(@PathVariable String campaignId,
+                                                                         @PathVariable String questId) {
+        if (questService.getQuestById(questId).isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(questService.getDeletionImpact(questId));
+    }
+
     /** Réordonne les quêtes de la campagne : order = position. */
     @PutMapping("/reorder")
     public ResponseEntity<Void> reorder(@PathVariable String campaignId, @RequestBody ReorderRequest req) {

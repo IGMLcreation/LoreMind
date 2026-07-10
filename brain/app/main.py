@@ -26,7 +26,7 @@ from app.infrastructure.ollama_model_installer import ensure_ollama_embedding_mo
 app = FastAPI(
     title="LoreMind Brain",
     description="Backend IA pour la génération de contenu narratif.",
-    version="1.0.2-beta",
+    version="1.0.3",
 )
 
 logger = logging.getLogger(__name__)

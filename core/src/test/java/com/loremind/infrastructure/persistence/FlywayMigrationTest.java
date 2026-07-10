@@ -12,6 +12,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -117,6 +119,79 @@ class FlywayMigrationTest {
                     rs.getString(2));
             rs.next();
             assertEquals("[]", rs.getString(2));
+        }
+    }
+
+    /**
+     * V24 : les conteneurs ORPHELINS de l'arc SYSTEM (quête libre supprimée avant que
+     * la suppression ne cascade) sont réparés — rattachés à une quête recréée s'ils
+     * ont des scènes (contenu redevenu visible), supprimés s'ils sont vides. Le
+     * conteneur d'une quête vivante n'est pas touché.
+     */
+    @Test
+    void v24_reattachesOrphanSystemContainers_andDropsEmptyOnes() throws SQLException {
+        String url = "jdbc:h2:mem:flyway_v24_test;MODE=PostgreSQL;NON_KEYWORDS=VALUE;DB_CLOSE_DELAY=-1";
+
+        // 1) Schéma arrêté AVANT V24…
+        Flyway.configure()
+                .dataSource(url, "sa", "")
+                .locations("classpath:db/migration")
+                .target(MigrationVersion.fromVersion("23"))
+                .load()
+                .migrate();
+
+        // 2) …peuplé : un arc SYSTEM avec un orphelin PLEIN (1 scène), un orphelin
+        //    VIDE, et le conteneur d'une quête VIVANTE.
+        try (Connection conn = DriverManager.getConnection(url, "sa", "");
+             Statement st = conn.createStatement()) {
+            st.executeUpdate("insert into campaigns (id, name, arcs_count, created_at, updated_at) "
+                    + "values (1, 'C', 0, now(), now())");
+            st.executeUpdate("insert into arcs (id, name, campaign_id, \"order\", type, created_at, updated_at) "
+                    + "values (9, 'Quêtes libres', 1, 9999, 'SYSTEM', now(), now())");
+            st.executeUpdate("insert into chapters (id, name, arc_id, \"order\", created_at, updated_at) "
+                    + "values (41, 'Orphelin plein', 9, 0, now(), now())");
+            st.executeUpdate("insert into chapters (id, name, arc_id, \"order\", created_at, updated_at) "
+                    + "values (42, 'Orphelin vide', 9, 1, now(), now())");
+            st.executeUpdate("insert into chapters (id, name, arc_id, \"order\", created_at, updated_at) "
+                    + "values (43, 'Vivant', 9, 2, now(), now())");
+            st.executeUpdate("insert into scenes (id, name, chapter_id, \"order\", created_at, updated_at) "
+                    + "values (1, 'S', 41, 0, now(), now())");
+            st.executeUpdate("insert into quests (campaign_id, \"order\", name, nodes, created_at, updated_at) "
+                    + "values (1, 0, 'Vivant', '[{\"nodeType\":\"CHAPTER\",\"nodeId\":\"43\",\"order\":0}]', now(), now())");
+        }
+
+        // 3) Fin de la chaîne : V24 répare.
+        Flyway.configure()
+                .dataSource(url, "sa", "")
+                .locations("classpath:db/migration")
+                .load()
+                .migrate();
+
+        try (Connection conn = DriverManager.getConnection(url, "sa", "");
+             Statement st = conn.createStatement()) {
+
+            // L'orphelin PLEIN est rattaché : quête LIBRE (arc_id NULL) recréée dessus.
+            try (ResultSet rs = st.executeQuery(
+                    "select arc_id, nodes from quests where name = 'Orphelin plein'")) {
+                assertTrue(rs.next(), "une quête aurait dû être recréée sur le conteneur orphelin");
+                assertNull(rs.getObject(1));
+                assertEquals("[{\"nodeType\":\"CHAPTER\",\"nodeId\":\"41\",\"order\":0}]", rs.getString(2));
+            }
+
+            // L'orphelin VIDE a disparu ; l'orphelin plein et le conteneur vivant restent.
+            try (ResultSet rs = st.executeQuery("select id from chapters where arc_id = 9 order by id")) {
+                assertTrue(rs.next());
+                assertEquals(41, rs.getInt(1));
+                assertTrue(rs.next());
+                assertEquals(43, rs.getInt(1));
+                assertFalse(rs.next(), "l'orphelin vide (42) aurait dû être supprimé");
+            }
+
+            // Pas de doublon : la quête vivante n'a pas été re-rattachée.
+            try (ResultSet rs = st.executeQuery("select count(*) from quests")) {
+                rs.next();
+                assertEquals(2, rs.getInt(1));
+            }
         }
     }
 }

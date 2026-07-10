@@ -1707,6 +1707,7 @@
     "notProvided": "Non renseigné",
     "deleteTitle": "Supprimer la quête",
     "deleteMessage": "Supprimer la quête « {{name}} » ?",
+    "deleteImpactScenes": "{{count}} scène(s) de cette quête seront supprimées avec elle.",
     "irreversible": "Cette action est irréversible.",
     "deletedPage": "(page supprimée)",
     "deletedQuest": "(quête supprimée)",

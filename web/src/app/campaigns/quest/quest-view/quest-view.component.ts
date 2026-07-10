@@ -181,14 +181,32 @@ export class QuestViewComponent implements OnInit {
     this.router.navigate(['/campaigns', this.campaignId, 'quests', this.questId, 'edit']);
   }
 
-  /** Suppression simple : une quête n'a pas d'enfants (les nœuds sont des références faibles). */
+  /**
+   * Suppression avec annonce de l'impact réel : le conteneur de scènes d'une quête
+   * LIBRE (arc SYSTEM, invisible dans l'arbre) part en cascade avec ses scènes —
+   * le nombre est affiché dans la confirmation. Les nœuds simplement liés et les
+   * jumeaux de hub (qui restent visibles dans leur arc) ne sont pas concernés.
+   */
   deleteQuest(): void {
-    if (!this.quest) return;
     const quest = this.quest;
+    if (!quest?.id) return;
+    this.questService.deletionImpact(this.campaignId, quest.id).subscribe({
+      next: impact => this.confirmDeleteQuest(quest, impact.scenes),
+      error: () => this.confirmDeleteQuest(quest, 0) // impact indisponible : confirmation simple
+    });
+  }
+
+  private confirmDeleteQuest(quest: Quest, scenes: number): void {
+    const details = [
+      ...(scenes > 0
+        ? [this.translate.instant('questView.deleteImpactScenes', { count: scenes })]
+        : []),
+      this.translate.instant('questView.irreversible')
+    ];
     this.confirmDialog.confirm({
       title: this.translate.instant('questView.deleteTitle'),
       message: this.translate.instant('questView.deleteMessage', { name: quest.name }),
-      details: [this.translate.instant('questView.irreversible')],
+      details,
       confirmLabel: this.translate.instant('common.delete'),
       variant: 'danger'
     }).then(ok => {

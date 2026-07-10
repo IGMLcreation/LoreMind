@@ -3,6 +3,11 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Quest, QuestCreate } from './campaign.model';
 
+/** Impact d'une suppression : scènes du conteneur (quête libre) qui partiront avec. */
+export interface QuestDeletionImpact {
+  scenes: number;
+}
+
 /**
  * Service HTTP pour les Quêtes (Niveau 1). API nestée sous la campagne :
  * /api/campaigns/{campaignId}/quests. Si {@code playthroughId} est fourni, les
@@ -37,6 +42,10 @@ export class QuestService {
 
   delete(campaignId: string, questId: string): Observable<void> {
     return this.http.delete<void>(`${this.base(campaignId)}/${questId}`);
+  }
+
+  deletionImpact(campaignId: string, questId: string): Observable<QuestDeletionImpact> {
+    return this.http.get<QuestDeletionImpact>(`${this.base(campaignId)}/${questId}/deletion-impact`);
   }
 
   reorder(campaignId: string, orderedIds: string[]): Observable<void> {

@@ -1,5 +1,8 @@
 package com.loremind.infrastructure.transfer.foundry;
 
+import com.loremind.domain.campaigncontext.quest.NodeType;
+import com.loremind.domain.campaigncontext.quest.QuestNodeRef;
+import com.loremind.domain.campaigncontext.structure.ArcType;
 import com.loremind.domain.campaigncontext.structure.SceneBattlemap;
 import com.loremind.domain.shared.template.TemplateField;
 import com.loremind.infrastructure.persistence.entity.*;
@@ -30,6 +33,7 @@ class FoundryExportServiceTest {
     @Autowired private CampaignJpaRepository campaignRepo;
     @Autowired private ArcJpaRepository arcRepo;
     @Autowired private ChapterJpaRepository chapterRepo;
+    @Autowired private QuestJpaRepository questRepo;
     @Autowired private SceneJpaRepository sceneRepo;
     @Autowired private NpcJpaRepository npcRepo;
     @Autowired private GameSystemJpaRepository gameSystemRepo;
@@ -250,5 +254,61 @@ class FoundryExportServiceTest {
     void buildBundle_unknownCampaign_throwsNoSuchElement() {
         assertThrows(java.util.NoSuchElementException.class,
                 () -> service.buildBundle("999999999", "2026-06-25T00:00:00Z"));
+    }
+
+    /**
+     * L'arc technique SYSTEM heberge les conteneurs des quetes libres. Un conteneur
+     * ORPHELIN (quete supprimee, chapitre garde par deleteQuest car il contenait des
+     * scenes) est invisible dans l'appli : il ne doit pas partir dans le bundle.
+     */
+    @Test
+    void buildBundle_systemArc_exportsOnlyLiveQuestContainers() {
+        CampaignJpaEntity camp = campaignRepo.save(CampaignJpaEntity.builder()
+                .name("Quetes libres").description("d").arcsCount(1).build());
+        ArcJpaEntity system = arcRepo.save(ArcJpaEntity.builder()
+                .campaignId(camp.getId()).name("Quêtes libres").order(9999)
+                .type(ArcType.SYSTEM).build());
+        ChapterJpaEntity live = chapterRepo.save(ChapterJpaEntity.builder()
+                .arcId(system.getId()).name("Quete vivante").order(0).build());
+        ChapterJpaEntity orphan = chapterRepo.save(ChapterJpaEntity.builder()
+                .arcId(system.getId()).name("test de quete").order(1).build());
+        sceneRepo.save(SceneJpaEntity.builder()
+                .chapterId(live.getId()).name("Scene vivante").order(0).build());
+        sceneRepo.save(SceneJpaEntity.builder()
+                .chapterId(orphan.getId()).name("Scene fantome").order(0).build());
+        questRepo.save(QuestJpaEntity.builder()
+                .campaignId(camp.getId()).name("Quete vivante").order(0)
+                .nodes(List.of(new QuestNodeRef(NodeType.CHAPTER, String.valueOf(live.getId()), 0)))
+                .build());
+
+        FoundryBundle.Data data = service.buildBundle(
+                String.valueOf(camp.getId()), "2026-07-09T00:00:00Z").data();
+
+        assertEquals(1, data.arcs().size());
+        assertEquals(1, data.quests().size());
+        assertEquals("Quete vivante", data.quests().get(0).name());
+        assertEquals(1, data.scenes().size());
+        assertEquals("Scene vivante", data.scenes().get(0).name());
+    }
+
+    /** Sans quete vivante, l'arc SYSTEM disparait entierement du bundle. */
+    @Test
+    void buildBundle_systemArcWithoutLiveQuest_isDroppedEntirely() {
+        CampaignJpaEntity camp = campaignRepo.save(CampaignJpaEntity.builder()
+                .name("Fantomes").description("d").arcsCount(1).build());
+        ArcJpaEntity system = arcRepo.save(ArcJpaEntity.builder()
+                .campaignId(camp.getId()).name("Quêtes libres").order(9999)
+                .type(ArcType.SYSTEM).build());
+        ChapterJpaEntity orphan = chapterRepo.save(ChapterJpaEntity.builder()
+                .arcId(system.getId()).name("test").order(0).build());
+        sceneRepo.save(SceneJpaEntity.builder()
+                .chapterId(orphan.getId()).name("test").order(0).build());
+
+        FoundryBundle.Data data = service.buildBundle(
+                String.valueOf(camp.getId()), "2026-07-09T00:00:00Z").data();
+
+        assertTrue(data.arcs().isEmpty());
+        assertTrue(data.quests().isEmpty());
+        assertTrue(data.scenes().isEmpty());
     }
 }

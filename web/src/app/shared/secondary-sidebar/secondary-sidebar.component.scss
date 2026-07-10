@@ -148,6 +148,11 @@
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  // PLAFONNÉ : avec beaucoup de templates, c'est la liste du panneau qui défile
+  // (cf. .panel-list) — sans plafond, le panneau grandissait jusqu'à écraser
+  // complètement l'arbre au-dessus (sidebar en overflow: hidden).
+  flex-shrink: 0;
+  max-height: 45%;
 }
 
 .panel-header-row {
@@ -202,6 +207,10 @@
   display: flex;
   flex-direction: column;
   gap: 0.1rem;
+  // Ascenseur interne, symétrique de celui de l'arbre (.tree) : l'en-tête du
+  // panneau et son bouton « + » restent toujours visibles.
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .panel-item {

@@ -3,6 +3,9 @@ package com.loremind.infrastructure.transfer.foundry;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.loremind.domain.campaigncontext.quest.NodeType;
+import com.loremind.domain.campaigncontext.quest.QuestNodeRef;
+import com.loremind.domain.campaigncontext.structure.ArcType;
 import com.loremind.domain.campaigncontext.structure.Room;
 import com.loremind.domain.campaigncontext.structure.RoomBranch;
 import com.loremind.domain.campaigncontext.structure.SceneBattlemap;
@@ -40,6 +43,7 @@ public class FoundryExportService {
     private final CampaignJpaRepository campaignRepo;
     private final ArcJpaRepository arcRepo;
     private final ChapterJpaRepository chapterRepo;
+    private final QuestJpaRepository questRepo;
     private final SceneJpaRepository sceneRepo;
     private final NpcJpaRepository npcRepo;
     private final EnemyJpaRepository enemyRepo;
@@ -55,6 +59,7 @@ public class FoundryExportService {
     public FoundryExportService(CampaignJpaRepository campaignRepo,
                                 ArcJpaRepository arcRepo,
                                 ChapterJpaRepository chapterRepo,
+                                QuestJpaRepository questRepo,
                                 SceneJpaRepository sceneRepo,
                                 NpcJpaRepository npcRepo,
                                 EnemyJpaRepository enemyRepo,
@@ -69,6 +74,7 @@ public class FoundryExportService {
         this.campaignRepo = campaignRepo;
         this.arcRepo = arcRepo;
         this.chapterRepo = chapterRepo;
+        this.questRepo = questRepo;
         this.sceneRepo = sceneRepo;
         this.npcRepo = npcRepo;
         this.enemyRepo = enemyRepo;
@@ -154,7 +160,20 @@ public class FoundryExportService {
         List<FoundryBundle.Quest> quests = new ArrayList<>();
         List<FoundryBundle.Scene> scenes = new ArrayList<>();
 
+        Set<String> liveContainerIds = liveQuestContainerIds(campaign);
         for (ArcJpaEntity arc : sortByOrder(arcRepo.findByCampaignId(campaign.getId()), ArcJpaEntity::getOrder)) {
+            List<ChapterJpaEntity> chapters = sortByOrder(chapterRepo.findByArcId(arc.getId()), ChapterJpaEntity::getOrder);
+            // L'arc technique SYSTEM (« Quetes libres ») est masque dans l'appli : seuls
+            // les conteneurs des quetes VIVANTES partent dans l'export. Un conteneur
+            // orphelin (quete supprimee, chapitre garde par deleteQuest car il contenait
+            // des scenes) est invisible cote LoreMind -> il ne doit pas reapparaitre
+            // cote Foundry. Arc omis entierement s'il ne reste rien.
+            if (arc.getType() == ArcType.SYSTEM) {
+                chapters = chapters.stream()
+                        .filter(ch -> liveContainerIds.contains(str(ch.getId())))
+                        .toList();
+                if (chapters.isEmpty()) continue;
+            }
             // Sans journaux, arcs/quetes ne servent que d'ossature (dossiers des Scenes) :
             // leurs illustrations ne sont pas embarquees.
             arcs.add(new FoundryBundle.Arc(
@@ -163,7 +182,7 @@ public class FoundryExportService {
                     arc.getThemes(), arc.getStakes(), arc.getGmNotes(), arc.getRewards(), arc.getResolution(),
                     opts.journals() ? assets.images(arc.getIllustrationImageIds()) : List.of()));
 
-            for (ChapterJpaEntity ch : sortByOrder(chapterRepo.findByArcId(arc.getId()), ChapterJpaEntity::getOrder)) {
+            for (ChapterJpaEntity ch : chapters) {
                 quests.add(new FoundryBundle.Quest(
                         str(ch.getId()), str(arc.getId()), ch.getName(), ch.getDescription(), ch.getOrder(),
                         ch.getIcon(), ch.getPlayerObjectives(), ch.getNarrativeStakes(), ch.getGmNotes(),
@@ -175,6 +194,17 @@ public class FoundryExportService {
             }
         }
         return new ArcsQuestsScenes(arcs, quests, scenes);
+    }
+
+    /** Ids des chapitres-conteneurs references par les quetes vivantes de la campagne. */
+    private Set<String> liveQuestContainerIds(CampaignJpaEntity campaign) {
+        Set<String> ids = new HashSet<>();
+        for (QuestJpaEntity q : questRepo.findByCampaignId(campaign.getId())) {
+            for (QuestNodeRef n : q.getNodes() != null ? q.getNodes() : List.<QuestNodeRef>of()) {
+                if (n.nodeType() == NodeType.CHAPTER) ids.add(n.nodeId());
+            }
+        }
+        return ids;
     }
 
     /** PNJ : purement journal — hors perimetre sans les journaux. */

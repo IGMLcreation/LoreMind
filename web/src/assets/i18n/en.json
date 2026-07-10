@@ -1707,6 +1707,7 @@
     "notProvided": "Not provided",
     "deleteTitle": "Delete quest",
     "deleteMessage": "Delete the quest \"{{name}}\"?",
+    "deleteImpactScenes": "{{count}} scene(s) of this quest will be deleted with it.",
     "irreversible": "This action is irreversible.",
     "deletedPage": "(deleted page)",
     "deletedQuest": "(deleted quest)",

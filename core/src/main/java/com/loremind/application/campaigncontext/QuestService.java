@@ -106,6 +106,11 @@ public class QuestService {
     /** Le chapitre est-il un CONTENEUR de cette quête (jumeau hub ou hébergé en arc SYSTEM) ? */
     private boolean isContainerOf(Quest quest, Chapter chapter) {
         if (Objects.equals(quest.getArcId(), chapter.getArcId())) return true;
+        return inSystemArc(chapter);
+    }
+
+    /** Le chapitre vit-il dans l'arc technique SYSTEM (masqué partout dans l'appli) ? */
+    private boolean inSystemArc(Chapter chapter) {
         return chapter.getArcId() != null && arcRepository.findById(chapter.getArcId())
                 .map(a -> a.getType() == ArcType.SYSTEM)
                 .orElse(false);
@@ -156,6 +161,18 @@ public class QuestService {
     /**
      * Supprime la quête et, en cascade, ses {@code QuestProgression} dans toutes les Parties.
      *
+     * <p>Nettoyage du CONTENEUR (chapitre jumeau, jamais un chapitre simplement LIÉ —
+     * isContainerOf exclut les liens transversaux) :
+     * <ul>
+     *   <li>jumeau de HUB non vide : GARDÉ — il redevient un chapitre visible de l'arc,
+     *       aucune perte de contenu ;</li>
+     *   <li>conteneur d'arc SYSTEM (quête libre) : supprimé AVEC ses scènes — une fois la
+     *       quête partie il est invisible partout dans l'appli et pourrirait en fantôme
+     *       (réapparitions dans les exports). L'impact est annoncé au préalable par
+     *       {@link #getDeletionImpact} (dialogue de confirmation côté front) ;</li>
+     *   <li>conteneur encore référencé par une autre quête : jamais touché.</li>
+     * </ul></p>
+     *
      * <p>Limite connue (nettoyage prévu Phase 5) : les {@code Prerequisite.QuestCompleted}
      * d'autres quêtes qui pointaient celle-ci restent pendants, sans être signalés ni
      * nettoyés. Échec sûr aujourd'hui : un prérequis vers une quête supprimée n'est jamais
@@ -167,26 +184,45 @@ public class QuestService {
         progressionRepository.deleteByQuestId(id);
         questRepository.deleteById(id);
         if (quest == null) return;
-        // Nettoyage du CONTENEUR (jumeau hub ou hébergé en arc SYSTEM) : un chapitre VIDE
-        // (aucune scène), plus référencé par aucune autre quête, ne doit pas réapparaître
-        // comme « chapitre vide » fantôme. S'il contient des scènes, on le GARDE (aucune
-        // perte de contenu). Les chapitres simplement LIÉS (quête transversale pointant du
-        // contenu réel d'un autre arc) ne sont JAMAIS touchés — isContainerOf les exclut.
         List<Quest> remaining = questRepository.findByCampaignId(quest.getCampaignId());
         for (QuestNodeRef node : nullSafeNodes(quest.getNodes())) {
             if (node.nodeType() != NodeType.CHAPTER) continue;
             chapterRepository.findById(node.nodeId()).ifPresent(ch -> {
                 boolean container = isContainerOf(quest, ch);
-                boolean empty = sceneRepository.findByChapterId(ch.getId()).isEmpty();
                 boolean referencedElsewhere = remaining.stream()
                         .anyMatch(q -> nullSafeNodes(q.getNodes()).stream()
                                 .anyMatch(n -> n.nodeType() == NodeType.CHAPTER
                                         && ch.getId().equals(n.nodeId())));
-                if (container && empty && !referencedElsewhere) {
-                    chapterRepository.deleteById(ch.getId());
-                }
+                if (!container || referencedElsewhere) return;
+                var scenes = sceneRepository.findByChapterId(ch.getId());
+                if (!scenes.isEmpty() && !inSystemArc(ch)) return; // jumeau de hub : reste visible
+                for (var scene : scenes) sceneRepository.deleteById(scene.getId());
+                chapterRepository.deleteById(ch.getId());
             });
         }
+    }
+
+    /** Scènes qui tomberont avec la quête (conteneurs d'arc SYSTEM exclusifs à cette quête). */
+    public record DeletionImpact(int scenes) {}
+
+    public DeletionImpact getDeletionImpact(String questId) {
+        Quest quest = questRepository.findById(questId).orElse(null);
+        if (quest == null) return new DeletionImpact(0);
+        List<Quest> others = questRepository.findByCampaignId(quest.getCampaignId()).stream()
+                .filter(q -> !questId.equals(q.getId()))
+                .toList();
+        int scenes = 0;
+        for (QuestNodeRef node : nullSafeNodes(quest.getNodes())) {
+            if (node.nodeType() != NodeType.CHAPTER) continue;
+            Chapter ch = chapterRepository.findById(node.nodeId()).orElse(null);
+            if (ch == null || !isContainerOf(quest, ch) || !inSystemArc(ch)) continue;
+            boolean referencedElsewhere = others.stream()
+                    .anyMatch(q -> nullSafeNodes(q.getNodes()).stream()
+                            .anyMatch(n -> n.nodeType() == NodeType.CHAPTER
+                                    && ch.getId().equals(n.nodeId())));
+            if (!referencedElsewhere) scenes += sceneRepository.findByChapterId(ch.getId()).size();
+        }
+        return new DeletionImpact(scenes);
     }
 
     private static List<QuestNodeRef> nullSafeNodes(List<QuestNodeRef> nodes) {
