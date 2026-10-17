@@ -73,6 +73,15 @@ class FlywayMigrationTest {
                     "values ('C', 0, now(), now())");
             st.executeUpdate("insert into arcs (name, campaign_id, \"order\", type, created_at, updated_at) " +
                     "select 'Quêtes libres', id, 9999, 'SYSTEM', now(), now() from campaigns");
+
+            // V25 : accès distant — réglage singleton + appareils, empreinte de jeton unique.
+            st.executeUpdate("insert into remote_access_config (id, enabled, port, updated_at) " +
+                    "values ('current', true, 8765, now())");
+            st.executeUpdate("insert into remote_devices (name, token_hash, created_at) values ('Tablette', 'abc', now())");
+            assertThrows(SQLException.class,
+                    () -> st.executeUpdate("insert into remote_devices (name, token_hash, created_at) " +
+                            "values ('Doublon', 'abc', now())"),
+                    "remote_devices.token_hash doit être unique (V25)");
         }
     }
 

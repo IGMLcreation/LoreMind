@@ -61,6 +61,8 @@ export const routes: Routes = [
   { path: 'game-systems/:id/edit', loadComponent: () => import('./game-systems/game-system-edit/game-system-edit.component').then(m => m.GameSystemEditComponent) },
   // Routes masquees en mode demo : ajouter canActivate: [hiddenInDemoGuard]
   // (a prevoir aussi sur la future route d'export VTT).
+  // Accès distant (mode bureau) : appairage d'une tablette par code.
+  { path: 'pair', loadComponent: () => import('./remote-access/remote-pair/remote-pair.component').then(m => m.RemotePairComponent) },
   { path: 'settings', canActivate: [hiddenInDemoGuard], loadComponent: () => import('./settings/settings.component').then(m => m.SettingsComponent) },
   { path: '', redirectTo: '/lore', pathMatch: 'full' }
 ];

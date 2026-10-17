@@ -20,6 +20,9 @@
               "zone.js"
             ],
             "tsConfig": "tsconfig.json",
+            "allowedCommonJsDependencies": [
+              "qrcode"
+            ],
             "assets": [
               "src/favicon.ico",
               "src/assets"

@@ -1,0 +1,80 @@
+// Recouvre tout le shell (menus compris) : sans appairage, rien d'autre n'est utilisable.
+.pair-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: #0a0a14;
+  overflow-y: auto;
+}
+
+.pair-card {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.75rem 1.5rem;
+  border-radius: 12px;
+  background: #111827;
+  border: 1px solid #1f2937;
+
+  h1 {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: white;
+    text-wrap: balance;
+  }
+}
+
+.pair-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: rgba(108, 99, 255, 0.15);
+  color: #a5b4fc;
+}
+
+.pair-text {
+  margin: 0;
+  color: #d1d5db;
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.pair-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+// Gros chiffres espacés : se lit et se tape facilement au doigt.
+.code-input {
+  font-size: 1.8rem !important;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.5em;
+  text-align: center;
+  padding: 0.6rem 0 0.6rem 0.5em !important;
+}
+
+.pair-error {
+  margin: 0;
+  color: #fca5a5;
+  font-size: 0.9rem;
+}
+
+.pair-submit,
+.pair-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 48px;
+  text-decoration: none;
+}

@@ -1,5 +1,7 @@
 package com.loremind.infrastructure.web.config;
 
+import com.loremind.application.remoteaccess.RemoteAccessService;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,6 +16,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
 /**
  * Configuration Spring Security.
@@ -23,6 +26,9 @@ import org.springframework.security.web.SecurityFilterChain;
  * Le reste de /api/** reste permitAll — l'app est self-hosted mono-utilisateur,
  * l'UI elle-meme n'est pas authentifiee (trust model : reseau local ou
  * reverse-proxy front amont).
+ * <p>
+ * Mode bureau : l'acces depuis une tablette passe par un connecteur reseau dedie,
+ * garde par {@link RemoteAccessFilter} (jeton d'appareil obtenu par code d'appairage).
  * <p>
  * Fail-closed : refuse de demarrer si admin.password n'est pas defini.
  */
@@ -58,7 +64,15 @@ public class SecurityConfig {
     // S4502 : API stateless en HTTP Basic sans cookie — CSRF sans objet (voir javadoc de classe).
     @SuppressWarnings("java:S4502")
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http,
+                                           ObjectProvider<RemoteAccessService> remoteAccess) throws Exception {
+        // Mode bureau : garde de l'accès distant (tablette sur le réseau local), placée AVANT
+        // le HTTP Basic pour qu'un appareil du réseau ne puisse même pas tenter le mot de
+        // passe admin. Absente en Docker (le service n'existe que sous le profil local).
+        RemoteAccessService remoteAccessService = remoteAccess.getIfAvailable();
+        if (remoteAccessService != null) {
+            http.addFilterBefore(new RemoteAccessFilter(remoteAccessService), BasicAuthenticationFilter.class);
+        }
         http
             // API stateless : pas de session, pas de cookie => CSRF sans objet.
             // Les credentials HTTP Basic sont envoyes a chaque requete, donc

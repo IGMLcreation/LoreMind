@@ -1,0 +1,45 @@
+<div class="pair-screen">
+  <main class="pair-card">
+    <div class="pair-icon" aria-hidden="true">
+      <lucide-icon [img]="Tablet" [size]="28"></lucide-icon>
+    </div>
+
+    @if (onHost) {
+      <h1>{{ 'remoteAccess.pair.onHostTitle' | translate }}</h1>
+      <p class="pair-text">{{ 'remoteAccess.pair.onHostText' | translate }}</p>
+      <a class="btn-primary pair-link" [routerLink]="['/settings']" [queryParams]="{ section: 'remote-access' }">
+        {{ 'remoteAccess.pair.onHostLink' | translate }}
+      </a>
+    } @else {
+      <h1>{{ 'remoteAccess.pair.title' | translate }}</h1>
+      <p class="pair-text">{{ 'remoteAccess.pair.text' | translate }}</p>
+
+      <form class="pair-form" (ngSubmit)="submit()">
+        <div class="field">
+          <label for="pair-code">{{ 'remoteAccess.pair.codeLabel' | translate }}</label>
+          <!-- Pas de ngModel : on réécrit le champ à chaque frappe pour n'y laisser
+          que des chiffres (ngModel ne rafraîchit pas la vue si la valeur nettoyée ne change pas).
+          Pas de maxlength : il couperait « 123 456 » collé AVANT le nettoyage. -->
+          <input id="pair-code" name="code" class="code-input"
+            inputmode="numeric" autocomplete="one-time-code"
+            [value]="code" (input)="onCodeInput($event)"
+            placeholder="000000" />
+        </div>
+        <div class="field">
+          <label for="pair-name">{{ 'remoteAccess.pair.nameLabel' | translate }}</label>
+          <input id="pair-name" name="deviceName" maxlength="100" [(ngModel)]="deviceName" />
+          <p class="field-hint">{{ 'remoteAccess.pair.nameHint' | translate }}</p>
+        </div>
+
+        @if (error) {
+          <p class="pair-error" role="alert">{{ error }}</p>
+        }
+
+        <button type="submit" class="btn-primary pair-submit" [disabled]="!canSubmit">
+          <lucide-icon [img]="Check" [size]="16"></lucide-icon>
+          {{ (submitting ? 'remoteAccess.pair.submitting' : 'remoteAccess.pair.submit') | translate }}
+        </button>
+      </form>
+    }
+  </main>
+</div>

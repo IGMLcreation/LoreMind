@@ -1,0 +1,102 @@
+@if (status; as s) {
+  <section class="card remote-access" id="remote-access">
+    <h2>{{ 'remoteAccess.settings.title' | translate }}</h2>
+    <p class="hint">{{ 'remoteAccess.settings.hint' | translate }}</p>
+
+    @if (error || s.lastError) {
+      <div class="alert alert-error" role="alert">
+        <lucide-icon [img]="AlertCircle" [size]="16"></lucide-icon>
+        <span>{{ error || s.lastError }}</span>
+      </div>
+    }
+
+    <label class="switch-row">
+      <input type="checkbox" [ngModel]="s.enabled" (ngModelChange)="toggle($event)" [disabled]="busy" />
+      <span>{{ 'remoteAccess.settings.enable' | translate }}</span>
+    </label>
+
+    @if (!s.enabled) {
+      <p class="note">
+        <lucide-icon [img]="ShieldCheck" [size]="15"></lucide-icon>
+        {{ 'remoteAccess.settings.firewallNote' | translate }}
+      </p>
+    }
+
+    @if (s.running) {
+      <div class="remote-block">
+        <h3>{{ 'remoteAccess.settings.addressTitle' | translate }}</h3>
+        @if (s.urls.length > 0) {
+          <ul class="url-list">
+            @for (url of s.urls; track url) {
+              <li><code>{{ url }}</code></li>
+            }
+          </ul>
+        } @else {
+          <p class="note">{{ 'remoteAccess.settings.noAddress' | translate }}</p>
+        }
+      </div>
+
+      <div class="remote-block">
+        <h3>{{ 'remoteAccess.settings.pairTitle' | translate }}</h3>
+        @if (pairing) {
+          <div class="pairing">
+            @if (qrDataUrl) {
+              <img class="qr" [src]="qrDataUrl" [alt]="'remoteAccess.settings.qrAlt' | translate" width="220" height="220" />
+            }
+            <div class="pairing-info">
+              <p class="pairing-steps">{{ 'remoteAccess.settings.pairSteps' | translate }}</p>
+              <div class="code" [attr.aria-label]="'remoteAccess.settings.codeAria' | translate: { code: pairing.code }">
+                {{ pairing.code.slice(0, 3) }}&nbsp;{{ pairing.code.slice(3) }}
+              </div>
+              <p class="expires">{{ 'remoteAccess.settings.expiresIn' | translate: { time: countdownLabel } }}</p>
+              <button type="button" class="btn-secondary" (click)="newCode()" [disabled]="busy">
+                <lucide-icon [img]="RefreshCw" [size]="14"></lucide-icon>
+                {{ 'remoteAccess.settings.newCode' | translate }}
+              </button>
+            </div>
+          </div>
+        } @else {
+          <button type="button" class="btn-primary" (click)="newCode()" [disabled]="busy">
+            <lucide-icon [img]="Tablet" [size]="16"></lucide-icon>
+            {{ 'remoteAccess.settings.connectDevice' | translate }}
+          </button>
+        }
+      </div>
+    }
+
+    <div class="remote-block">
+      <h3>{{ 'remoteAccess.settings.devicesTitle' | translate }}</h3>
+      @if (s.devices.length === 0) {
+        <p class="note">{{ 'remoteAccess.settings.noDevices' | translate }}</p>
+      } @else {
+        <ul class="device-list">
+          @for (d of s.devices; track d.id) {
+            <li>
+              <div class="device-info">
+                <span class="device-name">{{ d.name }}</span>
+                <span class="device-meta">{{ 'remoteAccess.settings.lastSeen' | translate: { date: formatDate(d.lastSeenAt) } }}</span>
+              </div>
+              <button type="button" class="btn-icon-danger" (click)="revoke(d)"
+                [title]="'remoteAccess.settings.revoke' | translate"
+                [attr.aria-label]="('remoteAccess.settings.revoke' | translate) + ' : ' + d.name">
+                <lucide-icon [img]="Trash2" [size]="16"></lucide-icon>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+
+    <details class="advanced">
+      <summary>{{ 'remoteAccess.settings.advanced' | translate }}</summary>
+      <div class="port-row">
+        <label for="remote-port">{{ 'remoteAccess.settings.portLabel' | translate }}</label>
+        <input id="remote-port" type="number" min="1024" max="65535" [(ngModel)]="port" />
+        <button type="button" class="btn-secondary" (click)="applyPort()" [disabled]="busy || port === s.port">
+          {{ 'remoteAccess.settings.applyPort' | translate }}
+        </button>
+      </div>
+      <p class="note">{{ 'remoteAccess.settings.outsideNote' | translate }}</p>
+    </details>
+  </section>
+}

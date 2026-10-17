@@ -12,6 +12,8 @@ import { UpdatesSectionComponent } from './updates-section/updates-section.compo
 import { OllamaModelManagerComponent } from './ollama-model-manager/ollama-model-manager.component';
 import { LanguageSwitcherComponent } from '../shared/language-switcher/language-switcher.component';
 import { FileDropDirective } from '../shared/file-drop.directive';
+import { RemoteAccessSectionComponent } from './remote-access-section/remote-access-section.component';
+import { RemoteAccessService } from '../services/remote-access.service';
 
 /**
  * Ecran de parametrage du LLM utilise par le Brain.
@@ -29,7 +31,7 @@ import { FileDropDirective } from '../shared/file-drop.directive';
  */
 @Component({
     selector: 'app-settings',
-    imports: [CommonModule, FormsModule, LucideAngularModule, TranslatePipe, UpdatesSectionComponent, OllamaModelManagerComponent, LanguageSwitcherComponent, FileDropDirective],
+    imports: [CommonModule, FormsModule, LucideAngularModule, TranslatePipe, UpdatesSectionComponent, OllamaModelManagerComponent, LanguageSwitcherComponent, FileDropDirective, RemoteAccessSectionComponent],
     templateUrl: './settings.component.html',
     styleUrls: ['./settings.component.scss']
 })
@@ -100,14 +102,21 @@ export class SettingsComponent implements OnInit {
     private router: Router,
     private layoutService: LayoutService,
     private translate: TranslateService,
-    private campaignService: CampaignService
+    private campaignService: CampaignService,
+    private remoteAccess: RemoteAccessService
   ) {}
+
+  /** Ouvert depuis une tablette (accès distant) : les Paramètres restent réservés au PC. */
+  remoteDevice = false;
 
   ngOnInit(): void {
     // Page racine : on s'assure de ne pas heriter de la sidebar d'une
     // section precedente (cf. fix CampaignsComponent / LoreComponent).
     this.layoutService.hide();
-    this.loadSettings();
+    this.remoteAccess.session().subscribe(session => {
+      this.remoteDevice = session.remote;
+      if (!session.remote) this.loadSettings();
+    });
     // Campagnes proposées pour un export ciblé (silencieux en cas d'échec).
     this.campaignService.getAllCampaigns().subscribe({
       next: (list) => this.campaigns = list,

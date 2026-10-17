@@ -16,6 +16,16 @@
     </div>
   </section>
 
+  @if (remoteDevice) {
+    <div class="alert alert-warn">
+      <lucide-icon [img]="AlertCircle" [size]="16"></lucide-icon>
+      <span>{{ 'remoteAccess.settings.onDevice' | translate }}</span>
+    </div>
+  } @else {
+    <!-- Accès depuis une tablette (mode bureau ; masqué en Docker). -->
+    <app-remote-access-section></app-remote-access-section>
+  }
+
   @if (errorMessage) {
     <div class="alert alert-error">
       <lucide-icon [img]="AlertCircle" [size]="16"></lucide-icon>

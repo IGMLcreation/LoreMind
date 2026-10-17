@@ -10,6 +10,7 @@ import { ConfigService } from './app/services/config.service';
 import { LanguageService } from './app/services/language.service';
 import { sessionExpiredInterceptor } from './app/interceptors/session-expired.interceptor';
 import { languageInterceptor } from './app/interceptors/language.interceptor';
+import { remotePairingInterceptor } from './app/interceptors/remote-pairing.interceptor';
 
 // withPreloading(PreloadAllModules) : une fois l'app initiale rendue, Angular
 // telecharge en arriere-plan tous les chunks lazy-loades. Consequence : la
@@ -19,7 +20,7 @@ import { languageInterceptor } from './app/interceptors/language.interceptor';
 bootstrapApplication(AppComponent, {
   providers: [
     provideZoneChangeDetection(),provideRouter(routes, withPreloading(PreloadAllModules)),
-    provideHttpClient(withInterceptors([sessionExpiredInterceptor, languageInterceptor])),
+    provideHttpClient(withInterceptors([sessionExpiredInterceptor, languageInterceptor, remotePairingInterceptor])),
     provideTranslateService({
       loader: provideTranslateHttpLoader({
         prefix: 'assets/i18n/',

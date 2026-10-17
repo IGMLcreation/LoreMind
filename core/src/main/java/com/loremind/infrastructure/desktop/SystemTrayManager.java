@@ -70,6 +70,13 @@ public class SystemTrayManager {
             open.addActionListener(e -> DesktopSingleInstance.openAppInBrowser());
             popup.add(open);
 
+            // Acces distant : ouvre la section Parametres ou l'on active l'acces
+            // depuis une tablette et ou l'on affiche le code d'appairage.
+            MenuItem remote = new MenuItem("Connecter une tablette…");
+            remote.addActionListener(e -> DesktopSingleInstance.openUrl(
+                    "http://localhost:" + DesktopUserConfig.runningPort() + "/settings?section=remote-access"));
+            popup.add(remote);
+
             popup.addSeparator();
 
             // Reglages : ouvre loremind.properties (port, identifiants admin) dans

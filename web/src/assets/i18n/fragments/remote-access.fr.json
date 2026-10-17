@@ -1,0 +1,50 @@
+{
+  "remoteAccess": {
+    "settings": {
+      "title": "Accès depuis une tablette",
+      "hint": "Consulte et modifie tes campagnes depuis une tablette ou un téléphone connecté au même Wi-Fi que ce PC. Chaque appareil doit être autorisé une fois, avec un code affiché ici.",
+      "enable": "Autoriser l'accès depuis le réseau local",
+      "firewallNote": "À l'activation, Windows peut demander d'autoriser DM Loremind dans le pare-feu : choisis « Réseaux privés » uniquement. À n'activer que sur un réseau de confiance (ta box), jamais sur un Wi-Fi public.",
+      "addressTitle": "Adresse à ouvrir sur la tablette",
+      "noAddress": "Aucune adresse réseau locale détectée : vérifie que ce PC est bien connecté au Wi-Fi ou au réseau de ta box.",
+      "pairTitle": "Connecter un appareil",
+      "connectDevice": "Connecter un appareil",
+      "pairSteps": "Sur la tablette, scanne le QR code, ou ouvre l'adresse ci-dessus et saisis ce code :",
+      "codeAria": "Code d'appairage {{code}}",
+      "qrAlt": "QR code pour connecter la tablette",
+      "expiresIn": "Valable encore {{time}}, pour un seul appareil",
+      "newCode": "Nouveau code",
+      "codeError": "Impossible de créer un code d'appairage.",
+      "saveError": "Impossible d'enregistrer le réglage.",
+      "devicesTitle": "Appareils autorisés",
+      "noDevices": "Aucun appareil autorisé pour le moment.",
+      "lastSeen": "Dernière connexion : {{date}}",
+      "revoke": "Retirer l'accès",
+      "revokeTitle": "Retirer l'accès ?",
+      "revokeMessage": "« {{name}} » ne pourra plus accéder à DM Loremind. Il faudra un nouveau code pour le reconnecter.",
+      "revokeError": "Impossible de retirer l'accès de cet appareil.",
+      "advanced": "Réglages avancés",
+      "portLabel": "Port réseau",
+      "applyPort": "Appliquer",
+      "outsideNote": "Pour y accéder hors de chez toi (en 4G, chez un ami), la documentation explique comment passer par Tailscale, un réseau privé chiffré et gratuit. N'ouvre pas ce port sur Internet depuis ta box.",
+      "onDevice": "Tu es connecté depuis une tablette : les paramètres se modifient uniquement sur le PC où DM Loremind est installé."
+    },
+    "pair": {
+      "title": "Connecter cet appareil",
+      "text": "Sur le PC, ouvre Paramètres > Accès depuis une tablette, puis « Connecter un appareil ». Saisis ici le code à 6 chiffres affiché.",
+      "codeLabel": "Code d'appairage",
+      "nameLabel": "Nom de cet appareil",
+      "nameHint": "Pour le reconnaître dans la liste des appareils autorisés.",
+      "submit": "Connecter",
+      "submitting": "Connexion…",
+      "rejected": "Code refusé : vérifie-le, ou affiche un nouveau code sur le PC.",
+      "failed": "La connexion a échoué. Vérifie que le PC est allumé et sur le même réseau.",
+      "defaultTablet": "Tablette",
+      "defaultPhone": "Téléphone",
+      "defaultDevice": "Appareil",
+      "onHostTitle": "Tu es sur le PC",
+      "onHostText": "Cette page sert à connecter une tablette. Sur ce PC, l'accès se règle depuis les Paramètres.",
+      "onHostLink": "Ouvrir les réglages d'accès"
+    }
+  }
+}

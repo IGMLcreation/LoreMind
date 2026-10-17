@@ -2385,5 +2385,53 @@
         }
       }
     }
+  },
+  "remoteAccess": {
+    "settings": {
+      "title": "Access from a tablet",
+      "hint": "Browse and edit your campaigns from a tablet or phone on the same Wi-Fi as this PC. Each device must be authorized once, with a code shown here.",
+      "enable": "Allow access from the local network",
+      "firewallNote": "When you turn this on, Windows may ask to allow DM Loremind through the firewall: choose \"Private networks\" only. Only enable it on a trusted network (your home router), never on public Wi-Fi.",
+      "addressTitle": "Address to open on the tablet",
+      "noAddress": "No local network address found: check that this PC is connected to your Wi-Fi or home router.",
+      "pairTitle": "Connect a device",
+      "connectDevice": "Connect a device",
+      "pairSteps": "On the tablet, scan the QR code, or open the address above and enter this code:",
+      "codeAria": "Pairing code {{code}}",
+      "qrAlt": "QR code to connect the tablet",
+      "expiresIn": "Valid for {{time}} more, for a single device",
+      "newCode": "New code",
+      "codeError": "Unable to create a pairing code.",
+      "saveError": "Unable to save the setting.",
+      "devicesTitle": "Authorized devices",
+      "noDevices": "No authorized device yet.",
+      "lastSeen": "Last connection: {{date}}",
+      "revoke": "Remove access",
+      "revokeTitle": "Remove access?",
+      "revokeMessage": "\"{{name}}\" will no longer be able to access DM Loremind. A new code will be needed to reconnect it.",
+      "revokeError": "Unable to remove this device's access.",
+      "advanced": "Advanced settings",
+      "portLabel": "Network port",
+      "applyPort": "Apply",
+      "outsideNote": "To reach it away from home (on 4G, at a friend's), the documentation explains how to use Tailscale, a free encrypted private network. Don't open this port to the Internet on your router.",
+      "onDevice": "You are connected from a tablet: settings can only be changed on the PC where DM Loremind is installed."
+    },
+    "pair": {
+      "title": "Connect this device",
+      "text": "On the PC, open Settings > Access from a tablet, then \"Connect a device\". Enter the 6-digit code shown there.",
+      "codeLabel": "Pairing code",
+      "nameLabel": "Name of this device",
+      "nameHint": "To recognize it in the list of authorized devices.",
+      "submit": "Connect",
+      "submitting": "Connecting…",
+      "rejected": "Code rejected: check it, or show a new code on the PC.",
+      "failed": "Connection failed. Check that the PC is on and on the same network.",
+      "defaultTablet": "Tablet",
+      "defaultPhone": "Phone",
+      "defaultDevice": "Device",
+      "onHostTitle": "You're on the PC",
+      "onHostText": "This page is for connecting a tablet. On this PC, access is managed from Settings.",
+      "onHostLink": "Open access settings"
+    }
   }
 }

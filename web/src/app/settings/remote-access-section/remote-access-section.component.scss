@@ -1,0 +1,173 @@
+// Complète les styles partagés de la page Paramètres (.card, .hint, .alert).
+.remote-access {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  h3 {
+    margin: 0 0 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 44px;
+  }
+}
+
+.switch-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+
+  input { accent-color: #6c63ff; width: 20px; height: 20px; margin: 0; }
+}
+
+.note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.6);
+
+  lucide-icon { flex-shrink: 0; margin-top: 0.15rem; color: #86efac; }
+}
+
+.remote-block {
+  padding-top: 0.25rem;
+}
+
+.url-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  code {
+    font-size: 1.05rem;
+    color: #c7d2fe;
+    overflow-wrap: anywhere;
+  }
+}
+
+.pairing {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.qr {
+  border-radius: 8px;
+  background: white;
+  max-width: 100%;
+  height: auto;
+}
+
+.pairing-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.pairing-steps {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.code {
+  font-size: 2.2rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  font-variant-numeric: tabular-nums;
+  color: white;
+}
+
+.expires {
+  margin: 0;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.device-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.55rem 0.75rem;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+}
+
+.device-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.device-name { font-weight: 600; overflow-wrap: anywhere; }
+.device-meta { font-size: 0.8rem; color: rgba(255, 255, 255, 0.5); }
+
+.btn-icon-danger {
+  justify-content: center;
+  width: 44px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #fca5a5;
+  cursor: pointer;
+
+  &:hover { background: rgba(239, 68, 68, 0.12); }
+  &:focus-visible { outline: 2px solid #6c63ff; }
+}
+
+.advanced {
+  summary {
+    cursor: pointer;
+    font-size: 0.88rem;
+    color: rgba(255, 255, 255, 0.7);
+    min-height: 32px;
+  }
+
+  &[open] summary { margin-bottom: 0.75rem; }
+}
+
+.port-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+
+  input {
+    width: 8rem;
+    padding: 0.6rem 0.8rem;
+    border-radius: 8px;
+    border: 1px solid #374151;
+    background: #1f2937;
+    color: white;
+  }
+}
