@@ -1881,5 +1881,17 @@
     "optTables": "Tables aléatoires",
     "optTablesHint": "Vos tables de rencontres et d'événements en RollTables Foundry.",
     "confirm": "Exporter"
+  },
+  "mobileShell": {
+    "openMenu": "Ouvrir le menu",
+    "closeMenu": "Fermer le menu",
+    "openTree": "Ouvrir l'arborescence",
+    "closeTree": "Fermer l'arborescence",
+    "mainNav": "Menu principal",
+    "treeNav": "Arborescence",
+    "search": "Rechercher",
+    "moreActions": "Plus d'actions",
+    "collapseTree": "Replier l'arborescence",
+    "expandTree": "Déplier l'arborescence"
   }
 }

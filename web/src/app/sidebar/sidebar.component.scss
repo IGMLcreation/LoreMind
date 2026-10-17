@@ -1,6 +1,7 @@
 .sidebar {
   width: 190px;
   height: 100vh;
+  height: 100dvh;
   background: #0f0f1a;
   color: #e0e0e0;
   display: flex;
@@ -202,3 +203,24 @@
 }
 
 .version { font-size: 0.7rem; color: #4b5563; }
+
+// Tiroir (shell < 1024 px) : plus large, et le contenu défile si l'écran est bas
+// (téléphone en paysage) au lieu d'écraser la liste des campagnes / lores.
+@media (max-width: 1023.98px) {
+  .sidebar {
+    width: min(280px, 88vw);
+    overflow-y: auto;
+  }
+  .sidebar-header { margin-bottom: 1.25rem; }
+}
+
+@media (pointer: coarse) {
+  .toggle-btn { min-height: 40px; }
+  .context-item { min-height: 40px; font-size: 0.9rem; }
+  .tool-btn { min-height: 44px; }
+}
+
+// Pas de clavier physique présumé sur écran tactile : le raccourci n'a pas de sens.
+@media (hover: none) {
+  .tool-kbd { display: none; }
+}

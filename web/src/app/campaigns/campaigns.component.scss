@@ -10,6 +10,8 @@
   text-align: center;
   margin-bottom: 3rem;
 
+  @media (max-width: 767.98px) { margin-bottom: 1.5rem; }
+
   .hero-icon { display: block; margin-bottom: 1rem; color: #6c63ff; }
 
   h1 { font-size: 2rem; font-weight: 700; color: white; margin-bottom: 0.5rem; }
@@ -19,7 +21,9 @@
 
 .campaigns-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  // 3 colonnes sur desktop (max-width 900px), moins dès que la carte passerait
+  // sous 240 px : 2 sur tablette portrait, 1 sur téléphone.
+  grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));
   gap: 1.5rem;
   width: 100%;
   max-width: 900px;

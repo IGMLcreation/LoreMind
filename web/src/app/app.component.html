@@ -1,10 +1,50 @@
 <app-update-banner></app-update-banner>
 
 <div class="app-container">
-  <app-sidebar></app-sidebar>
+  <!-- Barre haute (< 1024 px) : ouvre les tiroirs menu / arborescence. Masquée en CSS sur desktop. -->
+  <header class="mobile-topbar">
+    <button #mainToggle type="button" class="topbar-btn"
+      aria-controls="app-main-nav"
+      [attr.aria-expanded]="openDrawer() === 'main'"
+      [attr.aria-label]="(openDrawer() === 'main' ? 'mobileShell.closeMenu' : 'mobileShell.openMenu') | translate"
+      (click)="toggleDrawer('main')">
+      <lucide-icon [img]="openDrawer() === 'main' ? X : Menu" [size]="20"></lucide-icon>
+    </button>
+    @if (sidebarConfig$ | async; as config) {
+      <button #treeToggle type="button" class="topbar-btn topbar-tree"
+        aria-controls="app-tree-nav"
+        [attr.aria-expanded]="openDrawer() === 'tree'"
+        [attr.aria-label]="(openDrawer() === 'tree' ? 'mobileShell.closeTree' : 'mobileShell.openTree') | translate"
+        (click)="toggleDrawer('tree')">
+        <lucide-icon [img]="PanelLeft" [size]="18"></lucide-icon>
+        <span class="topbar-title">{{ config.title }}</span>
+      </button>
+    } @else {
+      <span class="topbar-brand">
+        <img src="assets/logo.png" alt="" />
+        <span>DM Loremind</span>
+      </span>
+    }
+    <button type="button" class="topbar-btn topbar-search"
+      [attr.aria-label]="'mobileShell.search' | translate"
+      (click)="openSearch()">
+      <lucide-icon [img]="Search" [size]="18"></lucide-icon>
+    </button>
+  </header>
+
+  <app-sidebar id="app-main-nav"
+    [class.drawer-open]="openDrawer() === 'main'"
+    [attr.role]="isCompact() ? 'dialog' : null"
+    [attr.aria-modal]="isCompact() && openDrawer() === 'main' ? 'true' : null"
+    [attr.aria-label]="'mobileShell.mainNav' | translate"></app-sidebar>
 
   @if (sidebarConfig$ | async; as config) {
-    <app-secondary-sidebar
+    <app-secondary-sidebar id="app-tree-nav"
+      [class.drawer-open]="openDrawer() === 'tree'"
+      [attr.role]="isCompact() ? 'dialog' : null"
+      [attr.aria-modal]="isCompact() && openDrawer() === 'tree' ? 'true' : null"
+      [attr.aria-label]="'mobileShell.treeNav' | translate"
+      [drawerMode]="isCompact()"
       [title]="config.title"
       [titleRoute]="config.titleRoute || null"
       [items]="config.items"
@@ -16,7 +56,11 @@
     </app-secondary-sidebar>
   }
 
-  <main class="main-content">
+  @if (openDrawer()) {
+    <div class="drawer-backdrop" aria-hidden="true" (click)="closeDrawer()"></div>
+  }
+
+  <main #mainContent class="main-content" tabindex="-1">
     <router-outlet></router-outlet>
   </main>
 </div>

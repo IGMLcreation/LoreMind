@@ -1,0 +1,91 @@
+// ==========================================================================
+// Règles responsive globales (téléphone / tablette)
+// --------------------------------------------------------------------------
+// Points de rupture partagés avec le shell (app.component.scss) :
+//   < 1024 px : tablette — menu et arborescence en tiroirs ;
+//   <  768 px : téléphone — une colonne, en-têtes repliés ;
+//   <  600 px : formulaires sur une colonne.
+// Les règles ci-dessous ne visent que des classes GLOBALES (styles/_forms,
+// _view, _buttons). Les composants gardent leurs propres @media.
+// ==========================================================================
+
+// Garde-fou : un média (image, vidéo, canvas) ne doit jamais élargir la page.
+img, video, canvas { max-width: 100%; }
+
+// Pas d'agrandissement automatique du texte à la rotation (iOS / Android).
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
+// En-têtes (formulaires et fiches) : quand la place manque — tablette, ou desktop
+// avec deux sidebars ouvertes —, les actions passent sous le titre et se
+// répartissent sur plusieurs lignes au lieu de pousser la page hors de l'écran.
+// Seul flex-wrap est posé ici : les composants gardent leur display/gap/alignement.
+.page-header,
+.page-header .header-actions,
+.view-page .view-header {
+  flex-wrap: wrap;
+}
+
+.view-page .view-header .view-actions {
+  flex-wrap: wrap;
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+@media (max-width: 599.98px) {
+  .field-row { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 767.98px) {
+  // Les pages posent leur propre marge latérale (souvent 2rem) en plus de celle
+  // du shell : sur téléphone on ne garde que celle du shell (main-content),
+  // sinon le contenu utile tombe sous 290 px. !important : les wrappers sont
+  // stylés dans leurs composants (encapsulation, spécificité supérieure).
+  .main-content > :not(router-outlet) > :first-child {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-top: 1rem !important;
+  }
+
+  // En-tête de formulaire : titre sur sa ligne, actions à la ligne en dessous.
+  .page-header {
+    padding: 0.75rem 0;
+    margin-bottom: 1rem;
+
+    h1 { font-size: 1.25rem; overflow-wrap: anywhere; }
+
+    // Formulaires d'édition : la barre d'actions occupe sa propre ligne.
+    > .header-actions { flex: 1 1 100%; }
+  }
+
+  // Fiches de consultation (page, arc, chapitre, scène) : marges réduites,
+  // titre sur toute la largeur puis actions en dessous.
+  .view-page {
+    padding: 1rem 0;
+
+    .view-header {
+      align-items: flex-start;
+      padding: 0.75rem 0;
+      margin-bottom: 1rem;
+
+      > :first-child { flex: 1 1 100%; min-width: 0; }
+
+      h1 { font-size: 1.35rem; overflow-wrap: anywhere; }
+    }
+  }
+
+  .form-actions { gap: 0.6rem; }
+
+  // Évite le zoom automatique d'iOS au focus d'un champ (déclenché sous 16 px).
+  .field input,
+  .field textarea,
+  .field select { font-size: 16px; }
+}
+
+// Écrans tactiles : les boutons partagés atteignent une cible confortable.
+@media (pointer: coarse) {
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger,
+  .btn-ai,
+  .btn-back { min-height: 40px; }
+}

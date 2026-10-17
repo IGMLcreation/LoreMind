@@ -1881,5 +1881,17 @@
     "optTables": "Random tables",
     "optTablesHint": "Your encounter and event tables as Foundry RollTables.",
     "confirm": "Export"
+  },
+  "mobileShell": {
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "openTree": "Open tree",
+    "closeTree": "Close tree",
+    "mainNav": "Main menu",
+    "treeNav": "Tree",
+    "search": "Search",
+    "moreActions": "More actions",
+    "collapseTree": "Collapse tree",
+    "expandTree": "Expand tree"
   }
 }

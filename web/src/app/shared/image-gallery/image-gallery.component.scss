@@ -185,7 +185,7 @@
 
 .carousel-slide {
   flex: 0 0 auto;
-  width: 360px;
+  width: min(360px, 85vw);
   aspect-ratio: 16 / 9;
   height: auto;
   scroll-snap-align: start;
@@ -439,4 +439,10 @@
 @keyframes fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+// Écrans sans survol (tactile) : le bouton de retrait est toujours visible, et
+// plus gros pour être visé au doigt.
+@media (hover: none) {
+  .gallery-remove { opacity: 1; width: 32px; height: 32px; }
 }

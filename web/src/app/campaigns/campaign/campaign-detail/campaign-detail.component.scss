@@ -173,16 +173,28 @@
   border-bottom: 1px solid #1f2937;
   margin-bottom: 1.5rem;
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 1.5rem;
+  gap: 1rem 1.5rem;
 
-  .header-texts { flex: 1; min-width: 0; }
+  // Le bloc titre réclame ~280 px ; s'il ne les a pas à côté des actions
+  // (tablette, desktop étroit), les actions passent dessous et s'y répartissent.
+  .header-texts { flex: 1 1 280px; min-width: 0; }
 
   .header-actions {
     display: flex;
+    flex-wrap: wrap;
     gap: 0.5rem;
-    flex-shrink: 0;
+    min-width: 0;
+  }
+
+  // Téléphone : l'en-tête (titre + 5 actions) mangerait la moitié de l'écran
+  // s'il restait collé en haut pendant le défilement.
+  @media (max-width: 767.98px) {
+    position: static;
+
+    h1 { overflow-wrap: anywhere; }
   }
 
   // Variante mode édition : champs empilés verticalement.

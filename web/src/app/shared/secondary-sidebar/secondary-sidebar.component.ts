@@ -25,6 +25,11 @@ export class SecondarySidebarComponent implements OnDestroy {
   @Input() rootDropKinds: ReorderKind[] | null = null;
   @Input() rootDropParentId: string | null = null;
   @Input() reorderContext: SidebarReorderContext | null = null;
+  /**
+   * Mode tiroir (shell < 1024 px) : largeur fixée par le CSS, pas de repli 44 px
+   * ni de poignée de redimensionnement — le tiroir se ferme depuis la barre haute.
+   */
+  @Input() drawerMode = false;
   @Output() collapsedChange = new EventEmitter<boolean>();
 
   /** true = ouvert (on affiche les items) ; false = replié (titre seul). */
@@ -40,6 +45,11 @@ export class SecondarySidebarComponent implements OnDestroy {
   readonly Home = Home;
 
   isCollapsed = false;
+
+  /** Repli effectif : le repli desktop est ignoré en mode tiroir. */
+  get collapsed(): boolean {
+    return this.isCollapsed && !this.drawerMode;
+  }
 
   // --- Resize (étirement horizontal) -------------------------------------
   /** Clé localStorage pour persister la largeur choisie par l'utilisateur. */

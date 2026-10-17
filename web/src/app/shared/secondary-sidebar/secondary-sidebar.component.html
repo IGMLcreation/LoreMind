@@ -1,12 +1,18 @@
 <aside class="secondary-sidebar"
-  [class.collapsed]="isCollapsed"
-  [style.width.px]="isCollapsed ? null : width">
+  [class.collapsed]="collapsed"
+  [class.drawer]="drawerMode"
+  [style.width.px]="collapsed || drawerMode ? null : width">
 
-  <div class="collapse-toggle" (click)="toggleCollapse()">
-    <lucide-icon [img]="isCollapsed ? PanelLeftOpen : PanelLeftClose" [size]="16"></lucide-icon>
-  </div>
+  <!-- Repli 44 px : desktop uniquement (en tiroir, on ferme le tiroir à la place). -->
+  @if (!drawerMode) {
+    <button type="button" class="collapse-toggle" (click)="toggleCollapse()"
+      [attr.aria-expanded]="!isCollapsed"
+      [attr.aria-label]="(isCollapsed ? 'mobileShell.expandTree' : 'mobileShell.collapseTree') | translate">
+      <lucide-icon [img]="isCollapsed ? PanelLeftOpen : PanelLeftClose" [size]="16"></lucide-icon>
+    </button>
+  }
 
-  @if (!isCollapsed) {
+  @if (!collapsed) {
     @if (titleRoute) {
       <button
         type="button"
@@ -103,8 +109,8 @@
     }
   }
 
-  <!-- Poignée de redimensionnement sur le bord droit (masquée si replié) -->
-  @if (!isCollapsed) {
+  <!-- Poignée de redimensionnement sur le bord droit (masquée si replié ou en tiroir) -->
+  @if (!collapsed && !drawerMode) {
     <div class="resize-handle"
       (mousedown)="startResize($event)"
     [title]="'secondarySidebar.resizeHandle' | translate"></div>

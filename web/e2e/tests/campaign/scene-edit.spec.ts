@@ -113,7 +113,10 @@ test.describe('Scene edit', () => {
 
     const branchItem = branchesSection.locator('.branch-item').first();
     await branchItem.getByPlaceholder(/Ex: Si les joueurs attaquent/i).fill('Si les PJ fuient');
-    await branchItem.locator('select').selectOption({ label: sibling.name });
+    // Une branche a 2 selects (scène cible + type de lien) : on vise celui qui liste la scène.
+    await branchItem
+      .locator('select', { has: page.locator('option', { hasText: sibling.name }) })
+      .selectOption({ label: sibling.name });
     await branchItem.getByPlaceholder(/Jet de Persuasion/i).fill('Sur échec initiative');
 
     await page.getByRole('button', { name: /^Sauvegarder$/i }).click();

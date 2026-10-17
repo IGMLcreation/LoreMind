@@ -300,8 +300,11 @@
   font-size: 0.9rem;
   font-weight: 500;
 
+  flex-wrap: wrap;
+
   select {
     flex: 1;
+    min-width: 0;
     max-width: 340px;
     padding: 8px 10px;
     border-radius: 8px;

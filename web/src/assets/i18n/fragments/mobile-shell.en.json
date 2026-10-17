@@ -1,0 +1,13 @@
+{
+  "mobileShell": {
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "openTree": "Open tree",
+    "closeTree": "Close tree",
+    "mainNav": "Main menu",
+    "treeNav": "Tree",
+    "search": "Search",
+    "collapseTree": "Collapse tree",
+    "expandTree": "Expand tree"
+  }
+}

@@ -1,14 +1,144 @@
+// Points de rupture du shell (cf. styles/_responsive.scss) :
+//  - >= 1024 px : colonnes fixes (menu + arborescence + contenu) ;
+//  - <  1024 px : barre haute + menu et arborescence en tiroirs off-canvas ;
+//  - <   768 px : une seule colonne, marges réduites.
+$compact: 1023.98px;
+$phone: 767.98px;
+$topbar-height: 52px;
+
 .app-container {
   display: flex;
   height: 100vh;
+  height: 100dvh;
 }
 
 .main-content {
   flex: 1;
+  // min-width: 0 — sans ça un contenu large (tableau, graphe) élargit la colonne
+  // flex au lieu de défiler dedans, et toute la page déborde horizontalement.
+  min-width: 0;
   // padding-top: 0 — sinon le contenu defile dans la zone de padding
   // au-dessus du `.page-header` sticky (top: 0 pin sur l'edge interne du
   // padding-box). Chaque page-wrapper definit deja son propre padding-top
   // qui devient l'unique source d'espacement haut.
   padding: 0 2rem 2rem;
   overflow-y: auto;
+
+  // Focus programmatique après navigation depuis un tiroir : pas d'anneau visible.
+  &:focus { outline: none; }
+}
+
+.mobile-topbar,
+.drawer-backdrop { display: none; }
+
+@media (max-width: $compact) {
+  .app-container { flex-direction: column; }
+
+  .mobile-topbar {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    flex: 0 0 auto;
+    height: $topbar-height;
+    padding: 0 0.5rem;
+    background: #0f0f1a;
+    border-bottom: 1px solid #1e1e3a;
+    position: relative;
+    z-index: 120;
+  }
+
+  .topbar-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-width: 44px;
+    height: 44px;
+    padding: 0 0.6rem;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    color: #d1d5db;
+    cursor: pointer;
+
+    &:hover, &[aria-expanded='true'] { background: #1f2937; color: white; }
+    &:focus-visible { outline: 2px solid #6c63ff; outline-offset: -2px; }
+  }
+
+  // Le bouton arborescence porte le titre de la section (campagne, lore) et prend
+  // toute la place disponible : c'est la cible la plus utilisée au doigt.
+  .topbar-tree {
+    flex: 1;
+    min-width: 0;
+    justify-content: flex-start;
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  .topbar-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .topbar-brand {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+    padding-left: 0.25rem;
+    font-weight: 700;
+    color: white;
+
+    img { width: 1.5rem; height: 1.5rem; border-radius: 5px; }
+  }
+
+  // Les deux sidebars deviennent des tiroirs : hors flux, cachés à gauche.
+  // visibility: hidden (retardée le temps de l'animation) les sort aussi de
+  // l'ordre de tabulation quand ils sont fermés.
+  app-sidebar,
+  app-secondary-sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 150;
+    max-width: 88vw;
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition: transform 0.25s ease, visibility 0s linear 0.25s;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
+
+    &.drawer-open {
+      transform: none;
+      visibility: visible;
+      transition: transform 0.25s ease;
+    }
+  }
+
+  .drawer-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 149;
+    background: rgba(0, 0, 0, 0.55);
+  }
+
+  .main-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 0 1.25rem 1.5rem;
+  }
+}
+
+@media (max-width: $phone) {
+  .main-content { padding: 0 0.75rem 1.25rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  app-sidebar,
+  app-secondary-sidebar,
+  app-sidebar.drawer-open,
+  app-secondary-sidebar.drawer-open { transition: none; }
 }
