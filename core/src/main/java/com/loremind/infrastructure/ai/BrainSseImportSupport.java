@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.codec.ServerSentEvent;
+import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
@@ -24,6 +25,21 @@ final class BrainSseImportSupport {
 
     /** Champ JSON standard des events SSE du Brain portant un message lisible. */
     private static final String MESSAGE_FIELD = "message";
+
+    /**
+     * Taille max d'UN évènement SSE. L'évènement {@code done} porte tout le résultat de
+     * l'import (règles d'un livre entier, en deux langues ; arbre complet d'une campagne) :
+     * la limite par défaut de WebClient (256 Ko) faisait échouer l'import au tout dernier
+     * moment (DataBufferLimitException), après des minutes d'analyse.
+     */
+    static final int MAX_EVENT_BYTES = 64 * 1024 * 1024;
+
+    /** WebClient d'import : évènements volumineux acceptés (voir {@link #MAX_EVENT_BYTES}). */
+    static WebClient importWebClient(WebClient.Builder builder, String baseUrl) {
+        return builder.baseUrl(baseUrl)
+                .codecs(c -> c.defaultCodecs().maxInMemorySize(MAX_EVENT_BYTES))
+                .build();
+    }
 
     private final ObjectMapper objectMapper;
 

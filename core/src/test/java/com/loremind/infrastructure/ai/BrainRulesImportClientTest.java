@@ -369,4 +369,43 @@ class BrainRulesImportClientTest {
         assertEquals(java.util.Map.of("Fighting", "d20 roll"), c.done.get().sectionsByLanguage().get("en"));
         assertEquals(java.util.Map.of("Combat", "d20"), c.done.get().sectionsByLanguage().get("fr"));
     }
+
+    /**
+     * Livre entier en deux langues : l'évènement {@code done} dépasse largement les 256 Ko
+     * par défaut de WebClient. Vrai serveur HTTP local (une ExchangeFunction simulée ne
+     * passe pas par les codecs du client, donc ne verrait pas la limite).
+     */
+    @Test
+    void streaming_acceptsAVeryLargeDoneEvent() throws Exception {
+        String big = "x".repeat(600_000);
+        String sse = "event:done\ndata:{\"sections\":{\"Combat\":\"" + big + "\"},\"page_count\":300,"
+                + "\"ocr_page_count\":0,\"source_language\":\"fr\",\"sections_by_language\":{\"fr\":{\"Combat\":\""
+                + big + "\"},\"en\":{\"Fighting\":\"" + big + "\"}}}\n\n";
+        byte[] payload = sse.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        com.sun.net.httpserver.HttpServer server =
+                com.sun.net.httpserver.HttpServer.create(new java.net.InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/import/rules/stream", exchange -> {
+            exchange.getRequestBody().readAllBytes();
+            exchange.getResponseHeaders().add(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_EVENT_STREAM_VALUE);
+            exchange.sendResponseHeaders(200, payload.length);
+            try (var out = exchange.getResponseBody()) {
+                out.write(payload);
+            }
+        });
+        server.start();
+        try {
+            String url = "http://127.0.0.1:" + server.getAddress().getPort();
+            BrainRulesImportClient real = new BrainRulesImportClient(restTemplate, WebClient.builder(), objectMapper,
+                    url, 30, "/import/rules", "/import/rules/stream");
+            Collector c = new Collector();
+            real.importRulesStreaming(new byte[]{1}, "r.pdf",
+                    c.progress::add, c.heartbeats::incrementAndGet, c.statuses::add, c.done::set, c.error::set);
+
+            assertNull(c.error.get());
+            assertNotNull(c.done.get());
+            assertEquals(600_000, c.done.get().sectionsByLanguage().get("en").get("Fighting").length());
+        } finally {
+            server.stop(0);
+        }
+    }
 }

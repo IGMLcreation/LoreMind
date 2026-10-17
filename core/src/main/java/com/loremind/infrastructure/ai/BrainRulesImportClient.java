@@ -70,7 +70,7 @@ public class BrainRulesImportClient implements RulesPdfImporter {
             @Value("${brain.paths.import-rules:/import/rules}") String importRulesPath,
             @Value("${brain.paths.import-rules-stream:/import/rules/stream}") String importRulesStreamPath) {
         this.restTemplate = restTemplate;
-        this.webClient = webClientBuilder.baseUrl(baseUrl).build();
+        this.webClient = BrainSseImportSupport.importWebClient(webClientBuilder, baseUrl);
         this.sse = new BrainSseImportSupport(objectMapper);
         this.baseUrl = baseUrl;
         this.importTimeoutSeconds = importTimeoutSeconds;

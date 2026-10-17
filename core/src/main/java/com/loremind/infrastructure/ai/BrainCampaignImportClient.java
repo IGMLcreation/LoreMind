@@ -53,7 +53,7 @@ public class BrainCampaignImportClient implements CampaignPdfImporter {
             @Value("${brain.base-url}") String baseUrl,
             @Value("${brain.import-timeout-seconds:600}") long importTimeoutSeconds,
             @Value("${brain.paths.import-campaign:/import/campaign/stream}") String importCampaignStreamPath) {
-        this.webClient = webClientBuilder.baseUrl(baseUrl).build();
+        this.webClient = BrainSseImportSupport.importWebClient(webClientBuilder, baseUrl);
         this.sse = new BrainSseImportSupport(objectMapper);
         this.importTimeoutSeconds = importTimeoutSeconds;
         this.importCampaignStreamPath = importCampaignStreamPath;
