@@ -1,0 +1,54 @@
+<section class="play-block" [class.play-block--live]="target.kind === 'resume'" [attr.aria-label]="'playAccess.block.title' | translate">
+  <div class="play-head">
+    <lucide-icon [img]="Play" [size]="16" class="play-head-icon"></lucide-icon>
+    <h2 class="play-title">{{ 'playAccess.block.title' | translate }}</h2>
+  </div>
+
+  @if (target.kind === 'resume') {
+    <ul class="play-rows">
+      @for (r of target.sessions; track r.session.id) {
+        <li class="play-row">
+          <span class="live-dot" aria-hidden="true"></span>
+          <div class="play-row-texts">
+            <span class="play-row-label">{{ 'playAccess.block.running' | translate }}</span>
+            <span class="play-row-sub">{{ r.session.name }} · {{ r.playthrough.name }}</span>
+          </div>
+          <button type="button" class="btn-primary play-btn" (click)="resume(r.session)">
+            <lucide-icon [img]="Play" [size]="15"></lucide-icon>
+            {{ 'playAccess.block.resume' | translate }}
+          </button>
+        </li>
+      }
+    </ul>
+  } @else if (target.kind === 'start') {
+    <div class="play-row">
+      <div class="play-row-texts">
+        @if (target.playthroughs.length > 1) {
+          <label class="play-row-label" for="play-block-playthrough">{{ 'playAccess.block.playthroughLabel' | translate }}</label>
+          <select id="play-block-playthrough" class="play-select" [(ngModel)]="selectedPlaythroughId">
+            @for (p of target.playthroughs; track p.id) {
+              <option [value]="p.id">{{ p.name }}</option>
+            }
+          </select>
+        } @else {
+          <span class="play-row-label">{{ 'playAccess.block.nextSession' | translate }}</span>
+          <span class="play-row-sub">{{ target.playthroughs[0].name }}</span>
+        }
+      </div>
+      <button type="button" class="btn-primary play-btn" [disabled]="starting" (click)="start()">
+        <lucide-icon [img]="Play" [size]="15"></lucide-icon>
+        {{ (starting ? 'playAccess.block.starting' : 'playAccess.block.start') | translate }}
+      </button>
+    </div>
+  } @else {
+    <div class="play-row">
+      <div class="play-row-texts">
+        <span class="play-row-sub">{{ 'playAccess.block.noPlaythrough' | translate }}</span>
+      </div>
+      <button type="button" class="btn-primary play-btn" [disabled]="creatingPlaythrough" (click)="createPlaythrough.emit()">
+        <lucide-icon [img]="Plus" [size]="15"></lucide-icon>
+        {{ 'playAccess.block.createPlaythrough' | translate }}
+      </button>
+    </div>
+  }
+</section>

@@ -1624,7 +1624,9 @@
     "sectionNarration": "Narration",
     "sectionTools": "Outils",
     "scenesGroup": "Scènes",
-    "quests": "Quêtes"
+    "quests": "Quêtes",
+    "playthroughs": "Parties",
+    "sectionPlay": "Jeu"
   },
   "services": {
     "importFailed": "Échec de l'import.",
@@ -1881,5 +1883,48 @@
     "optTables": "Tables aléatoires",
     "optTablesHint": "Vos tables de rencontres et d'événements en RollTables Foundry.",
     "confirm": "Exporter"
+  },
+  "playAccess": {
+    "shortcut": {
+      "one": "Séance en cours",
+      "many": "{{n}} séances en cours",
+      "openTitle": "Revenir à la séance en cours",
+      "listTitle": "Afficher les séances en cours"
+    },
+    "block": {
+      "title": "Jouer",
+      "running": "Séance en cours",
+      "resume": "Reprendre la séance",
+      "nextSession": "Prochaine séance",
+      "playthroughLabel": "Partie",
+      "start": "Démarrer une séance",
+      "starting": "Démarrage…",
+      "noPlaythrough": "Aucune partie pour l'instant : créez-en une pour y lancer vos séances.",
+      "createPlaythrough": "Créer une partie"
+    }
+  },
+  "sessionRules": {
+    "tab": "Règles",
+    "preamble": "Généralités",
+    "searchPlaceholder": "Chercher dans les règles…",
+    "clear": "Effacer la recherche",
+    "askAi": "Demander à l'IA",
+    "askAiTitle": "Poser la question à l'IA (onglet IA)",
+    "askAiInstead": "Poser la question à l'IA",
+    "askAiSection": "Demander à l'IA à propos de cette section",
+    "askTemplate": "Que disent les règles sur : {{q}} ?",
+    "askSectionTemplate": "À propos de la section « {{title}} » des règles : ",
+    "resultsOne": "1 section trouvée",
+    "resultsMany": "{{n}} sections trouvées",
+    "noResult": "Rien dans les règles pour « {{q}} ».",
+    "toc": "Sommaire",
+    "pin": "Épingler cette section",
+    "unpin": "Désépingler cette section",
+    "emptySection": "Section vide.",
+    "editRules": "Modifier les règles du système",
+    "noSystem": "Aucun système de jeu n'est associé à cette campagne : ses règles ne peuvent pas s'afficher ici.",
+    "chooseSystem": "Choisir le système de la campagne",
+    "noRules": "Le système « {{name}} » n'a pas encore de règles.",
+    "addRules": "Ajouter des règles au système"
   }
 }

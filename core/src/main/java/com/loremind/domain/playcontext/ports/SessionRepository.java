@@ -21,6 +21,9 @@ public interface SessionRepository {
     /** Retourne UNE session active dans l'app (sémantique « legacy » — multi-actives possibles). */
     Optional<Session> findActive();
 
+    /** Toutes les sessions en cours (toutes Parties confondues), la plus récente d'abord. */
+    List<Session> findAllActive();
+
     /** Retourne la session active du Playthrough donné, s'il y en a une. */
     Optional<Session> findActiveByPlaythroughId(String playthroughId);
 

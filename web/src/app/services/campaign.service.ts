@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Campaign, CampaignCreate, Arc, ArcCreate, Chapter, ChapterCreate, Scene, SceneCreate, Quest } from './campaign.model';
+import { Campaign, CampaignCreate, Arc, ArcCreate, Chapter, ChapterCreate, Scene, SceneCreate, Quest, Playthrough } from './campaign.model';
 import { CampaignReadinessAssessment } from './readiness.model';
 import { Npc } from './npc.model';
 import { RandomTable } from './random-table.model';
@@ -19,6 +19,8 @@ export interface CampaignTreeResponse {
   randomTables: RandomTable[];
   enemies: Enemy[];
   quests: Quest[];
+  /** Parties (Playthroughs) de la campagne — nœud « Parties » de l'arbre. */
+  playthroughs?: Playthrough[];
   readiness: CampaignReadinessAssessment;
 }
 

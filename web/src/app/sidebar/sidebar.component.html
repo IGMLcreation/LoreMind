@@ -17,6 +17,9 @@
     </button>
   </div>
 
+  <!-- Raccourci « Séance en cours » : visible seulement si une séance tourne. -->
+  <app-active-session-shortcut></app-active-session-shortcut>
+
   <!-- Mode contextuel : liste des lores ou campagnes -->
   @if (layoutConfig$ | async; as config) {
     <div class="context-list">

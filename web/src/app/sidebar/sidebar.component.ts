@@ -7,13 +7,14 @@ import { LayoutService } from '../services/layout.service';
 import { GlobalSearchService } from '../services/global-search.service';
 import { ConfigService } from '../services/config.service';
 import { UpdatesService } from '../services/updates.service';
+import { ActiveSessionShortcutComponent } from '../sessions/active-session-shortcut/active-session-shortcut.component';
 // Single source of truth pour la version affichée dans le footer :
 // on lit directement package.json à la compilation (resolveJsonModule).
 import packageJson from '../../../package.json';
 
 @Component({
     selector: 'app-sidebar',
-    imports: [AsyncPipe, LucideAngularModule, TranslatePipe],
+    imports: [AsyncPipe, LucideAngularModule, TranslatePipe, ActiveSessionShortcutComponent],
     templateUrl: './sidebar.component.html',
     styleUrls: ['./sidebar.component.scss']
 })

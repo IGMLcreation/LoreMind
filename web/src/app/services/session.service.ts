@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, Subject, tap } from 'rxjs';
 import { Session } from './session.model';
 
 /**
@@ -13,11 +13,23 @@ import { Session } from './session.model';
 export class SessionService {
   private apiUrl = '/api/sessions';
 
+  /**
+   * Émet après chaque mutation qui change l'ensemble des séances en cours
+   * (démarrage, fin, renommage, suppression) — écouté par {@link ActiveSessionsService}
+   * pour rafraîchir le raccourci « Séance en cours » sans attendre une navigation.
+   */
+  readonly changed$ = new Subject<void>();
+
   constructor(private http: HttpClient) {}
 
   /** Lance une nouvelle session sur la Partie (Playthrough) donnée. */
   startSession(playthroughId: string): Observable<Session> {
-    return this.http.post<Session>(this.apiUrl, { playthroughId });
+    return this.http.post<Session>(this.apiUrl, { playthroughId }).pipe(tap(() => this.changed$.next()));
+  }
+
+  /** Toutes les séances en cours (toutes Parties confondues), la plus récente d'abord. */
+  getActiveSessions(): Observable<Session[]> {
+    return this.http.get<Session[]>(this.apiUrl, { params: new HttpParams().set('active', 'true') });
   }
 
   /**
@@ -49,15 +61,15 @@ export class SessionService {
   }
 
   endSession(id: string): Observable<Session> {
-    return this.http.post<Session>(`${this.apiUrl}/${id}/end`, {});
+    return this.http.post<Session>(`${this.apiUrl}/${id}/end`, {}).pipe(tap(() => this.changed$.next()));
   }
 
   renameSession(id: string, name: string): Observable<Session> {
-    return this.http.patch<Session>(`${this.apiUrl}/${id}`, { name });
+    return this.http.patch<Session>(`${this.apiUrl}/${id}`, { name }).pipe(tap(() => this.changed$.next()));
   }
 
   deleteSession(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+    return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(tap(() => this.changed$.next()));
   }
 
   /** Épingle (sceneId) ou dés-épingle (null) la scène courante — mode cockpit. */

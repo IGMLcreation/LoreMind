@@ -10,6 +10,13 @@
     </button>
     <button type="button"
       class="ref-tab"
+      [class.ref-tab--active]="activeTab === 'rules'"
+      (click)="selectTab('rules')">
+      <lucide-icon [img]="BookOpen" [size]="14"></lucide-icon>
+      {{ 'sessionRules.tab' | translate }}
+    </button>
+    <button type="button"
+      class="ref-tab"
       [class.ref-tab--active]="activeTab === 'ai'"
       (click)="selectTab('ai')">
       <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
@@ -72,10 +79,19 @@
       </div>
     }
 
+    <!-- ====== Règles du système (lecture + recherche instantanée, sans IA) ====== -->
+    @if (activeTab === 'rules') {
+      <app-session-rules-panel
+        [campaignId]="campaignId"
+        (askAi)="onAskAiFromRules($event)">
+      </app-session-rules-panel>
+    }
+
     <!-- ====== IA ====== -->
     @if (activeTab === 'ai') {
       <app-session-ai-chat-panel
         [sessionId]="sessionId"
+        [prefill]="aiPrefill"
         [canSaveToJournal]="canAddToJournal"
         (saveToJournal)="onAiSaveToJournal($event)">
       </app-session-ai-chat-panel>

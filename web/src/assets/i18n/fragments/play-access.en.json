@@ -1,0 +1,49 @@
+{
+  "playAccess": {
+    "shortcut": {
+      "one": "Session in progress",
+      "many": "{{n}} sessions in progress",
+      "openTitle": "Back to the session in progress",
+      "listTitle": "Show sessions in progress"
+    },
+    "block": {
+      "title": "Play",
+      "running": "Session in progress",
+      "resume": "Resume session",
+      "nextSession": "Next session",
+      "playthroughLabel": "Playthrough",
+      "start": "Start a session",
+      "starting": "Starting…",
+      "noPlaythrough": "No playthrough yet: create one to run your sessions.",
+      "createPlaythrough": "Create a playthrough"
+    }
+  },
+  "campaignTree": {
+    "playthroughs": "Playthroughs",
+    "sectionPlay": "Play"
+  },
+  "sessionRules": {
+    "tab": "Rules",
+    "preamble": "General",
+    "searchPlaceholder": "Search the rules…",
+    "clear": "Clear search",
+    "askAi": "Ask the AI",
+    "askAiTitle": "Ask the AI (AI tab)",
+    "askAiInstead": "Ask the AI",
+    "askAiSection": "Ask the AI about this section",
+    "askTemplate": "What do the rules say about: {{q}}?",
+    "askSectionTemplate": "About the \"{{title}}\" section of the rules: ",
+    "resultsOne": "1 section found",
+    "resultsMany": "{{n}} sections found",
+    "noResult": "Nothing in the rules for \"{{q}}\".",
+    "toc": "Contents",
+    "pin": "Pin this section",
+    "unpin": "Unpin this section",
+    "emptySection": "Empty section.",
+    "editRules": "Edit the system's rules",
+    "noSystem": "No game system is linked to this campaign, so its rules can't be shown here.",
+    "chooseSystem": "Choose the campaign's system",
+    "noRules": "The \"{{name}}\" system has no rules yet.",
+    "addRules": "Add rules to the system"
+  }
+}

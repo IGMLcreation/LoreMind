@@ -17,5 +17,7 @@ public interface SessionJpaRepository extends JpaRepository<SessionJpaEntity, Lo
 
     Optional<SessionJpaEntity> findFirstByEndedAtIsNull();
 
+    List<SessionJpaEntity> findByEndedAtIsNullOrderByStartedAtDesc();
+
     Optional<SessionJpaEntity> findFirstByPlaythroughIdAndEndedAtIsNull(Long playthroughId);
 }

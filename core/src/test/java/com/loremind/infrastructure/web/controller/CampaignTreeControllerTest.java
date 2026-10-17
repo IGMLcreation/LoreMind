@@ -11,6 +11,8 @@ import com.loremind.domain.campaigncontext.ports.CampaignRepository;
 import com.loremind.domain.campaigncontext.ports.ChapterRepository;
 import com.loremind.domain.campaigncontext.ports.QuestRepository;
 import com.loremind.domain.campaigncontext.ports.SceneRepository;
+import com.loremind.domain.playcontext.Playthrough;
+import com.loremind.domain.playcontext.ports.PlaythroughRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +41,7 @@ class CampaignTreeControllerTest {
     @Autowired private ChapterRepository chapterRepository;
     @Autowired private SceneRepository sceneRepository;
     @Autowired private QuestRepository questRepository;
+    @Autowired private PlaythroughRepository playthroughRepository;
 
     private String campaignId;
     private String arcId;
@@ -52,6 +55,7 @@ class CampaignTreeControllerTest {
         chapterId = chapterRepository.save(Chapter.builder().arcId(arcId).name("Chap").order(0).build()).getId();
         sceneRepository.save(Scene.builder().chapterId(chapterId).name("Scène").order(0).build());
         questRepository.save(Quest.builder().campaignId(campaignId).arcId(arcId).name("Quête").order(0).build());
+        playthroughRepository.save(Playthrough.builder().campaignId(campaignId).name("Partie 1").build());
     }
 
     @Test
@@ -65,6 +69,8 @@ class CampaignTreeControllerTest {
                 .andExpect(jsonPath("$.scenesByChapter." + chapterId + "[0].name").value("Scène"))
                 .andExpect(jsonPath("$.quests", hasSize(1)))
                 .andExpect(jsonPath("$.quests[0].arcId").value(arcId))
+                .andExpect(jsonPath("$.playthroughs", hasSize(1)))
+                .andExpect(jsonPath("$.playthroughs[0].name").value("Partie 1"))
                 .andExpect(jsonPath("$.readiness.campaignId").value(campaignId))
                 .andExpect(jsonPath("$.readiness.gaps").isArray());
     }

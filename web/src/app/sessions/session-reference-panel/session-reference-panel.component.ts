@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 
 import { TranslatePipe } from '@ngx-translate/core';
-import { LucideAngularModule, User, Drama, Swords, Dices, ExternalLink, Sparkles, Table2, Package, ChevronDown, ChevronRight, Timer, Pin } from 'lucide-angular';
+import { LucideAngularModule, User, Drama, Swords, Dices, ExternalLink, Sparkles, Table2, Package, ChevronDown, ChevronRight, Timer, Pin, BookOpen } from 'lucide-angular';
 import { catchError, of } from 'rxjs';
 import { CampaignService } from '../../services/campaign.service';
 import { CharacterService } from '../../services/character.service';
@@ -20,8 +20,9 @@ import { SessionRandomTablesPanelComponent } from '../session-random-tables-pane
 import { SessionItemCatalogsPanelComponent } from '../session-item-catalogs-panel/session-item-catalogs-panel.component';
 import { ClocksManagerComponent } from '../../shared/clocks-manager/clocks-manager.component';
 import { PlaythroughFlagsManagerComponent } from '../../shared/playthrough-flags-manager/playthrough-flags-manager.component';
+import { SessionRulesPanelComponent } from '../session-rules-panel/session-rules-panel.component';
 
-type TabId = 'play' | 'dice' | 'tables' | 'objects' | 'characters' | 'scenes' | 'ai';
+type TabId = 'play' | 'rules' | 'dice' | 'tables' | 'objects' | 'characters' | 'scenes' | 'ai';
 
 /**
  * Panneau latéral du mode jeu : référence rapide en lecture seule.
@@ -35,7 +36,7 @@ type TabId = 'play' | 'dice' | 'tables' | 'objects' | 'characters' | 'scenes' | 
  */
 @Component({
     selector: 'app-session-reference-panel',
-    imports: [LucideAngularModule, TranslatePipe, SessionDicePanelComponent, SessionAiChatPanelComponent, SessionRandomTablesPanelComponent, SessionItemCatalogsPanelComponent, ClocksManagerComponent, PlaythroughFlagsManagerComponent],
+    imports: [LucideAngularModule, TranslatePipe, SessionDicePanelComponent, SessionAiChatPanelComponent, SessionRandomTablesPanelComponent, SessionItemCatalogsPanelComponent, ClocksManagerComponent, PlaythroughFlagsManagerComponent, SessionRulesPanelComponent],
     templateUrl: './session-reference-panel.component.html',
     styleUrls: ['./session-reference-panel.component.scss']
 })
@@ -52,6 +53,7 @@ export class SessionReferencePanelComponent implements OnChanges {
   readonly ChevronRight = ChevronRight;
   readonly Timer = Timer;
   readonly Pin = Pin;
+  readonly BookOpen = BookOpen;
 
   @Input() campaignId!: string;
   /** Partie active — nécessaire pour charger les PJ (refonte Playthrough). */
@@ -68,6 +70,8 @@ export class SessionReferencePanelComponent implements OnChanges {
 
   // « Partie » par défaut : l'état de jeu (horloges + faits) est le réflexe à la table.
   activeTab: TabId = 'play';
+  /** Question préremplie dans l'onglet IA (depuis l'onglet Règles) ; consommée à l'ouverture. */
+  aiPrefill: string | null = null;
 
   characters: Character[] = [];
   npcs: Npc[] = [];
@@ -106,6 +110,7 @@ export class SessionReferencePanelComponent implements OnChanges {
 
   selectTab(tab: TabId): void {
     this.activeTab = tab;
+    this.aiPrefill = null;
     if (tab === 'characters') this.ensureCharactersLoaded();
     if (tab === 'scenes')     this.ensureTreeLoaded();
   }
@@ -189,6 +194,12 @@ export class SessionReferencePanelComponent implements OnChanges {
   }
   scenesOf(chapter: Chapter): Scene[] {
     return [...(this.treeData?.scenesByChapter[chapter.id!] ?? [])].sort(byOrder);
+  }
+
+  /** Onglet Règles → « Demander à l'IA » : bascule sur l'IA, question préremplie. */
+  onAskAiFromRules(question: string): void {
+    this.activeTab = 'ai';
+    this.aiPrefill = question || null;
   }
 
   onDiceRolled(result: DiceRollResult): void {

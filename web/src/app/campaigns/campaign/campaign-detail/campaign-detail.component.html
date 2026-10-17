@@ -59,6 +59,14 @@
         </div>
       </div>
     }
+    <!-- ============ Jouer : reprendre / démarrer une séance (accès direct) ============ -->
+    @if (!editing && campaign.id) {
+      <app-campaign-play-block
+        [playthroughs]="playthroughs"
+        [creatingPlaythrough]="newPlaythroughInFlight"
+        (createPlaythrough)="createPlaythrough()">
+      </app-campaign-play-block>
+    }
     <!-- ============ Guidage co-MJ : « Prochaines étapes » (Pilier B) ============ -->
     @if (!editing && campaign.id) {
       <app-readiness-panel [campaignId]="campaign.id" [assessment]="readiness"></app-readiness-panel>

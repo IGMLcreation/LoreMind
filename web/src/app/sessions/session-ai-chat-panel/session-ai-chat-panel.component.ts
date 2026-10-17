@@ -37,11 +37,14 @@ export class SessionAiChatPanelComponent implements OnChanges, OnDestroy {
 
   @Input() sessionId!: string;
   @Input() canSaveToJournal = true;
+  /** Question à préremplir (ex. depuis l'onglet Règles) — le MJ la relit avant d'envoyer. */
+  @Input() prefill: string | null = null;
 
   /** Émis quand le MJ clique "Ajouter au journal" sur une réponse. */
   @Output() saveToJournal = new EventEmitter<string>();
 
   @ViewChild('messagesContainer') messagesContainer?: ElementRef<HTMLDivElement>;
+  @ViewChild('composerInput') composerInput?: ElementRef<HTMLTextAreaElement>;
 
   messages: ChatMessage[] = [];
   currentAssistantText = '';
@@ -54,6 +57,16 @@ export class SessionAiChatPanelComponent implements OnChanges, OnDestroy {
   constructor(private aiChat: AiChatService, private translate: TranslateService) {}
 
   ngOnChanges(changes: SimpleChanges): void {
+    if (changes['prefill'] && this.prefill) {
+      this.input = this.prefill;
+      // Après rendu : focus + curseur en fin de texte, prêt à compléter ou envoyer.
+      setTimeout(() => {
+        const el = this.composerInput?.nativeElement;
+        if (!el) return;
+        el.focus();
+        el.setSelectionRange(el.value.length, el.value.length);
+      });
+    }
     // Reset complet si on change de session (changement d'instance jouée).
     if (changes['sessionId'] && !changes['sessionId'].firstChange) {
       this.cancelStream();

@@ -1,0 +1,41 @@
+@if (entries.length > 0) {
+  <div class="active-shortcut">
+    <button type="button" class="shortcut-main"
+      [class.shortcut-main--current]="entries.length === 1 && isCurrent(entries[0])"
+      [attr.aria-expanded]="entries.length > 1 ? expanded : null"
+      [title]="(entries.length === 1 ? 'playAccess.shortcut.openTitle' : 'playAccess.shortcut.listTitle') | translate"
+      (click)="onMainClick()">
+      <span class="live-dot" aria-hidden="true"></span>
+      <span class="shortcut-texts">
+        <span class="shortcut-label">
+          @if (entries.length === 1) {
+            {{ 'playAccess.shortcut.one' | translate }}
+          } @else {
+            {{ 'playAccess.shortcut.many' | translate:{ n: entries.length } }}
+          }
+        </span>
+        @if (entries.length === 1) {
+          <span class="shortcut-sub">{{ entries[0].session.name }}</span>
+        }
+      </span>
+      @if (entries.length > 1) {
+        <lucide-icon class="shortcut-icon" [img]="expanded ? ChevronUp : ChevronDown" [size]="14"></lucide-icon>
+      }
+    </button>
+
+    @if (expanded && entries.length > 1) {
+      <ul class="shortcut-list">
+        @for (e of entries; track e.session.id) {
+          <li>
+            <button type="button" class="shortcut-item" [class.shortcut-item--current]="isCurrent(e)" (click)="open(e)">
+              <span class="shortcut-item-name">{{ e.session.name }}</span>
+              @if (contextOf(e)) {
+                <span class="shortcut-item-ctx">{{ contextOf(e) }}</span>
+              }
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+}

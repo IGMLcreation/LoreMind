@@ -1,0 +1,136 @@
+<div class="rules-panel">
+  @switch (state) {
+    @case ('loading') {
+      <p class="rules-hint">{{ 'common.loading' | translate }}</p>
+    }
+
+    @case ('noSystem') {
+      <div class="rules-empty">
+        <lucide-icon [img]="BookOpen" [size]="22" class="rules-empty-icon"></lucide-icon>
+        <p>{{ 'sessionRules.noSystem' | translate }}</p>
+        <button type="button" class="rules-btn" (click)="openInNewTab(chooseSystemUrl)">
+          <lucide-icon [img]="ExternalLink" [size]="14"></lucide-icon>
+          {{ 'sessionRules.chooseSystem' | translate }}
+        </button>
+      </div>
+    }
+
+    @case ('noRules') {
+      <div class="rules-empty">
+        <lucide-icon [img]="BookOpen" [size]="22" class="rules-empty-icon"></lucide-icon>
+        <p>{{ 'sessionRules.noRules' | translate:{ name: gameSystem?.name } }}</p>
+        <button type="button" class="rules-btn" (click)="openInNewTab(editRulesUrl)">
+          <lucide-icon [img]="ExternalLink" [size]="14"></lucide-icon>
+          {{ 'sessionRules.addRules' | translate }}
+        </button>
+      </div>
+    }
+
+    @case ('ready') {
+      <!-- Barre : recherche instantanée + bascule vers l'IA -->
+      <div class="rules-toolbar">
+        <div class="rules-search">
+          <lucide-icon [img]="Search" [size]="15" class="rules-search-icon"></lucide-icon>
+          <input type="search" class="rules-search-input"
+            [ngModel]="query" (ngModelChange)="onQueryChange($event)"
+            (keydown.escape)="clearQuery()"
+            [placeholder]="'sessionRules.searchPlaceholder' | translate"
+            [attr.aria-label]="'sessionRules.searchPlaceholder' | translate"
+            autocomplete="off" spellcheck="false" />
+          @if (query) {
+            <button type="button" class="rules-icon-btn" (click)="clearQuery()" [title]="'sessionRules.clear' | translate" [attr.aria-label]="'sessionRules.clear' | translate">
+              <lucide-icon [img]="X" [size]="15"></lucide-icon>
+            </button>
+          }
+        </div>
+        <button type="button" class="rules-btn rules-btn--ai" (click)="askAiAboutQuery()" [title]="'sessionRules.askAiTitle' | translate">
+          <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
+          {{ 'sessionRules.askAi' | translate }}
+        </button>
+      </div>
+
+      <p class="rules-meta">
+        {{ gameSystem?.name }}
+        @if (searching && matches.length > 0) {
+          · {{ (matches.length === 1 ? 'sessionRules.resultsOne' : 'sessionRules.resultsMany') | translate:{ n: matches.length } }}
+        }
+      </p>
+
+      @if (matches.length === 0) {
+        <div class="rules-empty rules-empty--compact">
+          <p>{{ 'sessionRules.noResult' | translate:{ q: query.trim() } }}</p>
+          <button type="button" class="rules-btn rules-btn--ai" (click)="askAiAboutQuery()">
+            <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
+            {{ 'sessionRules.askAiInstead' | translate }}
+          </button>
+        </div>
+      } @else {
+        <!-- Sommaire (sections H2 ; épinglées en tête hors recherche) -->
+        <nav class="rules-toc" [attr.aria-label]="'sessionRules.toc' | translate">
+          <button type="button" class="rules-toc-head" (click)="tocOpen = !tocOpen" [attr.aria-expanded]="tocOpen">
+            <lucide-icon [img]="tocOpen ? ChevronDown : ChevronRight" [size]="13"></lucide-icon>
+            {{ 'sessionRules.toc' | translate }}
+            <span class="rules-count">{{ matches.length }}</span>
+          </button>
+          @if (tocOpen) {
+            <div class="rules-toc-list">
+              @for (m of matches; track m.section.id) {
+                <button type="button" class="rules-chip" [class.rules-chip--pinned]="isPinned(m)" (click)="jumpTo(m)">
+                  @if (isPinned(m)) {
+                    <lucide-icon [img]="Pin" [size]="11"></lucide-icon>
+                  }
+                  <span class="rules-chip-label">{{ m.section.title }}</span>
+                  @if (searching && !m.titleMatch) {
+                    <span class="rules-chip-count">{{ m.blocks.length }}</span>
+                  }
+                </button>
+              }
+            </div>
+          }
+        </nav>
+
+        <!-- Sections repliables -->
+        <div class="rules-sections">
+          @for (m of matches; track m.section.id) {
+            <article class="rules-section" [id]="m.section.id" [class.rules-section--open]="isOpen(m)">
+              <div class="rules-section-head">
+                <button type="button" class="rules-section-toggle" (click)="toggle(m)" [attr.aria-expanded]="isOpen(m)">
+                  <lucide-icon [img]="isOpen(m) ? ChevronDown : ChevronRight" [size]="14" class="rules-chevron"></lucide-icon>
+                  <span class="rules-section-title">{{ m.section.title }}</span>
+                  @if (searching && !m.titleMatch) {
+                    <span class="rules-count">{{ m.blocks.length }} / {{ m.section.blocks.length }}</span>
+                  }
+                </button>
+                <button type="button" class="rules-icon-btn" [class.rules-icon-btn--on]="isPinned(m)"
+                  [attr.aria-pressed]="isPinned(m)"
+                  [title]="(isPinned(m) ? 'sessionRules.unpin' : 'sessionRules.pin') | translate"
+                  [attr.aria-label]="(isPinned(m) ? 'sessionRules.unpin' : 'sessionRules.pin') | translate"
+                  (click)="togglePin(m)">
+                  <lucide-icon [img]="isPinned(m) ? PinOff : Pin" [size]="14"></lucide-icon>
+                </button>
+              </div>
+              @if (isOpen(m)) {
+                <div class="rules-section-body">
+                  @if (m.blocks.length > 0) {
+                    <div class="rules-markdown" [innerHTML]="html(m)"></div>
+                  } @else {
+                    <p class="rules-hint">{{ 'sessionRules.emptySection' | translate }}</p>
+                  }
+                  <button type="button" class="rules-link" (click)="askAiAboutSection(m)">
+                    <lucide-icon [img]="Sparkles" [size]="12"></lucide-icon>
+                    {{ 'sessionRules.askAiSection' | translate }}
+                  </button>
+                </div>
+              }
+            </article>
+          }
+        </div>
+      }
+
+      <button type="button" class="rules-link rules-link--footer" (click)="openInNewTab(editRulesUrl)">
+        <lucide-icon [img]="ExternalLink" [size]="12"></lucide-icon>
+        {{ 'sessionRules.editRules' | translate }}
+      </button>
+    }
+  }
+</div>

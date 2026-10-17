@@ -32,11 +32,12 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
 import { FolderGroup, groupByFolder, byOrder } from '../../../shared/folder-grouping.util';
 import { CampaignReadinessAssessment } from '../../../services/readiness.model';
 import { ReadinessPanelComponent } from '../../../shared/readiness-panel/readiness-panel.component';
+import { CampaignPlayBlockComponent } from '../campaign-play-block/campaign-play-block.component';
 import { FoundryExportDialogComponent } from '../foundry-export-dialog/foundry-export-dialog.component';
 
 @Component({
     selector: 'app-campaign-detail',
-    imports: [FormsModule, LucideAngularModule, RouterLink, TranslatePipe, CdkDropList, CdkDrag, ReadinessPanelComponent, FoundryExportDialogComponent],
+    imports: [FormsModule, LucideAngularModule, RouterLink, TranslatePipe, CdkDropList, CdkDrag, ReadinessPanelComponent, CampaignPlayBlockComponent, FoundryExportDialogComponent],
     templateUrl: './campaign-detail.component.html',
     styleUrls: ['./campaign-detail.component.scss']
 })
@@ -94,14 +95,6 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   editPlaythroughName = '';
   /** Sessions de jeu (passées et en cours) liées à cette campagne. */
   sessions: Session[] = [];
-  /**
-   * Session active globale (toutes campagnes confondues).
-   * Sert à désactiver le bouton "Lancer" si une session tourne déjà ailleurs.
-   * Null si aucune session active dans l'app.
-   */
-  activeSessionGlobal: Session | null = null;
-  /** Indicateur de lancement en cours pour éviter les double-clics. */
-  startingSession = false;
 
   /** Parties (Playthroughs) de cette campagne. */
   playthroughs: Playthrough[] = [];
@@ -214,6 +207,18 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
     this.chapterCountByArc = this.computeChapterCounts(treeData);
     this.showLayout(allCampaigns, treeData);
     this.pageTitleService.set(campaign.name);
+    this.openEditFromQueryParam();
+  }
+
+  /**
+   * `?edit=system` (lien « Choisir le système » de l'onglet Règles en séance) : ouvre
+   * directement l'édition inline, puis retire le paramètre pour qu'un rechargement
+   * ne la rouvre pas.
+   */
+  private openEditFromQueryParam(): void {
+    if (!this.route.snapshot.queryParamMap.has('edit')) return;
+    this.startEdit();
+    this.router.navigate([], { relativeTo: this.route, queryParams: { edit: null }, queryParamsHandling: 'merge', replaceUrl: true });
   }
 
   /**
