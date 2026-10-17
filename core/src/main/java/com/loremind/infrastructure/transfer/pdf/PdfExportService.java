@@ -5,6 +5,7 @@ import com.loremind.domain.campaigncontext.bestiary.NpcStory;
 import com.loremind.domain.campaigncontext.quest.NodeType;
 import com.loremind.domain.campaigncontext.quest.Prerequisite;
 import com.loremind.domain.campaigncontext.quest.QuestNodeRef;
+import com.loremind.domain.campaigncontext.structure.ArcType;
 import com.loremind.domain.campaigncontext.structure.Room;
 import com.loremind.domain.campaigncontext.structure.RoomBranch;
 import com.loremind.domain.campaigncontext.structure.SceneBranch;
@@ -540,11 +541,12 @@ public class PdfExportService {
         List<ArcJpaEntity> arcs = st.visibleArcs;
         if (arcs.isEmpty()) return;
 
-        // Mode plat (miroir de l'UI Niveau 0) : 1 arc d'UN SEUL chapitre → on masque les
-        // niveaux Arc/Chapitre et on présente les scènes À PLAT (cohérent avec la sidebar).
-        if (arcs.size() == 1) {
+        // Mode plat (miroir de l'UI Niveau 0) : 1 arc linéaire d'UN SEUL chapitre, tous deux
+        // VIDES (créés d'office) → on masque les niveaux Arc/Chapitre et on présente les
+        // scènes À PLAT. Un arc ou un chapitre écrit (méthode guidée…) garde ses en-têtes.
+        if (arcs.size() == 1 && arcs.get(0).getType() != ArcType.HUB) {
             List<ChapterJpaEntity> only = st.chaptersByArc.get(arcs.get(0).getId());
-            if (only.size() == 1) {
+            if (only.size() == 1 && isBare(arcs.get(0)) && isBare(only.get(0))) {
                 narrativeFlat(ctx, st, arcs.get(0), only.get(0));
                 return;
             }
@@ -559,6 +561,28 @@ public class PdfExportService {
             arcSection(ctx, st, arc);
         }
         ctx.endColumns();
+    }
+
+    /** Aucun contenu d'ecriture dans l'arc (son nom ne compte pas : « Arc principal » est cree d'office). */
+    static boolean isBare(ArcJpaEntity arc) {
+        return allBlank(arc.getDescription(), arc.getThemes(), arc.getStakes(), arc.getRewards(),
+                arc.getResolution(), arc.getGmNotes(), arc.getHiddenTruth(), arc.getHooks())
+                && isEmpty(arc.getIllustrationImageIds());
+    }
+
+    /** Aucun contenu d'ecriture dans le chapitre (son nom ne compte pas : « Chapitre 1 » est cree d'office). */
+    static boolean isBare(ChapterJpaEntity ch) {
+        return allBlank(ch.getDescription(), ch.getPlayerObjectives(), ch.getNarrativeStakes(), ch.getGmNotes())
+                && isEmpty(ch.getIllustrationImageIds());
+    }
+
+    private static boolean allBlank(String... values) {
+        for (String v : values) if (notBlank(v)) return false;
+        return true;
+    }
+
+    private static boolean isEmpty(List<String> list) {
+        return list == null || list.isEmpty();
     }
 
     /** Arborescence des signets Arc -> Chapitre pour la partie narrative complete (mode non plat). */

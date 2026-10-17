@@ -12,6 +12,7 @@ import { Npc } from '../services/npc.model';
 import { RandomTable } from '../services/random-table.model';
 import { Enemy } from '../services/enemy.model';
 import { CampaignReadinessAssessment, ReadinessGap, ReadinessSeverity, ReadinessEntityType } from '../services/readiness.model';
+import { flatContainer } from './flat-structure';
 
 /**
  * Helper — charge l'arborescence complète d'une campagne (arcs -> chapitres -> scènes)
@@ -365,12 +366,13 @@ export function buildCampaignTree(
   // des scènes et l'ajout restent identiques (c'est le nœud chapitre, relabellisé
   // et remonté à la racine). Dès qu'un 2e arc OU un 2e chapitre existe, la
   // structure complète réapparaît automatiquement.
-  const onlyArc = sortedArcs.length === 1 ? sortedArcs[0] : null;
-  const onlyArcChapters = onlyArc ? (data.chaptersByArc[onlyArc.id!] ?? []) : [];
+  // Mode plat seulement si l'arc et le chapitre uniques sont VIDES (cf. flatContainer) :
+  // un chapitre écrit par une méthode guidée doit rester visible.
+  const flat = flatContainer(sortedArcs, data.chaptersByArc);
+  const onlyArc = flat?.arc ?? null;
   let narrationNodes: TreeItem[] = arcNodes;
-  // Le mode plat ne s'applique PAS à un arc HUB (qui présente des quêtes, pas juste des scènes).
-  if (onlyArc && onlyArc.type !== 'HUB' && onlyArcChapters.length === 1) {
-    const ch = onlyArcChapters[0];
+  if (flat && onlyArc) {
+    const ch = flat.chapter;
     const sortedScenes = [...(data.scenesByChapter[ch.id!] ?? [])].sort(byOrder);
     const sceneItems: TreeItem[] = sortedScenes.map(sc => ({
       id: `scene-${sc.id}`,

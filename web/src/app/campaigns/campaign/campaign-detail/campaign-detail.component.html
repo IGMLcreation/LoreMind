@@ -228,7 +228,7 @@
               </a>
             </div>
           </div>
-          @if (arcs.length > 0 && !showQuickAddScene) {
+          @if (arcs.length > 0 && !flatMode) {
             <div class="arcs-grid" cdkDropList cdkDropListOrientation="mixed"
               (cdkDropListDropped)="dropArc($event)">
               @for (arc of arcs; track arc.id) {
@@ -242,7 +242,7 @@
           }
           <!-- Mode plat (un seul arc d'un seul chapitre) : on masque la carte de
           l'arc par défaut, comme dans la sidebar. Les scènes vivent dans le volet. -->
-          @if (arcs.length > 0 && showQuickAddScene) {
+          @if (arcs.length > 0 && flatMode) {
             <div class="empty-state empty-state--compact">
               <p>{{ 'campaignDetail.flatModeHint' | translate }}</p>
             </div>

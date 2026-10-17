@@ -37,6 +37,7 @@ import { CampaignPlayBlockComponent } from '../campaign-play-block/campaign-play
 import { FoundryExportDialogComponent } from '../foundry-export-dialog/foundry-export-dialog.component';
 import { PdfExportDialogComponent } from '../pdf-export-dialog/pdf-export-dialog.component';
 import { downloadBlob, safeFileName } from '../../../shared/download.util';
+import { flatContainer } from '../../flat-structure';
 
 @Component({
     selector: 'app-campaign-detail',
@@ -212,6 +213,7 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
     // L'arc SYSTEM (« Quêtes libres ») est de la plomberie : pas de carte d'arc pour lui.
     this.arcs = [...treeData.arcs].sort(byOrder).filter(a => a.type !== 'SYSTEM');
     this.chapterCountByArc = this.computeChapterCounts(treeData);
+    this.flatMode = !!flatContainer(this.arcs, treeData.chaptersByArc);
     this.showLayout(allCampaigns, treeData);
     this.pageTitleService.set(campaign.name);
     this.openEditFromQueryParam();
@@ -347,6 +349,12 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   // seul), puis on ouvre la création de scène. Visible seulement quand la
   // structure est simple (vide, ou un seul arc d'au plus un chapitre).
   quickSceneInFlight = false;
+
+  /**
+   * Mode plat (arc et chapitre uniques encore vides) : les cartes d'arc sont masquées, les
+   * scènes vivent dans le volet. Dès qu'il y a du contenu écrit, la structure reste visible.
+   */
+  flatMode = false;
 
   get showQuickAddScene(): boolean {
     if (this.arcs.length === 0) return true;
