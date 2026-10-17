@@ -17,6 +17,8 @@ public class GameSystemDTO {
     private String name;
     private String description;
     private String rulesMarkdown;
+    /** Version anglaise des règles (rulesMarkdown = version française). */
+    private String rulesMarkdownEn;
     private List<TemplateFieldDTO> characterTemplate = new ArrayList<>();
     private List<TemplateFieldDTO> npcTemplate = new ArrayList<>();
     private List<TemplateFieldDTO> enemyTemplate = new ArrayList<>();

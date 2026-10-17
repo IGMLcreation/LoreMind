@@ -257,6 +257,7 @@ public class GameSystemController {
                 dto.getName(),
                 dto.getDescription(),
                 dto.getRulesMarkdown(),
+                dto.getRulesMarkdownEn(),
                 templateFieldMapper.toDomainList(dto.getCharacterTemplate()),
                 templateFieldMapper.toDomainList(dto.getNpcTemplate()),
                 templateFieldMapper.toDomainList(dto.getEnemyTemplate()),

@@ -59,6 +59,7 @@ public class GameSystemService {
             String name,
             String description,
             String rulesMarkdown,
+            String rulesMarkdownEn,
             List<TemplateField> characterTemplate,
             List<TemplateField> npcTemplate,
             List<TemplateField> enemyTemplate,
@@ -72,6 +73,7 @@ public class GameSystemService {
                 .name(data.name())
                 .description(data.description())
                 .rulesMarkdown(data.rulesMarkdown())
+                .rulesMarkdownEn(data.rulesMarkdownEn())
                 .foundryActorType(normalize(data.foundryActorType()))
                 .author(normalize(data.author()))
                 .isPublic(data.isPublic())
@@ -96,6 +98,7 @@ public class GameSystemService {
         existing.setName(data.name());
         existing.setDescription(data.description());
         existing.setRulesMarkdown(data.rulesMarkdown());
+        existing.setRulesMarkdownEn(data.rulesMarkdownEn());
         existing.replaceCharacterTemplate(data.characterTemplate());
         existing.replaceNpcTemplate(data.npcTemplate());
         existing.replaceEnemyTemplate(data.enemyTemplate());

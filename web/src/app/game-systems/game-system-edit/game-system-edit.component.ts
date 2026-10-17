@@ -43,6 +43,9 @@ const NPC_FIELD_SUGGESTIONS = ['Motivation', 'Apparence', 'Faction', 'Notes MJ']
 /** Suggestions de champs pour la fiche ENNEMI — stats de combat. */
 const ENEMY_FIELD_SUGGESTIONS = ['Stats', 'Attaques', 'Capacités', 'Faiblesses', 'Butin', 'Tactique'];
 
+/** Langue d'une version des règles. */
+type RulesLang = 'fr' | 'en';
+
 @Component({
     selector: 'app-game-system-edit',
     imports: [FormsModule, LucideAngularModule, TranslatePipe, TemplateFieldsEditorComponent],
@@ -83,7 +86,15 @@ export class GameSystemEditComponent implements OnInit {
   name = '';
   description = '';
   author = '';
-  sections: RuleSection[] = [];
+  /** Règles en deux langues : sections par langue ; l'onglet affiché est `rulesLang`. */
+  sectionsByLang: Record<RulesLang, RuleSection[]> = { fr: [], en: [] };
+  rulesLang: RulesLang = 'fr';
+  readonly rulesLangs: RulesLang[] = ['fr', 'en'];
+
+  /** Sections de l'onglet affiché (même tableau : push/splice modifient la bonne langue). */
+  get sections(): RuleSection[] {
+    return this.sectionsByLang[this.rulesLang];
+  }
   characterTemplate: TemplateField[] = [];
   npcTemplate: TemplateField[] = [];
   enemyTemplate: TemplateField[] = [];
@@ -107,6 +118,8 @@ export class GameSystemEditComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    // Onglet de règles par défaut : la langue de l'interface.
+    this.rulesLang = this.translate.getCurrentLang() === 'en' ? 'en' : 'fr';
     this.id = this.route.snapshot.paramMap.get('id');
     if (this.id) {
       this.service.getById(this.id).subscribe({
@@ -114,7 +127,10 @@ export class GameSystemEditComponent implements OnInit {
           this.name = gs.name;
           this.description = gs.description ?? '';
           this.author = gs.author ?? '';
-          this.sections = this.parseMarkdown(gs.rulesMarkdown ?? '');
+          this.sectionsByLang = {
+            fr: this.parseMarkdown(gs.rulesMarkdown ?? ''),
+            en: this.parseMarkdown(gs.rulesMarkdownEn ?? '')
+          };
           this.characterTemplate = gs.characterTemplate ? [...gs.characterTemplate] : [];
           this.npcTemplate = gs.npcTemplate ? [...gs.npcTemplate] : [];
           this.enemyTemplate = gs.enemyTemplate ? [...gs.enemyTemplate] : [];
@@ -181,7 +197,7 @@ export class GameSystemEditComponent implements OnInit {
         } else if (ev.type === 'status') {
           this.importStatus = ev.message;
         } else if (ev.type === 'done') {
-          this.finishImport(ev.sections, ev.pageCount, ev.ocrPageCount);
+          this.finishImport(ev.sections, ev.pageCount, ev.ocrPageCount, ev.sectionsByLanguage, ev.sourceLanguage);
         }
       },
       error: (err: Error) => {
@@ -193,9 +209,21 @@ export class GameSystemEditComponent implements OnInit {
     });
   }
 
-  private finishImport(sections: Record<string, string>, pageCount: number, ocrPageCount: number): void {
+  private finishImport(sections: Record<string, string>, pageCount: number, ocrPageCount: number,
+                       byLanguage?: Record<string, Record<string, string>>, sourceLanguage?: string | null): void {
     this.resetImportProgress();
-    const added = this.mergeImportedSections(sections);
+    // Règles en deux langues (Brain récent) : chaque version va dans son onglet ; sinon,
+    // les sections vont dans l'onglet affiché (comportement historique).
+    const bilingual = !!byLanguage && Object.keys(byLanguage).some(l => l === 'fr' || l === 'en');
+    let added = 0;
+    if (bilingual) {
+      for (const lang of this.rulesLangs) {
+        const merged = this.mergeImportedSections(byLanguage![lang] ?? {}, this.sectionsByLang[lang]);
+        if (lang === this.rulesLang || added === 0) added = Math.max(added, merged);
+      }
+    } else {
+      added = this.mergeImportedSections(sections, this.sections);
+    }
     if (added === 0) {
       this.importError = this.translate.instant('gameSystemEdit.importNoRules');
       return;
@@ -208,6 +236,18 @@ export class GameSystemEditComponent implements OnInit {
       pages: pageCount,
       ocr
     });
+    const translatedLangs = this.rulesLangs.filter(l => l !== sourceLanguage && (byLanguage?.[l] && Object.keys(byLanguage[l]).length));
+    if (bilingual && sourceLanguage && translatedLangs.length) {
+      this.importNote += ' ' + this.translate.instant('gameSystemEdit.importTranslated', {
+        source: this.translate.instant('gameSystemEdit.lang.' + sourceLanguage),
+        target: translatedLangs.map(l => this.translate.instant('gameSystemEdit.lang.' + l)).join(', ')
+      });
+    }
+  }
+
+  /** Nombre de sections non vides d'une langue (badge de l'onglet). */
+  sectionCount(lang: RulesLang): number {
+    return this.sectionsByLang[lang].filter(s => s.title.trim() || s.content.trim()).length;
   }
 
   private resetImportProgress(): void {
@@ -221,20 +261,20 @@ export class GameSystemEditComponent implements OnInit {
    * (insensible à la casse) → contenu ajouté à la suite ; sinon nouvelle carte.
    * Retourne le nombre de sections effectivement intégrées.
    */
-  private mergeImportedSections(sections: Record<string, string>): number {
+  private mergeImportedSections(sections: Record<string, string>, target: RuleSection[]): number {
     let count = 0;
     for (const [rawTitle, rawContent] of Object.entries(sections ?? {})) {
       const title = (rawTitle ?? '').trim();
       const content = (rawContent ?? '').trim();
       if (!title || !content) continue;
-      const existing = this.sections.find(
+      const existing = target.find(
         s => s.title.trim().toLowerCase() === title.toLowerCase()
       );
       if (existing) {
         existing.content = `${existing.content.trim()}\n\n${content}`.trim();
         existing.collapsed = false;
       } else {
-        this.sections.push({ title, content, collapsed: false });
+        target.push({ title, content, collapsed: false });
       }
       count++;
     }
@@ -300,7 +340,8 @@ export class GameSystemEditComponent implements OnInit {
       name: this.name.trim(),
       description: this.description.trim() || null,
       author: this.author.trim() || null,
-      rulesMarkdown: this.serializeMarkdown(),
+      rulesMarkdown: this.serializeMarkdown(this.sectionsByLang.fr),
+      rulesMarkdownEn: this.serializeMarkdown(this.sectionsByLang.en),
       characterTemplate: this.characterTemplate,
       npcTemplate: this.npcTemplate,
       enemyTemplate: this.enemyTemplate,
@@ -377,8 +418,8 @@ export class GameSystemEditComponent implements OnInit {
   }
 
   /** Reconstruit le markdown à partir des sections (ignore les sections vides). */
-  private serializeMarkdown(): string | null {
-    const valid = this.sections.filter(s => s.title.trim() || s.content.trim());
+  private serializeMarkdown(sections: RuleSection[]): string | null {
+    const valid = sections.filter(s => s.title.trim() || s.content.trim());
     if (valid.length === 0) return null;
     return valid
       .map(s => {

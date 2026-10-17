@@ -12,6 +12,8 @@ export interface GameSystem {
   name: string;
   description?: string | null;
   rulesMarkdown?: string | null;
+  /** Version anglaise des règles (rulesMarkdown = version française). */
+  rulesMarkdownEn?: string | null;
   characterTemplate?: TemplateField[];
   npcTemplate?: TemplateField[];
   enemyTemplate?: TemplateField[];
@@ -43,7 +45,9 @@ export interface RulesImportResponse {
 export type RulesImportStreamEvent =
   | { type: 'progress'; current: number; total: number; pageCount: number; ocrPageCount: number; newSectionTitles: string[] }
   | { type: 'status'; message: string }
-  | { type: 'done'; sections: Record<string, string>; pageCount: number; ocrPageCount: number }
+  | { type: 'done'; sections: Record<string, string>; pageCount: number; ocrPageCount: number;
+      /** Règles en deux langues : {fr|en → sections} ; langue d'origine du livre. */
+      sectionsByLanguage?: Record<string, Record<string, string>>; sourceLanguage?: string | null }
   | { type: 'error'; message: string };
 
 /** Payload de creation/mise a jour (sans id). */
@@ -51,6 +55,8 @@ export interface GameSystemCreate {
   name: string;
   description?: string | null;
   rulesMarkdown?: string | null;
+  /** Version anglaise des règles (rulesMarkdown = version française). */
+  rulesMarkdownEn?: string | null;
   characterTemplate?: TemplateField[];
   npcTemplate?: TemplateField[];
   enemyTemplate?: TemplateField[];

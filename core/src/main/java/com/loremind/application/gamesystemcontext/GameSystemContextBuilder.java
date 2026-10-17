@@ -1,6 +1,7 @@
 package com.loremind.application.gamesystemcontext;
 
 import com.loremind.domain.gamesystemcontext.GameSystem;
+import com.loremind.domain.shared.ports.CurrentLanguage;
 import com.loremind.domain.gamesystemcontext.GenerationIntent;
 import com.loremind.domain.gamesystemcontext.ports.GameSystemRepository;
 import com.loremind.domain.generationcontext.GameSystemContext;
@@ -36,9 +37,11 @@ public class GameSystemContextBuilder {
     private static final Pattern H2_HEADER = Pattern.compile("(?m)^##\\s+(\\S.*)$");
 
     private final GameSystemRepository gameSystemRepository;
+    private final CurrentLanguage currentLanguage;
 
-    public GameSystemContextBuilder(GameSystemRepository gameSystemRepository) {
+    public GameSystemContextBuilder(GameSystemRepository gameSystemRepository, CurrentLanguage currentLanguage) {
         this.gameSystemRepository = gameSystemRepository;
+        this.currentLanguage = currentLanguage;
     }
 
     public Optional<GameSystemContext> buildOptional(String gameSystemId, GenerationIntent intent) {
@@ -48,7 +51,8 @@ public class GameSystemContextBuilder {
     }
 
     private GameSystemContext build(GameSystem gs, GenerationIntent intent) {
-        Map<String, String> allSections = parseH2Sections(gs.getRulesMarkdown());
+        // Règles dans la langue de l'interface (repli sur l'autre version si celle-ci est vide).
+        Map<String, String> allSections = parseH2Sections(gs.rulesFor(currentLanguage.get()));
         Map<String, String> filtered = filterByIntent(allSections, intent);
         return new GameSystemContext(gs.getName(), gs.getDescription(), filtered);
     }

@@ -577,7 +577,8 @@ public class ExportService {
     private ContentExport.GameSystemDto toGameSystemDto(GameSystemJpaEntity e) {
         return new ContentExport.GameSystemDto(e.getId(), e.getName(), e.getDescription(),
                 e.getRulesMarkdown(), e.getCharacterTemplate(), e.getNpcTemplate(),
-                e.getEnemyTemplate(), e.getFoundryActorType(), e.getAuthor(), e.isPublic());
+                e.getEnemyTemplate(), e.getFoundryActorType(), e.getAuthor(), e.isPublic(),
+                e.getRulesMarkdownEn());
     }
 
     private ContentExport.LoreDto toLoreDto(LoreJpaEntity e) {

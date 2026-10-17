@@ -367,6 +367,10 @@ class RulesImportResult:
     sections: dict[str, str]
     page_count: int
     ocr_page_count: int
+    # Règles en deux langues : {code langue → sections}. La langue d'origine du livre
+    # (`source_language`) contient l'extraction fidèle ; l'autre, sa traduction.
+    sections_by_language: dict[str, dict[str, str]] = field(default_factory=dict)
+    source_language: str = ""
 
     def to_markdown(self) -> str:
         """Assemble les sections en un markdown monolithique (## titre + contenu).

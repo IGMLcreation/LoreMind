@@ -361,7 +361,7 @@ class ImportCampaignUseCase:
         # des appels LLM est divisé d'autant. 1 = comportement séquentiel.
         self._map_concurrency = max(1, map_concurrency)
 
-    async def execute(self, pdf_bytes: bytes) -> CampaignImportResult:
+    async def execute(self, pdf_bytes: bytes, language: str = "fr") -> CampaignImportResult:
         """Variante non-streamée : traite tout puis renvoie l'arbre complet."""
         doc = self._extractor.extract(pdf_bytes)
         chunks = chunk_text(doc.full_text, self._chunk_target_tokens)
@@ -371,7 +371,7 @@ class ImportCampaignUseCase:
         for start in range(0, total, self._map_concurrency):
             wave = list(enumerate(chunks))[start:start + self._map_concurrency]
             results = await asyncio.gather(*(
-                self._map_chunk(c, index=i, total=total, toc_block=toc_block)
+                self._map_chunk(c, index=i, total=total, toc_block=toc_block, language=language)
                 for i, c in wave
             ))
             for res in results:
@@ -386,7 +386,7 @@ class ImportCampaignUseCase:
             npcs=merger.npcs(),
         )
 
-    async def stream(self, pdf_bytes: bytes):
+    async def stream(self, pdf_bytes: bytes, language: str = "fr"):
         """Variante streamée : yield des évènements d'avancement.
 
         {"type":"extracting"}, puis {"type":"start", page_count, ocr_page_count,
@@ -432,7 +432,7 @@ class ImportCampaignUseCase:
             for start in range(0, total, self._map_concurrency):
                 wave = list(enumerate(chunks))[start:start + self._map_concurrency]
                 gathered = asyncio.gather(
-                    *(self._map_chunk(c, index=i, total=total, toc_block=toc_block)
+                    *(self._map_chunk(c, index=i, total=total, toc_block=toc_block, language=language)
                       for i, c in wave),
                     return_exceptions=True,
                 )
@@ -553,21 +553,23 @@ class ImportCampaignUseCase:
     # --- MAP : un morceau → sous-arbre ---------------------------------------
 
     async def _map_chunk(
-        self, chunk: str, *, index: int, total: int, toc_block: str = ""
+        self, chunk: str, *, index: int, total: int, toc_block: str = "", language: str = "fr"
     ) -> dict:
         """Phase MAP d'un morceau → {"arcs": [...], "npcs": [...]}."""
         return await self._extract_payload(
-            chunk, index=index, total=total, depth=0, toc_block=toc_block)
+            chunk, index=index, total=total, depth=0, toc_block=toc_block, language=language)
 
     async def _extract_payload(
-        self, text: str, *, index: int, total: int, depth: int, toc_block: str = ""
+        self, text: str, *, index: int, total: int, depth: int, toc_block: str = "",
+        language: str = "fr",
     ) -> dict:
         """Extrait l'arborescence + les PNJ d'un texte. Si la SORTIE est tronquée,
         retraite le texte en DEUX moitiés et concatène — le `_TreeMerger` final
         dédoublonne par nom (un arc/chapitre coupé entre les moitiés est recollé)."""
         toc_section = prompts.TOC_BLOCK.format(toc=toc_block) if toc_block else ""
         prompt = (
-            prompts.MAP_SYSTEM.format(default_arc=prompts.DEFAULT_ARC_NAME)
+            prompts.MAP_SYSTEM.format(default_arc=prompts.default_arc_name(language))
+            + prompts.language_block(language)
             + toc_section
             + f"\n\n--- EXTRAIT {index + 1}/{total} ---\n{text}\n\n"
             "Renvoie maintenant le JSON de l'arborescence."
@@ -591,9 +593,9 @@ class ImportCampaignUseCase:
                 f"Le modèle est trop lent sur le morceau {index + 1} : "
                 "re-découpage en 2 moitiés plus digestes…")
             a = await self._extract_payload(
-                left, index=index, total=total, depth=depth + 1, toc_block=toc_block)
+                left, index=index, total=total, depth=depth + 1, toc_block=toc_block, language=language)
             b = await self._extract_payload(
-                right, index=index, total=total, depth=depth + 1, toc_block=toc_block)
+                right, index=index, total=total, depth=depth + 1, toc_block=toc_block, language=language)
             return {"arcs": a["arcs"] + b["arcs"], "npcs": a["npcs"] + b["npcs"]}
         payload, truncated = self._parse_payload(raw, index=index)
 
@@ -607,9 +609,9 @@ class ImportCampaignUseCase:
                     f"Réponse du modèle coupée sur le morceau {index + 1} : "
                     "re-découpage en 2 moitiés plus digestes…")
                 a = await self._extract_payload(
-                    left, index=index, total=total, depth=depth + 1, toc_block=toc_block)
+                    left, index=index, total=total, depth=depth + 1, toc_block=toc_block, language=language)
                 b = await self._extract_payload(
-                    right, index=index, total=total, depth=depth + 1, toc_block=toc_block)
+                    right, index=index, total=total, depth=depth + 1, toc_block=toc_block, language=language)
                 return {"arcs": a["arcs"] + b["arcs"], "npcs": a["npcs"] + b["npcs"]}
         if truncated:
             logger.warning(

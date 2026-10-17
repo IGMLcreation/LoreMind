@@ -77,7 +77,9 @@ public record ContentExport(
             List<TemplateField> enemyTemplate,
             String foundryActorType,
             String author,
-            boolean isPublic
+            boolean isPublic,
+            /** Version anglaise des règles ; absente des bundles antérieurs (null). */
+            String rulesMarkdownEn
     ) {}
 
     public record LoreDto(

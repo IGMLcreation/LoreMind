@@ -100,6 +100,8 @@ async def test_rules_stream_skips_failed_chunk_but_continues(monkeypatch, no_sle
     monkeypatch.setattr("app.application.import_rules.chunk_text",
                         lambda *a, **k: ["AAA premier", "BBB second"])
     llm = ContentLLM([
+        ("Traduis ces titres", '{"titles": {"Magie": "Magic"}}'),
+        ("Traduis cet extrait", "spells"),
         ("AAA premier", LLMProviderError("HTTP 503 saturé")),
         ("BBB second", '{"Magie":"sorts"}'),
     ])
@@ -111,6 +113,25 @@ async def test_rules_stream_skips_failed_chunk_but_continues(monkeypatch, no_sle
     assert done["type"] == "done"
     assert done["sections"] == {"Magie": "sorts"}
     assert done["skipped"] == 1
+    # Règles en deux langues : livre en français (« Texte du PDF. ») → traduction anglaise.
+    assert done["source_language"] == "fr"
+    assert done["sections_by_language"] == {"fr": {"Magie": "sorts"}, "en": {"Magic": "spells"}}
+    assert any(e["type"] == "status" and "anglais" in e["message"] for e in events)
+
+
+async def test_rules_stream_keeps_the_source_language_when_translation_fails(monkeypatch, no_sleep):
+    monkeypatch.setattr("app.application.import_rules.chunk_text", lambda *a, **k: ["The rules of the game"])
+    llm = ContentLLM([
+        ("Traduis ces titres", LLMProviderError("HTTP 503 saturé")),
+        ("The rules of the game", '{"Combat":"Each round, you roll the dice."}'),
+    ])
+    uc = ImportRulesUseCase(llm, FakeExtractor(_doc("The rules of the game are simple and you can play.")))
+    events = [e async for e in uc.stream(b"pdf")]
+    done = events[-1]
+    assert done["type"] == "done"
+    assert done["source_language"] == "en"
+    assert done["sections_by_language"] == {"en": {"Combat": "Each round, you roll the dice."}}
+    assert any(e["type"] == "status" and "impossible" in e["message"] for e in events)
 
 
 async def test_rules_stream_all_chunks_fail_emits_error(one_chunk, no_sleep):
@@ -155,3 +176,34 @@ async def test_campaign_stream_all_fail_emits_error(one_chunk, no_sleep):
     uc = ImportCampaignUseCase(ScriptedLLM([LLMProviderError("502")]), FakeExtractor(_doc()))
     events = [e async for e in uc.stream(b"pdf")]
     assert events[-1]["type"] == "error"
+
+
+class _RecordingLLM(ScriptedLLM):
+    """ScriptedLLM qui garde les prompts reçus."""
+
+    def __init__(self, responses: list) -> None:
+        super().__init__(responses)
+        self.prompts: list[str] = []
+
+    async def generate(self, prompt: str, *, output_format=None, temperature=None) -> str:
+        self.prompts.append(prompt)
+        return await super().generate(prompt, output_format=output_format, temperature=temperature)
+
+
+async def test_campaign_import_writes_in_the_interface_language_and_keeps_names():
+    llm = _RecordingLLM([_TREE])
+    uc = ImportCampaignUseCase(llm, FakeExtractor(_doc()))
+    events = [e async for e in uc.stream(b"pdf", language="en")]
+    assert events[-1]["type"] == "done"
+    prompt = llm.prompts[0]
+    assert "LANGUE DE SORTIE" in prompt
+    assert "en anglais" in prompt
+    assert "noms propres" in prompt
+    assert '"Main adventure"' in prompt, "arc par défaut dans la langue de l'interface"
+
+
+async def test_campaign_import_defaults_to_french():
+    llm = _RecordingLLM([_TREE])
+    await ImportCampaignUseCase(llm, FakeExtractor(_doc())).execute(b"pdf")
+    assert "en français" in llm.prompts[0]
+    assert '"Aventure principale"' in llm.prompts[0]

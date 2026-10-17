@@ -23,4 +23,11 @@ class BrainRulesImportResponse {
 
     @JsonProperty("ocr_page_count")
     private int ocrPageCount;
+
+    /** Règles en deux langues : {code langue → sections} (absent d'un Brain antérieur). */
+    @JsonProperty("sections_by_language")
+    private Map<String, Map<String, String>> sectionsByLanguage;
+
+    @JsonProperty("source_language")
+    private String sourceLanguage;
 }

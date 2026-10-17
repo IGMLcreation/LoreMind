@@ -100,7 +100,12 @@ export class SessionRulesPanelComponent implements OnChanges, OnDestroy {
   private applySystem(gs: GameSystem | null): void {
     this.gameSystem = gs;
     if (!gs) { this.state = 'noSystem'; return; }
-    this.sections = parseRuleSections(gs.rulesMarkdown, this.translate.instant('sessionRules.preamble'));
+    // Règles dans la langue de l'interface, avec repli sur l'autre version si elle est vide.
+    const english = this.translate.getCurrentLang() === 'en';
+    const preferred = english ? gs.rulesMarkdownEn : gs.rulesMarkdown;
+    const fallback = english ? gs.rulesMarkdown : gs.rulesMarkdownEn;
+    const rules = preferred?.trim() ? preferred : fallback;
+    this.sections = parseRuleSections(rules, this.translate.instant('sessionRules.preamble'));
     if (this.sections.length === 0) { this.state = 'noRules'; return; }
     this.pinned = this.readPins();
     this.opened = new Set(this.sections.filter(s => this.pinned.has(s.title)).map(s => s.id));

@@ -347,4 +347,26 @@ class BrainRulesImportClientTest {
         assertTrue(c.done.get().sections().isEmpty());
         assertNull(c.error.get());
     }
+
+    @Test
+    void streaming_done_carriesBothLanguages() {
+        String sse = "event:done\ndata:{\"sections\":{\"Combat\":\"d20\"},\"page_count\":2,\"ocr_page_count\":0,"
+                + "\"source_language\":\"fr\",\"sections_by_language\":{\"fr\":{\"Combat\":\"d20\"},"
+                + "\"en\":{\"Fighting\":\"d20 roll\"}}}\n\n";
+        Collector c = new Collector();
+        ExchangeFunction ef = req -> Mono.just(
+                ClientResponse.create(HttpStatus.OK)
+                        .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_EVENT_STREAM_VALUE)
+                        .body(sse)
+                        .build());
+        client(ef).importRulesStreaming(
+                new byte[]{1}, "r.pdf",
+                c.progress::add, c.heartbeats::incrementAndGet, c.statuses::add,
+                c.done::set, c.error::set);
+
+        assertNotNull(c.done.get());
+        assertEquals("fr", c.done.get().sourceLanguage());
+        assertEquals(java.util.Map.of("Fighting", "d20 roll"), c.done.get().sectionsByLanguage().get("en"));
+        assertEquals(java.util.Map.of("Combat", "d20"), c.done.get().sectionsByLanguage().get("fr"));
+    }
 }

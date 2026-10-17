@@ -36,6 +36,9 @@ class RulesImportResponseDTO(BaseModel):
     sections: dict[str, str]
     page_count: int
     ocr_page_count: int
+    # Règles en deux langues : {code langue → sections} et langue d'origine du livre.
+    sections_by_language: dict[str, dict[str, str]] = {}
+    source_language: str = ""
 
 
 @router.post("/import/rules", response_model=RulesImportResponseDTO)
@@ -70,6 +73,8 @@ async def import_rules(
         sections=result.sections,
         page_count=result.page_count,
         ocr_page_count=result.ocr_page_count,
+        sections_by_language=result.sections_by_language,
+        source_language=result.source_language,
     )
 
 
@@ -115,6 +120,7 @@ async def import_rules_stream(
 @router.post("/import/campaign/stream")
 async def import_campaign_stream(
     use_case: Annotated[ImportCampaignUseCase, Depends(get_import_campaign_use_case)],
+    language: Annotated[str, Depends(get_user_language)],
     file: UploadFile = File(...),
 ) -> StreamingResponse:
     """Import streamé d'un PDF de campagne → arbre arc→chapitre→scène (SSE).
@@ -131,7 +137,7 @@ async def import_campaign_stream(
             yield sse_event("error", {"message": upload_error})
             return
         try:
-            async for ev in use_case.stream(content):
+            async for ev in use_case.stream(content, language=language):
                 event_type = ev.pop("type")
                 yield sse_event(event_type, ev)
         except PdfExtractionError as exc:

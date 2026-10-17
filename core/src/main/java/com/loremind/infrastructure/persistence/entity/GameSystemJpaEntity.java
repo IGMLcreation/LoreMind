@@ -37,6 +37,9 @@ public class GameSystemJpaEntity {
     @Column(name = "rules_markdown", columnDefinition = "TEXT")
     private String rulesMarkdown;
 
+    @Column(name = "rules_markdown_en", columnDefinition = "TEXT")
+    private String rulesMarkdownEn;
+
     /** Template PJ serialise en JSON via {@link TemplateFieldListJsonConverter}. */
     @Convert(converter = TemplateFieldListJsonConverter.class)
     @Column(name = "character_template", columnDefinition = "TEXT")

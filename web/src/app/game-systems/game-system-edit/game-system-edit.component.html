@@ -75,6 +75,18 @@
         <p class="import-error">{{ importError }}</p>
       }
 
+      <!-- Règles en deux langues : un onglet par version (l'import d'un PDF remplit les deux). -->
+      <div class="rules-langs" role="tablist" [attr.aria-label]="'gameSystemEdit.langTabs' | translate">
+        @for (lang of rulesLangs; track lang) {
+          <button type="button" role="tab" class="rules-lang" [class.active]="rulesLang === lang"
+            [attr.aria-selected]="rulesLang === lang" (click)="rulesLang = lang">
+            {{ ('gameSystemEdit.lang.' + lang) | translate }}
+            <span class="rules-lang-count">{{ sectionCount(lang) }}</span>
+          </button>
+        }
+      </div>
+      <p class="sections-hint">{{ 'gameSystemEdit.langHint' | translate }}</p>
+
       <div class="section-list">
         @for (section of sections; track section; let i = $index) {
           <div class="section-card" [class.collapsed]="section.collapsed">

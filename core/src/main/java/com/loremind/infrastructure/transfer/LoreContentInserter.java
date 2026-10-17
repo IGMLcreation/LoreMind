@@ -49,6 +49,7 @@ class LoreContentInserter {
             e.setName(d.name());
             e.setDescription(d.description());
             e.setRulesMarkdown(d.rulesMarkdown());
+            e.setRulesMarkdownEn(d.rulesMarkdownEn());
             e.setCharacterTemplate(d.characterTemplate());
             e.setNpcTemplate(d.npcTemplate());
             e.setEnemyTemplate(d.enemyTemplate());

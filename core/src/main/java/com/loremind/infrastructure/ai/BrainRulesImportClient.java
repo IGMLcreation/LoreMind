@@ -106,7 +106,9 @@ public class BrainRulesImportClient implements RulesPdfImporter {
             return new RulesImportResult(
                     Map.copyOf(response.getSections()),
                     response.getPageCount(),
-                    response.getOcrPageCount());
+                    response.getOcrPageCount(),
+                    response.getSectionsByLanguage() != null ? response.getSectionsByLanguage() : Map.of(),
+                    response.getSourceLanguage());
         } catch (ResourceAccessException e) {
             throw new RulesImportException(
                     "Le Brain est injoignable (timeout ou service arrêté).", e);
@@ -218,11 +220,22 @@ public class BrainRulesImportClient implements RulesPdfImporter {
             callbacks.onDone().accept(new RulesImportResult(
                     toStringMap(node.path("sections")),
                     node.path("page_count").asInt(),
-                    node.path("ocr_page_count").asInt()));
+                    node.path("ocr_page_count").asInt(),
+                    toLanguageMap(node.path("sections_by_language")),
+                    node.path("source_language").asText(null)));
         }
     }
 
     // --- Helpers -------------------------------------------------------------
+
+    /** {code langue → sections} : règles en deux langues (vide si le Brain ne les fournit pas). */
+    private Map<String, Map<String, String>> toLanguageMap(JsonNode node) {
+        Map<String, Map<String, String>> out = new java.util.LinkedHashMap<>();
+        if (node != null && node.isObject()) {
+            node.fields().forEachRemaining(e -> out.put(e.getKey(), toStringMap(e.getValue())));
+        }
+        return out;
+    }
 
     private List<String> toStringList(JsonNode array) {
         List<String> out = new ArrayList<>();

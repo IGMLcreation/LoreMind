@@ -23,6 +23,9 @@ class GameSystemContextBuilderTest {
     @Mock
     private GameSystemRepository gameSystemRepository;
 
+    @Mock
+    private com.loremind.domain.shared.ports.CurrentLanguage currentLanguage;
+
     @InjectMocks
     private GameSystemContextBuilder builder;
 
@@ -70,5 +73,25 @@ class GameSystemContextBuilderTest {
         Map<String, String> sections = builder.parseH2Sections(md);
 
         assertEquals("Règles de combat.", sections.get("Combat"));
+    }
+
+    @Test
+    void build_usesTheRulesOfTheInterfaceLanguage_withFallback() {
+        com.loremind.domain.gamesystemcontext.GameSystem gs = com.loremind.domain.gamesystemcontext.GameSystem.builder()
+                .id("gs").name("Nimble").rulesMarkdown("## Combat\nJet de d20").rulesMarkdownEn("## Fighting\nRoll a d20").build();
+        org.mockito.Mockito.when(gameSystemRepository.findById("gs")).thenReturn(java.util.Optional.of(gs));
+
+        org.mockito.Mockito.when(currentLanguage.get()).thenReturn("en");
+        assertTrue(builder.buildOptional("gs", com.loremind.domain.gamesystemcontext.GenerationIntent.GENERIC)
+                .orElseThrow().toString().contains("Roll a d20"));
+
+        org.mockito.Mockito.when(currentLanguage.get()).thenReturn("fr");
+        assertTrue(builder.buildOptional("gs", com.loremind.domain.gamesystemcontext.GenerationIntent.GENERIC)
+                .orElseThrow().toString().contains("Jet de d20"));
+
+        gs.setRulesMarkdownEn(null); // pas de version anglaise : repli sur le français
+        org.mockito.Mockito.when(currentLanguage.get()).thenReturn("en");
+        assertTrue(builder.buildOptional("gs", com.loremind.domain.gamesystemcontext.GenerationIntent.GENERIC)
+                .orElseThrow().toString().contains("Jet de d20"));
     }
 }

@@ -1,7 +1,29 @@
 """Prompts de l'import de campagne PDF (cf. import_campaign.py)."""
+from app.core.language import language_name
 
 # Nom de l'arc unique quand le livre n'est pas découpé en actes/parties.
 DEFAULT_ARC_NAME = "Aventure principale"
+DEFAULT_ARC_NAMES = {"fr": DEFAULT_ARC_NAME, "en": "Main adventure"}
+
+
+def default_arc_name(language: str) -> str:
+    """Nom de l'arc unique, dans la langue de l'interface."""
+    return DEFAULT_ARC_NAMES.get(language, DEFAULT_ARC_NAME)
+
+
+def language_block(language: str) -> str:
+    """Consigne de langue : les textes sont écrits dans la langue de l'interface, quelle que
+    soit celle du livre (traduits fidèlement s'il le faut). Les TITRES et noms propres restent
+    ceux du livre : la fusion des morceaux se fait par nom exact, et un nom ne se traduit pas."""
+    name = language_name(language)
+    return (
+        "\n\nLANGUE DE SORTIE :\n"
+        f"- Rédige TOUS les textes (description, player_narration, gm_notes, salles, PNJ) en {name}, "
+        f"quelle que soit la langue du livre. Si le livre est dans une autre langue, TRADUIS ces textes "
+        "fidèlement, sans les résumer davantage.\n"
+        "- Garde TELS QUELS les noms propres (personnages, lieux, divinités, sorts, objets nommés) "
+        "et les noms d'arcs, de chapitres, de scènes, de salles et de PNJ (titres du livre)."
+    )
 
 MAP_SYSTEM = """Tu es un assistant qui structure un livre de campagne de jeu de rôle.
 On te donne un EXTRAIT brut d'un PDF de campagne (texte parfois mal coupé par la mise en page).

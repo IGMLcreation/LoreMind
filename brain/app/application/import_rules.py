@@ -26,6 +26,7 @@ from app.application.import_status import (
 from app.application.llm_json import load_json_object, looks_like_truncated_json
 from app.application.llm_retry import generate_with_retry
 from app.application.prompts import import_rules as prompts
+from app.application.rules_translation import RulesTranslator, detect_language, other_languages, unique_titles
 from app.application.streaming import with_heartbeat
 from app.core.language import DEFAULT as _DEFAULT_LANG, language_name
 
@@ -89,6 +90,9 @@ _ANCHORS_SCHEMA: dict = {
     "additionalProperties": False,
 }
 
+
+# Échantillon de texte utilisé pour détecter la langue du livre (début du PDF).
+_DETECT_CHARS = 20_000
 
 class _SectionMerger:
     """Fusionne les sections issues des différents morceaux, ordre préservé.
@@ -250,10 +254,25 @@ class ImportRulesUseCase:
         merger = _SectionMerger()
         for i, chunk in enumerate(chunks):
             merger.add(await self._map_chunk(chunk, index=i, total=len(chunks), language=language))
+        sections = merger.result()
+        source = detect_language(doc.full_text[:_DETECT_CHARS], default=language)
+        by_language = {source: sections}
+        translator = RulesTranslator(self._llm)
+        for target in other_languages(source):
+            try:
+                titles = unique_titles(await translator.translate_titles(list(sections), source, target))
+                by_language[target] = {
+                    titles.get(title, title): await translator.translate_content(content, source, target)
+                    for title, content in sections.items()
+                }
+            except LLMProviderError as exc:
+                logger.warning("Traduction des règles (%s) impossible : %s", target, exc)
         return RulesImportResult(
-            sections=merger.result(),
+            sections=sections,
             page_count=doc.page_count,
             ocr_page_count=doc.ocr_page_count,
+            sections_by_language=by_language,
+            source_language=source,
         )
 
     async def stream(self, pdf_bytes: bytes, language: str = _DEFAULT_LANG):
@@ -344,13 +363,56 @@ class ImportRulesUseCase:
                               "de contexte (num_ctx) ou essayez un autre modèle."}
             return
 
+        # Règles en deux langues : l'extraction est fidèle au livre ; on traduit vers l'autre
+        # langue de l'application. Un échec de traduction n'annule pas l'import.
+        source = detect_language(doc.full_text[:_DETECT_CHARS], default=language)
+        by_language: dict[str, dict[str, str]] = {source: sections}
+        for target in other_languages(source):
+            try:
+                async for ev in self._translate_events(sections, source, target):
+                    if ev["type"] == "_translated":
+                        by_language[target] = ev["sections"]
+                    else:
+                        yield ev
+            except LLMProviderError as exc:
+                logger.warning("Traduction des règles (%s) impossible : %s", target, exc)
+                yield {"type": "status",
+                       "message": f"Traduction ({language_name(target)}) impossible : {str(exc)[:200]}"}
+
         yield {
             "type": "done",
             "sections": sections,
+            "sections_by_language": by_language,
+            "source_language": source,
             "page_count": doc.page_count,
             "ocr_page_count": doc.ocr_page_count,
             "skipped": skipped,
         }
+
+    async def _translate_events(self, sections: dict[str, str], source: str, target: str):
+        """Évènements d'avancement de la traduction ; le dernier est
+        {"type": "_translated", "sections": {...}} (consommé par `stream`, jamais relayé)."""
+        translator = RulesTranslator(self._llm)
+        titles = list(sections)
+        total = len(titles)
+        label = language_name(target)
+        yield {"type": "status", "message": f"Traduction ({label}) des titres…", "current": 0, "total": total}
+        mapping: dict[str, str] = {}
+        async for kind, payload in with_heartbeat(translator.translate_titles(titles, source, target)):
+            if kind == "heartbeat":
+                yield {"type": "heartbeat", "current": 0, "total": total}
+            elif kind == "result":
+                mapping = unique_titles(payload)
+        out: dict[str, str] = {}
+        for i, title in enumerate(titles):
+            yield {"type": "status", "message": f"Traduction ({label}) : {i + 1}/{total} — {title}",
+                   "current": i + 1, "total": total}
+            async for kind, payload in with_heartbeat(translator.translate_content(sections[title], source, target)):
+                if kind == "heartbeat":
+                    yield {"type": "heartbeat", "current": i + 1, "total": total}
+                elif kind == "result":
+                    out[mapping.get(title, title)] = payload
+        yield {"type": "_translated", "sections": out}
 
     # --- MAP : un morceau → sections -----------------------------------------
 

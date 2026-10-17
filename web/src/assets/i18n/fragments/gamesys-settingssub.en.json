@@ -53,7 +53,14 @@
     "importFailedReason": "Import failed: {{reason}}",
     "importNoRules": "No usable rules could be extracted from this PDF (scan without OCR, or unrecognized content).",
     "importOcrSuffix": " (including {{count}} page(s) via OCR)",
-    "importNote": "{{added}} section(s) suggested from {{pages}} page(s){{ocr}}. Review and adjust below before saving."
+    "importNote": "{{added}} section(s) suggested from {{pages}} page(s){{ocr}}. Review and adjust below before saving.",
+    "langTabs": "Rules language",
+    "lang": {
+      "fr": "Français",
+      "en": "English"
+    },
+    "langHint": "Rules exist in two versions: the app and the AI use the one matching the interface language (or the other if it's empty). Importing a PDF fills both, whatever its language.",
+    "importTranslated": "Book in {{source}}: the {{target}} version was translated automatically (proper names kept); review it in its tab."
   },
   "ollamaModelManager": {
     "installedModels": "Installed models",

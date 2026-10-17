@@ -35,6 +35,9 @@ public class GameSystem {
     /** Markdown monolithique. Sections découpées par titres H2 (## Combat, ## Classes, etc.). */
     private String rulesMarkdown;
 
+    /** Version anglaise des règles ({@code rulesMarkdown} = version française). Nullable. */
+    private String rulesMarkdownEn;
+
     /**
      * Template de fiche PJ : champs typés affichés pour chaque personnage joueur.
      * Hors champs universels hard-codés (nom, portrait, header). Jamais null après
@@ -160,5 +163,16 @@ public class GameSystem {
     private static boolean equalsIgnoreCase(String a, String b) {
         if (a == null || b == null) return a == null && b == null;
         return a.toLowerCase(Locale.ROOT).equals(b.toLowerCase(Locale.ROOT));
+    }
+
+    /**
+     * Règles dans la langue demandée ({@code en} → anglais, sinon français), avec repli sur
+     * l'autre version si celle-ci est vide : un système importé dans une seule langue reste lisible.
+     */
+    public String rulesFor(String language) {
+        boolean english = "en".equalsIgnoreCase(language);
+        String preferred = english ? rulesMarkdownEn : rulesMarkdown;
+        String fallback = english ? rulesMarkdown : rulesMarkdownEn;
+        return preferred != null && !preferred.isBlank() ? preferred : fallback;
     }
 }

@@ -16,5 +16,14 @@ import java.util.Map;
 public record RulesImportResult(
         Map<String, String> sections,
         int pageCount,
-        int ocrPageCount) {
+        int ocrPageCount,
+        /** Règles en deux langues : {code langue → sections} (« fr », « en »). */
+        Map<String, Map<String, String>> sectionsByLanguage,
+        /** Langue d'origine du livre (extraction fidèle) ; l'autre version est traduite. */
+        String sourceLanguage) {
+
+    /** Résultat dans une seule langue (Brain antérieur, ou traduction indisponible). */
+    public RulesImportResult(Map<String, String> sections, int pageCount, int ocrPageCount) {
+        this(sections, pageCount, ocrPageCount, Map.of(), null);
+    }
 }

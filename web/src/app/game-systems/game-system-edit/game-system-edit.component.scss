@@ -359,3 +359,32 @@
 
   &:hover { border-color: #374151; color: #e5e7eb; }
 }
+
+// Règles en deux langues : onglets Français / English au-dessus des sections.
+.rules-langs {
+  display: flex;
+  gap: 0.4rem;
+  margin: 0.75rem 0 0.35rem;
+}
+
+.rules-lang {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid #374151;
+  background: transparent;
+  color: #d1d5db;
+  cursor: pointer;
+  font-size: 0.85rem;
+
+  &.active { border-color: #6c63ff; background: rgba(108, 99, 255, 0.15); color: white; }
+}
+
+.rules-lang-count {
+  font-size: 0.72rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}

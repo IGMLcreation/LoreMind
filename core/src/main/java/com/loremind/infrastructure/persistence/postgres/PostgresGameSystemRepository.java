@@ -60,6 +60,7 @@ public class PostgresGameSystemRepository implements GameSystemRepository {
                 .name(e.getName())
                 .description(e.getDescription())
                 .rulesMarkdown(e.getRulesMarkdown())
+                .rulesMarkdownEn(e.getRulesMarkdownEn())
                 .characterTemplate(e.getCharacterTemplate() != null
                         ? new java.util.ArrayList<>(e.getCharacterTemplate())
                         : new java.util.ArrayList<>())
@@ -84,6 +85,7 @@ public class PostgresGameSystemRepository implements GameSystemRepository {
                 .name(g.getName())
                 .description(g.getDescription())
                 .rulesMarkdown(g.getRulesMarkdown())
+                .rulesMarkdownEn(g.getRulesMarkdownEn())
                 .characterTemplate(g.getCharacterTemplate() != null
                         ? new java.util.ArrayList<>(g.getCharacterTemplate())
                         : new java.util.ArrayList<>())
