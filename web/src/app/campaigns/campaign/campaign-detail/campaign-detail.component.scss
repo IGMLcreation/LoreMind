@@ -307,8 +307,10 @@
 
 .section-header {
   display: flex;
+  flex-wrap: wrap; // écran étroit : les actions passent sous le titre au lieu de déborder
   align-items: center;
   justify-content: space-between;
+  gap: 0.75rem;
   margin-bottom: 1.5rem;
 
   h2 { color: #d1d5db; font-size: 1rem; font-weight: 600; }
@@ -316,6 +318,7 @@
 
 .section-header-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
 }

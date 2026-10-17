@@ -25,6 +25,8 @@
         <span>DM Loremind</span>
       </span>
     }
+    <!-- Séance en cours : un tap y ramène (visible seulement si une séance tourne). -->
+    <app-active-session-shortcut compact class="topbar-session"></app-active-session-shortcut>
     <button type="button" class="topbar-btn topbar-search"
       [attr.aria-label]="'mobileShell.search' | translate"
       (click)="openSearch()">

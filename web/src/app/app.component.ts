@@ -12,6 +12,7 @@ import { GlobalSearchComponent } from './shared/global-search/global-search.comp
 import { UpdateBannerComponent } from './shared/update-banner/update-banner.component';
 import { ConfirmDialogHostComponent } from './shared/confirm-dialog/confirm-dialog-host.component';
 import { WritingCoachPanelComponent } from './shared/writing-coach/writing-coach-panel.component';
+import { ActiveSessionShortcutComponent } from './sessions/active-session-shortcut/active-session-shortcut.component';
 import { LayoutService } from './services/layout.service';
 import { GlobalSearchService } from './services/global-search.service';
 import { VersionCheckerService } from './services/version-checker.service';
@@ -36,6 +37,7 @@ const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), selec
     UpdateBannerComponent,
     ConfirmDialogHostComponent,
     WritingCoachPanelComponent,
+    ActiveSessionShortcutComponent,
     AsyncPipe
 ],
     templateUrl: './app.component.html',

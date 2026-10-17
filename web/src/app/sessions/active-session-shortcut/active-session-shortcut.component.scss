@@ -111,3 +111,41 @@
 
 .shortcut-item-name { font-size: 0.8rem; font-weight: 500; }
 .shortcut-item-ctx { font-size: 0.7rem; color: #9ca3af; }
+
+// --- Mode compact (barre haute mobile) ----------------------------------------------
+:host(.compact) {
+  position: relative;
+
+  .active-shortcut { margin-top: 0; }
+
+  .shortcut-main {
+    justify-content: center;
+    gap: 0.3rem;
+    width: auto;
+    min-width: 44px;
+    height: 44px;
+    padding: 0 0.55rem;
+  }
+
+  .live-dot { width: 10px; height: 10px; }
+
+  .shortcut-list {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 30;
+    width: min(280px, calc(100vw - 2rem));
+    padding: 0.4rem;
+    background: #0f0f1a;
+    border: 1px solid #2a2a45;
+    border-radius: 8px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+  }
+}
+
+.compact-count {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #d1fae5;
+  font-variant-numeric: tabular-nums;
+}

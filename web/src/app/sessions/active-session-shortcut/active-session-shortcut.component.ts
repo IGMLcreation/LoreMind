@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit } from '@angular/core';
+import { Component, DestroyRef, ElementRef, HostBinding, HostListener, Input, OnInit, booleanAttribute } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
@@ -11,8 +11,8 @@ import { ActiveSessionEntry, ActiveSessionsService } from '../../services/active
  * un clic y ramène depuis n'importe quel écran. Plusieurs séances (plusieurs tables) :
  * le bouton déplie la liste, la plus récente en tête.
  *
- * <p>Composant autonome (styles propres) pour pouvoir le réutiliser tel quel dans la
- * barre haute mobile.</p>
+ * <p>Composant autonome (styles propres). En mode {@code compact} (barre haute mobile) :
+ * une pastille de 44 px, et la liste s'ouvre en menu déroulant (Échap / tap à côté la ferme).</p>
  */
 @Component({
   selector: 'app-active-session-shortcut',
@@ -24,6 +24,9 @@ export class ActiveSessionShortcutComponent implements OnInit {
   readonly ChevronDown = ChevronDown;
   readonly ChevronUp = ChevronUp;
 
+  /** Barre haute mobile : pastille seule, liste en menu déroulant. */
+  @Input({ transform: booleanAttribute }) @HostBinding('class.compact') compact = false;
+
   entries: ActiveSessionEntry[] = [];
   expanded = false;
   currentUrl = '';
@@ -31,7 +34,8 @@ export class ActiveSessionShortcutComponent implements OnInit {
   constructor(
     private activeSessions: ActiveSessionsService,
     private router: Router,
-    private destroyRef: DestroyRef
+    private destroyRef: DestroyRef,
+    private host: ElementRef<HTMLElement>
   ) {}
 
   ngOnInit(): void {
@@ -48,6 +52,18 @@ export class ActiveSessionShortcutComponent implements OnInit {
         this.entries = list;
         if (list.length < 2) this.expanded = false;
       });
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (this.compact && this.expanded && !this.host.nativeElement.contains(event.target as Node)) {
+      this.expanded = false;
+    }
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.expanded) this.expanded = false;
   }
 
   /** Une seule séance : on y va ; plusieurs : on déplie la liste. */
