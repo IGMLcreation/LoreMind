@@ -92,4 +92,38 @@ class CampaignControllerTest {
         mockMvc.perform(delete("/api/campaigns/{id}", saved.getId()))
                 .andExpect(status().isNoContent());
     }
+
+    @Test
+    void publication_roundTripsThroughTheApi() throws Exception {
+        Campaign saved = campaignRepository.save(Campaign.builder().name("Module").description("").build());
+
+        mockMvc.perform(get("/api/campaigns/{id}/publication", saved.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.subtitle").doesNotExist());
+
+        mockMvc.perform(put("/api/campaigns/{id}/publication", saved.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"subtitle\":\"  Une enquête \",\"players\":\"3 à 5\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.subtitle").value("Une enquête"));
+
+        mockMvc.perform(get("/api/campaigns/{id}/publication", saved.getId()))
+                .andExpect(jsonPath("$.subtitle").value("Une enquête"))
+                .andExpect(jsonPath("$.players").value("3 à 5"))
+                // Aucun champ calculé (hasContent, hasCredits…) ne fuit dans le JSON.
+                .andExpect(jsonPath("$.empty").doesNotExist())
+                .andExpect(jsonPath("$.content").doesNotExist());
+    }
+
+    @Test
+    void pdfExport_acceptsOptions_andNamesThePlayerEdition() throws Exception {
+        Campaign saved = campaignRepository.save(Campaign.builder().name("Module").description("").build());
+
+        mockMvc.perform(get("/api/campaigns/{id}/pdf-export", saved.getId())
+                        .param("edition", "player").param("format", "A5").param("print", "true")
+                        .param("sections", "NARRATIVE,LORE").param("lore", "LINKED"))
+                .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header()
+                        .string("Content-Disposition", "attachment; filename=\"Module_joueurs.pdf\""));
+    }
 }

@@ -1,5 +1,6 @@
 package com.loremind.infrastructure.transfer;
 
+import com.loremind.domain.campaigncontext.CampaignPublication;
 import com.loremind.domain.campaigncontext.structure.Room;
 import com.loremind.domain.campaigncontext.structure.SceneBattlemap;
 import com.loremind.domain.files.ports.FileStorage;
@@ -90,7 +91,10 @@ class ImageRefRemapOnImportTest {
         String oldFileRef = String.valueOf(file.getId());
 
         CampaignJpaEntity campaign = campaignRepo.save(CampaignJpaEntity.builder()
-                .name("Remap Campaign").description("d").arcsCount(1).build());
+                .name("Remap Campaign").description("d").arcsCount(1)
+                .publication(new CampaignPublication("Sous-titre", "Autrice", null, null, null, null,
+                        null, null, null, null, null, null, "1.0", oldImageRef))
+                .build());
 
         Long originalNpcId = npcRepo.save(NpcJpaEntity.builder()
                 .name("Remap Npc").campaignId(campaign.getId())
@@ -148,6 +152,13 @@ class ImageRefRemapOnImportTest {
         StoredFileJpaEntity newFile = storedFileRepo.findByStorageKey(FILE_KEY).orElseThrow();
         String newFileRef = String.valueOf(newFile.getId());
         assertNotEquals(oldFileRef, newFileRef, "le fichier importé doit avoir un id neuf");
+
+        // Campagne importée : fiche Publication conservée, couverture remappée.
+        CampaignJpaEntity importedCampaign = campaignRepo.findAll().stream()
+                .filter(c -> "Remap Campaign".equals(c.getName()) && !c.getId().equals(campaign.getId()))
+                .findFirst().orElseThrow();
+        assertEquals("Sous-titre", importedCampaign.getPublication().subtitle(), "fiche Publication importée");
+        assertEquals(newImageRef, importedCampaign.getPublication().coverImageId(), "couverture remappée");
 
         // NPC importé : portrait + header + galerie pointent la nouvelle image.
         NpcJpaEntity importedNpc = npcRepo.findAll().stream()

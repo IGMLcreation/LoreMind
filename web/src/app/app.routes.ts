@@ -17,6 +17,7 @@ export const routes: Routes = [
   { path: 'campaigns', loadComponent: () => import('./campaigns/campaigns.component').then(m => m.CampaignsComponent) },
   { path: 'campaigns/:id', loadComponent: () => import('./campaigns/campaign/campaign-detail/campaign-detail.component').then(m => m.CampaignDetailComponent) },
   { path: 'campaigns/:campaignId/graph', loadComponent: () => import('./campaigns/campaign-graph/campaign-graph.component').then(m => m.CampaignGraphComponent) },
+  { path: 'campaigns/:campaignId/publication', loadComponent: () => import('./campaigns/campaign/campaign-publication/campaign-publication.component').then(m => m.CampaignPublicationComponent) },
   { path: 'campaigns/:campaignId/import', loadComponent: () => import('./campaigns/campaign/campaign-import/campaign-import.component').then(m => m.CampaignImportComponent) },
   { path: 'campaigns/:campaignId/playthroughs/:playthroughId', loadComponent: () => import('./campaigns/playthrough/playthrough-detail/playthrough-detail.component').then(m => m.PlaythroughDetailComponent) },
   { path: 'campaigns/:campaignId/playthroughs/:playthroughId/flags', loadComponent: () => import('./campaigns/playthrough/playthrough-flags-page/playthrough-flags-page.component').then(m => m.PlaythroughFlagsPageComponent) },

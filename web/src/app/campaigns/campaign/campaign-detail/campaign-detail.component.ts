@@ -11,7 +11,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin, of, Observable } from 'rxjs';
 import { catchError, switchMap, filter, map } from 'rxjs/operators';
-import { CampaignService, FoundryExportOptions } from '../../../services/campaign.service';
+import { CampaignService, FoundryExportOptions, PdfExportOptions } from '../../../services/campaign.service';
 import { LoreService } from '../../../services/lore.service';
 import { GameSystemService } from '../../../services/game-system.service';
 import { GameSystem } from '../../../services/game-system.model';
@@ -35,10 +35,12 @@ import { ReadinessPanelComponent } from '../../../shared/readiness-panel/readine
 import { WritingReviewPanelComponent } from '../../../shared/writing-review/writing-review-panel.component';
 import { CampaignPlayBlockComponent } from '../campaign-play-block/campaign-play-block.component';
 import { FoundryExportDialogComponent } from '../foundry-export-dialog/foundry-export-dialog.component';
+import { PdfExportDialogComponent } from '../pdf-export-dialog/pdf-export-dialog.component';
+import { downloadBlob, safeFileName } from '../../../shared/download.util';
 
 @Component({
     selector: 'app-campaign-detail',
-    imports: [FormsModule, LucideAngularModule, RouterLink, TranslatePipe, CdkDropList, CdkDrag, ReadinessPanelComponent, WritingReviewPanelComponent, CampaignPlayBlockComponent, FoundryExportDialogComponent],
+    imports: [FormsModule, LucideAngularModule, RouterLink, TranslatePipe, CdkDropList, CdkDrag, ReadinessPanelComponent, WritingReviewPanelComponent, CampaignPlayBlockComponent, FoundryExportDialogComponent, PdfExportDialogComponent],
     templateUrl: './campaign-detail.component.html',
     styleUrls: ['./campaign-detail.component.scss']
 })
@@ -67,6 +69,10 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   foundryDialogOpen = false;
   /** Export PDF en cours (anti double-clic). */
   exportingPdf = false;
+  /** Modale des options du livret PDF. */
+  pdfDialogOpen = false;
+  /** Fiche Publication remplie (sinon la modale propose de la compléter). */
+  hasPublication = true;
 
   campaign: Campaign | null = null;
   arcs: Arc[] = [];
@@ -430,28 +436,40 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
     }
   }
 
-  /** Génère et télécharge le livret PDF de la campagne. */
+  /** Ouvre la modale d'options du livret PDF (en vérifiant si la fiche Publication est remplie). */
   exportPdf(): void {
+    if (!this.campaign?.id || this.exportingPdf) return;
+    this.pdfDialogOpen = true;
+    this.campaignService.getPublication(this.campaign.id).subscribe({
+      next: (p) => this.hasPublication = Object.values(p ?? {}).some(v => typeof v === 'string' && v.trim().length > 0),
+      error: () => this.hasPublication = true // inconnu : pas d'incitation à tort
+    });
+  }
+
+  /** Génère et télécharge le livret PDF selon les options choisies. */
+  onPdfExportConfirmed(opts: PdfExportOptions): void {
     if (!this.campaign?.id || this.exportingPdf) return;
     this.exportingPdf = true;
     const name = this.campaign.name;
-    this.campaignService.exportPdf(this.campaign.id).subscribe({
+    this.campaignService.exportPdf(this.campaign.id, opts).subscribe({
       next: (blob) => {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${(name || 'campagne').replace(/[^a-zA-Z0-9-_]+/g, '_')}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        const suffix = opts.edition === 'player' ? '_joueurs' : '';
+        downloadBlob(blob, `${safeFileName(name, 'campagne')}${suffix}.pdf`);
         this.exportingPdf = false;
+        this.pdfDialogOpen = false;
       },
       error: (err) => {
         console.error('Échec de l\'export PDF', err);
         this.exportingPdf = false;
       }
     });
+  }
+
+  /** Depuis la modale PDF : compléter la fiche Publication (couverture, crédits…). */
+  openPublication(): void {
+    if (!this.campaign?.id) return;
+    this.pdfDialogOpen = false;
+    this.router.navigate(['/campaigns', this.campaign.id, 'publication']);
   }
 
   /** Réordonne les arcs par glisser-déposer et persiste le nouvel ordre. */

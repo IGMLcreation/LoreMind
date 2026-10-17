@@ -322,6 +322,15 @@
     </div>
   }
 
+<!-- Options du livret PDF (version MJ/joueurs, format, parties, lore) + accès à la fiche Publication. -->
+<app-pdf-export-dialog
+  [open]="pdfDialogOpen"
+  [exporting]="exportingPdf"
+  [hasPublication]="hasPublication"
+  (cancelled)="pdfDialogOpen = false"
+  (confirmed)="onPdfExportConfirmed($event)"
+  (editPublication)="openPublication()"></app-pdf-export-dialog>
+
 <!-- Choix du périmètre de l'export Foundry (tout / cartes+ennemis / journaux / tables). -->
 <app-foundry-export-dialog
   [open]="foundryDialogOpen"

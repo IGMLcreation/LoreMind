@@ -1,5 +1,6 @@
 package com.loremind.infrastructure.transfer;
 
+import com.loremind.domain.campaigncontext.CampaignPublication;
 import com.loremind.domain.campaigncontext.structure.SceneBattlemap;
 import com.loremind.domain.campaigncontext.structure.SceneType;
 import com.loremind.infrastructure.persistence.converter.PrerequisiteListJsonConverter;
@@ -99,9 +100,18 @@ class CampaignContentInserter {
             e.setPlayerCount(d.playerCount());
             e.setLoreId(d.loreId());             // remappe en 2e passe
             e.setGameSystemId(d.gameSystemId()); // remappe en 2e passe
+            e.setPublication(remapCover(maps, d.publication()));
             maps.campaignMap.put(d.id(), campaignRepo.save(e).getId());
         }
         result.count("campaigns", maps.campaignMap.size());
+    }
+
+    /** Fiche « Publication » : l'image de couverture suit le remapping des images importées. */
+    private static CampaignPublication remapCover(ImportIdMaps maps, CampaignPublication p) {
+        if (p == null || p.coverImageId() == null) return p;
+        return new CampaignPublication(p.subtitle(), p.author(), p.system(), p.levels(), p.players(),
+                p.duration(), p.pitch(), p.gmBackground(), p.hooks(), p.contentWarnings(), p.credits(),
+                p.legal(), p.version(), IdRemapper.remapStringId(maps.imageMap, p.coverImageId()));
     }
 
     /** Arc (relatedPageIds remappe en 2e passe). */

@@ -1,0 +1,14 @@
+/* Mode impression : surcharges ajoutees apres export.css. Aucun aplat de couleur (economie
+   d'encre, rendu net en noir et blanc) ; les filets et bordures portent la hierarchie.
+   ATTENTION : ce CSS est injecte tel quel dans le document XML — ni esperluette ni chevron ici. */
+.arc-head { background: none; color: #1f1c33; border-top: 2pt solid #2e2a4a; border-bottom: 2pt solid #2e2a4a;
+  border-radius: 0; }
+.arc-head .eyebrow-light { color: #6d6787; }
+.chapter-head { background: none; border-left: 4pt solid #555; }
+.scene, .room, .card { background: none; }
+.readaloud { background: none; }
+.secret { background: none; border: 1pt dashed #777; }
+.combat { background: none; border-left: 3pt solid #555; }
+.warning { background: none; border-left: 3pt solid #555; }
+.stats-table thead th, .stats-table tbody th, .stat-array th { background: none; }
+.stats-table tr.alt td { background: none; }

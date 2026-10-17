@@ -3,6 +3,7 @@ package com.loremind.application.campaigncontext;
 import com.loremind.application.playcontext.PlaythroughService;
 import com.loremind.domain.campaigncontext.structure.Arc;
 import com.loremind.domain.campaigncontext.Campaign;
+import com.loremind.domain.campaigncontext.CampaignPublication;
 import com.loremind.domain.campaigncontext.structure.Chapter;
 import com.loremind.domain.campaigncontext.ports.ArcRepository;
 import com.loremind.domain.campaigncontext.ports.CampaignRepository;
@@ -106,6 +107,23 @@ public class CampaignService {
         }
         campaign.setGraphPositions(value);
         campaignRepository.save(campaign);
+    }
+
+    /** Fiche « Publication » de la campagne (vide si jamais renseignée). */
+    public CampaignPublication getPublication(String id) {
+        Campaign campaign = campaignRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Campaign non trouvé avec l'ID: " + id));
+        return campaign.getPublication() != null ? campaign.getPublication() : CampaignPublication.empty();
+    }
+
+    /** Remplace la fiche « Publication » (nettoyée : blancs → vide, longueurs bornées). */
+    public CampaignPublication updatePublication(String id, CampaignPublication publication) {
+        Campaign campaign = campaignRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Campaign non trouvé avec l'ID: " + id));
+        CampaignPublication clean = publication != null ? publication.normalized() : CampaignPublication.empty();
+        campaign.setPublication(clean.hasContent() ? clean : null);
+        campaignRepository.save(campaign);
+        return clean;
     }
 
     private String normalizeId(String id) {

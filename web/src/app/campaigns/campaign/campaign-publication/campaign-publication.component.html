@@ -1,0 +1,159 @@
+<div class="edit-page">
+
+  <div class="page-header">
+    <div>
+      <h1>{{ 'publication.title' | translate }}</h1>
+      <p class="subtitle">{{ campaignName }}</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn-secondary" (click)="back()">
+        <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon>
+        {{ 'common.back' | translate }}
+      </button>
+      <button type="button" class="btn-secondary" (click)="pdfDialogOpen = true" [disabled]="loading">
+        <lucide-icon [img]="FileText" [size]="14"></lucide-icon>
+        {{ 'campaignDetail.pdfExport' | translate }}
+      </button>
+      <button type="button" class="btn-primary" (click)="save()" [disabled]="loading || saving || !dirty">
+        <lucide-icon [img]="Save" [size]="14"></lucide-icon>
+        {{ (saving ? 'common.saving' : (savedFlash ? 'publication.saved' : 'common.save')) | translate }}
+      </button>
+    </div>
+  </div>
+
+  @if (errorMessage) {
+    <div class="pub-error" role="alert">{{ errorMessage }}</div>
+  }
+
+  @if (!loading) {
+    <div class="edit-form">
+      <p class="optional-hint">{{ 'publication.intro' | translate }}</p>
+
+      <app-expandable-section [title]="'publication.coverSection' | translate" icon="📕" [initiallyOpen]="true"
+        [filled]="filledAny('subtitle', 'author', 'version', 'coverImageId')">
+        <div class="cover-grid">
+          <div class="cover-fields">
+            <div class="field">
+              <label for="pub-subtitle">{{ 'publication.subtitleLabel' | translate }}</label>
+              <input id="pub-subtitle" type="text" [ngModel]="pub.subtitle" (ngModelChange)="set('subtitle', $event)"
+                [placeholder]="'publication.subtitlePlaceholder' | translate" />
+            </div>
+            <div class="field">
+              <label for="pub-author">{{ 'publication.authorLabel' | translate }}</label>
+              <input id="pub-author" type="text" [ngModel]="pub.author" (ngModelChange)="set('author', $event)"
+                [placeholder]="'publication.authorPlaceholder' | translate" />
+            </div>
+            <div class="field">
+              <label for="pub-version">{{ 'publication.versionLabel' | translate }}</label>
+              <input id="pub-version" type="text" [ngModel]="pub.version" (ngModelChange)="set('version', $event)"
+                placeholder="1.0" />
+            </div>
+          </div>
+          <div class="field">
+            <p class="cover-label">{{ 'publication.coverLabel' | translate }}</p>
+            <app-single-image-picker
+              [imageId]="pub.coverImageId ?? null"
+              aspectRatio="3 / 4"
+              [hint]="'publication.coverHint' | translate"
+              (imageIdChange)="setCover($event)"></app-single-image-picker>
+          </div>
+        </div>
+      </app-expandable-section>
+
+      <app-expandable-section [title]="'publication.techSection' | translate" icon="🎲" [initiallyOpen]="true"
+        [filled]="filledAny('system', 'levels', 'players', 'duration')">
+        <p class="field-hint">{{ 'publication.techHint' | translate }}</p>
+        <div class="field-row">
+          <div class="field">
+            <label for="pub-system">{{ 'publication.systemLabel' | translate }}</label>
+            <input id="pub-system" type="text" [ngModel]="pub.system" (ngModelChange)="set('system', $event)"
+              [placeholder]="'publication.systemPlaceholder' | translate" />
+          </div>
+          <div class="field">
+            <label for="pub-levels">{{ 'publication.levelsLabel' | translate }}</label>
+            <input id="pub-levels" type="text" [ngModel]="pub.levels" (ngModelChange)="set('levels', $event)"
+              [placeholder]="'publication.levelsPlaceholder' | translate" />
+          </div>
+          <div class="field">
+            <label for="pub-players">{{ 'publication.playersLabel' | translate }}</label>
+            <input id="pub-players" type="text" [ngModel]="pub.players" (ngModelChange)="set('players', $event)"
+              [placeholder]="'publication.playersPlaceholder' | translate" />
+          </div>
+          <div class="field">
+            <label for="pub-duration">{{ 'publication.durationLabel' | translate }}</label>
+            <input id="pub-duration" type="text" [ngModel]="pub.duration" (ngModelChange)="set('duration', $event)"
+              [placeholder]="'publication.durationPlaceholder' | translate" />
+          </div>
+        </div>
+      </app-expandable-section>
+
+      <app-expandable-section [title]="'publication.presentationSection' | translate" icon="📣"
+        [filled]="filledAny('pitch', 'contentWarnings')">
+        <div class="field">
+          <div class="field-label-row">
+            <label for="pub-pitch">{{ 'publication.pitchLabel' | translate }}</label>
+            <app-writing-coach-trigger topic="publication.pitch"></app-writing-coach-trigger>
+          </div>
+          <textarea id="pub-pitch" rows="4" [ngModel]="pub.pitch" (ngModelChange)="set('pitch', $event)"
+            [placeholder]="'publication.pitchPlaceholder' | translate"></textarea>
+          <small class="field-hint">{{ 'publication.pitchHint' | translate }}</small>
+        </div>
+        <div class="field">
+          <div class="field-label-row">
+            <label for="pub-warnings">{{ 'publication.warningsLabel' | translate }}</label>
+            <app-writing-coach-trigger topic="publication.contentWarnings"></app-writing-coach-trigger>
+          </div>
+          <textarea id="pub-warnings" rows="2" [ngModel]="pub.contentWarnings" (ngModelChange)="set('contentWarnings', $event)"
+            [placeholder]="'publication.warningsPlaceholder' | translate"></textarea>
+        </div>
+      </app-expandable-section>
+
+      <app-expandable-section [title]="'publication.gmSection' | translate" icon="🔒" variant="private"
+        [filled]="filledAny('gmBackground', 'hooks')">
+        <p class="field-hint">{{ 'publication.gmHint' | translate }}</p>
+        <div class="field">
+          <div class="field-label-row">
+            <label for="pub-background">{{ 'publication.backgroundLabel' | translate }}</label>
+            <app-writing-coach-trigger topic="publication.gmBackground"></app-writing-coach-trigger>
+          </div>
+          <textarea id="pub-background" rows="7" [ngModel]="pub.gmBackground" (ngModelChange)="set('gmBackground', $event)"
+            [placeholder]="'publication.backgroundPlaceholder' | translate"></textarea>
+        </div>
+        <div class="field">
+          <div class="field-label-row">
+            <label for="pub-hooks">{{ 'publication.hooksLabel' | translate }}</label>
+            <app-writing-coach-trigger topic="publication.hooks"></app-writing-coach-trigger>
+          </div>
+          <textarea id="pub-hooks" rows="4" [ngModel]="pub.hooks" (ngModelChange)="set('hooks', $event)"
+            [placeholder]="'publication.hooksPlaceholder' | translate"></textarea>
+          <small class="field-hint">{{ 'publication.listHint' | translate }}</small>
+        </div>
+      </app-expandable-section>
+
+      <app-expandable-section [title]="'publication.creditsSection' | translate" icon="©️"
+        [filled]="filledAny('credits', 'legal')">
+        <div class="field">
+          <div class="field-label-row">
+            <label for="pub-credits">{{ 'publication.creditsLabel' | translate }}</label>
+            <app-writing-coach-trigger topic="publication.credits"></app-writing-coach-trigger>
+          </div>
+          <textarea id="pub-credits" rows="4" [ngModel]="pub.credits" (ngModelChange)="set('credits', $event)"
+            [placeholder]="'publication.creditsPlaceholder' | translate"></textarea>
+        </div>
+        <div class="field">
+          <label for="pub-legal">{{ 'publication.legalLabel' | translate }}</label>
+          <textarea id="pub-legal" rows="4" [ngModel]="pub.legal" (ngModelChange)="set('legal', $event)"
+            [placeholder]="'publication.legalPlaceholder' | translate"></textarea>
+          <small class="field-hint">{{ 'publication.legalHint' | translate }}</small>
+        </div>
+      </app-expandable-section>
+    </div>
+  }
+</div>
+
+<app-pdf-export-dialog
+  [open]="pdfDialogOpen"
+  [exporting]="exportingPdf"
+  [showPublicationLink]="false"
+  (cancelled)="pdfDialogOpen = false"
+  (confirmed)="onPdfConfirmed($event)"></app-pdf-export-dialog>

@@ -1,5 +1,6 @@
 package com.loremind.infrastructure.transfer.pdf;
 
+import com.loremind.domain.campaigncontext.CampaignPublication;
 import com.loremind.domain.campaigncontext.quest.NodeType;
 import com.loremind.domain.campaigncontext.quest.Prerequisite;
 import com.loremind.domain.campaigncontext.quest.QuestNodeRef;
@@ -9,6 +10,8 @@ import com.loremind.domain.campaigncontext.structure.SceneBranch;
 import com.loremind.domain.shared.template.TemplateField;
 import com.loremind.infrastructure.persistence.entity.*;
 import com.loremind.infrastructure.persistence.jpa.*;
+import com.loremind.infrastructure.transfer.pdf.PdfExportOptions.LoreScope;
+import com.loremind.infrastructure.transfer.pdf.PdfExportOptions.Section;
 import com.openhtmltopdf.outputdevice.helper.BaseRendererBuilder;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import org.slf4j.Logger;
@@ -20,9 +23,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static com.loremind.infrastructure.transfer.pdf.PdfHtml.*;
@@ -51,14 +51,10 @@ public class PdfExportService {
 
     private static final Logger log = LoggerFactory.getLogger(PdfExportService.class);
 
-    /** Largeur utile d'une page A4 (21cm - 2 x 1.7cm de marges). */
-    private static final double CONTENT_WIDTH_CM = 17.6;
     /** Hauteur max affichee d'une illustration : evite qu'une image portrait mange la page. */
     private static final double ILLUSTRATION_MAX_HEIGHT_CM = 11.0;
     /** Hauteur max affichee d'un portrait de fiche (colonne de 3cm de large). */
     private static final double PORTRAIT_MAX_HEIGHT_CM = 4.5;
-
-    private static final DateTimeFormatter FR_DATE = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.FRENCH);
 
     // ----- Libelles/police repetes (S1192 ; fragments HTML generiques dans PdfHtml) -----
     private static final String FONT_SERIF = "DejaVu Serif";
@@ -70,6 +66,12 @@ public class PdfExportService {
     private static final String CSS_SECRET = "secret";
     private static final String LABEL_NOTES_MJ = "Notes MJ";
     private static final String LABEL_SANS_DOSSIER = "Sans dossier";
+    private static final String LABEL_THEMES = "Thèmes";
+    private static final String LABEL_ENJEUX = "Enjeux";
+    private static final String LABEL_RECOMPENSES = "Récompenses";
+    private static final String LABEL_RESOLUTION = "Résolution";
+    private static final String LABEL_CONDITIONS = "Conditions de déblocage";
+    private static final String LABEL_NOEUDS = "Nœuds liés";
 
     private final CampaignJpaRepository campaignRepo;
     private final NpcJpaRepository npcRepo;
@@ -106,10 +108,14 @@ public class PdfExportService {
         return campaign(campaignId).getName();
     }
 
-    /** Construit le PDF complet de la campagne. @throws NoSuchElementException si absente. */
+    /** Livret MJ complet en A4 (options par défaut). @throws NoSuchElementException si absente. */
     public byte[] export(String campaignId) {
-        CampaignJpaEntity campaign = campaign(campaignId);
-        String xhtml = buildXhtml(campaign);
+        return export(campaignId, PdfExportOptions.defaults());
+    }
+
+    /** Construit le PDF de la campagne selon les options. @throws NoSuchElementException si absente. */
+    public byte[] export(String campaignId, PdfExportOptions options) {
+        String xhtml = xhtml(campaignId, options);
         try {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             PdfRendererBuilder builder = new PdfRendererBuilder();
@@ -122,6 +128,11 @@ public class PdfExportService {
         } catch (IOException e) {
             throw new UncheckedIOException("Echec de la generation du PDF", e);
         }
+    }
+
+    /** Document XHTML intermédiaire (exposé au paquet pour les tests de contenu). */
+    String xhtml(String campaignId, PdfExportOptions options) {
+        return buildXhtml(campaign(campaignId), options != null ? options : PdfExportOptions.defaults());
     }
 
     private CampaignJpaEntity campaign(String campaignId) {
@@ -168,6 +179,9 @@ public class PdfExportService {
      * le sommaire et les compteurs (repris ensuite sur la couverture).
      */
     private static final class Ctx {
+        final PdfExportOptions opt;
+        /** Version MJ : les contenus reserves au MJ (secrets, consequences, combats...) sont rendus. */
+        final boolean gm;
         final StringBuilder body = new StringBuilder();
         final StringBuilder bookmarks = new StringBuilder();
         final List<TocEntry> toc = new ArrayList<>();
@@ -178,55 +192,233 @@ public class PdfExportService {
         int randomTables;
         int lorePages;
 
+        Ctx(PdfExportOptions opt) {
+            this.opt = opt;
+            this.gm = opt.gmContent();
+        }
+
         void addToc(int level, String title, String anchor) {
             toc.add(new TocEntry(level, title, anchor));
         }
+
+        double contentWidthCm() {
+            return opt.format().contentWidthCm();
+        }
+
+        /** Champ reserve au MJ : absent de la version joueurs. */
+        void gmBlock(String label, String value) {
+            if (gm) block(body, label, value);
+        }
+
+        /** Encadre reserve au MJ : absent de la version joueurs. */
+        void gmBox(String cssClass, String label, String value) {
+            if (gm) box(body, cssClass, label, value);
+        }
     }
 
-    private String buildXhtml(CampaignJpaEntity campaign) {
+    private String buildXhtml(CampaignJpaEntity campaign, PdfExportOptions opt) {
         List<TemplateField> npcTemplate = resolveTemplate(campaign.getGameSystemId(), true);
         List<TemplateField> enemyTemplate = resolveTemplate(campaign.getGameSystemId(), false);
+        CampaignPublication pub = campaign.getPublication() != null
+                ? campaign.getPublication() : CampaignPublication.empty();
 
         // Les sections d'abord (elles remplissent sommaire + compteurs), la couverture
         // et le sommaire sont assembles ensuite en tete de document.
         Structure st = structureLoader.load(campaign);
-        Ctx ctx = new Ctx();
-        ctx.quests = st.quests.size();
-        narrative(ctx, st);
-        quests(ctx, st);
-        personas(ctx, "part-npcs", "Personnages non-joueurs (PNJ)", npcEntries(campaign), npcTemplate, false);
-        personas(ctx, "part-enemies", "Bestiaire", enemyEntries(campaign), enemyTemplate, true);
-        randomTables(ctx, campaign);
-        lore(ctx, campaign);
+        Ctx ctx = new Ctx(opt);
+        introduction(ctx, campaign, pub, st);
+        if (opt.includes(Section.NARRATIVE)) narrative(ctx, st);
+        if (opt.includes(Section.QUESTS)) {
+            ctx.quests = st.quests.size();
+            quests(ctx, st);
+        }
+        if (opt.includes(Section.NPCS)) {
+            personas(ctx, "part-npcs", "Personnages non-joueurs (PNJ)", npcEntries(campaign), npcTemplate, false);
+        }
+        if (opt.includes(Section.ENEMIES)) {
+            personas(ctx, "part-enemies", "Bestiaire", enemyEntries(campaign), enemyTemplate, true);
+        }
+        if (opt.includes(Section.TABLES)) randomTables(ctx, campaign);
+        if (opt.includes(Section.LORE)) lore(ctx, campaign, st);
 
         StringBuilder full = new StringBuilder();
-        cover(full, campaign, ctx);
+        cover(full, ctx, campaign, pub);
+        creditsPage(full, campaign, pub);
         full.append(tocHtml(ctx.toc));
         full.append(ctx.body);
 
         return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                + "<html xmlns=\"http://www.w3.org/1999/xhtml\"><head><meta charset=\"utf-8\"/>\n"
-                + "<style>" + cssFor(campaign.getName()) + "</style>\n"
+                + "<html xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"fr\" xml:lang=\"fr\"><head><meta charset=\"utf-8\"/>\n"
+                + documentInfo(campaign, pub)
+                + "<style>" + cssFor(campaign.getName(), opt) + "</style>\n"
                 + "<bookmarks>" + ctx.bookmarks + "</bookmarks>\n"
                 + "</head><body>" + full + "</body></html>";
     }
 
-    private void cover(StringBuilder b, CampaignJpaEntity c, Ctx ctx) {
-        b.append("<div class=\"cover\">");
-        b.append("<div class=\"subtitle\">Livret de campagne</div>");
+    /**
+     * Proprietes du fichier PDF (titre, auteur, sujet, mots-cles) lues par les liseuses
+     * et les boutiques : openhtmltopdf les reprend du {@code <title>} et des {@code <meta>}.
+     */
+    private static String documentInfo(CampaignJpaEntity c, CampaignPublication pub) {
+        StringBuilder m = new StringBuilder();
+        m.append("<title>").append(esc(c.getName())).append("</title>\n");
+        meta(m, "author", pub.author());
+        meta(m, "subject", notBlank(pub.subtitle()) ? pub.subtitle() : firstLine(pub.pitch()));
+        meta(m, "keywords", pub.system());
+        return m.toString();
+    }
+
+    private static void meta(StringBuilder m, String name, String content) {
+        if (!notBlank(content)) return;
+        m.append("<meta name=\"").append(name).append("\" content=\"").append(esc(content.trim())).append("\"/>\n");
+    }
+
+    private static String firstLine(String s) {
+        if (!notBlank(s)) return null;
+        String line = s.strip().split("\\R", 2)[0];
+        return line.length() > 200 ? line.substring(0, 199) + "…" : line;
+    }
+
+    /**
+     * Couverture. Sans fiche Publication : le livret historique (titre, compteurs, description).
+     * Avec : systeme en surtitre, sous-titre, illustration, ligne technique, auteur, version —
+     * jamais de date d'export (un module vendu n'a pas a dater sa generation).
+     */
+    private void cover(StringBuilder b, Ctx ctx, CampaignJpaEntity c, CampaignPublication pub) {
+        boolean published = pub.hasContent();
+        PdfImage art = imageEncoder.image(pub.coverImageId(), PdfImageEncoder.ILLUSTRATION_MAX);
+        b.append("<div class=\"cover").append(art != null ? " has-art" : "").append("\">");
+        String kicker = coverKicker(ctx, pub);
+        if (kicker != null) b.append("<div class=\"cover-kicker\">").append(esc(kicker)).append(DIV_CLOSE);
         b.append("<h1 class=\"cover-title\">").append(esc(c.getName())).append("</h1>");
+        if (notBlank(pub.subtitle())) {
+            b.append("<div class=\"cover-subtitle\">").append(esc(pub.subtitle())).append(DIV_CLOSE);
+        }
         b.append("<div class=\"cover-rule\"></div>");
-        String meta = coverMeta(ctx);
+        if (art != null) {
+            double maxH = ctx.opt.format().coverArtMaxCm;
+            double widthCm = Math.min(ctx.contentWidthCm(), maxH * art.w() / art.h());
+            b.append("<div class=\"cover-art\"><img style=\"width:").append(cm(widthCm))
+                    .append("\" src=\"").append(art.uri()).append("\"/></div>");
+        }
+        String meta = published ? technicalLine(pub) : coverMeta(ctx);
         if (!meta.isEmpty()) {
             b.append("<div class=\"cover-meta\">").append(esc(meta)).append(DIV_CLOSE);
         }
-        if (notBlank(c.getDescription())) {
+        if (!ctx.gm && published) {
+            b.append("<div class=\"cover-edition\">Édition joueurs</div>");
+        }
+        if (!published && notBlank(c.getDescription())) {
             b.append("<div class=\"cover-desc\">").append(multiline(c.getDescription())).append(DIV_CLOSE);
         }
-        b.append("<div class=\"cover-date\">Exporté le ")
-                .append(esc(LocalDate.now(ZoneId.systemDefault()).format(FR_DATE)))
-                .append(DIV_CLOSE);
+        if (notBlank(pub.author())) {
+            b.append("<div class=\"cover-author\">").append(esc(pub.author())).append(DIV_CLOSE);
+        }
+        if (notBlank(pub.version())) {
+            b.append("<div class=\"cover-version\">Version ").append(esc(pub.version())).append(DIV_CLOSE);
+        }
         b.append(DIV_CLOSE);
+    }
+
+    /** Surtitre : le systeme de jeu s'il est renseigne ; sinon l'intitule historique du livret. */
+    private static String coverKicker(Ctx ctx, CampaignPublication pub) {
+        if (notBlank(pub.system())) return pub.system();
+        if (pub.hasContent()) return null;
+        return ctx.gm ? "Livret de campagne" : "Livret des joueurs";
+    }
+
+    /** "Niveaux : 1 à 3 · Joueurs : 3 à 5 · Durée : 2 séances" (morceaux renseignés seulement). */
+    private static String technicalLine(CampaignPublication pub) {
+        List<String> parts = new ArrayList<>();
+        if (notBlank(pub.levels())) parts.add("Niveaux : " + pub.levels());
+        if (notBlank(pub.players())) parts.add("Joueurs : " + pub.players());
+        if (notBlank(pub.duration())) parts.add("Durée : " + pub.duration());
+        return String.join("  ·  ", parts);
+    }
+
+    /**
+     * Page de credits (verso de couverture) : titre, auteur, version, credits et mentions
+     * legales — attendue dans tout module diffuse. Absente si rien n'est renseigne.
+     */
+    private static void creditsPage(StringBuilder b, CampaignJpaEntity c, CampaignPublication pub) {
+        if (!pub.hasCredits()) return;
+        b.append("<div class=\"credits-page\"><div class=\"credits-title\">").append(esc(c.getName())).append(DIV_CLOSE);
+        if (notBlank(pub.subtitle())) {
+            b.append("<div class=\"credits-subtitle\">").append(esc(pub.subtitle())).append(DIV_CLOSE);
+        }
+        block(b, "Auteur", pub.author());
+        block(b, "Version", pub.version());
+        block(b, "Crédits", pub.credits());
+        if (notBlank(pub.legal())) {
+            b.append("<div class=\"legal\">");
+            prose(b, pub.legal());
+            b.append(DIV_CLOSE);
+        }
+        b.append(DIV_CLOSE);
+    }
+
+    /**
+     * Introduction d'un module publie (ordre attendu par les MJ qui l'achetent) : page
+     * technique, argument, avertissements, puis — version MJ — contexte cache, accroches et
+     * structure de l'aventure. Rien si la fiche Publication est vide (livret historique).
+     */
+    private void introduction(Ctx ctx, CampaignJpaEntity c, CampaignPublication pub, Structure st) {
+        if (!pub.hasContent()) return;
+        StringBuilder b = ctx.body;
+        b.append("<h1 class=\"part\" id=\"part-intro\">Introduction</h1>");
+        ctx.addToc(0, "Introduction", "part-intro");
+        ctx.bookmarks.append(bookmark("Introduction", "part-intro", ""));
+
+        technicalTable(b, pub);
+        String pitch = notBlank(pub.pitch()) ? pub.pitch() : c.getDescription();
+        introSection(b, "L'aventure en bref", pitch);
+        box(b, "warning", "Avertissements de contenu", pub.contentWarnings());
+        if (!ctx.gm) return;
+        introSection(b, "Contexte pour le MJ", pub.gmBackground());
+        introSection(b, "Accroches", pub.hooks());
+        if (ctx.opt.includes(Section.NARRATIVE)) introSection(b, "Structure de l'aventure", structureOutline(st));
+    }
+
+    /** Tableau « Système / Niveaux / Joueurs / Durée » de la page technique. */
+    private static void technicalTable(StringBuilder b, CampaignPublication pub) {
+        if (!pub.hasTechnicalSheet()) return;
+        b.append("<table class=\"stats-table tech-table\"><tbody>");
+        int row = 0;
+        row = techRow(b, row, "Système", pub.system());
+        row = techRow(b, row, "Niveaux", pub.levels());
+        row = techRow(b, row, "Joueurs", pub.players());
+        techRow(b, row, "Durée", pub.duration());
+        b.append(TBODY_TABLE_CLOSE);
+    }
+
+    private static int techRow(StringBuilder b, int row, String label, String value) {
+        if (!notBlank(value)) return row;
+        b.append(trTag(row)).append("<th>").append(esc(label)).append("</th><td>")
+                .append(esc(value)).append(TD_TR_CLOSE);
+        return row + 1;
+    }
+
+    /** Intertitre + texte (paragraphes, listes « - … ») ; rien si le texte est vide. */
+    private static void introSection(StringBuilder b, String title, String text) {
+        if (!notBlank(text)) return;
+        b.append("<h2 class=\"section-head\">").append(esc(title)).append("</h2>");
+        prose(b, text);
+    }
+
+    /** Plan de l'aventure : un arc par puce, suivi de ses chapitres. Null en mode plat. */
+    private static String structureOutline(Structure st) {
+        List<ArcJpaEntity> arcs = st.visibleArcs;
+        if (arcs.isEmpty()) return null;
+        if (arcs.size() == 1 && st.chaptersByArc.get(arcs.get(0).getId()).size() <= 1) return null;
+        StringBuilder s = new StringBuilder();
+        for (ArcJpaEntity arc : arcs) {
+            List<String> chapters = new ArrayList<>();
+            for (ChapterJpaEntity ch : st.chaptersByArc.get(arc.getId())) chapters.add(ch.getName());
+            s.append("- ").append(arc.getName());
+            if (!chapters.isEmpty()) s.append(" : ").append(String.join(", ", chapters));
+            s.append('\n');
+        }
+        return s.toString();
     }
 
     /** Ligne "3 scènes · 2 quêtes · 4 PNJ ..." de la couverture (parties non vides seulement). */
@@ -305,18 +497,23 @@ public class PdfExportService {
         b.append("<div class=\"arc\"><h2 class=\"arc-head\" id=\"arc-").append(arc.getId()).append("\">")
                 .append("<span class=\"eyebrow eyebrow-light\">Arc</span>")
                 .append(esc(arc.getName())).append("</h2>");
-        illustrations(b, arc.getIllustrationImageIds());
-        block(b, LABEL_DESCRIPTION, arc.getDescription());
-        block(b, "Themes", arc.getThemes());
-        block(b, "Enjeux", arc.getStakes());
-        block(b, "Recompenses", arc.getRewards());
-        block(b, "Resolution", arc.getResolution());
-        box(b, CSS_SECRET, LABEL_NOTES_MJ, arc.getGmNotes());
+        arcFields(ctx, arc);
 
         for (ChapterJpaEntity ch : st.chaptersByArc.get(arc.getId())) {
             chapterSection(ctx, st, ch);
         }
         b.append(DIV_CLOSE);
+    }
+
+    /** Champs d'un arc ; tout est reserve au MJ (synopsis, enjeux, resolution...) sauf les illustrations. */
+    private void arcFields(Ctx ctx, ArcJpaEntity arc) {
+        illustrations(ctx, arc.getIllustrationImageIds());
+        ctx.gmBlock(LABEL_DESCRIPTION, arc.getDescription());
+        ctx.gmBlock(LABEL_THEMES, arc.getThemes());
+        ctx.gmBlock(LABEL_ENJEUX, arc.getStakes());
+        ctx.gmBlock(LABEL_RECOMPENSES, arc.getRewards());
+        ctx.gmBlock(LABEL_RESOLUTION, arc.getResolution());
+        ctx.gmBox(CSS_SECRET, LABEL_NOTES_MJ, arc.getGmNotes());
     }
 
     /** Un chapitre narratif complet (dans son arc) : en-tete + champs (fusionnes ou non) + scenes. */
@@ -327,10 +524,10 @@ public class PdfExportService {
         b.append("<div class=\"chapter\"><div class=\"chapter-head\" id=\"ch-").append(ch.getId()).append("\">")
                 .append("<span class=\"eyebrow\">").append(fused != null ? "Quête" : "Chapitre").append(SPAN_CLOSE)
                 .append(esc(ch.getName())).append(DIV_CLOSE);
-        chapterFields(b, ch, fused, st);
+        chapterFields(ctx, ch, fused, st);
 
         for (SceneJpaEntity sc : st.scenesByChapter.get(ch.getId())) {
-            scene(b, sc, st);
+            scene(ctx, sc, st);
             ctx.scenes++;
         }
         b.append(DIV_CLOSE);
@@ -341,22 +538,22 @@ public class PdfExportService {
      * champs sont integres au meme bloc — conditions de deblocage comprises — en dedupliquant
      * les textes identiques (les quetes converties du legacy dupliquent le chapitre).
      */
-    private void chapterFields(StringBuilder b, ChapterJpaEntity ch, QuestJpaEntity fused, Structure st) {
-        illustrations(b, ch.getIllustrationImageIds());
+    private void chapterFields(Ctx ctx, ChapterJpaEntity ch, QuestJpaEntity fused, Structure st) {
+        illustrations(ctx, ch.getIllustrationImageIds());
         if (fused == null) {
-            block(b, LABEL_DESCRIPTION, ch.getDescription());
-            block(b, LABEL_OBJECTIFS_JOUEURS, ch.getPlayerObjectives());
-            block(b, LABEL_ENJEUX_NARRATIFS, ch.getNarrativeStakes());
-            box(b, CSS_SECRET, LABEL_NOTES_MJ, ch.getGmNotes());
+            ctx.gmBlock(LABEL_DESCRIPTION, ch.getDescription());
+            block(ctx.body, LABEL_OBJECTIFS_JOUEURS, ch.getPlayerObjectives());
+            ctx.gmBlock(LABEL_ENJEUX_NARRATIFS, ch.getNarrativeStakes());
+            ctx.gmBox(CSS_SECRET, LABEL_NOTES_MJ, ch.getGmNotes());
             return;
         }
-        illustrations(b, fused.getIllustrationImageIds());
-        block(b, LABEL_DESCRIPTION, mergeField(ch.getDescription(), fused.getDescription()));
-        block(b, "Conditions de déblocage", renderPrerequisites(fused.getPrerequisites(), st.questNames));
-        block(b, "Nœuds liés", renderQuestNodes(fused, st));
-        block(b, LABEL_OBJECTIFS_JOUEURS, mergeField(ch.getPlayerObjectives(), fused.getPlayerObjectives()));
-        block(b, LABEL_ENJEUX_NARRATIFS, mergeField(ch.getNarrativeStakes(), fused.getNarrativeStakes()));
-        box(b, CSS_SECRET, LABEL_NOTES_MJ, mergeField(ch.getGmNotes(), fused.getGmNotes()));
+        illustrations(ctx, fused.getIllustrationImageIds());
+        ctx.gmBlock(LABEL_DESCRIPTION, mergeField(ch.getDescription(), fused.getDescription()));
+        ctx.gmBlock(LABEL_CONDITIONS, renderPrerequisites(fused.getPrerequisites(), st.questNames));
+        ctx.gmBlock(LABEL_NOEUDS, renderQuestNodes(fused, st));
+        block(ctx.body, LABEL_OBJECTIFS_JOUEURS, mergeField(ch.getPlayerObjectives(), fused.getPlayerObjectives()));
+        ctx.gmBlock(LABEL_ENJEUX_NARRATIFS, mergeField(ch.getNarrativeStakes(), fused.getNarrativeStakes()));
+        ctx.gmBox(CSS_SECRET, LABEL_NOTES_MJ, mergeField(ch.getGmNotes(), fused.getGmNotes()));
     }
 
     /** Deux sources pour un meme champ : garde la non-vide, ou les deux si differentes. */
@@ -377,42 +574,43 @@ public class PdfExportService {
         b.append("<h1 class=\"part\" id=\"part-narrative\">Scènes</h1>");
         ctx.addToc(0, "Scènes", ANCHOR_PART_NARRATIVE);
 
-        illustrations(b, arc.getIllustrationImageIds());
-        block(b, LABEL_DESCRIPTION, arc.getDescription());
-        block(b, "Themes", arc.getThemes());
-        block(b, "Enjeux", arc.getStakes());
-        block(b, "Recompenses", arc.getRewards());
-        block(b, "Resolution", arc.getResolution());
-        box(b, CSS_SECRET, LABEL_NOTES_MJ, arc.getGmNotes());
-        chapterFields(b, ch, st.questByContainerChapter.get(ch.getId()), st);
+        arcFields(ctx, arc);
+        chapterFields(ctx, ch, st.questByContainerChapter.get(ch.getId()), st);
 
         StringBuilder scBms = new StringBuilder();
         for (SceneJpaEntity sc : st.scenesByChapter.get(ch.getId())) {
             ctx.addToc(1, sc.getName(), "scene-" + sc.getId());
             scBms.append(bookmark(sc.getName(), "scene-" + sc.getId(), ""));
-            scene(b, sc, st);
+            scene(ctx, sc, st);
             ctx.scenes++;
         }
         ctx.bookmarks.append(bookmark("Scènes", ANCHOR_PART_NARRATIVE, scBms.toString()));
     }
 
-    private void scene(StringBuilder b, SceneJpaEntity sc, Structure st) {
+    /**
+     * Une scene. Version joueurs : seuls le contexte (lieu, moment), l'ambiance, le texte a
+     * lire, les illustrations et les cartes restent — resume, secrets, consequences, sorties
+     * et combats sont reserves au MJ.
+     */
+    private void scene(Ctx ctx, SceneJpaEntity sc, Structure st) {
+        StringBuilder b = ctx.body;
         b.append("<div class=\"scene\" id=\"scene-").append(sc.getId()).append("\"><div class=\"scene-head\">")
                 .append("<span class=\"eyebrow\">Scène</span>")
                 .append(esc(sc.getName())).append(DIV_CLOSE);
         sceneMeta(b, sc);
+        ctx.gmBlock("Résumé", sc.getDescription());
         block(b, "Ambiance", sc.getAtmosphere(), "ambiance");
         box(b, "readaloud", "À lire aux joueurs", sc.getPlayerNarration());
-        box(b, CSS_SECRET, "Notes secrètes MJ", sc.getGmSecretNotes());
-        block(b, "Choix & consequences", sc.getChoicesConsequences());
-        block(b, "Sorties", renderSceneBranches(sc.getBranches(), st));
+        ctx.gmBox(CSS_SECRET, "Notes secrètes MJ", sc.getGmSecretNotes());
+        ctx.gmBlock("Choix et conséquences", sc.getChoicesConsequences());
+        ctx.gmBlock("Sorties", renderSceneBranches(sc.getBranches(), st));
         // Combat : difficulte + ennemis de la rencontre (refs bestiaire resolues en noms
         // + texte libre) dans le meme encadre rouge.
-        box(b, "combat", "Combat", joinNonBlank(sc.getCombatDifficulty(),
+        ctx.gmBox("combat", "Combat", joinNonBlank(sc.getCombatDifficulty(),
                 enemyLines(sc.getEnemyIds(), sc.getEnemies(), st)));
-        illustrations(b, sc.getIllustrationImageIds());
-        sceneBattlemaps(b, sc);
-        rooms(b, sc, st);
+        illustrations(ctx, sc.getIllustrationImageIds());
+        sceneBattlemaps(ctx, sc);
+        rooms(ctx, sc, st);
         b.append(DIV_CLOSE);
     }
 
@@ -438,19 +636,23 @@ public class PdfExportService {
      * Battlemaps (images uniquement ; les videos ne sont pas rendables en PDF). Le libellé
      * de la variante (Jour/Nuit…) est rendu en légende sous l'image.
      */
-    private void sceneBattlemaps(StringBuilder b, SceneJpaEntity sc) {
+    private void sceneBattlemaps(Ctx ctx, SceneJpaEntity sc) {
         if (sc.getBattlemaps() == null) return;
         for (var bm : sc.getBattlemaps()) {
             PdfImage battlemap = imageEncoder.fileImage(bm.mediaFileId());
             if (battlemap == null) continue;
             String caption = bm.label() == null || bm.label().isBlank()
                     ? "Battlemap" : "Battlemap — " + bm.label();
-            illustration(b, battlemap, caption);
+            illustration(ctx, battlemap, caption);
         }
     }
 
-    /** Pieces explorables de la scene (donjon, crypte...) — sous-blocs ambres. */
-    private void rooms(StringBuilder b, SceneJpaEntity sc, Structure st) {
+    /**
+     * Pieces explorables de la scene (donjon, crypte...) — sous-blocs ambres. Version joueurs :
+     * nom, plan et illustrations seulement.
+     */
+    private void rooms(Ctx ctx, SceneJpaEntity sc, Structure st) {
+        StringBuilder b = ctx.body;
         if (sc.getRooms() == null || sc.getRooms().isEmpty()) return;
         List<Room> rooms = new ArrayList<>(sc.getRooms());
         rooms.sort(java.util.Comparator.comparingInt(Room::getOrder));
@@ -461,15 +663,15 @@ public class PdfExportService {
             b.append("<div class=\"room\"><div class=\"room-head\"><span class=\"eyebrow\">Pièce");
             if (r.getFloor() != null) b.append(" · Étage ").append(r.getFloor());
             b.append(SPAN_CLOSE).append(esc(r.getName())).append(DIV_CLOSE);
-            block(b, LABEL_DESCRIPTION, r.getDescription());
-            box(b, "combat", "Ennemis", enemyLines(r.getEnemyIds(), r.getEnemies(), st));
-            block(b, "Butin", r.getLoot());
-            block(b, "Pièges", r.getTraps());
-            box(b, CSS_SECRET, LABEL_NOTES_MJ, r.getGmNotes());
+            ctx.gmBlock(LABEL_DESCRIPTION, r.getDescription());
+            ctx.gmBox("combat", "Ennemis", enemyLines(r.getEnemyIds(), r.getEnemies(), st));
+            ctx.gmBlock("Butin", r.getLoot());
+            ctx.gmBlock("Pièges", r.getTraps());
+            ctx.gmBox(CSS_SECRET, LABEL_NOTES_MJ, r.getGmNotes());
             PdfImage map = imageEncoder.image(r.getMapImageId(), PdfImageEncoder.ILLUSTRATION_MAX);
-            if (map != null) illustration(b, map, "Plan — " + r.getName());
-            illustrations(b, r.getIllustrationImageIds());
-            if (r.getBranches() != null && !r.getBranches().isEmpty()) {
+            if (map != null) illustration(ctx, map, "Plan — " + r.getName());
+            illustrations(ctx, r.getIllustrationImageIds());
+            if (ctx.gm && r.getBranches() != null && !r.getBranches().isEmpty()) {
                 List<String> parts = new ArrayList<>();
                 for (RoomBranch br : r.getBranches()) {
                     parts.add(branchLine(roomNames.getOrDefault(br.targetRoomId(), "?"),
@@ -556,13 +758,13 @@ public class PdfExportService {
         StringBuilder b = ctx.body;
         b.append("<div class=\"chapter\"><div class=\"chapter-head\" id=\"quest-").append(q.getId())
                 .append("\"><span class=\"eyebrow\">Quête</span>").append(esc(q.getName())).append(DIV_CLOSE);
-        illustrations(b, q.getIllustrationImageIds());
-        block(b, LABEL_DESCRIPTION, q.getDescription());
-        block(b, "Conditions de déblocage", renderPrerequisites(q.getPrerequisites(), st.questNames));
-        block(b, "Nœuds liés", renderQuestNodes(q, st));
+        illustrations(ctx, q.getIllustrationImageIds());
+        ctx.gmBlock(LABEL_DESCRIPTION, q.getDescription());
+        ctx.gmBlock(LABEL_CONDITIONS, renderPrerequisites(q.getPrerequisites(), st.questNames));
+        ctx.gmBlock(LABEL_NOEUDS, renderQuestNodes(q, st));
         block(b, LABEL_OBJECTIFS_JOUEURS, q.getPlayerObjectives());
-        block(b, LABEL_ENJEUX_NARRATIFS, q.getNarrativeStakes());
-        box(b, CSS_SECRET, LABEL_NOTES_MJ, q.getGmNotes());
+        ctx.gmBlock(LABEL_ENJEUX_NARRATIFS, q.getNarrativeStakes());
+        ctx.gmBox(CSS_SECRET, LABEL_NOTES_MJ, q.getGmNotes());
         // Scenes de ses conteneurs (arc SYSTEM, masque de la narration) : c'est ICI
         // que vit le contenu jouable d'une quete libre.
         questContainerScenes(ctx, q, st);
@@ -574,7 +776,7 @@ public class PdfExportService {
         Set<String> containers = st.containerChapterIds(q);
         for (QuestNodeRef n : q.getNodes()) {
             for (SceneJpaEntity sc : containerScenes(n, containers, st)) {
-                scene(ctx.body, sc, st);
+                scene(ctx, sc, st);
                 ctx.scenes++;
             }
         }
@@ -705,7 +907,7 @@ public class PdfExportService {
         fBms.append(bookmark(label, anchor, ""));
         b.append(H3_FOLDER_OPEN).append(anchor).append("\">").append(esc(label)).append("</h3>");
         rows.sort(java.util.Comparator.comparingInt(PersonaRow::order));
-        for (PersonaRow r : rows) personaCard(b, r, template, enemy);
+        for (PersonaRow r : rows) personaCard(ctx, r, template, enemy);
     }
 
     private void personaUngroupedSection(Ctx ctx, List<TemplateField> template, boolean enemy, String anchor,
@@ -717,10 +919,11 @@ public class PdfExportService {
             b.append(H3_FOLDER_OPEN).append(anchor).append("\">Sans dossier</h3>");
         }
         ungrouped.sort(java.util.Comparator.comparingInt(PersonaRow::order));
-        for (PersonaRow r : ungrouped) personaCard(b, r, template, enemy);
+        for (PersonaRow r : ungrouped) personaCard(ctx, r, template, enemy);
     }
 
-    private void personaCard(StringBuilder b, PersonaRow r, List<TemplateField> template, boolean enemy) {
+    private void personaCard(Ctx ctx, PersonaRow r, List<TemplateField> template, boolean enemy) {
+        StringBuilder b = ctx.body;
         // Mise en page en TABLE (portrait | contenu) : openhtmltopdf gere mal le float
         // + overflow (le texte se superposait au portrait).
         b.append("<div class=\"card\"><table class=\"persona\"><tr>");
@@ -735,7 +938,7 @@ public class PdfExportService {
         if (notBlank(r.level())) b.append(" <span class=\"level\">Niv. ").append(esc(r.level())).append(SPAN_CLOSE);
         b.append(DIV_CLOSE);
 
-        renderFields(b, template, r.values(), r.keyValueValues(), r.imageValues(), null);
+        renderFields(ctx, template, r.values(), r.keyValueValues(), r.imageValues(), null);
 
         if (enemy && r.foundryStats() != null) {
             Map<String, String> clean = cleanStats(r.foundryStats());
@@ -757,6 +960,26 @@ public class PdfExportService {
     private static final Set<String> STAT_NOISE_VALUES = Set.of("0", "0.0", "false", "none", "null", "", "-", "—");
     /** Premier segment de chemin a elaguer du libelle (purement structurel). */
     private static final Set<String> STAT_DROP_PREFIX = Set.of("attributes", "details", "system", "data");
+    /** Segments sans information pour un lecteur ("hp value" -> "PV"). */
+    private static final Set<String> STAT_DROP_SEGMENTS = Set.of("attributes", "abilities", "details",
+            "system", "data", "value", "traits", "skills");
+    /**
+     * Abreviations et termes courants des systemes Foundry (dnd5e, pf2e...) traduits pour
+     * un livret francais ; un segment inconnu garde son libelle humanise.
+     */
+    private static final Map<String, String> STAT_TERMS = Map.ofEntries(
+            Map.entry("hp", "PV"), Map.entry("ac", "CA"), Map.entry("cr", "FP"),
+            Map.entry("str", "FOR"), Map.entry("dex", "DEX"), Map.entry("con", "CON"),
+            Map.entry("int", "INT"), Map.entry("wis", "SAG"), Map.entry("cha", "CHA"),
+            Map.entry("max", "max"), Map.entry("temp", "temp."), Map.entry("level", "niveau"),
+            Map.entry("xp", "XP"), Map.entry("init", "initiative"), Map.entry("prof", "maîtrise"),
+            Map.entry("movement", "déplacement"), Map.entry("speed", "vitesse"),
+            Map.entry("walk", "marche"), Map.entry("fly", "vol"), Map.entry("swim", "nage"),
+            Map.entry("climb", "escalade"), Map.entry("burrow", "fouissement"),
+            Map.entry("senses", "sens"), Map.entry("darkvision", "vision dans le noir"),
+            Map.entry("languages", "langues"), Map.entry("alignment", "alignement"),
+            Map.entry("type", "type"), Map.entry("size", "taille"), Map.entry("perception", "perception"),
+            Map.entry("spelldc", "DD des sorts"), Map.entry("dc", "DD"), Map.entry("creaturetype", "type de créature"));
 
     /**
      * Nettoie le snapshot de stats Foundry pour le livret : retire le bruit (valeurs
@@ -782,13 +1005,24 @@ public class PdfExportService {
         return v;
     }
 
-    /** "attributes.hp.value" -> "Hp value" ; "details.creatureType" -> "Creature type". */
-    private static String humanizeStatKey(String key) {
+    /**
+     * "attributes.hp.value" -> "PV" ; "abilities.str.value" -> "FOR" ; "attributes.hp.max" ->
+     * "PV max" ; "details.cr" -> "FP" ; segment inconnu : camelCase humanise ("Creature type").
+     */
+    static String humanizeStatKey(String key) {
         String[] parts = key.split("\\.");
         int start = (parts.length > 1 && STAT_DROP_PREFIX.contains(parts[0].toLowerCase())) ? 1 : 0;
-        String s = String.join(" ", Arrays.asList(parts).subList(start, parts.length));
-        s = s.replaceAll("([a-z0-9])([A-Z])", "$1 $2").toLowerCase().trim(); // camelCase -> mots
-        return s.isEmpty() ? key : Character.toUpperCase(s.charAt(0)) + s.substring(1);
+        List<String> words = new ArrayList<>();
+        for (String part : Arrays.asList(parts).subList(start, parts.length)) {
+            String lower = part.toLowerCase(Locale.ROOT);
+            if (STAT_DROP_SEGMENTS.contains(lower) && parts.length - start > 1) continue;
+            String term = STAT_TERMS.get(lower);
+            words.add(term != null ? term
+                    : part.replaceAll("([a-z0-9])([A-Z])", "$1 $2").toLowerCase(Locale.ROOT).trim()); // camelCase -> mots
+        }
+        String s = String.join(" ", words).trim();
+        if (s.isEmpty()) return key;
+        return Character.toUpperCase(s.charAt(0)) + s.substring(1);
     }
 
     // ----- Tables aleatoires (le contenu le plus « papier » du livret) -----
@@ -847,13 +1081,17 @@ public class PdfExportService {
 
     // ----- Lore (pages groupees par dossier) -----
 
-    private void lore(Ctx ctx, CampaignJpaEntity campaign) {
+    private void lore(Ctx ctx, CampaignJpaEntity campaign, Structure st) {
         String loreId = campaign.getLoreId();
         if (loreId == null || loreId.isBlank()) return;
         Long lid;
         try { lid = Long.parseLong(loreId); } catch (NumberFormatException ex) { return; }
 
-        List<PageJpaEntity> pages = pageRepo.findByLoreId(lid);
+        List<PageJpaEntity> pages = new ArrayList<>(pageRepo.findByLoreId(lid));
+        if (ctx.opt.loreScope() == LoreScope.LINKED) {
+            Set<String> linked = linkedPageIds(campaign, st);
+            pages.removeIf(p -> !linked.contains(String.valueOf(p.getId())));
+        }
         if (pages.isEmpty()) return;
         ctx.lorePages = pages.size();
 
@@ -881,15 +1119,40 @@ public class PdfExportService {
             b.append(H3_FOLDER_OPEN).append(anchor).append("\">").append(esc(label)).append("</h3>");
             e.getValue().sort(java.util.Comparator.comparingInt(PageJpaEntity::getOrder));
             for (PageJpaEntity p : e.getValue()) {
-                b.append("<div class=\"card\"><div class=\"card-body\"><div class=\"persona-name\">")
+                b.append("<div class=\"card flow\"><div class=\"card-body\"><div class=\"persona-name\">")
                         .append(esc(p.getTitle())).append(DIV_CLOSE);
                 List<TemplateField> tpl = p.getTemplateId() != null
                         ? fieldsOf(templates.get(p.getTemplateId())) : null;
-                renderFields(b, tpl, p.getValues(), p.getKeyValueValues(), p.getImageValues(), p.getTableValues());
+                renderFields(ctx, tpl, p.getValues(), p.getKeyValueValues(), p.getImageValues(), p.getTableValues());
                 b.append("</div></div>");
             }
         }
         ctx.bookmarks.append(bookmark("Lore", "part-lore", fBms.toString()));
+    }
+
+    /**
+     * Pages de lore citees par le contenu de la campagne (pages liees des arcs, chapitres,
+     * scenes, quetes et PNJ) : l'export « pages liees » evite de livrer tout l'univers,
+     * secrets des autres campagnes compris.
+     */
+    private Set<String> linkedPageIds(CampaignJpaEntity campaign, Structure st) {
+        Set<String> ids = new HashSet<>();
+        for (ArcJpaEntity a : st.arcs) addAllNonNull(ids, a.getRelatedPageIds());
+        for (List<ChapterJpaEntity> chs : st.chaptersByArc.values()) {
+            for (ChapterJpaEntity ch : chs) addAllNonNull(ids, ch.getRelatedPageIds());
+        }
+        for (List<SceneJpaEntity> scs : st.scenesByChapter.values()) {
+            for (SceneJpaEntity sc : scs) addAllNonNull(ids, sc.getRelatedPageIds());
+        }
+        for (QuestJpaEntity q : st.quests) addAllNonNull(ids, q.getRelatedPageIds());
+        for (NpcJpaEntity n : npcRepo.findByCampaignIdOrderByOrderAsc(campaign.getId())) {
+            addAllNonNull(ids, n.getRelatedPageIds());
+        }
+        return ids;
+    }
+
+    private static void addAllNonNull(Set<String> into, List<String> values) {
+        if (values != null) into.addAll(values);
     }
 
     private String nodePath(Long nodeId, Map<Long, LoreNodeJpaEntity> nodes) {
@@ -908,10 +1171,11 @@ public class PdfExportService {
 
     // ----- Rendu des champs pilotes par template -----
 
-    private void renderFields(StringBuilder b, List<TemplateField> template, Map<String, String> values,
+    private void renderFields(Ctx ctx, List<TemplateField> template, Map<String, String> values,
                               Map<String, Map<String, String>> keyValueValues,
                               Map<String, List<String>> imageValues,
                               Map<String, List<Map<String, String>>> tableValues) {
+        StringBuilder b = ctx.body;
         // Repli : pas de template -> paires brutes cle=valeur.
         if (template == null || template.isEmpty()) {
             if (values != null) {
@@ -921,18 +1185,19 @@ public class PdfExportService {
         }
         for (TemplateField f : template) {
             if (f == null || f.getName() == null || f.getType() == null) continue;
-            renderField(b, f, values, keyValueValues, imageValues, tableValues);
+            renderField(ctx, f, values, keyValueValues, imageValues, tableValues);
         }
     }
 
-    private void renderField(StringBuilder b, TemplateField f, Map<String, String> values,
+    private void renderField(Ctx ctx, TemplateField f, Map<String, String> values,
                               Map<String, Map<String, String>> keyValueValues,
                               Map<String, List<String>> imageValues,
                               Map<String, List<Map<String, String>>> tableValues) {
+        StringBuilder b = ctx.body;
         switch (f.getType()) {
             case TEXT, NUMBER -> block(b, f.getName(), values != null ? values.get(f.getName()) : null);
             case KEY_VALUE_LIST -> renderKeyValueField(b, f, keyValueValues);
-            case IMAGE -> illustrations(b, imageValues != null ? imageValues.get(f.getName()) : null);
+            case IMAGE -> illustrations(ctx, imageValues != null ? imageValues.get(f.getName()) : null);
             case TABLE -> renderTableField(b, f, tableValues);
         }
     }
@@ -1012,11 +1277,11 @@ public class PdfExportService {
     // ----- Illustrations -----
 
     /** Galerie d'illustrations (liste d'ids d'images) -> blocs image centres, hauteur bornee. */
-    private void illustrations(StringBuilder b, List<String> imageIds) {
+    private void illustrations(Ctx ctx, List<String> imageIds) {
         if (imageIds == null) return;
         for (String id : imageIds) {
             PdfImage img = imageEncoder.image(id, PdfImageEncoder.ILLUSTRATION_MAX);
-            if (img != null) illustration(b, img, null);
+            if (img != null) illustration(ctx, img, null);
         }
     }
 
@@ -1024,9 +1289,11 @@ public class PdfExportService {
      * Une illustration centree, avec legende optionnelle. La largeur est calculee pour que
      * la hauteur affichee reste bornee : une image tres verticale ne mange plus la page.
      */
-    private void illustration(StringBuilder b, PdfImage img, String caption) {
-        double widthCm = Math.min(CONTENT_WIDTH_CM,
-                ILLUSTRATION_MAX_HEIGHT_CM * img.w() / img.h());
+    private void illustration(Ctx ctx, PdfImage img, String caption) {
+        StringBuilder b = ctx.body;
+        // Hauteur bornee proportionnellement au format (A5 : environ 7,8 cm).
+        double maxHeight = ILLUSTRATION_MAX_HEIGHT_CM * ctx.opt.format().widthCm / PdfExportOptions.PageFormat.A4.widthCm;
+        double widthCm = Math.min(ctx.contentWidthCm(), maxHeight * img.w() / img.h());
         b.append("<div class=\"illus\"><img style=\"width:").append(cm(widthCm))
                 .append("\" src=\"").append(img.uri()).append("\"/>");
         if (caption != null) {
@@ -1053,15 +1320,25 @@ public class PdfExportService {
         return t != null ? t.getFields() : null;
     }
 
-    /** CSS final : en-tete courant renseigne avec le nom de la campagne. */
+    /**
+     * CSS final : en-tete courant (nom de la campagne), format de page (taille, marges,
+     * corps du texte) et, en mode impression, la feuille sans aplats ajoutee en dernier.
+     */
     // S125 : faux positif — commentaire explicatif (prose), pas de code mort.
     @SuppressWarnings("java:S125")
-    private static String cssFor(String campaignName) {
+    private static String cssFor(String campaignName, PdfExportOptions opt) {
         String header = campaignName == null ? "" : campaignName.trim();
         if (header.length() > 70) header = header.substring(0, 69) + "…";
+        PdfExportOptions.PageFormat f = opt.format();
+        String margins = cm(f.marginTopCm) + " " + cm(f.marginSideCm) + " " + cm(f.marginBottomCm);
         // Echappement CSS (chaine entre quotes) PUIS XML : le CSS vit dans <style>,
         // du PCDATA — un '&' ou '<' brut casserait le parse du document entier.
-        return CSS.replace("__HEADER__", esc(header.replace("\\", "\\\\").replace("'", "\\'")));
+        String css = CSS.replace("__HEADER__", esc(header.replace("\\", "\\\\").replace("'", "\\'")))
+                .replace("__PAGE_SIZE__", f.cssSize)
+                .replace("__PAGE_MARGIN__", margins)
+                .replace("__BODY_PT__", String.format(Locale.ROOT, "%.1fpt", f.bodyPt));
+        if (f == PdfExportOptions.PageFormat.A5) css += A5_CSS;
+        return opt.printFriendly() ? css + PRINT_CSS : css;
     }
 
     // CSS print (CSS 2.1 + paged media supporte par openhtmltopdf : pas de flexbox/grid).
@@ -1071,12 +1348,16 @@ public class PdfExportService {
     // Contenu dans resources/pdf/export.css (extrait pour alleger cette classe).
     // S125 : faux positif — le bloc ci-dessus est de la prose explicative, pas du code mort.
     @SuppressWarnings("java:S125")
-    private static final String CSS = loadCss();
+    private static final String CSS = loadCss("/pdf/export.css");
+    /** Surcharges « impression » : fonds blancs, filets conserves (economie d'encre). */
+    private static final String PRINT_CSS = loadCss("/pdf/export-print.css");
+    /** Surcharges A5 : couverture et titres resserres pour une page etroite. */
+    private static final String A5_CSS = loadCss("/pdf/export-a5.css");
 
-    private static String loadCss() {
-        try (InputStream in = PdfExportService.class.getResourceAsStream("/pdf/export.css")) {
+    private static String loadCss(String resource) {
+        try (InputStream in = PdfExportService.class.getResourceAsStream(resource)) {
             if (in == null) {
-                throw new IllegalStateException("Ressource pdf/export.css introuvable dans le classpath");
+                throw new IllegalStateException("Ressource " + resource + " introuvable dans le classpath");
             }
             return new String(in.readAllBytes(), StandardCharsets.UTF_8);
         } catch (IOException e) {

@@ -6,6 +6,7 @@ import { CampaignReadinessAssessment } from './readiness.model';
 import { Npc } from './npc.model';
 import { RandomTable } from './random-table.model';
 import { Enemy } from './enemy.model';
+import { PdfExportOptions } from './pdf-export.model';
 
 /**
  * Arbre de campagne AGRÉGÉ (une seule requête HTTP) — miroir de CampaignTreeDTO.
@@ -34,6 +35,30 @@ export interface FoundryExportOptions {
   maps: boolean;
   journals: boolean;
   tables: boolean;
+}
+
+export { PDF_SECTIONS } from './pdf-export.model';
+export type { PdfSection, PdfExportOptions } from './pdf-export.model';
+
+/**
+ * Fiche « Publication » d'une campagne (module à vendre ou à partager) : couverture,
+ * page technique, introduction pour le MJ et page de crédits du PDF. Texte libre.
+ */
+export interface CampaignPublication {
+  subtitle?: string | null;
+  author?: string | null;
+  system?: string | null;
+  levels?: string | null;
+  players?: string | null;
+  duration?: string | null;
+  pitch?: string | null;
+  gmBackground?: string | null;
+  hooks?: string | null;
+  contentWarnings?: string | null;
+  credits?: string | null;
+  legal?: string | null;
+  version?: string | null;
+  coverImageId?: string | null;
 }
 
 /** Compte des entités qui seront supprimées en cascade avec la campagne. */
@@ -106,8 +131,25 @@ export class CampaignService {
   }
 
   /** Génère et télécharge le livret PDF de la campagne. */
-  exportPdf(id: string): Observable<Blob> {
-    return this.http.get(`${this.apiUrl}/${id}/pdf-export`, { responseType: 'blob' });
+  exportPdf(id: string, opts?: PdfExportOptions): Observable<Blob> {
+    let params = new HttpParams();
+    if (opts) {
+      params = params
+        .set('edition', opts.edition)
+        .set('format', opts.format)
+        .set('print', String(opts.print))
+        .set('sections', opts.sections.join(','))
+        .set('lore', opts.lore);
+    }
+    return this.http.get(`${this.apiUrl}/${id}/pdf-export`, { responseType: 'blob', params });
+  }
+
+  getPublication(id: string): Observable<CampaignPublication> {
+    return this.http.get<CampaignPublication>(`${this.apiUrl}/${id}/publication`);
+  }
+
+  updatePublication(id: string, publication: CampaignPublication): Observable<CampaignPublication> {
+    return this.http.put<CampaignPublication>(`${this.apiUrl}/${id}/publication`, publication);
   }
 
   createCampaign(campaign: CampaignCreate): Observable<Campaign> {

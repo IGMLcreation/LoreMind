@@ -3,6 +3,7 @@ package com.loremind.application.campaigncontext;
 import com.loremind.application.playcontext.PlaythroughService;
 import com.loremind.domain.campaigncontext.structure.Arc;
 import com.loremind.domain.campaigncontext.Campaign;
+import com.loremind.domain.campaigncontext.CampaignPublication;
 import com.loremind.domain.campaigncontext.structure.Chapter;
 import com.loremind.domain.campaigncontext.structure.Scene;
 import com.loremind.domain.campaigncontext.ports.ArcRepository;
@@ -406,5 +407,38 @@ class CampaignServiceTest {
 
         assertThrows(IllegalArgumentException.class,
                 () -> campaignService.updateGraphPositions("missing", "{}"));
+    }
+
+    @Test
+    void publication_isEmptyWhenNeverFilled_andSavedCleaned() {
+        when(campaignRepository.findById("campaign-1")).thenReturn(Optional.of(testCampaign));
+        assertFalse(campaignService.getPublication("campaign-1").hasContent());
+
+        when(campaignRepository.save(any(Campaign.class))).thenAnswer(inv -> inv.getArgument(0));
+        CampaignPublication saved = campaignService.updatePublication("campaign-1",
+                new CampaignPublication("  Sous-titre ", " ", null, null, null, null, null, null, null,
+                        null, null, null, null, null));
+
+        assertEquals("Sous-titre", saved.subtitle());
+        assertNull(saved.author());
+        assertEquals("Sous-titre", testCampaign.getPublication().subtitle());
+    }
+
+    @Test
+    void publication_emptiedIsStoredAsNull() {
+        when(campaignRepository.findById("campaign-1")).thenReturn(Optional.of(testCampaign));
+        when(campaignRepository.save(any(Campaign.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        campaignService.updatePublication("campaign-1", CampaignPublication.empty());
+
+        assertNull(testCampaign.getPublication());
+    }
+
+    @Test
+    void publication_unknownCampaign_throws() {
+        when(campaignRepository.findById("nope")).thenReturn(Optional.empty());
+        assertThrows(IllegalArgumentException.class, () -> campaignService.getPublication("nope"));
+        assertThrows(IllegalArgumentException.class,
+                () -> campaignService.updatePublication("nope", CampaignPublication.empty()));
     }
 }

@@ -198,6 +198,63 @@
           "example": "La guilde est démasquée publiquement ; ou bien elle est rachetée par les PJ eux-mêmes ; ou bien les villages sont perdus et l'arc suivant commence par l'exode.",
           "pitfall": "Une seule fin écrite d'avance : les choix des joueurs ne comptent plus. Prépare des issues, pas un scénario."
         }
+      },
+      "publication": {
+        "pitch": {
+          "title": "L'aventure en bref",
+          "purpose": "Donner envie en quelques lignes : la situation de départ, ce que les personnages vont faire et l'ambiance. C'est le texte qu'un MJ lit avant de choisir votre module.",
+          "questions": [
+            "Quelle situation trouble les personnages au début ?",
+            "Que vont-ils devoir faire, concrètement : enquêter, explorer, protéger, fuir ?",
+            "Quelle image ou quel détail rend cette aventure différente des autres ?"
+          ],
+          "example": "Une tour qu'on croyait éteinte se rallume au-dessus de Valfroide, en pleine foire d'automne. Les personnages ont trois jours pour découvrir qui ravive ses sceaux avant que la ville ne bascule dans la panique.",
+          "pitfall": "Raconter la fin ou le secret central. L'argument présente une promesse de jeu ; la vérité cachée va dans le contexte réservé au MJ."
+        },
+        "contentWarnings": {
+          "title": "Avertissements de contenu",
+          "purpose": "Prévenir le MJ des thèmes difficiles pour qu'il en parle avec sa table avant de jouer, et ajuste ce qui doit l'être.",
+          "questions": [
+            "Quels thèmes pourraient mettre mal à l'aise : violence explicite, mort d'enfant, deuil, possession, harcèlement… ?",
+            "Une scène peut-elle être jouée hors champ sans casser l'aventure ? Dites-le."
+          ],
+          "example": "Violence physique, mort d'un personnage secondaire, possession. La scène de la crypte peut être résumée sans être décrite.",
+          "pitfall": "Laisser vide par peur de « gâcher la surprise ». Annoncer un thème n'en révèle pas l'intrigue, et un MJ préparé mène mieux."
+        },
+        "gmBackground": {
+          "title": "Contexte caché",
+          "purpose": "Ce que le MJ doit savoir et que les joueurs ignorent : ce qui s'est vraiment passé, qui veut quoi, et ce qui arrive si personne n'intervient.",
+          "questions": [
+            "Qu'est-ce qui s'est passé avant l'arrivée des personnages ?",
+            "Qui tire les ficelles, que veut-il obtenir et par quelles étapes ?",
+            "Que devient la situation si les personnages ne font rien ?",
+            "Les joueurs peuvent-ils reconstituer cette vérité avec les indices de l'aventure ?"
+          ],
+          "example": "Le maître de la tour n'est pas mort : il a échangé son nom contre sa survie. Sa scribe ravive un sceau par nuit ; au troisième, il reprend corps. Sans les personnages, la foire se termine par l'incendie de la ville basse.",
+          "pitfall": "Une histoire secrète trop compliquée pour être découverte en jeu. Si les joueurs ne peuvent pas la comprendre à la fin, simplifiez-la."
+        },
+        "hooks": {
+          "title": "Accroches",
+          "purpose": "Les raisons qui amènent les personnages dans l'aventure. Un module publié ne connaît pas les personnages de l'acheteur : proposez-en plusieurs, de nature différente.",
+          "questions": [
+            "Quelle accroche joue sur l'intérêt (récompense, contrat, opportunité) ?",
+            "Laquelle joue sur un lien personnel (un proche, une dette, un passé) ?",
+            "Laquelle part d'un événement qui tombe sur les personnages sans qu'ils le cherchent ?"
+          ],
+          "example": "- Le conseil offre 500 pièces pour escorter un colporteur.\n- Un ami d'enfance d'un personnage a disparu à Valfroide.\n- Le médaillon d'un personnage se met à chauffer à l'approche de la tour.",
+          "pitfall": "Une seule accroche, présentée comme une obligation. Les joueurs s'impliquent mieux quand l'aventure est une opportunité qu'ils choisissent."
+        },
+        "credits": {
+          "title": "Crédits",
+          "purpose": "Nommer tous ceux qui ont contribué : c'est attendu dans un module diffusé, et c'est une marque de respect.",
+          "questions": [
+            "Qui a écrit, illustré, cartographié, relu ?",
+            "Quelles tables ont testé l'aventure ?",
+            "Utilisez-vous des illustrations ou des règles sous licence qu'il faut créditer ?"
+          ],
+          "example": "Écriture : Camille Martin\nCartes : Léo Dubois\nRelecture : Alex\nTesteurs : la table du jeudi (Inès, Yanis, Paul, Mira)",
+          "pitfall": "Oublier les testeurs, ou les crédits exigés par la licence d'une illustration ou d'un système de jeu."
+        }
       }
     }
   }

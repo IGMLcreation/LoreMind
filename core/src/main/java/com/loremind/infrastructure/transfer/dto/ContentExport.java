@@ -128,7 +128,9 @@ public record ContentExport(
             int arcsCount,
             int playerCount,
             String loreId,
-            String gameSystemId
+            String gameSystemId,
+            /** Fiche « Publication » ; absente des bundles antérieurs (null). */
+            com.loremind.domain.campaigncontext.CampaignPublication publication
     ) {}
 
     public record ArcDto(

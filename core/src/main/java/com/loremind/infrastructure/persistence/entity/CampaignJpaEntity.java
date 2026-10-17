@@ -1,5 +1,7 @@
 package com.loremind.infrastructure.persistence.entity;
 
+import com.loremind.domain.campaigncontext.CampaignPublication;
+import com.loremind.infrastructure.persistence.converter.CampaignPublicationJsonConverter;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -62,6 +64,11 @@ public class CampaignJpaEntity {
      */
     @Column(name = "graph_positions", columnDefinition = "TEXT")
     private String graphPositions;
+
+    /** Fiche « Publication » (JSON). NULL = jamais renseignée. */
+    @Column(name = "publication", columnDefinition = "TEXT")
+    @Convert(converter = CampaignPublicationJsonConverter.class)
+    private CampaignPublication publication;
 
     @PrePersist
     protected void onCreate() {

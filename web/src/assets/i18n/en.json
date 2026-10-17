@@ -2083,6 +2083,63 @@
           "example": "The guild is publicly exposed; or the PCs buy it out themselves; or the villages are lost and the next arc opens with the exodus.",
           "pitfall": "A single ending written in advance: the players' choices no longer matter. Prepare outcomes, not a script."
         }
+      },
+      "publication": {
+        "pitch": {
+          "title": "The adventure at a glance",
+          "purpose": "Make people want to play in a few lines: the starting situation, what the characters will do and the mood. It's the text a GM reads before picking your module.",
+          "questions": [
+            "What situation troubles the characters at the start?",
+            "What will they actually have to do: investigate, explore, protect, flee?",
+            "Which image or detail sets this adventure apart?"
+          ],
+          "example": "A tower thought long dead lights up again above Coldvale, in the middle of the autumn fair. The characters have three days to find out who is reviving its seals before the town falls into panic.",
+          "pitfall": "Giving away the ending or the central secret. The pitch is a promise of play; the hidden truth belongs in the GM-only background."
+        },
+        "contentWarnings": {
+          "title": "Content warnings",
+          "purpose": "Warn the GM about difficult themes so they can talk about them with their table before playing, and adjust what needs adjusting.",
+          "questions": [
+            "Which themes might make players uncomfortable: graphic violence, death of a child, grief, possession, harassment…?",
+            "Can a scene be played off-screen without breaking the adventure? Say so."
+          ],
+          "example": "Physical violence, death of a secondary character, possession. The crypt scene can be summarised rather than described.",
+          "pitfall": "Leaving it empty for fear of spoiling the surprise. Naming a theme reveals nothing of the plot, and a prepared GM runs it better."
+        },
+        "gmBackground": {
+          "title": "Hidden background",
+          "purpose": "What the GM needs to know and the players don't: what really happened, who wants what, and what happens if nobody steps in.",
+          "questions": [
+            "What happened before the characters arrived?",
+            "Who is pulling the strings, what do they want and through which steps?",
+            "What becomes of the situation if the characters do nothing?",
+            "Can the players piece this truth together from the adventure's clues?"
+          ],
+          "example": "The tower's master isn't dead: he traded his name for his survival. His scribe revives one seal each night; at the third, he takes form again. Without the characters, the fair ends with the lower town in flames.",
+          "pitfall": "A secret story too complicated to be discovered in play. If the players can't understand it by the end, simplify it."
+        },
+        "hooks": {
+          "title": "Hooks",
+          "purpose": "The reasons that bring the characters into the adventure. A published module doesn't know the buyer's characters: offer several, of different kinds.",
+          "questions": [
+            "Which hook plays on interest (reward, contract, opportunity)?",
+            "Which one plays on a personal tie (a relative, a debt, a past)?",
+            "Which one starts from an event that falls on the characters without them seeking it?"
+          ],
+          "example": "- The council offers 500 coins to escort a pedlar.\n- A childhood friend of one character vanished in Coldvale.\n- One character's medallion grows warm near the tower.",
+          "pitfall": "A single hook, presented as an obligation. Players get more involved when the adventure is an opportunity they choose."
+        },
+        "credits": {
+          "title": "Credits",
+          "purpose": "Name everyone who contributed: it's expected in a released module, and it's a mark of respect.",
+          "questions": [
+            "Who wrote, illustrated, mapped, edited?",
+            "Which tables playtested the adventure?",
+            "Are you using licensed artwork or rules that must be credited?"
+          ],
+          "example": "Writing: Camille Martin\nMaps: Léo Dubois\nEditing: Alex\nPlaytesters: the Thursday table (Inès, Yanis, Paul, Mira)",
+          "pitfall": "Forgetting the playtesters, or the credits required by an artwork's or a game system's licence."
+        }
       }
     }
   },
@@ -2524,5 +2581,78 @@
   "treeDrill": {
     "open": "Open page",
     "empty": "Nothing here yet."
+  },
+  "publication": {
+    "pageTitle": "Publishing · {{name}}",
+    "title": "Publishing sheet",
+    "intro": "This information turns the PDF booklet into a module ready to share or sell: cover, technical page, GM introduction and credits. Everything is optional: an empty sheet keeps the usual campaign booklet.",
+    "saved": "Saved",
+    "loadError": "Could not load the publishing sheet.",
+    "saveError": "Saving failed. Please try again.",
+    "exportError": "PDF generation failed.",
+    "coverSection": "Cover",
+    "subtitleLabel": "Subtitle",
+    "subtitlePlaceholder": "E.g. An investigation in the northern lands",
+    "authorLabel": "Author",
+    "authorPlaceholder": "Your name or your studio's",
+    "versionLabel": "Version",
+    "coverLabel": "Cover illustration",
+    "coverHint": "Portrait format recommended.",
+    "techSection": "Technical page",
+    "techHint": "What a GM checks first to know whether the adventure suits their table. Write it as it should be printed.",
+    "systemLabel": "Game system",
+    "systemPlaceholder": "E.g. D&D 5e, Pathfinder…",
+    "levelsLabel": "Character levels",
+    "levelsPlaceholder": "E.g. 1 to 3",
+    "playersLabel": "Number of players",
+    "playersPlaceholder": "E.g. 3 to 5",
+    "durationLabel": "Estimated length",
+    "durationPlaceholder": "E.g. two 4-hour sessions",
+    "presentationSection": "Presentation",
+    "pitchLabel": "The adventure at a glance",
+    "pitchPlaceholder": "The starting situation and what the characters will go through, in a few lines…",
+    "pitchHint": "Empty: the campaign description is used.",
+    "warningsLabel": "Content warnings",
+    "warningsPlaceholder": "Sensitive themes covered (violence, grief, horror…)",
+    "gmSection": "GM introduction",
+    "gmHint": "Only in the GM version of the PDF: the player version never shows it.",
+    "backgroundLabel": "Hidden background",
+    "backgroundPlaceholder": "What really happened, who pulls the strings and what will happen if the characters don't step in…",
+    "hooksLabel": "Hooks",
+    "hooksPlaceholder": "- A friend of the characters vanishes on the road\n- A reward is offered for…",
+    "listHint": "A line starting with \"- \" becomes a bullet in the PDF.",
+    "creditsSection": "Credits and licence",
+    "creditsLabel": "Credits",
+    "creditsPlaceholder": "Writing, art, maps, editing, playtesters…",
+    "legalLabel": "Licence and legal notice",
+    "legalPlaceholder": "E.g. Text licensed under CC BY-NC 4.0…",
+    "legalHint": "If you use licensed content (a system's reference rules, artwork…), state its licence and required notices here."
+  },
+  "pdfDialog": {
+    "title": "Export to PDF",
+    "publicationEmpty": "No publishing sheet yet: the PDF will be a plain campaign booklet.",
+    "publicationFilled": "The publishing sheet is filled in: cover, credits and introduction will be added.",
+    "publicationFill": "Fill in the sheet",
+    "publicationEdit": "Edit the sheet",
+    "editionLabel": "Version",
+    "editionGm": "GM (complete)",
+    "editionGmHint": "All content, secrets and notes included.",
+    "editionPlayer": "Players",
+    "editionPlayerHint": "No secrets at all: read-aloud text, atmosphere, illustrations and maps.",
+    "sectionsLabel": "Included parts",
+    "section": {
+      "NARRATIVE": "Narrative structure",
+      "QUESTS": "Quests",
+      "NPCS": "NPCs",
+      "ENEMIES": "Bestiary",
+      "TABLES": "Random tables",
+      "LORE": "Lore"
+    },
+    "loreLinked": "Only pages linked to the campaign",
+    "loreAll": "The whole lore",
+    "formatLabel": "Format",
+    "print": "Print mode",
+    "printHint": "No colour fills, to save ink.",
+    "confirm": "Generate the PDF"
   }
 }

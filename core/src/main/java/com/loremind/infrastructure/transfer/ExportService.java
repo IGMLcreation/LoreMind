@@ -200,7 +200,7 @@ public class ExportService {
         List<QuestJpaEntity> campaignQuests = questRepo.findByCampaignId(cid);
         // Images/fichiers : uniquement les binaires RÉFÉRENCÉS par la clôture (si option active).
         BinaryClosure binaries = req.includeImages()
-                ? loadBinaryClosure(structure, lore, play, campaignQuests) : BinaryClosure.EMPTY;
+                ? loadBinaryClosure(campaign, structure, lore, play, campaignQuests) : BinaryClosure.EMPTY;
 
         ContentExport.CampaignDto campaignDto = campaignDto(campaign, req.includeLore());
 
@@ -304,9 +304,11 @@ public class ExportService {
         private static final BinaryClosure EMPTY = new BinaryClosure(List.of(), List.of());
     }
 
-    private BinaryClosure loadBinaryClosure(StructuralClosure structure, LoreClosure lore, PlayClosure play,
+    private BinaryClosure loadBinaryClosure(CampaignJpaEntity campaign, StructuralClosure structure,
+                                            LoreClosure lore, PlayClosure play,
                                             List<QuestJpaEntity> campaignQuests) {
         Set<String> imageRefs = new LinkedHashSet<>();
+        if (campaign.getPublication() != null) add(imageRefs, campaign.getPublication().coverImageId());
         structure.arcs().forEach(a -> addAll(imageRefs, a.getIllustrationImageIds()));
         structure.chapters().forEach(c -> addAll(imageRefs, c.getIllustrationImageIds()));
         campaignQuests.forEach(q -> addAll(imageRefs, q.getIllustrationImageIds()));
@@ -340,7 +342,7 @@ public class ExportService {
         ContentExport.CampaignDto dto = toCampaignDto(campaign);
         if (includeLore) return dto;
         return new ContentExport.CampaignDto(dto.id(), dto.name(), dto.description(),
-                dto.arcsCount(), dto.playerCount(), null, dto.gameSystemId());
+                dto.arcsCount(), dto.playerCount(), null, dto.gameSystemId(), dto.publication());
     }
 
     // ----- Helpers de chargement -----
@@ -471,6 +473,9 @@ public class ExportService {
     /** Collecte les IDs d'images référencés par toutes les entités exportées (avant résolution en storageKey). */
     private Set<String> collectImageIdRefs(ContentExport export) {
         Set<String> refs = new LinkedHashSet<>();
+        for (ContentExport.CampaignDto c : export.campaigns()) {
+            if (c.publication() != null) add(refs, c.publication().coverImageId());
+        }
         for (ContentExport.ArcDto a : export.arcs()) addAll(refs, a.illustrationImageIds());
         for (ContentExport.ChapterDto c : export.chapters()) addAll(refs, c.illustrationImageIds());
         addQuestImageRefs(refs, export.quests());
@@ -599,7 +604,8 @@ public class ExportService {
 
     private ContentExport.CampaignDto toCampaignDto(CampaignJpaEntity e) {
         return new ContentExport.CampaignDto(e.getId(), e.getName(), e.getDescription(),
-                e.getArcsCount(), e.getPlayerCount(), e.getLoreId(), e.getGameSystemId());
+                e.getArcsCount(), e.getPlayerCount(), e.getLoreId(), e.getGameSystemId(),
+                e.getPublication());
     }
 
     private ContentExport.ArcDto toArcDto(ArcJpaEntity e) {

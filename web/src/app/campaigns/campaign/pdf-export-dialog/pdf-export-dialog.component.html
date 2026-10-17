@@ -1,0 +1,98 @@
+@if (open) {
+  <div class="confirm-backdrop" (click)="onCancel()">
+    <div class="confirm-modal variant-info"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="'pdfDialog.title' | translate"
+      (click)="$event.stopPropagation()">
+      <div class="confirm-header">
+        <div class="confirm-icon">
+          <lucide-icon [img]="FileText" [size]="20"></lucide-icon>
+        </div>
+        <h2>{{ 'pdfDialog.title' | translate }}</h2>
+        <button type="button" class="btn-close" (click)="onCancel()" [attr.aria-label]="'common.close' | translate">
+          <lucide-icon [img]="X" [size]="18"></lucide-icon>
+        </button>
+      </div>
+
+      <div class="confirm-body">
+        @if (showPublicationLink) {
+          <div class="pdf-publication" [class.empty]="!hasPublication">
+            <lucide-icon [img]="BookOpen" [size]="16"></lucide-icon>
+            <span>{{ (hasPublication ? 'pdfDialog.publicationFilled' : 'pdfDialog.publicationEmpty') | translate }}</span>
+            <button type="button" class="link-btn" (click)="editPublication.emit()">
+              {{ (hasPublication ? 'pdfDialog.publicationEdit' : 'pdfDialog.publicationFill') | translate }}
+            </button>
+          </div>
+        }
+
+        <div class="pdf-group">
+          <span class="pdf-group-label">{{ 'pdfDialog.editionLabel' | translate }}</span>
+          <div class="pdf-choice">
+            <label class="pdf-choice-option" [class.selected]="edition === 'gm'">
+              <input type="radio" name="pdf-edition" value="gm" [checked]="edition === 'gm'" (change)="setEdition('gm')" />
+              <strong>{{ 'pdfDialog.editionGm' | translate }}</strong>
+              <small>{{ 'pdfDialog.editionGmHint' | translate }}</small>
+            </label>
+            <label class="pdf-choice-option" [class.selected]="edition === 'player'">
+              <input type="radio" name="pdf-edition" value="player" [checked]="edition === 'player'" (change)="setEdition('player')" />
+              <strong>{{ 'pdfDialog.editionPlayer' | translate }}</strong>
+              <small>{{ 'pdfDialog.editionPlayerHint' | translate }}</small>
+            </label>
+          </div>
+        </div>
+
+        <div class="pdf-group">
+          <span class="pdf-group-label">{{ 'pdfDialog.sectionsLabel' | translate }}</span>
+          <div class="pdf-sections">
+            @for (s of allSections; track s) {
+              <label class="pdf-check">
+                <input type="checkbox" [attr.name]="'pdf-section-' + s" [checked]="has(s)" (change)="toggle(s)" />
+                {{ ('pdfDialog.section.' + s) | translate }}
+              </label>
+            }
+          </div>
+          @if (has('LORE')) {
+            <div class="pdf-lore">
+              <label class="pdf-check">
+                <input type="radio" name="pdf-lore" value="LINKED" [checked]="lore === 'LINKED'" (change)="lore = 'LINKED'" />
+                {{ 'pdfDialog.loreLinked' | translate }}
+              </label>
+              <label class="pdf-check">
+                <input type="radio" name="pdf-lore" value="ALL" [checked]="lore === 'ALL'" (change)="lore = 'ALL'" />
+                {{ 'pdfDialog.loreAll' | translate }}
+              </label>
+            </div>
+          }
+        </div>
+
+        <div class="pdf-group pdf-inline">
+          <label class="pdf-format">
+            <span class="pdf-group-label">{{ 'pdfDialog.formatLabel' | translate }}</span>
+            <select name="pdf-format" [value]="format" (change)="format = $any($event.target).value">
+              <option value="A4">A4</option>
+              <option value="A5">A5</option>
+              <option value="LETTER">US Letter</option>
+            </select>
+          </label>
+          <label class="pdf-check">
+            <input type="checkbox" name="pdf-print" [checked]="print" (change)="print = !print" />
+            <span>
+              {{ 'pdfDialog.print' | translate }}
+              <small>{{ 'pdfDialog.printHint' | translate }}</small>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <div class="confirm-actions">
+        <button type="button" class="btn-secondary" (click)="onCancel()" [disabled]="exporting">
+          {{ 'common.cancel' | translate }}
+        </button>
+        <button type="button" class="btn-confirm" (click)="onConfirm()" [disabled]="nothingSelected || exporting">
+          {{ (exporting ? 'campaignDetail.pdfExporting' : 'pdfDialog.confirm') | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

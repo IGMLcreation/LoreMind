@@ -2,6 +2,7 @@ package com.loremind.infrastructure.web.controller;
 
 import com.loremind.application.campaigncontext.CampaignService;
 import com.loremind.domain.campaigncontext.Campaign;
+import com.loremind.domain.campaigncontext.CampaignPublication;
 import com.loremind.infrastructure.web.dto.campaigncontext.CampaignDTO;
 import com.loremind.infrastructure.web.mapper.CampaignMapper;
 import org.springframework.http.ResponseEntity;
@@ -70,6 +71,18 @@ public class CampaignController {
     public ResponseEntity<Void> updateGraphPositions(@PathVariable String id, @RequestBody GraphPositionsBody body) {
         campaignService.updateGraphPositions(id, body.positions());
         return ResponseEntity.noContent().build();
+    }
+
+    /** Fiche « Publication » (couverture, page technique, crédits) utilisée par l'export PDF. */
+    @GetMapping("/{id}/publication")
+    public ResponseEntity<CampaignPublication> getPublication(@PathVariable String id) {
+        return ResponseEntity.ok(campaignService.getPublication(id));
+    }
+
+    @PutMapping("/{id}/publication")
+    public ResponseEntity<CampaignPublication> updatePublication(@PathVariable String id,
+                                                                 @RequestBody CampaignPublication body) {
+        return ResponseEntity.ok(campaignService.updatePublication(id, body));
     }
 
     @PutMapping("/{id}")

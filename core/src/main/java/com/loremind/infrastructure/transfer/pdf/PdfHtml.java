@@ -139,6 +139,20 @@ final class PdfHtml {
         b.append(DIV_CLOSE);
     }
 
+    /** Texte courant sans libelle : paragraphes et listes a puces (« - ... »). */
+    static void prose(StringBuilder b, String value) {
+        if (!notBlank(value)) return;
+        for (TextBlock t : parseBlocks(value)) {
+            if (t.list()) {
+                b.append("<ul class=\"prose-list\">");
+                for (String line : t.lines()) b.append("<li>").append(esc(line)).append("</li>");
+                b.append("</ul>");
+            } else {
+                b.append("<p class=\"prose\">").append(paragraphHtml(t)).append("</p>");
+            }
+        }
+    }
+
     private static String paragraphHtml(TextBlock t) {
         StringBuilder p = new StringBuilder();
         for (int i = 0; i < t.lines().size(); i++) {

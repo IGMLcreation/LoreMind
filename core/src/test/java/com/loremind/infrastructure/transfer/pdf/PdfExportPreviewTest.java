@@ -1,5 +1,6 @@
 package com.loremind.infrastructure.transfer.pdf;
 
+import com.loremind.domain.campaigncontext.CampaignPublication;
 import com.loremind.domain.campaigncontext.structure.ArcType;
 import com.loremind.domain.campaigncontext.structure.LinkType;
 import com.loremind.domain.campaigncontext.quest.NodeType;
@@ -83,7 +84,20 @@ class PdfExportPreviewTest {
                 .id(1L).name("Les Cendres de la Tour de Jais")
                 .description("Une campagne d'enquête et d'exploration pour 4 à 5 joueurs, du niveau 3 au niveau 8.\n"
                         + "Les héros devront démêler les fils d'un pacte ancien avant que la Tour ne s'éveille tout à fait.")
-                .gameSystemId("10").loreId("20").arcsCount(2).build()));
+                .gameSystemId("10").loreId("20").arcsCount(2)
+                .publication(new CampaignPublication("Une enquête dans les terres du Nord", "Camille Martin",
+                        "Chroniques Oubliées Fantasy", "3 à 8", "4 à 5", "6 à 8 séances",
+                        "Le vent du nord charrie des cendres : la Tour de Jais s'est rallumée. Les héros ont "
+                                + "jusqu'à la nuit des Cendres pour comprendre qui ravive ses sceaux.",
+                        LOREM + "\n\n" + LONG_NOTES,
+                        "- Un colporteur ami des PJ disparaît sur la route de Valfroide.\n"
+                                + "- Le conseil de Valfroide offre 500 po pour une escorte.\n"
+                                + "- Le médaillon d'un PJ se met à chauffer.",
+                        "Violence, mort d'un personnage secondaire, possession.",
+                        "Écriture : Camille Martin\nIllustrations : générées pour l'aperçu\nTesteurs : la table du jeudi",
+                        "Texte placé sous licence CC BY-NC 4.0. Les noms et marques cités appartiennent à leurs détenteurs.",
+                        "1.0", "401"))
+                .build()));
 
         // --- Structure narrative : 2 arcs -> chapitres -> scenes -------------
         when(arcRepo.findByCampaignId(1L)).thenReturn(List.of(
@@ -379,6 +393,12 @@ class PdfExportPreviewTest {
         Files.createDirectories(out.getParent());
         Files.write(out, pdf);
         System.out.println("[preview] PDF écrit : " + out.toAbsolutePath());
+
+        // Variante : édition joueurs, A5, mode impression.
+        byte[] player = service.export("1", PdfExportOptions.parse("player", "A5", true, null, null));
+        Path outPlayer = Path.of("target", "campaign-preview-joueurs-a5.pdf");
+        Files.write(outPlayer, player);
+        System.out.println("[preview] PDF écrit : " + outPlayer.toAbsolutePath());
     }
 
     /** Image placeholder deterministe : portrait carre ou battlemap avec grille. */

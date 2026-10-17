@@ -44,6 +44,9 @@ public class Campaign {
      */
     private String graphPositions;
 
+    /** Fiche « Publication » (couverture, page technique, crédits…). Null = jamais renseignée. */
+    private CampaignPublication publication;
+
     public boolean isLinkedToLore() {
         return this.loreId != null && !this.loreId.isBlank();
     }
