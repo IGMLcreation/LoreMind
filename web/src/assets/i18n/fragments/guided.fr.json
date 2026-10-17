@@ -737,7 +737,7 @@
     },
     "ai": {
       "title": "Ton idée de départ",
-      "placeholder": "Quelques mots suffisent : une tour qui se rallume, un pacte oublié, une foire d'automne…",
+      "placeholder": "Raconte ton idée comme à un ami : le lieu, l'adversaire, ce qui t'amuse, ce que tu veux éviter… Par ex. : une tour de guet qui se rallume chaque nuit alors qu'elle est abandonnée depuis cent ans.",
       "suggestAll": "Proposer toute l'aventure",
       "suggestStep": "Proposer pour cette étape",
       "thinking": "L'IA réfléchit…",
@@ -745,7 +745,8 @@
       "filled": "{{count}} champ(s) rempli(s) par l'IA : relis-les et corrige ce qui ne te plaît pas.",
       "nothingToFill": "Tous les champs sont déjà remplis : vide ceux que tu veux faire proposer par l'IA.",
       "error": "L'IA n'a pas répondu. Vérifie le moteur IA dans les Paramètres, puis réessaie.",
-      "hint": "L'IA ne remplit que les champs vides : elle ne touche jamais à ce que tu as écrit."
+      "hint": "L'IA développe ton idée en suivant la méthode étape par étape, et ne remplit que les champs vides : elle ne touche jamais à ce que tu as écrit.",
+      "ideaFirst": "Écris d'abord ton idée : l'IA part toujours de ce que tu as en tête, jamais de rien."
     }
   }
 }

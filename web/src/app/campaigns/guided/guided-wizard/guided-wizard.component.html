@@ -36,14 +36,14 @@
             <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
             {{ 'guided.ai.title' | translate }}
           </label>
-          <textarea id="guided-idea" rows="2" [(ngModel)]="idea"
+          <textarea id="guided-idea" rows="4" [(ngModel)]="idea"
             [placeholder]="'guided.ai.placeholder' | translate"></textarea>
           <div class="ai-actions">
-            <button type="button" class="btn-ai" (click)="suggestAll()" [disabled]="!!suggesting">
+            <button type="button" class="btn-ai" (click)="suggestAll()" [disabled]="!!suggesting || !hasIdea">
               {{ (suggesting === 'all' ? 'guided.ai.thinking' : 'guided.ai.suggestAll') | translate }}
             </button>
             @if (step.kind === 'form') {
-              <button type="button" class="btn-ai-secondary" (click)="suggestStep()" [disabled]="!!suggesting">
+              <button type="button" class="btn-ai-secondary" (click)="suggestStep()" [disabled]="!!suggesting || !hasIdea">
                 {{ (suggesting === 'step' ? 'guided.ai.thinking' : 'guided.ai.suggestStep') | translate }}
               </button>
             }
@@ -59,7 +59,7 @@
           @if (suggestError) {
             <p class="ai-error" role="alert">{{ suggestError }}</p>
           }
-          <p class="ai-hint">{{ 'guided.ai.hint' | translate }}</p>
+          <p class="ai-hint">{{ (hasIdea ? 'guided.ai.hint' : 'guided.ai.ideaFirst') | translate }}</p>
         </section>
       }
 

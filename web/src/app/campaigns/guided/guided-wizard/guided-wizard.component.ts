@@ -12,7 +12,7 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
 import { WritingCoachTriggerComponent } from '../../../shared/writing-coach/writing-coach-trigger.component';
 import { GuidedAnswers, GuidedDraft, GuidedField, GuidedMethod, GuidedStep, answer } from '../guided-method.model';
 import { findGuidedMethod } from '../guided-methods';
-import { IDEA_KEY, applySuggestions, buildSuggestRequest, markTouched } from '../guided-assist';
+import { IDEA_KEY, applySuggestions, buildSuggestRequest, hasIdea, markTouched } from '../guided-assist';
 
 /** Clés de réponse réservées à l'assistant (placement + chaînage), communes à toutes les méthodes. */
 const PLACEMENT_MODE = 'placement.mode';
@@ -164,6 +164,11 @@ export class GuidedWizardComponent implements OnInit {
     this.saveDraft();
   }
 
+  /** Les propositions partent toujours de l'idée du MJ : boutons inactifs tant qu'elle est vide. */
+  get hasIdea(): boolean {
+    return hasIdea(this.answers);
+  }
+
   get canUndoSuggest(): boolean {
     return this.beforeSuggest !== null;
   }
@@ -188,7 +193,7 @@ export class GuidedWizardComponent implements OnInit {
 
   private suggest(scope: 'all' | 'step'): void {
     const method = this.method;
-    if (!method || this.suggesting) return;
+    if (!method || this.suggesting || !hasIdea(this.answers)) return;
     const t = (key: string) => this.translate.instant(key) as string;
     const stepIds = scope === 'step' && this.step ? [this.step.id] : undefined;
     const request = buildSuggestRequest(method, this.answers, t, stepIds);

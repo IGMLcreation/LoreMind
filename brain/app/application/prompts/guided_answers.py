@@ -2,7 +2,8 @@
 proposer des réponses aux questions de la méthode (Donjon en 5 salles, Enquête en nœuds,
 Plan du méchant…).
 
-Générique : le front décrit la méthode (nom, principe) et ses questions (clé, libellé,
+Générique : le front décrit la méthode (nom ; principe suivi du rôle de chaque étape, comme
+dans l'assistant manuel) et ses questions (clé, libellé,
 aide, étape, choix possibles) ; ce module ne fait que formuler le prompt. Les réponses
 déjà écrites par le MJ sont fournies pour rester cohérent et ne jamais être contredites.
 """
@@ -38,10 +39,15 @@ def guided_answers_prompt(method_name: str, method_principle: str, idea: str, co
         f"{existing_lines}\n" if existing_lines else ""
     )
     context_block = f"\nContexte de la campagne :\n{context.strip()}\n" if context and context.strip() else ""
-    principle = f" Principe : {method_principle.strip()}" if method_principle and method_principle.strip() else ""
+    guide = method_principle.strip() if method_principle else ""
+    guide_block = (
+        "\nLa méthode, telle que le MJ la suit à la main (principe, puis rôle de chaque étape) :\n"
+        f"{guide}\n" if guide else ""
+    )
     return (
         "Tu es un auteur expérimenté de scénarios de jeu de rôle, qui aide un MJ à écrire son aventure "
-        f"avec la méthode « {method_name.strip() or 'guidée'} ».{principle}\n\n"
+        f"avec la méthode « {method_name.strip() or 'guidée'} ».\n"
+        f"{guide_block}\n"
         f"Idée de départ du MJ : {idea.strip() or '(aucune : propose une aventure originale)'}\n"
         f"{context_block}{existing_block}\n"
         "Questions de la méthode auxquelles tu dois répondre (n'utilise QUE ces clés) :\n"
@@ -51,7 +57,12 @@ def guided_answers_prompt(method_name: str, method_principle: str, idea: str, co
         '- Format exact : {"answers": {"cle": "réponse", ...}}\n'
         "- N'inclus QUE des clés de la liste. Pour une question à choix, renvoie EXACTEMENT une des "
         "valeurs proposées.\n"
-        "- Développe l'idée du MJ : toutes les réponses forment UNE aventure cohérente, concrète et jouable "
+        "- Pars de l'idée du MJ et développe-la : garde son ton, ses lieux, ses personnages ; n'en change "
+        "pas le sujet.\n"
+        "- Respecte la méthode : chaque réponse remplit le rôle de SON étape, tel que décrit ci-dessus "
+        "(ex. une épreuve qui ne se règle pas par un combat, des pistes qui se recoupent). Ne mélange pas "
+        "les étapes.\n"
+        "- Toutes les réponses forment UNE aventure cohérente, concrète et jouable "
         "(noms, lieux, motivations précises ; pas de généralités).\n"
         "- Sois concis : un nom en quelques mots, une description en 2 à 4 phrases.\n"
         "- Donne toujours aux joueurs de vrais choix et plusieurs façons de progresser.\n"

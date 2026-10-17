@@ -69,6 +69,26 @@ function formSteps(method: GuidedMethod, stepIds?: string[]): GuidedStep[] {
 }
 
 /**
+ * La méthode telle que le MJ la suit à la main : son principe, puis le rôle de chaque étape
+ * (le « pourquoi » affiché dans l'assistant). Sans ces consignes, l'IA ne voyait que les
+ * libellés des champs et pouvait, par exemple, régler l'épreuve de la salle 2 par un combat.
+ * Les exemples ne sont pas transmis : l'IA les recopierait.
+ */
+export function methodGuide(method: GuidedMethod, t: Translate): string {
+  const steps = formSteps(method).map(s => {
+    const title = t(k(method, 'steps.' + s.id + '.title'));
+    const why = t(k(method, 'steps.' + s.id + '.why'));
+    return `- ${title} : ${why}`;
+  });
+  return [t(k(method, 'tagline')), '', ...steps].join('\n');
+}
+
+/** L'IA part toujours de l'idée du MJ : pas de proposition « de but en blanc ». */
+export function hasIdea(answers: GuidedAnswers): boolean {
+  return (answers[IDEA_KEY] ?? '').trim().length > 0;
+}
+
+/**
  * Requête de propositions pour les étapes demandées (toutes si absent) : seuls les champs
  * encore libres sont demandés ; tout ce que le MJ a déjà écrit est transmis comme contexte.
  */
@@ -94,7 +114,7 @@ export function buildSuggestRequest(method: GuidedMethod, answers: GuidedAnswers
   }
   return {
     methodName: t(k(method, 'name')),
-    principle: t(k(method, 'tagline')),
+    principle: methodGuide(method, t),
     idea: (answers[IDEA_KEY] ?? '').trim(),
     questions,
     existing

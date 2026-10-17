@@ -26,7 +26,7 @@ public interface GuidedMethodAssistant {
 
     /**
      * @param methodName nom de la méthode (« Enquête en nœuds »…)
-     * @param principle  principe de la méthode, en une phrase
+     * @param principle  principe de la méthode, suivi du rôle de chaque étape (comme dans l'assistant manuel)
      * @param idea       idée de départ du MJ (peut être vide)
      * @param context    contexte de la campagne (nom, description, système)
      * @param questions  questions auxquelles répondre

@@ -29,6 +29,17 @@ def test_prompt_contains_idea_questions_choices_existing_answers_and_language():
     assert "anglais" in prompt
 
 
+def test_prompt_lists_the_method_steps_and_asks_to_follow_them():
+    guide = ("Cinq temps dans un même lieu.\n\n"
+             "- Salle 2 : l'épreuve : ici, l'épée ne suffit pas.\n"
+             "- Salle 3 : le revers : les choses se compliquent.")
+    p = guided_answers_prompt("Donjon en 5 salles", guide, "Une crypte", "", [{"key": "room2.name"}], {}, "fr")
+    assert "telle que le MJ la suit à la main" in p
+    assert "- Salle 2 : l'épreuve : ici, l'épée ne suffit pas." in p
+    assert "rôle de SON étape" in p
+    assert "Idée de départ du MJ : Une crypte" in p
+
+
 def test_prompt_without_idea_asks_for_an_original_adventure():
     prompt = guided_answers_prompt("Plan du méchant", "", "  ", "", [{"key": "villain", "label": "Adversaire"}], {}, "fr")
     assert "propose une aventure originale" in prompt

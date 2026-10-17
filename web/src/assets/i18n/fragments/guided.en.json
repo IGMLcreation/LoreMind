@@ -737,7 +737,7 @@
     },
     "ai": {
       "title": "Your starting idea",
-      "placeholder": "A few words are enough: a tower lighting up again, a forgotten pact, an autumn fair…",
+      "placeholder": "Tell your idea as you would to a friend: the place, the opponent, what you find fun, what you want to avoid… E.g.: a watchtower that lights up every night, though it has been abandoned for a hundred years.",
       "suggestAll": "Suggest the whole adventure",
       "suggestStep": "Suggest for this step",
       "thinking": "The AI is thinking…",
@@ -745,7 +745,8 @@
       "filled": "{{count}} field(s) filled by the AI: read them and change what you don't like.",
       "nothingToFill": "Every field is already filled: clear the ones you want the AI to suggest.",
       "error": "The AI didn't answer. Check the AI engine in Settings, then try again.",
-      "hint": "The AI only fills empty fields: it never touches what you wrote."
+      "hint": "The AI develops your idea following the method step by step, and only fills empty fields: it never touches what you wrote.",
+      "ideaFirst": "Write your idea first: the AI always starts from what you have in mind, never from nothing."
     }
   }
 }

@@ -1,4 +1,4 @@
-import { IDEA_KEY, applySuggestions, buildSuggestRequest, isFillable, markTouched } from './guided-assist';
+import { IDEA_KEY, applySuggestions, buildSuggestRequest, hasIdea, isFillable, markTouched } from './guided-assist';
 import { INVESTIGATION_METHOD } from './methods/investigation.method';
 import { GuidedField } from './guided-method.model';
 
@@ -30,6 +30,23 @@ describe('guided AI assist', () => {
     expect(nature.options.map(o => o.value)).toEqual(['location', 'npc', 'event']);
     expect(nature.hint).toBe('');
     expect(req.methodName).toBe('guided.investigation.name');
+  });
+
+  it('sends the method as the GM follows it by hand: principle, then the role of each step', () => {
+    const req = buildSuggestRequest(INVESTIGATION_METHOD, { [IDEA_KEY]: 'Une tour' }, t);
+    const lines = req.principle.split('\n');
+    expect(lines[0]).toBe('guided.investigation.tagline');
+    expect(lines).toContain('- guided.investigation.steps.node1.title : guided.investigation.steps.node1.why');
+    expect(req.principle).toContain('steps.proactive.why');
+    expect(req.principle).not.toContain('steps.placement');
+    expect(req.principle).not.toContain('steps.review');
+    expect(req.principle).not.toContain('.example');
+  });
+
+  it('requires an idea before asking the AI', () => {
+    expect(hasIdea({})).toBe(false);
+    expect(hasIdea({ [IDEA_KEY]: '   ' })).toBe(false);
+    expect(hasIdea({ [IDEA_KEY]: 'Une tour qui se rallume' })).toBe(true);
   });
 
   it('limits the questions to the requested step', () => {
