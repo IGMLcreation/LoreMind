@@ -111,6 +111,11 @@ public class SessionService {
         return sessionRepository.findActive();
     }
 
+    /** Toutes les sessions en cours, la plus récente d'abord (raccourci « Séance en cours »). */
+    public List<Session> getAllActive() {
+        return sessionRepository.findAllActive();
+    }
+
     public Optional<Session> getActiveByPlaythrough(String playthroughId) {
         return sessionRepository.findActiveByPlaythroughId(playthroughId);
     }

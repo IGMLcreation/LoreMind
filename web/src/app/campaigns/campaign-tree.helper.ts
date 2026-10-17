@@ -7,7 +7,7 @@ import { RandomTableService } from '../services/random-table.service';
 import { EnemyService } from '../services/enemy.service';
 import { TreeItem, TreeCreateAction, SecondarySidebarConfig, GlobalItem, ReorderKind } from '../services/layout.service';
 import { groupByFolder, byOrder } from '../shared/folder-grouping.util';
-import { Arc, Chapter, Scene, Campaign, Quest } from '../services/campaign.model';
+import { Arc, Chapter, Scene, Campaign, Quest, Playthrough } from '../services/campaign.model';
 import { Npc } from '../services/npc.model';
 import { RandomTable } from '../services/random-table.model';
 import { Enemy } from '../services/enemy.model';
@@ -34,6 +34,8 @@ export interface CampaignTreeData {
   quests?: Quest[];
   /** Bilan de readiness complet — évite un fetch séparé pour le panneau du hub. */
   readiness?: CampaignReadinessAssessment | null;
+  /** Parties (Playthroughs) — nœud « Parties » en tête d'arbre (accès direct aux séances). Optionnel. */
+  playthroughs?: Playthrough[];
 }
 
 export function loadCampaignTreeData(
@@ -56,13 +58,14 @@ export function loadCampaignTreeData(
       randomTables: tree.randomTables ?? [],
       enemies: tree.enemies ?? [],
       quests: tree.quests ?? [],
+      playthroughs: tree.playthroughs ?? [],
       gaps: tree.readiness?.gaps ?? [],
       readiness: tree.readiness ?? null
     } as CampaignTreeData)),
     // Dégradation gracieuse : sidebar vide plutôt qu'écran cassé si le back est indisponible.
     catchError(() => of({
       arcs: [], chaptersByArc: {}, scenesByChapter: {},
-      npcs: [], randomTables: [], enemies: [], quests: [], gaps: [], readiness: null
+      npcs: [], randomTables: [], enemies: [], quests: [], playthroughs: [], gaps: [], readiness: null
     } as CampaignTreeData))
   );
 }
@@ -459,7 +462,31 @@ export function buildCampaignTree(
     }]
   };
 
-  return [...narrationNodes, questsNode, npcsNode, enemiesNode, tablesNode, notebooksNode, catalogsNode, importNode];
+  // Parties (Playthroughs) : EN TÊTE d'arbre, avant la narration — c'est par une Partie
+  // qu'on lance/reprend une séance ; enfouies en bas du hub, on finissait par les manquer.
+  const playthroughItems: TreeItem[] = (data.playthroughs ?? [])
+    .filter(p => !!p.id)
+    .map(p => ({
+      id: `playthrough-${p.id}`,
+      label: p.name,
+      iconKey: 'c-dice',
+      route: `/campaigns/${campaignId}/playthroughs/${p.id}`
+    }));
+  const playthroughsNode: TreeItem | null = playthroughItems.length ? {
+    id: 'playthroughs-root',
+    label: translate.instant('campaignTree.playthroughs'),
+    iconKey: 'c-dice',
+    children: playthroughItems,
+    meta: String(playthroughItems.length),
+    // Libellé → hub (bloc « Jouer » + liste des Parties) ; chevron → une Partie par nœud.
+    route: `/campaigns/${campaignId}`,
+    sectionHeaderBefore: translate.instant('campaignTree.sectionPlay')
+  } : null;
+
+  return [
+    ...(playthroughsNode ? [playthroughsNode] : []),
+    ...narrationNodes, questsNode, npcsNode, enemiesNode, tablesNode, notebooksNode, catalogsNode, importNode
+  ];
 }
 
 /**

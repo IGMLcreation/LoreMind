@@ -12,7 +12,7 @@
 // ─────────────── Tabs ───────────────
 .ref-tabs {
   display: flex;
-  flex-wrap: wrap; // 6 onglets : on passe sur 2 rangs plutôt que de rogner « Scènes ».
+  flex-wrap: wrap; // 8 onglets : 3 rangs plutôt que de rogner « Scènes ».
   background: #111827;
   border-bottom: 1px solid #1f2937;
 }
@@ -36,6 +36,9 @@
   transition: color 0.15s, border-color 0.15s, background 0.15s;
 
   &:hover { color: #e5e7eb; background: rgba(108, 99, 255, 0.06); }
+
+  // Écran tactile : cible de 44 px (le rang d'onglets reste compact à la souris).
+  @media (pointer: coarse) { min-height: 44px; }
 
   &--active {
     color: #c4bdff;

@@ -13,15 +13,18 @@ import com.loremind.domain.campaigncontext.ports.NpcRepository;
 import com.loremind.domain.campaigncontext.ports.QuestRepository;
 import com.loremind.domain.campaigncontext.ports.RandomTableRepository;
 import com.loremind.domain.campaigncontext.ports.SceneRepository;
+import com.loremind.domain.playcontext.ports.PlaythroughRepository;
 import com.loremind.infrastructure.web.dto.campaigncontext.ArcDTO;
 import com.loremind.infrastructure.web.dto.campaigncontext.ChapterDTO;
 import com.loremind.infrastructure.web.dto.campaigncontext.NpcDTO;
 import com.loremind.infrastructure.web.dto.campaigncontext.QuestDTO;
 import com.loremind.infrastructure.web.dto.campaigncontext.RandomTableDTO;
 import com.loremind.infrastructure.web.dto.campaigncontext.SceneDTO;
+import com.loremind.infrastructure.web.dto.playcontext.PlaythroughDTO;
 import com.loremind.infrastructure.web.mapper.ArcMapper;
 import com.loremind.infrastructure.web.mapper.ChapterMapper;
 import com.loremind.infrastructure.web.mapper.NpcMapper;
+import com.loremind.infrastructure.web.mapper.PlaythroughMapper;
 import com.loremind.infrastructure.web.mapper.QuestMapper;
 import com.loremind.infrastructure.web.mapper.RandomTableMapper;
 import com.loremind.infrastructure.web.mapper.SceneMapper;
@@ -37,7 +40,7 @@ import java.util.Map;
 
 /**
  * Endpoint AGRÉGÉ de l'arbre de campagne : tout ce dont la sidebar a besoin en UNE
- * requête HTTP — arcs → chapitres → scènes, PNJ, tables, ennemis, quêtes et readiness.
+ * requête HTTP — arcs → chapitres → scènes, PNJ, tables, ennemis, quêtes, parties et readiness.
  *
  * <p>Remplace la rafale d'appels du front (~1 + N arcs + M chapitres + 5 listes ≈ 15-20
  * requêtes À CHAQUE navigation) : la latence HTTP par appel dominait le temps de rendu
@@ -56,6 +59,7 @@ public class CampaignTreeController {
     private final RandomTableRepository randomTableRepository;
     private final EnemyRepository enemyRepository;
     private final QuestRepository questRepository;
+    private final PlaythroughRepository playthroughRepository;
     private final CampaignReadinessService readinessService;
     private final ArcMapper arcMapper;
     private final ChapterMapper chapterMapper;
@@ -63,6 +67,7 @@ public class CampaignTreeController {
     private final NpcMapper npcMapper;
     private final RandomTableMapper randomTableMapper;
     private final QuestMapper questMapper;
+    private final PlaythroughMapper playthroughMapper;
 
     // S107 (trop de paramètres) : constructeur d'INJECTION pur, sans logique — l'endpoint
     // est un agrégat volontaire (une requête pour toute la sidebar), il consomme donc
@@ -77,13 +82,15 @@ public class CampaignTreeController {
                                   RandomTableRepository randomTableRepository,
                                   EnemyRepository enemyRepository,
                                   QuestRepository questRepository,
+                                  PlaythroughRepository playthroughRepository,
                                   CampaignReadinessService readinessService,
                                   ArcMapper arcMapper,
                                   ChapterMapper chapterMapper,
                                   SceneMapper sceneMapper,
                                   NpcMapper npcMapper,
                                   RandomTableMapper randomTableMapper,
-                                  QuestMapper questMapper) {
+                                  QuestMapper questMapper,
+                                  PlaythroughMapper playthroughMapper) {
         this.campaignRepository = campaignRepository;
         this.arcRepository = arcRepository;
         this.chapterRepository = chapterRepository;
@@ -92,6 +99,7 @@ public class CampaignTreeController {
         this.randomTableRepository = randomTableRepository;
         this.enemyRepository = enemyRepository;
         this.questRepository = questRepository;
+        this.playthroughRepository = playthroughRepository;
         this.readinessService = readinessService;
         this.arcMapper = arcMapper;
         this.chapterMapper = chapterMapper;
@@ -99,6 +107,7 @@ public class CampaignTreeController {
         this.npcMapper = npcMapper;
         this.randomTableMapper = randomTableMapper;
         this.questMapper = questMapper;
+        this.playthroughMapper = playthroughMapper;
     }
 
     /**
@@ -113,6 +122,7 @@ public class CampaignTreeController {
             List<RandomTableDTO> randomTables,
             List<Enemy> enemies,
             List<QuestDTO> quests,
+            List<PlaythroughDTO> playthroughs,
             CampaignReadinessAssessment readiness
     ) {}
 
@@ -147,6 +157,8 @@ public class CampaignTreeController {
                 enemyRepository.findByCampaignId(campaignId),
                 questRepository.findByCampaignId(campaignId).stream()
                         .map(questMapper::toDTO).toList(),
+                playthroughRepository.findByCampaignId(campaignId).stream()
+                        .map(playthroughMapper::toDTO).toList(),
                 readinessService.assess(campaignId)));
     }
 }

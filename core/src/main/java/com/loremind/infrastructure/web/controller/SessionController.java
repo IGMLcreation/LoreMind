@@ -56,11 +56,23 @@ public class SessionController {
                 .orElse(ResponseEntity.noContent().build());
     }
 
+    /**
+     * Liste des sessions. {@code active=true} : uniquement celles en cours, toutes Parties
+     * confondues, la plus récente d'abord (raccourci « Séance en cours » du menu, rafraîchi
+     * à chaque navigation — évite de rapatrier tout l'historique).
+     */
     @GetMapping
-    public ResponseEntity<List<SessionDTO>> getSessions(@RequestParam(value = "playthroughId", required = false) String playthroughId) {
-        List<Session> sessions = (playthroughId == null || playthroughId.isBlank())
-                ? sessionService.getAll()
-                : sessionService.getByPlaythroughId(playthroughId);
+    public ResponseEntity<List<SessionDTO>> getSessions(
+            @RequestParam(value = "playthroughId", required = false) String playthroughId,
+            @RequestParam(value = "active", defaultValue = "false") boolean active) {
+        List<Session> sessions;
+        if (active) {
+            sessions = sessionService.getAllActive();
+        } else if (playthroughId == null || playthroughId.isBlank()) {
+            sessions = sessionService.getAll();
+        } else {
+            sessions = sessionService.getByPlaythroughId(playthroughId);
+        }
         List<SessionDTO> dtos = sessions.stream()
                 .map(sessionMapper::toDTO)
                 .toList();

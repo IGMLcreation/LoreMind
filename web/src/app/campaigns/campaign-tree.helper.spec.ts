@@ -23,6 +23,29 @@ describe('buildCampaignTree', () => {
     ]);
   });
 
+  it('place un nœud « Parties » en tête (avant la narration), une entrée par partie', () => {
+    const tree = buildCampaignTree('c1', data({
+      arcs: [{ id: 'a1', name: 'Arc', type: 'LINEAR' }] as never,
+      chaptersByArc: { a1: [{ id: 'ch1', name: 'C1' }, { id: 'ch2', name: 'C2' }] } as never,
+      playthroughs: [
+        { id: 'p1', campaignId: 'c1', name: 'Table du mardi' },
+        { id: 'p2', campaignId: 'c1', name: 'Table du jeudi' },
+      ],
+    }), t);
+    expect(tree[0].id).toBe('playthroughs-root');
+    expect(tree[0].sectionHeaderBefore).toBe('campaignTree.sectionPlay');
+    expect(tree[0].meta).toBe('2');
+    expect(tree[0].children!.map((c) => c.route)).toEqual([
+      '/campaigns/c1/playthroughs/p1', '/campaigns/c1/playthroughs/p2',
+    ]);
+    expect(tree[1].id).toBe('arc-a1');
+  });
+
+  it('pas de nœud « Parties » sans partie', () => {
+    const tree = buildCampaignTree('c1', data({ playthroughs: [] }), t);
+    expect(tree.some((n) => n.id === 'playthroughs-root')).toBe(false);
+  });
+
   it('trie les arcs par ordre manuel (champ order, réagencé au glisser-déposer)', () => {
     const arcs = [
       { id: 'a', name: 'Final', order: 2 },

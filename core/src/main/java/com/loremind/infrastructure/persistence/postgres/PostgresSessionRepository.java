@@ -53,6 +53,13 @@ public class PostgresSessionRepository implements SessionRepository {
     }
 
     @Override
+    public List<Session> findAllActive() {
+        return jpaRepository.findByEndedAtIsNullOrderByStartedAtDesc().stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
     public Optional<Session> findActiveByPlaythroughId(String playthroughId) {
         return jpaRepository.findFirstByPlaythroughIdAndEndedAtIsNull(Long.parseLong(playthroughId))
                 .map(this::toDomain);

@@ -20,6 +20,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
+import static org.hamcrest.Matchers.everyItem;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -96,6 +101,21 @@ class SessionControllerTest {
         mockMvc.perform(get("/api/sessions").param("playthroughId", playthroughId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
+    }
+
+    @Test
+    void getSessions_activeOnly_excludesEnded() throws Exception {
+        Session running = saveSession();
+        Session ended = sessionRepository.save(Session.builder()
+                .name("ended").playthroughId(playthroughId)
+                .startedAt(FIXED_TIME.minusHours(2))
+                .endedAt(FIXED_TIME.minusHours(1))
+                .build());
+        mockMvc.perform(get("/api/sessions").param("active", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[*].active", everyItem(is(true))))
+                .andExpect(jsonPath("$[*].id", hasItem(running.getId())))
+                .andExpect(jsonPath("$[*].id", not(hasItem(ended.getId()))));
     }
 
     @Test
