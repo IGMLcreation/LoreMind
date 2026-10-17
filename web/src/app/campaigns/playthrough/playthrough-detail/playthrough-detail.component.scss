@@ -12,7 +12,14 @@
   h1 { margin: 0 0 0.2rem; font-size: 1.6rem; }
 }
 
-.header-info { flex: 1; }
+.header-info { flex: 1; min-width: 0; }
+
+// Téléphone : Retour et Supprimer sur la 1re ligne, titre + description en
+// pleine largeur dessous (sinon le titre tombe à un mot par ligne).
+@media (max-width: 767.98px) {
+  .page-header .header-actions { margin-left: auto; flex: 0 0 auto; }
+  .header-info { order: 1; flex-basis: 100%; }
+}
 
 .subtitle {
   margin: 0;

@@ -308,3 +308,10 @@
   color: #9ca3af;
   font-size: 0.85rem;
 }
+
+// Écrans sans survol (tactile) : poignées de liaison et de renommage visibles
+// en permanence (elles n'apparaissaient qu'au survol du nœud).
+@media (hover: none) {
+  .node .node-connect { opacity: 0.9; }
+  .node .node-rename { opacity: 1; }
+}

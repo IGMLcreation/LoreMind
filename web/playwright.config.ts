@@ -30,7 +30,21 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
+      testIgnore: /responsive\//,
       use: { ...devices['Desktop Chrome'] },
+    },
+    // Téléphone (375 px, tactile) : shell en tiroirs, absence de scroll horizontal.
+    // Chromium « Desktop Chrome » redimensionné plutôt qu'un preset d'appareil :
+    // même navigateur que la CI (seul chromium y est installé), largeur exacte.
+    {
+      name: 'mobile',
+      testMatch: /responsive\/.*\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 375, height: 812 },
+        isMobile: true,
+        hasTouch: true,
+      },
     },
   ],
 });

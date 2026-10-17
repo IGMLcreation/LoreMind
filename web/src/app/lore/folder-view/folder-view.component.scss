@@ -46,11 +46,16 @@
   padding: 1rem 0;
   border-bottom: 1px solid #1f2937;
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 1.5rem;
+  gap: 1rem 1.5rem;
 
-  .header-texts { flex: 1; min-width: 0; }
+  // Téléphone : titre + actions empilés prendraient trop de hauteur en sticky.
+  @media (max-width: 767.98px) { position: static; }
+
+  // ~280 px réservés au titre : sinon les actions passent dessous.
+  .header-texts { flex: 1 1 280px; min-width: 0; }
 
   h1 {
     display: inline-flex;
@@ -60,6 +65,7 @@
     font-weight: 700;
     color: white;
     margin-bottom: 0.5rem;
+    overflow-wrap: anywhere;
 
     .title-icon { color: #6c63ff; }
   }
@@ -71,8 +77,9 @@
 
   .header-actions {
     display: flex;
+    flex-wrap: wrap;
     gap: 0.5rem;
-    flex-shrink: 0;
+    min-width: 0;
   }
 }
 

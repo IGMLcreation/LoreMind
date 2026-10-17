@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { seedLoreWithFolder, deleteLore, getTemplatesForLore, type SeededLore } from '../../fixtures/api';
+import { addTextBlock } from '../../fixtures/template-builder';
 
 test.describe('Template creation', () => {
   let seeded: SeededLore;
@@ -50,14 +51,8 @@ test.describe('Template creation', () => {
     await page.getByLabel(/Nom du template/i).fill(templateName);
     await page.getByLabel(/Dossier par défaut/i).selectOption({ label: seeded.rootFolderName });
 
-    const addFieldInput = page.getByPlaceholder('+ Ajouter un champ');
-    await addFieldInput.fill('Pouvoir');
-    await addFieldInput.press('Enter');
-    await expect(page.locator('.grid-block[data-block-name="Pouvoir"]')).toBeVisible();
-
-    await addFieldInput.fill('Origine');
-    await addFieldInput.press('Enter');
-    await expect(page.locator('.grid-block[data-block-name="Origine"]')).toBeVisible();
+    await addTextBlock(page, 'Pouvoir');
+    await addTextBlock(page, 'Origine');
 
     const origineBlock = page.locator('.grid-block[data-block-name="Origine"]');
     await origineBlock.getByRole('button', { name: 'Supprimer' }).click();

@@ -1,0 +1,13 @@
+{
+  "mobileShell": {
+    "openMenu": "Ouvrir le menu",
+    "closeMenu": "Fermer le menu",
+    "openTree": "Ouvrir l'arborescence",
+    "closeTree": "Fermer l'arborescence",
+    "mainNav": "Menu principal",
+    "treeNav": "Arborescence",
+    "search": "Rechercher",
+    "collapseTree": "Replier l'arborescence",
+    "expandTree": "Déplier l'arborescence"
+  }
+}

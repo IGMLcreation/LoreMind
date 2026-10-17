@@ -2433,5 +2433,16 @@
       "onHostText": "Cette page sert à connecter une tablette. Sur ce PC, l'accès se règle depuis les Paramètres.",
       "onHostLink": "Ouvrir les réglages d'accès"
     }
+  },
+  "mobileShell": {
+    "openMenu": "Ouvrir le menu",
+    "closeMenu": "Fermer le menu",
+    "openTree": "Ouvrir l'arborescence",
+    "closeTree": "Fermer l'arborescence",
+    "mainNav": "Menu principal",
+    "treeNav": "Arborescence",
+    "search": "Rechercher",
+    "collapseTree": "Replier l'arborescence",
+    "expandTree": "Déplier l'arborescence"
   }
 }

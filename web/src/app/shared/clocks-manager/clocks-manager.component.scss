@@ -52,6 +52,7 @@
 
 .front-create {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
   align-items: center;
   margin-bottom: 0.75rem;
@@ -172,4 +173,20 @@
 
   input[type="text"] { flex: 1; min-width: 160px; }
   select { min-width: 120px; }
+}
+
+// Écrans tactiles : grille de 2 cartes minimum au téléphone, boutons −/+ de
+// 30 px visables au doigt — c'est l'action la plus fréquente en pleine séance.
+@media (pointer: coarse) {
+  .clock-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
+    gap: 0.75rem;
+  }
+  .clock-card { width: auto; padding: 0.5rem 0.4rem; }
+  .clock-card .clock-actions {
+    gap: 0.2rem;
+
+    button { width: 30px; height: 30px; }
+  }
 }

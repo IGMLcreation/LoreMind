@@ -7,6 +7,7 @@ import {
   type SeededLore,
   type SeededTemplate,
 } from '../../fixtures/api';
+import { addTextBlock } from '../../fixtures/template-builder';
 
 test.describe('Template edit', () => {
   let seeded: SeededLore;
@@ -55,10 +56,9 @@ test.describe('Template edit', () => {
   test('adds a new field, removes an existing one, and persists the order', async ({ page, request }) => {
     await page.goto(`/lore/${seeded.id}/templates/${template.id}`);
 
-    const addInput = page.getByPlaceholder('+ Ajouter un champ');
-    await addInput.fill('Stats');
-    await addInput.press('Enter');
-    await expect(page.locator('.grid-block[data-block-name="Stats"]')).toBeVisible();
+    // Attendre les champs existants (chargés en asynchrone) avant d'en ajouter un.
+    await expect(page.locator('.grid-block[data-block-name="Description"]')).toBeVisible();
+    await addTextBlock(page, 'Stats');
 
     const descriptionBlock = page.locator('.grid-block[data-block-name="Description"]');
     await descriptionBlock.getByRole('button', { name: 'Supprimer' }).click();

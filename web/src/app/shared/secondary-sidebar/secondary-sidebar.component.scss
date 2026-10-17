@@ -1,6 +1,7 @@
 .secondary-sidebar {
   width: 220px;
   height: 100vh;
+  height: 100dvh;
   background: #0d0d1f;
   border-right: 1px solid #1e1e3a;
   display: flex;
@@ -11,6 +12,12 @@
   position: relative;
   // Pas de transition sur la largeur : sinon le drag de resize "traîne" derrière la souris.
   // L'animation d'expand/collapse est gérée uniquement par la classe .collapsed ci-dessous.
+
+  // Tiroir (shell < 1024 px) : largeur confortable au doigt, plafonnée par l'écran.
+  &.drawer {
+    width: min(320px, 88vw);
+    padding: 1rem 0.75rem;
+  }
 
   &.collapsed {
     width: 44px !important;
@@ -41,6 +48,9 @@
   justify-content: center;
   width: 28px;
   height: 28px;
+  padding: 0;
+  background: none;
+  border: none;
   border-radius: 6px;
   cursor: pointer;
   color: #6b7280;
@@ -246,3 +256,11 @@
 // NB : aperçu/placeholder = styles GLOBAUX (src/styles.scss), car l'aperçu CDK est
 // déplacé hors du composant. Ici, juste le retour visuel de la drop list RACINE.
 .tree-list.cdk-drop-list-receiving { background: rgba(138, 123, 200, 0.08); border-radius: 4px; }
+
+// Écrans tactiles : cibles de 40 px minimum dans l'en-tête et le panneau bas.
+@media (pointer: coarse) {
+  .sidebar-title--link { min-height: 40px; }
+  .btn-pill { min-height: 40px; }
+  .panel-header-action { width: 36px; height: 36px; }
+  .panel-header, .panel-item { min-height: 40px; }
+}

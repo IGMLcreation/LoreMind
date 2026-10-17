@@ -564,3 +564,27 @@
   color: #f87171;
   font-weight: 600;
 }
+
+// Écrans sans survol (tactile) : la corbeille d'une conversation reste visible.
+@media (hover: none) {
+  .conv-item .conv-item-del { opacity: 1; }
+}
+
+// Téléphone / petite tablette : le drawer ne dépasse jamais l'écran (la largeur
+// inline mémorisée sur desktop est plafonnée), et la liste des conversations
+// passe au-dessus du fil au lieu de lui prendre 220 px de large.
+@media (max-width: 767.98px) {
+  .drawer {
+    max-width: 100vw;
+    height: 100dvh;
+    flex-direction: column;
+  }
+  .resize-handle { display: none; }
+  .conv-sidebar {
+    width: 100%;
+    max-height: 35%;
+    border-right: none;
+    border-bottom: 1px solid #1e1e3a;
+  }
+  .conv-main { min-height: 0; flex: 1; }
+}

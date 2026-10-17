@@ -287,3 +287,8 @@
   }
   .canvas { width: 100%; }
 }
+
+// Écrans sans survol (tactile) : poignée de redimensionnement pleinement visible.
+@media (hover: none) {
+  .rh-se::after { opacity: 1; }
+}

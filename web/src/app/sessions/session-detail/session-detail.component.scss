@@ -64,12 +64,14 @@
   gap: 1.5rem;
   flex-wrap: wrap;
 
-  .header-texts { flex: 1; min-width: 0; }
+  // ~280 px réservés au titre : sinon les actions passent dessous (téléphone).
+  .header-texts { flex: 1 1 280px; min-width: 0; }
 
   h1 {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
+    overflow-wrap: anywhere;
     font-size: 1.75rem;
     font-weight: 700;
     color: white;
@@ -90,7 +92,8 @@
       font-weight: 700;
       padding: 0.4rem 0.75rem;
       border-radius: 6px;
-      min-width: 280px;
+      min-width: min(280px, 100%);
+      flex: 1;
     }
   }
 
@@ -119,8 +122,9 @@
 
 .header-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
-  flex-shrink: 0;
+  min-width: 0;
 }
 
 // ─────────────── Boutons ───────────────
@@ -176,6 +180,9 @@
   border: 1px solid #1f2937;
   border-radius: 12px;
   padding: 1.5rem 1.75rem;
+
+  // Téléphone : la carte garde sa bordure mais rend la place au contenu.
+  @media (max-width: 767.98px) { padding: 1rem 0.85rem; }
 }
 
 .timeline-section h2 {
