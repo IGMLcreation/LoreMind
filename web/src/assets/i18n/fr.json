@@ -1296,7 +1296,8 @@
       "en": "English"
     },
     "langHint": "Les règles existent en deux versions : l'appli et l'IA utilisent celle de la langue de l'interface (ou l'autre si elle est vide). Importer un PDF remplit les deux, dans n'importe quelle langue.",
-    "importTranslated": "Livre en {{source}} : version {{target}} traduite automatiquement (noms propres conservés), relis-la dans son onglet."
+    "importTranslated": "Livre en {{source}} : version {{target}} traduite automatiquement (noms propres conservés), relis-la dans son onglet.",
+    "importWaiting": "L'IA travaille sur ce morceau depuis {{time}}. Un gros morceau peut prendre plusieurs minutes par essai : tant que ce compteur avance, l'import continue."
   },
   "ollamaModelManager": {
     "installedModels": "Modèles installés",

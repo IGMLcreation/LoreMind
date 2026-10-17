@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -52,7 +52,7 @@ type RulesLang = 'fr' | 'en';
     templateUrl: './game-system-edit.component.html',
     styleUrls: ['./game-system-edit.component.scss']
 })
-export class GameSystemEditComponent implements OnInit {
+export class GameSystemEditComponent implements OnInit, OnDestroy {
   readonly Save = Save;
   readonly ArrowLeft = ArrowLeft;
   readonly Dices = Dices;
@@ -82,6 +82,14 @@ export class GameSystemEditComponent implements OnInit {
    * en cours, pas l'historique.
    */
   importStatus: string | null = null;
+  /**
+   * Secondes écoulées depuis le dernier évènement du flux. Un morceau peut occuper
+   * l'IA plusieurs minutes (et un nouvel essai après une erreur autant) : sans ce
+   * compteur, l'écran paraît figé alors que l'import avance.
+   */
+  importWaitSeconds = 0;
+  private lastImportEventAt = 0;
+  private importWaitTimer?: ReturnType<typeof setInterval>;
 
   name = '';
   description = '';
@@ -177,9 +185,12 @@ export class GameSystemEditComponent implements OnInit {
     this.importProgress = null;
     this.importFound = [];
     this.importStatus = null;
+    this.startImportWait();
 
     this.service.importRulesStream(file).subscribe({
       next: (ev) => {
+        this.lastImportEventAt = Date.now();
+        this.importWaitSeconds = 0;
         if (ev.type === 'progress') {
           // Un morceau vient d'aboutir : le message d'attente est obsolète.
           this.importStatus = null;
@@ -254,6 +265,34 @@ export class GameSystemEditComponent implements OnInit {
     this.importing = false;
     this.importPhase = '';
     this.importProgress = null;
+    this.stopImportWait();
+  }
+
+  ngOnDestroy(): void {
+    this.stopImportWait();
+  }
+
+  /** Le compteur ne s'affiche qu'au-delà de quelques secondes sans nouvelle. */
+  get importWaitLabel(): string | null {
+    const s = this.importWaitSeconds;
+    if (s < 15) return null;
+    const m = Math.floor(s / 60);
+    return m > 0 ? `${m} min ${String(s % 60).padStart(2, '0')} s` : `${s} s`;
+  }
+
+  private startImportWait(): void {
+    this.stopImportWait();
+    this.lastImportEventAt = Date.now();
+    this.importWaitSeconds = 0;
+    this.importWaitTimer = setInterval(() => {
+      this.importWaitSeconds = Math.floor((Date.now() - this.lastImportEventAt) / 1000);
+    }, 1000);
+  }
+
+  private stopImportWait(): void {
+    if (this.importWaitTimer) clearInterval(this.importWaitTimer);
+    this.importWaitTimer = undefined;
+    this.importWaitSeconds = 0;
   }
 
   /**

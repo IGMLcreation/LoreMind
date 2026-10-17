@@ -110,3 +110,21 @@ async def test_rate_limit_respects_suggested_retry_after(slept):
     assert await generate_with_retry(llm, "p") == "ok"
     # min(8 + 2, 60) = 10
     assert slept == [10.0]
+
+
+async def test_tells_the_ui_when_the_next_attempt_starts(slept):
+    import asyncio
+
+    from app.application.import_status import reset_status_queue, set_status_queue
+
+    queue: asyncio.Queue = asyncio.Queue()
+    token = set_status_queue(queue)
+    try:
+        llm = FakeLLM([LLMProviderError("Erreur Mistral (ReadError) : ReadError"), "ok"])
+        assert await generate_with_retry(llm, "p") == "ok"
+    finally:
+        reset_status_queue(token)
+    messages = [queue.get_nowait() for _ in range(queue.qsize())]
+    assert "nouvel essai dans 3s" in messages[0]
+    # Sans ce second message, « nouvel essai dans 3s » restait affiché pendant tout l'essai suivant.
+    assert messages[1] == "Nouvel essai en cours (tentative 2/3)…"

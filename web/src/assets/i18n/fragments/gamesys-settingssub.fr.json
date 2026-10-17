@@ -49,6 +49,7 @@
     "structureFailed": "Échec de l'import de la structure.",
     "importExtracting": "Extraction du texte…",
     "importAnalyzing": "Analyse des règles… ({{current}}/{{total}})",
+    "importWaiting": "L'IA travaille sur ce morceau depuis {{time}}. Un gros morceau peut prendre plusieurs minutes par essai : tant que ce compteur avance, l'import continue.",
     "importFailed": "Échec de l'import du PDF.",
     "importFailedReason": "Échec de l'import : {{reason}}",
     "importNoRules": "Aucune règle exploitable n'a été extraite de ce PDF (scan sans OCR, ou contenu non reconnu).",

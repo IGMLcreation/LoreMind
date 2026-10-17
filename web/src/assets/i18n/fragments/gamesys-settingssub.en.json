@@ -49,6 +49,7 @@
     "structureFailed": "Structure import failed.",
     "importExtracting": "Extracting text…",
     "importAnalyzing": "Analyzing rules… ({{current}}/{{total}})",
+    "importWaiting": "The AI has been working on this chunk for {{time}}. A large chunk can take several minutes per attempt: as long as this counter moves, the import is still running.",
     "importFailed": "PDF import failed.",
     "importFailedReason": "Import failed: {{reason}}",
     "importNoRules": "No usable rules could be extracted from this PDF (scan without OCR, or unrecognized content).",

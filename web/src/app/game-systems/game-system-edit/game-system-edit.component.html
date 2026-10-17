@@ -60,6 +60,9 @@
           @if (importStatus) {
             <p class="import-status" role="status">{{ importStatus }}</p>
           }
+          @if (importWaitLabel) {
+            <p class="import-waiting">{{ 'gameSystemEdit.importWaiting' | translate:{ time: importWaitLabel } }}</p>
+          }
           @if (importFound.length) {
             <p class="import-found">
               {{ 'gameSystemEdit.sectionsFound' | translate:{ titles: importFound.join(' · ') } }}

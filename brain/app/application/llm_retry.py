@@ -113,5 +113,8 @@ async def generate_with_retry(
                     + str(exc)[:160]
                 )
                 await asyncio.sleep(wait)
+                # Le message « nouvel essai dans Ns » deviendrait faux : on dit que
+                # l'essai suivant est lancé (il peut durer plusieurs minutes).
+                notify_status(f"Nouvel essai en cours (tentative {attempt + 2}/{_ATTEMPTS})…")
     assert last_error is not None
     raise last_error
