@@ -361,3 +361,68 @@
 @media (prefers-reduced-motion: reduce) {
   .progress-fill { transition: none; }
 }
+
+// IA : idée de départ et propositions (ne remplit que les champs encore libres).
+.ai-idea {
+  margin: 0 0 1.25rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  background: rgba(251, 191, 36, 0.06);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+
+  textarea {
+    background: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 8px;
+    padding: 0.6rem 0.8rem;
+    color: white;
+    font: inherit;
+    resize: vertical;
+  }
+}
+
+.ai-idea-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #fde68a;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.ai-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-ai, .btn-ai-secondary {
+  padding: 0.45rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border: 1px solid rgba(251, 191, 36, 0.45);
+
+  &:disabled { opacity: 0.6; cursor: default; }
+}
+
+.btn-ai { background: rgba(251, 191, 36, 0.18); color: #fde68a; font-weight: 600; }
+.btn-ai-secondary { background: transparent; color: #fde68a; }
+
+.btn-link {
+  background: none;
+  border: none;
+  color: #a5b4fc;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0;
+}
+
+.ai-note { margin: 0; color: #c7d2fe; font-size: 0.85rem; }
+.ai-error { margin: 0; color: #fca5a5; font-size: 0.85rem; }
+.ai-hint { margin: 0; color: #9ca3af; font-size: 0.78rem; font-style: italic; }

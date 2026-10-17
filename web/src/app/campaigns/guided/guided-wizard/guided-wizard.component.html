@@ -29,6 +29,40 @@
         </aside>
       }
 
+      <!-- IA : idée de départ du MJ, propositions pour toute la méthode ou pour l'étape. -->
+      @if (step.kind !== 'review') {
+        <section class="ai-idea" [attr.aria-label]="'guided.ai.title' | translate">
+          <label class="ai-idea-label" for="guided-idea">
+            <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
+            {{ 'guided.ai.title' | translate }}
+          </label>
+          <textarea id="guided-idea" rows="2" [(ngModel)]="idea"
+            [placeholder]="'guided.ai.placeholder' | translate"></textarea>
+          <div class="ai-actions">
+            <button type="button" class="btn-ai" (click)="suggestAll()" [disabled]="!!suggesting">
+              {{ (suggesting === 'all' ? 'guided.ai.thinking' : 'guided.ai.suggestAll') | translate }}
+            </button>
+            @if (step.kind === 'form') {
+              <button type="button" class="btn-ai-secondary" (click)="suggestStep()" [disabled]="!!suggesting">
+                {{ (suggesting === 'step' ? 'guided.ai.thinking' : 'guided.ai.suggestStep') | translate }}
+              </button>
+            }
+            @if (canUndoSuggest && !suggesting) {
+              <button type="button" class="btn-link" (click)="undoSuggest()">{{ 'guided.ai.undo' | translate }}</button>
+            }
+          </div>
+          @if (suggestFilled !== null) {
+            <p class="ai-note" role="status">
+              {{ (suggestFilled > 0 ? 'guided.ai.filled' : 'guided.ai.nothingToFill') | translate:{ count: suggestFilled } }}
+            </p>
+          }
+          @if (suggestError) {
+            <p class="ai-error" role="alert">{{ suggestError }}</p>
+          }
+          <p class="ai-hint">{{ 'guided.ai.hint' | translate }}</p>
+        </section>
+      }
+
       <!-- Où ranger l'aventure -->
       @if (step.kind === 'placement') {
         <fieldset class="placement">

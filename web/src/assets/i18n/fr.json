@@ -1289,7 +1289,14 @@
     "importFailedReason": "Échec de l'import : {{reason}}",
     "importNoRules": "Aucune règle exploitable n'a été extraite de ce PDF (scan sans OCR, ou contenu non reconnu).",
     "importOcrSuffix": " (dont {{count}} page(s) via OCR)",
-    "importNote": "{{added}} section(s) proposée(s) depuis {{pages}} page(s){{ocr}}. Relisez et ajustez ci-dessous avant d'enregistrer."
+    "importNote": "{{added}} section(s) proposée(s) depuis {{pages}} page(s){{ocr}}. Relisez et ajustez ci-dessous avant d'enregistrer.",
+    "langTabs": "Langue des règles",
+    "lang": {
+      "fr": "Français",
+      "en": "English"
+    },
+    "langHint": "Les règles existent en deux versions : l'appli et l'IA utilisent celle de la langue de l'interface (ou l'autre si elle est vide). Importer un PDF remplit les deux, dans n'importe quelle langue.",
+    "importTranslated": "Livre en {{source}} : version {{target}} traduite automatiquement (noms propres conservés), relis-la dans son onglet."
   },
   "ollamaModelManager": {
     "installedModels": "Modèles installés",
@@ -2613,7 +2620,7 @@
       "tagline": "Une aventure courte en cinq temps dans un même lieu : un gardien, une épreuve, un revers, le climax, la récompense."
     },
     "chooserTitle": "Écrire avec une méthode guidée",
-    "chooserIntro": "Choisissez une structure : l'assistant vous pose les bonnes questions, étape par étape, puis crée le chapitre et ses scènes. Vous écrivez tout ; rien n'est généré.",
+    "chooserIntro": "Choisissez une structure : l'assistant vous pose les bonnes questions, étape par étape, puis crée le chapitre et ses scènes. Vous pouvez tout écrire vous-même, ou partir d'une idée et laisser l'IA proposer des réponses que vous corrigez.",
     "chooserStart": "Commencer",
     "chooserScenes": "{{count}} scènes",
     "reviewClock": "Une horloge « {{name}} » de {{segments}} segments sera créée dans chaque partie de la campagne.",
@@ -3113,6 +3120,18 @@
         },
         "clockName": "Le plan de l'adversaire"
       }
+    },
+    "ai": {
+      "title": "Ton idée de départ",
+      "placeholder": "Quelques mots suffisent : une tour qui se rallume, un pacte oublié, une foire d'automne…",
+      "suggestAll": "Proposer toute l'aventure",
+      "suggestStep": "Proposer pour cette étape",
+      "thinking": "L'IA réfléchit…",
+      "undo": "Annuler la proposition",
+      "filled": "{{count}} champ(s) rempli(s) par l'IA : relis-les et corrige ce qui ne te plaît pas.",
+      "nothingToFill": "Tous les champs sont déjà remplis : vide ceux que tu veux faire proposer par l'IA.",
+      "error": "L'IA n'a pas répondu. Vérifie le moteur IA dans les Paramètres, puis réessaie.",
+      "hint": "L'IA ne remplit que les champs vides : elle ne touche jamais à ce que tu as écrit."
     }
   },
   "remoteAccess": {

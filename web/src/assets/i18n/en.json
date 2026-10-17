@@ -1289,7 +1289,14 @@
     "importFailedReason": "Import failed: {{reason}}",
     "importNoRules": "No usable rules could be extracted from this PDF (scan without OCR, or unrecognized content).",
     "importOcrSuffix": " (including {{count}} page(s) via OCR)",
-    "importNote": "{{added}} section(s) suggested from {{pages}} page(s){{ocr}}. Review and adjust below before saving."
+    "importNote": "{{added}} section(s) suggested from {{pages}} page(s){{ocr}}. Review and adjust below before saving.",
+    "langTabs": "Rules language",
+    "lang": {
+      "fr": "Français",
+      "en": "English"
+    },
+    "langHint": "Rules exist in two versions: the app and the AI use the one matching the interface language (or the other if it's empty). Importing a PDF fills both, whatever its language.",
+    "importTranslated": "Book in {{source}}: the {{target}} version was translated automatically (proper names kept); review it in its tab."
   },
   "ollamaModelManager": {
     "installedModels": "Installed models",
@@ -2613,7 +2620,7 @@
       "tagline": "A short adventure in five beats in a single place: a guardian, a challenge, a setback, the climax, the reward."
     },
     "chooserTitle": "Write with a guided method",
-    "chooserIntro": "Pick a structure: the wizard asks you the right questions, step by step, then creates the chapter and its scenes. You write everything; nothing is generated.",
+    "chooserIntro": "Pick a structure: the wizard asks you the right questions, step by step, then creates the chapter and its scenes. You can write everything yourself, or start from an idea and let the AI suggest answers that you then edit.",
     "chooserStart": "Start",
     "chooserScenes": "{{count}} scenes",
     "reviewClock": "A \"{{name}}\" clock with {{segments}} segments will be created in each playthrough of the campaign.",
@@ -3113,6 +3120,18 @@
         },
         "clockName": "The enemy's plan"
       }
+    },
+    "ai": {
+      "title": "Your starting idea",
+      "placeholder": "A few words are enough: a tower lighting up again, a forgotten pact, an autumn fair…",
+      "suggestAll": "Suggest the whole adventure",
+      "suggestStep": "Suggest for this step",
+      "thinking": "The AI is thinking…",
+      "undo": "Undo the suggestion",
+      "filled": "{{count}} field(s) filled by the AI: read them and change what you don't like.",
+      "nothingToFill": "Every field is already filled: clear the ones you want the AI to suggest.",
+      "error": "The AI didn't answer. Check the AI engine in Settings, then try again.",
+      "hint": "The AI only fills empty fields: it never touches what you wrote."
     }
   },
   "remoteAccess": {

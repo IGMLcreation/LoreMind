@@ -12,6 +12,7 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
 import { WritingCoachTriggerComponent } from '../../../shared/writing-coach/writing-coach-trigger.component';
 import { GuidedAnswers, GuidedDraft, GuidedField, GuidedMethod, GuidedStep, answer } from '../guided-method.model';
 import { findGuidedMethod } from '../guided-methods';
+import { IDEA_KEY, applySuggestions, buildSuggestRequest, markTouched } from '../guided-assist';
 
 /** Clés de réponse réservées à l'assistant (placement + chaînage), communes à toutes les méthodes. */
 const PLACEMENT_MODE = 'placement.mode';
@@ -139,8 +140,80 @@ export class GuidedWizardComponent implements OnInit {
   }
 
   setAnswer(key: string, value: string): void {
-    this.answers = { ...this.answers, [key]: value };
+    // Un champ modifié par le MJ ne sera plus jamais remplacé par une proposition de l'IA.
+    this.answers = markTouched({ ...this.answers, [key]: value }, key);
     this.saveDraft();
+  }
+
+  // --- IA : propositions à partir de l'idée de départ ------------------------------------
+
+  /** Proposition en cours (anti double-clic) ; `all` = toute la méthode, sinon l'étape. */
+  suggesting: 'all' | 'step' | null = null;
+  suggestError: string | null = null;
+  /** Nombre de champs remplis par la dernière proposition (message de confirmation). */
+  suggestFilled: number | null = null;
+  /** Réponses avant la dernière proposition : « Annuler » les restaure. */
+  private beforeSuggest: GuidedAnswers | null = null;
+
+  get idea(): string {
+    return this.answers[IDEA_KEY] ?? '';
+  }
+
+  set idea(value: string) {
+    this.answers = { ...this.answers, [IDEA_KEY]: value };
+    this.saveDraft();
+  }
+
+  get canUndoSuggest(): boolean {
+    return this.beforeSuggest !== null;
+  }
+
+  /** Propose des réponses pour tous les champs encore libres de la méthode. */
+  suggestAll(): void {
+    this.suggest('all');
+  }
+
+  /** Propose des réponses pour les champs encore libres de l'étape affichée. */
+  suggestStep(): void {
+    this.suggest('step');
+  }
+
+  undoSuggest(): void {
+    if (!this.beforeSuggest) return;
+    this.answers = this.beforeSuggest;
+    this.beforeSuggest = null;
+    this.suggestFilled = null;
+    this.saveDraft();
+  }
+
+  private suggest(scope: 'all' | 'step'): void {
+    const method = this.method;
+    if (!method || this.suggesting) return;
+    const t = (key: string) => this.translate.instant(key) as string;
+    const stepIds = scope === 'step' && this.step ? [this.step.id] : undefined;
+    const request = buildSuggestRequest(method, this.answers, t, stepIds);
+    this.suggestError = null;
+    this.suggestFilled = null;
+    if (request.questions.length === 0) {
+      this.suggestFilled = 0;
+      return;
+    }
+    this.suggesting = scope;
+    this.skeletonService.suggest(this.campaignId, request).subscribe({
+      next: ({ answers }) => {
+        const before = this.answers;
+        const result = applySuggestions(method, this.answers, answers ?? {}, t);
+        this.answers = result.answers;
+        this.beforeSuggest = result.filled > 0 ? before : this.beforeSuggest;
+        this.suggestFilled = result.filled;
+        this.suggesting = null;
+        this.saveDraft();
+      },
+      error: () => {
+        this.suggesting = null;
+        this.suggestError = this.translate.instant('guided.ai.error');
+      }
+    });
   }
 
   /** Placement par défaut + valeurs pré-remplies + premier choix des champs `choice`. */

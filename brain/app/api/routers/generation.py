@@ -9,6 +9,7 @@ from app.application.generate_page import GeneratePageUseCase
 from app.application.llm_json import load_json_object
 from app.application.llm_retry import generate_with_retry
 from app.application.prompts import conversation_title as title_prompts
+from app.application.prompts import guided_answers as guided_answers_prompts
 from app.application.prompts import narrative_fields as narrative_fields_prompts
 from app.application.prompts import scene_drafts as scene_drafts_prompts
 from app.application.prompts import session_recap as session_recap_prompts
@@ -290,3 +291,82 @@ async def generate_session_recap(
     if not recap:
         raise HTTPException(status_code=502, detail="Le modèle n'a renvoyé aucun récit.")
     return SessionRecapResponseDTO(recap=recap)
+
+
+# --- Méthodes guidées : proposer des réponses à partir d'une idée (Mentor d'écriture) ----
+
+
+class GuidedOptionDTO(BaseModel):
+    """Choix possible d'une question à choix : valeur technique + libellé lisible."""
+
+    value: str
+    label: str = Field(default="")
+
+
+class GuidedFieldDTO(BaseModel):
+    """Une question de la méthode guidée (décrite par le front, relayée par le Core)."""
+
+    key: str
+    label: str = Field(default="")
+    hint: str = Field(default="")
+    step: str = Field(default="")
+    options: list[GuidedOptionDTO] = Field(default_factory=list)
+
+
+class GuidedAnswersRequestDTO(BaseModel):
+    method_name: str = Field(default="")
+    method_principle: str = Field(default="")
+    idea: str = Field(default="")
+    context: str = Field(default="")
+    fields: list[GuidedFieldDTO] = Field(default_factory=list)
+    existing: dict[str, str] = Field(default_factory=dict)
+
+
+class GuidedAnswersResponseDTO(BaseModel):
+    """Une réponse proposée par clé (clés demandées uniquement, choix valides, non vides)."""
+
+    answers: dict[str, str]
+
+
+@router.post("/generate/guided-answers", response_model=GuidedAnswersResponseDTO)
+async def generate_guided_answers(
+    body: GuidedAnswersRequestDTO,
+    llm: Annotated[LLMProvider, Depends(get_llm_provider)],
+    language: Annotated[str, Depends(get_user_language)],
+) -> GuidedAnswersResponseDTO:
+    """Propose des réponses aux questions d'une méthode guidée à partir de l'idée du MJ.
+
+    Rien n'est enregistré : le front remplit les champs vides, le MJ relit et corrige. Une
+    question à choix n'accepte qu'une des valeurs proposées ; le reste est ignoré.
+    """
+    by_key = {f.key: f for f in body.fields if f.key}
+    prompt = guided_answers_prompts.guided_answers_prompt(
+        body.method_name, body.method_principle, body.idea, body.context,
+        [f.model_dump() for f in body.fields], body.existing, language)
+    try:
+        raw = await generate_with_retry(llm, prompt, output_format="json", temperature=0.8)
+    except LLMProviderError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    parsed, _ = load_json_object(raw)
+    if not isinstance(parsed, dict):
+        raise HTTPException(status_code=502, detail="Le modèle n'a pas renvoyé de réponses exploitables.")
+    return GuidedAnswersResponseDTO(answers=_clean_guided_answers(parsed.get("answers"), by_key))
+
+
+def _clean_guided_answers(raw: object, by_key: dict[str, GuidedFieldDTO]) -> dict[str, str]:
+    """Garde les clés demandées, non vides ; une question à choix n'accepte qu'une valeur proposée."""
+    out: dict[str, str] = {}
+    if not isinstance(raw, dict):
+        return out
+    for key, value in raw.items():
+        field = by_key.get(str(key))
+        if field is None or not isinstance(value, (str, int, float)):
+            continue
+        text = str(value).strip()
+        if not text:
+            continue
+        if field.options and text not in {o.value for o in field.options}:
+            continue
+        out[field.key] = text
+    return out
