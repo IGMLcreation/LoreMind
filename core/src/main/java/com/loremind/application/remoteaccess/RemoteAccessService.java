@@ -216,6 +216,11 @@ public class RemoteAccessService {
         return deviceRepository.deleteById(deviceId);
     }
 
+    /** Port réseau réglé (ouvert ou non) : celui que le pare-feu doit laisser passer. */
+    public synchronized int configuredPort() {
+        return currentConfig().port();
+    }
+
     /** Port du connecteur réseau ouvert, ou -1 (pour le filtre : qui vient « de l'extérieur » ?). */
     public int lanPort() {
         return lanConnector.runningPort();

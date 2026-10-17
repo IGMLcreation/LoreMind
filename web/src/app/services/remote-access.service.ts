@@ -41,6 +41,13 @@ export interface NetworkReadiness {
   /** Pare-feu tiers (Bitdefender…) : ils filtrent en plus de Windows, réglages illisibles d'ici. */
   thirdPartyFirewalls: string[];
   program?: string | null;
+  platform?: 'windows' | 'linux' | null;
+  /** Linux : pare-feu actif (ufw, firewalld) ou « none ». */
+  linuxFirewall?: string | null;
+  /** Linux : port autorisé ; null = invérifiable sans droits administrateur (ufw). */
+  portOpen?: boolean | null;
+  /** Linux : commande à lancer sur la machine pour ouvrir le port. */
+  fixCommand?: string | null;
 }
 
 export type FirewallFixOutcome = 'APPLIED' | 'CANCELLED' | 'FAILED' | 'UNSUPPORTED';

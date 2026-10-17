@@ -18,6 +18,10 @@ import java.util.Locale;
  * @param thirdPartyFirewalls pare-feu tiers présents : leurs réglages ne sont pas lisibles, donc {@code ready}
  *                        ne peut pas être garanti — le front avertit l'utilisateur de les régler lui-même
  * @param program         exécutable concerné
+ * @param platform        {@code windows} ou {@code linux}
+ * @param linuxFirewall   Linux : pare-feu actif ({@code ufw}, {@code firewalld}, {@code none})
+ * @param portOpen        Linux : port autorisé ({@code null} = invérifiable sans droits administrateur)
+ * @param fixCommand      Linux : commande à lancer pour ouvrir le port, ou {@code null}
  */
 public record NetworkReadiness(
         boolean supported,
@@ -26,7 +30,11 @@ public record NetworkReadiness(
         boolean firewallAllowed,
         boolean firewallBlocked,
         List<String> thirdPartyFirewalls,
-        String program
+        String program,
+        String platform,
+        String linuxFirewall,
+        Boolean portOpen,
+        String fixCommand
 ) {
 
     static final String PUBLIC = "Public";
@@ -34,7 +42,10 @@ public record NetworkReadiness(
 
     public static NetworkReadiness evaluate(NetworkSnapshot snapshot) {
         if (snapshot == null || !snapshot.supported()) {
-            return new NetworkReadiness(false, false, List.of(), false, false, List.of(), null);
+            return new NetworkReadiness(false, false, List.of(), false, false, List.of(), null, null, null, null, null);
+        }
+        if (NetworkSnapshot.LINUX.equals(snapshot.platform())) {
+            return evaluateLinux(snapshot);
         }
         List<NetworkSnapshot.FirewallRule> rules = snapshot.rules() == null ? List.of() : snapshot.rules();
         boolean allowedPrivate = covers(rules, "Allow", PRIVATE);
@@ -53,7 +64,27 @@ public record NetworkReadiness(
         boolean ready = allowedPrivate && !blockedPrivate && blockingPublic.isEmpty();
         List<String> thirdParty = snapshot.thirdPartyFirewalls() == null ? List.of() : snapshot.thirdPartyFirewalls();
         return new NetworkReadiness(true, ready, blockingPublic, allowedPrivate, blockedPrivate, thirdParty,
-                snapshot.program());
+                snapshot.program(), NetworkSnapshot.WINDOWS, null, null, null);
+    }
+
+    /**
+     * Linux : prêt si aucun pare-feu (ufw, firewalld) n'est actif, ou si le port est ouvert.
+     * Port invérifiable (ufw sans droits root) : pas prêt, mais pas en erreur — le front
+     * affiche la commande « au cas où ».
+     */
+    private static NetworkReadiness evaluateLinux(NetworkSnapshot s) {
+        String fw = s.linuxFirewall() == null ? "none" : s.linuxFirewall();
+        boolean ready = "none".equals(fw) || Boolean.TRUE.equals(s.portOpen());
+        return new NetworkReadiness(true, ready, List.of(), false, false, List.of(), null,
+                NetworkSnapshot.LINUX, fw, s.portOpen(), ready ? null : linuxCommand(fw, s.port()));
+    }
+
+    static String linuxCommand(String firewall, int port) {
+        return switch (firewall) {
+            case "ufw" -> "sudo ufw allow " + port + "/tcp";
+            case "firewalld" -> "sudo firewall-cmd --permanent --add-port=" + port + "/tcp && sudo firewall-cmd --reload";
+            default -> null;
+        };
     }
 
     /** Une règle ACTIVE de cette action couvre-t-elle ce profil (« Any » couvre tout) ? */

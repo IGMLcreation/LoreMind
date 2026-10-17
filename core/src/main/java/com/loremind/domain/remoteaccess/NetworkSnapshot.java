@@ -13,9 +13,29 @@ import java.util.List;
  * @param rules     règles entrantes du pare-feu pour ce programme
  * @param thirdPartyFirewalls pare-feu tiers déclarés à Windows (Bitdefender, Norton…) : ils filtrent
  *                  EN PLUS du pare-feu Windows, avec leurs propres règles, illisibles d'ici
+ * @param platform  {@code windows} ou {@code linux}
+ * @param linuxFirewall Linux : pare-feu actif détecté ({@code ufw}, {@code firewalld}, {@code none})
+ * @param port      port réseau de l'accès distant (Linux : port à ouvrir)
+ * @param portOpen  Linux : port autorisé par le pare-feu ; {@code null} = impossible à savoir sans
+ *                  droits administrateur (ex. règles ufw illisibles)
  */
 public record NetworkSnapshot(boolean supported, String program, List<Network> networks, List<FirewallRule> rules,
-                              List<String> thirdPartyFirewalls) {
+                              List<String> thirdPartyFirewalls, String platform, String linuxFirewall,
+                              int port, Boolean portOpen) {
+
+    public static final String WINDOWS = "windows";
+    public static final String LINUX = "linux";
+
+    /** Instantané Windows (réseaux, règles du pare-feu, pare-feu tiers). */
+    public NetworkSnapshot(boolean supported, String program, List<Network> networks, List<FirewallRule> rules,
+                           List<String> thirdPartyFirewalls) {
+        this(supported, program, networks, rules, thirdPartyFirewalls, WINDOWS, null, 0, null);
+    }
+
+    /** Instantané Linux : pare-feu actif et état du port quand il est lisible. */
+    public static NetworkSnapshot linux(String linuxFirewall, int port, Boolean portOpen) {
+        return new NetworkSnapshot(true, null, List.of(), List.of(), List.of(), LINUX, linuxFirewall, port, portOpen);
+    }
 
     /** Catégorie Windows : {@code Public}, {@code Private} ou {@code DomainAuthenticated}. */
     public record Network(String name, String alias, String category) {}

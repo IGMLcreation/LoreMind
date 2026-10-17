@@ -61,14 +61,14 @@ public class RemoteAccessAdminController {
     /** Une tablette peut-elle joindre ce PC ? (type de réseau, règle du pare-feu) */
     @GetMapping("/network-check")
     public NetworkReadiness networkCheck() {
-        return NetworkReadiness.evaluate(hostNetworkAccess.inspect());
+        return NetworkReadiness.evaluate(hostNetworkAccess.inspect(remoteAccessService.configuredPort()));
     }
 
     /** Ajoute la règle du pare-feu ; attend la réponse de l'utilisateur à la confirmation Windows (UAC). */
     @PostMapping("/firewall-rule")
     public FirewallFixResponse allowThroughFirewall() {
         HostNetworkAccess.FirewallFixOutcome outcome = hostNetworkAccess.allowThroughFirewall();
-        return new FirewallFixResponse(outcome, NetworkReadiness.evaluate(hostNetworkAccess.inspect()));
+        return new FirewallFixResponse(outcome, NetworkReadiness.evaluate(hostNetworkAccess.inspect(remoteAccessService.configuredPort())));
     }
 
     /** Ouvre les réglages réseau de Windows (pour passer un Wi-Fi « Public » en « Privé »). */

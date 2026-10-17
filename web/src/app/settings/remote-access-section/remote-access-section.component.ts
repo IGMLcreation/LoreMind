@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { LucideAngularModule, Tablet, Trash2, RefreshCw, AlertCircle, ShieldCheck, CheckCircle2, Settings2 } from 'lucide-angular';
+import { LucideAngularModule, Tablet, Trash2, RefreshCw, AlertCircle, ShieldCheck, CheckCircle2, Settings2, Copy } from 'lucide-angular';
 import QRCode from 'qrcode';
 
 import {
@@ -30,6 +30,8 @@ export class RemoteAccessSectionComponent implements OnInit, OnDestroy {
   readonly ShieldCheck = ShieldCheck;
   readonly CheckCircle2 = CheckCircle2;
   readonly Settings2 = Settings2;
+  readonly Copy = Copy;
+  copied = false;
 
   private readonly remoteAccess = inject(RemoteAccessService);
   private readonly translate = inject(TranslateService);
@@ -197,8 +199,25 @@ export class RemoteAccessSectionComponent implements OnInit, OnDestroy {
     return this.network?.thirdPartyFirewalls ?? [];
   }
 
+  get isLinux(): boolean {
+    return this.network?.platform === 'linux';
+  }
+
   get firewallNeedsFix(): boolean {
-    return !!this.network && (!this.network.firewallAllowed || this.network.firewallBlocked);
+    return !!this.network && !this.isLinux && (!this.network.firewallAllowed || this.network.firewallBlocked);
+  }
+
+  /** Linux : copie la commande d'ouverture du port (à lancer sur le serveur). */
+  async copyFixCommand(): Promise<void> {
+    const command = this.network?.fixCommand;
+    if (!command) return;
+    try {
+      await navigator.clipboard.writeText(command);
+      this.copied = true;
+      setTimeout(() => this.copied = false, 2000);
+    } catch {
+      this.copied = false; // presse-papiers indisponible : la commande reste lisible et sélectionnable
+    }
   }
 
   /** Le QR code ouvre directement l'écran d'appairage avec le code pré-rempli. */

@@ -69,7 +69,13 @@
       "thirdParty": "{{names}} filtre aussi les connexions sur ce PC, avec ses propres règles que DM Loremind ne peut pas vérifier. Tant qu'il ne l'autorise pas, la tablette chargera sans fin.",
       "thirdPartyHowTo": "Dans les réglages du pare-feu de ce logiciel : classe ton Wi-Fi en réseau domestique (pas public, sans mode furtif), puis ajoute une règle qui autorise DM Loremind en connexions entrantes.",
       "docLink": "Voir la marche à suivre",
-      "docUrl": "https://loremind-docs.igmlcreation.fr/docs/configuration/acces-tablette#la-tablette-charge-sans-fin"
+      "docUrl": "https://loremind-docs.igmlcreation.fr/docs/configuration/acces-tablette#la-tablette-charge-sans-fin",
+      "linuxNone": "Aucun pare-feu ufw ou firewalld n'est actif sur cette machine : rien à ouvrir.",
+      "linuxOpen": "Le pare-feu ({{fw}}) laisse passer le port {{port}}.",
+      "linuxClosed": "Le pare-feu ({{fw}}) bloque le port {{port}} : les autres appareils chargeraient sans fin. Ouvre-le avec cette commande sur la machine :",
+      "linuxUnknown": "Le pare-feu {{fw}} est actif. DM Loremind ne peut pas lire ses règles sans droits administrateur : si ce n'est pas déjà fait, ouvre le port {{port}} avec cette commande sur la machine :",
+      "copy": "Copier",
+      "copied": "Copié"
     }
   }
 }

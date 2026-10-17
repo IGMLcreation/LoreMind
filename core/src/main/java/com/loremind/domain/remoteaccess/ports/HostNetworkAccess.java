@@ -12,8 +12,8 @@ public interface HostNetworkAccess {
     /** Résultat de la demande d'autorisation dans le pare-feu. */
     enum FirewallFixOutcome { APPLIED, CANCELLED, FAILED, UNSUPPORTED }
 
-    /** Lecture seule, sans droits administrateur. */
-    NetworkSnapshot inspect();
+    /** Lecture seule, sans droits administrateur. {@code port} : port réseau de l'accès distant. */
+    NetworkSnapshot inspect(int port);
 
     /**
      * Autorise l'application en entrée sur les réseaux privés. Passe par la confirmation

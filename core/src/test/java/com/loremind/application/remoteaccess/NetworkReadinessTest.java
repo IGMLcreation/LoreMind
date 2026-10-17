@@ -85,4 +85,34 @@ class NetworkReadinessTest {
         NetworkReadiness r = eval(List.of(new Network(null, "Wi-Fi", "Public")), List.of(ALLOW_PRIVATE));
         assertEquals(List.of("Wi-Fi"), r.publicNetworks());
     }
+
+    // --- Linux ---
+
+    @Test
+    void linux_withoutFirewall_isReady() {
+        NetworkReadiness r = NetworkReadiness.evaluate(NetworkSnapshot.linux("none", 8765, null));
+        assertTrue(r.ready());
+        assertEquals("linux", r.platform());
+        assertNull(r.fixCommand());
+    }
+
+    @Test
+    void linux_ufw_portUnknown_proposesTheCommand() {
+        NetworkReadiness r = NetworkReadiness.evaluate(NetworkSnapshot.linux("ufw", 8765, null));
+        assertFalse(r.ready());
+        assertNull(r.portOpen());
+        assertEquals("sudo ufw allow 8765/tcp", r.fixCommand());
+    }
+
+    @Test
+    void linux_firewalld_closedThenOpen() {
+        NetworkReadiness closed = NetworkReadiness.evaluate(NetworkSnapshot.linux("firewalld", 9000, false));
+        assertFalse(closed.ready());
+        assertEquals("sudo firewall-cmd --permanent --add-port=9000/tcp && sudo firewall-cmd --reload", closed.fixCommand());
+
+        NetworkReadiness open = NetworkReadiness.evaluate(NetworkSnapshot.linux("firewalld", 9000, true));
+        assertTrue(open.ready());
+        assertNull(open.fixCommand());
+    }
 }
+

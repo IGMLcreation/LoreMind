@@ -39,7 +39,32 @@
       @if (network?.supported) {
         <div class="remote-block network-check" [class.ok]="allClear">
           <h3>{{ 'remoteAccess.network.title' | translate }}</h3>
-          @if (network!.ready) {
+          @if (isLinux) {
+            <!-- Linux : état du pare-feu lisible sans root, sinon commande à lancer sur la machine. -->
+            @if (network!.ready) {
+              <p class="check-ok">
+                <lucide-icon [img]="CheckCircle2" [size]="16"></lucide-icon>
+                {{ (network!.linuxFirewall === 'none' ? 'remoteAccess.network.linuxNone' : 'remoteAccess.network.linuxOpen')
+                   | translate: { fw: network!.linuxFirewall, port: s.port } }}
+              </p>
+            } @else {
+              <div class="check-item">
+                <p class="check-problem">
+                  {{ (network!.portOpen === false ? 'remoteAccess.network.linuxClosed' : 'remoteAccess.network.linuxUnknown')
+                     | translate: { fw: network!.linuxFirewall, port: s.port } }}
+                </p>
+                @if (network!.fixCommand) {
+                  <div class="command-row">
+                    <code class="command">{{ network!.fixCommand }}</code>
+                    <button type="button" class="btn-secondary" (click)="copyFixCommand()">
+                      <lucide-icon [img]="Copy" [size]="14"></lucide-icon>
+                      {{ (copied ? 'remoteAccess.network.copied' : 'remoteAccess.network.copy') | translate }}
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+          } @else if (network!.ready) {
             <p class="check-ok">
               <lucide-icon [img]="CheckCircle2" [size]="16"></lucide-icon>
               {{ (thirdPartyFirewalls.length > 0 ? 'remoteAccess.network.windowsReady' : 'remoteAccess.network.ready') | translate }}

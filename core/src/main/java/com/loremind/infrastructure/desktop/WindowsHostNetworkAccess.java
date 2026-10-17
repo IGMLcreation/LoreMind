@@ -6,8 +6,6 @@ import com.loremind.domain.remoteaccess.NetworkSnapshot;
 import com.loremind.domain.remoteaccess.ports.HostNetworkAccess;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,9 +29,9 @@ import java.util.concurrent.TimeUnit;
  * Les scripts sont passés en {@code -EncodedCommand} (UTF-16LE base64) : aucun problème de
  * guillemets ni d'accents. Le seul paramètre variable est le chemin de l'exécutable,
  * fourni par le système (pas par l'utilisateur), et échappé pour une chaîne PowerShell.
+ * <p>
+ * Choisie au démarrage par {@code HostNetworkAccessConfig} sous Windows.
  */
-@Component
-@Profile("local")
 public class WindowsHostNetworkAccess implements HostNetworkAccess {
 
     private static final Logger log = LoggerFactory.getLogger(WindowsHostNetworkAccess.class);
@@ -52,7 +50,7 @@ public class WindowsHostNetworkAccess implements HostNetworkAccess {
     }
 
     @Override
-    public NetworkSnapshot inspect() {
+    public NetworkSnapshot inspect(int port) {
         String program = currentProgram();
         if (!isWindows() || program == null) return NetworkSnapshot.unsupported();
         try {

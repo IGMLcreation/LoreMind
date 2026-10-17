@@ -79,7 +79,7 @@ class WindowsHostNetworkAccessTest {
     @Test
     @EnabledOnOs(OS.WINDOWS)
     void inspect_readsTheRealSystem_onWindows() {
-        NetworkSnapshot s = new WindowsHostNetworkAccess(mapper).inspect();
+        NetworkSnapshot s = new WindowsHostNetworkAccess(mapper).inspect(8765);
         assertTrue(s.supported(), "PowerShell doit répondre en lecture seule sur Windows");
         assertNotNull(s.program());
         assertNotNull(s.thirdPartyFirewalls());

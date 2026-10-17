@@ -2458,7 +2458,13 @@
       "thirdParty": "{{names}} also filters connections on this PC, with its own rules that DM Loremind can't check. Until it allows it, the tablet will load forever.",
       "thirdPartyHowTo": "In that software's firewall settings: classify your Wi-Fi as a home network (not public, stealth mode off), then add a rule allowing incoming connections for DM Loremind.",
       "docLink": "See how to fix it",
-      "docUrl": "https://loremind-docs.igmlcreation.fr/en/docs/configuration/acces-tablette#the-tablet-loads-forever"
+      "docUrl": "https://loremind-docs.igmlcreation.fr/en/docs/configuration/acces-tablette#the-tablet-loads-forever",
+      "linuxNone": "No ufw or firewalld firewall is active on this machine: nothing to open.",
+      "linuxOpen": "The firewall ({{fw}}) lets port {{port}} through.",
+      "linuxClosed": "The firewall ({{fw}}) blocks port {{port}}: other devices would load forever. Open it with this command on the machine:",
+      "linuxUnknown": "The {{fw}} firewall is active. DM Loremind can't read its rules without administrator rights: if you haven't already, open port {{port}} with this command on the machine:",
+      "copy": "Copy",
+      "copied": "Copied"
     }
   },
   "mobileShell": {
