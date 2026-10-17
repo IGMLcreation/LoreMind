@@ -1,13 +1,15 @@
-import { Component, Input, Output, EventEmitter, HostListener, OnDestroy, ElementRef, forwardRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, HostListener, OnDestroy, ElementRef, ViewChild, forwardRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { NavigationEnd, Router } from '@angular/router';
+import { Subscription, filter } from 'rxjs';
 import { TranslatePipe } from '@ngx-translate/core';
 import { CdkDropList, CdkDrag, CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
-import { LucideAngularModule, ChevronRight, ChevronDown, PanelLeftClose, PanelLeftOpen, Plus, FolderPlus, FilePlus, Home, LucideIconData } from 'lucide-angular';
+import { LucideAngularModule, ChevronRight, ChevronDown, PanelLeftClose, PanelLeftOpen, Plus, FolderPlus, FilePlus, Home, ArrowLeft, ExternalLink, LucideIconData } from 'lucide-angular';
 import { TreeItem, TreeCreateAction, SidebarAction, BottomPanel, BottomPanelItem, LayoutService, ReorderKind, SidebarReorderContext } from '../../services/layout.service';
 import { SidebarReorderService } from '../../services/sidebar-reorder.service';
 import { SidebarTreeNodeComponent } from './sidebar-tree-node.component';
 import { resolveIcon } from '../../lore/lore-icons';
+import { countLabel, hasChildren as nodeHasChildren, resolveStack, stackForActive } from './tree-drilldown';
 
 @Component({
     selector: 'app-secondary-sidebar',
@@ -29,7 +31,21 @@ export class SecondarySidebarComponent implements OnDestroy {
    * Mode tiroir (shell < 1024 px) : largeur fixée par le CSS, pas de repli 44 px
    * ni de poignée de redimensionnement — le tiroir se ferme depuis la barre haute.
    */
-  @Input() drawerMode = false;
+  @Input() set drawerMode(value: boolean) {
+    this._drawerMode = value;
+    if (value) this.syncDrillToActive();
+  }
+  get drawerMode(): boolean { return this._drawerMode; }
+  private _drawerMode = false;
+
+  // --- Navigation par niveaux (mode tiroir : téléphone, tablette) ---------------------
+  // Un niveau à la fois au lieu de l'arbre indenté : toucher un nœud qui a des enfants
+  // « entre » dedans (sans naviguer ni fermer le tiroir), « retour » remonte. Seule une
+  // feuille (scène, page…) navigue — le tiroir se ferme alors au changement de route.
+  /** Pile des nœuds ouverts, de la racine vers le niveau affiché. */
+  drill: TreeItem[] = [];
+  @ViewChild('drillTitle') private drillTitle?: ElementRef<HTMLElement>;
+  private routerSub?: Subscription;
   @Output() collapsedChange = new EventEmitter<boolean>();
 
   /** true = ouvert (on affiche les items) ; false = replié (titre seul). */
@@ -43,6 +59,8 @@ export class SecondarySidebarComponent implements OnDestroy {
   readonly FolderPlus = FolderPlus;
   readonly FilePlus = FilePlus;
   readonly Home = Home;
+  readonly ArrowLeft = ArrowLeft;
+  readonly ExternalLink = ExternalLink;
 
   isCollapsed = false;
 
@@ -79,6 +97,10 @@ export class SecondarySidebarComponent implements OnDestroy {
     this._items = value ?? [];
     this._buildDragMaps();
     this.autoExpandActiveAncestors();
+    // Arbre reconstruit (même ids, nouveaux objets) : on garde le niveau où l'on était.
+    this.drill = this.drill.length
+      ? resolveStack(this._items, this.drill.map(n => n.id))
+      : resolveStack(this._items, stackForActive(this._items, i => this.isDrillActive(i)));
   }
   get items(): TreeItem[] { return this._items; }
 
@@ -94,6 +116,10 @@ export class SecondarySidebarComponent implements OnDestroy {
     private elementRef: ElementRef<HTMLElement>,
     private reorderService: SidebarReorderService
   ) {
+    // Après chaque navigation, le tiroir rouvert montre le niveau de la page courante.
+    this.routerSub = this.router.events
+      .pipe(filter(e => e instanceof NavigationEnd))
+      .subscribe(() => { if (this._drawerMode) this.syncDrillToActive(); });
     try {
       const stored = localStorage.getItem(SecondarySidebarComponent.WIDTH_STORAGE_KEY);
       const parsed = stored ? parseInt(stored, 10) : NaN;
@@ -142,11 +168,74 @@ export class SecondarySidebarComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.routerSub?.unsubscribe();
     // Sécurité : si le composant est détruit en plein drag, on restaure le curseur global.
     if (this.isResizing) {
       document.body.style.userSelect = '';
       document.body.style.cursor = '';
     }
+  }
+
+  /** Niveau affiché : le dernier nœud ouvert, ou null à la racine. */
+  get drillLevel(): TreeItem | null {
+    return this.drill.length ? this.drill[this.drill.length - 1] : null;
+  }
+
+  /** Lignes du niveau affiché. */
+  get drillRows(): TreeItem[] {
+    return this.drillLevel ? this.drillLevel.children ?? [] : this._items;
+  }
+
+  /** Libellé du bouton retour : le niveau parent, ou le titre de la section. */
+  get drillBackLabel(): string {
+    return this.drill.length > 1 ? this.drill[this.drill.length - 2].label : this.title;
+  }
+
+  drillCount(item: TreeItem): string | null {
+    return countLabel(item);
+  }
+
+  canDrill(item: TreeItem): boolean {
+    return !item.isAction && nodeHasChildren(item);
+  }
+
+  /** Toucher une ligne : entrer si elle a des enfants, sinon ouvrir sa page. */
+  tapDrillRow(item: TreeItem): void {
+    if (this.canDrill(item)) {
+      this.drill = [...this.drill, item];
+      this.focusDrillTitle();
+    } else if (item.route) {
+      this.router.navigate([item.route]);
+    }
+  }
+
+  drillBack(): void {
+    this.drill = this.drill.slice(0, -1);
+    this.focusDrillTitle();
+  }
+
+  /** « Ouvrir la fiche » du niveau affiché (arc, chapitre, dossier…). */
+  openDrillLevel(): void {
+    const route = this.drillLevel?.route;
+    if (route) this.router.navigate([route]);
+  }
+
+  /**
+   * Page courante pour le choix du niveau. L'accueil de la section (route du titre) ne
+   * compte pas : un nœud qui y pointe (ex. « Parties » → hub) ouvrirait sinon le tiroir
+   * dans ce nœud au lieu de la racine.
+   */
+  private isDrillActive(item: TreeItem): boolean {
+    return item.route !== this.titleRoute && this.isActive(item);
+  }
+
+  private syncDrillToActive(): void {
+    this.drill = resolveStack(this._items, stackForActive(this._items, i => this.isDrillActive(i)));
+  }
+
+  /** Lecteurs d'écran / clavier : le focus suit le changement de niveau. */
+  private focusDrillTitle(): void {
+    setTimeout(() => this.drillTitle?.nativeElement.focus());
   }
 
   runAction(action: SidebarAction): void {

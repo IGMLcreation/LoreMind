@@ -13,61 +13,122 @@
   }
 
   @if (!collapsed) {
-    @if (titleRoute) {
-      <button
-        type="button"
-        class="sidebar-title sidebar-title--link"
-        [class.active]="isTitleActive()"
-        [title]="'secondarySidebar.backToCampaignHome' | translate"
-        (click)="clickTitle()">
-        <lucide-icon [img]="Home" [size]="14" class="sidebar-title-icon"></lucide-icon>
-        <span class="sidebar-title-text">{{ title }}</span>
-      </button>
-    } @else {
-      <h2 class="sidebar-title">{{ title }}</h2>
-    }
-    @if (createActions.length) {
-      <div class="actions-row">
-        @for (action of createActions; track action) {
-          <button
-            class="btn-pill"
-            [class.primary]="action.variant === 'primary'"
-            [class.secondary]="action.variant === 'secondary'"
-            (click)="runAction(action)">
-            {{ action.label }}
-          </button>
+    <!-- Niveau ouvert en mode tiroir : son propre en-tête (retour, titre, actions). -->
+    @if (drawerMode && drillLevel; as level) {
+      <div class="drill-header">
+        <button type="button" class="drill-back" (click)="drillBack()">
+          <lucide-icon [img]="ArrowLeft" [size]="18"></lucide-icon>
+          <span class="drill-back-label">{{ drillBackLabel }}</span>
+        </button>
+        <h2 #drillTitle class="drill-title" tabindex="-1">{{ level.label }}</h2>
+        @if (level.route || level.createActions?.length) {
+          <div class="drill-actions">
+            @if (level.route) {
+              <button type="button" class="drill-action" (click)="openDrillLevel()">
+                <lucide-icon [img]="ExternalLink" [size]="15"></lucide-icon>
+                {{ 'treeDrill.open' | translate }}
+              </button>
+            }
+            @for (a of level.createActions; track a.id) {
+              <button type="button" class="drill-action" (click)="runCreateAction($event, a)">
+                <lucide-icon [img]="iconForAction(a)" [size]="15"></lucide-icon>
+                {{ a.label }}
+              </button>
+            }
+          </div>
         }
       </div>
+    } @else {
+      @if (titleRoute) {
+        <button
+          type="button"
+          class="sidebar-title sidebar-title--link"
+          [class.active]="isTitleActive()"
+          [title]="'secondarySidebar.backToCampaignHome' | translate"
+          (click)="clickTitle()">
+          <lucide-icon [img]="Home" [size]="14" class="sidebar-title-icon"></lucide-icon>
+          <span class="sidebar-title-text">{{ title }}</span>
+        </button>
+      } @else {
+        <h2 class="sidebar-title">{{ title }}</h2>
+      }
+      @if (createActions.length) {
+        <div class="actions-row">
+          @for (action of createActions; track action) {
+            <button
+              class="btn-pill"
+              [class.primary]="action.variant === 'primary'"
+              [class.secondary]="action.variant === 'secondary'"
+              (click)="runAction(action)">
+              {{ action.label }}
+            </button>
+          }
+        </div>
+    }
     }
     <!-- cdkDropListGroup : connecte toutes les drop lists de l'arbre (déplacement d'un
          nœud d'une liste à l'autre). Chaque ligne est un <app-sidebar-tree-node> :
          comme c'est un VRAI composant déclaré statiquement dans la drop list, son
          cdkDrag résout sa drop list par DI (impossible via un template outlet-é). -->
-    <div class="tree">
-      <div class="tree-list" cdkDropList
-        id="sidebar-root"
-        [cdkDropListData]="rootDragData"
-        [cdkDropListConnectedTo]="dropListIds"
-        [cdkDropListDisabled]="!dndEnabled()"
-        [cdkDropListEnterPredicate]="rootEnterPredicate"
-        (cdkDropListDropped)="onDrop(null, $event)">
-        @for (item of items; track item.id; let first = $first) {
-          <!-- En-tête de section RENDU HORS du nœud (sinon il serait emporté par le
-               drag du premier item). C'est un élément non-déplaçable de la drop list. -->
-          @if (item.sectionHeaderBefore) {
+    @if (drawerMode) {
+      <nav class="drill-list" [attr.aria-label]="drillLevel?.label || title">
+        @for (item of drillRows; track item.id; let first = $first) {
+          @if (!drillLevel && item.sectionHeaderBefore) {
             <div class="tree-section-header" [class.first]="first">{{ item.sectionHeaderBefore }}</div>
           }
-          @if (dndEnabled() && item.dragKind) {
-            <app-sidebar-tree-node cdkDrag [cdkDragData]="item" cdkDragLockAxis="y"
-              [item]="item" [level]="0"></app-sidebar-tree-node>
-          } @else {
-            <app-sidebar-tree-node [item]="item" [level]="0"></app-sidebar-tree-node>
-          }
+          <button type="button" class="drill-row"
+            [class.active]="isActive(item)"
+            [class.action]="item.isAction"
+            [attr.aria-current]="isActive(item) ? 'page' : null"
+            (click)="tapDrillRow(item)">
+            @if (iconFor(item); as icon) {
+              <lucide-icon [img]="icon" [size]="17" class="drill-icon"></lucide-icon>
+            }
+            @if (item.statusDot) {
+              <span class="status-dot"
+                [class.blocking]="item.statusDot === 'blocking'"
+                [class.recommended]="item.statusDot === 'recommended'"
+                [title]="item.statusDotTitle || (('readiness.dot.' + item.statusDot) | translate)"></span>
+            }
+            <span class="drill-label">{{ item.label }}</span>
+            @if (!item.isAction && drillCount(item); as count) {
+              <span class="drill-count">{{ count }}</span>
+            }
+            @if (canDrill(item)) {
+              <lucide-icon [img]="ChevronRight" [size]="18" class="drill-chevron"></lucide-icon>
+            }
+          </button>
+        } @empty {
+          <p class="drill-empty">{{ 'treeDrill.empty' | translate }}</p>
         }
+      </nav>
+    } @else {
+    <div class="tree">
+        <div class="tree-list" cdkDropList
+          id="sidebar-root"
+          [cdkDropListData]="rootDragData"
+          [cdkDropListConnectedTo]="dropListIds"
+          [cdkDropListDisabled]="!dndEnabled()"
+          [cdkDropListEnterPredicate]="rootEnterPredicate"
+          (cdkDropListDropped)="onDrop(null, $event)">
+          @for (item of items; track item.id; let first = $first) {
+            <!-- En-tête de section RENDU HORS du nœud (sinon il serait emporté par le
+                 drag du premier item). C'est un élément non-déplaçable de la drop list. -->
+            @if (item.sectionHeaderBefore) {
+              <div class="tree-section-header" [class.first]="first">{{ item.sectionHeaderBefore }}</div>
+            }
+            @if (dndEnabled() && item.dragKind) {
+              <app-sidebar-tree-node cdkDrag [cdkDragData]="item" cdkDragLockAxis="y"
+                [item]="item" [level]="0"></app-sidebar-tree-node>
+            } @else {
+              <app-sidebar-tree-node [item]="item" [level]="0"></app-sidebar-tree-node>
+            }
+          }
+        </div>
       </div>
-    </div>
-    <!-- Panneau bas (ex: Templates) ------------------------------------ -->
-    @if (bottomPanel) {
+    }
+    <!-- Panneau bas (ex: Templates) : à la racine seulement en mode tiroir. -->
+    @if (bottomPanel && !(drawerMode && drillLevel)) {
       <section class="bottom-panel">
         <div class="panel-header-row">
           <button class="panel-header" (click)="togglePanel()">

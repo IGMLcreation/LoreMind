@@ -133,19 +133,30 @@ test.describe('Shell mobile (375 px)', () => {
       await page.getByRole('button', { name: "Ouvrir l'arborescence" }).tap();
       await expect(tree).toBeVisible();
 
-      // Déplie « Scènes » puis l'arc / le chapitre jusqu'à la scène, au doigt.
-      for (const label of [/Scènes/, new RegExp(arc.name), new RegExp(chapter.name)]) {
-        const row = tree.locator('.tree-row', { has: page.locator('.tree-btn', { hasText: label }) }).first();
-        if (await tree.getByRole('button', { name: scene.name }).isVisible()) break;
-        const chevron = row.locator('.chevron-btn');
-        if (await chevron.count()) await chevron.tap();
+      // Navigation par niveaux : toucher une ligne qui a des enfants « entre » dedans
+      // (sans quitter le volet), jusqu'à la scène. Mode plat ou arc/chapitre selon le seed.
+      const sceneRow = tree.locator('.drill-row', { hasText: scene.name });
+      for (const label of ['Scènes', arc.name, chapter.name]) {
+        if (await sceneRow.isVisible()) break;
+        const row = tree.locator('.drill-row', { hasText: label }).first();
+        if (await row.count()) {
+          await row.tap();
+          await expect(tree.locator('.drill-back')).toBeVisible();
+          await expect(tree).toBeVisible();
+        }
       }
-      await tree.getByRole('button', { name: scene.name }).tap();
+      await sceneRow.tap();
 
       await expect(page).toHaveURL(new RegExp(`/scenes/${scene.id}$`));
       await expect(page.getByRole('heading', { level: 1, name: scene.name })).toBeVisible();
       await expect(tree).toBeHidden();
       await expectNoHorizontalScroll(page);
+
+      // En rouvrant le volet, on retrouve le niveau de la scène, surlignée ; « retour » remonte.
+      await page.getByRole('button', { name: "Ouvrir l'arborescence" }).tap();
+      await expect(tree.locator('.drill-row.active', { hasText: scene.name })).toBeVisible();
+      await tree.locator('.drill-back').tap();
+      await expect(tree.locator('.drill-row.active', { hasText: scene.name })).toHaveCount(0);
     });
 
     test('écran de séance : journal et horloges lisibles sans scroll horizontal', async ({ page, request }) => {

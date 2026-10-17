@@ -2514,5 +2514,9 @@
     "chooseSystem": "Choose the campaign's system",
     "noRules": "The \"{{name}}\" system has no rules yet.",
     "addRules": "Add rules to the system"
+  },
+  "treeDrill": {
+    "open": "Open page",
+    "empty": "Nothing here yet."
   }
 }

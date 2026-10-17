@@ -2514,5 +2514,9 @@
     "chooseSystem": "Choisir le système de la campagne",
     "noRules": "Le système « {{name}} » n'a pas encore de règles.",
     "addRules": "Ajouter des règles au système"
+  },
+  "treeDrill": {
+    "open": "Ouvrir la fiche",
+    "empty": "Rien ici pour le moment."
   }
 }
