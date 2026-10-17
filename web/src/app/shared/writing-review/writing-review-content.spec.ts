@@ -25,7 +25,7 @@ describe('writing review content', () => {
   const rules = emittedRules();
 
   it('finds the rules emitted by the core', () => {
-    expect(rules).toHaveLength(15);
+    expect(rules).toHaveLength(17);
   });
 
   for (const lang of ['fr', 'en'] as const) {
@@ -70,5 +70,21 @@ describe('remarkAction', () => {
   it('falls back to the campaign hub for campaign-wide remarks', () => {
     const r = { ...base, entityType: 'CAMPAIGN' as const, entityId: 'camp', ruleId: 'WRITE-010-UNTYPED-SCENES' };
     expect(remarkAction(r, 'camp').link).toEqual(['/campaigns', 'camp']);
+  });
+});
+
+describe('remarkAction for NPCs and hooks', () => {
+  const base: WritingRemark = {
+    entityType: 'NPC', entityId: 'n1', ruleId: 'WRITE-016-NPC-NO-MOTIVATION',
+    category: 'STAKES', params: { role: 'OPPONENT' }, arcId: null, chapterId: null
+  };
+
+  it('opens the NPC editor', () => {
+    expect(remarkAction(base, 'camp')).toEqual({ link: ['/campaigns', 'camp', 'npcs', 'n1', 'edit'] });
+  });
+
+  it('opens the arc editor on the hooks section', () => {
+    expect(remarkAction({ ...base, entityType: 'ARC', entityId: 'a1', ruleId: 'WRITE-017-SINGLE-HOOK' }, 'camp'))
+      .toEqual({ link: ['/campaigns', 'camp', 'arcs', 'a1', 'edit'], queryParams: { focus: 'hooks' } });
   });
 });

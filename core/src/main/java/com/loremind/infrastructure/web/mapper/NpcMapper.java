@@ -23,6 +23,7 @@ public class NpcMapper {
         dto.setCampaignId(n.getCampaignId());
         dto.setRelatedPageIds(n.getRelatedPageIds() != null ? new ArrayList<>(n.getRelatedPageIds()) : new ArrayList<>());
         dto.setFolder(n.getFolder());
+        dto.setStory(n.getStory());
         dto.setOrder(n.getOrder());
         return dto;
     }
@@ -40,6 +41,7 @@ public class NpcMapper {
                 .campaignId(dto.getCampaignId())
                 .relatedPageIds(dto.getRelatedPageIds() != null ? new ArrayList<>(dto.getRelatedPageIds()) : new ArrayList<>())
                 .folder(dto.getFolder())
+                .story(dto.getStory())
                 .order(dto.getOrder())
                 .build();
     }

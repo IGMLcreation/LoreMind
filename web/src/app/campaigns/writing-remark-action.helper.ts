@@ -21,6 +21,8 @@ export function remarkAction(remark: WritingRemark, campaignId: string): GapActi
       return { link: [...base, 'arcs', remark.arcId ?? '', 'chapters', remark.entityId, 'edit'], queryParams };
     case 'ARC':
       return { link: [...base, 'arcs', remark.entityId, 'edit'], queryParams };
+    case 'NPC':
+      return { link: [...base, 'npcs', remark.entityId, 'edit'] };
     default:
       return { link: base };
   }
@@ -38,5 +40,6 @@ const FOCUS_BY_RULE: Record<string, string> = {
   'WRITE-011-ISOLATED-SCENE': 'branches',
   'WRITE-012-CHOKEPOINT': 'choices',
   'WRITE-013-LINEAR-DUNGEON': 'rooms',
-  'WRITE-015-SAME-SOURCE-CLUES': 'branches'
+  'WRITE-015-SAME-SOURCE-CLUES': 'branches',
+  'WRITE-017-SINGLE-HOOK': 'hooks'
 };

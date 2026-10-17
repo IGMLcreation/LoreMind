@@ -4,6 +4,9 @@ import com.loremind.domain.campaigncontext.Campaign;
 import com.loremind.domain.campaigncontext.ports.ArcRepository;
 import com.loremind.domain.campaigncontext.ports.CampaignRepository;
 import com.loremind.domain.campaigncontext.ports.ChapterRepository;
+import com.loremind.domain.campaigncontext.bestiary.Npc;
+import com.loremind.domain.campaigncontext.bestiary.NpcStory;
+import com.loremind.domain.campaigncontext.ports.NpcRepository;
 import com.loremind.domain.campaigncontext.ports.QuestRepository;
 import com.loremind.domain.campaigncontext.ports.SceneRepository;
 import com.loremind.domain.campaigncontext.quest.Quest;
@@ -91,17 +94,20 @@ public class WritingReviewService {
     private final ChapterRepository chapterRepository;
     private final SceneRepository sceneRepository;
     private final QuestRepository questRepository;
+    private final NpcRepository npcRepository;
 
     public WritingReviewService(CampaignRepository campaignRepository,
                                 ArcRepository arcRepository,
                                 ChapterRepository chapterRepository,
                                 SceneRepository sceneRepository,
-                                QuestRepository questRepository) {
+                                QuestRepository questRepository,
+                                NpcRepository npcRepository) {
         this.campaignRepository = campaignRepository;
         this.arcRepository = arcRepository;
         this.chapterRepository = chapterRepository;
         this.sceneRepository = sceneRepository;
         this.questRepository = questRepository;
+        this.npcRepository = npcRepository;
     }
 
     /** Relit toute la campagne et renvoie les remarques dans l'ordre de l'arbre. */
@@ -121,6 +127,11 @@ public class WritingReviewService {
             List<Chapter> chapters = new ArrayList<>(chapterRepository.findByArcId(arc.getId()));
             chapters.sort(Comparator.comparingInt(Chapter::getOrder));
             boolean visibleArc = arc.getType() != ArcType.SYSTEM;
+
+            // WRITE-017 — une seule accroche : les personnages n'ont qu'une raison de s'en mêler.
+            if (visibleArc && countLines(arc.getHooks()) == 1) {
+                treeRemarks.add(arcRemark(arc, "WRITE-017-SINGLE-HOOK", WritingRemarkCategory.AGENCY, Map.of()));
+            }
 
             // WRITE-005 (arc) : seulement sur un arc qui a déjà du contenu.
             if (visibleArc && isBlank(arc.getStakes())
@@ -164,6 +175,7 @@ public class WritingReviewService {
 
         List<WritingRemark> remarks = new ArrayList<>(campaignRemarks);
         remarks.addAll(treeRemarks);
+        remarks.addAll(reviewNpcs(campaignId));
         return new WritingReviewReport(campaignId, remarks);
     }
 
@@ -437,7 +449,8 @@ public class WritingReviewService {
 
     /** WRITE-008 — combat sans but : ni choix décrits, ni notes sur les motivations des ennemis. */
     private void checkCombatPurpose(Arc arc, Chapter chapter, Scene scene, List<WritingRemark> out) {
-        if (isCombat(scene) && isBlank(scene.getChoicesConsequences()) && isBlank(scene.getGmSecretNotes())) {
+        if (isCombat(scene) && isBlank(scene.getChoicesConsequences()) && isBlank(scene.getGmSecretNotes())
+                && isBlank(scene.getTactics())) {
             out.add(sceneRemark(arc, chapter, scene, "WRITE-008-COMBAT-NO-PURPOSE", WritingRemarkCategory.STAKES,
                     Map.of()));
         }
@@ -455,7 +468,33 @@ public class WritingReviewService {
         }
     }
 
+    // --- PNJ ----------------------------------------------------------------------------------
+
+    /**
+     * WRITE-016 — opposant ou allié sans motivation : un PNJ qui pèse sur l'intrigue doit
+     * vouloir quelque chose, sinon le MJ ne sait pas comment le faire réagir. Les figurants
+     * et les PNJ sans rôle précisé ne sont pas jugés (pas de bruit sur les seconds rôles).
+     */
+    private List<WritingRemark> reviewNpcs(String campaignId) {
+        List<WritingRemark> out = new ArrayList<>();
+        for (Npc npc : npcRepository.findByCampaignId(campaignId)) {
+            NpcStory story = npc.getStory();
+            if (story != null && story.drivesThePlot() && story.normalized().motivation() == null) {
+                out.add(new WritingRemark(ReadinessEntityType.NPC, npc.getId(), labelOr(npc.getName(), "PNJ"),
+                        "WRITE-016-NPC-NO-MOTIVATION", WritingRemarkCategory.STAKES,
+                        Map.of("role", story.normalized().role()), null, null));
+            }
+        }
+        return out;
+    }
+
     // --- Helpers ----------------------------------------------------------------------------
+
+    /** Nombre de lignes non vides (une accroche par ligne, puces « - » comprises). */
+    private static int countLines(String text) {
+        if (isBlank(text)) return 0;
+        return (int) text.lines().filter(l -> !l.isBlank()).count();
+    }
 
     private static boolean isCombat(Scene scene) {
         return typeOf(scene) == SceneType.ENCOUNTER

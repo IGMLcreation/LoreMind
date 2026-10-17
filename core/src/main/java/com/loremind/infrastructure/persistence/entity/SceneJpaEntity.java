@@ -78,6 +78,14 @@ public class SceneJpaEntity {
     @Column(name = "choices_consequences", columnDefinition = "TEXT")
     private String choicesConsequences;
 
+    // Tactique et moral des adversaires
+    @Column(name = "tactics", columnDefinition = "TEXT")
+    private String tactics;
+
+    // Utilité de la scène dans l'histoire
+    @Column(name = "purpose", columnDefinition = "TEXT")
+    private String purpose;
+
     // Combat
     @Column(name = "combat_difficulty", columnDefinition = "TEXT")
     private String combatDifficulty;

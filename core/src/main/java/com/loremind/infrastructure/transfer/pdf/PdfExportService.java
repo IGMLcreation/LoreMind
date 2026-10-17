@@ -1,6 +1,7 @@
 package com.loremind.infrastructure.transfer.pdf;
 
 import com.loremind.domain.campaigncontext.CampaignPublication;
+import com.loremind.domain.campaigncontext.bestiary.NpcStory;
 import com.loremind.domain.campaigncontext.quest.NodeType;
 import com.loremind.domain.campaigncontext.quest.Prerequisite;
 import com.loremind.domain.campaigncontext.quest.QuestNodeRef;
@@ -538,6 +539,8 @@ public class PdfExportService {
     private void arcFields(Ctx ctx, ArcJpaEntity arc) {
         illustrations(ctx, arc.getIllustrationImageIds());
         ctx.gmBlock(LABEL_DESCRIPTION, arc.getDescription());
+        ctx.gmBox(CSS_SECRET, "Histoire cachée", arc.getHiddenTruth());
+        ctx.gmBlock("Accroches", arc.getHooks());
         ctx.gmBlock(LABEL_THEMES, arc.getThemes());
         ctx.gmBlock(LABEL_ENJEUX, arc.getStakes());
         ctx.gmBlock(LABEL_RECOMPENSES, arc.getRewards());
@@ -628,6 +631,7 @@ public class PdfExportService {
                 .append(esc(sc.getName())).append(DIV_CLOSE);
         sceneMeta(b, sc);
         ctx.gmBlock("Résumé", sc.getDescription());
+        ctx.gmBlock("Utilité", sc.getPurpose());
         block(b, "Ambiance", sc.getAtmosphere(), "ambiance");
         box(b, "readaloud", "À lire aux joueurs", sc.getPlayerNarration());
         ctx.gmBox(CSS_SECRET, "Notes secrètes MJ", sc.getGmSecretNotes());
@@ -635,7 +639,7 @@ public class PdfExportService {
         if (ctx.gm) blockHtml(b, "Sorties", sceneBranchItems(sc.getBranches(), st));
         // Combat : difficulte + ennemis de la rencontre (fiches du bestiaire en renvoi
         // « p. N » + texte libre) dans le meme encadre rouge.
-        combatBox(ctx, "Combat", sc.getCombatDifficulty(), sc.getEnemyIds(), sc.getEnemies(), st);
+        combatBox(ctx, "Combat", sc.getCombatDifficulty(), sc.getEnemyIds(), sc.getEnemies(), sc.getTactics(), st);
         illustrations(ctx, sc.getIllustrationImageIds());
         if (ctx.maps != null) {
             mapLinks(ctx, sc);
@@ -706,7 +710,7 @@ public class PdfExportService {
             if (r.getFloor() != null) b.append(" · Étage ").append(r.getFloor());
             b.append(SPAN_CLOSE).append(esc(r.getName())).append(DIV_CLOSE);
             ctx.gmBlock(LABEL_DESCRIPTION, r.getDescription());
-            combatBox(ctx, "Ennemis", null, r.getEnemyIds(), r.getEnemies(), st);
+            combatBox(ctx, "Ennemis", null, r.getEnemyIds(), r.getEnemies(), null, st);
             ctx.gmBlock("Butin", r.getLoot());
             ctx.gmBlock("Pièges", r.getTraps());
             ctx.gmBox(CSS_SECRET, LABEL_NOTES_MJ, r.getGmNotes());
@@ -776,7 +780,7 @@ public class PdfExportService {
      * leur fiche (« Bandit (p. 24) »), puis texte libre. Rien si tout est vide.
      */
     private static void combatBox(Ctx ctx, String label, String difficulty, List<String> enemyIds,
-                                  String freeText, Structure st) {
+                                  String freeText, String tactics, Structure st) {
         if (!ctx.gm) return;
         List<String> enemies = new ArrayList<>();
         if (enemyIds != null) {
@@ -785,7 +789,7 @@ public class PdfExportService {
                 if (name != null) enemies.add(xref("enemy-" + id, name) + " " + pageRef("enemy-" + id));
             }
         }
-        if (!notBlank(difficulty) && enemies.isEmpty() && !notBlank(freeText)) return;
+        if (!notBlank(difficulty) && enemies.isEmpty() && !notBlank(freeText) && !notBlank(tactics)) return;
         StringBuilder b = ctx.body;
         b.append("<div class=\"box combat\"><div class=\"box-label\">").append(esc(label)).append(DIV_CLOSE);
         prose(b, difficulty);
@@ -795,6 +799,7 @@ public class PdfExportService {
             b.append("</ul>");
         }
         prose(b, freeText);
+        block(b, "Tactique et moral", tactics);
         b.append(DIV_CLOSE);
     }
 
@@ -907,13 +912,14 @@ public class PdfExportService {
     /** Une fiche persona generique pour la mise en page (PNJ ou ennemi). */
     record PersonaRow(Long id, int order, String name, String folder, String level, String portraitId,
                               Map<String, String> values, Map<String, Map<String, String>> keyValueValues,
-                              Map<String, List<String>> imageValues, Map<String, String> foundryStats) {}
+                              Map<String, List<String>> imageValues, Map<String, String> foundryStats,
+                              NpcStory story) {}
 
     private List<PersonaRow> npcEntries(CampaignJpaEntity c) {
         List<PersonaRow> out = new ArrayList<>();
         for (NpcJpaEntity n : npcRepo.findByCampaignIdOrderByOrderAsc(c.getId())) {
             out.add(new PersonaRow(n.getId(), n.getOrder(), n.getName(), n.getFolder(), null, n.getPortraitImageId(),
-                    n.getValues(), n.getKeyValueValues(), n.getImageValues(), null));
+                    n.getValues(), n.getKeyValueValues(), n.getImageValues(), null, n.getStory()));
         }
         return out;
     }
@@ -922,7 +928,7 @@ public class PdfExportService {
         List<PersonaRow> out = new ArrayList<>();
         for (EnemyJpaEntity e : enemyRepo.findByCampaignIdOrderByOrderAsc(c.getId())) {
             out.add(new PersonaRow(e.getId(), e.getOrder(), e.getName(), e.getFolder(), e.getLevel(), e.getPortraitImageId(),
-                    e.getValues(), e.getKeyValueValues(), e.getImageValues(), e.getFoundryStats()));
+                    e.getValues(), e.getKeyValueValues(), e.getImageValues(), e.getFoundryStats(), null));
         }
         return out;
     }
@@ -1003,7 +1009,14 @@ public class PdfExportService {
         b.append("<td class=\"persona-content\">");
         b.append("<div class=\"persona-name\">").append(esc(r.name()));
         if (notBlank(r.level())) b.append(" <span class=\"level\">Niv. ").append(esc(r.level())).append(SPAN_CLOSE);
+        String role = r.story() != null ? ROLE_LABELS.get(r.story().role()) : null;
+        if (ctx.gm && role != null) b.append(" <span class=\"level\">").append(role).append(SPAN_CLOSE);
         b.append(DIV_CLOSE);
+        if (r.story() != null) {
+            block(b, "Signe distinctif", r.story().mannerism());
+            ctx.gmBlock("Motivation", r.story().motivation());
+            ctx.gmBlock("Ce qu'il sait", r.story().knowledge());
+        }
 
         renderFields(ctx, template, r.values(), r.keyValueValues(), r.imageValues(), null);
 
@@ -1022,6 +1035,10 @@ public class PdfExportService {
         }
         b.append("</td></tr></table></div>");
     }
+
+    /** Libelles des roles d'un PNJ dans l'histoire (fiche « role dans l'histoire »). */
+    private static final Map<String, String> ROLE_LABELS = Map.of(
+            "OPPONENT", "Opposant", "ALLY", "Allié", "RESOURCE", "Ressource", "EXTRA", "Figurant");
 
     /** Valeurs de stats considerees comme "vides"/bruit (masquees dans le livret). */
     private static final Set<String> STAT_NOISE_VALUES = Set.of("0", "0.0", "false", "none", "null", "", "-", "—");

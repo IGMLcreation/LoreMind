@@ -107,6 +107,28 @@
           ],
           "example": "Trois contrebandiers ne cherchent pas à tuer : ils veulent couler la barque qui contient les preuves. S'ils y parviennent, le combat est perdu, même si tous les PJ sont debout.",
           "pitfall": "Le combat « sac de points de vie » : sans autre objectif que d'abattre l'adversaire, il devient vite répétitif. Donne un but à chaque camp."
+        },
+        "purpose": {
+          "title": "Utilité de la scène",
+          "purpose": "Chaque scène doit apporter quelque chose à l'histoire. Savoir ce qu'on perdrait en la coupant aide à décider ce qu'on garde, ce qu'on raccourcit, et ce qu'on improvise.",
+          "questions": [
+            "Qu'apprennent les joueurs ici qu'ils n'apprendront nulle part ailleurs ?",
+            "Quelle décision prennent-ils, ou quelle émotion vivent-ils ?",
+            "Si le temps manque en séance, peut-on la résumer en deux phrases ?"
+          ],
+          "example": "Sans l'auberge, les joueurs ne rencontrent jamais Maëlis : ils perdent leur seule alliée et la première piste vers la tour.",
+          "pitfall": "Une scène qui n'existe que pour « faire joli » ou pour remplir une séance : les joueurs le sentent, et le rythme s'effondre."
+        },
+        "tactics": {
+          "title": "Tactique et moral des adversaires",
+          "purpose": "Des adversaires qui veulent survivre rendent un combat vivant : ils utilisent le terrain, protègent leur chef et savent quand fuir. Le MJ sait alors comment les jouer sans improviser au hasard.",
+          "questions": [
+            "Comment le terrain les avantage-t-il ?",
+            "Qu'est-ce qui les fait fuir, se rendre ou négocier ?",
+            "Qui protègent-ils, et que font-ils si leur chef tombe ?"
+          ],
+          "example": "Les contrebandiers tirent depuis les barques et coupent les amarres si on les approche. Si le sergent tombe, ils jettent leurs armes et proposent de parler.",
+          "pitfall": "Des ennemis qui se battent tous jusqu'à la mort : le combat devient une simple soustraction de points de vie, sans choix pour les joueurs."
         }
       },
       "chapter": {
@@ -197,6 +219,28 @@
           ],
           "example": "La guilde est démasquée publiquement ; ou bien elle est rachetée par les PJ eux-mêmes ; ou bien les villages sont perdus et l'arc suivant commence par l'exode.",
           "pitfall": "Une seule fin écrite d'avance : les choix des joueurs ne comptent plus. Prépare des issues, pas un scénario."
+        },
+        "hiddenTruth": {
+          "title": "Histoire cachée",
+          "purpose": "La vérité que les joueurs vont reconstituer. Tout le reste en découle : chaque indice, chaque révélation est une trace qu'elle a laissée.",
+          "questions": [
+            "Qu'est-ce qui s'est vraiment passé, et qui en est responsable ?",
+            "Quelles traces cela a-t-il laissées, et où ?",
+            "Les joueurs peuvent-ils la comprendre entièrement à la fin ?"
+          ],
+          "example": "Le régent a empoisonné le vieux roi pour gouverner à la place du prince. Le médecin de la cour le sait et se tait par peur.",
+          "pitfall": "Une vérité trop compliquée pour être découverte en jeu. Si un joueur ne peut pas la résumer en une phrase à la fin, simplifiez-la."
+        },
+        "hooks": {
+          "title": "Accroches",
+          "purpose": "Les raisons qui poussent les personnages à se lancer. Plusieurs accroches de nature différente laissent les joueurs choisir leur motivation au lieu de la subir.",
+          "questions": [
+            "Laquelle joue sur l'intérêt (récompense, contrat) ?",
+            "Laquelle touche un personnage personnellement ?",
+            "Laquelle tombe sur eux sans qu'ils la cherchent ?"
+          ],
+          "example": "- Le conseil offre une récompense pour retrouver le prince.\n- La sœur d'un personnage travaillait au palais et a disparu.\n- Des gardes du régent viennent arrêter les personnages sans raison.",
+          "pitfall": "Une seule accroche, présentée comme une obligation : si elle ne parle pas à la table, l'aventure démarre à contrecœur."
         }
       },
       "publication": {
@@ -254,6 +298,50 @@
           ],
           "example": "Écriture : Camille Martin\nCartes : Léo Dubois\nRelecture : Alex\nTesteurs : la table du jeudi (Inès, Yanis, Paul, Mira)",
           "pitfall": "Oublier les testeurs, ou les crédits exigés par la licence d'une illustration ou d'un système de jeu."
+        }
+      },
+      "npc": {
+        "role": {
+          "title": "Rôle dans l'histoire",
+          "purpose": "Savoir quelle place tient un PNJ dit combien de préparation il mérite : un opposant ou un allié pèse sur l'intrigue, un figurant n'a besoin que d'un détail.",
+          "questions": [
+            "Ce PNJ aide-t-il les personnages, s'y oppose-t-il, ou détient-il quelque chose dont ils ont besoin ?",
+            "Agit-il de lui-même, ou est-il l'enjeu que d'autres se disputent ?"
+          ],
+          "example": "Borin le forgeron est une ressource : il sait qui a commandé les clés de la crypte, mais ne le dira qu'à quelqu'un qui l'aide.",
+          "pitfall": "Des alliés qui font tout à la place des joueurs. Un allié a des limites : ce qu'il ne peut pas ou ne veut pas faire."
+        },
+        "motivation": {
+          "title": "Motivation",
+          "purpose": "Ce que le PNJ veut décide de tout ce qu'il fait. Avec une motivation claire, le MJ sait comment il réagit à n'importe quelle action des joueurs.",
+          "questions": [
+            "Que veut-il, maintenant ?",
+            "Que craint-il de perdre ?",
+            "Jusqu'où est-il prêt à aller ?"
+          ],
+          "example": "Ysolde veut le trône pour elle-même, mais elle craint plus que tout le scandale : elle préfère acheter que tuer.",
+          "pitfall": "Un méchant méchant « parce que » : les joueurs ne peuvent ni le comprendre, ni le manipuler, ni le convaincre."
+        },
+        "knowledge": {
+          "title": "Ce qu'il sait",
+          "purpose": "La liste de ce que le PNJ peut révéler évite d'improviser des réponses contradictoires et relie le PNJ aux indices de l'aventure.",
+          "questions": [
+            "Quelles informations utiles détient-il ?",
+            "À quelle condition les donnera-t-il (confiance, argent, menace) ?",
+            "Que croit-il savoir à tort ?"
+          ],
+          "example": "Il a vu le notaire sortir de la chambre à minuit. Il le dira contre la promesse d'un passage sûr hors de la ville.",
+          "pitfall": "Un PNJ qui sait tout et le dit au premier venu : l'enquête se résout en une conversation."
+        },
+        "mannerism": {
+          "title": "Signe distinctif",
+          "purpose": "Un détail à jouer à la table rend un PNJ mémorable en quelques secondes, et aide les joueurs à reconnaître qui parle.",
+          "questions": [
+            "Quel geste, quelle manie le trahit ?",
+            "Comment parle-t-il : vite, lentement, avec un mot fétiche ?"
+          ],
+          "example": "Tapote sa bague chaque fois qu'elle ment, et termine ses phrases par « n'est-ce pas ? ».",
+          "pitfall": "Une longue description physique que personne ne retient : un seul détail fort vaut mieux qu'un portrait complet."
         }
       }
     }

@@ -31,6 +31,8 @@ public class SceneDTO {
     private String gmSecretNotes;
     private String choicesConsequences;
     private String combatDifficulty;
+    private String tactics;
+    private String purpose;
     private String enemies;
 
     /** IDs des fiches du bestiaire engagées dans la rencontre (weak refs). */

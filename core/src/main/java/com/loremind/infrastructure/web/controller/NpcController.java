@@ -83,7 +83,8 @@ public class NpcController {
                 dto.getCampaignId(),
                 dto.getRelatedPageIds(),
                 dto.getFolder(),
-                order
+                order,
+                dto.getStory()
         );
     }
 }

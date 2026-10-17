@@ -19,6 +19,26 @@
 
   <app-persona-view [persona]="npc" [templateFields]="templateFields"></app-persona-view>
 
+  @if (npc?.story; as story) {
+    <section class="nv-story">
+      <h2 class="nv-story-title">
+        {{ 'npcView.storyTitle' | translate }}
+        @if (story.role) {
+          <span class="nv-role">{{ ('npcEdit.role.' + story.role) | translate }}</span>
+        }
+      </h2>
+      @if (story.mannerism) {
+        <p><strong>{{ 'npcEdit.mannerismLabel' | translate }} :</strong> {{ story.mannerism }}</p>
+      }
+      @if (story.motivation) {
+        <p><strong>{{ 'npcEdit.motivationLabel' | translate }} :</strong> {{ story.motivation }}</p>
+      }
+      @if (story.knowledge) {
+        <p class="nv-private"><strong>{{ 'npcEdit.knowledgeLabel' | translate }} :</strong> {{ story.knowledge }}</p>
+      }
+    </section>
+  }
+
   <!-- Pages de Lore liées à ce PNJ (sa ville, sa faction…) -->
   @if (loreId && (npc?.relatedPageIds?.length ?? 0) > 0) {
     <section class="nv-lore-links">

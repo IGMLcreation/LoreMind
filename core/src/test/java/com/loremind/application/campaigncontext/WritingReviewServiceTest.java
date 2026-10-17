@@ -4,6 +4,9 @@ import com.loremind.domain.campaigncontext.Campaign;
 import com.loremind.domain.campaigncontext.ports.ArcRepository;
 import com.loremind.domain.campaigncontext.ports.CampaignRepository;
 import com.loremind.domain.campaigncontext.ports.ChapterRepository;
+import com.loremind.domain.campaigncontext.bestiary.Npc;
+import com.loremind.domain.campaigncontext.bestiary.NpcStory;
+import com.loremind.domain.campaigncontext.ports.NpcRepository;
 import com.loremind.domain.campaigncontext.ports.QuestRepository;
 import com.loremind.domain.campaigncontext.ports.SceneRepository;
 import com.loremind.domain.campaigncontext.quest.Quest;
@@ -47,6 +50,7 @@ class WritingReviewServiceTest {
     @Mock private ChapterRepository chapterRepository;
     @Mock private SceneRepository sceneRepository;
     @Mock private QuestRepository questRepository;
+    @Mock private NpcRepository npcRepository;
 
     @InjectMocks private WritingReviewService service;
 
@@ -458,5 +462,54 @@ class WritingReviewServiceTest {
         assertEquals("NPC", r.params().get("kind"));
         assertEquals("3", r.params().get("count"));
         assertFalse(ruleIds().contains("WRITE-003-SINGLE-CLUE"));
+    }
+
+    // --- WRITE-008 : la tactique des adversaires donne un but au combat ---
+
+    @Test
+    void combatPurpose_notRaised_whenTacticsAreWritten() {
+        tree(List.of(scene("fight", 0).type(SceneType.ENCOUNTER).choicesConsequences(null)
+                .tactics("Ils fuient dès que leur chef tombe").build()));
+        assertFalse(ruleIds().contains("WRITE-008-COMBAT-NO-PURPOSE"));
+    }
+
+    // --- WRITE-016 : opposant ou allié sans motivation ---
+
+    @Test
+    void npcWithoutMotivation_onlyForPlotDrivingRoles() {
+        when(npcRepository.findByCampaignId(CAMP)).thenReturn(List.of(
+                Npc.builder().id("n1").name("Ysolde").story(new NpcStory("OPPONENT", " ", null, null)).build(),
+                Npc.builder().id("n2").name("Borin").story(new NpcStory("ALLY", "Protéger sa fille", null, null)).build(),
+                Npc.builder().id("n3").name("Le passant").story(new NpcStory("EXTRA", null, null, null)).build(),
+                Npc.builder().id("n4").name("Sans fiche").build()));
+
+        List<WritingRemark> remarks = service.review(CAMP).remarks().stream()
+                .filter(r -> r.ruleId().equals("WRITE-016-NPC-NO-MOTIVATION")).toList();
+        assertEquals(1, remarks.size());
+        assertEquals("n1", remarks.get(0).entityId());
+        assertEquals(ReadinessEntityType.NPC, remarks.get(0).entityType());
+        assertEquals("OPPONENT", remarks.get(0).params().get("role"));
+    }
+
+    // --- WRITE-017 : une seule accroche ---
+
+    @Test
+    void singleHook_whenTheArcHasExactlyOne() {
+        Arc arc = arc("arc", ArcType.HUB);
+        arc.setHooks("- Le prêtre a disparu");
+        tree(arc, chapter("chap", "arc"), List.of(scene("s1", 0).build()));
+        assertEquals(ReadinessEntityType.ARC, remark("WRITE-017-SINGLE-HOOK").entityType());
+    }
+
+    @Test
+    void singleHook_notRaised_withSeveralHooks_orNone() {
+        Arc several = arc("arc", ArcType.HUB);
+        several.setHooks("- Le prêtre a disparu\n\n- Une récompense est offerte");
+        tree(several, chapter("chap", "arc"), List.of(scene("s1", 0).build()));
+        assertFalse(ruleIds().contains("WRITE-017-SINGLE-HOOK"));
+
+        Arc none = arc("arc", ArcType.HUB);
+        tree(none, chapter("chap", "arc"), List.of(scene("s1", 0).build()));
+        assertFalse(ruleIds().contains("WRITE-017-SINGLE-HOOK"), "accroches non renseignées : pas de remarque");
     }
 }

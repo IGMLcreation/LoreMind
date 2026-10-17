@@ -92,3 +92,39 @@
     }
   }
 }
+
+// Fiche « rôle dans l'histoire » (indépendante du système de jeu).
+.nv-story {
+  margin: 1.25rem 0;
+  padding: 0.9rem 1rem;
+  border: 1px solid #1f2937;
+  border-radius: 10px;
+  background: #111827;
+
+  p { margin: 0.35rem 0; color: #d1d5db; line-height: 1.5; white-space: pre-line; }
+  strong { color: #e5e7eb; }
+}
+
+.nv-story-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  color: white;
+  margin: 0 0 0.4rem;
+}
+
+.nv-role {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(108, 99, 255, 0.15);
+  color: #c7d2fe;
+}
+
+.nv-private {
+  border-left: 2px dashed #ab9fd6;
+  padding-left: 0.6rem;
+}

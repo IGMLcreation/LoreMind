@@ -91,7 +91,11 @@
     "deleteMessage": "Supprimer la scène \"{{name}}\" ?",
     "deleteIrreversible": "Cette action est irréversible.",
     "saveError": "Erreur lors de la sauvegarde",
-    "deleteError": "Erreur lors de la suppression"
+    "deleteError": "Erreur lors de la suppression",
+    "purposeLabel": "Utilité de la scène",
+    "purposePlaceholder": "Si on la coupe, qu'est-ce que l'histoire perd ? (une info, un choix, une émotion…)",
+    "tacticsLabel": "Tactique et moral des adversaires",
+    "tacticsPlaceholder": "Comment ils se battent, et quand ils fuient, se rendent ou négocient"
   },
   "sceneView": {
     "subtitle": "Scène",
@@ -121,7 +125,9 @@
     "deleteTitle": "Supprimer la scène",
     "deleteMessage": "Supprimer la scène \"{{name}}\" ?",
     "deleteIrreversible": "Cette action est irréversible.",
-    "deleteError": "Erreur lors de la suppression de la scène"
+    "deleteError": "Erreur lors de la suppression de la scène",
+    "purposeSectionTitle": "Utilité",
+    "tacticsSectionTitle": "Tactique et moral"
   },
   "sceneType": {
     "GENERIC": "Scène générique",

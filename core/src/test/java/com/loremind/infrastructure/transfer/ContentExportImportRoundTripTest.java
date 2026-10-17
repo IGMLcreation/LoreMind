@@ -165,6 +165,7 @@ class ContentExportImportRoundTripTest {
 
         ArcJpaEntity arc = arcRepo.save(ArcJpaEntity.builder()
                 .name("RT Arc").campaignId(campaign.getId()).order(0).type(ArcType.HUB)
+                .hiddenTruth("RT vérité").hooks("- RT accroche 1\n- RT accroche 2")
                 .relatedPageIds(new ArrayList<>(List.of(String.valueOf(page.getId()))))
                 .illustrationImageIds(new ArrayList<>(List.of(imageRef))).build());
 
@@ -189,6 +190,7 @@ class ContentExportImportRoundTripTest {
 
         sceneRepo.save(SceneJpaEntity.builder()
                 .name("RT Scene").chapterId(chapterB.getId()).order(0)
+                .tactics("RT fuient à la moitié").purpose("RT révèle le traître")
                 .enemyIds(new ArrayList<>(List.of(String.valueOf(enemy.getId()))))
                 .relatedPageIds(new ArrayList<>(List.of(String.valueOf(page.getId()))))
                 .illustrationImageIds(new ArrayList<>(List.of(imageRef)))
@@ -198,6 +200,7 @@ class ContentExportImportRoundTripTest {
 
         npcRepo.save(NpcJpaEntity.builder()
                 .name("RT Npc").campaignId(campaign.getId()).portraitImageId(imageRef).folder("Ville").order(0)
+                .story(new com.loremind.domain.campaigncontext.bestiary.NpcStory("ALLY", "RT venger son frère", null, "RT tic"))
                 .relatedPageIds(new ArrayList<>(List.of(String.valueOf(page.getId())))).build());
 
         ItemCatalogJpaEntity catalog = ItemCatalogJpaEntity.builder()
@@ -351,6 +354,18 @@ class ContentExportImportRoundTripTest {
         assertEquals(2 * questsBefore, questProgressionRepo.count());
         assertEquals(2 * charactersBefore, characterRepo.count());
         assertEquals((int) playthroughsBefore, result.created().get("playthroughs"));
+    }
+
+    @Test
+    void import_keepsStoryFields_ofArcsScenesAndNpcs() {
+        assertEquals("RT vérité", importedArc.getHiddenTruth());
+        assertTrue(importedArc.getHooks().contains("RT accroche 2"));
+        assertEquals(2, rtScenes.size());
+        assertTrue(rtScenes.stream().allMatch(s -> "RT fuient à la moitié".equals(s.getTactics())
+                && "RT révèle le traître".equals(s.getPurpose())));
+        List<NpcJpaEntity> npcs = npcRepo.findAll().stream().filter(n -> "RT Npc".equals(n.getName())).toList();
+        assertEquals(2, npcs.size());
+        assertTrue(npcs.stream().allMatch(n -> n.getStory() != null && "RT venger son frère".equals(n.getStory().motivation())));
     }
 
     @Test

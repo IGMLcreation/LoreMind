@@ -89,6 +89,16 @@
         "observation": "Les {{count}} chemins qui mènent à « {{entity}} » partent tous de scènes « {{kind}} ».",
         "why": "Si toute l'information passe par le même genre de scène (que des interrogatoires, que des fouilles), une table qui n'aime pas ce genre ou y échoue manquera tous les indices à la fois.",
         "question": "Un indice pourrait-il venir d'un autre genre de scène : un lieu à fouiller, un document, un événement ?"
+      },
+      "WRITE-016-NPC-NO-MOTIVATION": {
+        "observation": "« {{entity}} » pèse sur l'intrigue, mais sa motivation n'est pas écrite.",
+        "why": "Un opposant ou un allié qui ne veut rien de précis est difficile à jouer : le MJ ne sait pas comment il réagit quand les joueurs bousculent ses plans.",
+        "question": "Que veut ce PNJ, et que craint-il de perdre ?"
+      },
+      "WRITE-017-SINGLE-HOOK": {
+        "observation": "« {{entity}} » n'a qu'une seule accroche.",
+        "why": "Si cette unique raison ne parle pas aux joueurs, l'aventure démarre à contrecœur. Plusieurs accroches de nature différente leur laissent choisir pourquoi s'en mêler.",
+        "question": "Quelle autre raison, personnelle ou intéressée, pourrait pousser les personnages à agir ?"
       }
     }
   }

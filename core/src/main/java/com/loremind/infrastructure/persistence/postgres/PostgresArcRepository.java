@@ -77,6 +77,8 @@ public class PostgresArcRepository implements ArcRepository {
                 .gmNotes(jpaEntity.getGmNotes())
                 .rewards(jpaEntity.getRewards())
                 .resolution(jpaEntity.getResolution())
+                .hiddenTruth(jpaEntity.getHiddenTruth())
+                .hooks(jpaEntity.getHooks())
                 // Defensive copy : jamais de null en domaine pour simplifier les appelants.
                 .relatedPageIds(jpaEntity.getRelatedPageIds() != null
                         ? new ArrayList<>(jpaEntity.getRelatedPageIds())
@@ -104,6 +106,8 @@ public class PostgresArcRepository implements ArcRepository {
                 .gmNotes(arc.getGmNotes())
                 .rewards(arc.getRewards())
                 .resolution(arc.getResolution())
+                .hiddenTruth(arc.getHiddenTruth())
+                .hooks(arc.getHooks())
                 .relatedPageIds(arc.getRelatedPageIds() != null
                         ? new ArrayList<>(arc.getRelatedPageIds())
                         : new ArrayList<>())

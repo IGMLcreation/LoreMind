@@ -125,6 +125,8 @@ public class SceneService {
             case "playerNarration" -> scene.setPlayerNarration(value);
             case "choicesConsequences" -> scene.setChoicesConsequences(value);
             case "combatDifficulty" -> scene.setCombatDifficulty(value);
+            case "tactics" -> scene.setTactics(value);
+            case "purpose" -> scene.setPurpose(value);
             case "enemies" -> scene.setEnemies(value);
             case "gmSecretNotes" -> scene.setGmSecretNotes(value);
             default -> { /* clé inconnue → ignorée (garde-fou anti-écrasement) */ }

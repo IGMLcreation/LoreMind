@@ -44,7 +44,23 @@
     "chatSuggestion3": "Imagine 3 répliques signatures qui le caractérisent",
     "deleteTitle": "Supprimer la fiche ?",
     "deleteMessage": "Supprimer la fiche de \"{{name}}\" ?",
-    "irreversible": "Cette action est irréversible."
+    "irreversible": "Cette action est irréversible.",
+    "storyTitle": "Rôle dans l'histoire",
+    "storyHint": "Indépendant du système de jeu : ce qui rend ce PNJ jouable et utile au récit.",
+    "roleLabel": "Rôle",
+    "roleNone": "Non précisé",
+    "role": {
+      "OPPONENT": "Opposant",
+      "ALLY": "Allié",
+      "RESOURCE": "Ressource (informateur, service)",
+      "EXTRA": "Figurant"
+    },
+    "motivationLabel": "Motivation",
+    "motivationPlaceholder": "Ce qu'il veut, et ce qu'il est prêt à faire pour l'obtenir",
+    "knowledgeLabel": "Ce qu'il sait (réservé au MJ)",
+    "knowledgePlaceholder": "Les informations qu'il peut révéler, et à quelle condition",
+    "mannerismLabel": "Signe distinctif",
+    "mannerismPlaceholder": "Un geste, une façon de parler, un tic à jouer à la table"
   },
   "npcList": {
     "create": "Nouveau PNJ",
@@ -59,7 +75,8 @@
   "npcView": {
     "aiAssistant": "Assistant IA",
     "relatedPages": "Pages de Lore liées",
-    "deletedPage": "(page supprimée)"
+    "deletedPage": "(page supprimée)",
+    "storyTitle": "Rôle dans l'histoire"
   },
   "enemyEdit": {
     "backToEnemies": "Retour aux ennemis",

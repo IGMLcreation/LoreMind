@@ -87,6 +87,48 @@
           </app-dynamic-fields-form>
         </div>
 
+        <!-- Rôle dans l'histoire : indépendant du système de jeu (le gabarit porte les caractéristiques). -->
+        <fieldset class="story-block">
+          <legend>{{ 'npcEdit.storyTitle' | translate }}</legend>
+          <p class="hint">{{ 'npcEdit.storyHint' | translate }}</p>
+          <div class="field">
+            <div class="field-label-row">
+              <label for="npc-role">{{ 'npcEdit.roleLabel' | translate }}</label>
+              <app-writing-coach-trigger topic="npc.role"></app-writing-coach-trigger>
+            </div>
+            <select id="npc-role" name="role" [(ngModel)]="story.role">
+              <option [ngValue]="null">{{ 'npcEdit.roleNone' | translate }}</option>
+              @for (r of roles; track r) {
+                <option [ngValue]="r">{{ ('npcEdit.role.' + r) | translate }}</option>
+              }
+            </select>
+          </div>
+          <div class="field">
+            <div class="field-label-row">
+              <label for="npc-motivation">{{ 'npcEdit.motivationLabel' | translate }}</label>
+              <app-writing-coach-trigger topic="npc.motivation"></app-writing-coach-trigger>
+            </div>
+            <textarea id="npc-motivation" name="motivation" rows="3" [(ngModel)]="story.motivation"
+              [placeholder]="'npcEdit.motivationPlaceholder' | translate"></textarea>
+          </div>
+          <div class="field">
+            <div class="field-label-row">
+              <label for="npc-knowledge">{{ 'npcEdit.knowledgeLabel' | translate }}</label>
+              <app-writing-coach-trigger topic="npc.knowledge"></app-writing-coach-trigger>
+            </div>
+            <textarea id="npc-knowledge" name="knowledge" rows="3" [(ngModel)]="story.knowledge"
+              [placeholder]="'npcEdit.knowledgePlaceholder' | translate"></textarea>
+          </div>
+          <div class="field">
+            <div class="field-label-row">
+              <label for="npc-mannerism">{{ 'npcEdit.mannerismLabel' | translate }}</label>
+              <app-writing-coach-trigger topic="npc.mannerism"></app-writing-coach-trigger>
+            </div>
+            <input id="npc-mannerism" name="mannerism" type="text" [(ngModel)]="story.mannerism"
+              [placeholder]="'npcEdit.mannerismPlaceholder' | translate" />
+          </div>
+        </fieldset>
+
         <!-- Pages de Lore liées (uniquement si la campagne est rattachée à un Lore) -->
         @if (loreId) {
           <div class="field">

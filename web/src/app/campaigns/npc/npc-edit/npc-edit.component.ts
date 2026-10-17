@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, Save, ArrowLeft, Drama, Trash2, Sparkles } from 'lucide-angular';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NpcService } from '../../../services/npc.service';
+import { NPC_ROLES, NpcStory } from '../../../services/npc.model';
 import { CampaignService } from '../../../services/campaign.service';
 import { GameSystemService } from '../../../services/game-system.service';
 import { PageService } from '../../../services/page.service';
@@ -16,6 +17,7 @@ import { DynamicFieldsFormComponent } from '../../../shared/dynamic-fields-form/
 import { SingleImagePickerComponent } from '../../../shared/single-image-picker/single-image-picker.component';
 import { LoreLinkPickerComponent } from '../../../shared/lore-link-picker/lore-link-picker.component';
 import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
+import { WritingCoachTriggerComponent } from '../../../shared/writing-coach/writing-coach-trigger.component';
 
 /**
  * Editeur plein ecran d'une fiche de PNJ.
@@ -25,7 +27,7 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
  */
 @Component({
     selector: 'app-npc-edit',
-    imports: [FormsModule, LucideAngularModule, TranslatePipe, AiChatDrawerComponent, DynamicFieldsFormComponent, SingleImagePickerComponent, LoreLinkPickerComponent],
+    imports: [FormsModule, LucideAngularModule, TranslatePipe, AiChatDrawerComponent, DynamicFieldsFormComponent, SingleImagePickerComponent, LoreLinkPickerComponent, WritingCoachTriggerComponent],
     templateUrl: './npc-edit.component.html',
     styleUrls: ['./npc-edit.component.scss']
 })
@@ -68,6 +70,9 @@ export class NpcEditComponent implements OnInit {
   lorePages: Page[] = [];
   /** IDs des pages de lore référencées par ce PNJ. */
   relatedPageIds: string[] = [];
+  /** Rôle dans l'histoire (fiche indépendante du système de jeu). */
+  story: NpcStory = { role: null };
+  readonly roles = NPC_ROLES;
 
   constructor(
     private route: ActivatedRoute,
@@ -103,6 +108,7 @@ export class NpcEditComponent implements OnInit {
           this.imageValues = n.imageValues ?? {};
           this.keyValueValues = n.keyValueValues ?? {};
           this.relatedPageIds = [...(n.relatedPageIds ?? [])];
+          this.story = { ...(n.story ?? {}), role: n.story?.role ?? null };
           this.order = n.order ?? 0;
         },
         error: () => this.back()
@@ -157,7 +163,8 @@ export class NpcEditComponent implements OnInit {
       imageValues: this.imageValues,
       keyValueValues: this.keyValueValues,
       campaignId: this.campaignId,
-      relatedPageIds: this.relatedPageIds
+      relatedPageIds: this.relatedPageIds,
+      story: { ...this.story, role: this.story.role || null }
     };
     const isCreation = !this.npcId;
     const req = this.npcId

@@ -84,6 +84,18 @@
         }
       </section>
     </div>
+    @if (arc.hooks?.trim()) {
+      <section class="view-section">
+        <h2 class="view-section-title"><span class="view-section-icon">🪝</span> {{ 'arcView.hooksTitle' | translate }}</h2>
+        <p class="view-section-body">{{ arc.hooks }}</p>
+      </section>
+    }
+    @if (arc.hiddenTruth?.trim()) {
+      <section class="view-section view-section--private">
+        <h2 class="view-section-title"><span class="view-section-icon">🗝️</span> {{ 'arcView.hiddenTruthTitle' | translate }}</h2>
+        <p class="view-section-body">{{ arc.hiddenTruth }}</p>
+      </section>
+    }
     <section class="view-section">
       <h2 class="view-section-title"><span class="view-section-icon">🎁</span> {{ 'arcView.rewardsTitle' | translate }}</h2>
       @if (arc.rewards?.trim()) {

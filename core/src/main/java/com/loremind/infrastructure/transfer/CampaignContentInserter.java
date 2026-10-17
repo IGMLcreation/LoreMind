@@ -129,6 +129,8 @@ class CampaignContentInserter {
             e.setGmNotes(d.gmNotes());
             e.setRewards(d.rewards());
             e.setResolution(d.resolution());
+            e.setHiddenTruth(d.hiddenTruth());
+            e.setHooks(d.hooks());
             e.setRelatedPageIds(d.relatedPageIds()); // remappe en 2e passe
             e.setIllustrationImageIds(IdRemapper.remapStringList(maps.imageMap, d.illustrationImageIds()));
             maps.arcMap.put(d.id(), arcRepo.save(e).getId());
@@ -267,6 +269,7 @@ class CampaignContentInserter {
             e.setRelatedPageIds(d.relatedPageIds()); // remappe en 2e passe
             e.setFolder(d.folder());
             e.setOrder(d.order());
+            e.setStory(d.story());
             maps.npcMap.put(d.id(), npcRepo.save(e).getId());
         }
         result.count("npcs", maps.npcMap.size());
@@ -317,6 +320,8 @@ class CampaignContentInserter {
             e.setBattlemaps(resolveBattlemaps(d, maps));
             e.setGraphX(d.graphX());
             e.setGraphY(d.graphY());
+            e.setTactics(d.tactics());
+            e.setPurpose(d.purpose());
             e.setBranches(d.branches());             // remappe en 2e passe
             // Rooms : l'id (UUID) et les branches restent tels quels ; seules leurs refs
             // d'images (galerie + plan) sont remappees vers les images importees.

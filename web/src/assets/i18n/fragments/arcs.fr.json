@@ -55,7 +55,13 @@
     "chatSuggestion3": "Suggère un dénouement en deux actes",
     "deleteTitle": "Supprimer l'arc",
     "deleteMessage": "Supprimer l'arc \"{{name}}\" ?",
-    "irreversible": "Cette action est irréversible."
+    "irreversible": "Cette action est irréversible.",
+    "truthHooksSectionTitle": "Histoire cachée et accroches",
+    "hiddenTruthLabel": "Histoire cachée (réservée au MJ)",
+    "hiddenTruthPlaceholder": "Ce qui s'est vraiment passé, que les joueurs découvriront peu à peu",
+    "hooksLabel": "Accroches",
+    "hooksPlaceholder": "- Un ami des personnages disparaît\n- Une récompense est offerte pour…",
+    "hooksHint": "Une accroche par ligne. Visez-en au moins deux, de nature différente."
   },
   "arcView": {
     "subtitleHub": "Arc en hub (quêtes non linéaires)",
@@ -87,6 +93,8 @@
     "deleteCascade": "Cette action supprimera aussi : {{parts}}.",
     "irreversible": "Cette action est irréversible.",
     "deleteConfirmTitle": "Supprimer l'arc",
-    "deleteConfirmMessage": "Supprimer l'arc \"{{name}}\" ?"
+    "deleteConfirmMessage": "Supprimer l'arc \"{{name}}\" ?",
+    "hooksTitle": "Accroches",
+    "hiddenTruthTitle": "Histoire cachée"
   }
 }

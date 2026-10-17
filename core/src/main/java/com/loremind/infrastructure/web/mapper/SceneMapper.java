@@ -43,6 +43,8 @@ public class SceneMapper {
         dto.setGmSecretNotes(scene.getGmSecretNotes());
         dto.setChoicesConsequences(scene.getChoicesConsequences());
         dto.setCombatDifficulty(scene.getCombatDifficulty());
+        dto.setTactics(scene.getTactics());
+        dto.setPurpose(scene.getPurpose());
         dto.setEnemies(scene.getEnemies());
         dto.setEnemyIds(scene.getEnemyIds() != null
                 ? new ArrayList<>(scene.getEnemyIds())
@@ -81,6 +83,8 @@ public class SceneMapper {
                 .gmSecretNotes(dto.getGmSecretNotes())
                 .choicesConsequences(dto.getChoicesConsequences())
                 .combatDifficulty(dto.getCombatDifficulty())
+                .tactics(dto.getTactics())
+                .purpose(dto.getPurpose())
                 .enemies(dto.getEnemies())
                 .enemyIds(dto.getEnemyIds() != null
                         ? new ArrayList<>(dto.getEnemyIds())

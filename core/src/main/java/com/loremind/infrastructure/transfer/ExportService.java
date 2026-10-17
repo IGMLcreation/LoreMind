@@ -614,7 +614,7 @@ public class ExportService {
                 e.getType() != null ? e.getType().name() : null,
                 e.getIcon(), e.getThemes(), e.getStakes(), e.getGmNotes(),
                 e.getRewards(), e.getResolution(), e.getRelatedPageIds(),
-                e.getIllustrationImageIds());
+                e.getIllustrationImageIds(), e.getHiddenTruth(), e.getHooks());
     }
 
     private ContentExport.ChapterDto toChapterDto(ChapterJpaEntity e) {
@@ -643,7 +643,7 @@ public class ExportService {
                 e.getEnemies(), e.getEnemyIds(), e.getRelatedPageIds(),
                 e.getIllustrationImageIds(), null, null, // legacy battlemap : plus émis
                 e.getBattlemaps(), e.getBranches(), e.getRooms(), e.getType(),
-                e.getGraphX(), e.getGraphY());
+                e.getGraphX(), e.getGraphY(), e.getTactics(), e.getPurpose());
     }
 
     private ContentExport.CharacterDto toCharacterDto(CharacterJpaEntity e) {
@@ -655,7 +655,7 @@ public class ExportService {
     private ContentExport.NpcDto toNpcDto(NpcJpaEntity e) {
         return new ContentExport.NpcDto(e.getId(), e.getName(), e.getPortraitImageId(),
                 e.getHeaderImageId(), e.getValues(), e.getImageValues(), e.getKeyValueValues(),
-                e.getCampaignId(), e.getRelatedPageIds(), e.getFolder(), e.getOrder());
+                e.getCampaignId(), e.getRelatedPageIds(), e.getFolder(), e.getOrder(), e.getStory());
     }
 
     private ContentExport.EnemyDto toEnemyDto(EnemyJpaEntity e) {

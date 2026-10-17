@@ -147,7 +147,10 @@ public record ContentExport(
             String rewards,
             String resolution,
             List<String> relatedPageIds,
-            List<String> illustrationImageIds
+            List<String> illustrationImageIds,
+            /** Histoire cachée et accroches ; absentes des bundles antérieurs (null). */
+            String hiddenTruth,
+            String hooks
     ) {}
 
     public record ChapterDto(
@@ -197,7 +200,10 @@ public record ContentExport(
             List<Room> rooms,
             SceneType type,
             Double graphX,
-            Double graphY
+            Double graphY,
+            /** Tactique des adversaires et utilité ; absentes des bundles antérieurs (null). */
+            String tactics,
+            String purpose
     ) {}
 
     public record CharacterDto(
@@ -224,7 +230,9 @@ public record ContentExport(
             Long campaignId,
             List<String> relatedPageIds,
             String folder,
-            int order
+            int order,
+            /** Rôle dans l'histoire ; absent des bundles antérieurs (null). */
+            com.loremind.domain.campaigncontext.bestiary.NpcStory story
     ) {}
 
     public record EnemyDto(

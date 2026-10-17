@@ -154,7 +154,7 @@ export class SceneEditComponent implements OnInit {
   get branchesFilled(): boolean { return this.branches.length > 0; }
   get combatFilled(): boolean {
     const v = this.form.value;
-    return !!(v.combatDifficulty || v.enemies) || this.enemyIds.length > 0;
+    return !!(v.combatDifficulty || v.enemies || v.tactics) || this.enemyIds.length > 0;
   }
   get loreFilled(): boolean { return this.relatedPageIds.length > 0; }
   get dungeonFilled(): boolean { return this.rooms.length > 0; }
@@ -191,7 +191,10 @@ export class SceneEditComponent implements OnInit {
       choicesConsequences:  [''],
       // Combat
       combatDifficulty:     [''],
-      enemies:              ['']
+      enemies:              [''],
+      tactics:              [''],
+      // Utilité dans l'histoire
+      purpose:              ['']
     });
   }
 
@@ -281,7 +284,9 @@ export class SceneEditComponent implements OnInit {
         gmSecretNotes:        scene.gmSecretNotes ?? '',
         choicesConsequences:  scene.choicesConsequences ?? '',
         combatDifficulty:     scene.combatDifficulty ?? '',
-        enemies:              scene.enemies ?? ''
+        enemies:              scene.enemies ?? '',
+        tactics:              scene.tactics ?? '',
+        purpose:              scene.purpose ?? ''
       });
 
       this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId, this.translate));
@@ -304,6 +309,8 @@ export class SceneEditComponent implements OnInit {
       choicesConsequences:  this.form.value.choicesConsequences,
       combatDifficulty:     this.form.value.combatDifficulty,
       enemies:              this.form.value.enemies,
+      tactics:              this.form.value.tactics,
+      purpose:              this.form.value.purpose,
       enemyIds:             this.enemyIds,
       relatedPageIds:       this.relatedPageIds,
       illustrationImageIds: this.illustrationImageIds,

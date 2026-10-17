@@ -29,6 +29,8 @@ public class ArcDTO {
     private String gmNotes;
     private String rewards;
     private String resolution;
+    private String hiddenTruth;
+    private String hooks;
 
     /** IDs des pages du Lore liées à cet arc (weak cross-context references). */
     private List<String> relatedPageIds = new ArrayList<>();

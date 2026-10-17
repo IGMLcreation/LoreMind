@@ -89,6 +89,16 @@
         "observation": "The {{count}} paths leading to \"{{entity}}\" all start from \"{{kind}}\" scenes.",
         "why": "If all the information goes through one kind of scene (only interrogations, only searches), a table that dislikes it or fails at it will miss every clue at once.",
         "question": "Could a clue come from another kind of scene: a place to search, a document, an event?"
+      },
+      "WRITE-016-NPC-NO-MOTIVATION": {
+        "observation": "\"{{entity}}\" weighs on the plot, but their motivation isn't written.",
+        "why": "An opponent or ally who wants nothing specific is hard to play: the GM doesn't know how they react when the players upset their plans.",
+        "question": "What does this NPC want, and what are they afraid to lose?"
+      },
+      "WRITE-017-SINGLE-HOOK": {
+        "observation": "\"{{entity}}\" has only one hook.",
+        "why": "If that single reason doesn't speak to the players, the adventure starts reluctantly. Several hooks of different kinds let them choose why to get involved.",
+        "question": "What other reason, personal or self-interested, could push the characters to act?"
       }
     }
   }

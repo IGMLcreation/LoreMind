@@ -97,6 +97,10 @@ export class ArcEditComponent implements OnInit {
     return !!(v.themes || v.stakes);
   }
   get gmNotesFilled(): boolean { return !!this.form.value.gmNotes; }
+  get truthHooksFilled(): boolean {
+    const v = this.form.value;
+    return !!(v.hiddenTruth || v.hooks);
+  }
   get rewardsResolutionFilled(): boolean {
     const v = this.form.value;
     return !!(v.rewards || v.resolution);
@@ -126,7 +130,9 @@ export class ArcEditComponent implements OnInit {
       stakes:      [''],
       gmNotes:     [''],
       rewards:     [''],
-      resolution:  ['']
+      resolution:  [''],
+      hiddenTruth: [''],
+      hooks:       ['']
     });
   }
 
@@ -179,7 +185,9 @@ export class ArcEditComponent implements OnInit {
         stakes:      arc.stakes ?? '',
         gmNotes:     arc.gmNotes ?? '',
         rewards:     arc.rewards ?? '',
-        resolution:  arc.resolution ?? ''
+        resolution:  arc.resolution ?? '',
+        hiddenTruth: arc.hiddenTruth ?? '',
+        hooks:       arc.hooks ?? ''
       });
 
       this.layoutService.show(buildCampaignSidebarConfig(campaign, allCampaigns, treeData, this.campaignId, this.translate));
@@ -199,6 +207,8 @@ export class ArcEditComponent implements OnInit {
       gmNotes:        this.form.value.gmNotes,
       rewards:        this.form.value.rewards,
       resolution:     this.form.value.resolution,
+      hiddenTruth:    this.form.value.hiddenTruth,
+      hooks:          this.form.value.hooks,
       relatedPageIds: this.relatedPageIds,
       illustrationImageIds: this.illustrationImageIds,
       icon:           this.selectedIcon

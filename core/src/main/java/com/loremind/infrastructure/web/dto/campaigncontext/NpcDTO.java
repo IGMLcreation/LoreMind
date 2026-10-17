@@ -24,5 +24,6 @@ public class NpcDTO {
     /** IDs de Pages de Lore référencées par ce PNJ (référence faible cross-context). */
     private List<String> relatedPageIds = new ArrayList<>();
     private String folder;
+    private com.loremind.domain.campaigncontext.bestiary.NpcStory story;
     private int order;
 }

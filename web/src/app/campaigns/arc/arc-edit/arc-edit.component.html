@@ -95,6 +95,35 @@
     </app-expandable-section>
 
     <!-- Thèmes et enjeux -->
+    <!-- Histoire cachée et accroches : la vérité que les joueurs découvriront, et pourquoi ils s'en mêlent. -->
+    <app-expandable-section [title]="'arcEdit.truthHooksSectionTitle' | translate" icon="🗝️" [initiallyOpen]="focusSection === 'hooks'" [filled]="truthHooksFilled">
+      <div class="field">
+        <div class="field-label-row">
+          <label for="arc-edit-hidden-truth">{{ 'arcEdit.hiddenTruthLabel' | translate }}</label>
+          <app-writing-coach-trigger topic="arc.hiddenTruth"></app-writing-coach-trigger>
+        </div>
+        <textarea
+          id="arc-edit-hidden-truth"
+          formControlName="hiddenTruth"
+          [placeholder]="'arcEdit.hiddenTruthPlaceholder' | translate"
+          rows="4">
+        </textarea>
+      </div>
+      <div class="field">
+        <div class="field-label-row">
+          <label for="arc-edit-hooks">{{ 'arcEdit.hooksLabel' | translate }}</label>
+          <app-writing-coach-trigger topic="arc.hooks"></app-writing-coach-trigger>
+        </div>
+        <textarea
+          id="arc-edit-hooks"
+          formControlName="hooks"
+          [placeholder]="'arcEdit.hooksPlaceholder' | translate"
+          rows="4">
+        </textarea>
+        <small class="field-hint">{{ 'arcEdit.hooksHint' | translate }}</small>
+      </div>
+    </app-expandable-section>
+
     <app-expandable-section [title]="'arcEdit.themesStakesSectionTitle' | translate" icon="🎭" [initiallyOpen]="focusSection === 'stakes'" [filled]="themesStakesFilled">
       <div class="field-row">
         <div class="field">

@@ -1,6 +1,7 @@
 package com.loremind.application.campaigncontext;
 
 import com.loremind.domain.campaigncontext.bestiary.Npc;
+import com.loremind.domain.campaigncontext.bestiary.NpcStory;
 import com.loremind.domain.shared.ReorderSupport;
 import com.loremind.domain.campaigncontext.ports.NpcRepository;
 import org.springframework.stereotype.Service;
@@ -29,8 +30,17 @@ public class NpcService {
             String campaignId,
             List<String> relatedPageIds,
             String folder,
-            Integer order
-    ) {}
+            Integer order,
+            /** Rôle dans l'histoire ; null = inchangé (mise à jour) / non renseigné (création). */
+            NpcStory story
+    ) {
+        public NpcData(String name, String portraitImageId, String headerImageId, Map<String, String> values,
+                       Map<String, List<String>> imageValues, Map<String, Map<String, String>> keyValueValues,
+                       String campaignId, List<String> relatedPageIds, String folder, Integer order) {
+            this(name, portraitImageId, headerImageId, values, imageValues, keyValueValues, campaignId,
+                    relatedPageIds, folder, order, null);
+        }
+    }
 
     public Npc createNpc(NpcData data) {
         int order = data.order() != null
@@ -47,6 +57,7 @@ public class NpcService {
                 .relatedPageIds(data.relatedPageIds() != null ? new ArrayList<>(data.relatedPageIds()) : new ArrayList<>())
                 .folder(normalizeFolder(data.folder()))
                 .order(order)
+                .story(cleanStory(data.story()))
                 .build();
         return npcRepository.save(npc);
     }
@@ -70,10 +81,20 @@ public class NpcService {
         existing.setKeyValueValues(data.keyValueValues() != null ? new HashMap<>(data.keyValueValues()) : new HashMap<>());
         existing.setRelatedPageIds(data.relatedPageIds() != null ? new ArrayList<>(data.relatedPageIds()) : new ArrayList<>());
         existing.setFolder(normalizeFolder(data.folder()));
+        if (data.story() != null) {
+            existing.setStory(cleanStory(data.story()));
+        }
         if (data.order() != null) {
             existing.setOrder(data.order());
         }
         return npcRepository.save(existing);
+    }
+
+    /** Fiche nettoyée, ou null si elle est vide (rien à stocker). */
+    private static NpcStory cleanStory(NpcStory story) {
+        if (story == null) return null;
+        NpcStory clean = story.normalized();
+        return clean.hasContent() ? clean : null;
     }
 
     public void deleteNpc(String id) {

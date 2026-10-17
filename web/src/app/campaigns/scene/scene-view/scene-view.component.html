@@ -73,6 +73,12 @@
         <p class="view-section-body">{{ scene.choicesConsequences }}</p>
       </section>
     }
+    @if (scene.purpose?.trim()) {
+      <section class="view-section">
+        <h2 class="view-section-title"><span class="view-section-icon">🎯</span> {{ 'sceneView.purposeSectionTitle' | translate }}</h2>
+        <p class="view-section-body">{{ scene.purpose }}</p>
+      </section>
+    }
     <!-- Combat ou rencontre -->
     @if (scene.combatDifficulty?.trim() || scene.enemies?.trim() || linkedEnemies.length > 0) {
       @if (scene.combatDifficulty?.trim()) {
@@ -99,6 +105,12 @@
           }
         </section>
       }
+    }
+    @if (scene.tactics?.trim()) {
+      <section class="view-section">
+        <h2 class="view-section-title"><span class="view-section-icon">🛡️</span> {{ 'sceneView.tacticsSectionTitle' | translate }}</h2>
+        <p class="view-section-body">{{ scene.tactics }}</p>
+      </section>
     }
     <!-- Notes et secrets du MJ (privé) -->
     @if (scene.gmSecretNotes?.trim()) {

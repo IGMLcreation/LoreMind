@@ -72,6 +72,12 @@ public class ArcJpaEntity {
     @Column(columnDefinition = "TEXT")
     private String resolution;
 
+    @Column(name = "hidden_truth", columnDefinition = "TEXT")
+    private String hiddenTruth;
+
+    @Column(name = "hooks", columnDefinition = "TEXT")
+    private String hooks;
+
     /**
      * IDs des pages du Lore liées à cet arc, stockés en JSON dans une colonne TEXT.
      * Pas de FK cross-context : respect des Bounded Contexts.

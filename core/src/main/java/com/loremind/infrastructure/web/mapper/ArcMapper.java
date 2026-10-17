@@ -32,6 +32,8 @@ public class ArcMapper {
         dto.setGmNotes(arc.getGmNotes());
         dto.setRewards(arc.getRewards());
         dto.setResolution(arc.getResolution());
+        dto.setHiddenTruth(arc.getHiddenTruth());
+        dto.setHooks(arc.getHooks());
         dto.setRelatedPageIds(copyList(arc.getRelatedPageIds()));
         dto.setIllustrationImageIds(copyList(arc.getIllustrationImageIds()));
         return dto;
@@ -55,6 +57,8 @@ public class ArcMapper {
                 .gmNotes(dto.getGmNotes())
                 .rewards(dto.getRewards())
                 .resolution(dto.getResolution())
+                .hiddenTruth(dto.getHiddenTruth())
+                .hooks(dto.getHooks())
                 .relatedPageIds(copyList(dto.getRelatedPageIds()))
                 .illustrationImageIds(copyList(dto.getIllustrationImageIds()))
                 .build();

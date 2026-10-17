@@ -80,6 +80,8 @@ public class PostgresSceneRepository implements SceneRepository {
                 .gmSecretNotes(jpaEntity.getGmSecretNotes())
                 .choicesConsequences(jpaEntity.getChoicesConsequences())
                 .combatDifficulty(jpaEntity.getCombatDifficulty())
+                .tactics(jpaEntity.getTactics())
+                .purpose(jpaEntity.getPurpose())
                 .enemies(jpaEntity.getEnemies())
                 .enemyIds(jpaEntity.getEnemyIds() != null
                         ? new ArrayList<>(jpaEntity.getEnemyIds())
@@ -123,6 +125,8 @@ public class PostgresSceneRepository implements SceneRepository {
                 .gmSecretNotes(scene.getGmSecretNotes())
                 .choicesConsequences(scene.getChoicesConsequences())
                 .combatDifficulty(scene.getCombatDifficulty())
+                .tactics(scene.getTactics())
+                .purpose(scene.getPurpose())
                 .enemies(scene.getEnemies())
                 .enemyIds(scene.getEnemyIds() != null
                         ? new ArrayList<>(scene.getEnemyIds())

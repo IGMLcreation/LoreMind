@@ -44,7 +44,23 @@
     "chatSuggestion3": "Imagine 3 signature lines that characterize them",
     "deleteTitle": "Delete this sheet?",
     "deleteMessage": "Delete the sheet for \"{{name}}\"?",
-    "irreversible": "This action is irreversible."
+    "irreversible": "This action is irreversible.",
+    "storyTitle": "Role in the story",
+    "storyHint": "Independent of the game system: what makes this NPC playable and useful to the story.",
+    "roleLabel": "Role",
+    "roleNone": "Not set",
+    "role": {
+      "OPPONENT": "Opponent",
+      "ALLY": "Ally",
+      "RESOURCE": "Resource (informant, service)",
+      "EXTRA": "Extra"
+    },
+    "motivationLabel": "Motivation",
+    "motivationPlaceholder": "What they want, and what they're willing to do to get it",
+    "knowledgeLabel": "What they know (GM only)",
+    "knowledgePlaceholder": "The information they can reveal, and on what condition",
+    "mannerismLabel": "Distinctive trait",
+    "mannerismPlaceholder": "A gesture, a way of speaking, a tic to play at the table"
   },
   "npcList": {
     "create": "New NPC",
@@ -59,7 +75,8 @@
   "npcView": {
     "aiAssistant": "AI Assistant",
     "relatedPages": "Linked Lore pages",
-    "deletedPage": "(deleted page)"
+    "deletedPage": "(deleted page)",
+    "storyTitle": "Role in the story"
   },
   "enemyEdit": {
     "backToEnemies": "Back to enemies",

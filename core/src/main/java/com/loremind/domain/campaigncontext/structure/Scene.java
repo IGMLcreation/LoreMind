@@ -48,6 +48,8 @@ public class Scene {
 
     // === Combat ou rencontre ===
     private String combatDifficulty;       // Difficulté estimée
+    private String tactics;                // Tactique et moral des adversaires (quand fuient-ils, se rendent-ils ?)
+    private String purpose;                // Utilité : ce que l'histoire perd si on coupe la scène
     private String enemies;                // Liste des ennemis et créatures (texte libre)
 
     /**

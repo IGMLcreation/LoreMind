@@ -16,6 +16,24 @@ export interface Npc {
   /** Dossier de classement (ex. « Bard's Gate »). Vide/absent = non classé. */
   folder?: string | null;
   order?: number;
+  /** Rôle dans l'histoire (indépendant du système de jeu). */
+  story?: NpcStory | null;
+}
+
+/** Place d'un PNJ dans l'histoire. */
+export type NpcRole = 'OPPONENT' | 'ALLY' | 'RESOURCE' | 'EXTRA';
+
+export const NPC_ROLES: NpcRole[] = ['OPPONENT', 'ALLY', 'RESOURCE', 'EXTRA'];
+
+/** Fiche « rôle dans l'histoire » d'un PNJ (miroir du record Java NpcStory). */
+export interface NpcStory {
+  role?: NpcRole | null;
+  /** Ce qu'il veut, et ce qu'il est prêt à faire. */
+  motivation?: string | null;
+  /** Ce qu'il sait (réservé au MJ). */
+  knowledge?: string | null;
+  /** Signe distinctif à jouer (geste, phrasé, tic). */
+  mannerism?: string | null;
 }
 
 export interface NpcCreate {
@@ -28,4 +46,5 @@ export interface NpcCreate {
   campaignId: string;
   relatedPageIds?: string[];
   folder?: string | null;
+  story?: NpcStory | null;
 }

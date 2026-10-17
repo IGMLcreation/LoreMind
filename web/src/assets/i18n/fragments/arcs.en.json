@@ -55,7 +55,13 @@
     "chatSuggestion3": "Suggest a two-act resolution",
     "deleteTitle": "Delete arc",
     "deleteMessage": "Delete the arc \"{{name}}\"?",
-    "irreversible": "This action is irreversible."
+    "irreversible": "This action is irreversible.",
+    "truthHooksSectionTitle": "Hidden truth and hooks",
+    "hiddenTruthLabel": "Hidden truth (GM only)",
+    "hiddenTruthPlaceholder": "What really happened, which the players will uncover bit by bit",
+    "hooksLabel": "Hooks",
+    "hooksPlaceholder": "- A friend of the characters goes missing\n- A reward is offered for…",
+    "hooksHint": "One hook per line. Aim for at least two, of different kinds."
   },
   "arcView": {
     "subtitleHub": "Hub arc (non-linear quests)",
@@ -87,6 +93,8 @@
     "deleteCascade": "This action will also delete: {{parts}}.",
     "irreversible": "This action is irreversible.",
     "deleteConfirmTitle": "Delete arc",
-    "deleteConfirmMessage": "Delete the arc \"{{name}}\"?"
+    "deleteConfirmMessage": "Delete the arc \"{{name}}\"?",
+    "hooksTitle": "Hooks",
+    "hiddenTruthTitle": "Hidden truth"
   }
 }

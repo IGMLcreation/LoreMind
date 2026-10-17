@@ -38,6 +38,8 @@ public class Arc {
     private String gmNotes;          // Notes privées du MJ (non exportées vers FoundryVTT)
     private String rewards;          // Récompenses et progression
     private String resolution;       // Dénouement prévu
+    private String hiddenTruth;      // Histoire cachée : ce qui s'est vraiment passé (réservé au MJ)
+    private String hooks;            // Accroches : pourquoi les personnages s'en mêlent (une par ligne)
 
     /**
      * IDs des pages du Lore associées à cet arc (weak cross-context references).

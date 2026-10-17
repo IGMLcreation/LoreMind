@@ -67,6 +67,11 @@ public class NpcJpaEntity {
     @Column(name = "\"order\"", nullable = false)
     private int order;
 
+    /** Fiche « rôle dans l'histoire » (JSON). NULL = non renseignée. */
+    @Column(name = "story", columnDefinition = "TEXT")
+    @Convert(converter = com.loremind.infrastructure.persistence.converter.NpcStoryJsonConverter.class)
+    private com.loremind.domain.campaigncontext.bestiary.NpcStory story;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

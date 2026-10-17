@@ -107,6 +107,28 @@
           ],
           "example": "Three smugglers aren't trying to kill anyone: they want to sink the boat holding the evidence. If they succeed, the fight is lost, even with every PC still standing.",
           "pitfall": "The \"bag of hit points\" fight: with no goal other than taking the enemy down, it quickly becomes repetitive. Give each side a purpose."
+        },
+        "purpose": {
+          "title": "Purpose of the scene",
+          "purpose": "Every scene should bring something to the story. Knowing what you'd lose by cutting it helps decide what to keep, what to shorten, and what to improvise.",
+          "questions": [
+            "What do the players learn here that they won't learn anywhere else?",
+            "What decision do they make, or what emotion do they feel?",
+            "If time runs short, can it be summed up in two sentences?"
+          ],
+          "example": "Without the inn, the players never meet Maëlis: they lose their only ally and the first lead to the tower.",
+          "pitfall": "A scene that only exists to look nice or fill a session: players feel it, and the pacing collapses."
+        },
+        "tactics": {
+          "title": "Enemy tactics and morale",
+          "purpose": "Enemies who want to survive make a fight come alive: they use the terrain, protect their leader and know when to run. The GM then knows how to play them without improvising at random.",
+          "questions": [
+            "How does the terrain favour them?",
+            "What makes them flee, surrender or negotiate?",
+            "Who do they protect, and what do they do if their leader falls?"
+          ],
+          "example": "The smugglers shoot from the boats and cut the moorings if approached. If the sergeant falls, they drop their weapons and offer to talk.",
+          "pitfall": "Enemies who all fight to the death: the fight becomes plain hit point subtraction, with no choices for the players."
         }
       },
       "chapter": {
@@ -197,6 +219,28 @@
           ],
           "example": "The guild is publicly exposed; or the PCs buy it out themselves; or the villages are lost and the next arc opens with the exodus.",
           "pitfall": "A single ending written in advance: the players' choices no longer matter. Prepare outcomes, not a script."
+        },
+        "hiddenTruth": {
+          "title": "Hidden truth",
+          "purpose": "The truth the players will piece together. Everything else follows from it: every clue, every revelation is a trace it left behind.",
+          "questions": [
+            "What really happened, and who is responsible?",
+            "What traces did it leave, and where?",
+            "Can the players fully understand it by the end?"
+          ],
+          "example": "The regent poisoned the old king to rule in the prince's place. The court physician knows and keeps quiet out of fear.",
+          "pitfall": "A truth too complicated to discover in play. If a player can't sum it up in one sentence at the end, simplify it."
+        },
+        "hooks": {
+          "title": "Hooks",
+          "purpose": "The reasons that push the characters to get involved. Several hooks of different kinds let players choose their motivation instead of having it imposed.",
+          "questions": [
+            "Which one plays on interest (reward, contract)?",
+            "Which one affects a character personally?",
+            "Which one falls on them without them looking for it?"
+          ],
+          "example": "- The council offers a reward to find the prince.\n- A character's sister worked at the palace and has vanished.\n- The regent's guards come to arrest the characters for no reason.",
+          "pitfall": "A single hook, presented as an obligation: if it doesn't speak to the table, the adventure starts reluctantly."
         }
       },
       "publication": {
@@ -254,6 +298,50 @@
           ],
           "example": "Writing: Camille Martin\nMaps: Léo Dubois\nEditing: Alex\nPlaytesters: the Thursday table (Inès, Yanis, Paul, Mira)",
           "pitfall": "Forgetting the playtesters, or the credits required by an artwork's or a game system's licence."
+        }
+      },
+      "npc": {
+        "role": {
+          "title": "Role in the story",
+          "purpose": "Knowing what place an NPC holds tells you how much preparation they deserve: an opponent or an ally weighs on the plot, an extra only needs one detail.",
+          "questions": [
+            "Does this NPC help the characters, oppose them, or hold something they need?",
+            "Do they act on their own, or are they the prize others fight over?"
+          ],
+          "example": "Borin the blacksmith is a resource: he knows who ordered the crypt keys, but will only tell someone who helps him.",
+          "pitfall": "Allies who do everything in the players' place. An ally has limits: what they can't or won't do."
+        },
+        "motivation": {
+          "title": "Motivation",
+          "purpose": "What the NPC wants decides everything they do. With a clear motivation, the GM knows how they react to anything the players do.",
+          "questions": [
+            "What do they want, right now?",
+            "What are they afraid to lose?",
+            "How far are they willing to go?"
+          ],
+          "example": "Ysolde wants the throne for herself, but fears scandal above all: she'd rather bribe than kill.",
+          "pitfall": "A villain who is evil \"just because\": players can neither understand, manipulate nor convince them."
+        },
+        "knowledge": {
+          "title": "What they know",
+          "purpose": "Listing what the NPC can reveal avoids improvising contradictory answers and ties the NPC to the adventure's clues.",
+          "questions": [
+            "What useful information do they hold?",
+            "On what condition will they share it (trust, money, threat)?",
+            "What do they wrongly believe they know?"
+          ],
+          "example": "He saw the notary leave the room at midnight. He'll say so in exchange for safe passage out of town.",
+          "pitfall": "An NPC who knows everything and tells the first person who asks: the investigation is solved in one conversation."
+        },
+        "mannerism": {
+          "title": "Distinctive trait",
+          "purpose": "One detail to play at the table makes an NPC memorable in seconds, and helps players recognise who is speaking.",
+          "questions": [
+            "What gesture or habit gives them away?",
+            "How do they speak: fast, slowly, with a pet word?"
+          ],
+          "example": "Taps her ring every time she lies, and ends her sentences with \"don't you agree?\".",
+          "pitfall": "A long physical description nobody remembers: one strong detail beats a full portrait."
         }
       }
     }

@@ -67,6 +67,10 @@ export interface Arc {
   gmNotes?: string;
   rewards?: string;
   resolution?: string;
+  /** Histoire cachée (réservée au MJ). */
+  hiddenTruth?: string;
+  /** Accroches : une par ligne. */
+  hooks?: string;
 
   /** IDs des pages du Lore liées à cet arc (weak cross-context refs). */
   relatedPageIds?: string[];
@@ -89,6 +93,10 @@ export interface ArcCreate {
   gmNotes?: string;
   rewards?: string;
   resolution?: string;
+  /** Histoire cachée (réservée au MJ). */
+  hiddenTruth?: string;
+  /** Accroches : une par ligne. */
+  hooks?: string;
 
   relatedPageIds?: string[];
   illustrationImageIds?: string[];
@@ -297,6 +305,10 @@ export interface Scene {
   gmSecretNotes?: string;
   choicesConsequences?: string;
   combatDifficulty?: string;
+  /** Tactique et moral des adversaires. */
+  tactics?: string;
+  /** Utilité : ce que l'histoire perd si on coupe la scène. */
+  purpose?: string;
   enemies?: string;
 
   /** IDs des fiches du bestiaire engagées dans la rencontre (weak refs). */
@@ -340,6 +352,10 @@ export interface SceneCreate {
   gmSecretNotes?: string;
   choicesConsequences?: string;
   combatDifficulty?: string;
+  /** Tactique et moral des adversaires. */
+  tactics?: string;
+  /** Utilité : ce que l'histoire perd si on coupe la scène. */
+  purpose?: string;
   enemies?: string;
 
   /** IDs des fiches du bestiaire engagées dans la rencontre (weak refs). */

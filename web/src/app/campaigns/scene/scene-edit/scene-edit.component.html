@@ -64,6 +64,20 @@
       </textarea>
     </div>
 
+    <!-- Utilité : ce que l'histoire perd si on coupe la scène (aide à trier et à rythmer). -->
+    <div class="field">
+      <div class="field-label-row">
+        <label for="scene-edit-purpose">{{ 'sceneEdit.purposeLabel' | translate }}</label>
+        <app-writing-coach-trigger topic="scene.purpose"></app-writing-coach-trigger>
+      </div>
+      <textarea
+        id="scene-edit-purpose"
+        formControlName="purpose"
+        [placeholder]="'sceneEdit.purposePlaceholder' | translate"
+        rows="2">
+      </textarea>
+    </div>
+
     <div class="field">
       <label>{{ 'sceneEdit.iconLabel' | translate }}</label>
       <app-icon-picker [options]="campaignIconOptions" [(selected)]="selectedIcon"></app-icon-picker>
@@ -346,6 +360,18 @@
           formControlName="enemies"
           [placeholder]="'sceneEdit.enemiesPlaceholder' | translate"
           rows="4">
+        </textarea>
+      </div>
+      <div class="field">
+        <div class="field-label-row">
+          <label for="scene-edit-tactics">{{ 'sceneEdit.tacticsLabel' | translate }}</label>
+          <app-writing-coach-trigger topic="scene.tactics"></app-writing-coach-trigger>
+        </div>
+        <textarea
+          id="scene-edit-tactics"
+          formControlName="tactics"
+          [placeholder]="'sceneEdit.tacticsPlaceholder' | translate"
+          rows="3">
         </textarea>
       </div>
     </app-expandable-section>

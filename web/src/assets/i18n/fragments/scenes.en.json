@@ -91,7 +91,11 @@
     "deleteMessage": "Delete the scene \"{{name}}\"?",
     "deleteIrreversible": "This action is irreversible.",
     "saveError": "Error while saving",
-    "deleteError": "Error while deleting"
+    "deleteError": "Error while deleting",
+    "purposeLabel": "Purpose of the scene",
+    "purposePlaceholder": "If it were cut, what would the story lose? (information, a choice, an emotion…)",
+    "tacticsLabel": "Enemy tactics and morale",
+    "tacticsPlaceholder": "How they fight, and when they flee, surrender or negotiate"
   },
   "sceneView": {
     "subtitle": "Scene",
@@ -121,7 +125,9 @@
     "deleteTitle": "Delete scene",
     "deleteMessage": "Delete the scene \"{{name}}\"?",
     "deleteIrreversible": "This action is irreversible.",
-    "deleteError": "Error while deleting the scene"
+    "deleteError": "Error while deleting the scene",
+    "purposeSectionTitle": "Purpose",
+    "tacticsSectionTitle": "Tactics and morale"
   },
   "sceneType": {
     "GENERIC": "Generic scene",

@@ -60,6 +60,9 @@ public class Npc {
     /** Ordre d'affichage dans la liste des PNJ de la campagne. */
     private int order;
 
+    /** Rôle dans l'histoire (rôle, motivation, ce qu'il sait, signe distinctif). Null = non renseigné. */
+    private NpcStory story;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
