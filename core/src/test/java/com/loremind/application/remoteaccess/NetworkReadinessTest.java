@@ -17,7 +17,7 @@ class NetworkReadinessTest {
     private static final FirewallRule ALLOW_PRIVATE = new FirewallRule("Allow", "Private", "True");
 
     private static NetworkReadiness eval(List<Network> networks, List<FirewallRule> rules) {
-        return NetworkReadiness.evaluate(new NetworkSnapshot(true, "C:\\DM Loremind.exe", networks, rules));
+        return NetworkReadiness.evaluate(new NetworkSnapshot(true, "C:\\DM Loremind.exe", networks, rules, List.of()));
     }
 
     @Test
@@ -69,6 +69,15 @@ class NetworkReadinessTest {
     void disabledRules_areIgnored_andAnyCoversPrivate() {
         assertFalse(eval(List.of(HOME_PRIVATE), List.of(new FirewallRule("Allow", "Private", "False"))).ready());
         assertTrue(eval(List.of(HOME_PRIVATE), List.of(new FirewallRule("Allow", "Any", "True"))).ready());
+    }
+
+    @Test
+    void thirdPartyFirewall_isReported_withoutPretendingToKnowItsRules() {
+        // Cas réel du 2026-10-17 : Windows prêt, mais Bitdefender filtre en plus avec ses propres règles.
+        NetworkReadiness r = NetworkReadiness.evaluate(new NetworkSnapshot(true, "C:\\DM Loremind.exe",
+                List.of(HOME_PRIVATE), List.of(ALLOW_PRIVATE), List.of("Bitdefender Pare-feu")));
+        assertTrue(r.ready(), "Windows est prêt…");
+        assertEquals(List.of("Bitdefender Pare-feu"), r.thirdPartyFirewalls(), "…mais le pare-feu tiers est signalé");
     }
 
     @Test

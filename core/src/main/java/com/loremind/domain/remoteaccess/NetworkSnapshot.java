@@ -11,8 +11,11 @@ import java.util.List;
  * @param program   exécutable visé par les règles (DM Loremind.exe en bureau)
  * @param networks  réseaux connectés
  * @param rules     règles entrantes du pare-feu pour ce programme
+ * @param thirdPartyFirewalls pare-feu tiers déclarés à Windows (Bitdefender, Norton…) : ils filtrent
+ *                  EN PLUS du pare-feu Windows, avec leurs propres règles, illisibles d'ici
  */
-public record NetworkSnapshot(boolean supported, String program, List<Network> networks, List<FirewallRule> rules) {
+public record NetworkSnapshot(boolean supported, String program, List<Network> networks, List<FirewallRule> rules,
+                              List<String> thirdPartyFirewalls) {
 
     /** Catégorie Windows : {@code Public}, {@code Private} ou {@code DomainAuthenticated}. */
     public record Network(String name, String alias, String category) {}
@@ -25,6 +28,6 @@ public record NetworkSnapshot(boolean supported, String program, List<Network> n
     public record FirewallRule(String action, String profile, String enabled) {}
 
     public static NetworkSnapshot unsupported() {
-        return new NetworkSnapshot(false, null, List.of(), List.of());
+        return new NetworkSnapshot(false, null, List.of(), List.of(), List.of());
     }
 }

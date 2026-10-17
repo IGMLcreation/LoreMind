@@ -33,6 +33,18 @@ class WindowsHostNetworkAccessTest {
         assertEquals("Private", s.networks().get(0).category());
         assertEquals(2, s.rules().size());
         assertEquals("Block", s.rules().get(1).action());
+        assertTrue(s.thirdPartyFirewalls().isEmpty());
+    }
+
+    @Test
+    void parse_readsThirdPartyFirewalls_asSingleValueOrArray() throws Exception {
+        NetworkSnapshot one = WindowsHostNetworkAccess.parseSnapshot(mapper, "C:\\app.exe",
+                "{\"networks\":[],\"rules\":[],\"thirdPartyFirewalls\":\"Bitdefender Pare-feu\"}");
+        assertEquals(java.util.List.of("Bitdefender Pare-feu"), one.thirdPartyFirewalls());
+
+        NetworkSnapshot two = WindowsHostNetworkAccess.parseSnapshot(mapper, "C:\\app.exe",
+                "{\"networks\":[],\"rules\":[],\"thirdPartyFirewalls\":[\"Norton\",\"\"]}");
+        assertEquals(java.util.List.of("Norton"), two.thirdPartyFirewalls());
     }
 
     @Test
@@ -55,6 +67,7 @@ class WindowsHostNetworkAccessTest {
         assertFalse(allow.contains("Public"), "la règle ne doit jamais ouvrir les réseaux publics");
         assertTrue(allow.contains("Remove-NetFirewallRule"), "les blocages de CE programme sont retirés");
         assertTrue(WindowsHostNetworkAccess.inspectScript(path).contains("ConvertTo-Json"));
+        assertTrue(WindowsHostNetworkAccess.inspectScript(path).contains("SecurityCenter2"));
     }
 
     @Test
@@ -69,5 +82,6 @@ class WindowsHostNetworkAccessTest {
         NetworkSnapshot s = new WindowsHostNetworkAccess(mapper).inspect();
         assertTrue(s.supported(), "PowerShell doit répondre en lecture seule sur Windows");
         assertNotNull(s.program());
+        assertNotNull(s.thirdPartyFirewalls());
     }
 }

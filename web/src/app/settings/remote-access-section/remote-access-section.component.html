@@ -37,12 +37,12 @@
       </div>
 
       @if (network?.supported) {
-        <div class="remote-block network-check" [class.ok]="network!.ready">
+        <div class="remote-block network-check" [class.ok]="allClear">
           <h3>{{ 'remoteAccess.network.title' | translate }}</h3>
           @if (network!.ready) {
             <p class="check-ok">
               <lucide-icon [img]="CheckCircle2" [size]="16"></lucide-icon>
-              {{ 'remoteAccess.network.ready' | translate }}
+              {{ (thirdPartyFirewalls.length > 0 ? 'remoteAccess.network.windowsReady' : 'remoteAccess.network.ready') | translate }}
             </p>
           } @else {
             @if (network!.publicNetworks.length > 0) {
@@ -67,6 +67,15 @@
                 <p class="note">{{ 'remoteAccess.network.uacNote' | translate }}</p>
               </div>
             }
+          }
+          @if (thirdPartyFirewalls.length > 0) {
+            <div class="check-item">
+              <p class="check-problem">{{ 'remoteAccess.network.thirdParty' | translate: { names: thirdPartyFirewalls.join(', ') } }}</p>
+              <p class="note">{{ 'remoteAccess.network.thirdPartyHowTo' | translate }}</p>
+              <a class="btn-link" [href]="'remoteAccess.network.docUrl' | translate" target="_blank" rel="noopener">
+                {{ 'remoteAccess.network.docLink' | translate }}
+              </a>
+            </div>
           }
           @if (fixMessage) {
             <p class="fix-message" role="status">{{ fixMessage }}</p>

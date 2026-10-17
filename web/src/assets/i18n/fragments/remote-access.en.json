@@ -64,7 +64,12 @@
         "CANCELLED": "Confirmation cancelled: nothing was changed.",
         "FAILED": "The permission failed. You can try again, or add it manually (see the documentation).",
         "UNSUPPORTED": "This check is only available on Windows."
-      }
+      },
+      "windowsReady": "The Windows firewall and the network type let the tablet through.",
+      "thirdParty": "{{names}} also filters connections on this PC, with its own rules that DM Loremind can't check. Until it allows it, the tablet will load forever.",
+      "thirdPartyHowTo": "In that software's firewall settings: classify your Wi-Fi as a home network (not public, stealth mode off), then add a rule allowing incoming connections for DM Loremind.",
+      "docLink": "See how to fix it",
+      "docUrl": "https://loremind-docs.igmlcreation.fr/en/docs/configuration/acces-tablette#the-tablet-loads-forever"
     }
   }
 }

@@ -64,7 +64,12 @@
         "CANCELLED": "Confirmation annulée : rien n'a été modifié.",
         "FAILED": "L'autorisation a échoué. Tu peux réessayer, ou l'ajouter à la main (voir la documentation).",
         "UNSUPPORTED": "Cette vérification n'est disponible que sur Windows."
-      }
+      },
+      "windowsReady": "Le pare-feu Windows et le type de réseau laissent passer la tablette.",
+      "thirdParty": "{{names}} filtre aussi les connexions sur ce PC, avec ses propres règles que DM Loremind ne peut pas vérifier. Tant qu'il ne l'autorise pas, la tablette chargera sans fin.",
+      "thirdPartyHowTo": "Dans les réglages du pare-feu de ce logiciel : classe ton Wi-Fi en réseau domestique (pas public, sans mode furtif), puis ajoute une règle qui autorise DM Loremind en connexions entrantes.",
+      "docLink": "Voir la marche à suivre",
+      "docUrl": "https://loremind-docs.igmlcreation.fr/docs/configuration/acces-tablette#la-tablette-charge-sans-fin"
     }
   }
 }

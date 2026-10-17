@@ -188,6 +188,15 @@ export class RemoteAccessSectionComponent implements OnInit, OnDestroy {
     this.remoteAccess.openNetworkSettings().subscribe({ error: () => undefined });
   }
 
+  /** Vert seulement si rien ne bloque côté Windows ET qu'aucun pare-feu tiers n'échappe à la vérification. */
+  get allClear(): boolean {
+    return !!this.network && this.network.ready && this.thirdPartyFirewalls.length === 0;
+  }
+
+  get thirdPartyFirewalls(): string[] {
+    return this.network?.thirdPartyFirewalls ?? [];
+  }
+
   get firewallNeedsFix(): boolean {
     return !!this.network && (!this.network.firewallAllowed || this.network.firewallBlocked);
   }

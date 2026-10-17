@@ -15,6 +15,8 @@ import java.util.Locale;
  * @param publicNetworks  réseaux connectés classés « Public » que le pare-feu ne laisse pas passer
  * @param firewallAllowed une règle active autorise l'application sur les réseaux privés
  * @param firewallBlocked une règle active BLOQUE l'application (ex. « Annuler » dans la fenêtre Windows)
+ * @param thirdPartyFirewalls pare-feu tiers présents : leurs réglages ne sont pas lisibles, donc {@code ready}
+ *                        ne peut pas être garanti — le front avertit l'utilisateur de les régler lui-même
  * @param program         exécutable concerné
  */
 public record NetworkReadiness(
@@ -23,6 +25,7 @@ public record NetworkReadiness(
         List<String> publicNetworks,
         boolean firewallAllowed,
         boolean firewallBlocked,
+        List<String> thirdPartyFirewalls,
         String program
 ) {
 
@@ -31,7 +34,7 @@ public record NetworkReadiness(
 
     public static NetworkReadiness evaluate(NetworkSnapshot snapshot) {
         if (snapshot == null || !snapshot.supported()) {
-            return new NetworkReadiness(false, false, List.of(), false, false, null);
+            return new NetworkReadiness(false, false, List.of(), false, false, List.of(), null);
         }
         List<NetworkSnapshot.FirewallRule> rules = snapshot.rules() == null ? List.of() : snapshot.rules();
         boolean allowedPrivate = covers(rules, "Allow", PRIVATE);
@@ -46,8 +49,11 @@ public record NetworkReadiness(
         // Un réseau public n'est un obstacle que si le pare-feu ne l'ouvre pas explicitement.
         List<String> blockingPublic = publicOpen ? List.of() : publicNetworks;
 
+        // « ready » ne porte que sur ce qui est lisible (Windows) ; un pare-feu tiers est signalé à part.
         boolean ready = allowedPrivate && !blockedPrivate && blockingPublic.isEmpty();
-        return new NetworkReadiness(true, ready, blockingPublic, allowedPrivate, blockedPrivate, snapshot.program());
+        List<String> thirdParty = snapshot.thirdPartyFirewalls() == null ? List.of() : snapshot.thirdPartyFirewalls();
+        return new NetworkReadiness(true, ready, blockingPublic, allowedPrivate, blockedPrivate, thirdParty,
+                snapshot.program());
     }
 
     /** Une règle ACTIVE de cette action couvre-t-elle ce profil (« Any » couvre tout) ? */

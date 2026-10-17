@@ -38,6 +38,8 @@ export interface NetworkReadiness {
   publicNetworks: string[];
   firewallAllowed: boolean;
   firewallBlocked: boolean;
+  /** Pare-feu tiers (Bitdefender…) : ils filtrent en plus de Windows, réglages illisibles d'ici. */
+  thirdPartyFirewalls: string[];
   program?: string | null;
 }
 

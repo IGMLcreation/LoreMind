@@ -117,7 +117,12 @@ public class WindowsHostNetworkAccess implements HostNetworkAccess {
                 + "([Environment]::ExpandEnvironmentVariables($_.Program) -ieq $p) } | Get-NetFirewallRule | "
                 + "Where-Object { $_.Direction.ToString() -eq 'Inbound' } | ForEach-Object { [pscustomobject]@{ "
                 + "action = $_.Action.ToString(); profile = $_.Profile.ToString(); enabled = $_.Enabled.ToString() } })\n"
-                + "[pscustomobject]@{ networks = $nets; rules = $rules } | ConvertTo-Json -Depth 4 -Compress\n";
+                // Pare-feu TIERS déclarés au Centre de sécurité (le pare-feu Windows n'y figure pas) :
+                // ils filtrent en plus de Windows, avec des règles qu'on ne peut pas lire.
+                + "$fw = @(Get-CimInstance -Namespace root/SecurityCenter2 -ClassName FirewallProduct | "
+                + "ForEach-Object { $_.displayName } | Where-Object { $_ -and $_ -notmatch 'Windows' })\n"
+                + "[pscustomobject]@{ networks = $nets; rules = $rules; thirdPartyFirewalls = $fw } | "
+                + "ConvertTo-Json -Depth 4 -Compress\n";
     }
 
     /**
@@ -150,7 +155,11 @@ public class WindowsHostNetworkAccess implements HostNetworkAccess {
         for (JsonNode r : array(root.path("rules"))) {
             rules.add(new NetworkSnapshot.FirewallRule(text(r, "action"), text(r, "profile"), text(r, "enabled")));
         }
-        return new NetworkSnapshot(true, program, networks, rules);
+        List<String> thirdParty = new ArrayList<>();
+        for (JsonNode f : array(root.path("thirdPartyFirewalls"))) {
+            if (f.isTextual() && !f.asText().isBlank()) thirdParty.add(f.asText());
+        }
+        return new NetworkSnapshot(true, program, networks, rules, thirdParty);
     }
 
     /** ConvertTo-Json écrit un objet seul (pas un tableau) quand la liste n'a qu'un élément. */
