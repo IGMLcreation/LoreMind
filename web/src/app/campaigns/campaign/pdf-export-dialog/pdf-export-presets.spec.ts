@@ -7,13 +7,13 @@ describe('PDF export presets', () => {
   it('GM edition = complete booklet, whole lore', () => {
     expect(toExportOptions(gm())).toEqual({
       edition: 'gm', format: 'A4', print: false,
-      sections: ['NARRATIVE', 'QUESTS', 'NPCS', 'ENEMIES', 'TABLES', 'LORE'], lore: 'ALL',
+      sections: ['NARRATIVE', 'QUESTS', 'NPCS', 'ENEMIES', 'TABLES', 'LORE', 'APPENDIX', 'MAPS'], lore: 'ALL',
     });
   });
 
   it('player edition preselects player-safe parts and linked lore only', () => {
     const o = toExportOptions({ edition: 'player', format: 'A5', print: true, ...editionPreset('player') })!;
-    expect(o.sections).toEqual(['NARRATIVE', 'NPCS', 'LORE']);
+    expect(o.sections).toEqual(['NARRATIVE', 'NPCS', 'LORE', 'MAPS']);
     expect(o.lore).toBe('LINKED');
     expect(o.format).toBe('A5');
     expect(o.print).toBe(true);

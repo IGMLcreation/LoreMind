@@ -11,11 +11,12 @@ export interface PdfExportChoice {
 
 /**
  * Préréglages d'une version : MJ = livret complet ; joueurs = ce qu'on peut leur montrer
- * (narration, PNJ, lore limité aux pages liées), sans bestiaire, quêtes ni tables.
+ * (narration, PNJ, lore limité aux pages liées, cartes en grand), sans bestiaire, quêtes,
+ * tables ni annexes MJ.
  */
 export function editionPreset(edition: 'gm' | 'player'): Pick<PdfExportChoice, 'sections' | 'lore'> {
   return edition === 'player'
-    ? { sections: new Set<PdfSection>(['NARRATIVE', 'NPCS', 'LORE']), lore: 'LINKED' }
+    ? { sections: new Set<PdfSection>(['NARRATIVE', 'NPCS', 'LORE', 'MAPS']), lore: 'LINKED' }
     : { sections: new Set<PdfSection>(PDF_SECTIONS), lore: 'ALL' };
 }
 

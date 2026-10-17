@@ -65,6 +65,11 @@ class PdfImageEncoder {
 
     /** Battlemap (fichier stocke) re-encodee, seulement si c'est une image (pas une video). */
     PdfImage fileImage(String fileId) {
+        return fileImage(fileId, ILLUSTRATION_MAX);
+    }
+
+    /** Idem, avec une cote max choisie (cartes pleine page de l'annexe : plus fines). */
+    PdfImage fileImage(String fileId, int maxDim) {
         if (fileId == null || fileId.isBlank()) return null;
         StoredFileJpaEntity e;
         try {
@@ -75,7 +80,7 @@ class PdfImageEncoder {
         if (e == null) return null;
         String ct = e.getContentType();
         if (ct == null || !ct.startsWith("image/")) return null; // mp4/webm -> ignore
-        return encode(fileStorage.download(e.getStorageKey()), ILLUSTRATION_MAX, fileId);
+        return encode(fileStorage.download(e.getStorageKey()), maxDim, fileId);
     }
 
     /** Lit un flux image, le redimensionne (max maxDim) et le re-encode en data-URI JPEG. */

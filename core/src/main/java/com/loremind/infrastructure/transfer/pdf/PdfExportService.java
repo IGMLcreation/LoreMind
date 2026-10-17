@@ -178,11 +178,13 @@ public class PdfExportService {
      * Contexte de rendu : les sections ecrivent leur corps et alimentent les signets,
      * le sommaire et les compteurs (repris ensuite sur la couverture).
      */
-    private static final class Ctx {
+    static final class Ctx {
         final PdfExportOptions opt;
         /** Version MJ : les contenus reserves au MJ (secrets, consequences, combats...) sont rendus. */
         final boolean gm;
         final StringBuilder body = new StringBuilder();
+        /** Cartes rendues en annexe (par scene), ou null si l'annexe Cartes n'est pas demandee. */
+        Map<Long, List<PdfAppendices.MapPage>> maps;
         final StringBuilder bookmarks = new StringBuilder();
         final List<TocEntry> toc = new ArrayList<>();
         int scenes;
@@ -226,33 +228,60 @@ public class PdfExportService {
         // et le sommaire sont assembles ensuite en tete de document.
         Structure st = structureLoader.load(campaign);
         Ctx ctx = new Ctx(opt);
+        // Cartes encodees d'abord : les scenes y renvoient au lieu de les afficher en petit.
+        if (opt.includes(Section.MAPS)) ctx.maps = PdfAppendices.collectMaps(st, imageEncoder);
+        List<PersonaRow> npcRows = opt.includes(Section.NPCS) ? npcEntries(campaign) : List.of();
+        List<PersonaRow> enemyRows = opt.includes(Section.ENEMIES) ? enemyEntries(campaign) : List.of();
         introduction(ctx, campaign, pub, st);
         if (opt.includes(Section.NARRATIVE)) narrative(ctx, st);
         if (opt.includes(Section.QUESTS)) {
             ctx.quests = st.quests.size();
             quests(ctx, st);
         }
-        if (opt.includes(Section.NPCS)) {
-            personas(ctx, "part-npcs", "Personnages non-joueurs (PNJ)", npcEntries(campaign), npcTemplate, false);
-        }
-        if (opt.includes(Section.ENEMIES)) {
-            personas(ctx, "part-enemies", "Bestiaire", enemyEntries(campaign), enemyTemplate, true);
-        }
+        personas(ctx, "part-npcs", "Personnages non-joueurs (PNJ)", npcRows, npcTemplate, false);
+        personas(ctx, "part-enemies", "Bestiaire", enemyRows, enemyTemplate, true);
         if (opt.includes(Section.TABLES)) randomTables(ctx, campaign);
         if (opt.includes(Section.LORE)) lore(ctx, campaign, st);
+        if (opt.includes(Section.APPENDIX) && ctx.gm) appendix(ctx, st, npcRows, enemyRows);
+        if (ctx.maps != null) PdfAppendices.mapsPart(ctx, ctx.maps);
 
         StringBuilder full = new StringBuilder();
         cover(full, ctx, campaign, pub);
         creditsPage(full, campaign, pub);
         full.append(tocHtml(ctx.toc));
         full.append(ctx.body);
+        String body = resolveRefs(full.toString());
 
         return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                 + "<html xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"fr\" xml:lang=\"fr\"><head><meta charset=\"utf-8\"/>\n"
                 + documentInfo(campaign, pub)
                 + "<style>" + cssFor(campaign.getName(), opt) + "</style>\n"
                 + "<bookmarks>" + ctx.bookmarks + "</bookmarks>\n"
-                + "</head><body>" + full + "</body></html>";
+                + "</head><body>" + body + "</body></html>";
+    }
+
+    /**
+     * Annexes MJ : revelations et indices, index des PNJ et des adversaires (avec leurs
+     * apparitions). Les index ne listent que les fiches presentes dans le livret.
+     */
+    private void appendix(Ctx ctx, Structure st, List<PersonaRow> npcRows, List<PersonaRow> enemyRows) {
+        StringBuilder annex = new StringBuilder();
+        PdfAppendices.revelations(annex, st);
+        PdfAppendices.index(annex, "annex-npcs", "Index des PNJ", indexRows(npcRows, "npc-"), null);
+        PdfAppendices.index(annex, "annex-enemies", "Index des adversaires", indexRows(enemyRows, "enemy-"),
+                PdfAppendices.enemyAppearances(st));
+        if (annex.isEmpty()) return;
+        ctx.body.append("<h1 class=\"part\" id=\"part-annex\">Annexes</h1>").append(annex);
+        ctx.addToc(0, "Annexes", "part-annex");
+        ctx.bookmarks.append(bookmark("Annexes", "part-annex", ""));
+    }
+
+    private static List<PdfAppendices.IndexRow> indexRows(List<PersonaRow> rows, String anchorPrefix) {
+        List<PdfAppendices.IndexRow> out = new ArrayList<>();
+        for (PersonaRow r : rows) {
+            out.add(new PdfAppendices.IndexRow(anchorPrefix + r.id(), r.name(), r.folder(), r.level()));
+        }
+        return out;
     }
 
     /**
@@ -550,7 +579,7 @@ public class PdfExportService {
         illustrations(ctx, fused.getIllustrationImageIds());
         ctx.gmBlock(LABEL_DESCRIPTION, mergeField(ch.getDescription(), fused.getDescription()));
         ctx.gmBlock(LABEL_CONDITIONS, renderPrerequisites(fused.getPrerequisites(), st.questNames));
-        ctx.gmBlock(LABEL_NOEUDS, renderQuestNodes(fused, st));
+        if (ctx.gm) blockHtml(ctx.body, LABEL_NOEUDS, questNodeItems(fused, st));
         block(ctx.body, LABEL_OBJECTIFS_JOUEURS, mergeField(ch.getPlayerObjectives(), fused.getPlayerObjectives()));
         ctx.gmBlock(LABEL_ENJEUX_NARRATIFS, mergeField(ch.getNarrativeStakes(), fused.getNarrativeStakes()));
         ctx.gmBox(CSS_SECRET, LABEL_NOTES_MJ, mergeField(ch.getGmNotes(), fused.getGmNotes()));
@@ -603,13 +632,16 @@ public class PdfExportService {
         box(b, "readaloud", "À lire aux joueurs", sc.getPlayerNarration());
         ctx.gmBox(CSS_SECRET, "Notes secrètes MJ", sc.getGmSecretNotes());
         ctx.gmBlock("Choix et conséquences", sc.getChoicesConsequences());
-        ctx.gmBlock("Sorties", renderSceneBranches(sc.getBranches(), st));
-        // Combat : difficulte + ennemis de la rencontre (refs bestiaire resolues en noms
-        // + texte libre) dans le meme encadre rouge.
-        ctx.gmBox("combat", "Combat", joinNonBlank(sc.getCombatDifficulty(),
-                enemyLines(sc.getEnemyIds(), sc.getEnemies(), st)));
+        if (ctx.gm) blockHtml(b, "Sorties", sceneBranchItems(sc.getBranches(), st));
+        // Combat : difficulte + ennemis de la rencontre (fiches du bestiaire en renvoi
+        // « p. N » + texte libre) dans le meme encadre rouge.
+        combatBox(ctx, "Combat", sc.getCombatDifficulty(), sc.getEnemyIds(), sc.getEnemies(), st);
         illustrations(ctx, sc.getIllustrationImageIds());
-        sceneBattlemaps(ctx, sc);
+        if (ctx.maps != null) {
+            mapLinks(ctx, sc);
+        } else {
+            sceneBattlemaps(ctx, sc);
+        }
         rooms(ctx, sc, st);
         b.append(DIV_CLOSE);
     }
@@ -630,6 +662,16 @@ public class PdfExportService {
             block(b, "Lieu", sc.getLocation());
             block(b, "Moment", sc.getTiming());
         }
+    }
+
+    /** Annexe Cartes demandee : la scene renvoie a ses cartes pleine page (« p. N »). */
+    private static void mapLinks(Ctx ctx, SceneJpaEntity sc) {
+        List<String> items = new ArrayList<>();
+        String prefix = "map-" + sc.getId() + "-";
+        for (PdfAppendices.MapPage p : ctx.maps.getOrDefault(sc.getId(), List.of())) {
+            if (p.anchor().startsWith(prefix)) items.add(xref(p.anchor(), p.title()) + " " + pageRef(p.anchor()));
+        }
+        blockHtml(ctx.body, "Cartes", items);
     }
 
     /**
@@ -664,12 +706,11 @@ public class PdfExportService {
             if (r.getFloor() != null) b.append(" · Étage ").append(r.getFloor());
             b.append(SPAN_CLOSE).append(esc(r.getName())).append(DIV_CLOSE);
             ctx.gmBlock(LABEL_DESCRIPTION, r.getDescription());
-            ctx.gmBox("combat", "Ennemis", enemyLines(r.getEnemyIds(), r.getEnemies(), st));
+            combatBox(ctx, "Ennemis", null, r.getEnemyIds(), r.getEnemies(), st);
             ctx.gmBlock("Butin", r.getLoot());
             ctx.gmBlock("Pièges", r.getTraps());
             ctx.gmBox(CSS_SECRET, LABEL_NOTES_MJ, r.getGmNotes());
-            PdfImage map = imageEncoder.image(r.getMapImageId(), PdfImageEncoder.ILLUSTRATION_MAX);
-            if (map != null) illustration(ctx, map, "Plan — " + r.getName());
+            roomMap(ctx, sc, r);
             illustrations(ctx, r.getIllustrationImageIds());
             if (ctx.gm && r.getBranches() != null && !r.getBranches().isEmpty()) {
                 List<String> parts = new ArrayList<>();
@@ -683,20 +724,42 @@ public class PdfExportService {
         }
     }
 
-    /** Sorties narratives d'une scene, cibles resolues en noms de scenes. */
-    private String renderSceneBranches(List<SceneBranch> branches, Structure st) {
-        if (branches == null || branches.isEmpty()) return null;
-        List<String> parts = new ArrayList<>();
+    /** Plan d'une piece : en annexe pleine page si demandee (renvoi), sinon en illustration. */
+    private void roomMap(Ctx ctx, SceneJpaEntity sc, Room r) {
+        if (ctx.maps != null) {
+            String anchor = PdfAppendices.roomMapAnchor(sc.getId(), r.getId());
+            boolean inAnnex = ctx.maps.getOrDefault(sc.getId(), List.of()).stream()
+                    .anyMatch(p -> p.anchor().equals(anchor));
+            if (inAnnex) blockHtml(ctx.body, "Plan", List.of("carte en annexe " + pageRef(anchor)));
+            return;
+        }
+        PdfImage map = imageEncoder.image(r.getMapImageId(), PdfImageEncoder.ILLUSTRATION_MAX);
+        if (map != null) illustration(ctx, map, "Plan — " + r.getName());
+    }
+
+    /**
+     * Sorties narratives d'une scene en HTML : nom de la scene cible cliquable et sa page
+     * (« Vers « La crypte » (p. 12) — Si les PJ fouillent [indice] »).
+     */
+    private static List<String> sceneBranchItems(List<SceneBranch> branches, Structure st) {
+        List<String> items = new ArrayList<>();
+        if (branches == null) return items;
         for (SceneBranch br : branches) {
+            String anchor = "scene-" + br.targetSceneId();
+            StringBuilder line = new StringBuilder("Vers « ")
+                    .append(xref(anchor, st.sceneNames.getOrDefault(br.targetSceneId(), "?")))
+                    .append(" » ").append(pageRef(anchor));
+            if (notBlank(br.label())) line.append(" — ").append(esc(br.label().trim()));
             String kind = switch (br.kind()) {
                 case CLUE -> "indice";
                 case LEAD -> "piste";
                 case EXIT -> null;
             };
-            parts.add(branchLine(st.sceneNames.getOrDefault(br.targetSceneId(), "?"),
-                    br.label(), kind, br.condition()));
+            if (kind != null) line.append(" [").append(kind).append("]");
+            if (notBlank(br.condition())) line.append(" (condition : ").append(esc(br.condition().trim())).append(")");
+            items.add(line.toString());
         }
-        return joinAsList(parts);
+        return items;
     }
 
     /** "Vers <cible> — <libelle> [indice] (condition : ...)" avec les morceaux presents. */
@@ -709,29 +772,30 @@ public class PdfExportService {
     }
 
     /**
-     * Ennemis d'une rencontre : refs bestiaire resolues en noms (liste a puces)
-     * + texte libre eventuel en paragraphe. Null si rien.
+     * Encadre de combat (reserve au MJ) : difficulte, adversaires du bestiaire en renvoi vers
+     * leur fiche (« Bandit (p. 24) »), puis texte libre. Rien si tout est vide.
      */
-    private String enemyLines(List<String> enemyIds, String freeText, Structure st) {
-        List<String> names = new ArrayList<>();
+    private static void combatBox(Ctx ctx, String label, String difficulty, List<String> enemyIds,
+                                  String freeText, Structure st) {
+        if (!ctx.gm) return;
+        List<String> enemies = new ArrayList<>();
         if (enemyIds != null) {
             for (String id : enemyIds) {
                 String name = st.enemyNames.get(id);
-                if (name != null) names.add(name);
+                if (name != null) enemies.add(xref("enemy-" + id, name) + " " + pageRef("enemy-" + id));
             }
         }
-        return joinNonBlank(joinAsList(names), freeText);
-    }
-
-    /** Joint les morceaux non vides par une ligne vide (nouveau paragraphe). Null si rien. */
-    private static String joinNonBlank(String... parts) {
-        StringBuilder out = new StringBuilder();
-        for (String p : parts) {
-            if (!notBlank(p)) continue;
-            if (!out.isEmpty()) out.append("\n\n");
-            out.append(p);
+        if (!notBlank(difficulty) && enemies.isEmpty() && !notBlank(freeText)) return;
+        StringBuilder b = ctx.body;
+        b.append("<div class=\"box combat\"><div class=\"box-label\">").append(esc(label)).append(DIV_CLOSE);
+        prose(b, difficulty);
+        if (!enemies.isEmpty()) {
+            b.append("<ul class=\"prose-list\">");
+            for (String e : enemies) b.append("<li>").append(e).append("</li>");
+            b.append("</ul>");
         }
-        return out.isEmpty() ? null : out.toString();
+        prose(b, freeText);
+        b.append(DIV_CLOSE);
     }
 
     // ----- Quetes libres / transversales (celles SANS conteneur dans la narration) -----
@@ -761,7 +825,7 @@ public class PdfExportService {
         illustrations(ctx, q.getIllustrationImageIds());
         ctx.gmBlock(LABEL_DESCRIPTION, q.getDescription());
         ctx.gmBlock(LABEL_CONDITIONS, renderPrerequisites(q.getPrerequisites(), st.questNames));
-        ctx.gmBlock(LABEL_NOEUDS, renderQuestNodes(q, st));
+        if (ctx.gm) blockHtml(ctx.body, LABEL_NOEUDS, questNodeItems(q, st));
         block(b, LABEL_OBJECTIFS_JOUEURS, q.getPlayerObjectives());
         ctx.gmBlock(LABEL_ENJEUX_NARRATIFS, q.getNarrativeStakes());
         ctx.gmBox(CSS_SECRET, LABEL_NOTES_MJ, q.getGmNotes());
@@ -810,18 +874,20 @@ public class PdfExportService {
      * Les chapitres-CONTENEURS de la quete sont exclus : c'est de la plomberie (le jumeau
      * porte le meme nom que la quete), pas un lien narratif.
      */
-    private String renderQuestNodes(QuestJpaEntity q, Structure st) {
-        if (q.getNodes() == null || q.getNodes().isEmpty()) return null;
+    private static List<String> questNodeItems(QuestJpaEntity q, Structure st) {
+        List<String> items = new ArrayList<>();
+        if (q.getNodes() == null) return items;
         Set<String> containers = st.containerChapterIds(q);
-        List<String> parts = new ArrayList<>();
         for (QuestNodeRef n : q.getNodes()) {
             if (n.nodeType() == NodeType.SCENE) {
-                parts.add("Scène : " + st.sceneNames.getOrDefault(n.nodeId(), "?"));
+                String anchor = "scene-" + n.nodeId();
+                items.add("Scène : " + xref(anchor, st.sceneNames.getOrDefault(n.nodeId(), "?")) + " " + pageRef(anchor));
             } else if (!containers.contains(n.nodeId())) {
-                parts.add("Chapitre : " + st.chapterNames.getOrDefault(n.nodeId(), "?"));
+                String anchor = "ch-" + n.nodeId();
+                items.add("Chapitre : " + xref(anchor, st.chapterNames.getOrDefault(n.nodeId(), "?")) + " " + pageRef(anchor));
             }
         }
-        return joinAsList(parts);
+        return items;
     }
 
     /** Plusieurs elements -> lignes "- ..." (rendues en vraies puces par parseBlocks). */
@@ -839,14 +905,14 @@ public class PdfExportService {
     // ----- PNJ / Ennemis (groupes par dossier) -----
 
     /** Une fiche persona generique pour la mise en page (PNJ ou ennemi). */
-    private record PersonaRow(int order, String name, String folder, String level, String portraitId,
+    record PersonaRow(Long id, int order, String name, String folder, String level, String portraitId,
                               Map<String, String> values, Map<String, Map<String, String>> keyValueValues,
                               Map<String, List<String>> imageValues, Map<String, String> foundryStats) {}
 
     private List<PersonaRow> npcEntries(CampaignJpaEntity c) {
         List<PersonaRow> out = new ArrayList<>();
         for (NpcJpaEntity n : npcRepo.findByCampaignIdOrderByOrderAsc(c.getId())) {
-            out.add(new PersonaRow(n.getOrder(), n.getName(), n.getFolder(), null, n.getPortraitImageId(),
+            out.add(new PersonaRow(n.getId(), n.getOrder(), n.getName(), n.getFolder(), null, n.getPortraitImageId(),
                     n.getValues(), n.getKeyValueValues(), n.getImageValues(), null));
         }
         return out;
@@ -855,7 +921,7 @@ public class PdfExportService {
     private List<PersonaRow> enemyEntries(CampaignJpaEntity c) {
         List<PersonaRow> out = new ArrayList<>();
         for (EnemyJpaEntity e : enemyRepo.findByCampaignIdOrderByOrderAsc(c.getId())) {
-            out.add(new PersonaRow(e.getOrder(), e.getName(), e.getFolder(), e.getLevel(), e.getPortraitImageId(),
+            out.add(new PersonaRow(e.getId(), e.getOrder(), e.getName(), e.getFolder(), e.getLevel(), e.getPortraitImageId(),
                     e.getValues(), e.getKeyValueValues(), e.getImageValues(), e.getFoundryStats()));
         }
         return out;
@@ -926,7 +992,8 @@ public class PdfExportService {
         StringBuilder b = ctx.body;
         // Mise en page en TABLE (portrait | contenu) : openhtmltopdf gere mal le float
         // + overflow (le texte se superposait au portrait).
-        b.append("<div class=\"card\"><table class=\"persona\"><tr>");
+        b.append("<div class=\"card\" id=\"").append(enemy ? "enemy-" : "npc-").append(r.id())
+                .append("\"><table class=\"persona\"><tr>");
         PdfImage portrait = imageEncoder.image(r.portraitId(), PdfImageEncoder.PORTRAIT_MAX);
         if (portrait != null) {
             double widthCm = Math.min(3.0, PORTRAIT_MAX_HEIGHT_CM * portrait.w() / portrait.h());

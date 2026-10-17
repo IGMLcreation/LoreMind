@@ -139,6 +139,57 @@ final class PdfHtml {
         b.append(DIV_CLOSE);
     }
 
+    // ----- Renvois internes (« voir p. 12 ») -----
+
+    private static final java.util.regex.Pattern ID_ATTR = java.util.regex.Pattern.compile(" id=\"([^\"]+)\"");
+    private static final java.util.regex.Pattern XREF = java.util.regex.Pattern.compile(
+            "<a class=\"xref\" href=\"#([^\"]+)\">(.*?)</a>");
+    private static final java.util.regex.Pattern PREF = java.util.regex.Pattern.compile(
+            "<a class=\"pref\" href=\"#([^\"]+)\"></a>");
+
+    /** Nom cliquable vers une ancre du livret (retire par {@link #resolveRefs} si l'ancre manque). */
+    static String xref(String anchor, String text) {
+        return "<a class=\"xref\" href=\"#" + anchor + "\">" + esc(text) + "</a>";
+    }
+
+    /** Numero de page de l'ancre, rendu « (p. 12) » par target-counter (cf. export.css). */
+    static String pageRef(String anchor) {
+        return "<a class=\"pref\" href=\"#" + anchor + "\"></a>";
+    }
+
+    /**
+     * Neutralise les renvois vers des ancres absentes du document (partie non exportee,
+     * scene d'une quete exclue...) : le nom reste en texte simple, le numero de page disparait.
+     * openhtmltopdf ne sait pas resoudre target-counter vers une ancre inexistante.
+     */
+    static String resolveRefs(String html) {
+        java.util.Set<String> ids = new java.util.HashSet<>();
+        java.util.regex.Matcher m = ID_ATTR.matcher(html);
+        while (m.find()) ids.add(m.group(1));
+        String out = XREF.matcher(html).replaceAll(r -> ids.contains(r.group(1))
+                ? java.util.regex.Matcher.quoteReplacement(r.group())
+                : java.util.regex.Matcher.quoteReplacement(r.group(2)));
+        return PREF.matcher(out).replaceAll(r -> ids.contains(r.group(1))
+                ? java.util.regex.Matcher.quoteReplacement(r.group()) : "");
+    }
+
+    /**
+     * Champ « libelle + elements » dont les elements sont DEJA du HTML (renvois, liens) :
+     * un seul element en ligne apres le libelle, plusieurs en liste a puces.
+     */
+    static void blockHtml(StringBuilder b, String label, List<String> htmlItems) {
+        if (htmlItems == null || htmlItems.isEmpty()) return;
+        b.append("<div class=\"field\"><span class=\"field-label\">").append(esc(label)).append(SPAN_CLOSE);
+        if (htmlItems.size() == 1) {
+            b.append(htmlItems.get(0));
+        } else {
+            b.append("<ul>");
+            for (String item : htmlItems) b.append("<li>").append(item).append("</li>");
+            b.append("</ul>");
+        }
+        b.append(DIV_CLOSE);
+    }
+
     /** Texte courant sans libelle : paragraphes et listes a puces (« - ... »). */
     static void prose(StringBuilder b, String value) {
         if (!notBlank(value)) return;

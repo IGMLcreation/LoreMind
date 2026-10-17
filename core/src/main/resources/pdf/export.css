@@ -131,3 +131,23 @@ div.field-label { margin: .12cm 0 .06cm; padding-right: 0; }
 .stat-array th { background: #f1eef9; color: #4a3f7a; border: 1pt solid #ddd6ee;
   padding: 2.5pt 9pt; text-align: center; }
 .stat-array td { border: 1pt solid #e6e2f2; padding: 2.5pt 9pt; text-align: center; }
+/* --- Renvois internes : nom cliquable + numero de page « (p. 12) » --- */
+a.xref { color: #463b78; border-bottom: .5pt dotted #b9aede; }
+a.pref:after { content: "(p. " target-counter(attr(href), page) ")"; font-family: 'DejaVu Sans', sans-serif;
+  font-size: 7.5pt; color: #8a7bc8; }
+/* --- Annexes --- */
+.annex-intro { color: #555; font-size: 9pt; }
+.annex-table td { vertical-align: top; }
+.annex-table .page-col { width: 1.6cm; text-align: right; }
+ul.annex-list { margin: 0; padding-left: .45cm; }
+ul.annex-list li { margin: 0 0 .04cm; }
+.annex-kind { font-family: 'DejaVu Sans', sans-serif; font-size: 7pt; text-transform: uppercase;
+  letter-spacing: .06em; color: #7d6fb0; }
+.annex-warn { color: #a84f49; font-style: italic; }
+/* --- Cartes en pleine page paysage (page nommee) --- */
+@page landscape { size: __PAGE_SIZE__ landscape; margin: 1cm; @top-center { content: none; }
+  @bottom-center { content: counter(page); font-family: 'DejaVu Sans', sans-serif; font-size: 8pt; color: #999; } }
+.map-page { page: landscape; page-break-before: always; text-align: center; }
+.map-title { font-family: 'DejaVu Sans', sans-serif; font-size: 11pt; font-weight: bold; color: #2e2a4a;
+  text-align: left; margin: 0 0 .3cm; }
+.map-page img { display: block; margin: 0 auto; border: 1pt solid #cfc9e0; }

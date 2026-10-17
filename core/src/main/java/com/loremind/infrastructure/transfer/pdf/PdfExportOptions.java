@@ -17,8 +17,12 @@ import java.util.Set;
 public record PdfExportOptions(boolean gmContent, PageFormat format, boolean printFriendly,
                                Set<Section> sections, LoreScope loreScope) {
 
-    /** Parties du livret qu'on peut inclure ou non. */
-    public enum Section { NARRATIVE, QUESTS, NPCS, ENEMIES, TABLES, LORE }
+    /**
+     * Parties du livret qu'on peut inclure ou non. APPENDIX = annexes MJ (revelations et
+     * indices, index PNJ et adversaires ; jamais en version joueurs) ; MAPS = cartes en
+     * pleine page paysage (les scenes y renvoient au lieu de les afficher en petit).
+     */
+    public enum Section { NARRATIVE, QUESTS, NPCS, ENEMIES, TABLES, LORE, APPENDIX, MAPS }
 
     /** Pages de lore exportées : toutes, ou seulement celles liées au contenu de la campagne. */
     public enum LoreScope { ALL, LINKED }
@@ -28,12 +32,13 @@ public record PdfExportOptions(boolean gmContent, PageFormat format, boolean pri
      * A5 : marges et corps réduits pour garder une ligne lisible sur une page étroite.
      */
     public enum PageFormat {
-        A4("A4", 21.0, 2.2, 1.7, 2.0, 10.0, 12.5),
-        A5("A5", 14.8, 1.7, 1.3, 1.6, 9.0, 7.0),
-        LETTER("letter", 21.59, 2.2, 1.8, 2.0, 10.0, 12.0);
+        A4("A4", 21.0, 29.7, 2.2, 1.7, 2.0, 10.0, 12.5),
+        A5("A5", 14.8, 21.0, 1.7, 1.3, 1.6, 9.0, 7.0),
+        LETTER("letter", 21.59, 27.94, 2.2, 1.8, 2.0, 10.0, 12.0);
 
         final String cssSize;
         final double widthCm;
+        final double heightCm;
         final double marginTopCm;
         final double marginSideCm;
         final double marginBottomCm;
@@ -41,15 +46,21 @@ public record PdfExportOptions(boolean gmContent, PageFormat format, boolean pri
         /** Hauteur max de l'illustration de couverture : la couverture tient sur une page. */
         final double coverArtMaxCm;
 
-        PageFormat(String cssSize, double widthCm, double marginTopCm, double marginSideCm,
+        PageFormat(String cssSize, double widthCm, double heightCm, double marginTopCm, double marginSideCm,
                    double marginBottomCm, double bodyPt, double coverArtMaxCm) {
             this.cssSize = cssSize;
             this.widthCm = widthCm;
+            this.heightCm = heightCm;
             this.marginTopCm = marginTopCm;
             this.marginSideCm = marginSideCm;
             this.marginBottomCm = marginBottomCm;
             this.bodyPt = bodyPt;
             this.coverArtMaxCm = coverArtMaxCm;
+        }
+
+        /** Largeur d'une page tournée en paysage (= hauteur en portrait). */
+        double landscapeWidthCm() {
+            return heightCm;
         }
 
         /** Largeur utile (page moins les deux marges latérales). */

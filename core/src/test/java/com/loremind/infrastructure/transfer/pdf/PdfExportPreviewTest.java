@@ -10,6 +10,7 @@ import com.loremind.domain.campaigncontext.structure.Room;
 import com.loremind.domain.campaigncontext.structure.RoomBranch;
 import com.loremind.domain.campaigncontext.structure.SceneBattlemap;
 import com.loremind.domain.campaigncontext.structure.SceneBranch;
+import com.loremind.domain.campaigncontext.structure.SceneType;
 import com.loremind.domain.files.ports.FileStorage;
 import com.loremind.domain.images.ports.ImageStorage;
 import com.loremind.domain.shared.template.TemplateField;
@@ -158,6 +159,7 @@ class PdfExportPreviewTest {
                                         "si un PJ a repéré Maëlis", LinkType.CLUE)))
                         .build(),
                 SceneJpaEntity.builder().id(301L).chapterId(200L).order(1).name("Le stand du colporteur")
+                        .type(SceneType.REVELATION)
                         .location("Allée marchande, place du Guet.")
                         .atmosphere("Le stand est intact mais abandonné ; la marchandise n'a pas été pillée, ce qui inquiète plus que tout.")
                         .gmSecretNotes("Sous le comptoir : un carnet dont trois pages ont été arrachées, imprégnées d'odeur de cendre.")
@@ -171,6 +173,7 @@ class PdfExportPreviewTest {
                         .enemies("Le sergent : profil du sbire avec +5 PV et une rapière (+1 aux dégâts).")
                         .battlemaps(List.of(new SceneBattlemap("Nuit", "500", null),
                                 new SceneBattlemap("Jour", "501", null)))
+                        .branches(List.of(new SceneBranch("Le carnet volé désigne le stand", "301", null, LinkType.CLUE)))
                         .build()));
         when(sceneRepo.findByChapterId(201L)).thenReturn(List.of(
                 SceneJpaEntity.builder().id(303L).chapterId(201L).order(0).name("Le seuil scellé")

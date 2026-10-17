@@ -1,8 +1,8 @@
 /** Parties du livret PDF qu'on peut inclure ou non (miroir de PdfExportOptions.Section). */
-export type PdfSection = 'NARRATIVE' | 'QUESTS' | 'NPCS' | 'ENEMIES' | 'TABLES' | 'LORE';
+export type PdfSection = 'NARRATIVE' | 'QUESTS' | 'NPCS' | 'ENEMIES' | 'TABLES' | 'LORE' | 'APPENDIX' | 'MAPS';
 
 /** Ordre canonique des parties dans le livret. */
-export const PDF_SECTIONS: PdfSection[] = ['NARRATIVE', 'QUESTS', 'NPCS', 'ENEMIES', 'TABLES', 'LORE'];
+export const PDF_SECTIONS: PdfSection[] = ['NARRATIVE', 'QUESTS', 'NPCS', 'ENEMIES', 'TABLES', 'LORE', 'APPENDIX', 'MAPS'];
 
 /**
  * Options de l'export PDF (modale) :

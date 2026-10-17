@@ -63,7 +63,9 @@
       "NPCS": "PNJ",
       "ENEMIES": "Bestiaire",
       "TABLES": "Tables aléatoires",
-      "LORE": "Lore"
+      "LORE": "Lore",
+      "APPENDIX": "Annexes MJ (révélations, index)",
+      "MAPS": "Cartes en pleine page"
     },
     "loreLinked": "Seulement les pages liées à la campagne",
     "loreAll": "Tout le lore",

@@ -63,7 +63,9 @@
       "NPCS": "NPCs",
       "ENEMIES": "Bestiary",
       "TABLES": "Random tables",
-      "LORE": "Lore"
+      "LORE": "Lore",
+      "APPENDIX": "GM appendix (revelations, indexes)",
+      "MAPS": "Full-page maps"
     },
     "loreLinked": "Only pages linked to the campaign",
     "loreAll": "The whole lore",
