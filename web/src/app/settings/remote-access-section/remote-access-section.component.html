@@ -36,6 +36,48 @@
         }
       </div>
 
+      @if (network?.supported) {
+        <div class="remote-block network-check" [class.ok]="network!.ready">
+          <h3>{{ 'remoteAccess.network.title' | translate }}</h3>
+          @if (network!.ready) {
+            <p class="check-ok">
+              <lucide-icon [img]="CheckCircle2" [size]="16"></lucide-icon>
+              {{ 'remoteAccess.network.ready' | translate }}
+            </p>
+          } @else {
+            @if (network!.publicNetworks.length > 0) {
+              <div class="check-item">
+                <p class="check-problem">{{ 'remoteAccess.network.publicProblem' | translate: { names: network!.publicNetworks.join(', ') } }}</p>
+                <p class="note">{{ 'remoteAccess.network.publicHowTo' | translate }}</p>
+                <button type="button" class="btn-secondary" (click)="openNetworkSettings()">
+                  <lucide-icon [img]="Settings2" [size]="15"></lucide-icon>
+                  {{ 'remoteAccess.network.openSettings' | translate }}
+                </button>
+              </div>
+            }
+            @if (firewallNeedsFix) {
+              <div class="check-item">
+                <p class="check-problem">
+                  {{ (network!.firewallBlocked ? 'remoteAccess.network.firewallBlocked' : 'remoteAccess.network.firewallMissing') | translate }}
+                </p>
+                <button type="button" class="btn-primary" (click)="allowFirewall()" [disabled]="fixing">
+                  <lucide-icon [img]="ShieldCheck" [size]="16"></lucide-icon>
+                  {{ (fixing ? 'remoteAccess.network.fixing' : 'remoteAccess.network.allowFirewall') | translate }}
+                </button>
+                <p class="note">{{ 'remoteAccess.network.uacNote' | translate }}</p>
+              </div>
+            }
+          }
+          @if (fixMessage) {
+            <p class="fix-message" role="status">{{ fixMessage }}</p>
+          }
+          <button type="button" class="btn-link" (click)="checkNetwork()" [disabled]="checking">
+            <lucide-icon [img]="RefreshCw" [size]="14"></lucide-icon>
+            {{ (checking ? 'remoteAccess.network.checking' : 'remoteAccess.network.recheck') | translate }}
+          </button>
+        </div>
+      }
+
       <div class="remote-block">
         <h3>{{ 'remoteAccess.settings.pairTitle' | translate }}</h3>
         @if (pairing) {

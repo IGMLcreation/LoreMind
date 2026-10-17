@@ -4,7 +4,7 @@
       "title": "Access from a tablet",
       "hint": "Browse and edit your campaigns from a tablet or phone on the same Wi-Fi as this PC. Each device must be authorized once, with a code shown here.",
       "enable": "Allow access from the local network",
-      "firewallNote": "When you turn this on, Windows may ask to allow DM Loremind through the firewall: choose \"Private networks\" only. Only enable it on a trusted network (your home router), never on public Wi-Fi.",
+      "firewallNote": "Once access is on, DM Loremind checks that the Windows firewall and your network type let the tablet through, and helps you fix it if needed. Only turn it on at home, never on public Wi-Fi.",
       "addressTitle": "Address to open on the tablet",
       "noAddress": "No local network address found: check that this PC is connected to your Wi-Fi or home router.",
       "pairTitle": "Connect a device",
@@ -45,6 +45,26 @@
       "onHostTitle": "You're on the PC",
       "onHostText": "This page is for connecting a tablet. On this PC, access is managed from Settings.",
       "onHostLink": "Open access settings"
+    },
+    "network": {
+      "title": "Network check",
+      "ready": "The firewall and the network let the tablet through.",
+      "publicProblem": "Windows considers your network \"{{names}}\" public: it blocks other devices, even with the firewall permission.",
+      "publicHowTo": "If it's your home network, switch it to \"Private\": Windows network settings > your Wi-Fi > Properties > Network profile type: Private. Then check again.",
+      "openSettings": "Open network settings",
+      "firewallMissing": "The Windows firewall doesn't let DM Loremind through yet: the tablet would load forever.",
+      "firewallBlocked": "The Windows firewall blocks DM Loremind (a permission was probably declined).",
+      "allowFirewall": "Allow through the firewall",
+      "fixing": "Confirm in the Windows prompt…",
+      "uacNote": "Windows will ask for administrator confirmation. DM Loremind will be allowed on private networks only.",
+      "recheck": "Check again",
+      "checking": "Checking…",
+      "fix": {
+        "APPLIED": "Done: DM Loremind is allowed through the firewall.",
+        "CANCELLED": "Confirmation cancelled: nothing was changed.",
+        "FAILED": "The permission failed. You can try again, or add it manually (see the documentation).",
+        "UNSUPPORTED": "This check is only available on Windows."
+      }
     }
   }
 }

@@ -4,7 +4,7 @@
       "title": "Accès depuis une tablette",
       "hint": "Consulte et modifie tes campagnes depuis une tablette ou un téléphone connecté au même Wi-Fi que ce PC. Chaque appareil doit être autorisé une fois, avec un code affiché ici.",
       "enable": "Autoriser l'accès depuis le réseau local",
-      "firewallNote": "À l'activation, Windows peut demander d'autoriser DM Loremind dans le pare-feu : choisis « Réseaux privés » uniquement. À n'activer que sur un réseau de confiance (ta box), jamais sur un Wi-Fi public.",
+      "firewallNote": "Une fois l'accès activé, DM Loremind vérifie que le pare-feu Windows et le type de ton réseau laissent passer la tablette, et t'aide à corriger si besoin. À n'activer que sur ton réseau de maison, jamais sur un Wi-Fi public.",
       "addressTitle": "Adresse à ouvrir sur la tablette",
       "noAddress": "Aucune adresse réseau locale détectée : vérifie que ce PC est bien connecté au Wi-Fi ou au réseau de ta box.",
       "pairTitle": "Connecter un appareil",
@@ -45,6 +45,26 @@
       "onHostTitle": "Tu es sur le PC",
       "onHostText": "Cette page sert à connecter une tablette. Sur ce PC, l'accès se règle depuis les Paramètres.",
       "onHostLink": "Ouvrir les réglages d'accès"
+    },
+    "network": {
+      "title": "Vérification du réseau",
+      "ready": "Le pare-feu et le réseau laissent passer la tablette.",
+      "publicProblem": "Windows considère ton réseau « {{names}} » comme un réseau public : il bloque les autres appareils, même avec l'autorisation du pare-feu.",
+      "publicHowTo": "S'il s'agit de ton réseau de maison, passe-le en « Privé » : réglages réseau de Windows > ton Wi-Fi > Propriétés > Type de profil réseau : Privé. Puis vérifie à nouveau.",
+      "openSettings": "Ouvrir les réglages réseau",
+      "firewallMissing": "Le pare-feu Windows ne laisse pas encore passer DM Loremind : la tablette chargerait sans fin.",
+      "firewallBlocked": "Le pare-feu Windows bloque DM Loremind (une autorisation a sans doute été refusée).",
+      "allowFirewall": "Autoriser dans le pare-feu",
+      "fixing": "Confirme dans la fenêtre de Windows…",
+      "uacNote": "Windows te demandera une confirmation administrateur. DM Loremind sera autorisé sur les réseaux privés uniquement.",
+      "recheck": "Vérifier à nouveau",
+      "checking": "Vérification…",
+      "fix": {
+        "APPLIED": "C'est fait : DM Loremind est autorisé dans le pare-feu.",
+        "CANCELLED": "Confirmation annulée : rien n'a été modifié.",
+        "FAILED": "L'autorisation a échoué. Tu peux réessayer, ou l'ajouter à la main (voir la documentation).",
+        "UNSUPPORTED": "Cette vérification n'est disponible que sur Windows."
+      }
     }
   }
 }

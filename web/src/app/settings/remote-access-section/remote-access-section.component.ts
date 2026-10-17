@@ -3,11 +3,11 @@ import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { LucideAngularModule, Tablet, Trash2, RefreshCw, AlertCircle, ShieldCheck } from 'lucide-angular';
+import { LucideAngularModule, Tablet, Trash2, RefreshCw, AlertCircle, ShieldCheck, CheckCircle2, Settings2 } from 'lucide-angular';
 import QRCode from 'qrcode';
 
 import {
-  PairedDevice, PairingCode, RemoteAccessService, RemoteAccessStatus
+  NetworkReadiness, PairedDevice, PairingCode, RemoteAccessService, RemoteAccessStatus
 } from '../../services/remote-access.service';
 import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 
@@ -28,6 +28,8 @@ export class RemoteAccessSectionComponent implements OnInit, OnDestroy {
   readonly RefreshCw = RefreshCw;
   readonly AlertCircle = AlertCircle;
   readonly ShieldCheck = ShieldCheck;
+  readonly CheckCircle2 = CheckCircle2;
+  readonly Settings2 = Settings2;
 
   private readonly remoteAccess = inject(RemoteAccessService);
   private readonly translate = inject(TranslateService);
@@ -40,6 +42,12 @@ export class RemoteAccessSectionComponent implements OnInit, OnDestroy {
   port = 0;
   busy = false;
   error: string | null = null;
+
+  /** Pare-feu et type de réseau (Windows) : null tant que non vérifié ou accès fermé. */
+  network: NetworkReadiness | null = null;
+  checking = false;
+  fixing = false;
+  fixMessage: string | null = null;
 
   pairing: PairingCode | null = null;
   qrDataUrl: string | null = null;
@@ -138,6 +146,50 @@ export class RemoteAccessSectionComponent implements OnInit, OnDestroy {
   private apply(status: RemoteAccessStatus): void {
     this.status = status;
     this.port = status.port;
+    if (status.running) {
+      this.checkNetwork();
+    } else {
+      this.network = null;
+      this.fixMessage = null;
+    }
+  }
+
+  // --- Vérification du réseau (Windows) ----------------------------------------------
+
+  /** Sans règle de pare-feu, ou sur un réseau « Public », la tablette charge sans fin : on le dit. */
+  checkNetwork(): void {
+    if (this.checking) return;
+    this.checking = true;
+    this.remoteAccess.networkCheck().subscribe({
+      next: r => { this.checking = false; this.network = r; },
+      error: () => { this.checking = false; this.network = null; }
+    });
+  }
+
+  /** Windows affiche sa confirmation administrateur : la requête attend la réponse. */
+  allowFirewall(): void {
+    if (this.fixing) return;
+    this.fixing = true;
+    this.fixMessage = null;
+    this.remoteAccess.allowThroughFirewall().subscribe({
+      next: res => {
+        this.fixing = false;
+        this.network = res.readiness;
+        this.fixMessage = this.translate.instant(`remoteAccess.network.fix.${res.outcome}`);
+      },
+      error: () => {
+        this.fixing = false;
+        this.fixMessage = this.translate.instant('remoteAccess.network.fix.FAILED');
+      }
+    });
+  }
+
+  openNetworkSettings(): void {
+    this.remoteAccess.openNetworkSettings().subscribe({ error: () => undefined });
+  }
+
+  get firewallNeedsFix(): boolean {
+    return !!this.network && (!this.network.firewallAllowed || this.network.firewallBlocked);
   }
 
   /** Le QR code ouvre directement l'écran d'appairage avec le code pré-rempli. */

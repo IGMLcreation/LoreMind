@@ -30,6 +30,24 @@ export interface PairingCode {
   expiresAt: string;
 }
 
+/** Une tablette peut-elle joindre ce PC ? (Windows : type de réseau + pare-feu) */
+export interface NetworkReadiness {
+  supported: boolean;
+  ready: boolean;
+  /** Réseaux connectés classés « Public » que le pare-feu ne laisse pas passer. */
+  publicNetworks: string[];
+  firewallAllowed: boolean;
+  firewallBlocked: boolean;
+  program?: string | null;
+}
+
+export type FirewallFixOutcome = 'APPLIED' | 'CANCELLED' | 'FAILED' | 'UNSUPPORTED';
+
+export interface FirewallFixResponse {
+  outcome: FirewallFixOutcome;
+  readiness: NetworkReadiness;
+}
+
 export interface RemoteSession {
   /** Requête arrivée par le réseau local (tablette) plutôt que depuis le PC. */
   remote: boolean;
@@ -63,6 +81,19 @@ export class RemoteAccessService {
 
   revoke(deviceId: string): Observable<void> {
     return this.http.delete<void>(`${this.adminUrl}/devices/${deviceId}`);
+  }
+
+  networkCheck(): Observable<NetworkReadiness> {
+    return this.http.get<NetworkReadiness>(`${this.adminUrl}/network-check`);
+  }
+
+  /** Attend la réponse de l'utilisateur à la confirmation administrateur de Windows. */
+  allowThroughFirewall(): Observable<FirewallFixResponse> {
+    return this.http.post<FirewallFixResponse>(`${this.adminUrl}/firewall-rule`, {});
+  }
+
+  openNetworkSettings(): Observable<void> {
+    return this.http.post<void>(`${this.adminUrl}/open-network-settings`, {});
   }
 
   pair(code: string, deviceName: string): Observable<PairedDevice> {
