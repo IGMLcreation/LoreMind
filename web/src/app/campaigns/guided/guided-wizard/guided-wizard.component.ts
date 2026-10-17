@@ -186,6 +186,11 @@ export class GuidedWizardComponent implements OnInit {
     this.setAnswer(LINK_SCENES, String(value));
   }
 
+  /** Chaînage proposé seulement quand la méthode ne relie pas elle-même ses scènes. */
+  offersChain(draft: GuidedDraft): boolean {
+    return !draft.links?.length && !draft.noChain;
+  }
+
   create(): void {
     const draft = this.draft;
     if (!draft || this.submitting) return;
@@ -197,8 +202,12 @@ export class GuidedWizardComponent implements OnInit {
       newArcName: existing ? null : answer(this.answers, PLACEMENT_NEW_ARC),
       chapter: draft.chapter,
       scenes: draft.scenes,
-      linkSequentially: this.linkScenes,
-      linkLabel: this.translate.instant('guided.linkLabel')
+      linkSequentially: this.offersChain(draft) && this.linkScenes,
+      linkLabel: this.translate.instant('guided.linkLabel'),
+      links: (draft.links ?? []).map(l => ({
+        from: l.from, to: l.to, kind: l.kind, label: this.translate.instant(this.k(`links.${l.labelKey}`))
+      })),
+      clock: draft.clock ?? null
     }).subscribe({
       next: result => {
         this.clearDraft();

@@ -4,6 +4,8 @@ import { join } from 'node:path';
 import { GuidedField, GuidedStep } from './guided-method.model';
 import { GUIDED_METHODS } from './guided-methods';
 import { FIVE_ROOM_METHOD } from './methods/five-room.method';
+import { INVESTIGATION_METHOD } from './methods/investigation.method';
+import { VILLAIN_PLAN_METHOD } from './methods/villain-plan.method';
 
 /**
  * Garde-fous des méthodes guidées : chaque étape / champ / option / valeur par défaut
@@ -40,7 +42,15 @@ function stepKeys(p: string, step: GuidedStep): string[] {
 }
 
 function requiredKeys(): string[] {
-  return GUIDED_METHODS.flatMap(m => [`${m.i18nKey}.name`, ...m.steps.flatMap(s => stepKeys(m.i18nKey, s))]);
+  return GUIDED_METHODS.flatMap(m => {
+    const draft = m.toDraft({});
+    return [
+      `${m.i18nKey}.name`, `${m.i18nKey}.tagline`,
+      ...m.steps.flatMap(s => stepKeys(m.i18nKey, s)),
+      ...(draft.links?.length ? [`${m.i18nKey}.reviewLinks`] : []),
+      ...[...new Set((draft.links ?? []).map(l => l.labelKey))].map(k => `${m.i18nKey}.links.${k}`)
+    ];
+  });
 }
 
 describe('guided methods content', () => {
@@ -100,5 +110,69 @@ describe('five-room method', () => {
 
   it('defaults room 1 to a fight when no nature was chosen', () => {
     expect(FIVE_ROOM_METHOD.toDraft({}).scenes[0].type).toBe('ENCOUNTER');
+  });
+});
+
+describe('investigation method', () => {
+  const draft = INVESTIGATION_METHOD.toDraft({
+    title: "L'héritage empoisonné", truth: 'Le notaire est coupable', stakes: 'Le palefrenier sera pendu',
+    'hook.name': "L'arrestation", 'hook.description': 'Le palefrenier est arrêté',
+    'node1.name': 'Le bureau', 'node1.nature': 'location',
+    'node2.name': 'La servante', 'node2.nature': 'npc',
+    'node3.name': "L'enterrement", 'node3.nature': 'event',
+    'conclusion.name': 'La fuite', 'proactive.name': "L'incendie"
+  });
+
+  it('keeps the hidden truth in the GM notes, the hook as the chapter description', () => {
+    expect(draft.chapter.gmNotes).toBe('Le notaire est coupable');
+    expect(draft.chapter.description).toBe('Le palefrenier est arrêté');
+  });
+
+  it('builds six typed scenes: hook, three varied leads, conclusion, fallback event', () => {
+    expect(draft.scenes.map(s => s.type)).toEqual(['EVENT', 'LOCATION', 'NPC', 'EVENT', 'REVELATION', 'EVENT']);
+  });
+
+  it('links the conclusion from three leads, with no single point of failure', () => {
+    const into = (i: number) => draft.links!.filter(l => l.to === i);
+    expect(into(4).map(l => l.from).sort()).toEqual([1, 2, 3]);
+    expect(into(4).every(l => l.kind === 'CLUE')).toBe(true);
+    // Chaque piste est atteinte depuis l'accroche, une autre piste et la relance.
+    for (const lead of [1, 2, 3]) expect(new Set(into(lead).map(l => l.from)).size).toBe(3);
+    expect(draft.links!.some(l => l.from === l.to)).toBe(false);
+    expect(draft.noChain).toBeFalsy();
+  });
+
+  it('offers varied lead natures by default', () => {
+    const empty = INVESTIGATION_METHOD.steps.filter(s => s.id.startsWith('node'))
+      .map(s => s.fields!.find(f => f.kind === 'choice')!.options![0]);
+    expect(new Set(empty).size).toBe(3);
+  });
+});
+
+describe('villain plan method', () => {
+  const answers = {
+    title: "La régence d'Ysolde", villain: 'Dame Ysolde', goal: 'Le trône du prince',
+    stakes: 'La loi martiale', clockName: 'La régence',
+    'step1.name': 'Le capitaine remplacé', 'step1.action': 'Elle place un homme à elle',
+    'step6.name': 'Le couronnement'
+  };
+
+  it('writes the whole plan in the GM notes and the villain in the description', () => {
+    const draft = VILLAIN_PLAN_METHOD.toDraft(answers);
+    expect(draft.chapter.description).toBe('Dame Ysolde\n\nLe trône du prince');
+    expect(draft.chapter.gmNotes).toBe('1. Le capitaine remplacé — Elle place un homme à elle\n2. Le couronnement');
+  });
+
+  it('creates six unchained scenes with a varied rhythm by default', () => {
+    const draft = VILLAIN_PLAN_METHOD.toDraft(answers);
+    expect(draft.scenes).toHaveLength(6);
+    expect(draft.noChain).toBe(true);
+    expect(draft.links).toBeUndefined();
+    expect(draft.scenes.map(s => s.type)).toEqual(['EVENT', 'NPC', 'LOCATION', 'EVENT', 'NPC', 'ENCOUNTER']);
+  });
+
+  it('adds a six-segment clock unless the GM declines it', () => {
+    expect(VILLAIN_PLAN_METHOD.toDraft(answers).clock).toEqual({ name: 'La régence', description: 'La loi martiale', segments: 6 });
+    expect(VILLAIN_PLAN_METHOD.toDraft({ ...answers, clockWanted: 'no' }).clock).toBeUndefined();
   });
 });

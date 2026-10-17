@@ -10,6 +10,10 @@ import com.loremind.domain.campaigncontext.structure.LinkType;
 import com.loremind.domain.campaigncontext.structure.Scene;
 import com.loremind.domain.campaigncontext.structure.SceneBranch;
 import com.loremind.domain.campaigncontext.structure.SceneType;
+import com.loremind.application.playcontext.ClockService;
+import com.loremind.domain.playcontext.ClockTrigger;
+import com.loremind.domain.playcontext.Playthrough;
+import com.loremind.domain.playcontext.ports.PlaythroughRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,19 +37,25 @@ public class GuidedSkeletonService {
     private final ArcService arcService;
     private final ChapterService chapterService;
     private final SceneService sceneService;
+    private final PlaythroughRepository playthroughRepository;
+    private final ClockService clockService;
 
     public GuidedSkeletonService(ArcRepository arcRepository,
                                  ChapterRepository chapterRepository,
                                  SceneRepository sceneRepository,
                                  ArcService arcService,
                                  ChapterService chapterService,
-                                 SceneService sceneService) {
+                                 SceneService sceneService,
+                                 PlaythroughRepository playthroughRepository,
+                                 ClockService clockService) {
         this.arcRepository = arcRepository;
         this.chapterRepository = chapterRepository;
         this.sceneRepository = sceneRepository;
         this.arcService = arcService;
         this.chapterService = chapterService;
         this.sceneService = sceneService;
+        this.playthroughRepository = playthroughRepository;
+        this.clockService = clockService;
     }
 
     /**
@@ -55,17 +65,19 @@ public class GuidedSkeletonService {
     @Transactional
     public GuidedSkeleton.Result create(String campaignId, GuidedSkeleton skeleton) {
         validate(skeleton);
-        List<GuidedSkeleton.SceneSpec> specs = skeleton.scenes().stream()
-                .filter(s -> s != null && !isBlank(s.name()))
-                .toList();
-
         String arcId = resolveArc(campaignId, skeleton);
         Chapter chapter = createChapter(arcId, skeleton.chapter());
 
+        // Une scène sans nom est ignorée ; byIndex garde la position d'origine pour les liens.
         List<Scene> scenes = new ArrayList<>();
+        List<Scene> byIndex = new ArrayList<>();
         int order = 0;
-        for (GuidedSkeleton.SceneSpec spec : specs) {
-            scenes.add(sceneService.createScene(Scene.builder()
+        for (GuidedSkeleton.SceneSpec spec : skeleton.scenes()) {
+            if (spec == null || isBlank(spec.name())) {
+                byIndex.add(null);
+                continue;
+            }
+            Scene created = sceneService.createScene(Scene.builder()
                     .name(spec.name().trim())
                     .description(blankToNull(spec.description()))
                     .type(Objects.requireNonNullElse(spec.type(), SceneType.GENERIC))
@@ -75,14 +87,61 @@ public class GuidedSkeletonService {
                     .enemies(blankToNull(spec.enemies()))
                     .chapterId(chapter.getId())
                     .order(order++)
-                    .build()));
+                    .build());
+            scenes.add(created);
+            byIndex.add(created);
         }
 
         if (skeleton.linkSequentially()) {
             linkInChain(scenes, isBlank(skeleton.linkLabel()) ? "→" : skeleton.linkLabel().trim());
         }
+        if (skeleton.links() != null && !skeleton.links().isEmpty()) {
+            linkExplicitly(byIndex, skeleton.links());
+        }
+        int clocks = createClocks(campaignId, skeleton.clock());
 
-        return new GuidedSkeleton.Result(arcId, chapter.getId(), scenes.stream().map(Scene::getId).toList());
+        return new GuidedSkeleton.Result(arcId, chapter.getId(), scenes.stream().map(Scene::getId).toList(), clocks);
+    }
+
+    /**
+     * Liens explicites (réseau d'une enquête) : ajoutés aux sorties existantes. Un lien vers
+     * ou depuis une scène ignorée (sans nom), hors limites ou en boucle sur soi est écarté.
+     */
+    private void linkExplicitly(List<Scene> byIndex, List<GuidedSkeleton.LinkSpec> links) {
+        java.util.Map<String, Scene> touched = new java.util.LinkedHashMap<>();
+        for (GuidedSkeleton.LinkSpec link : links) {
+            if (link == null || link.from() == link.to()) continue;
+            Scene from = at(byIndex, link.from());
+            Scene to = at(byIndex, link.to());
+            if (from == null || to == null) continue;
+            List<SceneBranch> branches = from.getBranches() == null ? new ArrayList<>() : new ArrayList<>(from.getBranches());
+            String label = isBlank(link.label()) ? to.getName() : link.label().trim();
+            branches.add(new SceneBranch(label, to.getId(), null,
+                    Objects.requireNonNullElse(link.kind(), LinkType.EXIT)));
+            from.setBranches(branches);
+            touched.put(from.getId(), from);
+        }
+        touched.values().forEach(sceneRepository::save);
+    }
+
+    private static Scene at(List<Scene> byIndex, int index) {
+        return index >= 0 && index < byIndex.size() ? byIndex.get(index) : null;
+    }
+
+    /**
+     * Horloge du plan (méthode « Plan du méchant ») : créée dans chaque partie de la campagne,
+     * car une horloge est de l'état de partie. Aucune partie : rien n'est créé (le MJ la
+     * créera quand il lancera une partie).
+     */
+    private int createClocks(String campaignId, GuidedSkeleton.ClockSpec clock) {
+        if (clock == null || isBlank(clock.name())) return 0;
+        int count = 0;
+        for (Playthrough p : playthroughRepository.findByCampaignId(campaignId)) {
+            clockService.create(p.getId(), clock.name().trim(), blankToNull(clock.description()),
+                    clock.segments(), ClockTrigger.NONE, null, null);
+            count++;
+        }
+        return count;
     }
 
     private static void validate(GuidedSkeleton skeleton) {
@@ -132,6 +191,7 @@ public class GuidedSkeletonService {
                 .description(blankToNull(spec.description()))
                 .playerObjectives(blankToNull(spec.playerObjectives()))
                 .narrativeStakes(blankToNull(spec.narrativeStakes()))
+                .gmNotes(blankToNull(spec.gmNotes()))
                 .arcId(arcId)
                 .order(nextOrder)
                 .build());

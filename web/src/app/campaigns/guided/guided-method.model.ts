@@ -1,4 +1,5 @@
-import { GuidedChapterSpec, GuidedSceneSpec } from '../../services/guided-skeleton.model';
+import { GuidedChapterSpec, GuidedClockSpec, GuidedSceneSpec } from '../../services/guided-skeleton.model';
+import { LinkType } from '../../services/campaign.model';
 
 /**
  * Définition d'une méthode guidée (Mentor d'écriture, phases M3/M5). L'assistant
@@ -40,6 +41,23 @@ export interface GuidedStep {
 export interface GuidedDraft {
   chapter: GuidedChapterSpec;
   scenes: GuidedSceneSpec[];
+  /**
+   * Liens propres à la méthode (réseau d'enquête). Absent : l'assistant propose de relier
+   * les scènes en chaîne. Le libellé est une clé i18n relative à la méthode (`links.<clé>`).
+   */
+  links?: GuidedDraftLink[];
+  /** Pas de chaînage proposé (les scènes sont des événements que le MJ déclenche). */
+  noChain?: boolean;
+  /** Horloge à créer dans chaque partie. */
+  clock?: GuidedClockSpec;
+}
+
+export interface GuidedDraftLink {
+  from: number;
+  to: number;
+  kind: LinkType;
+  /** Clé sous `guided.<i18nKey>.links.` */
+  labelKey: string;
 }
 
 export interface GuidedMethod {

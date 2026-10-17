@@ -272,6 +272,17 @@
   input { accent-color: #6c63ff; width: 18px; height: 18px; margin: 0; }
 }
 
+.review-note {
+  margin: 0.75rem 0 0;
+  padding: 0.55rem 0.75rem;
+  border-left: 3px solid #6c63ff;
+  background: rgba(108, 99, 255, 0.08);
+  border-radius: 0 6px 6px 0;
+  color: #c7d2fe;
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
 .review-after {
   margin: 0;
   color: #9ca3af;

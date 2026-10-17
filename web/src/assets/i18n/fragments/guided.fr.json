@@ -230,6 +230,509 @@
         "room5": {
           "name": "La récompense"
         }
+      },
+      "tagline": "Une aventure courte en cinq temps dans un même lieu : un gardien, une épreuve, un revers, le climax, la récompense."
+    },
+    "chooserTitle": "Écrire avec une méthode guidée",
+    "chooserIntro": "Choisissez une structure : l'assistant vous pose les bonnes questions, étape par étape, puis crée le chapitre et ses scènes. Vous écrivez tout ; rien n'est généré.",
+    "chooserStart": "Commencer",
+    "chooserScenes": "{{count}} scènes",
+    "reviewClock": "Une horloge « {{name}} » de {{segments}} segments sera créée dans chaque partie de la campagne.",
+    "investigation": {
+      "name": "Enquête en nœuds",
+      "tagline": "Une enquête qui ne se bloque jamais : trois pistes qui se recoupent, une conclusion atteinte par trois chemins, et une scène de relance si la table piétine.",
+      "reviewLinks": "Les scènes seront reliées entre elles par {{count}} pistes et indices : chaque piste mène aux autres et à la conclusion.",
+      "links": {
+        "lead": "Piste",
+        "clue": "Indice",
+        "proactive": "Relance"
+      },
+      "steps": {
+        "placement": {
+          "title": "Où ranger l'enquête ?",
+          "why": "L'enquête devient un chapitre. Rangez-la dans un arc existant ou créez-en un nouveau.",
+          "example": "Un arc « La saison des cendres » qui regroupe plusieurs affaires."
+        },
+        "mystery": {
+          "title": "Le mystère",
+          "why": "Commencez par la vérité : ce qui s'est réellement passé, qui en est responsable et pourquoi. Les joueurs ne la connaîtront qu'à la fin, mais tout le reste en découle : chaque indice est une trace laissée par cette vérité.",
+          "example": "Le notaire a empoisonné son associé pour cacher une dette ; il a fait accuser le palefrenier. Si personne ne l'arrête, il quittera la ville avec l'héritage dans trois jours."
+        },
+        "hook": {
+          "title": "L'accroche",
+          "why": "La scène d'ouverture lance l'affaire et donne aux joueurs plusieurs pistes à suivre, pas une seule. Plus elle les concerne directement, plus ils s'investiront.",
+          "example": "Le palefrenier, ami d'un des personnages, est arrêté sous leurs yeux. Il crie son innocence et parle du notaire, d'une lettre brûlée et d'une servante qui a tout vu."
+        },
+        "node1": {
+          "title": "Première piste",
+          "why": "Une piste est un lieu, une personne ou un événement où les joueurs apprennent quelque chose. Notez ce qu'ils y trouvent : l'assistant reliera chaque piste aux deux autres et à la conclusion.",
+          "example": "Le bureau du notaire : un registre falsifié, des cendres de lettre dans l'âtre, et une adresse griffonnée."
+        },
+        "node2": {
+          "title": "Deuxième piste",
+          "why": "Variez les sources : si toutes les pistes sont des interrogatoires, une table qui n'aime pas parler passera à côté de tout. Un lieu, une personne, un événement : chacun son style.",
+          "example": "La servante, terrifiée, qui a vu le notaire sortir de la chambre ce soir-là. Elle ne parlera qu'en échange d'une protection."
+        },
+        "node3": {
+          "title": "Troisième piste",
+          "why": "Cette piste ramène aux deux autres : les joueurs peuvent commencer par n'importe laquelle et retrouver leur chemin. Pensez à ce qui pourrait mal tourner ici.",
+          "example": "L'enterrement de l'associé : le notaire y fait un discours trop parfait, et le médecin murmure que le corps sentait l'amande."
+        },
+        "conclusion": {
+          "title": "La conclusion",
+          "why": "Chacune des trois pistes y mène : si les joueurs en ratent une, ils arrivent quand même ici. Prévoyez comment la vérité éclate et ce que les joueurs peuvent en faire.",
+          "example": "Confronté aux preuves, le notaire tente de fuir par les quais. Les joueurs peuvent l'arrêter, le livrer à la foule ou négocier la libération du palefrenier."
+        },
+        "proactive": {
+          "title": "La relance",
+          "why": "Si l'enquête piétine, cette scène vient aux joueurs : l'adversaire riposte, un témoin se manifeste, la situation empire. Elle apporte de nouvelles pistes vers les trois autres.",
+          "example": "Une nuit, on tente d'incendier l'écurie où dort le palefrenier libéré sous caution. L'incendiaire laisse tomber un bouton de manteau du notaire."
+        },
+        "review": {
+          "title": "Récapitulatif",
+          "why": "Vérifiez les scènes avant de créer le chapitre. Tout reste modifiable ensuite, et la relecture vous signalera ce qui manque."
+        }
+      },
+      "fields": {
+        "title": {
+          "label": "Nom de l'enquête",
+          "placeholder": "Ex. : L'héritage empoisonné"
+        },
+        "truth": {
+          "label": "Ce qui s'est vraiment passé (réservé au MJ)",
+          "placeholder": "Qui, quoi, pourquoi, et ce qui arrivera si personne n'intervient"
+        },
+        "stakes": {
+          "label": "Ce qui se passe si l'enquête échoue",
+          "placeholder": "Pour le monde, et pour les personnages"
+        },
+        "hook": {
+          "name": {
+            "label": "Nom de la scène d'ouverture",
+            "placeholder": "Ex. : L'arrestation"
+          },
+          "nature": {
+            "label": "Comment l'affaire commence-t-elle ?"
+          },
+          "description": {
+            "label": "Ce qui se passe",
+            "placeholder": "La situation de départ, en quelques lignes"
+          },
+          "clues": {
+            "label": "Les pistes qu'elle ouvre",
+            "placeholder": "Ce qui pousse vers chacune des trois pistes"
+          }
+        },
+        "node1": {
+          "name": {
+            "label": "Nom de la piste",
+            "placeholder": "Ex. : Le bureau du notaire"
+          },
+          "nature": {
+            "label": "De quel genre de scène s'agit-il ?"
+          },
+          "description": {
+            "label": "Ce que les joueurs y trouvent",
+            "placeholder": "Ce qu'il y a à voir, à fouiller, à apprendre"
+          },
+          "clues": {
+            "label": "Indices et où ils mènent",
+            "placeholder": "Au moins un indice vers la conclusion, un vers une autre piste"
+          },
+          "secret": {
+            "label": "Ce que le MJ sait (piège, mensonge, complication)",
+            "placeholder": "Ce qui peut mal tourner ici"
+          }
+        },
+        "node2": {
+          "name": {
+            "label": "Nom de la piste",
+            "placeholder": "Ex. : La servante"
+          },
+          "nature": {
+            "label": "De quel genre de scène s'agit-il ?"
+          },
+          "description": {
+            "label": "Ce que les joueurs y trouvent",
+            "placeholder": "Ce qu'il y a à voir, à fouiller, à apprendre"
+          },
+          "clues": {
+            "label": "Indices et où ils mènent",
+            "placeholder": "Au moins un indice vers la conclusion, un vers une autre piste"
+          },
+          "secret": {
+            "label": "Ce que le MJ sait (piège, mensonge, complication)",
+            "placeholder": "Ce qui peut mal tourner ici"
+          }
+        },
+        "node3": {
+          "name": {
+            "label": "Nom de la piste",
+            "placeholder": "Ex. : L'enterrement"
+          },
+          "nature": {
+            "label": "De quel genre de scène s'agit-il ?"
+          },
+          "description": {
+            "label": "Ce que les joueurs y trouvent",
+            "placeholder": "Ce qu'il y a à voir, à fouiller, à apprendre"
+          },
+          "clues": {
+            "label": "Indices et où ils mènent",
+            "placeholder": "Au moins un indice vers la conclusion, un vers une autre piste"
+          },
+          "secret": {
+            "label": "Ce que le MJ sait (piège, mensonge, complication)",
+            "placeholder": "Ce qui peut mal tourner ici"
+          }
+        },
+        "conclusion": {
+          "name": {
+            "label": "Nom de la conclusion",
+            "placeholder": "Ex. : La fuite par les quais"
+          },
+          "nature": {
+            "label": "Comment l'enquête se conclut-elle ?"
+          },
+          "description": {
+            "label": "Ce qui se passe",
+            "placeholder": "Comment la vérité éclate"
+          },
+          "choices": {
+            "label": "Ce que les joueurs peuvent en faire",
+            "placeholder": "Plusieurs issues, et leurs conséquences"
+          }
+        },
+        "proactive": {
+          "name": {
+            "label": "Nom de la scène de relance",
+            "placeholder": "Ex. : L'incendie de l'écurie"
+          },
+          "description": {
+            "label": "Ce que fait l'adversaire si les joueurs piétinent",
+            "placeholder": "Une riposte, un témoin qui se manifeste, une menace qui avance"
+          },
+          "clues": {
+            "label": "Les nouvelles pistes qu'elle apporte",
+            "placeholder": "Ce qui renvoie vers les trois pistes"
+          }
+        }
+      },
+      "options": {
+        "hook": {
+          "nature": {
+            "event": "Par un événement",
+            "npc": "Par une rencontre"
+          }
+        },
+        "node1": {
+          "nature": {
+            "location": "Un lieu à fouiller",
+            "npc": "Une personne à interroger",
+            "event": "Un événement à vivre"
+          }
+        },
+        "node2": {
+          "nature": {
+            "location": "Un lieu à fouiller",
+            "npc": "Une personne à interroger",
+            "event": "Un événement à vivre"
+          }
+        },
+        "node3": {
+          "nature": {
+            "location": "Un lieu à fouiller",
+            "npc": "Une personne à interroger",
+            "event": "Un événement à vivre"
+          }
+        },
+        "conclusion": {
+          "nature": {
+            "revelation": "Une révélation",
+            "encounter": "Une confrontation"
+          }
+        }
+      },
+      "defaults": {
+        "hook": {
+          "name": "L'affaire commence"
+        },
+        "node1": {
+          "name": "Première piste"
+        },
+        "node2": {
+          "name": "Deuxième piste"
+        },
+        "node3": {
+          "name": "Troisième piste"
+        },
+        "conclusion": {
+          "name": "La vérité éclate"
+        },
+        "proactive": {
+          "name": "L'adversaire riposte"
+        }
+      }
+    },
+    "villainPlan": {
+      "name": "Plan du méchant",
+      "tagline": "Un adversaire qui agit même quand les joueurs ne font rien : six étapes, trois discrètes puis trois visibles, et une horloge pour suivre sa progression.",
+      "steps": {
+        "placement": {
+          "title": "Où ranger le plan ?",
+          "why": "Le plan devient un chapitre dont les scènes sont des événements à déclencher au fil des séances. Rangez-le dans un arc existant ou créez-en un nouveau.",
+          "example": "L'arc principal de la campagne, pour que la menace pèse sur tout le reste."
+        },
+        "villain": {
+          "title": "L'adversaire",
+          "why": "Un bon adversaire veut quelque chose que les personnages possèdent, protègent ou aiment : c'est ce qui rend l'affrontement inévitable. Dites aussi ce qui arrive s'il réussit.",
+          "example": "Dame Ysolde, régente, veut le trône du jeune prince que les personnages ont juré de protéger. Si elle réussit, le prince disparaît et la ville tombe sous la loi martiale."
+        },
+        "step1": {
+          "title": "Étape 1 — Se préparer en secret",
+          "why": "Les trois premières étapes sont discrètes : l'adversaire avance ses pions sans se montrer. Chacune laisse pourtant une trace que des joueurs attentifs peuvent remarquer.",
+          "example": "Ysolde fait remplacer le capitaine de la garde par un homme à elle. Un garde ami des personnages est muté sans explication."
+        },
+        "step2": {
+          "title": "Étape 2 — Gagner des alliés",
+          "why": "Chaque étape le rapproche de son but et frappe un peu plus fort que la précédente. Pensez à ce qui touche directement un personnage.",
+          "example": "Elle achète le silence du chambellan. Le mentor d'un personnage, qui refuse, est accusé de vol."
+        },
+        "step3": {
+          "title": "Étape 3 — Préparer le coup",
+          "why": "Dernière étape discrète : tout est en place. Si les joueurs ont suivi les traces, c'est le moment où ils peuvent encore tout empêcher.",
+          "example": "Elle fait venir des mercenaires déguisés en marchands. Une auberge que fréquentent les personnages se remplit d'étrangers armés."
+        },
+        "step4": {
+          "title": "Étape 4 — Frapper",
+          "why": "À partir d'ici, le plan devient visible : l'adversaire agit au grand jour. Laissez toujours aux joueurs une occasion de réagir, même tard.",
+          "example": "Le prince tombe malade au banquet. Ysolde annonce qu'elle gouvernera seule « pour le bien du royaume »."
+        },
+        "step5": {
+          "title": "Étape 5 — Écraser la résistance",
+          "why": "L'adversaire s'en prend à ceux qui pourraient l'arrêter, souvent les personnages eux-mêmes ou leurs proches.",
+          "example": "La garde perquisitionne chez les alliés des personnages. Un avis de recherche porte le visage de l'un d'eux."
+        },
+        "step6": {
+          "title": "Étape 6 — Atteindre son but",
+          "why": "Si rien ne l'a arrêté, l'adversaire obtient ce qu'il voulait. C'est souvent ici que se joue l'affrontement final, mais il peut aussi arriver trop tard.",
+          "example": "Le couronnement d'Ysolde au temple. Les personnages ont jusqu'à la fin de la cérémonie pour sauver le prince."
+        },
+        "clock": {
+          "title": "L'horloge du plan",
+          "why": "Une horloge de six segments, un par étape, se remplit au fil des séances quand les joueurs n'interviennent pas. Elle est créée dans chaque partie de la campagne, pour que vous voyiez où en est l'adversaire.",
+          "example": "Entre deux séances, si personne ne l'a gêné, l'adversaire avance d'une étape : on remplit un segment."
+        },
+        "review": {
+          "title": "Récapitulatif",
+          "why": "Vérifiez les étapes avant de créer le chapitre. Les scènes ne sont pas reliées entre elles : c'est l'adversaire qui avance, à vous de déclencher chaque étape au bon moment."
+        }
+      },
+      "fields": {
+        "title": {
+          "label": "Nom du plan",
+          "placeholder": "Ex. : La régence d'Ysolde"
+        },
+        "villain": {
+          "label": "Qui est l'adversaire ?",
+          "placeholder": "Son nom et ce qu'il est"
+        },
+        "goal": {
+          "label": "Que veut-il, qui touche les personnages ?",
+          "placeholder": "Ce qu'ils possèdent, protègent ou aiment"
+        },
+        "stakes": {
+          "label": "Ce qui arrive s'il réussit",
+          "placeholder": "Pour le monde, et pour les personnages"
+        },
+        "objectives": {
+          "label": "Ce que les joueurs peuvent viser",
+          "placeholder": "Démasquer, contrecarrer, protéger…"
+        },
+        "step1": {
+          "name": {
+            "label": "Nom de l'étape",
+            "placeholder": "Ex. : Le capitaine remplacé"
+          },
+          "nature": {
+            "label": "De quel genre de scène s'agit-il ?"
+          },
+          "action": {
+            "label": "Ce que fait l'adversaire",
+            "placeholder": "Concrètement, et qui cela touche"
+          },
+          "sign": {
+            "label": "Ce que les joueurs peuvent remarquer et faire",
+            "placeholder": "La trace laissée, et comment réagir"
+          }
+        },
+        "step2": {
+          "name": {
+            "label": "Nom de l'étape",
+            "placeholder": "Ex. : Le chambellan acheté"
+          },
+          "nature": {
+            "label": "De quel genre de scène s'agit-il ?"
+          },
+          "action": {
+            "label": "Ce que fait l'adversaire",
+            "placeholder": "Concrètement, et qui cela touche"
+          },
+          "sign": {
+            "label": "Ce que les joueurs peuvent remarquer et faire",
+            "placeholder": "La trace laissée, et comment réagir"
+          }
+        },
+        "step3": {
+          "name": {
+            "label": "Nom de l'étape",
+            "placeholder": "Ex. : Les faux marchands"
+          },
+          "nature": {
+            "label": "De quel genre de scène s'agit-il ?"
+          },
+          "action": {
+            "label": "Ce que fait l'adversaire",
+            "placeholder": "Concrètement, et qui cela touche"
+          },
+          "sign": {
+            "label": "Ce que les joueurs peuvent remarquer et faire",
+            "placeholder": "La trace laissée, et comment réagir"
+          }
+        },
+        "step4": {
+          "name": {
+            "label": "Nom de l'étape",
+            "placeholder": "Ex. : Le banquet"
+          },
+          "nature": {
+            "label": "De quel genre de scène s'agit-il ?"
+          },
+          "action": {
+            "label": "Ce que fait l'adversaire",
+            "placeholder": "Concrètement, et qui cela touche"
+          },
+          "sign": {
+            "label": "Ce que les joueurs peuvent remarquer et faire",
+            "placeholder": "La trace laissée, et comment réagir"
+          }
+        },
+        "step5": {
+          "name": {
+            "label": "Nom de l'étape",
+            "placeholder": "Ex. : Les perquisitions"
+          },
+          "nature": {
+            "label": "De quel genre de scène s'agit-il ?"
+          },
+          "action": {
+            "label": "Ce que fait l'adversaire",
+            "placeholder": "Concrètement, et qui cela touche"
+          },
+          "sign": {
+            "label": "Ce que les joueurs peuvent remarquer et faire",
+            "placeholder": "La trace laissée, et comment réagir"
+          }
+        },
+        "step6": {
+          "name": {
+            "label": "Nom de l'étape",
+            "placeholder": "Ex. : Le couronnement"
+          },
+          "nature": {
+            "label": "De quel genre de scène s'agit-il ?"
+          },
+          "action": {
+            "label": "Ce que fait l'adversaire",
+            "placeholder": "Concrètement, et qui cela touche"
+          },
+          "sign": {
+            "label": "Ce que les joueurs peuvent remarquer et faire",
+            "placeholder": "La trace laissée, et comment réagir"
+          }
+        },
+        "clockWanted": {
+          "label": "Créer l'horloge dans les parties ?"
+        },
+        "clockName": {
+          "label": "Nom de l'horloge",
+          "placeholder": "Ex. : La régence d'Ysolde"
+        }
+      },
+      "options": {
+        "clockWanted": {
+          "yes": "Oui, une horloge de 6 segments",
+          "no": "Non, je suivrai le plan moi-même"
+        },
+        "step1": {
+          "nature": {
+            "event": "Un événement",
+            "npc": "Une rencontre avec un PNJ",
+            "location": "Un lieu",
+            "encounter": "Un affrontement"
+          }
+        },
+        "step2": {
+          "nature": {
+            "event": "Un événement",
+            "npc": "Une rencontre avec un PNJ",
+            "location": "Un lieu",
+            "encounter": "Un affrontement"
+          }
+        },
+        "step3": {
+          "nature": {
+            "event": "Un événement",
+            "npc": "Une rencontre avec un PNJ",
+            "location": "Un lieu",
+            "encounter": "Un affrontement"
+          }
+        },
+        "step4": {
+          "nature": {
+            "event": "Un événement",
+            "npc": "Une rencontre avec un PNJ",
+            "location": "Un lieu",
+            "encounter": "Un affrontement"
+          }
+        },
+        "step5": {
+          "nature": {
+            "event": "Un événement",
+            "npc": "Une rencontre avec un PNJ",
+            "location": "Un lieu",
+            "encounter": "Un affrontement"
+          }
+        },
+        "step6": {
+          "nature": {
+            "event": "Un événement",
+            "npc": "Une rencontre avec un PNJ",
+            "location": "Un lieu",
+            "encounter": "Un affrontement"
+          }
+        }
+      },
+      "defaults": {
+        "step1": {
+          "name": "Préparatifs secrets"
+        },
+        "step2": {
+          "name": "Des alliés achetés"
+        },
+        "step3": {
+          "name": "Tout est en place"
+        },
+        "step4": {
+          "name": "Le coup d'éclat"
+        },
+        "step5": {
+          "name": "La résistance écrasée"
+        },
+        "step6": {
+          "name": "Le but atteint"
+        },
+        "clockName": "Le plan de l'adversaire"
       }
     }
   }

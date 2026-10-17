@@ -217,7 +217,7 @@
                 {{ 'campaignDetail.newArc' | translate }}
               </button>
               <!-- Mentor d'écriture (M3) : écrire une aventure question par question. -->
-              <a class="btn-add btn-guided" [routerLink]="['/campaigns', campaign.id, 'guided', 'five-room']">
+              <a class="btn-add btn-guided" [routerLink]="['/campaigns', campaign.id, 'guided']">
                 <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
                 {{ 'guided.entry' | translate }}
               </a>
@@ -250,7 +250,7 @@
                 <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
                 {{ 'campaignDetail.quickSceneFirst' | translate }}
               </button>
-              <a class="btn-add-first btn-guided" [routerLink]="['/campaigns', campaign.id, 'guided', 'five-room']">
+              <a class="btn-add-first btn-guided" [routerLink]="['/campaigns', campaign.id, 'guided']">
                 <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
                 {{ 'guided.entryFirst' | translate }}
               </a>

@@ -1,0 +1,28 @@
+<div class="chooser">
+  <a class="chooser-back" [routerLink]="['/campaigns', campaignId]">
+    <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon>
+    {{ 'guided.backToCampaign' | translate }}
+  </a>
+
+  <h1>
+    <lucide-icon [img]="Sparkles" [size]="20"></lucide-icon>
+    {{ 'guided.chooserTitle' | translate }}
+  </h1>
+  <p class="chooser-intro">{{ 'guided.chooserIntro' | translate }}</p>
+
+  <ul class="method-list">
+    @for (method of methods; track method.id) {
+      <li class="method-card">
+        <div class="method-text">
+          <h2>{{ ('guided.' + method.i18nKey + '.name') | translate }}</h2>
+          <p>{{ ('guided.' + method.i18nKey + '.tagline') | translate }}</p>
+          <span class="method-meta">{{ 'guided.chooserScenes' | translate:{ count: sceneCount(method) } }}</span>
+        </div>
+        <a class="btn-primary method-start" [routerLink]="['/campaigns', campaignId, 'guided', method.id]">
+          {{ 'guided.chooserStart' | translate }}
+          <lucide-icon [img]="ArrowRight" [size]="14"></lucide-icon>
+        </a>
+      </li>
+    }
+  </ul>
+</div>

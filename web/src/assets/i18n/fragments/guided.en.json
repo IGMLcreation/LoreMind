@@ -230,6 +230,509 @@
         "room5": {
           "name": "The reward"
         }
+      },
+      "tagline": "A short adventure in five beats in a single place: a guardian, a challenge, a setback, the climax, the reward."
+    },
+    "chooserTitle": "Write with a guided method",
+    "chooserIntro": "Pick a structure: the wizard asks you the right questions, step by step, then creates the chapter and its scenes. You write everything; nothing is generated.",
+    "chooserStart": "Start",
+    "chooserScenes": "{{count}} scenes",
+    "reviewClock": "A \"{{name}}\" clock with {{segments}} segments will be created in each playthrough of the campaign.",
+    "investigation": {
+      "name": "Node-based investigation",
+      "tagline": "An investigation that never gets stuck: three leads that cross-reference each other, a conclusion reached by three paths, and a fallback scene if the table stalls.",
+      "reviewLinks": "The scenes will be linked by {{count}} leads and clues: each lead points to the others and to the conclusion.",
+      "links": {
+        "lead": "Lead",
+        "clue": "Clue",
+        "proactive": "Fallback"
+      },
+      "steps": {
+        "placement": {
+          "title": "Where to put the investigation?",
+          "why": "The investigation becomes a chapter. Put it in an existing arc or create a new one.",
+          "example": "An arc \"The season of ashes\" grouping several cases."
+        },
+        "mystery": {
+          "title": "The mystery",
+          "why": "Start with the truth: what really happened, who is responsible and why. The players will only learn it at the end, but everything else follows from it: each clue is a trace left by that truth.",
+          "example": "The notary poisoned his partner to hide a debt and framed the stable boy. If no one stops him, he'll leave town with the inheritance in three days."
+        },
+        "hook": {
+          "title": "The hook",
+          "why": "The opening scene starts the case and gives the players several leads to follow, not just one. The more it concerns them directly, the more involved they'll be.",
+          "example": "The stable boy, a friend of one character, is arrested in front of them. He shouts his innocence and mentions the notary, a burnt letter and a maid who saw everything."
+        },
+        "node1": {
+          "title": "First lead",
+          "why": "A lead is a place, a person or an event where the players learn something. Note what they find there: the wizard will link each lead to the two others and to the conclusion.",
+          "example": "The notary's office: a forged ledger, ashes of a letter in the hearth, and a scribbled address."
+        },
+        "node2": {
+          "title": "Second lead",
+          "why": "Vary the sources: if every lead is an interrogation, a table that doesn't like talking will miss everything. A place, a person, an event: each has its own style.",
+          "example": "The terrified maid who saw the notary leave the room that night. She'll only talk in exchange for protection."
+        },
+        "node3": {
+          "title": "Third lead",
+          "why": "This lead points back to the two others: players can start with any of them and still find their way. Think about what could go wrong here.",
+          "example": "The partner's funeral: the notary gives a speech that's too perfect, and the doctor whispers that the body smelled of almonds."
+        },
+        "conclusion": {
+          "title": "The conclusion",
+          "why": "All three leads lead here: if the players miss one, they still arrive. Plan how the truth comes out and what the players can do with it.",
+          "example": "Faced with the evidence, the notary tries to flee by the docks. The players can arrest him, hand him to the crowd or bargain for the stable boy's release."
+        },
+        "proactive": {
+          "title": "The fallback",
+          "why": "If the investigation stalls, this scene comes to the players: the enemy strikes back, a witness comes forward, things get worse. It brings new leads to the three others.",
+          "example": "One night, someone tries to set fire to the stable where the stable boy sleeps. The arsonist drops a button from the notary's coat."
+        },
+        "review": {
+          "title": "Summary",
+          "why": "Check the scenes before creating the chapter. Everything can be edited afterwards, and the editor review will point out what's missing."
+        }
+      },
+      "fields": {
+        "title": {
+          "label": "Name of the investigation",
+          "placeholder": "E.g. The poisoned inheritance"
+        },
+        "truth": {
+          "label": "What really happened (GM only)",
+          "placeholder": "Who, what, why, and what will happen if nobody steps in"
+        },
+        "stakes": {
+          "label": "What happens if the investigation fails",
+          "placeholder": "For the world, and for the characters"
+        },
+        "hook": {
+          "name": {
+            "label": "Name of the opening scene",
+            "placeholder": "E.g. The arrest"
+          },
+          "nature": {
+            "label": "How does the case begin?"
+          },
+          "description": {
+            "label": "What happens",
+            "placeholder": "The starting situation, in a few lines"
+          },
+          "clues": {
+            "label": "The leads it opens",
+            "placeholder": "What points to each of the three leads"
+          }
+        },
+        "node1": {
+          "name": {
+            "label": "Name of the lead",
+            "placeholder": "E.g. The notary's office"
+          },
+          "nature": {
+            "label": "What kind of scene is it?"
+          },
+          "description": {
+            "label": "What the players find there",
+            "placeholder": "What there is to see, search, learn"
+          },
+          "clues": {
+            "label": "Clues and where they lead",
+            "placeholder": "At least one clue to the conclusion, one to another lead"
+          },
+          "secret": {
+            "label": "What the GM knows (trap, lie, complication)",
+            "placeholder": "What can go wrong here"
+          }
+        },
+        "node2": {
+          "name": {
+            "label": "Name of the lead",
+            "placeholder": "E.g. The maid"
+          },
+          "nature": {
+            "label": "What kind of scene is it?"
+          },
+          "description": {
+            "label": "What the players find there",
+            "placeholder": "What there is to see, search, learn"
+          },
+          "clues": {
+            "label": "Clues and where they lead",
+            "placeholder": "At least one clue to the conclusion, one to another lead"
+          },
+          "secret": {
+            "label": "What the GM knows (trap, lie, complication)",
+            "placeholder": "What can go wrong here"
+          }
+        },
+        "node3": {
+          "name": {
+            "label": "Name of the lead",
+            "placeholder": "E.g. The funeral"
+          },
+          "nature": {
+            "label": "What kind of scene is it?"
+          },
+          "description": {
+            "label": "What the players find there",
+            "placeholder": "What there is to see, search, learn"
+          },
+          "clues": {
+            "label": "Clues and where they lead",
+            "placeholder": "At least one clue to the conclusion, one to another lead"
+          },
+          "secret": {
+            "label": "What the GM knows (trap, lie, complication)",
+            "placeholder": "What can go wrong here"
+          }
+        },
+        "conclusion": {
+          "name": {
+            "label": "Name of the conclusion",
+            "placeholder": "E.g. Escape by the docks"
+          },
+          "nature": {
+            "label": "How does the investigation end?"
+          },
+          "description": {
+            "label": "What happens",
+            "placeholder": "How the truth comes out"
+          },
+          "choices": {
+            "label": "What the players can do with it",
+            "placeholder": "Several outcomes, and their consequences"
+          }
+        },
+        "proactive": {
+          "name": {
+            "label": "Name of the fallback scene",
+            "placeholder": "E.g. The stable fire"
+          },
+          "description": {
+            "label": "What the enemy does if the players stall",
+            "placeholder": "A counter-attack, a witness coming forward, a threat moving on"
+          },
+          "clues": {
+            "label": "The new leads it brings",
+            "placeholder": "What points back to the three leads"
+          }
+        }
+      },
+      "options": {
+        "hook": {
+          "nature": {
+            "event": "Through an event",
+            "npc": "Through an encounter"
+          }
+        },
+        "node1": {
+          "nature": {
+            "location": "A place to search",
+            "npc": "A person to question",
+            "event": "An event to live through"
+          }
+        },
+        "node2": {
+          "nature": {
+            "location": "A place to search",
+            "npc": "A person to question",
+            "event": "An event to live through"
+          }
+        },
+        "node3": {
+          "nature": {
+            "location": "A place to search",
+            "npc": "A person to question",
+            "event": "An event to live through"
+          }
+        },
+        "conclusion": {
+          "nature": {
+            "revelation": "A revelation",
+            "encounter": "A confrontation"
+          }
+        }
+      },
+      "defaults": {
+        "hook": {
+          "name": "The case begins"
+        },
+        "node1": {
+          "name": "First lead"
+        },
+        "node2": {
+          "name": "Second lead"
+        },
+        "node3": {
+          "name": "Third lead"
+        },
+        "conclusion": {
+          "name": "The truth comes out"
+        },
+        "proactive": {
+          "name": "The enemy strikes back"
+        }
+      }
+    },
+    "villainPlan": {
+      "name": "The villain's plan",
+      "tagline": "An enemy who acts even when the players do nothing: six steps, three hidden then three visible, and a clock to track their progress.",
+      "steps": {
+        "placement": {
+          "title": "Where to put the plan?",
+          "why": "The plan becomes a chapter whose scenes are events to trigger across sessions. Put it in an existing arc or create a new one.",
+          "example": "The campaign's main arc, so the threat weighs on everything else."
+        },
+        "villain": {
+          "title": "The enemy",
+          "why": "A good enemy wants something the characters own, protect or love: that's what makes the conflict unavoidable. Also say what happens if they succeed.",
+          "example": "Lady Ysolde, the regent, wants the throne of the young prince the characters swore to protect. If she succeeds, the prince vanishes and the city falls under martial law."
+        },
+        "step1": {
+          "title": "Step 1 — Prepare in secret",
+          "why": "The first three steps are hidden: the enemy moves their pieces without showing themselves. Each still leaves a trace that attentive players can notice.",
+          "example": "Ysolde replaces the guard captain with one of her men. A guard friendly to the characters is transferred without explanation."
+        },
+        "step2": {
+          "title": "Step 2 — Gain allies",
+          "why": "Each step brings the enemy closer to their goal and hits a little harder than the last. Think about what directly affects a character.",
+          "example": "She buys the chamberlain's silence. A character's mentor, who refuses, is accused of theft."
+        },
+        "step3": {
+          "title": "Step 3 — Set the trap",
+          "why": "Last hidden step: everything is in place. If the players followed the traces, this is when they can still stop it all.",
+          "example": "She brings in mercenaries disguised as merchants. An inn the characters frequent fills with armed strangers."
+        },
+        "step4": {
+          "title": "Step 4 — Strike",
+          "why": "From here on, the plan becomes visible: the enemy acts openly. Always leave the players a chance to react, even late.",
+          "example": "The prince falls ill at the banquet. Ysolde announces she will rule alone \"for the good of the realm\"."
+        },
+        "step5": {
+          "title": "Step 5 — Crush the resistance",
+          "why": "The enemy goes after those who could stop them, often the characters themselves or their loved ones.",
+          "example": "The guard raids the characters' allies. A wanted poster bears one of their faces."
+        },
+        "step6": {
+          "title": "Step 6 — Reach the goal",
+          "why": "If nothing stopped them, the enemy gets what they wanted. The final confrontation often happens here, but it may also come too late.",
+          "example": "Ysolde's coronation at the temple. The characters have until the end of the ceremony to save the prince."
+        },
+        "clock": {
+          "title": "The plan's clock",
+          "why": "A six-segment clock, one per step, fills across sessions when the players don't intervene. It's created in each playthrough of the campaign, so you can see how far the enemy has got.",
+          "example": "Between two sessions, if nobody hindered them, the enemy moves one step forward: fill one segment."
+        },
+        "review": {
+          "title": "Summary",
+          "why": "Check the steps before creating the chapter. The scenes aren't linked to each other: it's the enemy who moves forward, and you trigger each step at the right time."
+        }
+      },
+      "fields": {
+        "title": {
+          "label": "Name of the plan",
+          "placeholder": "E.g. Ysolde's regency"
+        },
+        "villain": {
+          "label": "Who is the enemy?",
+          "placeholder": "Their name and what they are"
+        },
+        "goal": {
+          "label": "What do they want that affects the characters?",
+          "placeholder": "Something they own, protect or love"
+        },
+        "stakes": {
+          "label": "What happens if they succeed",
+          "placeholder": "For the world, and for the characters"
+        },
+        "objectives": {
+          "label": "What the players can aim for",
+          "placeholder": "Expose, thwart, protect…"
+        },
+        "step1": {
+          "name": {
+            "label": "Name of the step",
+            "placeholder": "E.g. The replaced captain"
+          },
+          "nature": {
+            "label": "What kind of scene is it?"
+          },
+          "action": {
+            "label": "What the enemy does",
+            "placeholder": "Concretely, and who it affects"
+          },
+          "sign": {
+            "label": "What the players can notice and do",
+            "placeholder": "The trace left behind, and how to react"
+          }
+        },
+        "step2": {
+          "name": {
+            "label": "Name of the step",
+            "placeholder": "E.g. The bought chamberlain"
+          },
+          "nature": {
+            "label": "What kind of scene is it?"
+          },
+          "action": {
+            "label": "What the enemy does",
+            "placeholder": "Concretely, and who it affects"
+          },
+          "sign": {
+            "label": "What the players can notice and do",
+            "placeholder": "The trace left behind, and how to react"
+          }
+        },
+        "step3": {
+          "name": {
+            "label": "Name of the step",
+            "placeholder": "E.g. The fake merchants"
+          },
+          "nature": {
+            "label": "What kind of scene is it?"
+          },
+          "action": {
+            "label": "What the enemy does",
+            "placeholder": "Concretely, and who it affects"
+          },
+          "sign": {
+            "label": "What the players can notice and do",
+            "placeholder": "The trace left behind, and how to react"
+          }
+        },
+        "step4": {
+          "name": {
+            "label": "Name of the step",
+            "placeholder": "E.g. The banquet"
+          },
+          "nature": {
+            "label": "What kind of scene is it?"
+          },
+          "action": {
+            "label": "What the enemy does",
+            "placeholder": "Concretely, and who it affects"
+          },
+          "sign": {
+            "label": "What the players can notice and do",
+            "placeholder": "The trace left behind, and how to react"
+          }
+        },
+        "step5": {
+          "name": {
+            "label": "Name of the step",
+            "placeholder": "E.g. The raids"
+          },
+          "nature": {
+            "label": "What kind of scene is it?"
+          },
+          "action": {
+            "label": "What the enemy does",
+            "placeholder": "Concretely, and who it affects"
+          },
+          "sign": {
+            "label": "What the players can notice and do",
+            "placeholder": "The trace left behind, and how to react"
+          }
+        },
+        "step6": {
+          "name": {
+            "label": "Name of the step",
+            "placeholder": "E.g. The coronation"
+          },
+          "nature": {
+            "label": "What kind of scene is it?"
+          },
+          "action": {
+            "label": "What the enemy does",
+            "placeholder": "Concretely, and who it affects"
+          },
+          "sign": {
+            "label": "What the players can notice and do",
+            "placeholder": "The trace left behind, and how to react"
+          }
+        },
+        "clockWanted": {
+          "label": "Create the clock in the playthroughs?"
+        },
+        "clockName": {
+          "label": "Name of the clock",
+          "placeholder": "E.g. Ysolde's regency"
+        }
+      },
+      "options": {
+        "clockWanted": {
+          "yes": "Yes, a 6-segment clock",
+          "no": "No, I'll track the plan myself"
+        },
+        "step1": {
+          "nature": {
+            "event": "An event",
+            "npc": "An NPC encounter",
+            "location": "A place",
+            "encounter": "A fight"
+          }
+        },
+        "step2": {
+          "nature": {
+            "event": "An event",
+            "npc": "An NPC encounter",
+            "location": "A place",
+            "encounter": "A fight"
+          }
+        },
+        "step3": {
+          "nature": {
+            "event": "An event",
+            "npc": "An NPC encounter",
+            "location": "A place",
+            "encounter": "A fight"
+          }
+        },
+        "step4": {
+          "nature": {
+            "event": "An event",
+            "npc": "An NPC encounter",
+            "location": "A place",
+            "encounter": "A fight"
+          }
+        },
+        "step5": {
+          "nature": {
+            "event": "An event",
+            "npc": "An NPC encounter",
+            "location": "A place",
+            "encounter": "A fight"
+          }
+        },
+        "step6": {
+          "nature": {
+            "event": "An event",
+            "npc": "An NPC encounter",
+            "location": "A place",
+            "encounter": "A fight"
+          }
+        }
+      },
+      "defaults": {
+        "step1": {
+          "name": "Secret preparations"
+        },
+        "step2": {
+          "name": "Bought allies"
+        },
+        "step3": {
+          "name": "Everything in place"
+        },
+        "step4": {
+          "name": "The strike"
+        },
+        "step5": {
+          "name": "Resistance crushed"
+        },
+        "step6": {
+          "name": "Goal reached"
+        },
+        "clockName": "The enemy's plan"
       }
     }
   }

@@ -1,0 +1,85 @@
+.chooser {
+  max-width: 760px;
+  padding: 2rem;
+  margin: 0 auto;
+
+  h1 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.5rem;
+    color: white;
+    margin: 1rem 0 0.5rem;
+
+    lucide-icon { color: #fbbf24; }
+  }
+}
+
+.chooser-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #9ca3af;
+  font-size: 0.85rem;
+  text-decoration: none;
+
+  &:hover { color: white; }
+}
+
+.chooser-intro {
+  color: #9ca3af;
+  line-height: 1.55;
+  margin: 0 0 1.5rem;
+}
+
+.method-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.method-card {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1rem 1.15rem;
+  background: #111827;
+  border: 1px solid #1f2937;
+  border-radius: 12px;
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.method-text {
+  flex: 1;
+  min-width: 0;
+
+  h2 { font-size: 1.05rem; color: white; margin: 0 0 0.3rem; }
+  p { color: #d1d5db; font-size: 0.88rem; line-height: 1.5; margin: 0 0 0.4rem; }
+}
+
+.method-meta {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.method-start {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .chooser { padding: 1rem; }
+}

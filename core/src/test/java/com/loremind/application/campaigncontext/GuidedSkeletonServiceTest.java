@@ -1,13 +1,18 @@
 package com.loremind.application.campaigncontext;
 
+import com.loremind.application.playcontext.ClockService;
 import com.loremind.domain.campaigncontext.ports.ArcRepository;
 import com.loremind.domain.campaigncontext.ports.ChapterRepository;
 import com.loremind.domain.campaigncontext.ports.SceneRepository;
 import com.loremind.domain.campaigncontext.structure.Arc;
 import com.loremind.domain.campaigncontext.structure.ArcType;
 import com.loremind.domain.campaigncontext.structure.Chapter;
+import com.loremind.domain.campaigncontext.structure.LinkType;
 import com.loremind.domain.campaigncontext.structure.Scene;
 import com.loremind.domain.campaigncontext.structure.SceneType;
+import com.loremind.domain.playcontext.ClockTrigger;
+import com.loremind.domain.playcontext.Playthrough;
+import com.loremind.domain.playcontext.ports.PlaythroughRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,6 +50,8 @@ class GuidedSkeletonServiceTest {
     @Mock private ArcService arcService;
     @Mock private ChapterService chapterService;
     @Mock private SceneService sceneService;
+    @Mock private PlaythroughRepository playthroughRepository;
+    @Mock private ClockService clockService;
 
     @InjectMocks private GuidedSkeletonService service;
 
@@ -195,5 +202,74 @@ class GuidedSkeletonServiceTest {
 
         assertThrows(IllegalArgumentException.class, () -> service.create(CAMP, noChapterName));
         assertThrows(IllegalArgumentException.class, () -> service.create(CAMP, noScene));
+    }
+
+    // --- Liens explicites (Enquête en nœuds) et horloge (Plan du méchant) ---
+
+    private static GuidedSkeleton withLinks(List<GuidedSkeleton.SceneSpec> scenes, List<GuidedSkeleton.LinkSpec> links,
+                                            GuidedSkeleton.ClockSpec clock) {
+        return new GuidedSkeleton(null, "Arc",
+                new GuidedSkeleton.ChapterSpec("Enquête", "Accroche", null, null, "Le notaire est coupable"),
+                scenes, false, null, links, clock);
+    }
+
+    @Test
+    void explicitLinks_areAddedWithTheirKind_andIndexesSurviveSkippedScenes() {
+        when(arcRepository.findByCampaignId(CAMP)).thenReturn(List.of());
+        // La scène d'index 1 n'a pas de nom : ignorée, mais les index des liens restent ceux d'origine.
+        List<GuidedSkeleton.SceneSpec> scenes = List.of(
+                room("Accroche", SceneType.EVENT), room(" ", SceneType.LOCATION),
+                room("Piste", SceneType.NPC), room("Conclusion", SceneType.REVELATION));
+
+        service.create(CAMP, withLinks(scenes, List.of(
+                new GuidedSkeleton.LinkSpec(0, 2, "Piste", LinkType.LEAD),
+                new GuidedSkeleton.LinkSpec(2, 3, "Indice", LinkType.CLUE),
+                new GuidedSkeleton.LinkSpec(0, 1, "Vers la scène ignorée", LinkType.LEAD),
+                new GuidedSkeleton.LinkSpec(3, 3, "Boucle sur soi", LinkType.EXIT),
+                new GuidedSkeleton.LinkSpec(0, 9, "Hors limites", LinkType.EXIT)), null));
+
+        Scene hook = createdScenes.get(0);
+        Scene lead = createdScenes.get(1);
+        Scene end = createdScenes.get(2);
+        assertEquals(1, hook.getBranches().size(), "seul le lien valide de l'accroche est gardé");
+        assertEquals(lead.getId(), hook.getBranches().get(0).targetSceneId());
+        assertEquals(LinkType.LEAD, hook.getBranches().get(0).kind());
+        assertEquals(end.getId(), lead.getBranches().get(0).targetSceneId());
+        assertEquals(LinkType.CLUE, lead.getBranches().get(0).kind());
+        assertTrue(end.getBranches() == null || end.getBranches().isEmpty());
+        verify(sceneRepository, times(2)).save(any(Scene.class));
+    }
+
+    @Test
+    void chapterGmNotes_arePersisted() {
+        when(arcRepository.findByCampaignId(CAMP)).thenReturn(List.of());
+        service.create(CAMP, withLinks(List.of(room("S", SceneType.EVENT)), null, null));
+
+        ArgumentCaptor<Chapter> chapter = ArgumentCaptor.forClass(Chapter.class);
+        verify(chapterService).createChapter(chapter.capture());
+        assertEquals("Le notaire est coupable", chapter.getValue().getGmNotes());
+    }
+
+    @Test
+    void clock_isCreatedInEveryPlaythroughOfTheCampaign() {
+        when(arcRepository.findByCampaignId(CAMP)).thenReturn(List.of());
+        when(playthroughRepository.findByCampaignId(CAMP)).thenReturn(List.of(
+                Playthrough.builder().id("p1").campaignId(CAMP).build(),
+                Playthrough.builder().id("p2").campaignId(CAMP).build()));
+
+        GuidedSkeleton.Result result = service.create(CAMP, withLinks(List.of(room("Étape 1", SceneType.EVENT)), null,
+                new GuidedSkeleton.ClockSpec(" La régence ", "La loi martiale", 6)));
+
+        assertEquals(2, result.clocks());
+        verify(clockService).create("p1", "La régence", "La loi martiale", 6, ClockTrigger.NONE, null, null);
+        verify(clockService).create("p2", "La régence", "La loi martiale", 6, ClockTrigger.NONE, null, null);
+    }
+
+    @Test
+    void noClock_whenNotRequested() {
+        when(arcRepository.findByCampaignId(CAMP)).thenReturn(List.of());
+        GuidedSkeleton.Result result = service.create(CAMP, skeleton(null, "Arc", false));
+        assertEquals(0, result.clocks());
+        verify(clockService, never()).create(any(), any(), any(), org.mockito.ArgumentMatchers.anyInt(), any(), any(), any());
     }
 }

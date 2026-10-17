@@ -128,10 +128,18 @@
               </li>
             }
           </ol>
-          <label class="link-toggle">
-            <input type="checkbox" [(ngModel)]="linkScenes" />
-            {{ 'guided.linkScenes' | translate }}
-          </label>
+          @if (offersChain(d)) {
+            <label class="link-toggle">
+              <input type="checkbox" [(ngModel)]="linkScenes" />
+              {{ 'guided.linkScenes' | translate }}
+            </label>
+          }
+          @if (d.links?.length) {
+            <p class="review-note">{{ k('reviewLinks') | translate:{ count: d.links!.length } }}</p>
+          }
+          @if (d.clock) {
+            <p class="review-note">{{ 'guided.reviewClock' | translate:{ name: d.clock.name, segments: d.clock.segments } }}</p>
+          }
           <p class="review-after">{{ 'guided.reviewAfter' | translate }}</p>
         </div>
       }
