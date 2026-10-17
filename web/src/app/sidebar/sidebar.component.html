@@ -12,7 +12,7 @@
     <button class="toggle-btn" [class.active]="currentRoute.startsWith('/lore')" (click)="navigateTo('/lore')">
       {{ 'sidebar.tabLore' | translate }}
     </button>
-    <button class="toggle-btn" [class.active]="currentRoute.startsWith('/campaigns')" (click)="navigateTo('/campaigns')">
+    <button class="toggle-btn" [class.active]="currentRoute.startsWith('/campaigns') || currentRoute.startsWith('/sessions/')" (click)="navigateTo('/campaigns')">
       {{ 'sidebar.tabCampaign' | translate }}
     </button>
   </div>
@@ -27,6 +27,7 @@
         <button
           class="context-item"
           [class.active]="isActive(item.route)"
+          [attr.aria-current]="isActive(item.route) ? 'location' : null"
           (click)="navigateTo(item.route)">
           {{ item.name }}
         </button>

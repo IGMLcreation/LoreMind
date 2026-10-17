@@ -3,9 +3,12 @@ import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } fro
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { BehaviorSubject, Subject, forkJoin, of } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged, switchMap, takeUntil } from 'rxjs/operators';
-import { LucideAngularModule, Search, BookOpen, Folder, Users, FileText, Scroll, Drama, User, Dices, Package, Skull } from 'lucide-angular';
+import { BehaviorSubject, Subject, forkJoin, of, timer } from 'rxjs';
+import { catchError, distinctUntilChanged, switchMap, takeUntil } from 'rxjs/operators';
+import { LucideAngularModule, Search, BookOpen, Folder, Users, FileText, Scroll, Drama, User, Dices, Package, Skull, Star, X } from 'lucide-angular';
+import { A11yModule } from '@angular/cdk/a11y';
+import { NavigationHistoryService } from '../../services/navigation-history.service';
+import { NavigationEntry } from '../navigation-history';
 import { GlobalSearchService } from '../../services/global-search.service';
 import { LoreService } from '../../services/lore.service';
 import { PageService } from '../../services/page.service';
@@ -24,10 +27,12 @@ import { Npc } from '../../services/npc.model';
 import { RandomTable } from '../../services/random-table.model';
 import { ItemCatalog } from '../../services/item-catalog.model';
 import { Enemy } from '../../services/enemy.model';
+import { CampaignContentHit, campaignContentRoute, campaignContentContext } from '../../services/campaign-content-search.model';
 
 type ResultKind =
   | 'lore' | 'node' | 'template' | 'page' | 'campaign'
-  | 'npc' | 'character' | 'random-table' | 'item-catalog' | 'enemy';
+  | 'npc' | 'character' | 'random-table' | 'item-catalog' | 'enemy'
+  | CampaignContentHit['kind'] | 'saved';
 
 interface SearchResult {
   /** Optionnel dans les DTOs (objets pas encore persistés) mais toujours
@@ -50,11 +55,13 @@ interface SearchResult {
  */
 @Component({
     selector: 'app-global-search',
-    imports: [FormsModule, LucideAngularModule, TranslatePipe],
+    imports: [FormsModule, LucideAngularModule, TranslatePipe, A11yModule],
     templateUrl: './global-search.component.html',
     styleUrls: ['./global-search.component.scss']
 })
 export class GlobalSearchComponent implements OnInit, OnDestroy {
+  readonly Star = Star;
+  readonly X = X;
   readonly Search = Search;
   readonly BookOpen = BookOpen;
   readonly Folder = Folder;
@@ -90,12 +97,37 @@ export class GlobalSearchComponent implements OnInit, OnDestroy {
     private randomTableService: RandomTableService,
     private itemCatalogService: ItemCatalogService,
     private enemyService: EnemyService,
-    private translate: TranslateService
+    private translate: TranslateService,
+    public history: NavigationHistoryService
   ) {}
+
+  private savedResult(entry: NavigationEntry): SearchResult {
+    return { id: entry.url, kind: 'saved', title: entry.title, subtitle: entry.subtitle, tag: '', route: [entry.url] };
+  }
+
+  get favorites(): SearchResult[] { return this.history.history().favorites.map(entry => this.savedResult(entry)); }
+  get recent(): SearchResult[] {
+    return this.history.history().recent.filter(entry => !this.history.isFavorite(entry.url)).map(entry => this.savedResult(entry));
+  }
+  get visibleResults(): SearchResult[] {
+    return this.query.trim().length < 2 ? [...this.favorites, ...this.recent] : this.results;
+  }
+  resultUrl(result: SearchResult): string { return this.router.serializeUrl(this.router.createUrlTree(result.route)); }
+  isFavorite(result: SearchResult): boolean { return this.history.isFavorite(this.resultUrl(result)); }
+  toggleFavorite(result: SearchResult): void {
+    this.history.toggle({ url: this.resultUrl(result), title: result.title, subtitle: result.subtitle });
+    this.activeIndex = Math.min(this.activeIndex, Math.max(0, this.visibleResults.length - 1));
+  }
+  clearRecent(): void { this.history.clearRecent(); this.activeIndex = 0; }
+
+  private scrollToActive(): void {
+    setTimeout(() => document.getElementById('gs-result-' + this.activeIndex)?.scrollIntoView({ block: 'nearest' }), 0);
+  }
 
   ngOnInit(): void {
     this.globalSearch.open$.pipe(takeUntil(this.destroy$)).subscribe(open => {
       this.open = open;
+      this.queryChanges$.next('');
       if (open) {
         this.query = '';
         this.results = [];
@@ -106,16 +138,17 @@ export class GlobalSearchComponent implements OnInit, OnDestroy {
     });
 
     this.queryChanges$.pipe(
-      debounceTime(200),
       distinctUntilChanged(),
       switchMap(q => {
+        this.results = [];
+        this.activeIndex = 0;
         const trimmed = q.trim();
         if (trimmed.length < 2) {
           this.loading = false;
           return of<SearchResult[]>([]);
         }
         this.loading = true;
-        return forkJoin({
+        return timer(200).pipe(switchMap(() => forkJoin({
           lores:      this.loreService.searchLores(trimmed).pipe(catchError(() => of([]))),
           nodes:      this.loreService.searchLoreNodes(trimmed).pipe(catchError(() => of([]))),
           templates:  this.templateService.search(trimmed).pipe(catchError(() => of([]))),
@@ -125,8 +158,9 @@ export class GlobalSearchComponent implements OnInit, OnDestroy {
           characters: this.characterService.search(trimmed).pipe(catchError(() => of([]))),
           tables:     this.randomTableService.search(trimmed).pipe(catchError(() => of([]))),
           catalogs:   this.itemCatalogService.search(trimmed).pipe(catchError(() => of([]))),
-          enemies:    this.enemyService.search(trimmed).pipe(catchError(() => of([])))
-        }).pipe(
+          enemies:    this.enemyService.search(trimmed).pipe(catchError(() => of([]))),
+          content:    this.campaignService.searchContent(trimmed).pipe(catchError(() => of([])))
+        })),
           switchMap(r => of(this.buildResults(r))),
           catchError(() => of<SearchResult[]>([]))
         );
@@ -151,7 +185,7 @@ export class GlobalSearchComponent implements OnInit, OnDestroy {
    */
   private buildResults(r: {
     lores: Lore[]; nodes: LoreNode[]; templates: Template[]; pages: Page[]; campaigns: Campaign[];
-    npcs: Npc[]; characters: CharacterSearchResult[]; tables: RandomTable[]; catalogs: ItemCatalog[]; enemies: Enemy[];
+    npcs: Npc[]; characters: CharacterSearchResult[]; tables: RandomTable[]; catalogs: ItemCatalog[]; enemies: Enemy[]; content: CampaignContentHit[];
   }): SearchResult[] {
     const { lores, nodes, templates, pages, campaigns, npcs, characters, tables, catalogs, enemies } = r;
     const pageResults: SearchResult[] = pages.map(p => ({
@@ -236,6 +270,12 @@ export class GlobalSearchComponent implements OnInit, OnDestroy {
     }));
     return [
       ...pageResults,
+      ...r.content.map(hit => ({
+        id: hit.id, kind: hit.kind, title: hit.name,
+        subtitle: campaignContentContext(hit),
+        tag: this.translate.instant('globalSearch.tags.' + hit.kind),
+        route: campaignContentRoute(hit)
+      })).filter(hit => hit.route.length > 0),
       ...npcResults, ...characterResults, ...enemyResults, ...tableResults, ...catalogResults,
       ...nodeResults, ...templateResults,
       ...campaignResults, ...loreResults
@@ -248,6 +288,7 @@ export class GlobalSearchComponent implements OnInit, OnDestroy {
   }
 
   select(result: SearchResult): void {
+    this.history.visit(this.resultUrl(result), result.title, result.subtitle);
     this.router.navigate(result.route);
     this.globalSearch.close();
   }
@@ -263,19 +304,24 @@ export class GlobalSearchComponent implements OnInit, OnDestroy {
     if (event.key === 'Escape') {
       event.preventDefault();
       this.close();
+    } else if (event.target !== this.searchInput?.nativeElement) {
+      // Native buttons (including stars) keep their own Enter/Space behavior.
+      return;
     } else if (event.key === 'ArrowDown') {
       event.preventDefault();
-      if (this.results.length > 0) {
-        this.activeIndex = (this.activeIndex + 1) % this.results.length;
+      if (this.visibleResults.length > 0) {
+        this.activeIndex = (this.activeIndex + 1) % this.visibleResults.length;
+        this.scrollToActive();
       }
     } else if (event.key === 'ArrowUp') {
       event.preventDefault();
-      if (this.results.length > 0) {
-        this.activeIndex = (this.activeIndex - 1 + this.results.length) % this.results.length;
+      if (this.visibleResults.length > 0) {
+        this.activeIndex = (this.activeIndex - 1 + this.visibleResults.length) % this.visibleResults.length;
+        this.scrollToActive();
       }
     } else if (event.key === 'Enter') {
       event.preventDefault();
-      const r = this.results[this.activeIndex];
+      const r = this.visibleResults[this.activeIndex];
       if (r) this.select(r);
     }
   }

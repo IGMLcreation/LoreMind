@@ -1,6 +1,6 @@
 @if (assessment) {
   <section class="readiness-panel" [class.ready]="isReady">
-    <button type="button" class="readiness-header" (click)="toggle()">
+    <button type="button" class="readiness-header" (click)="toggle()" [attr.aria-expanded]="!collapsed">
       <lucide-icon [img]="collapsed ? ChevronRight : ChevronDown" [size]="16"></lucide-icon>
       @if (isReady) {
         <lucide-icon [img]="CheckCircle2" [size]="16" class="ready-icon"></lucide-icon>

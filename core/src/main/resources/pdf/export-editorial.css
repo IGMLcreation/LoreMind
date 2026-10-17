@@ -1,0 +1,93 @@
+/* Edition A4 : narration en colonnes, palette encre et sauge.
+   CSS pagine OpenHTMLtoPDF ; les tableaux detailles et cartes restent pleine largeur. */
+@page {
+  @top-center { content: '__HEADER__'; font-family: 'DejaVu Sans', sans-serif; font-size: 7pt;
+    color: #34594f; letter-spacing: .12em; border-bottom: .5pt solid #b3bfb4; padding-bottom: 6pt; }
+  @bottom-center { content: counter(page); font-size: 9pt; color: #34594f; font-family: 'DejaVu Serif', serif; }
+}
+@page:first { @top-center { content: none; border: 0; } }
+body { margin: 0; color: #292c29; line-height: 1.42; word-wrap: break-word; }
+.editorial-flow { column-count: 2; column-gap: .8cm; }
+.editorial-flow p, .editorial-flow .field, .editorial-flow .box { orphans: 3; widows: 3; }
+.editorial-flow .prose { text-align: left; }
+/* Un bloc en ligne est deplace entier par le moteur de colonnes. Les encadres longs
+   restent fluides, sans fond ni bordure susceptibles de deborder sur la colonne suivante. */
+.editorial-flow .box, .editorial-flow .illus { display: inline-block; width: 100%; box-sizing: border-box; }
+.editorial-flow .box.flow { display: block; background: none; border: 0; padding: .1cm 0; }
+.editorial-flow .box.flow .box-label { border-top: 1pt solid #9a8351; padding-top: .12cm; }
+.editorial-flow .arc-head, .editorial-flow .chapter-head, .editorial-flow .scene-head,
+.editorial-flow .section-head { display: inline-block; width: 100%; box-sizing: border-box; }
+.cover { padding-top: 3cm; }
+.cover.has-art { padding-top: .3cm; }
+.cover-title { font-family: 'DejaVu Serif', serif; font-size: 32pt; line-height: 1.12;
+  letter-spacing: -.03em; color: #193c34; }
+.cover-kicker { color: #456656; font-size: 9pt; letter-spacing: .18em; }
+.cover-subtitle { font-family: 'DejaVu Serif', serif; color: #545b50; font-style: italic; font-size: 13pt; }
+.cover-rule { width: 5cm; border-bottom: 1.5pt solid #9a8351; }
+.cover-art { margin: .35cm 0 .5cm; }
+.cover-art img { border: 0; }
+.cover-meta { color: #34594f; font-size: 9pt; }
+.cover-author { color: #193c34; margin-top: .6cm; }
+.cover-version { color: #67746a; }
+@page illustrated-cover { size: A4; margin: 0;
+  @top-center { content: none; border: 0; }
+  @bottom-center { content: none; }
+}
+.cover-illustrated { page: illustrated-cover; position: relative; width: 21cm; height: 29.65cm;
+  padding: 0; margin: 0; overflow: hidden; background: #193c34; }
+.cover-background { position: absolute; }
+.cover-caption { position: absolute; bottom: 1.2cm; left: 1.3cm; right: 1.3cm;
+  background: #193c34; padding: .7cm .7cm .6cm; }
+.cover-caption .cover-title { color: #fffdf4; }
+.cover-caption .cover-kicker, .cover-caption .cover-meta, .cover-caption .cover-version { color: #d4dfce; }
+.cover-caption .cover-subtitle, .cover-caption .cover-author { color: #fffdf4; }
+.cover-caption .cover-rule { border-color: #c9b47e; }
+.cover-caption .cover-edition { color: #e1ca8e; }
+.credits-title, .credits-subtitle { color: #34594f; }
+.legal { border-color: #b3bfb4; }
+h1.part, h1.toc-title { font-family: 'DejaVu Serif', serif; font-size: 25pt; line-height: 1.15;
+  letter-spacing: -.02em; text-transform: none; color: #193c34; border-bottom: 1.5pt solid #9a8351;
+  padding-bottom: .22cm; margin-bottom: .5cm; }
+.toc tr.lvl0 td { color: #193c34; border-bottom-color: #b3bfb4; }
+.toc td { border-bottom-color: #d4d9d0; }
+.arc { margin: 0 0 .4cm; }
+.arc-head { background: none; padding: .12cm 0 .18cm; border-radius: 0;
+  border-top: 2pt solid #34594f; border-bottom: .5pt solid #9a8351;
+  color: #193c34; font-family: 'DejaVu Serif', serif; font-size: 19pt; line-height: 1.18; }
+.chapter-head { background: none; border: 0; border-bottom: 1pt solid #b3bfb4;
+  padding: 0 0 .12cm; font-family: 'DejaVu Serif', serif; font-size: 15pt; line-height: 1.2; color: #34594f; }
+.eyebrow, .eyebrow-light { color: #637767; font-size: 6.5pt; margin-bottom: .08cm; }
+.scene { border: 0; border-radius: 0; background: none; padding: 0; margin: .4cm 0 .3cm; }
+.scene-head { color: #193c34; font-size: 11pt; text-transform: uppercase; letter-spacing: .03em;
+  border-bottom: .5pt solid #b3bfb4; padding-bottom: .08cm; }
+.scene-meta { color: #687365; font-size: 8.5pt; }
+.room { background: none; border: 0;
+  padding: 0 0 0 .22cm; margin: .3cm 0; }
+.room-head { color: #695a36; border-left: 1pt solid #9a8351; padding-left: .18cm; }
+h2.section-head { font-family: 'DejaVu Serif', serif; font-size: 14pt; color: #34594f; border-bottom-color: #b3bfb4; }
+h3.folder { color: #456656; border-bottom-color: #b3bfb4; }
+.field { margin: .2cm 0; }
+.field-label { color: #34594f; font-size: 7.5pt; letter-spacing: .02em; }
+.box { padding: .25cm .3cm; margin: .25cm 0; border-radius: 0; }
+.box-label { letter-spacing: .06em; }
+.box ul { padding-left: .4cm; margin: .12cm 0; }
+.readaloud { background: #edf1e7; border: .75pt solid #456656; font-style: normal; color: #234438; }
+.readaloud .box-label { color: #34594f; }
+.secret { background: #f5f1e7; border: 0; border-left: 2pt solid #9a8351; }
+.secret .box-label { color: #79683e; }
+.combat { background: #f8eeea; border-left-color: #9b5547; }
+.card { background: #fafbf7; border-color: #c5cec1; border-radius: 0; }
+.persona-name { font-family: 'DejaVu Serif', serif; color: #193c34; font-size: 14pt; }
+.level, .illus .caption { color: #637767; }
+.illus { margin: .35cm 0; }
+.illus img { border: 0; border-radius: 0; }
+.illus .caption { font-size: 7pt; letter-spacing: .04em; }
+.tech-table { width: 100%; }
+.stats-table thead th, .stat-array th { background: #e7ede2; color: #34594f; border-color: #b3bfb4; }
+.stats-table tbody th { background: #f0f3eb; }
+.stats-table tr.alt td { background: #f0f3eb; }
+.stats-table td, .stats-table th, .stat-array td { border-color: #d4d9d0; }
+.stats-table .roll-col, a.xref { color: #34594f; }
+a.xref { border-bottom-color: #b3bfb4; }
+a.pref:after, .annex-kind { color: #637767; }
+.map-title { color: #193c34; }

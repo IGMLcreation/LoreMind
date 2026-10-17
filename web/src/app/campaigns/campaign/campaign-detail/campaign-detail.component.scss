@@ -6,6 +6,32 @@
   line-height: 1.4;
 }
 
+.management-menu {
+  position: relative;
+  summary { cursor: pointer; list-style: none; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: '▾'; margin-left: 0.5rem; }
+  &[open] summary::after { content: '▴'; }
+  summary:focus-visible { outline: 2px solid #a5b4fc; outline-offset: 2px; }
+}
+.management-actions {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.5rem);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: max-content;
+  max-width: min(280px, 80vw);
+  padding: 0.5rem;
+  background: #131722;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px #0006;
+  button { width: 100%; text-align: left; justify-content: flex-start; white-space: normal; }
+}
+
 // ==== Parties (Playthroughs) ====
 .playthroughs-grid {
   display: grid;

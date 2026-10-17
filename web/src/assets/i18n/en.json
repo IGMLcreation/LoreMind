@@ -296,8 +296,20 @@
       "character": "PC",
       "randomTable": "Random table",
       "itemCatalog": "Item catalog",
-      "enemy": "Enemy"
-    }
+      "enemy": "Enemy",
+      "arc": "Arc",
+      "chapter": "Chapter",
+      "scene": "Scene",
+      "quest": "Quest"
+    },
+    "loading": "Searching…",
+    "favorites": "Favorites",
+    "recent": "Recently viewed",
+    "clearRecent": "Clear history",
+    "addFavorite": "Add {{name}} to favorites",
+    "removeFavorite": "Remove {{name}} from favorites",
+    "shortcutsEmpty": "Your recently viewed pages will appear here. Type at least 2 characters to search, then use the star to save a favorite.",
+    "close": "Close search"
   },
   "updateBanner": {
     "message": "A new version of LoreMind is available (<strong>{{version}}</strong>). Reload to enjoy the latest improvements.",
@@ -653,7 +665,8 @@
     "organizeInArcs": "or organize into arcs",
     "defaultArcName": "Main arc",
     "defaultChapterName": "Chapter 1",
-    "flatModeHint": "Simple mode: your scenes are in the left panel. Add one, or organize the campaign into arcs."
+    "flatModeHint": "Simple mode: your scenes are in the left panel. Add one, or organize the campaign into arcs.",
+    "manage": "Manage"
   },
   "campaignImport": {
     "pageTitle": "Import a campaign",

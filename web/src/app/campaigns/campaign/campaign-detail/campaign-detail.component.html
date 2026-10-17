@@ -40,22 +40,27 @@
             <lucide-icon [img]="Network" [size]="14"></lucide-icon>
             {{ 'campaignDetail.graph' | translate }}
           </button>
-          <button type="button" class="btn-secondary" (click)="exportPdf()" [disabled]="exportingPdf">
-            <lucide-icon [img]="FileText" [size]="14"></lucide-icon>
-            {{ (exportingPdf ? 'campaignDetail.pdfExporting' : 'campaignDetail.pdfExport') | translate }}
-          </button>
-          <button type="button" class="btn-secondary" (click)="exportFoundry()" [disabled]="exportingFoundry">
-            <lucide-icon [img]="Download" [size]="14"></lucide-icon>
-            {{ (exportingFoundry ? 'campaignDetail.foundryExporting' : 'campaignDetail.foundryExport') | translate }}
-          </button>
-          <button type="button" class="btn-secondary" (click)="startEdit()">
+          <details #managementMenu class="management-menu" (keydown.escape)="managementMenu.open = false; managementToggle.focus()">
+            <summary #managementToggle class="btn-secondary">{{ 'campaignDetail.manage' | translate }}</summary>
+            <div class="management-actions">
+          <button type="button" class="btn-secondary" (click)="managementMenu.open = false; startEdit()">
             <lucide-icon [img]="Pencil" [size]="14"></lucide-icon>
             {{ 'common.edit' | translate }}
           </button>
-          <button type="button" class="btn-danger" (click)="deleteCampaign()">
+          <button type="button" class="btn-secondary" (click)="managementMenu.open = false; exportPdf()" [disabled]="exportingPdf">
+            <lucide-icon [img]="FileText" [size]="14"></lucide-icon>
+            {{ (exportingPdf ? 'campaignDetail.pdfExporting' : 'campaignDetail.pdfExport') | translate }}
+          </button>
+          <button type="button" class="btn-secondary" (click)="managementMenu.open = false; exportFoundry()" [disabled]="exportingFoundry">
+            <lucide-icon [img]="Download" [size]="14"></lucide-icon>
+            {{ (exportingFoundry ? 'campaignDetail.foundryExporting' : 'campaignDetail.foundryExport') | translate }}
+          </button>
+          <button type="button" class="btn-danger" (click)="managementMenu.open = false; deleteCampaign()">
             <lucide-icon [img]="Trash2" [size]="14"></lucide-icon>
             {{ 'common.delete' | translate }}
           </button>
+            </div>
+          </details>
         </div>
       </div>
     }

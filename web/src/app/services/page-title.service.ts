@@ -1,5 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Title } from '@angular/platform-browser';
+import { Router } from '@angular/router';
+import { NavigationHistoryService } from './navigation-history.service';
 
 /**
  * Service centralisé pour le titre de l'onglet navigateur.
@@ -11,7 +13,7 @@ import { Title } from '@angular/platform-browser';
  */
 @Injectable({ providedIn: 'root' })
 export class PageTitleService {
-  constructor(private title: Title) {}
+  constructor(private title: Title, private router: Router, private history: NavigationHistoryService) {}
 
   /**
    * Définit le titre de l'onglet au format "LoreMind - <subject>".
@@ -21,5 +23,6 @@ export class PageTitleService {
   set(subject: string | null | undefined): void {
     const s = subject?.trim();
     this.title.setTitle(s ? `LoreMind - ${s}` : 'LoreMind');
+    if (s) this.history.visit(this.router.url, s);
   }
 }

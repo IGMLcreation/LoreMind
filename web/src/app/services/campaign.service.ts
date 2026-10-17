@@ -7,6 +7,7 @@ import { Npc } from './npc.model';
 import { RandomTable } from './random-table.model';
 import { Enemy } from './enemy.model';
 import { PdfExportOptions } from './pdf-export.model';
+import { CampaignContentHit } from './campaign-content-search.model';
 
 /**
  * Arbre de campagne AGRÉGÉ (une seule requête HTTP) — miroir de CampaignTreeDTO.
@@ -261,5 +262,9 @@ export class CampaignService {
   search(q: string): Observable<Campaign[]> {
     const params = new HttpParams().set('q', q);
     return this.http.get<Campaign[]>(`${this.apiUrl}/search`, { params });
+  }
+
+  searchContent(q: string): Observable<CampaignContentHit[]> {
+    return this.http.get<CampaignContentHit[]>(`${this.apiUrl}/search-content`, { params: { q } });
   }
 }

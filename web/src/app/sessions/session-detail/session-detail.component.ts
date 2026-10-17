@@ -1,6 +1,7 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
@@ -15,7 +16,8 @@ import { SessionService } from '../../services/session.service';
 import { Session } from '../../services/session.model';
 import { PlaythroughService } from '../../services/playthrough.service';
 import { CampaignService } from '../../services/campaign.service';
-import { Scene } from '../../services/campaign.model';
+import { Scene, Campaign, Playthrough } from '../../services/campaign.model';
+import { BreadcrumbComponent, BreadcrumbItem } from '../../shared/breadcrumb/breadcrumb.component';
 import {
   SessionEntry, SessionEntryInput, EntryType, ENTRY_TYPE_META
 } from '../../services/session-entry.model';
@@ -33,11 +35,22 @@ import { DiceRollResult } from '../session-dice-panel/session-dice-panel.compone
  */
 @Component({
     selector: 'app-session-detail',
-    imports: [CommonModule, FormsModule, LucideAngularModule, TranslatePipe, RouterLink, SessionReferencePanelComponent],
+    imports: [CommonModule, FormsModule, LucideAngularModule, TranslatePipe, BreadcrumbComponent, SessionReferencePanelComponent],
     templateUrl: './session-detail.component.html',
     styleUrls: ['./session-detail.component.scss']
 })
 export class SessionDetailComponent implements OnInit, OnDestroy {
+  private readonly destroyRef = inject(DestroyRef);
+  private campaign: Campaign | null = null;
+  private playthrough: Playthrough | null = null;
+
+  get breadcrumbItems(): BreadcrumbItem[] {
+    const items: BreadcrumbItem[] = [{ label: this.translate.instant('campaignTree.allCampaigns'), route: ['/campaigns'] }];
+    if (this.campaign) items.push({ label: this.campaign.name, route: ['/campaigns', this.campaign.id] });
+    if (this.playthrough) items.push({ label: this.playthrough.name, route: ['/campaigns', this.playthrough.campaignId, 'playthroughs', this.playthrough.id] });
+    if (this.session) items.push({ label: this.session.name });
+    return items;
+  }
   readonly Dices = Dices;
   readonly ArrowLeft = ArrowLeft;
   readonly Square = Square;
@@ -126,18 +139,33 @@ export class SessionDetailComponent implements OnInit, OnDestroy {
       filter((id): id is string => !!id),
       switchMap(id => this.sessionService.getSessionById(id).pipe(
         catchError(() => of(null))
-      ))
-    ).subscribe(session => {
+      )),
+      switchMap(session => {
+        this.campaignId = null;
+        this.campaign = null;
+        this.playthrough = null;
+        if (!session?.playthroughId) return of({ session, playthrough: null, campaign: null });
+        return this.playthroughService.getById(session.playthroughId).pipe(
+          catchError(() => of(null)),
+          switchMap(playthrough => {
+            if (!playthrough) return of({ session, playthrough, campaign: null });
+            return this.campaignService.getCampaignById(playthrough.campaignId).pipe(
+              catchError(() => of(null)),
+              map(campaign => ({ session, playthrough, campaign }))
+            );
+          })
+        );
+      }),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(({ session, playthrough, campaign }) => {
       this.session = session;
+      this.playthrough = playthrough;
+      this.campaign = campaign;
+      this.campaignId = playthrough?.campaignId ?? null;
       if (session) {
         this.pageTitleService.set(session.name);
         this.loadEntries(session.id);
         this.loadPinnedScene(session.currentSceneId ?? null);
-        if (session.playthroughId) {
-          this.playthroughService.getById(session.playthroughId).pipe(
-            catchError(() => of(null))
-          ).subscribe(pt => { this.campaignId = pt ? pt.campaignId : null; });
-        }
       }
     });
   }

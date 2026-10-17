@@ -7,6 +7,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { LucideAngularModule, Menu, PanelLeft, Search, X } from 'lucide-angular';
 import { filter, map } from 'rxjs';
 import { SidebarComponent } from './sidebar/sidebar.component';
+import { CampaignBreadcrumbComponent } from './shared/breadcrumb/campaign-breadcrumb.component';
 import { SecondarySidebarComponent } from './shared/secondary-sidebar/secondary-sidebar.component';
 import { GlobalSearchComponent } from './shared/global-search/global-search.component';
 import { UpdateBannerComponent } from './shared/update-banner/update-banner.component';
@@ -29,6 +30,7 @@ const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), selec
     selector: 'app-root',
     imports: [
     RouterOutlet,
+    CampaignBreadcrumbComponent,
     LucideAngularModule,
     TranslatePipe,
     SidebarComponent,

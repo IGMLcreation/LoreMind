@@ -1,23 +1,41 @@
 @if (open) {
   <div class="gs-overlay" (click)="close()">
-    <div class="gs-modal" (click)="$event.stopPropagation()">
+    <div class="gs-modal" role="dialog" aria-modal="true" cdkTrapFocus [cdkTrapFocusAutoCapture]="true" [attr.aria-label]="'sidebar.globalSearch' | translate" (click)="$event.stopPropagation()">
       <div class="gs-input-row">
         <lucide-icon [img]="Search" [size]="18" class="gs-search-icon"></lucide-icon>
         <input
           #searchInput
+          cdkFocusInitial
           type="text"
           class="gs-input"
+          [attr.aria-label]="'sidebar.globalSearch' | translate"
           [placeholder]="'globalSearch.placeholder' | translate"
           [ngModel]="query"
           (ngModelChange)="onQueryChange($event)" />
-        <span class="gs-kbd">ESC</span>
+        <button type="button" class="gs-icon-btn" [attr.aria-label]="'globalSearch.close' | translate" (click)="close()">
+          <lucide-icon [img]="X" [size]="18"></lucide-icon>
+        </button>
       </div>
-      @if (results.length > 0) {
+      @if (loading) {
+        <div class="gs-empty" role="status">{{ 'globalSearch.loading' | translate }}</div>
+      }
+      @if (visibleResults.length > 0) {
         <div class="gs-results">
-          @for (r of results; track r; let i = $index) {
+          @for (r of visibleResults; track resultUrl(r); let i = $index) {
+            @if (query.trim().length < 2 && i === 0 && favorites.length > 0) {
+              <h2 class="gs-section-title">{{ 'globalSearch.favorites' | translate }}</h2>
+            }
+            @if (query.trim().length < 2 && i === favorites.length && recent.length > 0) {
+              <div class="gs-section-header">
+                <h2 class="gs-section-title">{{ 'globalSearch.recent' | translate }}</h2>
+                <button type="button" class="gs-clear" (click)="clearRecent()">{{ 'globalSearch.clearRecent' | translate }}</button>
+              </div>
+            }
+            <div class="gs-result-row" [class.active]="i === activeIndex">
             <button
+              type="button"
+              [id]="'gs-result-' + i"
               class="gs-result"
-              [class.active]="i === activeIndex"
               (mouseenter)="activeIndex = i"
               (click)="select(r)">
               <lucide-icon [img]="iconFor(r.kind)" [size]="16" class="gs-result-icon"></lucide-icon>
@@ -26,9 +44,16 @@
                 @if (r.subtitle) {
                   <div class="gs-result-subtitle">{{ r.subtitle }}</div>
                 }
-                <div class="gs-result-tag">{{ r.tag }}</div>
+                @if (r.tag) { <div class="gs-result-tag">{{ r.tag }}</div> }
               </div>
             </button>
+            <button type="button" class="gs-icon-btn gs-favorite" [class.starred]="isFavorite(r)"
+              [attr.aria-pressed]="isFavorite(r)"
+              [attr.aria-label]="(isFavorite(r) ? 'globalSearch.removeFavorite' : 'globalSearch.addFavorite') | translate:{ name: r.title }"
+              (click)="toggleFavorite(r)">
+              <lucide-icon [img]="Star" [size]="18"></lucide-icon>
+            </button>
+            </div>
           }
         </div>
       }
@@ -37,9 +62,9 @@
           {{ 'globalSearch.noResults' | translate }}
         </div>
       }
-      @if (query.trim().length < 2) {
+      @if (query.trim().length < 2 && visibleResults.length === 0) {
         <div class="gs-empty">
-          {{ 'globalSearch.minChars' | translate }}
+          {{ 'globalSearch.shortcutsEmpty' | translate }}
         </div>
       }
       <div class="gs-footer">
@@ -48,7 +73,7 @@
           <span><kbd>↵</kbd> {{ 'globalSearch.hintSelect' | translate }}</span>
           <span><kbd>ESC</kbd> {{ 'globalSearch.hintClose' | translate }}</span>
         </div>
-        @if (results.length > 0) {
+        @if (query.trim().length >= 2 && results.length > 0) {
           <span class="gs-count">
             {{ (results.length > 1 ? 'globalSearch.countPlural' : 'globalSearch.countSingular') | translate:{ count: results.length } }}
           </span>

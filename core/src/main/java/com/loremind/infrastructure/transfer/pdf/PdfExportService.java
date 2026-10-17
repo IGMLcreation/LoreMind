@@ -116,6 +116,7 @@ public class PdfExportService {
 
     /** Construit le PDF de la campagne selon les options. @throws NoSuchElementException si absente. */
     public byte[] export(String campaignId, PdfExportOptions options) {
+        options = options != null ? options : PdfExportOptions.defaults();
         String xhtml = xhtml(campaignId, options);
         try {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -124,7 +125,12 @@ public class PdfExportService {
             registerFonts(builder);
             builder.withHtmlContent(xhtml, null);
             builder.toStream(out);
-            builder.run();
+            try (var renderer = builder.buildPdfRenderer(); var document = renderer.getPdfDocument()) {
+                renderer.layout();
+                renderer.createPDFWithoutClosing();
+                PdfPageOrnaments.draw(document, options);
+                document.save(out);
+            }
             return out.toByteArray();
         } catch (IOException e) {
             throw new UncheckedIOException("Echec de la generation du PDF", e);
@@ -194,6 +200,7 @@ public class PdfExportService {
         int enemies;
         int randomTables;
         int lorePages;
+        private boolean columns;
 
         Ctx(PdfExportOptions opt) {
             this.opt = opt;
@@ -205,7 +212,19 @@ public class PdfExportService {
         }
 
         double contentWidthCm() {
-            return opt.format().contentWidthCm();
+            double width = opt.format().contentWidthCm();
+            return columns ? (width - 0.8) / 2 : width;
+        }
+
+        /** Le petit format garde une colonne ; les tables et cartes restent hors du flux. */
+        void beginColumns() {
+            columns = opt.format() == PdfExportOptions.PageFormat.A4;
+            if (columns) body.append("<div class=\"editorial-flow\">");
+        }
+
+        void endColumns() {
+            if (columns) body.append(DIV_CLOSE);
+            columns = false;
         }
 
         /** Champ reserve au MJ : absent de la version joueurs. */
@@ -317,6 +336,10 @@ public class PdfExportService {
     private void cover(StringBuilder b, Ctx ctx, CampaignJpaEntity c, CampaignPublication pub) {
         boolean published = pub.hasContent();
         PdfImage art = imageEncoder.image(pub.coverImageId(), PdfImageEncoder.ILLUSTRATION_MAX);
+        if (art != null && ctx.opt.format() == PdfExportOptions.PageFormat.A4 && !ctx.opt.printFriendly()) {
+            illustratedCover(b, ctx, c, pub, art);
+            return;
+        }
         b.append("<div class=\"cover").append(art != null ? " has-art" : "").append("\">");
         String kicker = coverKicker(ctx, pub);
         if (kicker != null) b.append("<div class=\"cover-kicker\">").append(esc(kicker)).append(DIV_CLOSE);
@@ -348,6 +371,32 @@ public class PdfExportService {
             b.append("<div class=\"cover-version\">Version ").append(esc(pub.version())).append(DIV_CLOSE);
         }
         b.append(DIV_CLOSE);
+    }
+
+    /** Couverture A4 illustree : image a fond perdu et cartouche contraste, sans etirer l'image. */
+    private static void illustratedCover(StringBuilder b, Ctx ctx, CampaignJpaEntity c,
+                                         CampaignPublication pub, PdfImage art) {
+        double scale = Math.max(21.0 / art.w(), 29.7 / art.h());
+        double width = art.w() * scale, height = art.h() * scale;
+        b.append("<div class=\"cover cover-illustrated\"><img class=\"cover-background\" style=\"width:")
+                .append(cm(width)).append(";height:").append(cm(height))
+                .append(";left:").append(cm((21.0 - width) / 2))
+                .append(";top:").append(cm((29.7 - height) / 2))
+                .append("\" src=\"").append(art.uri()).append("\"/>")
+                .append("<div class=\"cover-caption\">");
+        String kicker = coverKicker(ctx, pub);
+        if (kicker != null) b.append("<div class=\"cover-kicker\">").append(esc(kicker)).append(DIV_CLOSE);
+        int titleSize = c.getName().length() > 100 ? 20 : c.getName().length() > 60 ? 26 : 32;
+        b.append("<h1 class=\"cover-title\" style=\"font-size:").append(titleSize).append("pt\">")
+                .append(esc(c.getName())).append("</h1>");
+        if (notBlank(pub.subtitle())) b.append("<div class=\"cover-subtitle\">").append(esc(pub.subtitle())).append(DIV_CLOSE);
+        b.append("<div class=\"cover-rule\"></div>");
+        String meta = technicalLine(pub);
+        if (!meta.isEmpty()) b.append("<div class=\"cover-meta\">").append(esc(meta)).append(DIV_CLOSE);
+        if (!ctx.gm) b.append("<div class=\"cover-edition\">Édition joueurs</div>");
+        if (notBlank(pub.author())) b.append("<div class=\"cover-author\">").append(esc(pub.author())).append(DIV_CLOSE);
+        if (notBlank(pub.version())) b.append("<div class=\"cover-version\">Version ").append(esc(pub.version())).append(DIV_CLOSE);
+        b.append("</div></div>");
     }
 
     /** Surtitre : le systeme de jeu s'il est renseigne ; sinon l'intitule historique du livret. */
@@ -399,14 +448,17 @@ public class PdfExportService {
         ctx.addToc(0, "Introduction", "part-intro");
         ctx.bookmarks.append(bookmark("Introduction", "part-intro", ""));
 
+        ctx.beginColumns();
         technicalTable(b, pub);
         String pitch = notBlank(pub.pitch()) ? pub.pitch() : c.getDescription();
         introSection(b, "L'aventure en bref", pitch);
         box(b, "warning", "Avertissements de contenu", pub.contentWarnings());
-        if (!ctx.gm) return;
-        introSection(b, "Contexte pour le MJ", pub.gmBackground());
-        introSection(b, "Accroches", pub.hooks());
-        if (ctx.opt.includes(Section.NARRATIVE)) introSection(b, "Structure de l'aventure", structureOutline(st));
+        if (ctx.gm) {
+            introSection(b, "Contexte pour le MJ", pub.gmBackground());
+            introSection(b, "Accroches", pub.hooks());
+            if (ctx.opt.includes(Section.NARRATIVE)) introSection(b, "Structure de l'aventure", structureOutline(st));
+        }
+        ctx.endColumns();
     }
 
     /** Tableau « Système / Niveaux / Joueurs / Durée » de la page technique. */
@@ -502,9 +554,11 @@ public class PdfExportService {
         ctx.addToc(0, "Structure narrative", ANCHOR_PART_NARRATIVE);
         narrativeBookmarks(ctx, st, arcs);
 
+        ctx.beginColumns();
         for (ArcJpaEntity arc : arcs) {
             arcSection(ctx, st, arc);
         }
+        ctx.endColumns();
     }
 
     /** Arborescence des signets Arc -> Chapitre pour la partie narrative complete (mode non plat). */
@@ -606,6 +660,7 @@ public class PdfExportService {
         b.append("<h1 class=\"part\" id=\"part-narrative\">Scènes</h1>");
         ctx.addToc(0, "Scènes", ANCHOR_PART_NARRATIVE);
 
+        ctx.beginColumns();
         arcFields(ctx, arc);
         chapterFields(ctx, ch, st.questByContainerChapter.get(ch.getId()), st);
 
@@ -617,6 +672,7 @@ public class PdfExportService {
             ctx.scenes++;
         }
         ctx.bookmarks.append(bookmark("Scènes", ANCHOR_PART_NARRATIVE, scBms.toString()));
+        ctx.endColumns();
     }
 
     /**
@@ -791,7 +847,10 @@ public class PdfExportService {
         }
         if (!notBlank(difficulty) && enemies.isEmpty() && !notBlank(freeText) && !notBlank(tactics)) return;
         StringBuilder b = ctx.body;
-        b.append("<div class=\"box combat\"><div class=\"box-label\">").append(esc(label)).append(DIV_CLOSE);
+        String boxText = Objects.toString(difficulty, "") + "\n" + String.join("\n", enemies)
+                + "\n" + Objects.toString(freeText, "") + "\n" + Objects.toString(tactics, "");
+        b.append("<div class=\"box combat").append(isLongBox(boxText) ? " flow" : "")
+                .append("\"><div class=\"box-label\">").append(esc(label)).append(DIV_CLOSE);
         prose(b, difficulty);
         if (!enemies.isEmpty()) {
             b.append("<ul class=\"prose-list\">");
@@ -816,10 +875,12 @@ public class PdfExportService {
         for (QuestJpaEntity q : quests) qBms.append(bookmark(q.getName(), "quest-" + q.getId(), ""));
         ctx.bookmarks.append(bookmark("Quêtes", "part-quests", qBms.toString()));
 
+        ctx.beginColumns();
         for (QuestJpaEntity q : quests) {
             ctx.addToc(1, q.getName(), "quest-" + q.getId());
             standaloneQuest(ctx, q, st);
         }
+        ctx.endColumns();
     }
 
     /** Une quete libre/transversale : ses champs + les scenes de ses conteneurs (arc SYSTEM masque). */
@@ -1377,7 +1438,9 @@ public class PdfExportService {
         StringBuilder b = ctx.body;
         // Hauteur bornee proportionnellement au format (A5 : environ 7,8 cm).
         double maxHeight = ILLUSTRATION_MAX_HEIGHT_CM * ctx.opt.format().widthCm / PdfExportOptions.PageFormat.A4.widthCm;
-        double widthCm = Math.min(ctx.contentWidthCm(), maxHeight * img.w() / img.h());
+        // Reserve les retraits des encadres et pieces imbriques, y compris en deux colonnes.
+        double maxWidth = ctx.contentWidthCm() - (ctx.columns ? 1.2 : 0);
+        double widthCm = Math.min(maxWidth, maxHeight * img.w() / img.h());
         b.append("<div class=\"illus\"><img style=\"width:").append(cm(widthCm))
                 .append("\" src=\"").append(img.uri()).append("\"/>");
         if (caption != null) {
@@ -1422,6 +1485,9 @@ public class PdfExportService {
                 .replace("__PAGE_MARGIN__", margins)
                 .replace("__BODY_PT__", String.format(Locale.ROOT, "%.1fpt", f.bodyPt));
         if (f == PdfExportOptions.PageFormat.A5) css += A5_CSS;
+        if (f == PdfExportOptions.PageFormat.A4) {
+            css += EDITORIAL_CSS.replace("__HEADER__", esc(header.replace("\\", "\\\\").replace("'", "\\'")));
+        }
         return opt.printFriendly() ? css + PRINT_CSS : css;
     }
 
@@ -1437,6 +1503,7 @@ public class PdfExportService {
     private static final String PRINT_CSS = loadCss("/pdf/export-print.css");
     /** Surcharges A5 : couverture et titres resserres pour une page etroite. */
     private static final String A5_CSS = loadCss("/pdf/export-a5.css");
+    private static final String EDITORIAL_CSS = loadCss("/pdf/export-editorial.css");
 
     private static String loadCss(String resource) {
         try (InputStream in = PdfExportService.class.getResourceAsStream(resource)) {

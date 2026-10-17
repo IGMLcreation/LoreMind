@@ -11,6 +11,7 @@ import { ActiveSessionShortcutComponent } from '../sessions/active-session-short
 // Single source of truth pour la version affichée dans le footer :
 // on lit directement package.json à la compilation (resolveJsonModule).
 import packageJson from '../../../package.json';
+import { isWithinRoute } from '../shared/navigation-path';
 
 @Component({
     selector: 'app-sidebar',
@@ -57,7 +58,7 @@ export class SidebarComponent implements OnInit {
   }
 
   isActive(itemRoute: string): boolean {
-    return this.currentRoute === itemRoute;
+    return isWithinRoute(this.currentRoute, itemRoute);
   }
 
   openSearch(): void {

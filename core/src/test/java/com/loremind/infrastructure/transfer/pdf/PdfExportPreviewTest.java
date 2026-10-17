@@ -402,6 +402,9 @@ class PdfExportPreviewTest {
         Path outPlayer = Path.of("target", "campaign-preview-joueurs-a5.pdf");
         Files.write(outPlayer, player);
         System.out.println("[preview] PDF écrit : " + outPlayer.toAbsolutePath());
+
+        Files.write(Path.of("target", "campaign-preview-impression-a4.pdf"),
+                service.export("1", PdfExportOptions.parse("gm", "A4", true, null, null)));
     }
 
     /** Image placeholder deterministe : portrait carre ou battlemap avec grille. */

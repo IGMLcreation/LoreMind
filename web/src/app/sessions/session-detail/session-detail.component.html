@@ -1,9 +1,6 @@
 @if (session) {
   <div class="session-detail">
-    <a class="back-link" [routerLink]="campaignId ? ['/campaigns', campaignId] : ['/campaigns']">
-      <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon>
-      {{ 'sessionDetail.backToCampaign' | translate }}
-    </a>
+    <app-breadcrumb [items]="breadcrumbItems"></app-breadcrumb>
     <div class="detail-header">
       <div class="header-texts">
         @if (!editingName) {

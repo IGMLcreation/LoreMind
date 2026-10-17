@@ -88,7 +88,8 @@ final class PdfHtml {
      */
     static void box(StringBuilder b, String cssClass, String label, String value) {
         if (!notBlank(value)) return;
-        b.append("<div class=\"box ").append(cssClass).append("\">");
+        boolean longText = isLongBox(value);
+        b.append("<div class=\"box ").append(cssClass).append(longText ? " flow" : "").append("\">");
         b.append("<div class=\"box-label\">").append(esc(label)).append(DIV_CLOSE);
         List<TextBlock> blocks = parseBlocks(value);
         for (int i = 0; i < blocks.size(); i++) {
@@ -104,6 +105,11 @@ final class PdfHtml {
             }
         }
         b.append(DIV_CLOSE);
+    }
+
+    /** Borne conservative des encadres qui peuvent rester entiers dans une colonne A4. */
+    static boolean isLongBox(String text) {
+        return text.length() > 900 || text.lines().count() > 12;
     }
 
     /**

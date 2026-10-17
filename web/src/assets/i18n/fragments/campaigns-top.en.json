@@ -47,6 +47,7 @@
     "submit": "Create the campaign"
   },
   "campaignDetail": {
+    "manage": "Manage",
     "players": "{{n}} players",
     "openLinkedLore": "Open the linked universe",
     "loreMissingTitle": "The linked universe cannot be found",

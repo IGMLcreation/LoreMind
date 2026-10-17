@@ -47,6 +47,7 @@
     "submit": "Créer la campagne"
   },
   "campaignDetail": {
+    "manage": "Gérer",
     "players": "{{n}} joueurs",
     "openLinkedLore": "Ouvrir l'univers associé",
     "loreMissingTitle": "L'univers associé est introuvable",

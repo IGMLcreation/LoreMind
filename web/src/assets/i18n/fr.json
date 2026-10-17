@@ -296,8 +296,20 @@
       "character": "PJ",
       "randomTable": "Table aléatoire",
       "itemCatalog": "Catalogue d'objets",
-      "enemy": "Ennemi"
-    }
+      "enemy": "Ennemi",
+      "arc": "Arc",
+      "chapter": "Chapitre",
+      "scene": "Scène",
+      "quest": "Quête"
+    },
+    "loading": "Recherche en cours…",
+    "favorites": "Favoris",
+    "recent": "Consultés récemment",
+    "clearRecent": "Effacer l’historique",
+    "addFavorite": "Ajouter {{name}} aux favoris",
+    "removeFavorite": "Retirer {{name}} des favoris",
+    "shortcutsEmpty": "Vos dernières fiches consultées apparaîtront ici. Tapez au moins 2 caractères pour rechercher, puis utilisez l’étoile pour garder un favori.",
+    "close": "Fermer la recherche"
   },
   "updateBanner": {
     "message": "Une nouvelle version de LoreMind est disponible (<strong>{{version}}</strong>). Recharge pour profiter des dernières améliorations.",
@@ -653,7 +665,8 @@
     "organizeInArcs": "ou organiser en arcs",
     "defaultArcName": "Arc principal",
     "defaultChapterName": "Chapitre 1",
-    "flatModeHint": "Mode simple : vos scènes sont dans le volet de gauche. Ajoutez-en une, ou organisez la campagne en arcs."
+    "flatModeHint": "Mode simple : vos scènes sont dans le volet de gauche. Ajoutez-en une, ou organisez la campagne en arcs.",
+    "manage": "Gérer"
   },
   "campaignImport": {
     "pageTitle": "Importer une campagne",

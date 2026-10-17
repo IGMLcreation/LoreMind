@@ -21,6 +21,14 @@
     "ariaLabel": "Fil d'Ariane"
   },
   "globalSearch": {
+    "favorites": "Favoris",
+    "recent": "Consultés récemment",
+    "clearRecent": "Effacer l’historique",
+    "addFavorite": "Ajouter {{name}} aux favoris",
+    "removeFavorite": "Retirer {{name}} des favoris",
+    "shortcutsEmpty": "Vos dernières fiches consultées apparaîtront ici. Tapez au moins 2 caractères pour rechercher, puis utilisez l’étoile pour garder un favori.",
+    "close": "Fermer la recherche",
+    "loading": "Recherche en cours…",
     "placeholder": "Rechercher dans LoreMind...",
     "noResults": "Aucun résultat",
     "minChars": "Tape au moins 2 caractères",
@@ -40,7 +48,11 @@
       "character": "PJ",
       "randomTable": "Table aléatoire",
       "itemCatalog": "Catalogue d'objets",
-      "enemy": "Ennemi"
+      "enemy": "Ennemi",
+      "arc": "Arc",
+      "chapter": "Chapitre",
+      "scene": "Scène",
+      "quest": "Quête"
     }
   },
   "updateBanner": {
