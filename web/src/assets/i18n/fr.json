@@ -2208,6 +2208,31 @@
         "observation": "{{percent}} % des scènes de la campagne n'ont pas de type ({{count}} scènes).",
         "why": "Sans type, impossible de voir d'un coup d'œil le rythme de l'aventure, et la relecture ne peut pas t'aider sur ce point.",
         "question": "Pour chaque scène : les joueurs vont-ils surtout explorer, combattre, parler, subir un événement ou découvrir quelque chose ?"
+      },
+      "WRITE-011-ISOLATED-SCENE": {
+        "observation": "« {{entity}} » n'est reliée à aucune autre scène : aucun lien n'y mène et aucun n'en part.",
+        "why": "Dans un chapitre construit avec des liens, une scène isolée a de bonnes chances de n'être jamais jouée : rien n'y conduit les joueurs.",
+        "question": "Depuis quelle scène les joueurs pourraient-ils arriver ici, et où cette scène les mène-t-elle ensuite ?"
+      },
+      "WRITE-012-CHOKEPOINT": {
+        "observation": "« {{entity}} » est un passage obligé : tous les chemins du chapitre passent par elle ({{count}} scène(s) dans ce cas).",
+        "why": "Si les joueurs échouent ici, ratent l'indice ou prennent une autre direction, l'histoire s'arrête. Un passage obligé ne pose problème que s'il peut être raté.",
+        "question": "Que se passe-t-il si les joueurs échouent ou contournent cette scène ? Un autre chemin pourrait-il mener à la suite ?"
+      },
+      "WRITE-013-LINEAR-DUNGEON": {
+        "observation": "Les {{rooms}} pièces de « {{entity}} » s'enchaînent sans aucune boucle.",
+        "why": "Un lieu sans boucle se visite comme un couloir : un seul chemin, aucun raccourci, aucune façon de contourner un obstacle ou de fuir par ailleurs.",
+        "question": "Pourrait-on relier deux pièces éloignées (passage secret, conduit, escalier dérobé) pour ouvrir un second chemin ?"
+      },
+      "WRITE-014-NO-PROACTIVE": {
+        "observation": "« {{entity}} » contient des révélations mais aucune scène d'événement.",
+        "why": "Quand une enquête piétine, le MJ a besoin d'une scène à déclencher lui-même : l'adversaire riposte, un témoin se manifeste, la menace progresse. Elle relance la partie et apporte de nouvelles pistes.",
+        "question": "Que fait l'adversaire si les joueurs tournent en rond ? Quelle scène pourrait leur arriver dessus avec un nouvel indice ?"
+      },
+      "WRITE-015-SAME-SOURCE-CLUES": {
+        "observation": "Les {{count}} chemins qui mènent à « {{entity}} » partent tous de scènes « {{kind}} ».",
+        "why": "Si toute l'information passe par le même genre de scène (que des interrogatoires, que des fouilles), une table qui n'aime pas ce genre ou y échoue manquera tous les indices à la fois.",
+        "question": "Un indice pourrait-il venir d'un autre genre de scène : un lieu à fouiller, un document, un événement ?"
       }
     }
   },

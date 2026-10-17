@@ -11,14 +11,21 @@ import com.loremind.domain.campaigncontext.readiness.ReadinessEntityType;
 import com.loremind.domain.campaigncontext.structure.Arc;
 import com.loremind.domain.campaigncontext.structure.ArcType;
 import com.loremind.domain.campaigncontext.structure.Chapter;
+import com.loremind.domain.campaigncontext.structure.Room;
+import com.loremind.domain.campaigncontext.structure.RoomBranch;
 import com.loremind.domain.campaigncontext.structure.Scene;
 import com.loremind.domain.campaigncontext.structure.SceneBranch;
 import com.loremind.domain.campaigncontext.structure.SceneType;
 import com.loremind.domain.campaigncontext.writingreview.WritingRemarkCategory;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -44,8 +51,16 @@ public class WritingReviewService {
 
     /** WRITE-001 : à partir de combien de scènes un chapitre sans aucun choix devient un couloir. */
     static final int CORRIDOR_MIN_SCENES = 3;
-    /** WRITE-003 : nombre minimal de chemins menant à une révélation (en deçà : un seul chemin). */
-    static final int REVELATION_MIN_INCOMING = 2;
+    /** WRITE-003 : nombre minimal de scènes menant à une révélation (règle des 3 indices). */
+    static final int REVELATION_MIN_INCOMING = 3;
+    /** WRITE-011 / 012 / 014 : un chapitre « qui utilise le graphe » a au moins ce nombre de scènes reliées. */
+    static final int LINKED_MIN_SCENES = 2;
+    /** WRITE-012 : taille minimale d'un chapitre pour juger un passage obligé. */
+    static final int CHOKEPOINT_MIN_SCENES = 4;
+    /** WRITE-013 : nombre minimal de pièces pour juger la forme d'un donjon. */
+    static final int DUNGEON_MIN_ROOMS = 4;
+    /** WRITE-014 : taille minimale d'une enquête pour attendre une scène de relance. */
+    static final int PROACTIVE_MIN_SCENES = 3;
     /** WRITE-004 : longueur d'une suite de scènes du même genre jugée monotone. */
     static final int MONOTONOUS_RUN = 3;
     /** WRITE-006 : au-delà, la narration dépasse ~1 min de lecture à voix haute (~900 car./min). */
@@ -126,6 +141,7 @@ public class WritingReviewService {
                 for (Scene scene : scenes) {
                     reviewScene(arc, chapter, scene, scenes, treeRemarks);
                 }
+                reviewGraph(arc, chapter, scenes, treeRemarks);
                 if (!scenes.isEmpty()) {
                     lastChapterScenes = scenes;
                 }
@@ -175,6 +191,14 @@ public class WritingReviewService {
         if (isBlank(chapter.getNarrativeStakes())) {
             out.add(chapterRemark(arc, chapter, "WRITE-005-NO-STAKES", WritingRemarkCategory.STAKES, Map.of()));
         }
+
+        // WRITE-014 — enquête sans relance : des révélations, mais aucun événement que le MJ
+        // peut déclencher si les joueurs tournent en rond.
+        boolean investigation = scenes.stream().anyMatch(s -> typeOf(s) == SceneType.REVELATION);
+        boolean proactive = scenes.stream().anyMatch(s -> typeOf(s) == SceneType.EVENT);
+        if (investigation && !proactive && scenes.size() >= PROACTIVE_MIN_SCENES && usesLinks(scenes)) {
+            out.add(chapterRemark(arc, chapter, "WRITE-014-NO-PROACTIVE", WritingRemarkCategory.PACING, Map.of()));
+        }
     }
 
     private record MonotonousRun(String kind, int length) {}
@@ -215,6 +239,142 @@ public class WritingReviewService {
         checkSingleClue(arc, chapter, scene, chapterScenes, out);
         checkNarration(arc, chapter, scene, out);
         checkCombatPurpose(arc, chapter, scene, out);
+        checkLinearDungeon(arc, chapter, scene, out);
+    }
+
+    /**
+     * WRITE-013 — donjon en couloir : des pièces reliées entre elles, mais sans aucune boucle
+     * (graphe des liens = arbre). Les joueurs ne choisissent pas leur route et ne peuvent ni
+     * contourner un obstacle ni revenir par un autre chemin. Muet si les pièces ne sont pas reliées.
+     */
+    private void checkLinearDungeon(Arc arc, Chapter chapter, Scene scene, List<WritingRemark> out) {
+        List<Room> rooms = scene.getRooms();
+        if (rooms == null || rooms.size() < DUNGEON_MIN_ROOMS) return;
+        Set<String> ids = rooms.stream().map(Room::getId).filter(id -> !isBlank(id)).collect(Collectors.toSet());
+        // Arêtes non orientées distinctes (A→B et B→A = un seul passage).
+        Set<String> edges = new HashSet<>();
+        for (Room r : rooms) {
+            if (r.getBranches() == null) continue;
+            for (RoomBranch b : r.getBranches()) {
+                String to = b.targetRoomId();
+                if (isBlank(r.getId()) || !ids.contains(to) || r.getId().equals(to)) continue;
+                edges.add(r.getId().compareTo(to) < 0 ? r.getId() + "|" + to : to + "|" + r.getId());
+            }
+        }
+        if (edges.isEmpty()) return;
+        int components = countComponents(ids, edges);
+        int loops = edges.size() - ids.size() + components;
+        if (loops == 0 && components == 1) {
+            out.add(sceneRemark(arc, chapter, scene, "WRITE-013-LINEAR-DUNGEON", WritingRemarkCategory.AGENCY,
+                    Map.of("rooms", String.valueOf(ids.size()))));
+        }
+    }
+
+    private static int countComponents(Set<String> nodes, Set<String> edges) {
+        Map<String, Set<String>> adj = new HashMap<>();
+        for (String n : nodes) adj.put(n, new HashSet<>());
+        for (String e : edges) {
+            String[] ab = e.split("\\|", 2);
+            adj.get(ab[0]).add(ab[1]);
+            adj.get(ab[1]).add(ab[0]);
+        }
+        Set<String> seen = new HashSet<>();
+        int components = 0;
+        for (String start : nodes) {
+            if (!seen.add(start)) continue;
+            components++;
+            Deque<String> stack = new ArrayDeque<>(List.of(start));
+            while (!stack.isEmpty()) {
+                for (String next : adj.get(stack.pop())) {
+                    if (seen.add(next)) stack.push(next);
+                }
+            }
+        }
+        return components;
+    }
+
+    // --- Graphe du chapitre -------------------------------------------------------------
+
+    /**
+     * Règles sur la forme du graphe des scènes d'un chapitre, seulement s'il utilise des liens
+     * (sans aucun lien, c'est WRITE-001 qui parle) : WRITE-011 scène isolée, WRITE-012 passage
+     * obligé. Les liens sont internes au chapitre (règle de SceneService).
+     */
+    private void reviewGraph(Arc arc, Chapter chapter, List<Scene> scenes, List<WritingRemark> out) {
+        if (!usesLinks(scenes)) return;
+        Map<String, Set<String>> next = successors(scenes);
+        Set<String> withIncoming = next.values().stream().flatMap(Set::stream).collect(Collectors.toSet());
+
+        // WRITE-011 — scène isolée : ni lien entrant ni lien sortant (hors scène d'ouverture).
+        for (int i = 1; i < scenes.size(); i++) {
+            Scene s = scenes.get(i);
+            if (next.get(s.getId()).isEmpty() && !withIncoming.contains(s.getId())) {
+                out.add(sceneRemark(arc, chapter, s, "WRITE-011-ISOLATED-SCENE", WritingRemarkCategory.PACING, Map.of()));
+            }
+        }
+
+        checkChokepoint(arc, chapter, scenes, next, out);
+    }
+
+    /**
+     * WRITE-012 — passage obligé : depuis la scène d'ouverture, tous les chemins vers les
+     * fins du chapitre traversent une même scène. Si les joueurs y échouent ou passent à côté,
+     * tout s'arrête. Une seule remarque par chapitre (le premier passage obligé).
+     */
+    private void checkChokepoint(Arc arc, Chapter chapter, List<Scene> scenes, Map<String, Set<String>> next,
+                                 List<WritingRemark> out) {
+        if (scenes.size() < CHOKEPOINT_MIN_SCENES) return;
+        String entry = scenes.get(0).getId();
+        if (next.get(entry).isEmpty()) return;
+        Set<String> reachable = reach(entry, next, null);
+        Set<String> ends = reachable.stream().filter(id -> next.get(id).isEmpty()).collect(Collectors.toSet());
+        if (ends.isEmpty()) return; // Boucle sans fin : rien à juger.
+
+        List<Scene> chokepoints = new ArrayList<>();
+        for (Scene s : scenes) {
+            String id = s.getId();
+            if (id.equals(entry) || ends.contains(id) || !reachable.contains(id)) continue;
+            Set<String> without = reach(entry, next, id);
+            if (ends.stream().noneMatch(without::contains)) chokepoints.add(s);
+        }
+        if (chokepoints.isEmpty()) return;
+        out.add(sceneRemark(arc, chapter, chokepoints.get(0), "WRITE-012-CHOKEPOINT", WritingRemarkCategory.AGENCY,
+                Map.of("count", String.valueOf(chokepoints.size()))));
+    }
+
+    /** Successeurs de chaque scène du chapitre (liens vers des scènes du même chapitre seulement). */
+    private static Map<String, Set<String>> successors(List<Scene> scenes) {
+        Set<String> ids = scenes.stream().map(Scene::getId).collect(Collectors.toSet());
+        Map<String, Set<String>> next = new HashMap<>();
+        for (Scene s : scenes) {
+            Set<String> targets = new LinkedHashSet<>();
+            if (s.getBranches() != null) {
+                for (SceneBranch b : s.getBranches()) {
+                    String to = b.targetSceneId();
+                    if (ids.contains(to) && !to.equals(s.getId())) targets.add(to);
+                }
+            }
+            next.put(s.getId(), targets);
+        }
+        return next;
+    }
+
+    /** Scènes atteignables depuis {@code from} en suivant les liens, sans passer par {@code removed}. */
+    private static Set<String> reach(String from, Map<String, Set<String>> next, String removed) {
+        Set<String> seen = new HashSet<>();
+        Deque<String> stack = new ArrayDeque<>(List.of(from));
+        seen.add(from);
+        while (!stack.isEmpty()) {
+            for (String n : next.getOrDefault(stack.pop(), Set.of())) {
+                if (!n.equals(removed) && seen.add(n)) stack.push(n);
+            }
+        }
+        return seen;
+    }
+
+    /** Le chapitre utilise le graphe : au moins {@link #LINKED_MIN_SCENES} scènes portent des liens. */
+    private static boolean usesLinks(List<Scene> scenes) {
+        return scenes.stream().filter(WritingReviewService::hasBranches).count() >= LINKED_MIN_SCENES;
     }
 
     /** WRITE-002 — faux carrefour : plusieurs sorties qui mènent toutes au même endroit. */
@@ -241,14 +401,21 @@ public class WritingReviewService {
                                  List<WritingRemark> out) {
         if (typeOf(scene) != SceneType.REVELATION || isBlank(scene.getId())) return;
         if (chapterScenes.stream().noneMatch(WritingReviewService::hasBranches)) return;
-        long incoming = chapterScenes.stream()
+        List<Scene> sources = chapterScenes.stream()
                 .filter(s -> !scene.getId().equals(s.getId()) && s.getBranches() != null)
-                .flatMap(s -> s.getBranches().stream().map(SceneBranch::targetSceneId).distinct())
-                .filter(scene.getId()::equals)
-                .count();
-        if (incoming < REVELATION_MIN_INCOMING) {
+                .filter(s -> s.getBranches().stream().anyMatch(b -> scene.getId().equals(b.targetSceneId())))
+                .toList();
+        if (sources.size() < REVELATION_MIN_INCOMING) {
             out.add(sceneRemark(arc, chapter, scene, "WRITE-003-SINGLE-CLUE", WritingRemarkCategory.AGENCY,
-                    Map.of("incoming", String.valueOf(incoming))));
+                    Map.of("incoming", String.valueOf(sources.size()))));
+            return;
+        }
+        // WRITE-015 — assez de chemins, mais tous du même genre (que des interrogatoires…) :
+        // un groupe qui n'aime pas ce genre de scène passe à côté de tous les indices.
+        Set<SceneType> kinds = sources.stream().map(WritingReviewService::typeOf).collect(Collectors.toSet());
+        if (kinds.size() == 1 && !kinds.contains(SceneType.GENERIC)) {
+            out.add(sceneRemark(arc, chapter, scene, "WRITE-015-SAME-SOURCE-CLUES", WritingRemarkCategory.AGENCY,
+                    Map.of("kind", kinds.iterator().next().name(), "count", String.valueOf(sources.size()))));
         }
     }
 

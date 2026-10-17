@@ -34,5 +34,9 @@ const FOCUS_BY_RULE: Record<string, string> = {
   'WRITE-006-LONG-NARRATION': 'narration',
   'WRITE-007-NARRATION-DECIDES': 'narration',
   'WRITE-008-COMBAT-NO-PURPOSE': 'combat',
-  'WRITE-009-SINGLE-ENDING': 'choices'
+  'WRITE-009-SINGLE-ENDING': 'choices',
+  'WRITE-011-ISOLATED-SCENE': 'branches',
+  'WRITE-012-CHOKEPOINT': 'choices',
+  'WRITE-013-LINEAR-DUNGEON': 'rooms',
+  'WRITE-015-SAME-SOURCE-CLUES': 'branches'
 };

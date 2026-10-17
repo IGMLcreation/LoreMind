@@ -11,6 +11,8 @@ import com.loremind.domain.campaigncontext.readiness.ReadinessEntityType;
 import com.loremind.domain.campaigncontext.structure.Arc;
 import com.loremind.domain.campaigncontext.structure.ArcType;
 import com.loremind.domain.campaigncontext.structure.Chapter;
+import com.loremind.domain.campaigncontext.structure.Room;
+import com.loremind.domain.campaigncontext.structure.RoomBranch;
 import com.loremind.domain.campaigncontext.structure.Scene;
 import com.loremind.domain.campaigncontext.structure.SceneBranch;
 import com.loremind.domain.campaigncontext.structure.SceneType;
@@ -153,12 +155,23 @@ class WritingReviewServiceTest {
     }
 
     @Test
-    void singleClue_notRaised_withTwoPaths_orInChapterWithoutLinks() {
+    void singleClue_twoPathsAreStillBelowTheThreeClueRule() {
         tree(List.of(
                 scene("s1", 0).branches(List.of(SceneBranch.of("A", "rev"))).build(),
                 scene("s2", 1).type(SceneType.LOCATION).branches(List.of(SceneBranch.of("B", "rev"))).build(),
                 scene("rev", 2).type(SceneType.REVELATION).build()));
+        assertEquals("2", remark("WRITE-003-SINGLE-CLUE").params().get("incoming"));
+    }
+
+    @Test
+    void singleClue_notRaised_withThreeVariedPaths() {
+        tree(List.of(
+                scene("s1", 0).branches(List.of(SceneBranch.of("A", "rev"))).build(),
+                scene("s2", 1).type(SceneType.LOCATION).branches(List.of(SceneBranch.of("B", "rev"))).build(),
+                scene("s3", 2).type(SceneType.EVENT).branches(List.of(SceneBranch.of("C", "rev"))).build(),
+                scene("rev", 3).type(SceneType.REVELATION).build()));
         assertFalse(ruleIds().contains("WRITE-003-SINGLE-CLUE"));
+        assertFalse(ruleIds().contains("WRITE-015-SAME-SOURCE-CLUES"));
     }
 
     @Test
@@ -318,5 +331,132 @@ class WritingReviewServiceTest {
     void untypedScenes_notRaised_belowMinimumSceneCount() {
         tree(List.of(scene("s1", 0).type(SceneType.GENERIC).build()));
         assertFalse(ruleIds().contains("WRITE-010-UNTYPED-SCENES"));
+    }
+
+    // --- WRITE-011 : scène isolée ---
+
+    private static SceneBranch to(String target) {
+        return SceneBranch.of("vers " + target, target);
+    }
+
+    @Test
+    void isolatedScene_noLinkInNorOut_inALinkedChapter() {
+        tree(List.of(
+                scene("s1", 0).branches(List.of(to("s2"))).build(),
+                scene("s2", 1).type(SceneType.LOCATION).branches(List.of(to("s3"))).build(),
+                scene("s3", 2).build(),
+                scene("lost", 3).type(SceneType.LOCATION).build()));
+
+        WritingRemark r = remark("WRITE-011-ISOLATED-SCENE");
+        assertEquals("lost", r.entityId());
+    }
+
+    @Test
+    void isolatedScene_notRaised_forAnOpeningOrAProactiveScene_orWithoutLinks() {
+        // « event » n'a pas de lien entrant mais en a un sortant : scène que le MJ déclenche.
+        tree(List.of(
+                scene("s1", 0).branches(List.of(to("s2"))).build(),
+                scene("s2", 1).type(SceneType.LOCATION).build(),
+                scene("event", 2).type(SceneType.EVENT).branches(List.of(to("s2"))).build()));
+        assertFalse(ruleIds().contains("WRITE-011-ISOLATED-SCENE"));
+    }
+
+    @Test
+    void isolatedScene_notRaised_whenTheChapterDoesNotUseLinks() {
+        tree(List.of(scene("s1", 0).branches(List.of(to("s2"))).build(),
+                scene("s2", 1).type(SceneType.LOCATION).build(),
+                scene("s3", 2).build()));
+        assertFalse(ruleIds().contains("WRITE-011-ISOLATED-SCENE"), "une seule scène reliée : pas un graphe");
+    }
+
+    // --- WRITE-012 : passage obligé ---
+
+    @Test
+    void chokepoint_everyPathGoesThroughOneScene() {
+        // s1 → (a | b) → gate → (end1 | end2)
+        tree(List.of(
+                scene("s1", 0).branches(List.of(to("a"), to("b"))).build(),
+                scene("a", 1).type(SceneType.LOCATION).branches(List.of(to("gate"))).build(),
+                scene("b", 2).branches(List.of(to("gate"))).build(),
+                scene("gate", 3).type(SceneType.LOCATION).branches(List.of(to("end1"), to("end2"))).build(),
+                scene("end1", 4).build(),
+                scene("end2", 5).type(SceneType.EVENT).build()));
+
+        WritingRemark r = remark("WRITE-012-CHOKEPOINT");
+        assertEquals("gate", r.entityId());
+        assertEquals("1", r.params().get("count"));
+    }
+
+    @Test
+    void chokepoint_notRaised_whenAnotherRouteExists() {
+        // s1 → a → end ; s1 → b → end : deux routes indépendantes.
+        tree(List.of(
+                scene("s1", 0).branches(List.of(to("a"), to("b"))).build(),
+                scene("a", 1).type(SceneType.LOCATION).branches(List.of(to("end"))).build(),
+                scene("b", 2).branches(List.of(to("end"))).build(),
+                scene("end", 3).type(SceneType.EVENT).build()));
+        assertFalse(ruleIds().contains("WRITE-012-CHOKEPOINT"));
+    }
+
+    // --- WRITE-013 : donjon en couloir ---
+
+    private static Room room(String id, String... targets) {
+        List<RoomBranch> branches = new ArrayList<>();
+        for (String t : targets) branches.add(RoomBranch.of("porte", t));
+        return Room.builder().id(id).name(id).order(0).branches(branches).build();
+    }
+
+    @Test
+    void linearDungeon_roomsLinkedWithoutAnyLoop() {
+        tree(List.of(scene("crypt", 0).type(SceneType.LOCATION).rooms(List.of(
+                room("r1", "r2"), room("r2", "r1", "r3"), room("r3", "r4"), room("r4"))).build()));
+
+        WritingRemark r = remark("WRITE-013-LINEAR-DUNGEON");
+        assertEquals("4", r.params().get("rooms"));
+    }
+
+    @Test
+    void linearDungeon_notRaised_withALoop_orUnlinkedRooms() {
+        tree(List.of(
+                scene("loop", 0).type(SceneType.LOCATION).rooms(List.of(
+                        room("r1", "r2"), room("r2", "r3"), room("r3", "r4"), room("r4", "r1"))).build(),
+                scene("plain", 1).rooms(List.of(room("x1"), room("x2"), room("x3"), room("x4"))).build()));
+        assertFalse(ruleIds().contains("WRITE-013-LINEAR-DUNGEON"));
+    }
+
+    // --- WRITE-014 : enquête sans relance ---
+
+    @Test
+    void noProactive_investigationWithoutAnyEvent() {
+        tree(List.of(
+                scene("s1", 0).branches(List.of(to("s2"), to("rev"))).build(),
+                scene("s2", 1).type(SceneType.LOCATION).branches(List.of(to("rev"))).build(),
+                scene("rev", 2).type(SceneType.REVELATION).build()));
+        assertEquals(ReadinessEntityType.CHAPTER, remark("WRITE-014-NO-PROACTIVE").entityType());
+    }
+
+    @Test
+    void noProactive_notRaised_withAnEventScene() {
+        tree(List.of(
+                scene("s1", 0).branches(List.of(to("s2"), to("rev"))).build(),
+                scene("s2", 1).type(SceneType.EVENT).branches(List.of(to("rev"))).build(),
+                scene("rev", 2).type(SceneType.REVELATION).build()));
+        assertFalse(ruleIds().contains("WRITE-014-NO-PROACTIVE"));
+    }
+
+    // --- WRITE-015 : indices tous du même genre ---
+
+    @Test
+    void sameSourceClues_threePathsAllFromNpcScenes() {
+        tree(List.of(
+                scene("n1", 0).branches(List.of(to("rev"))).build(),
+                scene("n2", 1).branches(List.of(to("rev"))).build(),
+                scene("n3", 2).branches(List.of(to("rev"))).build(),
+                scene("rev", 3).type(SceneType.REVELATION).build()));
+
+        WritingRemark r = remark("WRITE-015-SAME-SOURCE-CLUES");
+        assertEquals("NPC", r.params().get("kind"));
+        assertEquals("3", r.params().get("count"));
+        assertFalse(ruleIds().contains("WRITE-003-SINGLE-CLUE"));
     }
 }

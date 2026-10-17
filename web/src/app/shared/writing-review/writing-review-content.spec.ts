@@ -25,7 +25,7 @@ describe('writing review content', () => {
   const rules = emittedRules();
 
   it('finds the rules emitted by the core', () => {
-    expect(rules).toHaveLength(10);
+    expect(rules).toHaveLength(15);
   });
 
   for (const lang of ['fr', 'en'] as const) {

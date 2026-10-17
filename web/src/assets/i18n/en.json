@@ -2208,6 +2208,31 @@
         "observation": "{{percent}}% of the campaign's scenes have no type ({{count}} scenes).",
         "why": "Without types, you can't see the adventure's pacing at a glance, and the review can't help you with it.",
         "question": "For each scene: will the players mostly explore, fight, talk, go through an event or discover something?"
+      },
+      "WRITE-011-ISOLATED-SCENE": {
+        "observation": "\"{{entity}}\" isn't linked to any other scene: no link leads to it and none leaves it.",
+        "why": "In a chapter built with links, an isolated scene is likely never to be played: nothing brings the players there.",
+        "question": "From which scene could the players arrive here, and where does this scene lead them next?"
+      },
+      "WRITE-012-CHOKEPOINT": {
+        "observation": "\"{{entity}}\" is a chokepoint: every path through the chapter goes through it ({{count}} scene(s) like this).",
+        "why": "If the players fail here, miss the clue or head elsewhere, the story stops. A chokepoint is only a problem if it can be missed.",
+        "question": "What happens if the players fail or bypass this scene? Could another path lead to what comes next?"
+      },
+      "WRITE-013-LINEAR-DUNGEON": {
+        "observation": "The {{rooms}} rooms of \"{{entity}}\" follow one another without any loop.",
+        "why": "A place without loops plays like a corridor: a single path, no shortcut, no way to get around an obstacle or escape another way.",
+        "question": "Could two distant rooms be connected (secret passage, duct, hidden stairs) to open a second route?"
+      },
+      "WRITE-014-NO-PROACTIVE": {
+        "observation": "\"{{entity}}\" contains revelations but no event scene.",
+        "why": "When an investigation stalls, the GM needs a scene they can trigger themselves: the enemy strikes back, a witness comes forward, the threat moves on. It restarts play and brings new leads.",
+        "question": "What does the enemy do if the players go round in circles? Which scene could come to them with a new clue?"
+      },
+      "WRITE-015-SAME-SOURCE-CLUES": {
+        "observation": "The {{count}} paths leading to \"{{entity}}\" all start from \"{{kind}}\" scenes.",
+        "why": "If all the information goes through one kind of scene (only interrogations, only searches), a table that dislikes it or fails at it will miss every clue at once.",
+        "question": "Could a clue come from another kind of scene: a place to search, a document, an event?"
       }
     }
   },
