@@ -6,6 +6,7 @@ import { SecondarySidebarComponent } from './shared/secondary-sidebar/secondary-
 import { GlobalSearchComponent } from './shared/global-search/global-search.component';
 import { UpdateBannerComponent } from './shared/update-banner/update-banner.component';
 import { ConfirmDialogHostComponent } from './shared/confirm-dialog/confirm-dialog-host.component';
+import { WritingCoachPanelComponent } from './shared/writing-coach/writing-coach-panel.component';
 import { LayoutService } from './services/layout.service';
 import { GlobalSearchService } from './services/global-search.service';
 import { VersionCheckerService } from './services/version-checker.service';
@@ -19,6 +20,7 @@ import { VersionCheckerService } from './services/version-checker.service';
     GlobalSearchComponent,
     UpdateBannerComponent,
     ConfirmDialogHostComponent,
+    WritingCoachPanelComponent,
     AsyncPipe
 ],
     templateUrl: './app.component.html',

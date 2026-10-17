@@ -1,0 +1,236 @@
+{
+  "guided": {
+    "entry": "Guided method",
+    "entryFirst": "Write an adventure step by step",
+    "backToCampaign": "Back to the campaign",
+    "progress": "Step {{n}} of {{total}}",
+    "exampleLabel": "Example",
+    "previous": "Previous",
+    "next": "Next",
+    "create": "Create the adventure",
+    "creating": "Creating…",
+    "restart": "Start over",
+    "restartTitle": "Start the method over?",
+    "restartMessage": "All your answers will be erased.",
+    "createError": "Creation failed. Your answers are kept: try again in a moment.",
+    "unknownMethod": "This guided method doesn't exist.",
+    "placementExisting": "Add it to an existing arc",
+    "placementArcLabel": "Arc",
+    "placementNew": "Create a new arc",
+    "placementNewArcLabel": "New arc name",
+    "placementNewArcPlaceholder": "E.g.: The Northern Lands",
+    "reviewArc": "Arc",
+    "reviewChapter": "Chapter",
+    "linkScenes": "Link the rooms in order (\"To the next room\" exits)",
+    "linkLabel": "To the next room",
+    "reviewAfter": "Everything stays editable afterwards. Have a look at the \"Editor's review\" on the campaign page: it will tell you what can still be strengthened.",
+    "fiveRoom": {
+      "name": "Five-room dungeon",
+      "steps": {
+        "placement": {
+          "title": "The five-room dungeon",
+          "why": "A simple method to write a short, complete adventure, ideal for one session. It chains five key moments: a guardian at the entrance, a challenge that can't be solved with a sword, a setback, the climax, then the reward. The \"dungeon\" can be any place: a manor, a ship, a forest, a masked ball… Start by choosing where to file the adventure in your campaign.",
+          "example": "A crypt under a village chapel, where a relic was stolen. Or a smuggler's ship, on the night it sets sail."
+        },
+        "frame": {
+          "title": "The setting",
+          "why": "Before the rooms, lay down the essentials: a name, a place, and above all a hook. The hook is why the characters go there now. If it concerns them personally, they will commit on their own.",
+          "example": "\"The stolen reliquary\": the village priest, a friend of one PC, vanished with the relic. He was seen going down into the crypt, and the pilgrimage arrives in three days."
+        },
+        "stakes": {
+          "title": "What the players want, and what they risk",
+          "why": "The players must know what they came to do, or they will wander. And failure must cost something: that's what creates tension.",
+          "example": "Goal: bring the relic back before the pilgrimage. Stakes: without it, the village loses its protection, and the priest will be blamed for the theft."
+        },
+        "room1": {
+          "title": "Room 1: the entrance and its guardian",
+          "why": "Something stops anyone from getting in. It starts the adventure right away, and explains why nobody has conquered this place yet. The guardian doesn't have to be a monster: a guard to convince or a dangerous passage work too.",
+          "example": "An old spectral guardian blocks the crypt stairs. He lets through anyone who proves they came to protect the relic, not steal it."
+        },
+        "room2": {
+          "title": "Room 2: the challenge",
+          "why": "Here, a sword isn't enough: a puzzle, a negotiation, a place to explore carefully. It lets non-fighters shine, and changes the pace after the entrance.",
+          "example": "A hall of identical tombs: only the founder's opens, and the clues are in the epitaphs."
+        },
+        "room3": {
+          "title": "Room 3: the setback",
+          "why": "A trap, a red herring or a nasty surprise: things get complicated right before the climax. The characters' resources run low, tension rises.",
+          "example": "The priest is found… but he is the thief. He was bewitched, and he just triggered the collapse of the gallery."
+        },
+        "room4": {
+          "title": "Room 4: the climax",
+          "why": "The big confrontation, the most intense moment of the adventure. To make it memorable, give the opponent a goal other than fighting, and terrain that changes the game.",
+          "example": "The enchantress wants to finish the ritual before dawn. She fights while protecting the circle of candles: putting it out weakens her, but reaching it means crossing icy water."
+        },
+        "room5": {
+          "title": "Room 5: the reward or the revelation",
+          "why": "The ending rewards the effort: a treasure, an ally, knowledge. It's also the right time for a twist that opens what comes next in your campaign.",
+          "example": "The relic is saved, and the freed priest becomes an ally. But the circle bore a symbol: that of a brotherhood the PCs have already met elsewhere."
+        },
+        "review": {
+          "title": "Your adventure is ready to be created",
+          "why": "Here is what will be created: a chapter and its five scenes, already typed so the review can help you with pacing."
+        }
+      },
+      "fields": {
+        "title": {
+          "label": "Adventure name",
+          "placeholder": "E.g.: The stolen reliquary"
+        },
+        "location": {
+          "label": "The place",
+          "placeholder": "E.g.: The crypt under the chapel"
+        },
+        "hook": {
+          "label": "The hook: why do the characters go there now?",
+          "placeholder": "Who sends them, what's urgent, how does it concern them?"
+        },
+        "objectives": {
+          "label": "What the players want to achieve",
+          "placeholder": "Phrased the way the players would say it"
+        },
+        "stakes": {
+          "label": "What happens if they fail",
+          "placeholder": "Who suffers? What is lost?"
+        },
+        "room1": {
+          "name": {
+            "label": "Room name",
+            "placeholder": "E.g.: The guarded entrance"
+          },
+          "nature": {
+            "label": "How does the encounter play out?"
+          },
+          "description": {
+            "label": "What blocks the entrance",
+            "placeholder": "Who or what guards the entrance, and why?"
+          },
+          "enemies": {
+            "label": "Possible opponents",
+            "placeholder": "E.g.: a spectral guardian"
+          },
+          "choices": {
+            "label": "How to get through? And if it goes wrong?",
+            "placeholder": "At least two ways through, and what happens on a failure"
+          },
+          "secret": {
+            "label": "What the GM knows (secret, guardian's motive)",
+            "placeholder": "What the players don't know"
+          }
+        },
+        "room2": {
+          "name": {
+            "label": "Room name",
+            "placeholder": "E.g.: The challenge"
+          },
+          "nature": {
+            "label": "What kind of challenge?"
+          },
+          "description": {
+            "label": "The challenge",
+            "placeholder": "What must be solved, convinced or discovered?"
+          },
+          "choices": {
+            "label": "How to succeed? And on a failure?",
+            "placeholder": "The possible approaches, and what a failure costs"
+          },
+          "secret": {
+            "label": "The solution and clues (for the GM)",
+            "placeholder": "Where the clues are, what the answer is"
+          }
+        },
+        "room3": {
+          "name": {
+            "label": "Room name",
+            "placeholder": "E.g.: The setback"
+          },
+          "description": {
+            "label": "The setback",
+            "placeholder": "Which trap, which nasty surprise?"
+          },
+          "choices": {
+            "label": "How can the players react?",
+            "placeholder": "The options, and what they cost"
+          },
+          "secret": {
+            "label": "What hides behind it (for the GM)",
+            "placeholder": "The truth behind the red herring or the trap"
+          }
+        },
+        "room4": {
+          "name": {
+            "label": "Room name",
+            "placeholder": "E.g.: The climax"
+          },
+          "description": {
+            "label": "The confrontation",
+            "placeholder": "Who do they face, and in what setting?"
+          },
+          "enemies": {
+            "label": "Opponents",
+            "placeholder": "E.g.: the enchantress and two followers"
+          },
+          "choices": {
+            "label": "How to win other than by striking?",
+            "placeholder": "Goals, terrain features, outcome if the PCs lose"
+          },
+          "secret": {
+            "label": "What the opponent really wants (for the GM)",
+            "placeholder": "Their goal, what they'll do when in trouble"
+          }
+        },
+        "room5": {
+          "name": {
+            "label": "Room name",
+            "placeholder": "E.g.: The reward"
+          },
+          "description": {
+            "label": "The reward",
+            "placeholder": "What do the characters gain?"
+          },
+          "choices": {
+            "label": "Consequences for what comes next",
+            "placeholder": "What changes in the world depending on what they did"
+          },
+          "secret": {
+            "label": "The revelation or twist (for the GM)",
+            "placeholder": "What opens the rest of your campaign"
+          }
+        }
+      },
+      "options": {
+        "room1": {
+          "nature": {
+            "combat": "A fight",
+            "social": "A conversation",
+            "obstacle": "An obstacle"
+          }
+        },
+        "room2": {
+          "nature": {
+            "puzzle": "A puzzle",
+            "social": "A negotiation",
+            "exploration": "An exploration"
+          }
+        }
+      },
+      "defaults": {
+        "room1": {
+          "name": "The guarded entrance"
+        },
+        "room2": {
+          "name": "The challenge"
+        },
+        "room3": {
+          "name": "The setback"
+        },
+        "room4": {
+          "name": "The climax"
+        },
+        "room5": {
+          "name": "The reward"
+        }
+      }
+    }
+  }
+}

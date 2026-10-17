@@ -1,0 +1,70 @@
+{
+  "writingReview": {
+    "title": "Editor's review",
+    "countN": "{{n}} tip(s)",
+    "intro": "Writing tips to bring your adventure to life. Nothing mandatory: keep what serves your story.",
+    "allGood": "Nothing to report: your campaign avoids the classic pitfalls the review can spot.",
+    "showMore": "Show {{n}} more",
+    "see": "View",
+    "hintsTitle": "Review tips ({{n}})",
+    "kindCombat": "Combat",
+    "categories": {
+      "AGENCY": "Player agency",
+      "STAKES": "Stakes",
+      "PACING": "Pacing",
+      "NARRATION": "Narration"
+    },
+    "rules": {
+      "WRITE-001-CORRIDOR": {
+        "observation": "\"{{entity}}\" chains {{count}} scenes without any choice or branch.",
+        "why": "The players follow a path drawn in advance: they may feel like spectators of the story.",
+        "question": "At what point could they decide something that changes what happens next?"
+      },
+      "WRITE-002-FAKE-CHOICE": {
+        "observation": "The {{count}} exits of \"{{entity}}\" all lead to \"{{target}}\".",
+        "why": "When every option ends up in the same place, it's a fake choice, and players eventually notice.",
+        "question": "What could differ depending on the option chosen: a place, an ally, a price to pay?"
+      },
+      "WRITE-003-SINGLE-CLUE": {
+        "observation": "The revelation \"{{entity}}\" is linked from only {{incoming}} scene(s).",
+        "why": "If the players miss that path, they lose the information and the story stalls. The three clue rule suggests three ways to discover every essential piece of information.",
+        "question": "In which other scenes could the players find a clue leading there?"
+      },
+      "WRITE-004-MONOTONOUS-PACING": {
+        "observation": "\"{{entity}}\" chains {{count}} \"{{kind}}\" scenes in a row.",
+        "why": "Repetition wears the table out: three fights in a row, or three conversations, end up feeling the same.",
+        "question": "Could a scene of another kind (exploration, conversation, revelation) fit in between?"
+      },
+      "WRITE-005-NO-STAKES": {
+        "observation": "\"{{entity}}\" has no written stakes yet.",
+        "why": "Without stakes, the players don't know why they should act or what they risk: tension drops.",
+        "question": "What happens if the characters fail, and who suffers?"
+      },
+      "WRITE-006-LONG-NARRATION": {
+        "observation": "The narration of \"{{entity}}\" is {{chars}} characters long, more than a minute when read aloud.",
+        "why": "Past one minute, the players' attention drifts and important details get lost.",
+        "question": "What is essential to open the scene, and what can be discovered in play?"
+      },
+      "WRITE-007-NARRATION-DECIDES": {
+        "observation": "The narration of \"{{entity}}\" contains \"{{phrase}}\".",
+        "why": "The text decides what the characters do or feel. Players like to stay in charge of their reactions.",
+        "question": "How could you describe the situation so that they want to react that way on their own?"
+      },
+      "WRITE-008-COMBAT-NO-PURPOSE": {
+        "observation": "The fight in \"{{entity}}\" has no described choices and no notes on the enemies' motives.",
+        "why": "A fight with no goal other than taking the enemy down quickly becomes repetitive.",
+        "question": "What do these enemies really want: flee, protect, steal, buy time?"
+      },
+      "WRITE-009-SINGLE-ENDING": {
+        "observation": "\"{{entity}}\", the last scene of the arc \"{{arc}}\", offers no choice and no exit.",
+        "why": "A single ending written in advance takes the weight out of the players' decisions.",
+        "question": "What happens if the characters fail, or switch sides?"
+      },
+      "WRITE-010-UNTYPED-SCENES": {
+        "observation": "{{percent}}% of the campaign's scenes have no type ({{count}} scenes).",
+        "why": "Without types, you can't see the adventure's pacing at a glance, and the review can't help you with it.",
+        "question": "For each scene: will the players mostly explore, fight, talk, go through an event or discover something?"
+      }
+    }
+  }
+}

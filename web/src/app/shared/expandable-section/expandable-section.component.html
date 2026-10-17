@@ -1,17 +1,22 @@
 <div class="expandable-section" [class.private]="variant === 'private'">
 
-  <button type="button" class="section-header" (click)="toggle()">
-    <span class="section-title">
-      @if (icon) {
-        <span class="section-icon">{{ icon }}</span>
-      }
-      {{ title }}
-      @if (filled) {
-        <span class="section-dot" aria-hidden="true"></span>
-      }
-    </span>
-    <lucide-icon [img]="isOpen ? ChevronUp : ChevronDown" [size]="16"></lucide-icon>
-  </button>
+  <div class="section-header-row">
+    <button type="button" class="section-header" (click)="toggle()">
+      <span class="section-title">
+        @if (icon) {
+          <span class="section-icon">{{ icon }}</span>
+        }
+        {{ title }}
+        @if (filled) {
+          <span class="section-dot" aria-hidden="true"></span>
+        }
+      </span>
+      <lucide-icon [img]="isOpen ? ChevronUp : ChevronDown" [size]="16"></lucide-icon>
+    </button>
+    @if (coachTopic) {
+      <app-writing-coach-trigger class="section-coach" [topic]="coachTopic"></app-writing-coach-trigger>
+    }
+  </div>
 
   @if (isOpen) {
     <div class="section-content">

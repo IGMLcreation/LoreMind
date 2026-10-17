@@ -30,6 +30,9 @@
     est dans des sections repliables avec pastille « rempli ». -->
     <p class="optional-hint">{{ 'sceneEdit.optionalHint' | translate }}</p>
 
+    <!-- Mentor d'écriture (M2) : conseils de relecture qui concernent cette entité. -->
+    <app-writing-review-hints [campaignId]="campaignId" entityType="SCENE" [entityId]="sceneId"></app-writing-review-hints>
+
     <!-- Co-création (Pilier A) : le co-MJ propose, l'utilisateur valide champ par champ.
     Les champs retenus remplissent le formulaire ; rien n'est enregistré avant la sauvegarde. -->
     <app-entity-assist-panel
@@ -49,7 +52,10 @@
     </div>
 
     <div class="field">
-      <label for="scene-edit-description">{{ 'sceneEdit.descriptionLabel' | translate }}</label>
+      <div class="field-label-row">
+        <label for="scene-edit-description">{{ 'sceneEdit.descriptionLabel' | translate }}</label>
+        <app-writing-coach-trigger topic="scene.description"></app-writing-coach-trigger>
+      </div>
       <textarea
         id="scene-edit-description"
         formControlName="description"
@@ -65,7 +71,10 @@
 
     <!-- Type narratif du nœud (Niveau 2 — graphe de nœuds typés) -->
     <div class="field">
-      <label for="scene-edit-type">{{ 'sceneEdit.nodeTypeLabel' | translate }}</label>
+      <div class="field-label-row">
+        <label for="scene-edit-type">{{ 'sceneEdit.nodeTypeLabel' | translate }}</label>
+        <app-writing-coach-trigger topic="scene.nodeType"></app-writing-coach-trigger>
+      </div>
       <select id="scene-edit-type" formControlName="type">
         @for (opt of sceneTypeOptions; track opt) {
           <option [value]="opt">{{ 'sceneType.' + opt | translate }}</option>
@@ -181,7 +190,10 @@
     <app-expandable-section [title]="'sceneEdit.contextSectionTitle' | translate" icon="📍" [initiallyOpen]="true" [filled]="contextFilled">
       <div class="field-row">
         <div class="field">
-          <label for="scene-edit-location">{{ 'sceneEdit.locationLabel' | translate }}</label>
+          <div class="field-label-row">
+            <label for="scene-edit-location">{{ 'sceneEdit.locationLabel' | translate }}</label>
+            <app-writing-coach-trigger topic="scene.setting"></app-writing-coach-trigger>
+          </div>
           <input id="scene-edit-location" type="text" formControlName="location" [placeholder]="'sceneEdit.locationPlaceholder' | translate" />
         </div>
         <div class="field">
@@ -190,7 +202,10 @@
         </div>
       </div>
       <div class="field">
-        <label for="scene-edit-atmosphere">{{ 'sceneEdit.atmosphereLabel' | translate }}</label>
+        <div class="field-label-row">
+          <label for="scene-edit-atmosphere">{{ 'sceneEdit.atmosphereLabel' | translate }}</label>
+          <app-writing-coach-trigger topic="scene.atmosphere"></app-writing-coach-trigger>
+        </div>
         <textarea
           id="scene-edit-atmosphere"
           formControlName="atmosphere"
@@ -201,7 +216,7 @@
     </app-expandable-section>
 
     <!-- Section : Narration pour les joueurs -->
-    <app-expandable-section [title]="'sceneEdit.narrationSectionTitle' | translate" icon="📖" [filled]="narrationFilled">
+    <app-expandable-section [title]="'sceneEdit.narrationSectionTitle' | translate" coachTopic="scene.narration" icon="📖" [initiallyOpen]="focusSection === 'narration'" [filled]="narrationFilled">
       <div class="field">
         <textarea
           formControlName="playerNarration"
@@ -213,7 +228,7 @@
     </app-expandable-section>
 
     <!-- Section : Notes et secrets du MJ (privé) -->
-    <app-expandable-section [title]="'sceneEdit.gmNotesSectionTitle' | translate" icon="🔒" variant="private" [filled]="gmNotesFilled">
+    <app-expandable-section [title]="'sceneEdit.gmNotesSectionTitle' | translate" coachTopic="scene.gmNotes" icon="🔒" variant="private" [filled]="gmNotesFilled">
       <div class="field">
         <textarea
           formControlName="gmSecretNotes"
@@ -225,7 +240,7 @@
     </app-expandable-section>
 
     <!-- Section : Choix et conséquences -->
-    <app-expandable-section [title]="'sceneEdit.choicesSectionTitle' | translate" icon="🔀" [filled]="choicesFilled">
+    <app-expandable-section [title]="'sceneEdit.choicesSectionTitle' | translate" coachTopic="scene.choices" icon="🔀" [initiallyOpen]="focusSection === 'choices'" [filled]="choicesFilled">
       <div class="field">
         <textarea
           formControlName="choicesConsequences"
@@ -236,7 +251,7 @@
     </app-expandable-section>
 
     <!-- Section : Branches narratives (graphe intra-chapitre) -->
-    <app-expandable-section [title]="'sceneEdit.branchesSectionTitle' | translate" icon="🌿" [initiallyOpen]="focusSection === 'branches'" [filled]="branchesFilled">
+    <app-expandable-section [title]="'sceneEdit.branchesSectionTitle' | translate" coachTopic="scene.branches" icon="🌿" [initiallyOpen]="focusSection === 'branches'" [filled]="branchesFilled">
       @if (siblingScenes.length === 0) {
         <div class="branches-hint">
           <small class="field-hint">
@@ -307,7 +322,7 @@
     </app-expandable-section>
 
     <!-- Section : Combat ou rencontre -->
-    <app-expandable-section [title]="'sceneEdit.combatSectionTitle' | translate" icon="⚔️" [initiallyOpen]="focusSection === 'combat'" [filled]="combatFilled">
+    <app-expandable-section [title]="'sceneEdit.combatSectionTitle' | translate" coachTopic="scene.combat" icon="⚔️" [initiallyOpen]="focusSection === 'combat'" [filled]="combatFilled">
       <div class="field">
         <label for="scene-edit-combat-difficulty">{{ 'sceneEdit.combatDifficultyLabel' | translate }}</label>
         <input id="scene-edit-combat-difficulty" type="text" formControlName="combatDifficulty" [placeholder]="'sceneEdit.combatDifficultyPlaceholder' | translate" />

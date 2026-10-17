@@ -1,0 +1,154 @@
+:host {
+  // Le panneau gère lui-même son positionnement fixed.
+  display: contents;
+}
+
+.coach-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: min(380px, 100vw);
+  height: 100vh;
+  background: #0f0f1a;
+  border-left: 1px solid #1e1e3a;
+  box-shadow: -12px 0 32px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  visibility: hidden;
+  transition: transform 0.25s ease, visibility 0s linear 0.25s;
+  // Au-dessus du drawer de chat IA (1000) : c'est le dernier ouvert qui compte.
+  z-index: 1001;
+
+  &.open {
+    transform: translateX(0);
+    visibility: visible;
+    transition: transform 0.25s ease;
+  }
+}
+
+.coach-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1.1rem 1.25rem 1rem;
+  border-bottom: 1px solid #1e1e3a;
+  flex-shrink: 0;
+
+  h2 {
+    margin: 0.35rem 0 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: white;
+  }
+}
+
+.coach-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fbbf24;
+}
+
+.coach-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  cursor: pointer;
+
+  &:hover { background: #1f2937; color: white; }
+  &:focus-visible { outline: 2px solid #6c63ff; }
+}
+
+.coach-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.coach-block {
+  h3 {
+    margin: 0 0 0.45rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #9ca3af;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: #e5e7eb;
+    // Les exemples peuvent contenir des retours à la ligne (puces).
+    white-space: pre-line;
+  }
+}
+
+.coach-questions {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  li {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #e5e7eb;
+
+    &::marker { color: #6c63ff; }
+  }
+}
+
+.coach-example {
+  padding: 0.85rem 1rem;
+  border-radius: 8px;
+  background: rgba(108, 99, 255, 0.08);
+  border: 1px solid rgba(108, 99, 255, 0.25);
+
+  p { font-style: italic; color: #d1d5db; }
+}
+
+.coach-pitfall {
+  padding: 0.85rem 1rem;
+  border-radius: 8px;
+  background: rgba(251, 191, 36, 0.06);
+  border: 1px solid rgba(251, 191, 36, 0.25);
+
+  h3 { color: #fbbf24; }
+}
+
+.coach-footer {
+  flex-shrink: 0;
+  padding: 0.85rem 1.25rem;
+  border-top: 1px solid #1e1e3a;
+
+  p {
+    margin: 0;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    color: #6b7280;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .coach-panel,
+  .coach-panel.open { transition: none; }
+}

@@ -9,12 +9,25 @@
   &.private {
     border-color: #7f1d1d;
 
-    .section-header { background: rgba(127, 29, 29, 0.12); }
+    .section-header-row { background: rgba(127, 29, 29, 0.12); }
     .section-title { color: #fca5a5; }
   }
 }
 
+// En-tête = bouton de repli + éventuel 💡 du coach d'écriture (bouton frère :
+// pas de bouton imbriqué dans un bouton).
+.section-header-row {
+  display: flex;
+  align-items: center;
+}
+
+.section-coach {
+  margin-right: 0.6rem;
+}
+
 .section-header {
+  flex: 1;
+  min-width: 0;
   width: 100%;
   display: flex;
   align-items: center;

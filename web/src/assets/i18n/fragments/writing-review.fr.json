@@ -1,0 +1,70 @@
+{
+  "writingReview": {
+    "title": "Relecture d'éditeur",
+    "countN": "{{n}} conseil(s)",
+    "intro": "Des conseils d'auteur pour rendre ton aventure plus vivante. Rien d'obligatoire : à toi de voir ce qui sert ton histoire.",
+    "allGood": "Rien à signaler : ta campagne évite les pièges classiques que la relecture sait repérer.",
+    "showMore": "Voir les {{n}} autre(s)",
+    "see": "Voir",
+    "hintsTitle": "Conseils de relecture ({{n}})",
+    "kindCombat": "Combat",
+    "categories": {
+      "AGENCY": "Pouvoir des joueurs",
+      "STAKES": "Enjeux",
+      "PACING": "Rythme",
+      "NARRATION": "Narration"
+    },
+    "rules": {
+      "WRITE-001-CORRIDOR": {
+        "observation": "« {{entity}} » enchaîne {{count}} scènes sans aucun choix ni embranchement.",
+        "why": "Les joueurs suivent un chemin tracé d'avance : ils risquent de se sentir spectateurs de l'histoire.",
+        "question": "À quel moment pourraient-ils décider de quelque chose qui change la suite ?"
+      },
+      "WRITE-002-FAKE-CHOICE": {
+        "observation": "Les {{count}} sorties de « {{entity}} » mènent toutes à « {{target}} ».",
+        "why": "Quand toutes les options aboutissent au même endroit, c'est un faux choix, et les joueurs finissent par le sentir.",
+        "question": "Qu'est-ce qui pourrait différer selon l'option choisie : un lieu, un allié, un prix à payer ?"
+      },
+      "WRITE-003-SINGLE-CLUE": {
+        "observation": "La révélation « {{entity}} » n'est reliée qu'à {{incoming}} scène(s) qui y mène(nt).",
+        "why": "Si les joueurs ratent ce chemin, ils perdent l'information et l'histoire se bloque. La règle des 3 indices conseille de prévoir trois façons de découvrir chaque information essentielle.",
+        "question": "Dans quelles autres scènes les joueurs pourraient-ils trouver un indice qui y mène ?"
+      },
+      "WRITE-004-MONOTONOUS-PACING": {
+        "observation": "« {{entity}} » enchaîne {{count}} scènes de type « {{kind}} » d'affilée.",
+        "why": "La répétition fatigue la table : trois combats de suite, ou trois discussions, finissent par se ressembler.",
+        "question": "Une scène d'un autre genre (exploration, discussion, révélation) pourrait-elle s'intercaler ?"
+      },
+      "WRITE-005-NO-STAKES": {
+        "observation": "« {{entity}} » n'a pas encore d'enjeux écrits.",
+        "why": "Sans enjeu, les joueurs ne savent pas pourquoi agir ni ce qu'ils risquent : la tension retombe.",
+        "question": "Que se passe-t-il si les personnages échouent, et qui en souffre ?"
+      },
+      "WRITE-006-LONG-NARRATION": {
+        "observation": "La narration de « {{entity}} » fait {{chars}} caractères, soit plus d'une minute de lecture à voix haute.",
+        "why": "Au-delà d'une minute, l'attention des joueurs décroche et les détails importants se perdent.",
+        "question": "Que garder d'essentiel pour lancer la scène, et que laisser découvrir en jeu ?"
+      },
+      "WRITE-007-NARRATION-DECIDES": {
+        "observation": "La narration de « {{entity}} » contient « {{phrase}} ».",
+        "why": "Le texte décide à la place des personnages de ce qu'ils font ou ressentent. Les joueurs aiment rester maîtres de leurs réactions.",
+        "question": "Comment décrire la situation pour qu'ils aient envie de réagir ainsi d'eux-mêmes ?"
+      },
+      "WRITE-008-COMBAT-NO-PURPOSE": {
+        "observation": "Le combat de « {{entity}} » n'a ni choix décrits, ni notes sur les motivations des adversaires.",
+        "why": "Un combat sans autre but que d'abattre l'adversaire devient vite répétitif.",
+        "question": "Que veulent vraiment ces ennemis : fuir, protéger, voler, gagner du temps ?"
+      },
+      "WRITE-009-SINGLE-ENDING": {
+        "observation": "« {{entity}} », dernière scène de l'arc « {{arc}} », ne prévoit ni choix ni sortie.",
+        "why": "Une fin unique écrite d'avance enlève leur poids aux décisions des joueurs.",
+        "question": "Que se passe-t-il si les personnages échouent, ou s'ils changent de camp ?"
+      },
+      "WRITE-010-UNTYPED-SCENES": {
+        "observation": "{{percent}} % des scènes de la campagne n'ont pas de type ({{count}} scènes).",
+        "why": "Sans type, impossible de voir d'un coup d'œil le rythme de l'aventure, et la relecture ne peut pas t'aider sur ce point.",
+        "question": "Pour chaque scène : les joueurs vont-ils surtout explorer, combattre, parler, subir un événement ou découvrir quelque chose ?"
+      }
+    }
+  }
+}

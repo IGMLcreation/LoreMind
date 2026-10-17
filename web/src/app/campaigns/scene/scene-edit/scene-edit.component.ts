@@ -31,6 +31,8 @@ import { FieldProposal } from '../../../services/entity-assist.model';
 import { FileDropDirective } from '../../../shared/file-drop.directive';
 import { CAMPAIGN_ICON_OPTIONS } from '../../campaign-icons';
 import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
+import { WritingCoachTriggerComponent } from '../../../shared/writing-coach/writing-coach-trigger.component';
+import { WritingReviewHintsComponent } from '../../../shared/writing-review/writing-review-hints.component';
 
 /**
  * État d'édition d'UNE battlemap de la scène (une carte par variante : Jour, Nuit,
@@ -63,7 +65,7 @@ interface BattlemapEdit {
  */
 @Component({
     selector: 'app-scene-edit',
-    imports: [ReactiveFormsModule, LucideAngularModule, ExpandableSectionComponent, LoreLinkPickerComponent, EnemyLinkPickerComponent, AiChatDrawerComponent, ImageGalleryComponent, IconPickerComponent, RoomsEditorComponent, EntityAssistPanelComponent, FileDropDirective, TranslatePipe],
+    imports: [ReactiveFormsModule, LucideAngularModule, ExpandableSectionComponent, LoreLinkPickerComponent, EnemyLinkPickerComponent, AiChatDrawerComponent, ImageGalleryComponent, IconPickerComponent, RoomsEditorComponent, EntityAssistPanelComponent, FileDropDirective, TranslatePipe, WritingCoachTriggerComponent, WritingReviewHintsComponent],
     templateUrl: './scene-edit.component.html',
     styleUrls: ['./scene-edit.component.scss']
 })
@@ -95,7 +97,7 @@ export class SceneEditComponent implements OnInit {
   scene: Scene | null = null;
 
   /**
-   * Section à déplier d'office (query param `?focus=combat|branches|rooms`) — posé par
+   * Section à déplier d'office (query param `?focus=combat|branches|rooms|narration|choices`) — posé par
    * le bouton « Corriger » du guidage pour atterrir directement sur l'outil fautif.
    */
   focusSection: string | null = null;

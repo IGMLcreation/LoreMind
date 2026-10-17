@@ -32,11 +32,12 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
 import { FolderGroup, groupByFolder, byOrder } from '../../../shared/folder-grouping.util';
 import { CampaignReadinessAssessment } from '../../../services/readiness.model';
 import { ReadinessPanelComponent } from '../../../shared/readiness-panel/readiness-panel.component';
+import { WritingReviewPanelComponent } from '../../../shared/writing-review/writing-review-panel.component';
 import { FoundryExportDialogComponent } from '../foundry-export-dialog/foundry-export-dialog.component';
 
 @Component({
     selector: 'app-campaign-detail',
-    imports: [FormsModule, LucideAngularModule, RouterLink, TranslatePipe, CdkDropList, CdkDrag, ReadinessPanelComponent, FoundryExportDialogComponent],
+    imports: [FormsModule, LucideAngularModule, RouterLink, TranslatePipe, CdkDropList, CdkDrag, ReadinessPanelComponent, WritingReviewPanelComponent, FoundryExportDialogComponent],
     templateUrl: './campaign-detail.component.html',
     styleUrls: ['./campaign-detail.component.scss']
 })

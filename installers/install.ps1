@@ -18,7 +18,9 @@
   Le code source de ce script est public et auditable a l'adresse indiquee dans .LINK.
 
 .PARAMETER InstallDir
-  Dossier d'installation. Defaut : %LOCALAPPDATA%\DM Loremind
+  Dossier d'installation. Defaut : %LOCALAPPDATA%\DM Loremind Docker
+  (PAS "%LOCALAPPDATA%\DM Loremind" : ce dossier est celui de l'application
+  bureau .msi — les deux produits ne doivent jamais partager un dossier).
 
 .PARAMETER ComposeUrl
   URL du fichier docker-compose.yml a recuperer. Defaut : version officielle du depot.
@@ -48,7 +50,7 @@
 
 [CmdletBinding()]
 param(
-    [string]$InstallDir = "$env:LOCALAPPDATA\DM Loremind",
+    [string]$InstallDir = "$env:LOCALAPPDATA\DM Loremind Docker",
     [string]$ComposeUrl = "https://raw.githubusercontent.com/IGMLcreation/LoreMind/main/docker-compose.yml",
     [int]$WebPort      = 8081,
     [switch]$NonInteractive
@@ -204,6 +206,27 @@ if (Test-Docker) {
 # ---------------------------------------------------------------------------
 # 3. Dossier d'installation + docker-compose.yml
 # ---------------------------------------------------------------------------
+# Compat : les stacks historiques vivaient dans "%LOCALAPPDATA%\DM Loremind",
+# desormais reserve a l'application bureau (.msi jpackage, meme nom produit —
+# une maj du .msi pouvait ecraser compose/.env). Si un stack y est deja
+# installe (compose present, pas d'exe bureau), on le reutilise plutot que
+# d'en creer un second qui entrerait en conflit (memes noms de conteneurs).
+$legacyDir = "$env:LOCALAPPDATA\DM Loremind"
+if ($InstallDir -eq "$env:LOCALAPPDATA\DM Loremind Docker" -and
+    (Test-Path (Join-Path $legacyDir 'docker-compose.yml')) -and
+    -not (Test-Path (Join-Path $legacyDir 'DM Loremind.exe'))) {
+    Write-Warn2 "Stack Docker existant detecte dans $legacyDir - reutilise (pas de duplication)."
+    $InstallDir = $legacyDir
+}
+
+# Garde-fou : jamais d'installation du stack Docker dans le dossier de
+# l'application bureau (le .msi et le stack s'ecraseraient mutuellement).
+if (Test-Path (Join-Path $InstallDir 'DM Loremind.exe')) {
+    Write-Err "Le dossier $InstallDir contient l'application bureau DM Loremind (.msi)."
+    Write-Err "La version Docker doit vivre ailleurs : relancez avec -InstallDir <autre dossier>."
+    exit 1
+}
+
 Write-Step "Preparation du dossier $InstallDir"
 New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
 Set-Location $InstallDir

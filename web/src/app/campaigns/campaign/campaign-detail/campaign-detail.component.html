@@ -62,6 +62,8 @@
     <!-- ============ Guidage co-MJ : « Prochaines étapes » (Pilier B) ============ -->
     @if (!editing && campaign.id) {
       <app-readiness-panel [campaignId]="campaign.id" [assessment]="readiness"></app-readiness-panel>
+      <!-- Mentor d'écriture (M2) : conseils d'auteur sur la qualité, à côté de la complétude. -->
+      <app-writing-review-panel [campaignId]="campaign.id"></app-writing-review-panel>
     }
     <!-- ============ Header : mode édition inline ============ -->
     @if (editing) {
@@ -206,6 +208,11 @@
                 <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
                 {{ 'campaignDetail.newArc' | translate }}
               </button>
+              <!-- Mentor d'écriture (M3) : écrire une aventure question par question. -->
+              <a class="btn-add btn-guided" [routerLink]="['/campaigns', campaign.id, 'guided', 'five-room']">
+                <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
+                {{ 'guided.entry' | translate }}
+              </a>
             </div>
           </div>
           @if (arcs.length > 0 && !showQuickAddScene) {
@@ -235,6 +242,10 @@
                 <lucide-icon [img]="Plus" [size]="14"></lucide-icon>
                 {{ 'campaignDetail.quickSceneFirst' | translate }}
               </button>
+              <a class="btn-add-first btn-guided" [routerLink]="['/campaigns', campaign.id, 'guided', 'five-room']">
+                <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
+                {{ 'guided.entryFirst' | translate }}
+              </a>
               <button type="button" class="empty-alt-action" (click)="createArc()">
                 {{ 'campaignDetail.organizeInArcs' | translate }}
               </button>

@@ -29,6 +29,9 @@
     <!-- Tout est optionnel sauf le titre : identité visible, le reste replié. -->
     <p class="optional-hint">{{ 'chapterEdit.optionalHint' | translate }}</p>
 
+    <!-- Mentor d'écriture (M2) : conseils de relecture qui concernent cette entité. -->
+    <app-writing-review-hints [campaignId]="campaignId" entityType="CHAPTER" [entityId]="chapterId"></app-writing-review-hints>
+
     <!-- Co-création (Pilier A) : le co-MJ propose, validation champ par champ → remplit le formulaire. -->
     <app-entity-assist-panel
       [entityType]="'chapter'" [entityId]="chapterId" [campaignId]="campaignId"
@@ -53,7 +56,10 @@
     </div>
 
     <div class="field">
-      <label for="chapter-edit-description">{{ 'chapterEdit.synopsisLabel' | translate }}</label>
+      <div class="field-label-row">
+        <label for="chapter-edit-description">{{ 'chapterEdit.synopsisLabel' | translate }}</label>
+        <app-writing-coach-trigger topic="chapter.synopsis"></app-writing-coach-trigger>
+      </div>
       <textarea
         id="chapter-edit-description"
         formControlName="description"
@@ -93,10 +99,13 @@
     </app-expandable-section>
 
     <!-- Objectifs et enjeux -->
-    <app-expandable-section [title]="'chapterEdit.objectivesStakesSectionTitle' | translate" icon="🎯" [filled]="objectivesStakesFilled">
+    <app-expandable-section [title]="'chapterEdit.objectivesStakesSectionTitle' | translate" icon="🎯" [initiallyOpen]="focusSection === 'stakes'" [filled]="objectivesStakesFilled">
       <div class="field-row">
         <div class="field">
-          <label for="chapter-edit-player-objectives">{{ 'chapterEdit.playerObjectivesLabel' | translate }}</label>
+          <div class="field-label-row">
+            <label for="chapter-edit-player-objectives">{{ 'chapterEdit.playerObjectivesLabel' | translate }}</label>
+            <app-writing-coach-trigger topic="chapter.objectives"></app-writing-coach-trigger>
+          </div>
           <textarea
             id="chapter-edit-player-objectives"
             formControlName="playerObjectives"
@@ -105,7 +114,10 @@
           </textarea>
         </div>
         <div class="field">
-          <label for="chapter-edit-narrative-stakes">{{ 'chapterEdit.narrativeStakesLabel' | translate }}</label>
+          <div class="field-label-row">
+            <label for="chapter-edit-narrative-stakes">{{ 'chapterEdit.narrativeStakesLabel' | translate }}</label>
+            <app-writing-coach-trigger topic="chapter.stakes"></app-writing-coach-trigger>
+          </div>
           <textarea
             id="chapter-edit-narrative-stakes"
             formControlName="narrativeStakes"

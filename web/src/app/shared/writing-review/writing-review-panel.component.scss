@@ -1,0 +1,92 @@
+// Même gabarit que « Prochaines étapes » (readiness-panel), accent ambré du mentor.
+.review-panel {
+  margin: 0 0 1.25rem;
+  background: #0d1117;
+  border: 1px solid #1f2937;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.review-header {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  background: transparent;
+  border: none;
+  color: #e5e7eb;
+  cursor: pointer;
+  text-align: left;
+
+  &:hover { background: #111827; }
+  &:focus-visible { outline: 2px solid #6c63ff; outline-offset: -2px; }
+
+  .review-icon { color: #fbbf24; }
+}
+
+.review-title {
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.review-count {
+  margin-left: auto;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  background: #3a2e1a;
+  color: #fcd34d;
+}
+
+.review-body {
+  padding: 0 0.9rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.review-intro,
+.review-empty {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #9ca3af;
+}
+
+.review-empty { color: #86efac; }
+
+.review-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  h3 {
+    margin: 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #6b7280;
+  }
+}
+
+.review-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.review-more {
+  align-self: flex-start;
+  padding: 0.2rem 0;
+  border: none;
+  background: none;
+  color: #a5b4fc;
+  font-size: 0.8rem;
+  cursor: pointer;
+
+  &:hover { text-decoration: underline; }
+  &:focus-visible { outline: 2px solid #6c63ff; border-radius: 4px; }
+}

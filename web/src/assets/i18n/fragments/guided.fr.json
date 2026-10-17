@@ -1,0 +1,236 @@
+{
+  "guided": {
+    "entry": "Méthode guidée",
+    "entryFirst": "Écrire une aventure pas à pas",
+    "backToCampaign": "Retour à la campagne",
+    "progress": "Étape {{n}} sur {{total}}",
+    "exampleLabel": "Exemple",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "create": "Créer l'aventure",
+    "creating": "Création…",
+    "restart": "Recommencer",
+    "restartTitle": "Recommencer la méthode ?",
+    "restartMessage": "Toutes tes réponses seront effacées.",
+    "createError": "La création a échoué. Tes réponses sont conservées : réessaie dans un instant.",
+    "unknownMethod": "Cette méthode guidée n'existe pas.",
+    "placementExisting": "L'ajouter à un arc existant",
+    "placementArcLabel": "Arc",
+    "placementNew": "Créer un nouvel arc",
+    "placementNewArcLabel": "Nom du nouvel arc",
+    "placementNewArcPlaceholder": "Ex. : Les terres du Nord",
+    "reviewArc": "Arc",
+    "reviewChapter": "Chapitre",
+    "linkScenes": "Relier les salles dans l'ordre (sorties « Vers la salle suivante »)",
+    "linkLabel": "Vers la salle suivante",
+    "reviewAfter": "Tout reste modifiable ensuite. Pense à jeter un œil à la « Relecture d'éditeur » sur la page de la campagne : elle te dira ce qui peut encore être renforcé.",
+    "fiveRoom": {
+      "name": "Donjon en 5 salles",
+      "steps": {
+        "placement": {
+          "title": "Le donjon en 5 salles",
+          "why": "Une méthode simple pour écrire une aventure courte et complète, idéale pour une séance. Elle enchaîne cinq temps forts : un gardien à l'entrée, une épreuve qui ne se règle pas à l'épée, un revers, le climax, puis la récompense. Le « donjon » peut être n'importe quel lieu : un manoir, un navire, une forêt, un bal masqué… Commence par choisir où ranger l'aventure dans ta campagne.",
+          "example": "Une crypte sous la chapelle d'un village, où une relique a été volée. Ou le bateau d'un contrebandier, la nuit de son départ."
+        },
+        "frame": {
+          "title": "Le cadre",
+          "why": "Avant les salles, pose l'essentiel : un nom, un lieu, et surtout une accroche. L'accroche, c'est la raison pour laquelle les personnages y vont maintenant. Si elle les concerne personnellement, ils s'engageront d'eux-mêmes.",
+          "example": "« Le reliquaire volé » : le prêtre du village, ami d'un des PJ, a disparu avec la relique. On l'a vu descendre dans la crypte, et le pèlerinage arrive dans trois jours."
+        },
+        "stakes": {
+          "title": "Ce que les joueurs cherchent, et ce qu'ils risquent",
+          "why": "Les joueurs doivent savoir ce qu'ils viennent faire, sinon ils errent. Et il faut que l'échec coûte quelque chose : c'est ce qui crée la tension.",
+          "example": "Objectif : ramener la relique avant le pèlerinage. Enjeu : sans elle, le village perd sa protection, et le prêtre sera accusé du vol."
+        },
+        "room1": {
+          "title": "Salle 1 : l'entrée et son gardien",
+          "why": "Quelque chose empêche d'entrer. Ça lance l'aventure tout de suite, et ça explique pourquoi personne n'est encore venu à bout de ce lieu. Le gardien n'est pas forcément un monstre : un garde à convaincre ou un passage dangereux fonctionnent aussi.",
+          "example": "Un vieux gardien spectral bloque l'escalier de la crypte. Il laisse passer quiconque prouve qu'il vient protéger la relique, pas la voler."
+        },
+        "room2": {
+          "title": "Salle 2 : l'épreuve",
+          "why": "Ici, l'épée ne suffit pas : une énigme, une négociation, un lieu à explorer avec soin. Ça laisse briller les joueurs qui ne sont pas des combattants, et ça change le rythme après l'entrée.",
+          "example": "Une salle de tombeaux identiques : seul celui du fondateur s'ouvre, et les indices sont dans les épitaphes."
+        },
+        "room3": {
+          "title": "Salle 3 : le revers",
+          "why": "Un piège, une fausse piste ou une mauvaise surprise : les choses se compliquent juste avant le climax. Les ressources des personnages s'épuisent, la tension monte.",
+          "example": "Le prêtre est retrouvé… mais c'est lui le voleur. Il a été envoûté, et il vient de déclencher l'effondrement de la galerie."
+        },
+        "room4": {
+          "title": "Salle 4 : le climax",
+          "why": "La grande confrontation, le moment le plus intense de l'aventure. Pour qu'il soit mémorable, donne un but à l'adversaire autre que se battre, et un terrain qui change la donne.",
+          "example": "L'envoûteuse veut finir le rituel avant l'aube. Elle se bat en protégeant le cercle de bougies : l'éteindre l'affaiblit, mais il faut traverser l'eau glacée pour y arriver."
+        },
+        "room5": {
+          "title": "Salle 5 : la récompense ou la révélation",
+          "why": "La fin récompense les efforts : un trésor, un allié, un savoir. C'est aussi le bon moment pour un retournement qui ouvre la suite de ta campagne.",
+          "example": "La relique est sauvée, et le prêtre libéré devient un allié. Mais le cercle portait un symbole : celui d'une confrérie que les PJ croisent déjà ailleurs."
+        },
+        "review": {
+          "title": "Ton aventure est prête à être créée",
+          "why": "Voici ce qui va être créé : un chapitre et ses cinq scènes, déjà typées pour que la relecture puisse t'aider sur le rythme."
+        }
+      },
+      "fields": {
+        "title": {
+          "label": "Nom de l'aventure",
+          "placeholder": "Ex. : Le reliquaire volé"
+        },
+        "location": {
+          "label": "Le lieu",
+          "placeholder": "Ex. : La crypte sous la chapelle"
+        },
+        "hook": {
+          "label": "L'accroche : pourquoi les personnages y vont-ils maintenant ?",
+          "placeholder": "Qui les envoie, qu'est-ce qui presse, en quoi ça les concerne ?"
+        },
+        "objectives": {
+          "label": "Ce que les joueurs veulent accomplir",
+          "placeholder": "Formulé comme les joueurs le diraient"
+        },
+        "stakes": {
+          "label": "Ce qui se passe s'ils échouent",
+          "placeholder": "Qui en souffre ? Qu'est-ce qui est perdu ?"
+        },
+        "room1": {
+          "name": {
+            "label": "Nom de la salle",
+            "placeholder": "Ex. : L'entrée gardée"
+          },
+          "nature": {
+            "label": "Comment se passe la rencontre ?"
+          },
+          "description": {
+            "label": "Ce qui bloque l'entrée",
+            "placeholder": "Qui ou quoi garde l'entrée, et pourquoi ?"
+          },
+          "enemies": {
+            "label": "Adversaires éventuels",
+            "placeholder": "Ex. : un gardien spectral"
+          },
+          "choices": {
+            "label": "Comment passer ? Et si ça tourne mal ?",
+            "placeholder": "Au moins deux façons de passer, et ce qui arrive en cas d'échec"
+          },
+          "secret": {
+            "label": "Ce que le MJ sait (secret, motivation du gardien)",
+            "placeholder": "Ce que les joueurs ignorent"
+          }
+        },
+        "room2": {
+          "name": {
+            "label": "Nom de la salle",
+            "placeholder": "Ex. : L'épreuve"
+          },
+          "nature": {
+            "label": "Quel genre d'épreuve ?"
+          },
+          "description": {
+            "label": "L'épreuve",
+            "placeholder": "Que faut-il résoudre, convaincre ou découvrir ?"
+          },
+          "choices": {
+            "label": "Comment la réussir ? Et en cas d'échec ?",
+            "placeholder": "Les approches possibles, et ce que coûte un échec"
+          },
+          "secret": {
+            "label": "La solution et les indices (pour le MJ)",
+            "placeholder": "Où sont les indices, quelle est la réponse"
+          }
+        },
+        "room3": {
+          "name": {
+            "label": "Nom de la salle",
+            "placeholder": "Ex. : Le revers"
+          },
+          "description": {
+            "label": "Le revers",
+            "placeholder": "Quel piège, quelle mauvaise surprise ?"
+          },
+          "choices": {
+            "label": "Comment les joueurs peuvent-ils réagir ?",
+            "placeholder": "Les options, et ce qu'elles coûtent"
+          },
+          "secret": {
+            "label": "Ce qui se cache derrière (pour le MJ)",
+            "placeholder": "La vérité derrière la fausse piste ou le piège"
+          }
+        },
+        "room4": {
+          "name": {
+            "label": "Nom de la salle",
+            "placeholder": "Ex. : Le climax"
+          },
+          "description": {
+            "label": "La confrontation",
+            "placeholder": "Qui affrontent-ils, et dans quel décor ?"
+          },
+          "enemies": {
+            "label": "Adversaires",
+            "placeholder": "Ex. : l'envoûteuse et deux fidèles"
+          },
+          "choices": {
+            "label": "Comment gagner autrement qu'en frappant ?",
+            "placeholder": "Objectifs, éléments du terrain, issue si les PJ perdent"
+          },
+          "secret": {
+            "label": "Ce que veut vraiment l'adversaire (pour le MJ)",
+            "placeholder": "Son but, ce qu'il fera s'il est en difficulté"
+          }
+        },
+        "room5": {
+          "name": {
+            "label": "Nom de la salle",
+            "placeholder": "Ex. : La récompense"
+          },
+          "description": {
+            "label": "La récompense",
+            "placeholder": "Qu'est-ce que les personnages gagnent ?"
+          },
+          "choices": {
+            "label": "Les conséquences pour la suite",
+            "placeholder": "Ce qui change dans le monde selon ce qu'ils ont fait"
+          },
+          "secret": {
+            "label": "La révélation ou le retournement (pour le MJ)",
+            "placeholder": "Ce qui ouvre la suite de ta campagne"
+          }
+        }
+      },
+      "options": {
+        "room1": {
+          "nature": {
+            "combat": "Un combat",
+            "social": "Une discussion",
+            "obstacle": "Un obstacle"
+          }
+        },
+        "room2": {
+          "nature": {
+            "puzzle": "Une énigme",
+            "social": "Une négociation",
+            "exploration": "Une exploration"
+          }
+        }
+      },
+      "defaults": {
+        "room1": {
+          "name": "L'entrée gardée"
+        },
+        "room2": {
+          "name": "L'épreuve"
+        },
+        "room3": {
+          "name": "Le revers"
+        },
+        "room4": {
+          "name": "Le climax"
+        },
+        "room5": {
+          "name": "La récompense"
+        }
+      }
+    }
+  }
+}

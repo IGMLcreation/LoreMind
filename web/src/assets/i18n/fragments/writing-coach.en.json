@@ -1,0 +1,204 @@
+{
+  "writingCoach": {
+    "triggerTitle": "Writing tips",
+    "panelLabel": "Writing tips",
+    "kicker": "Writing tips",
+    "purposeTitle": "What it's for",
+    "questionsTitle": "Questions to help you",
+    "exampleTitle": "Example",
+    "pitfallTitle": "Common pitfall",
+    "footer": "These are guidelines, not rules: your adventure, your choices. Need concrete ideas? \"Flesh out with AI\" suggests options you accept one by one.",
+    "topics": {
+      "scene": {
+        "description": {
+          "title": "Short description",
+          "purpose": "Reminds you, in one sentence, what is at play here when you prep the session or need to improvise.",
+          "questions": [
+            "If you had to sum up this scene for another GM in ten seconds, what would you say?",
+            "What changes between the start and the end of the scene?",
+            "What do the characters come here looking for?"
+          ],
+          "example": "The PCs must convince the ferrywoman to take them across the river before dawn, even though she has already been paid to turn them in.",
+          "pitfall": "Describing the set instead of the situation: \"a tavern\" says nothing about what is at play. A good description holds a goal or a tension."
+        },
+        "nodeType": {
+          "title": "Node type",
+          "purpose": "Tells you, and the tool, what kind of scene this is: a location to explore, an encounter, an NPC, an event or a revelation.",
+          "questions": [
+            "What will the players mostly do here: explore, fight, talk, endure or discover?",
+            "Does this scene deliver key information for what comes next? (then it's a revelation)"
+          ],
+          "example": "An interrogation in the watch-house cellar is an \"NPC\" scene; finding the forged ledger hidden there is a \"revelation\".",
+          "pitfall": "Leaving everything as \"generic\": you lose sight of your adventure's pacing (three fights in a row then go unnoticed)."
+        },
+        "setting": {
+          "title": "Location and time",
+          "purpose": "Anchors the scene in a specific place and moment, so players can picture themselves there.",
+          "questions": [
+            "Why this place and not another? What opportunities or obstacles does it offer?",
+            "Does the timing add a constraint: night, a crowd, a storm, a bell about to ring?",
+            "What can be used here: a staircase, a chandelier, a crowd to hide in?"
+          ],
+          "example": "The fish market, an hour before opening: the stalls are empty, but the merchants arrive soon and word will spread.",
+          "pitfall": "A neutral place that brings nothing. A good location gives the players ideas and the GM complications."
+        },
+        "atmosphere": {
+          "title": "Mood and atmosphere",
+          "purpose": "Gives you sensory details to pick from during play, bringing the scene to life without over-preparing.",
+          "questions": [
+            "What can be heard? Smelled? How warm or cold is it?",
+            "Which detail would a player remember after the session?",
+            "What emotion do you want to trigger: unease, wonder, urgency?"
+          ],
+          "example": "Smell of warm wax and stale incense. A steady drip somewhere in the dark. The cold of the stone seeps through the boots.",
+          "pitfall": "Only describing what can be seen. Two senses other than sight do more than a long descriptive paragraph."
+        },
+        "narration": {
+          "title": "Narration for players",
+          "purpose": "The text you read aloud to open the scene. It sets the stage and puts the players in a position to act.",
+          "questions": [
+            "Can it be read in under a minute?",
+            "Does it end on a situation that calls for a reaction?",
+            "What must the players know, and what can they discover by asking questions?"
+          ],
+          "example": "The mill door bangs in the wind. Inside, the millstone still turns, grinding nothing. On the floury floor, footprints lead to the trapdoor… and none come back. What do you do?",
+          "pitfall": "Deciding for the characters (\"you are scared\", \"you step in carefully\") or revealing everything at once. Describe what they perceive; let them choose what they feel and do."
+        },
+        "gmNotes": {
+          "title": "GM notes and secrets",
+          "purpose": "What the players don't know: hidden truths, NPC motives, what happens behind the scenes.",
+          "questions": [
+            "What happens if the players do nothing?",
+            "What is the scene's main NPC hiding, and why?",
+            "Which piece of information must you be able to find in three seconds during play?"
+          ],
+          "example": "• The ferrywoman was paid by the watch.\n• Offered more, she hesitates, then betrays the watch.\n• If the PCs dawdle: the patrol arrives at the third bell.",
+          "pitfall": "Writing the whole scene as prose: in play, you won't find the information. Prefer short bullet points."
+        },
+        "choices": {
+          "title": "Choices and consequences",
+          "purpose": "What gives players agency: their decisions truly change what happens next.",
+          "questions": [
+            "What are at least two ways to approach the scene?",
+            "What does each option cost, or put at risk?",
+            "What happens on a failure? Does the scene still move forward?"
+          ],
+          "example": "Bribe the ferrywoman: quick, but she will sell them out later. Threaten her: she gives in, but secretly warns the watch. Swim across: discreet, but the gear is lost or damaged.",
+          "pitfall": "\"Fake choices\": every option leads to the same result. And forgetting failure: a bad roll shouldn't stop the game, it should complicate it."
+        },
+        "branches": {
+          "title": "Story branches",
+          "purpose": "Link the scene to the next ones based on what the players do, so no choice leads to a dead end.",
+          "questions": [
+            "Where do the players go if they succeed? And if they fail?",
+            "What if they do something unexpected: flee, side with the enemy, ignore the lead?",
+            "Is a key piece of information reachable through a single path only?"
+          ],
+          "example": "Success → \"The smugglers' passage\". Failure → \"Arrested by the watch\" (which also leads to the passage, but in chains). The ferrywoman's betrayal → \"Ambush on the riverbank\".",
+          "pitfall": "A single exit that depends on one successful roll. If the dice turn, the game stops: always keep a path open, even a costlier one."
+        },
+        "combat": {
+          "title": "Combat or encounter",
+          "purpose": "Prepare an encounter that is easy to read, and interesting beyond trading blows.",
+          "questions": [
+            "Why are these enemies fighting? What do they really want: flee, protect, steal, buy time?",
+            "Does the terrain change anything: high ground, water, darkness, things to knock over?",
+            "Can this fight be avoided, won another way, or lost without dying?"
+          ],
+          "example": "Three smugglers aren't trying to kill anyone: they want to sink the boat holding the evidence. If they succeed, the fight is lost, even with every PC still standing.",
+          "pitfall": "The \"bag of hit points\" fight: with no goal other than taking the enemy down, it quickly becomes repetitive. Give each side a purpose."
+        }
+      },
+      "chapter": {
+        "synopsis": {
+          "title": "Synopsis",
+          "purpose": "Your overview: the starting situation, what happens, and how it might end.",
+          "questions": [
+            "How are the characters involved?",
+            "What pushes them to act now rather than later?",
+            "What are two or three possible outcomes?"
+          ],
+          "example": "The Vaulx bridge collapsed overnight and the village is cut off from the market. The bailiff blames the miners; the miners blame the bailiff. The PCs, stuck on the wrong bank, are the only ones nobody suspects.",
+          "pitfall": "Telling the story like a novel, including what the characters will do. Describe the situation and the forces at play, not the players' path."
+        },
+        "objectives": {
+          "title": "Player objectives",
+          "purpose": "What the characters are trying to achieve, from their own point of view.",
+          "questions": [
+            "Do the players clearly know what they have to do?",
+            "How and when will they find out?",
+            "Can the objective shift along the way, after a revelation?"
+          ],
+          "example": "Find out who sabotaged the bridge, and prove it before the spring fair.",
+          "pitfall": "An objective only the GM knows: the players wander without knowing what to do. If they can't put it into words, they don't have it."
+        },
+        "stakes": {
+          "title": "Narrative stakes",
+          "purpose": "What is at stake: what can be gained and, above all, what can be lost.",
+          "questions": [
+            "What happens if the characters fail? Who suffers?",
+            "Does it affect a character personally?",
+            "Can the players lose something even when they succeed?"
+          ],
+          "example": "If the culprit isn't found, the bailiff will hang the brother of the blacksmith, the PCs' ally, as an example.",
+          "pitfall": "Abstract stakes (\"save the kingdom\") with no face. An NPC the players like, in danger, matters more than an entire kingdom."
+        }
+      },
+      "arc": {
+        "synopsis": {
+          "title": "Arc synopsis",
+          "purpose": "The arc's main thread: the central problem and what drives it forward.",
+          "questions": [
+            "What is the central problem of this arc?",
+            "Who is responsible for it, and what do they want?",
+            "What happens if the characters don't step in?"
+          ],
+          "example": "A guild of cartographers is slowly erasing villages from the official maps, to sell the \"empty\" land to the crown. Unchecked, three villages will vanish by winter.",
+          "pitfall": "A synopsis with no antagonist or opposing force: nothing drives the story, and the players wait for something to happen."
+        },
+        "themes": {
+          "title": "Themes",
+          "purpose": "The story's colour, what it is really about beyond the plot.",
+          "questions": [
+            "What moral question will the players face?",
+            "What hard choice will the arc force on them?"
+          ],
+          "example": "Official truth versus lived truth. How far should one obey an unjust law?",
+          "pitfall": "Listing genres (\"horror, mystery\") instead of themes. A genre says how the story is told; a theme says what it is about."
+        },
+        "stakes": {
+          "title": "Stakes",
+          "purpose": "What changes, for the world and for the characters, depending on how the arc ends.",
+          "questions": [
+            "What becomes of the world if the antagonist wins?",
+            "What do the characters gain by getting involved?",
+            "What do they personally risk?"
+          ],
+          "example": "If the guild wins, entire families lose their land, including one PC's home village.",
+          "pitfall": "Stakes that don't concern the characters. Always tie the world's problem to something they care about."
+        },
+        "rewards": {
+          "title": "Rewards and progression",
+          "purpose": "What motivates the characters and marks their progress.",
+          "questions": [
+            "Beyond gold, what can they gain: allies, reputation, knowledge, a place of their own?",
+            "How does the world react to their success?"
+          ],
+          "example": "The gratitude of the saved villages (a safe haven), a true map nobody else owns, and a sworn enemy within the guild.",
+          "pitfall": "Only planning gold and items. The most memorable rewards change the characters' place in the world."
+        },
+        "resolution": {
+          "title": "Planned resolution",
+          "purpose": "The arc's possible endings, not a fixed one.",
+          "questions": [
+            "What are two or three possible outcomes?",
+            "What happens if the characters fail?",
+            "What stays open for what comes next?"
+          ],
+          "example": "The guild is publicly exposed; or the PCs buy it out themselves; or the villages are lost and the next arc opens with the exodus.",
+          "pitfall": "A single ending written in advance: the players' choices no longer matter. Prepare outcomes, not a script."
+        }
+      }
+    }
+  }
+}

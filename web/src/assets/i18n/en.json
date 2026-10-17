@@ -1881,5 +1881,509 @@
     "optTables": "Random tables",
     "optTablesHint": "Your encounter and event tables as Foundry RollTables.",
     "confirm": "Export"
+  },
+  "writingCoach": {
+    "triggerTitle": "Writing tips",
+    "panelLabel": "Writing tips",
+    "kicker": "Writing tips",
+    "purposeTitle": "What it's for",
+    "questionsTitle": "Questions to help you",
+    "exampleTitle": "Example",
+    "pitfallTitle": "Common pitfall",
+    "footer": "These are guidelines, not rules: your adventure, your choices. Need concrete ideas? \"Flesh out with AI\" suggests options you accept one by one.",
+    "topics": {
+      "scene": {
+        "description": {
+          "title": "Short description",
+          "purpose": "Reminds you, in one sentence, what is at play here when you prep the session or need to improvise.",
+          "questions": [
+            "If you had to sum up this scene for another GM in ten seconds, what would you say?",
+            "What changes between the start and the end of the scene?",
+            "What do the characters come here looking for?"
+          ],
+          "example": "The PCs must convince the ferrywoman to take them across the river before dawn, even though she has already been paid to turn them in.",
+          "pitfall": "Describing the set instead of the situation: \"a tavern\" says nothing about what is at play. A good description holds a goal or a tension."
+        },
+        "nodeType": {
+          "title": "Node type",
+          "purpose": "Tells you, and the tool, what kind of scene this is: a location to explore, an encounter, an NPC, an event or a revelation.",
+          "questions": [
+            "What will the players mostly do here: explore, fight, talk, endure or discover?",
+            "Does this scene deliver key information for what comes next? (then it's a revelation)"
+          ],
+          "example": "An interrogation in the watch-house cellar is an \"NPC\" scene; finding the forged ledger hidden there is a \"revelation\".",
+          "pitfall": "Leaving everything as \"generic\": you lose sight of your adventure's pacing (three fights in a row then go unnoticed)."
+        },
+        "setting": {
+          "title": "Location and time",
+          "purpose": "Anchors the scene in a specific place and moment, so players can picture themselves there.",
+          "questions": [
+            "Why this place and not another? What opportunities or obstacles does it offer?",
+            "Does the timing add a constraint: night, a crowd, a storm, a bell about to ring?",
+            "What can be used here: a staircase, a chandelier, a crowd to hide in?"
+          ],
+          "example": "The fish market, an hour before opening: the stalls are empty, but the merchants arrive soon and word will spread.",
+          "pitfall": "A neutral place that brings nothing. A good location gives the players ideas and the GM complications."
+        },
+        "atmosphere": {
+          "title": "Mood and atmosphere",
+          "purpose": "Gives you sensory details to pick from during play, bringing the scene to life without over-preparing.",
+          "questions": [
+            "What can be heard? Smelled? How warm or cold is it?",
+            "Which detail would a player remember after the session?",
+            "What emotion do you want to trigger: unease, wonder, urgency?"
+          ],
+          "example": "Smell of warm wax and stale incense. A steady drip somewhere in the dark. The cold of the stone seeps through the boots.",
+          "pitfall": "Only describing what can be seen. Two senses other than sight do more than a long descriptive paragraph."
+        },
+        "narration": {
+          "title": "Narration for players",
+          "purpose": "The text you read aloud to open the scene. It sets the stage and puts the players in a position to act.",
+          "questions": [
+            "Can it be read in under a minute?",
+            "Does it end on a situation that calls for a reaction?",
+            "What must the players know, and what can they discover by asking questions?"
+          ],
+          "example": "The mill door bangs in the wind. Inside, the millstone still turns, grinding nothing. On the floury floor, footprints lead to the trapdoor… and none come back. What do you do?",
+          "pitfall": "Deciding for the characters (\"you are scared\", \"you step in carefully\") or revealing everything at once. Describe what they perceive; let them choose what they feel and do."
+        },
+        "gmNotes": {
+          "title": "GM notes and secrets",
+          "purpose": "What the players don't know: hidden truths, NPC motives, what happens behind the scenes.",
+          "questions": [
+            "What happens if the players do nothing?",
+            "What is the scene's main NPC hiding, and why?",
+            "Which piece of information must you be able to find in three seconds during play?"
+          ],
+          "example": "• The ferrywoman was paid by the watch.\n• Offered more, she hesitates, then betrays the watch.\n• If the PCs dawdle: the patrol arrives at the third bell.",
+          "pitfall": "Writing the whole scene as prose: in play, you won't find the information. Prefer short bullet points."
+        },
+        "choices": {
+          "title": "Choices and consequences",
+          "purpose": "What gives players agency: their decisions truly change what happens next.",
+          "questions": [
+            "What are at least two ways to approach the scene?",
+            "What does each option cost, or put at risk?",
+            "What happens on a failure? Does the scene still move forward?"
+          ],
+          "example": "Bribe the ferrywoman: quick, but she will sell them out later. Threaten her: she gives in, but secretly warns the watch. Swim across: discreet, but the gear is lost or damaged.",
+          "pitfall": "\"Fake choices\": every option leads to the same result. And forgetting failure: a bad roll shouldn't stop the game, it should complicate it."
+        },
+        "branches": {
+          "title": "Story branches",
+          "purpose": "Link the scene to the next ones based on what the players do, so no choice leads to a dead end.",
+          "questions": [
+            "Where do the players go if they succeed? And if they fail?",
+            "What if they do something unexpected: flee, side with the enemy, ignore the lead?",
+            "Is a key piece of information reachable through a single path only?"
+          ],
+          "example": "Success → \"The smugglers' passage\". Failure → \"Arrested by the watch\" (which also leads to the passage, but in chains). The ferrywoman's betrayal → \"Ambush on the riverbank\".",
+          "pitfall": "A single exit that depends on one successful roll. If the dice turn, the game stops: always keep a path open, even a costlier one."
+        },
+        "combat": {
+          "title": "Combat or encounter",
+          "purpose": "Prepare an encounter that is easy to read, and interesting beyond trading blows.",
+          "questions": [
+            "Why are these enemies fighting? What do they really want: flee, protect, steal, buy time?",
+            "Does the terrain change anything: high ground, water, darkness, things to knock over?",
+            "Can this fight be avoided, won another way, or lost without dying?"
+          ],
+          "example": "Three smugglers aren't trying to kill anyone: they want to sink the boat holding the evidence. If they succeed, the fight is lost, even with every PC still standing.",
+          "pitfall": "The \"bag of hit points\" fight: with no goal other than taking the enemy down, it quickly becomes repetitive. Give each side a purpose."
+        }
+      },
+      "chapter": {
+        "synopsis": {
+          "title": "Synopsis",
+          "purpose": "Your overview: the starting situation, what happens, and how it might end.",
+          "questions": [
+            "How are the characters involved?",
+            "What pushes them to act now rather than later?",
+            "What are two or three possible outcomes?"
+          ],
+          "example": "The Vaulx bridge collapsed overnight and the village is cut off from the market. The bailiff blames the miners; the miners blame the bailiff. The PCs, stuck on the wrong bank, are the only ones nobody suspects.",
+          "pitfall": "Telling the story like a novel, including what the characters will do. Describe the situation and the forces at play, not the players' path."
+        },
+        "objectives": {
+          "title": "Player objectives",
+          "purpose": "What the characters are trying to achieve, from their own point of view.",
+          "questions": [
+            "Do the players clearly know what they have to do?",
+            "How and when will they find out?",
+            "Can the objective shift along the way, after a revelation?"
+          ],
+          "example": "Find out who sabotaged the bridge, and prove it before the spring fair.",
+          "pitfall": "An objective only the GM knows: the players wander without knowing what to do. If they can't put it into words, they don't have it."
+        },
+        "stakes": {
+          "title": "Narrative stakes",
+          "purpose": "What is at stake: what can be gained and, above all, what can be lost.",
+          "questions": [
+            "What happens if the characters fail? Who suffers?",
+            "Does it affect a character personally?",
+            "Can the players lose something even when they succeed?"
+          ],
+          "example": "If the culprit isn't found, the bailiff will hang the brother of the blacksmith, the PCs' ally, as an example.",
+          "pitfall": "Abstract stakes (\"save the kingdom\") with no face. An NPC the players like, in danger, matters more than an entire kingdom."
+        }
+      },
+      "arc": {
+        "synopsis": {
+          "title": "Arc synopsis",
+          "purpose": "The arc's main thread: the central problem and what drives it forward.",
+          "questions": [
+            "What is the central problem of this arc?",
+            "Who is responsible for it, and what do they want?",
+            "What happens if the characters don't step in?"
+          ],
+          "example": "A guild of cartographers is slowly erasing villages from the official maps, to sell the \"empty\" land to the crown. Unchecked, three villages will vanish by winter.",
+          "pitfall": "A synopsis with no antagonist or opposing force: nothing drives the story, and the players wait for something to happen."
+        },
+        "themes": {
+          "title": "Themes",
+          "purpose": "The story's colour, what it is really about beyond the plot.",
+          "questions": [
+            "What moral question will the players face?",
+            "What hard choice will the arc force on them?"
+          ],
+          "example": "Official truth versus lived truth. How far should one obey an unjust law?",
+          "pitfall": "Listing genres (\"horror, mystery\") instead of themes. A genre says how the story is told; a theme says what it is about."
+        },
+        "stakes": {
+          "title": "Stakes",
+          "purpose": "What changes, for the world and for the characters, depending on how the arc ends.",
+          "questions": [
+            "What becomes of the world if the antagonist wins?",
+            "What do the characters gain by getting involved?",
+            "What do they personally risk?"
+          ],
+          "example": "If the guild wins, entire families lose their land, including one PC's home village.",
+          "pitfall": "Stakes that don't concern the characters. Always tie the world's problem to something they care about."
+        },
+        "rewards": {
+          "title": "Rewards and progression",
+          "purpose": "What motivates the characters and marks their progress.",
+          "questions": [
+            "Beyond gold, what can they gain: allies, reputation, knowledge, a place of their own?",
+            "How does the world react to their success?"
+          ],
+          "example": "The gratitude of the saved villages (a safe haven), a true map nobody else owns, and a sworn enemy within the guild.",
+          "pitfall": "Only planning gold and items. The most memorable rewards change the characters' place in the world."
+        },
+        "resolution": {
+          "title": "Planned resolution",
+          "purpose": "The arc's possible endings, not a fixed one.",
+          "questions": [
+            "What are two or three possible outcomes?",
+            "What happens if the characters fail?",
+            "What stays open for what comes next?"
+          ],
+          "example": "The guild is publicly exposed; or the PCs buy it out themselves; or the villages are lost and the next arc opens with the exodus.",
+          "pitfall": "A single ending written in advance: the players' choices no longer matter. Prepare outcomes, not a script."
+        }
+      }
+    }
+  },
+  "writingReview": {
+    "title": "Editor's review",
+    "countN": "{{n}} tip(s)",
+    "intro": "Writing tips to bring your adventure to life. Nothing mandatory: keep what serves your story.",
+    "allGood": "Nothing to report: your campaign avoids the classic pitfalls the review can spot.",
+    "showMore": "Show {{n}} more",
+    "see": "View",
+    "hintsTitle": "Review tips ({{n}})",
+    "kindCombat": "Combat",
+    "categories": {
+      "AGENCY": "Player agency",
+      "STAKES": "Stakes",
+      "PACING": "Pacing",
+      "NARRATION": "Narration"
+    },
+    "rules": {
+      "WRITE-001-CORRIDOR": {
+        "observation": "\"{{entity}}\" chains {{count}} scenes without any choice or branch.",
+        "why": "The players follow a path drawn in advance: they may feel like spectators of the story.",
+        "question": "At what point could they decide something that changes what happens next?"
+      },
+      "WRITE-002-FAKE-CHOICE": {
+        "observation": "The {{count}} exits of \"{{entity}}\" all lead to \"{{target}}\".",
+        "why": "When every option ends up in the same place, it's a fake choice, and players eventually notice.",
+        "question": "What could differ depending on the option chosen: a place, an ally, a price to pay?"
+      },
+      "WRITE-003-SINGLE-CLUE": {
+        "observation": "The revelation \"{{entity}}\" is linked from only {{incoming}} scene(s).",
+        "why": "If the players miss that path, they lose the information and the story stalls. The three clue rule suggests three ways to discover every essential piece of information.",
+        "question": "In which other scenes could the players find a clue leading there?"
+      },
+      "WRITE-004-MONOTONOUS-PACING": {
+        "observation": "\"{{entity}}\" chains {{count}} \"{{kind}}\" scenes in a row.",
+        "why": "Repetition wears the table out: three fights in a row, or three conversations, end up feeling the same.",
+        "question": "Could a scene of another kind (exploration, conversation, revelation) fit in between?"
+      },
+      "WRITE-005-NO-STAKES": {
+        "observation": "\"{{entity}}\" has no written stakes yet.",
+        "why": "Without stakes, the players don't know why they should act or what they risk: tension drops.",
+        "question": "What happens if the characters fail, and who suffers?"
+      },
+      "WRITE-006-LONG-NARRATION": {
+        "observation": "The narration of \"{{entity}}\" is {{chars}} characters long, more than a minute when read aloud.",
+        "why": "Past one minute, the players' attention drifts and important details get lost.",
+        "question": "What is essential to open the scene, and what can be discovered in play?"
+      },
+      "WRITE-007-NARRATION-DECIDES": {
+        "observation": "The narration of \"{{entity}}\" contains \"{{phrase}}\".",
+        "why": "The text decides what the characters do or feel. Players like to stay in charge of their reactions.",
+        "question": "How could you describe the situation so that they want to react that way on their own?"
+      },
+      "WRITE-008-COMBAT-NO-PURPOSE": {
+        "observation": "The fight in \"{{entity}}\" has no described choices and no notes on the enemies' motives.",
+        "why": "A fight with no goal other than taking the enemy down quickly becomes repetitive.",
+        "question": "What do these enemies really want: flee, protect, steal, buy time?"
+      },
+      "WRITE-009-SINGLE-ENDING": {
+        "observation": "\"{{entity}}\", the last scene of the arc \"{{arc}}\", offers no choice and no exit.",
+        "why": "A single ending written in advance takes the weight out of the players' decisions.",
+        "question": "What happens if the characters fail, or switch sides?"
+      },
+      "WRITE-010-UNTYPED-SCENES": {
+        "observation": "{{percent}}% of the campaign's scenes have no type ({{count}} scenes).",
+        "why": "Without types, you can't see the adventure's pacing at a glance, and the review can't help you with it.",
+        "question": "For each scene: will the players mostly explore, fight, talk, go through an event or discover something?"
+      }
+    }
+  },
+  "guided": {
+    "entry": "Guided method",
+    "entryFirst": "Write an adventure step by step",
+    "backToCampaign": "Back to the campaign",
+    "progress": "Step {{n}} of {{total}}",
+    "exampleLabel": "Example",
+    "previous": "Previous",
+    "next": "Next",
+    "create": "Create the adventure",
+    "creating": "Creating…",
+    "restart": "Start over",
+    "restartTitle": "Start the method over?",
+    "restartMessage": "All your answers will be erased.",
+    "createError": "Creation failed. Your answers are kept: try again in a moment.",
+    "unknownMethod": "This guided method doesn't exist.",
+    "placementExisting": "Add it to an existing arc",
+    "placementArcLabel": "Arc",
+    "placementNew": "Create a new arc",
+    "placementNewArcLabel": "New arc name",
+    "placementNewArcPlaceholder": "E.g.: The Northern Lands",
+    "reviewArc": "Arc",
+    "reviewChapter": "Chapter",
+    "linkScenes": "Link the rooms in order (\"To the next room\" exits)",
+    "linkLabel": "To the next room",
+    "reviewAfter": "Everything stays editable afterwards. Have a look at the \"Editor's review\" on the campaign page: it will tell you what can still be strengthened.",
+    "fiveRoom": {
+      "name": "Five-room dungeon",
+      "steps": {
+        "placement": {
+          "title": "The five-room dungeon",
+          "why": "A simple method to write a short, complete adventure, ideal for one session. It chains five key moments: a guardian at the entrance, a challenge that can't be solved with a sword, a setback, the climax, then the reward. The \"dungeon\" can be any place: a manor, a ship, a forest, a masked ball… Start by choosing where to file the adventure in your campaign.",
+          "example": "A crypt under a village chapel, where a relic was stolen. Or a smuggler's ship, on the night it sets sail."
+        },
+        "frame": {
+          "title": "The setting",
+          "why": "Before the rooms, lay down the essentials: a name, a place, and above all a hook. The hook is why the characters go there now. If it concerns them personally, they will commit on their own.",
+          "example": "\"The stolen reliquary\": the village priest, a friend of one PC, vanished with the relic. He was seen going down into the crypt, and the pilgrimage arrives in three days."
+        },
+        "stakes": {
+          "title": "What the players want, and what they risk",
+          "why": "The players must know what they came to do, or they will wander. And failure must cost something: that's what creates tension.",
+          "example": "Goal: bring the relic back before the pilgrimage. Stakes: without it, the village loses its protection, and the priest will be blamed for the theft."
+        },
+        "room1": {
+          "title": "Room 1: the entrance and its guardian",
+          "why": "Something stops anyone from getting in. It starts the adventure right away, and explains why nobody has conquered this place yet. The guardian doesn't have to be a monster: a guard to convince or a dangerous passage work too.",
+          "example": "An old spectral guardian blocks the crypt stairs. He lets through anyone who proves they came to protect the relic, not steal it."
+        },
+        "room2": {
+          "title": "Room 2: the challenge",
+          "why": "Here, a sword isn't enough: a puzzle, a negotiation, a place to explore carefully. It lets non-fighters shine, and changes the pace after the entrance.",
+          "example": "A hall of identical tombs: only the founder's opens, and the clues are in the epitaphs."
+        },
+        "room3": {
+          "title": "Room 3: the setback",
+          "why": "A trap, a red herring or a nasty surprise: things get complicated right before the climax. The characters' resources run low, tension rises.",
+          "example": "The priest is found… but he is the thief. He was bewitched, and he just triggered the collapse of the gallery."
+        },
+        "room4": {
+          "title": "Room 4: the climax",
+          "why": "The big confrontation, the most intense moment of the adventure. To make it memorable, give the opponent a goal other than fighting, and terrain that changes the game.",
+          "example": "The enchantress wants to finish the ritual before dawn. She fights while protecting the circle of candles: putting it out weakens her, but reaching it means crossing icy water."
+        },
+        "room5": {
+          "title": "Room 5: the reward or the revelation",
+          "why": "The ending rewards the effort: a treasure, an ally, knowledge. It's also the right time for a twist that opens what comes next in your campaign.",
+          "example": "The relic is saved, and the freed priest becomes an ally. But the circle bore a symbol: that of a brotherhood the PCs have already met elsewhere."
+        },
+        "review": {
+          "title": "Your adventure is ready to be created",
+          "why": "Here is what will be created: a chapter and its five scenes, already typed so the review can help you with pacing."
+        }
+      },
+      "fields": {
+        "title": {
+          "label": "Adventure name",
+          "placeholder": "E.g.: The stolen reliquary"
+        },
+        "location": {
+          "label": "The place",
+          "placeholder": "E.g.: The crypt under the chapel"
+        },
+        "hook": {
+          "label": "The hook: why do the characters go there now?",
+          "placeholder": "Who sends them, what's urgent, how does it concern them?"
+        },
+        "objectives": {
+          "label": "What the players want to achieve",
+          "placeholder": "Phrased the way the players would say it"
+        },
+        "stakes": {
+          "label": "What happens if they fail",
+          "placeholder": "Who suffers? What is lost?"
+        },
+        "room1": {
+          "name": {
+            "label": "Room name",
+            "placeholder": "E.g.: The guarded entrance"
+          },
+          "nature": {
+            "label": "How does the encounter play out?"
+          },
+          "description": {
+            "label": "What blocks the entrance",
+            "placeholder": "Who or what guards the entrance, and why?"
+          },
+          "enemies": {
+            "label": "Possible opponents",
+            "placeholder": "E.g.: a spectral guardian"
+          },
+          "choices": {
+            "label": "How to get through? And if it goes wrong?",
+            "placeholder": "At least two ways through, and what happens on a failure"
+          },
+          "secret": {
+            "label": "What the GM knows (secret, guardian's motive)",
+            "placeholder": "What the players don't know"
+          }
+        },
+        "room2": {
+          "name": {
+            "label": "Room name",
+            "placeholder": "E.g.: The challenge"
+          },
+          "nature": {
+            "label": "What kind of challenge?"
+          },
+          "description": {
+            "label": "The challenge",
+            "placeholder": "What must be solved, convinced or discovered?"
+          },
+          "choices": {
+            "label": "How to succeed? And on a failure?",
+            "placeholder": "The possible approaches, and what a failure costs"
+          },
+          "secret": {
+            "label": "The solution and clues (for the GM)",
+            "placeholder": "Where the clues are, what the answer is"
+          }
+        },
+        "room3": {
+          "name": {
+            "label": "Room name",
+            "placeholder": "E.g.: The setback"
+          },
+          "description": {
+            "label": "The setback",
+            "placeholder": "Which trap, which nasty surprise?"
+          },
+          "choices": {
+            "label": "How can the players react?",
+            "placeholder": "The options, and what they cost"
+          },
+          "secret": {
+            "label": "What hides behind it (for the GM)",
+            "placeholder": "The truth behind the red herring or the trap"
+          }
+        },
+        "room4": {
+          "name": {
+            "label": "Room name",
+            "placeholder": "E.g.: The climax"
+          },
+          "description": {
+            "label": "The confrontation",
+            "placeholder": "Who do they face, and in what setting?"
+          },
+          "enemies": {
+            "label": "Opponents",
+            "placeholder": "E.g.: the enchantress and two followers"
+          },
+          "choices": {
+            "label": "How to win other than by striking?",
+            "placeholder": "Goals, terrain features, outcome if the PCs lose"
+          },
+          "secret": {
+            "label": "What the opponent really wants (for the GM)",
+            "placeholder": "Their goal, what they'll do when in trouble"
+          }
+        },
+        "room5": {
+          "name": {
+            "label": "Room name",
+            "placeholder": "E.g.: The reward"
+          },
+          "description": {
+            "label": "The reward",
+            "placeholder": "What do the characters gain?"
+          },
+          "choices": {
+            "label": "Consequences for what comes next",
+            "placeholder": "What changes in the world depending on what they did"
+          },
+          "secret": {
+            "label": "The revelation or twist (for the GM)",
+            "placeholder": "What opens the rest of your campaign"
+          }
+        }
+      },
+      "options": {
+        "room1": {
+          "nature": {
+            "combat": "A fight",
+            "social": "A conversation",
+            "obstacle": "An obstacle"
+          }
+        },
+        "room2": {
+          "nature": {
+            "puzzle": "A puzzle",
+            "social": "A negotiation",
+            "exploration": "An exploration"
+          }
+        }
+      },
+      "defaults": {
+        "room1": {
+          "name": "The guarded entrance"
+        },
+        "room2": {
+          "name": "The challenge"
+        },
+        "room3": {
+          "name": "The setback"
+        },
+        "room4": {
+          "name": "The climax"
+        },
+        "room5": {
+          "name": "The reward"
+        }
+      }
+    }
   }
 }

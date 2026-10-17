@@ -1,0 +1,37 @@
+@if (report) {
+  <section class="review-panel">
+    <button type="button" class="review-header" (click)="toggle()" [attr.aria-expanded]="!collapsed">
+      <lucide-icon [img]="collapsed ? ChevronRight : ChevronDown" [size]="16"></lucide-icon>
+      <lucide-icon [img]="Lightbulb" [size]="16" class="review-icon"></lucide-icon>
+      <span class="review-title">{{ 'writingReview.title' | translate }}</span>
+      @if (total > 0) {
+        <span class="review-count">{{ 'writingReview.countN' | translate: { n: total } }}</span>
+      }
+    </button>
+
+    @if (!collapsed) {
+      <div class="review-body">
+        @if (total === 0) {
+          <p class="review-empty">{{ 'writingReview.allGood' | translate }}</p>
+        } @else {
+          <p class="review-intro">{{ 'writingReview.intro' | translate }}</p>
+          @for (group of groups; track group.category) {
+            <div class="review-group">
+              <h3>{{ ('writingReview.categories.' + group.category) | translate }}</h3>
+              <div class="review-list">
+                @for (remark of visible(group); track remark.ruleId + remark.entityId) {
+                  <app-writing-remark-card [remark]="remark" [campaignId]="campaignId"></app-writing-remark-card>
+                }
+              </div>
+              @if (group.remarks.length > perGroup && !expanded.has(group.category)) {
+                <button type="button" class="review-more" (click)="showAll(group.category)">
+                  {{ 'writingReview.showMore' | translate: { n: group.remarks.length - perGroup } }}
+                </button>
+              }
+            </div>
+          }
+        }
+      </div>
+    }
+  </section>
+}

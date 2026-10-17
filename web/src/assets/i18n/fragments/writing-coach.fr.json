@@ -1,0 +1,204 @@
+{
+  "writingCoach": {
+    "triggerTitle": "Conseils d'écriture",
+    "panelLabel": "Conseils d'écriture",
+    "kicker": "Conseils d'écriture",
+    "purposeTitle": "À quoi ça sert",
+    "questionsTitle": "Questions pour t'aider",
+    "exampleTitle": "Exemple",
+    "pitfallTitle": "Piège classique",
+    "footer": "Ce sont des repères, pas des règles : ton aventure, tes choix. Besoin d'idées concrètes ? « Étoffer avec l'IA » propose des pistes que tu valides une à une.",
+    "topics": {
+      "scene": {
+        "description": {
+          "title": "Description courte",
+          "purpose": "Te rappeler en une phrase ce qui se joue ici, quand tu prépares la séance ou que tu dois improviser.",
+          "questions": [
+            "Si tu devais résumer la scène à un autre MJ en dix secondes, que dirais-tu ?",
+            "Qu'est-ce qui change entre le début et la fin de la scène ?",
+            "Qu'est-ce que les personnages viennent chercher ici ?"
+          ],
+          "example": "Les PJ doivent convaincre la passeuse de leur faire traverser le fleuve avant l'aube, alors qu'elle a déjà été payée pour les dénoncer.",
+          "pitfall": "Décrire le décor au lieu de la situation : « une taverne » ne dit pas ce qui s'y joue. Une bonne description contient un objectif ou une tension."
+        },
+        "nodeType": {
+          "title": "Type de nœud",
+          "purpose": "Dire, à toi comme à l'outil, la nature de la scène : lieu à explorer, rencontre, PNJ, événement ou révélation.",
+          "questions": [
+            "Qu'est-ce que les joueurs vont surtout faire ici : explorer, combattre, parler, subir ou découvrir ?",
+            "Cette scène apporte-t-elle une information clé pour la suite ? (c'est alors une révélation)"
+          ],
+          "example": "Un interrogatoire dans la cave du guet est une scène « PNJ » ; la découverte du registre falsifié qui s'y cache est une « révélation ».",
+          "pitfall": "Tout laisser en « générique » : tu perds la vue d'ensemble du rythme de ton aventure (trois combats d'affilée passent alors inaperçus)."
+        },
+        "setting": {
+          "title": "Lieu et moment",
+          "purpose": "Ancrer la scène quelque part et à un moment précis, pour que les joueurs puissent s'y projeter.",
+          "questions": [
+            "Pourquoi ce lieu-là plutôt qu'un autre ? Qu'offre-t-il comme opportunités ou obstacles ?",
+            "Le moment ajoute-t-il une contrainte : la nuit, la foule, la tempête, une cloche qui va sonner ?",
+            "Que peut-on y utiliser : un escalier, un lustre, une foule où se cacher ?"
+          ],
+          "example": "Le marché aux poissons, une heure avant l'ouverture : les étals sont vides, mais les marchands arrivent bientôt et tout se saura.",
+          "pitfall": "Un lieu neutre qui n'apporte rien. Un bon lieu donne des idées aux joueurs et des complications au MJ."
+        },
+        "atmosphere": {
+          "title": "Ambiance et atmosphère",
+          "purpose": "Te donner des détails sensoriels à piocher en jeu, pour rendre la scène vivante sans tout préparer.",
+          "questions": [
+            "Qu'entend-on ? Que sent-on ? Quelle est la température ?",
+            "Quel détail un joueur retiendrait-il en sortant de la partie ?",
+            "Quelle émotion veux-tu provoquer : malaise, émerveillement, urgence ?"
+          ],
+          "example": "Odeur de cire chaude et d'encens rance. Un goutte-à-goutte régulier quelque part dans le noir. Le froid de la pierre traverse les bottes.",
+          "pitfall": "Ne parler que de ce qu'on voit. Deux sens autres que la vue font plus d'effet qu'un long paragraphe descriptif."
+        },
+        "narration": {
+          "title": "Narration pour les joueurs",
+          "purpose": "Le texte que tu lis tel quel pour lancer la scène. Il plante le décor et met les joueurs en situation d'agir.",
+          "questions": [
+            "Peut-on le lire en moins d'une minute ?",
+            "Se termine-t-il sur une situation qui appelle une réaction ?",
+            "Qu'est-ce que les joueurs doivent absolument savoir, et que peuvent-ils découvrir en posant des questions ?"
+          ],
+          "example": "La porte du moulin bat au vent. À l'intérieur, la meule tourne encore, à vide. Sur le sol fariné, des traces de pas mènent vers la trappe… et aucune n'en revient. Que faites-vous ?",
+          "pitfall": "Décider à la place des personnages (« vous avez peur », « vous entrez prudemment ») ou tout révéler d'un coup. Décris ce qu'ils perçoivent, laisse-les choisir ce qu'ils ressentent et font."
+        },
+        "gmNotes": {
+          "title": "Notes et secrets du MJ",
+          "purpose": "Ce que les joueurs ignorent : vérités cachées, motivations des PNJ, ce qui se passe en coulisse.",
+          "questions": [
+            "Que se passe-t-il si les joueurs ne font rien ?",
+            "Que cache le PNJ principal de la scène, et pourquoi ?",
+            "Quelle information dois-tu absolument retrouver en trois secondes pendant la partie ?"
+          ],
+          "example": "• La passeuse a été payée par le guet.\n• Si on lui propose plus, elle hésite, puis trahit le guet.\n• Si les PJ tardent : la patrouille arrive au troisième son de cloche.",
+          "pitfall": "Rédiger la scène entière en prose : en jeu, tu ne retrouveras pas l'info. Préfère des puces courtes."
+        },
+        "choices": {
+          "title": "Choix et conséquences",
+          "purpose": "Ce qui donne du pouvoir aux joueurs : leurs décisions changent vraiment la suite.",
+          "questions": [
+            "Quelles sont au moins deux façons d'aborder la scène ?",
+            "Qu'est-ce que chaque option coûte, ou fait perdre ?",
+            "Que se passe-t-il en cas d'échec ? La scène avance-t-elle quand même ?"
+          ],
+          "example": "Soudoyer la passeuse : rapide, mais elle les vendra plus tard. La menacer : elle cède, mais prévient le guet en cachette. Traverser à la nage : discret, mais l'équipement est perdu ou abîmé.",
+          "pitfall": "Les « faux choix » : toutes les options mènent au même résultat. Et oublier l'échec : un jet de dés raté ne doit pas bloquer la partie, il doit la compliquer."
+        },
+        "branches": {
+          "title": "Branches narratives",
+          "purpose": "Relier la scène aux suivantes selon ce que font les joueurs, pour qu'aucun choix ne mène à une impasse.",
+          "questions": [
+            "Où vont les joueurs s'ils réussissent ? Et s'ils échouent ?",
+            "Et s'ils font quelque chose d'inattendu : fuir, s'allier à l'ennemi, ignorer la piste ?",
+            "Une information essentielle n'est-elle accessible que par un seul chemin ?"
+          ],
+          "example": "Succès → « Le passage clandestin ». Échec → « Arrêtés par le guet » (qui mène aussi au passage, mais menottés). Trahison de la passeuse → « Embuscade sur la rive ».",
+          "pitfall": "Une seule sortie qui dépend d'un seul jet réussi. Si les dés trahissent, la partie s'arrête : prévois toujours un chemin, même plus coûteux."
+        },
+        "combat": {
+          "title": "Combat ou rencontre",
+          "purpose": "Préparer une rencontre lisible, et intéressante au-delà de l'échange de coups.",
+          "questions": [
+            "Pourquoi ces ennemis se battent-ils ? Que veulent-ils vraiment : fuir, protéger, voler, gagner du temps ?",
+            "Le terrain change-t-il quelque chose : hauteur, eau, obscurité, objets à renverser ?",
+            "Peut-on éviter ce combat, le gagner autrement, ou le perdre sans mourir ?"
+          ],
+          "example": "Trois contrebandiers ne cherchent pas à tuer : ils veulent couler la barque qui contient les preuves. S'ils y parviennent, le combat est perdu, même si tous les PJ sont debout.",
+          "pitfall": "Le combat « sac de points de vie » : sans autre objectif que d'abattre l'adversaire, il devient vite répétitif. Donne un but à chaque camp."
+        }
+      },
+      "chapter": {
+        "synopsis": {
+          "title": "Synopsis",
+          "purpose": "Ta vue d'ensemble : la situation de départ, ce qui se passe, et comment ça peut se terminer.",
+          "questions": [
+            "Comment les personnages sont-ils impliqués ?",
+            "Qu'est-ce qui les pousse à agir maintenant, et pas plus tard ?",
+            "Quelles sont deux ou trois issues possibles ?"
+          ],
+          "example": "Le pont de Vaulx s'est effondré pendant la nuit et le village est coupé du marché. Le bailli accuse les mineurs ; les mineurs accusent le bailli. Les PJ, coincés sur la mauvaise rive, sont les seuls que personne ne soupçonne.",
+          "pitfall": "Raconter l'histoire comme un roman, avec ce que feront les personnages. Décris la situation et les forces en présence, pas le parcours des joueurs."
+        },
+        "objectives": {
+          "title": "Objectifs des joueurs",
+          "purpose": "Ce que les personnages cherchent à accomplir, de leur point de vue à eux.",
+          "questions": [
+            "Les joueurs savent-ils clairement ce qu'ils doivent faire ?",
+            "Comment et quand vont-ils l'apprendre ?",
+            "L'objectif peut-il évoluer en cours de route, à la suite d'une révélation ?"
+          ],
+          "example": "Trouver qui a saboté le pont, et le prouver avant la foire de printemps.",
+          "pitfall": "Un objectif que seul le MJ connaît : les joueurs errent sans savoir quoi faire. S'ils ne peuvent pas le formuler, ils ne l'ont pas."
+        },
+        "stakes": {
+          "title": "Enjeux narratifs",
+          "purpose": "Ce qui est en jeu : ce qu'on peut gagner, et surtout ce qu'on peut perdre.",
+          "questions": [
+            "Que se passe-t-il si les personnages échouent ? Qui en souffre ?",
+            "Est-ce que ça touche un personnage personnellement ?",
+            "Les joueurs peuvent-ils perdre quelque chose même en réussissant ?"
+          ],
+          "example": "Si le coupable n'est pas trouvé, le bailli fera pendre le frère de la forgeronne, l'alliée des PJ, pour l'exemple.",
+          "pitfall": "Des enjeux abstraits (« sauver le royaume ») sans visage. Un PNJ que les joueurs apprécient, en danger, compte plus qu'un royaume entier."
+        }
+      },
+      "arc": {
+        "synopsis": {
+          "title": "Synopsis de l'arc",
+          "purpose": "Le fil rouge de l'arc : le problème central et ce qui le fait avancer.",
+          "questions": [
+            "Quel est le problème central de cet arc ?",
+            "Qui en est responsable, et que veut-il ?",
+            "Que se passe-t-il si les personnages n'interviennent pas ?"
+          ],
+          "example": "Une guilde de cartographes efface peu à peu des villages des cartes officielles, pour revendre les terres « vides » à la couronne. Sans intervention, trois villages disparaîtront d'ici l'hiver.",
+          "pitfall": "Un synopsis sans antagoniste ni force opposée : rien ne pousse l'histoire, et les joueurs attendent qu'il se passe quelque chose."
+        },
+        "themes": {
+          "title": "Thèmes",
+          "purpose": "La couleur de l'histoire, ce dont elle parle vraiment, au-delà de l'intrigue.",
+          "questions": [
+            "Quelle question morale les joueurs vont-ils rencontrer ?",
+            "Quel choix difficile l'arc va-t-il leur imposer ?"
+          ],
+          "example": "La vérité officielle contre la vérité vécue. Jusqu'où obéir à une loi injuste ?",
+          "pitfall": "Lister des genres (« horreur, mystère ») au lieu de thèmes. Un genre dit comment l'histoire se raconte, un thème dit ce qu'elle raconte."
+        },
+        "stakes": {
+          "title": "Enjeux",
+          "purpose": "Ce qui change, pour le monde et pour les personnages, selon l'issue de l'arc.",
+          "questions": [
+            "Que devient le monde si l'antagoniste gagne ?",
+            "Qu'est-ce que les personnages gagnent à s'en mêler ?",
+            "Qu'est-ce qu'ils risquent personnellement ?"
+          ],
+          "example": "Si la guilde gagne, des familles entières perdent leurs terres, dont le village natal d'un des PJ.",
+          "pitfall": "Des enjeux qui ne concernent pas les personnages. Relie toujours le problème du monde à quelque chose qui leur tient à cœur."
+        },
+        "rewards": {
+          "title": "Récompenses et progression",
+          "purpose": "Ce qui motive les personnages et marque leur progression.",
+          "questions": [
+            "Au-delà de l'or, que peuvent-ils gagner : des alliés, une réputation, un savoir, un lieu à eux ?",
+            "Comment le monde réagit-il à leur réussite ?"
+          ],
+          "example": "La gratitude des villages sauvés (un refuge sûr), une vraie carte que personne d'autre ne possède, et un ennemi juré au sein de la guilde.",
+          "pitfall": "Ne prévoir que de l'or et des objets. Les récompenses les plus mémorables changent la place des personnages dans le monde."
+        },
+        "resolution": {
+          "title": "Dénouement prévu",
+          "purpose": "Les fins possibles de l'arc, pas une fin imposée.",
+          "questions": [
+            "Quelles sont deux ou trois issues possibles ?",
+            "Que se passe-t-il si les personnages échouent ?",
+            "Qu'est-ce qui reste ouvert pour la suite ?"
+          ],
+          "example": "La guilde est démasquée publiquement ; ou bien elle est rachetée par les PJ eux-mêmes ; ou bien les villages sont perdus et l'arc suivant commence par l'exode.",
+          "pitfall": "Une seule fin écrite d'avance : les choix des joueurs ne comptent plus. Prépare des issues, pas un scénario."
+        }
+      }
+    }
+  }
+}

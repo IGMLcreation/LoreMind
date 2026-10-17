@@ -486,6 +486,18 @@
   &:hover { background: #5b52e0; }
 }
 
+// Entrée « Méthode guidée » (Mentor d'écriture, M3) : un lien stylé en bouton,
+// accent ambré du mentor pour le distinguer des créations « à la main ».
+.btn-guided {
+  text-decoration: none;
+  background: rgba(251, 191, 36, 0.12);
+  color: #fde68a;
+  border: 1px solid rgba(251, 191, 36, 0.35);
+
+  &:hover { background: rgba(251, 191, 36, 0.2); }
+  &:focus-visible { outline: 2px solid #6c63ff; outline-offset: 2px; }
+}
+
 // Action secondaire de l'état vide (« ou créer un arc ») — bouton texte discret.
 .empty-alt-action {
   background: none;

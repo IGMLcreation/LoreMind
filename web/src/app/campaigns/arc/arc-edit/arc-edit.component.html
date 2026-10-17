@@ -29,6 +29,9 @@
     <!-- Tout est optionnel sauf le titre : identité visible, le reste replié. -->
     <p class="optional-hint">{{ 'arcEdit.optionalHint' | translate }}</p>
 
+    <!-- Mentor d'écriture (M2) : conseils de relecture qui concernent cette entité. -->
+    <app-writing-review-hints [campaignId]="campaignId" entityType="ARC" [entityId]="arcId"></app-writing-review-hints>
+
     <!-- Co-création (Pilier A) : le co-MJ propose, validation champ par champ → remplit le formulaire. -->
     <app-entity-assist-panel
       [entityType]="'arc'" [entityId]="arcId" [campaignId]="campaignId"
@@ -47,7 +50,10 @@
     </div>
 
     <div class="field">
-      <label for="arc-edit-description">{{ 'arcEdit.synopsisLabel' | translate }}</label>
+      <div class="field-label-row">
+        <label for="arc-edit-description">{{ 'arcEdit.synopsisLabel' | translate }}</label>
+        <app-writing-coach-trigger topic="arc.synopsis"></app-writing-coach-trigger>
+      </div>
       <textarea
         id="arc-edit-description"
         formControlName="description"
@@ -89,10 +95,13 @@
     </app-expandable-section>
 
     <!-- Thèmes et enjeux -->
-    <app-expandable-section [title]="'arcEdit.themesStakesSectionTitle' | translate" icon="🎭" [filled]="themesStakesFilled">
+    <app-expandable-section [title]="'arcEdit.themesStakesSectionTitle' | translate" icon="🎭" [initiallyOpen]="focusSection === 'stakes'" [filled]="themesStakesFilled">
       <div class="field-row">
         <div class="field">
-          <label for="arc-edit-themes">{{ 'arcEdit.themesLabel' | translate }}</label>
+          <div class="field-label-row">
+            <label for="arc-edit-themes">{{ 'arcEdit.themesLabel' | translate }}</label>
+            <app-writing-coach-trigger topic="arc.themes"></app-writing-coach-trigger>
+          </div>
           <textarea
             id="arc-edit-themes"
             formControlName="themes"
@@ -101,7 +110,10 @@
           </textarea>
         </div>
         <div class="field">
-          <label for="arc-edit-stakes">{{ 'arcEdit.stakesLabel' | translate }}</label>
+          <div class="field-label-row">
+            <label for="arc-edit-stakes">{{ 'arcEdit.stakesLabel' | translate }}</label>
+            <app-writing-coach-trigger topic="arc.stakes"></app-writing-coach-trigger>
+          </div>
           <textarea
             id="arc-edit-stakes"
             formControlName="stakes"
@@ -129,7 +141,10 @@
     <!-- Récompenses et dénouement -->
     <app-expandable-section [title]="'arcEdit.rewardsResolutionSectionTitle' | translate" icon="🎁" [filled]="rewardsResolutionFilled">
       <div class="field">
-        <label for="arc-edit-rewards">{{ 'arcEdit.rewardsLabel' | translate }}</label>
+        <div class="field-label-row">
+          <label for="arc-edit-rewards">{{ 'arcEdit.rewardsLabel' | translate }}</label>
+          <app-writing-coach-trigger topic="arc.rewards"></app-writing-coach-trigger>
+        </div>
         <textarea
           id="arc-edit-rewards"
           formControlName="rewards"
@@ -138,7 +153,10 @@
         </textarea>
       </div>
       <div class="field">
-        <label for="arc-edit-resolution">{{ 'arcEdit.resolutionLabel' | translate }}</label>
+        <div class="field-label-row">
+          <label for="arc-edit-resolution">{{ 'arcEdit.resolutionLabel' | translate }}</label>
+          <app-writing-coach-trigger topic="arc.resolution"></app-writing-coach-trigger>
+        </div>
         <textarea
           id="arc-edit-resolution"
           formControlName="resolution"

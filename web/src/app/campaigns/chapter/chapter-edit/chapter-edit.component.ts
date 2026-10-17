@@ -27,6 +27,8 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
 import { EntityAssistPanelComponent } from '../../../shared/entity-assist-panel/entity-assist-panel.component';
 import { FieldProposal } from '../../../services/entity-assist.model';
 import { SceneDraftPanelComponent } from '../../../shared/scene-draft-panel/scene-draft-panel.component';
+import { WritingCoachTriggerComponent } from '../../../shared/writing-coach/writing-coach-trigger.component';
+import { WritingReviewHintsComponent } from '../../../shared/writing-review/writing-review-hints.component';
 
 /**
  * Écran d'édition d'un Chapitre. Donnée de SCÉNARIO uniquement.
@@ -47,7 +49,8 @@ import { SceneDraftPanelComponent } from '../../../shared/scene-draft-panel/scen
     ExpandableSectionComponent,
     EntityAssistPanelComponent,
     SceneDraftPanelComponent,
-    TranslatePipe
+    TranslatePipe,
+    WritingCoachTriggerComponent, WritingReviewHintsComponent
 ],
     templateUrl: './chapter-edit.component.html',
     styleUrls: ['./chapter-edit.component.scss']
@@ -87,6 +90,9 @@ export class ChapterEditComponent implements OnInit {
 
   /** `?assist=draft-scenes` (bouton « Corriger » du guidage) → panneau IA déployé d'office. */
   assistParam: string | null = null;
+
+  /** `?focus=stakes` (lien « Voir » de la relecture d'éditeur) → section dépliée d'office. */
+  focusSection: string | null = null;
 
   availablePages: Page[] = [];
   loreId: string | null = null;
@@ -144,6 +150,7 @@ export class ChapterEditComponent implements OnInit {
         this.arcId = newArcId;
         this.chapterId = newChapterId;
         this.assistParam = this.route.snapshot.queryParamMap.get('assist');
+        this.focusSection = this.route.snapshot.queryParamMap.get('focus');
         this.loadAll();
       }
     });

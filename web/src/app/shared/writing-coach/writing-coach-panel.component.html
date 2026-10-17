@@ -1,0 +1,57 @@
+<aside class="coach-panel" [class.open]="!!topic()"
+  role="complementary"
+  [attr.aria-hidden]="!topic()"
+  [attr.aria-label]="'writingCoach.panelLabel' | translate">
+
+  @if (content(); as c) {
+    <header class="coach-header">
+      <div class="coach-heading">
+        <span class="coach-kicker">
+          <lucide-icon [img]="Lightbulb" [size]="14"></lucide-icon>
+          {{ 'writingCoach.kicker' | translate }}
+        </span>
+        <h2>{{ c.title }}</h2>
+      </div>
+      <button type="button" class="coach-close" (click)="close()"
+        [title]="'common.close' | translate" [attr.aria-label]="'common.close' | translate">
+        <lucide-icon [img]="X" [size]="16"></lucide-icon>
+      </button>
+    </header>
+
+    <div class="coach-body">
+      <section class="coach-block">
+        <h3>{{ 'writingCoach.purposeTitle' | translate }}</h3>
+        <p>{{ c.purpose }}</p>
+      </section>
+
+      @if (c.questions.length) {
+        <section class="coach-block">
+          <h3>{{ 'writingCoach.questionsTitle' | translate }}</h3>
+          <ul class="coach-questions">
+            @for (q of c.questions; track q) {
+              <li>{{ q }}</li>
+            }
+          </ul>
+        </section>
+      }
+
+      @if (c.example) {
+        <section class="coach-block coach-example">
+          <h3>{{ 'writingCoach.exampleTitle' | translate }}</h3>
+          <p>{{ c.example }}</p>
+        </section>
+      }
+
+      @if (c.pitfall) {
+        <section class="coach-block coach-pitfall">
+          <h3>{{ 'writingCoach.pitfallTitle' | translate }}</h3>
+          <p>{{ c.pitfall }}</p>
+        </section>
+      }
+    </div>
+
+    <footer class="coach-footer">
+      <p>{{ 'writingCoach.footer' | translate }}</p>
+    </footer>
+  }
+</aside>

@@ -1,6 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 
 import { LucideAngularModule, ChevronDown, ChevronUp } from 'lucide-angular';
+import { WritingCoachTriggerComponent } from '../writing-coach/writing-coach-trigger.component';
 
 /**
  * Section repliable avec titre (icône + texte) et contenu projeté via ng-content.
@@ -13,7 +14,7 @@ import { LucideAngularModule, ChevronDown, ChevronUp } from 'lucide-angular';
  */
 @Component({
     selector: 'app-expandable-section',
-    imports: [LucideAngularModule],
+    imports: [LucideAngularModule, WritingCoachTriggerComponent],
     templateUrl: './expandable-section.component.html',
     styleUrls: ['./expandable-section.component.scss']
 })
@@ -31,6 +32,11 @@ export class ExpandableSectionComponent implements OnInit {
    * sans avoir à les ouvrir une à une. Le parent calcule l'état.
    */
   @Input() filled = false;
+  /**
+   * Sujet du coach d'écriture (ex. `scene.choices`) : affiche un 💡 dans l'en-tête
+   * qui ouvre les conseils. Pour les sections qui n'ont pas de libellé par champ.
+   */
+  @Input() coachTopic: string | null = null;
 
   isOpen = false;
 

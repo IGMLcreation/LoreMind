@@ -46,6 +46,17 @@
   textarea { resize: vertical; min-height: 4rem; }
 }
 
+// Libellé + bouton 💡 du coach d'écriture sur une même ligne :
+//   <div class="field-label-row">
+//     <label for="x">Enjeux</label>
+//     <app-writing-coach-trigger topic="chapter.stakes"></app-writing-coach-trigger>
+//   </div>
+.field-label-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
 .field-hint {
   color: #6b7280;
   font-size: 0.75rem;

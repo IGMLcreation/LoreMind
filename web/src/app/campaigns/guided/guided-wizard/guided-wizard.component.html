@@ -1,0 +1,171 @@
+@if (method && step) {
+  <div class="wizard">
+
+    <header class="wizard-top">
+      <a class="wizard-back" [routerLink]="['/campaigns', campaignId]">
+        <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon>
+        {{ 'guided.backToCampaign' | translate }}
+      </a>
+      <div class="wizard-method">
+        <lucide-icon [img]="Sparkles" [size]="14"></lucide-icon>
+        {{ k('name') | translate }}
+      </div>
+      <div class="wizard-progress" role="progressbar"
+        [attr.aria-valuenow]="stepIndex + 1" aria-valuemin="1" [attr.aria-valuemax]="total"
+        [attr.aria-label]="'guided.progress' | translate: { n: stepIndex + 1, total: total }">
+        <span class="progress-text">{{ 'guided.progress' | translate: { n: stepIndex + 1, total: total } }}</span>
+        <span class="progress-track"><span class="progress-fill" [style.width.%]="progress"></span></span>
+      </div>
+    </header>
+
+    <main class="wizard-step">
+      <h1 #stepTitle tabindex="-1">{{ k('steps.' + step.id + '.title') | translate }}</h1>
+      <p class="step-why">{{ k('steps.' + step.id + '.why') | translate }}</p>
+
+      @if (step.kind !== 'review') {
+        <aside class="step-example">
+          <span class="example-label">{{ 'guided.exampleLabel' | translate }}</span>
+          <p>{{ k('steps.' + step.id + '.example') | translate }}</p>
+        </aside>
+      }
+
+      <!-- Où ranger l'aventure -->
+      @if (step.kind === 'placement') {
+        <fieldset class="placement">
+          <legend class="sr-only">{{ k('steps.placement.title') | translate }}</legend>
+          @if (linearArcs.length > 0) {
+            <label class="option-card" [class.selected]="answers['placement.mode'] === 'existing'">
+              <input type="radio" name="placement-mode" value="existing"
+                [ngModel]="answers['placement.mode']" (ngModelChange)="setAnswer('placement.mode', $event)" />
+              <span>{{ 'guided.placementExisting' | translate }}</span>
+            </label>
+            @if (answers['placement.mode'] === 'existing') {
+              <div class="field nested">
+                <label for="guided-arc">{{ 'guided.placementArcLabel' | translate }}</label>
+                <select id="guided-arc" [ngModel]="answers['placement.arcId']"
+                  (ngModelChange)="setAnswer('placement.arcId', $event)">
+                  @for (arc of linearArcs; track arc.id) {
+                    <option [value]="arc.id">{{ arc.name }}</option>
+                  }
+                </select>
+              </div>
+            }
+          }
+          <label class="option-card" [class.selected]="answers['placement.mode'] === 'new'">
+            <input type="radio" name="placement-mode" value="new"
+              [ngModel]="answers['placement.mode']" (ngModelChange)="setAnswer('placement.mode', $event)" />
+            <span>{{ 'guided.placementNew' | translate }}</span>
+          </label>
+          @if (answers['placement.mode'] === 'new') {
+            <div class="field nested">
+              <label for="guided-new-arc">{{ 'guided.placementNewArcLabel' | translate }} *</label>
+              <input id="guided-new-arc" type="text" [ngModel]="answers['placement.newArcName']"
+                (ngModelChange)="setAnswer('placement.newArcName', $event)"
+                [placeholder]="'guided.placementNewArcPlaceholder' | translate" />
+            </div>
+          }
+        </fieldset>
+      }
+
+      <!-- Questions de l'étape -->
+      @if (step.kind === 'form') {
+        <div class="step-fields">
+          @for (field of step.fields; track field.key) {
+            @if (field.kind === 'choice') {
+              <fieldset class="field choice-field">
+                <legend>{{ k('fields.' + field.key + '.label') | translate }}</legend>
+                <div class="choice-row">
+                  @for (option of field.options; track option) {
+                    <label class="choice-chip" [class.selected]="answers[field.key] === option">
+                      <!-- attr.* : name/value doivent exister dans le DOM (groupe radio natif,
+                      navigation clavier) ; [value] seul est consommé par le ControlValueAccessor. -->
+                      <input type="radio" [attr.name]="fieldId(field)" [attr.value]="option" [value]="option"
+                        [ngModel]="answers[field.key]" (ngModelChange)="setAnswer(field.key, $event)" />
+                      {{ k('options.' + field.key + '.' + option) | translate }}
+                    </label>
+                  }
+                </div>
+              </fieldset>
+            } @else {
+              <div class="field">
+                <div class="field-label-row">
+                  <label [for]="fieldId(field)">
+                    {{ k('fields.' + field.key + '.label') | translate }}@if (field.required) { * }
+                  </label>
+                  @if (field.coachTopic) {
+                    <app-writing-coach-trigger [topic]="field.coachTopic"></app-writing-coach-trigger>
+                  }
+                </div>
+                @if (field.kind === 'textarea') {
+                  <textarea [id]="fieldId(field)" rows="3"
+                    [ngModel]="answers[field.key]" (ngModelChange)="setAnswer(field.key, $event)"
+                    [placeholder]="k('fields.' + field.key + '.placeholder') | translate"></textarea>
+                } @else {
+                  <input [id]="fieldId(field)" type="text"
+                    [ngModel]="answers[field.key]" (ngModelChange)="setAnswer(field.key, $event)"
+                    [placeholder]="k('fields.' + field.key + '.placeholder') | translate" />
+                }
+              </div>
+            }
+          }
+        </div>
+      }
+
+      <!-- Récapitulatif -->
+      @if (step.kind === 'review' && draft; as d) {
+        <div class="review">
+          <dl class="review-meta">
+            <dt>{{ 'guided.reviewArc' | translate }}</dt>
+            <dd>{{ placementLabel }}</dd>
+            <dt>{{ 'guided.reviewChapter' | translate }}</dt>
+            <dd>{{ d.chapter.name }}</dd>
+          </dl>
+          <ol class="review-scenes">
+            @for (scene of d.scenes; track $index) {
+              <li>
+                <span class="scene-name">{{ scene.name }}</span>
+                <span class="scene-type">{{ ('sceneType.' + scene.type) | translate }}</span>
+              </li>
+            }
+          </ol>
+          <label class="link-toggle">
+            <input type="checkbox" [(ngModel)]="linkScenes" />
+            {{ 'guided.linkScenes' | translate }}
+          </label>
+          <p class="review-after">{{ 'guided.reviewAfter' | translate }}</p>
+        </div>
+      }
+
+      @if (error) {
+        <p class="wizard-error" role="alert">{{ error }}</p>
+      }
+    </main>
+
+    <footer class="wizard-nav">
+      <button type="button" class="btn-secondary" (click)="previous()" [disabled]="stepIndex === 0">
+        <lucide-icon [img]="ArrowLeft" [size]="14"></lucide-icon>
+        {{ 'guided.previous' | translate }}
+      </button>
+      <button type="button" class="btn-ghost" (click)="restart()">
+        <lucide-icon [img]="RotateCcw" [size]="14"></lucide-icon>
+        {{ 'guided.restart' | translate }}
+      </button>
+      @if (isLast) {
+        <button type="button" class="btn-primary" (click)="create()" [disabled]="submitting">
+          <lucide-icon [img]="Check" [size]="14"></lucide-icon>
+          {{ (submitting ? 'guided.creating' : 'guided.create') | translate }}
+        </button>
+      } @else {
+        <button type="button" class="btn-primary" (click)="next()" [disabled]="!canProceed()">
+          {{ 'guided.next' | translate }}
+          <lucide-icon [img]="ArrowRight" [size]="14"></lucide-icon>
+        </button>
+      }
+    </footer>
+  </div>
+} @else {
+  <div class="wizard">
+    <p class="wizard-error">{{ 'guided.unknownMethod' | translate }}</p>
+    <a [routerLink]="['/campaigns', campaignId]">{{ 'guided.backToCampaign' | translate }}</a>
+  </div>
+}

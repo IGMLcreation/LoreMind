@@ -45,6 +45,7 @@ export const routes: Routes = [
   { path: 'campaigns/:campaignId/random-tables/:tableId/edit', loadComponent: () => import('./campaigns/random-table/random-table-edit/random-table-edit.component').then(m => m.RandomTableEditComponent) },
   { path: 'campaigns/:campaignId/random-tables/:tableId', loadComponent: () => import('./campaigns/random-table/random-table-view/random-table-view.component').then(m => m.RandomTableViewComponent) },
   { path: 'campaigns/:campaignId/arcs/create', loadComponent: () => import('./campaigns/arc/arc-create/arc-create.component').then(m => m.ArcCreateComponent) },
+  { path: 'campaigns/:campaignId/guided/:method', loadComponent: () => import('./campaigns/guided/guided-wizard/guided-wizard.component').then(m => m.GuidedWizardComponent) },
   { path: 'campaigns/:campaignId/arcs/:arcId', loadComponent: () => import('./campaigns/arc/arc-view/arc-view.component').then(m => m.ArcViewComponent) },
   { path: 'campaigns/:campaignId/arcs/:arcId/edit', loadComponent: () => import('./campaigns/arc/arc-edit/arc-edit.component').then(m => m.ArcEditComponent) },
   { path: 'campaigns/:campaignId/arcs/:arcId/chapters/create', loadComponent: () => import('./campaigns/chapter/chapter-create/chapter-create.component').then(m => m.ChapterCreateComponent) },

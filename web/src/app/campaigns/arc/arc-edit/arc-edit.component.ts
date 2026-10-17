@@ -26,6 +26,8 @@ import { CAMPAIGN_ICON_OPTIONS } from '../../campaign-icons';
 import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 import { EntityAssistPanelComponent } from '../../../shared/entity-assist-panel/entity-assist-panel.component';
 import { FieldProposal } from '../../../services/entity-assist.model';
+import { WritingCoachTriggerComponent } from '../../../shared/writing-coach/writing-coach-trigger.component';
+import { WritingReviewHintsComponent } from '../../../shared/writing-review/writing-review-hints.component';
 
 /**
  * Écran de détail/modification d'un Arc.
@@ -38,7 +40,7 @@ import { FieldProposal } from '../../../services/entity-assist.model';
  */
 @Component({
     selector: 'app-arc-edit',
-    imports: [ReactiveFormsModule, LucideAngularModule, LoreLinkPickerComponent, AiChatDrawerComponent, ImageGalleryComponent, IconPickerComponent, ExpandableSectionComponent, EntityAssistPanelComponent, TranslatePipe],
+    imports: [ReactiveFormsModule, LucideAngularModule, LoreLinkPickerComponent, AiChatDrawerComponent, ImageGalleryComponent, IconPickerComponent, ExpandableSectionComponent, EntityAssistPanelComponent, TranslatePipe, WritingCoachTriggerComponent, WritingReviewHintsComponent],
     templateUrl: './arc-edit.component.html',
     styleUrls: ['./arc-edit.component.scss']
 })
@@ -73,6 +75,9 @@ export class ArcEditComponent implements OnInit {
   campaignId = '';
   arcId = '';
   arc: Arc | null = null;
+
+  /** `?focus=stakes` (lien « Voir » de la relecture d'éditeur) → section dépliée d'office. */
+  focusSection: string | null = null;
 
   /** Pages disponibles pour le picker (vide si la campagne n'a pas de loreId). */
   availablePages: Page[] = [];
@@ -135,6 +140,7 @@ export class ArcEditComponent implements OnInit {
       if (newArcId !== this.arcId || newCampaignId !== this.campaignId) {
         this.campaignId = newCampaignId;
         this.arcId = newArcId;
+        this.focusSection = this.route.snapshot.queryParamMap.get('focus');
         this.loadAll();
       }
     });
