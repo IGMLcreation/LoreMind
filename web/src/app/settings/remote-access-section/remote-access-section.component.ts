@@ -141,8 +141,15 @@ export class RemoteAccessSectionComponent implements OnInit, OnDestroy {
 
   formatDate(value?: string | null): string {
     if (!value) return '—';
-    const lang = this.translate.currentLang;
-    return new Date(value).toLocaleString(lang ? String(lang) : undefined, { dateStyle: 'medium', timeStyle: 'short' });
+    // getCurrentLang() et non `currentLang` : en ngx-translate 18, `currentLang` est un
+    // signal ; le convertir en texte donnait une locale invalide → RangeError qui
+    // interrompait l'affichage de toute la page Paramètres dès qu'un appareil était appairé.
+    const lang = this.translate.getCurrentLang() === 'en' ? 'en-GB' : 'fr-FR';
+    try {
+      return new Date(value).toLocaleString(lang, { dateStyle: 'medium', timeStyle: 'short' });
+    } catch {
+      return value;
+    }
   }
 
   private apply(status: RemoteAccessStatus): void {
