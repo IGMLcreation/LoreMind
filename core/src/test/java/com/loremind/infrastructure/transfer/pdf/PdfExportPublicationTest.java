@@ -11,14 +11,18 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -146,17 +150,29 @@ class PdfExportPublicationTest {
         assertFalse(x.contains("Structure de l'aventure"));
     }
 
-    @Test
-    void formatAndPrintMode_shapeTheStylesheet() {
-        String a5 = service.xhtml(campaignId, new PdfExportOptions(true, PageFormat.A5, true,
-                EnumSet.allOf(Section.class), LoreScope.ALL));
-        assertTrue(a5.contains("size: A5"));
-        assertTrue(a5.contains("font-size: 9.0pt"));
-        assertTrue(a5.contains(".arc-head { background: none"), "feuille impression ajoutée");
-
-        String a4 = service.xhtml(campaignId, PdfExportOptions.defaults());
-        assertTrue(a4.contains("size: A4"));
-        assertFalse(a4.contains(".arc-head { background: none"));
+    @ParameterizedTest
+    @EnumSource(PageFormat.class)
+    void formatAndPrintMode_shapeTheStylesheet(PageFormat format) throws Exception {
+        String printCss;
+        try (var in = PdfExportService.class.getResourceAsStream("/pdf/export-print.css")) {
+            assertNotNull(in, "feuille impression disponible");
+            printCss = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+        }
+        for (boolean print : new boolean[]{false, true}) {
+            String x = service.xhtml(campaignId, new PdfExportOptions(true, format, print,
+                    EnumSet.allOf(Section.class), LoreScope.ALL));
+            String css = x.substring(x.indexOf("<style>") + "<style>".length(), x.indexOf("</style>"));
+            assertTrue(css.contains("size: " + format.cssSize + ";"), "format " + format);
+            assertTrue(css.contains(String.format(Locale.ROOT, "font-size: %.1fpt", format.bodyPt)),
+                    "corps du texte pour " + format);
+            // Le style A4 couleur peut aussi avoir des titres sans fond. Verifier la feuille
+            // complete et son ordre de cascade, plutot qu'une declaration CSS partagee.
+            if (print) {
+                assertTrue(css.endsWith(printCss), "surcharges impression appliquees en dernier : " + format);
+            } else {
+                assertFalse(css.contains(printCss), "aucune feuille impression en couleur : " + format);
+            }
+        }
     }
 
     @Test
