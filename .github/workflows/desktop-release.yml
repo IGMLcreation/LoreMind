@@ -104,6 +104,10 @@ jobs:
   windows:
     needs: tests
     runs-on: windows-latest
+    # Reprises par le job `publish` (tag de la release, statut pre-release).
+    outputs:
+      tag: ${{ steps.ver.outputs.tag }}
+      isbeta: ${{ steps.ver.outputs.isbeta }}
     steps:
       # En declenchement manuel, on checkout le TAG correspondant a la version
       # saisie (sinon checkout prendrait la branche par defaut). En push de tag,
@@ -167,17 +171,14 @@ jobs:
         shell: pwsh
         run: .\installers\desktop\build-windows.ps1 -Version ${{ steps.ver.outputs.version }}
 
-      # Release GitHub publique avec le .msi ; une beta est publiee en pre-release.
-      # tag_name explicite : en declenchement manuel, github.ref est une branche,
-      # donc on cible le tag derive (la release est attachee au bon tag).
-      - name: Publish installer to GitHub Release
-        uses: softprops/action-gh-release@v2
+      # Le .msi est passe au job `publish`, seul a creer la release.
+      - name: Keep installer for the release
+        uses: actions/upload-artifact@v4
         with:
-          tag_name: ${{ steps.ver.outputs.tag }}
-          files: core/target/dist-out/*.msi
-          fail_on_unmatched_files: true
-          generate_release_notes: true
-          prerelease: ${{ steps.ver.outputs.isbeta == 'true' }}
+          name: installer-windows
+          path: core/target/dist-out/*.msi
+          if-no-files-found: error
+          retention-days: 7
 
   # LINUX : AppImage (1 fichier, toutes distros) attache a la MEME release.
   # Tourne sur ubuntu-latest (jpackage ne cross-compile pas -> build natif Linux).
@@ -230,13 +231,40 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: bash ./installers/desktop/build-linux.sh --version ${{ steps.ver.outputs.version }}
 
-      # Attache l'AppImage a la release (meme tag que le .msi -> les deux
-      # installeurs sur la meme release). prerelease aussi ici : le job qui cree
-      # la release en premier fixe son statut.
-      - name: Publish AppImage to GitHub Release
+      # L'AppImage est passee au job `publish`, seul a creer la release.
+      - name: Keep AppImage for the release
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-linux
+          path: core/target/dist-out/DM_Loremind*.AppImage
+          if-no-files-found: error
+          retention-days: 7
+
+  # PUBLICATION : un seul job cree la release et y attache les deux installeurs.
+  # Quand windows et linux publiaient chacun de leur cote, ils tournaient en
+  # parallele et creaient DEUX releases pour le meme tag (une publiee, une en
+  # brouillon), l'un echouant sur « already_exists ». Rien n'est publie si l'un
+  # des deux builds echoue : une release a toujours ses deux installeurs.
+  # Relancer le workflow pour une version deja publiee met la release a jour et
+  # remplace les fichiers de meme nom (pas besoin de la supprimer).
+  publish:
+    needs: [windows, linux]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get installers
+        uses: actions/download-artifact@v4
+        with:
+          pattern: installer-*
+          path: dist
+          merge-multiple: true
+
+      # tag_name explicite : en declenchement manuel, github.ref est une branche.
+      # Une beta est publiee en pre-release (ignoree par /releases/latest).
+      - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.ver.outputs.tag }}
-          files: core/target/dist-out/DM_Loremind*.AppImage
+          tag_name: ${{ needs.windows.outputs.tag }}
+          files: dist/*
           fail_on_unmatched_files: true
-          prerelease: ${{ steps.ver.outputs.isbeta == 'true' }}
+          generate_release_notes: true
+          prerelease: ${{ needs.windows.outputs.isbeta == 'true' }}
