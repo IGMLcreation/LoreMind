@@ -12,12 +12,10 @@ name: Desktop installers
 # inclus) pour que le tag declenche ce workflow.
 #
 # Tag stable  vX.Y.Z       -> GitHub Release PUBLIQUE avec le .msi attache.
-# Tag beta    vX.Y.Z-beta* -> AUCUNE publication publique. Le .msi est depose en
-#                             ARTEFACT PRIVE du run (telechargeable seulement par
-#                             toi via l'onglet Actions) ; tu le joins ensuite a un
-#                             post Patreon reserve a un palier. Patreon = la
-#                             barriere d'acces (equivalent du registry prive +
-#                             relais pour les images Docker beta).
+# Tag beta    vX.Y.Z-beta* -> GitHub Release PUBLIQUE marquee « pre-release » : le
+#                             canal beta est libre. /releases/latest l'ignore, donc
+#                             seules les installations beta en sont prevenues
+#                             (cf. DesktopUpdateService).
 
 on:
   push:
@@ -169,33 +167,23 @@ jobs:
         shell: pwsh
         run: .\installers\desktop\build-windows.ps1 -Version ${{ steps.ver.outputs.version }}
 
-      # STABLE uniquement : Release GitHub publique avec le .msi.
+      # Release GitHub publique avec le .msi ; une beta est publiee en pre-release.
       # tag_name explicite : en declenchement manuel, github.ref est une branche,
       # donc on cible le tag derive (la release est attachee au bon tag).
-      - name: Publish installer to GitHub Release (stable)
-        if: ${{ steps.ver.outputs.isbeta == 'false' }}
+      - name: Publish installer to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.ver.outputs.tag }}
           files: core/target/dist-out/*.msi
           fail_on_unmatched_files: true
           generate_release_notes: true
-
-      # BETA uniquement : artefact PRIVE (pas de release publique). A recuperer
-      # via l'onglet Actions puis a joindre a un post Patreon gate par palier.
-      - name: Upload installer as private artifact (beta)
-        if: ${{ steps.ver.outputs.isbeta == 'true' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: loremind-beta-${{ steps.ver.outputs.version }}-msi
-          path: core/target/dist-out/*.msi
-          retention-days: 90
+          prerelease: ${{ steps.ver.outputs.isbeta == 'true' }}
 
   # LINUX : AppImage (1 fichier, toutes distros) attache a la MEME release.
   # Tourne sur ubuntu-latest (jpackage ne cross-compile pas -> build natif Linux).
   # Brain empaquete via python-build-standalone (pas de Python embeddable Linux
   # officiel ; pas de PyInstaller -> pas de faux positif AV). Memes regles de
-  # publication que windows : stable -> release publique ; beta -> artefact prive.
+  # publication que windows : stable -> release publique ; beta -> pre-release.
   linux:
     needs: tests
     runs-on: ubuntu-latest
@@ -242,21 +230,13 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: bash ./installers/desktop/build-linux.sh --version ${{ steps.ver.outputs.version }}
 
-      # STABLE uniquement : attache l'AppImage a la release publique (meme tag que
-      # le .msi -> les deux installeurs sur la meme release).
-      - name: Publish AppImage to GitHub Release (stable)
-        if: ${{ steps.ver.outputs.isbeta == 'false' }}
+      # Attache l'AppImage a la release (meme tag que le .msi -> les deux
+      # installeurs sur la meme release). prerelease aussi ici : le job qui cree
+      # la release en premier fixe son statut.
+      - name: Publish AppImage to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.ver.outputs.tag }}
           files: core/target/dist-out/DM_Loremind*.AppImage
           fail_on_unmatched_files: true
-
-      # BETA uniquement : artefact PRIVE (pas de release publique).
-      - name: Upload AppImage as private artifact (beta)
-        if: ${{ steps.ver.outputs.isbeta == 'true' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: loremind-beta-${{ steps.ver.outputs.version }}-appimage
-          path: core/target/dist-out/DM_Loremind*.AppImage
-          retention-days: 90
+          prerelease: ${{ steps.ver.outputs.isbeta == 'true' }}

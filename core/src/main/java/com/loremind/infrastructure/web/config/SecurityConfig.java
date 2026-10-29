@@ -85,7 +85,6 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/settings/**").hasRole(ROLE_ADMIN)
                 .requestMatchers("/api/admin/**").hasRole(ROLE_ADMIN)
-                .requestMatchers("/api/license/**").hasRole(ROLE_ADMIN)
                 .anyRequest().permitAll()
             )
             .httpBasic(basic -> {});

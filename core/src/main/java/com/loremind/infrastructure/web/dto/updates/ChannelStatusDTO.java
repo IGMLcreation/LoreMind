@@ -1,7 +1,7 @@
-package com.loremind.infrastructure.web.dto.licensing;
+package com.loremind.infrastructure.web.dto.updates;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.loremind.application.licensing.ChannelSwitcherService;
+import com.loremind.application.channel.ChannelSwitcherService;
 
 /**
  * Etat du canal courant + dernier resultat de switch.

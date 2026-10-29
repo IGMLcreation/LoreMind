@@ -1,5 +1,6 @@
 package com.loremind.infrastructure.updates;
 
+import com.loremind.application.channel.ChannelSwitcherService;
 import com.loremind.infrastructure.updates.UpdateCheckService.ImageStatus;
 import com.loremind.infrastructure.updates.UpdateCheckService.ImageStatusKind;
 import com.loremind.infrastructure.updates.UpdateCheckService.TagsListResponse;
@@ -7,6 +8,9 @@ import com.loremind.infrastructure.updates.UpdateCheckService.UpdateStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.mockito.ArgumentCaptor;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -41,18 +45,62 @@ class UpdateCheckServiceTest {
             p.setProperty("version", currentVersion);
             bp = new BuildProperties(p);
         }
-        // licenseService null : la beta est testee separement, ces tests
-        // couvrent uniquement le canal stable.
+        return newService(token, bp, ChannelSwitcherService.Channel.STABLE);
+    }
+
+    private static UpdateCheckService newService(String token, BuildProperties bp,
+                                                 ChannelSwitcherService.Channel channel) {
+        ChannelSwitcherService channels = mock(ChannelSwitcherService.class);
+        when(channels.getCurrentChannel()).thenReturn(channel);
         return new UpdateCheckService(
                 new RestTemplateBuilder(),
                 "ghcr.io",
                 "igmlcreation/loremind-core,igmlcreation/loremind-brain",
                 "http://watchtower:8080",
                 token,
-                "",
-                null,
+                "ghcr.io",
+                "igmlcreation/loremind-beta-core",
+                channels,
                 bp
         );
+    }
+
+    private static BuildProperties version(String v) {
+        Properties p = new Properties();
+        p.setProperty("version", v);
+        return new BuildProperties(p);
+    }
+
+    // --- Canal beta (libre : images publiques, lecture anonyme) ------------------
+
+    @Test
+    void checkBeta_disabledWhenNotOnBetaChannel() {
+        UpdateCheckService svc = newService("tok", version("1.4.0"), ChannelSwitcherService.Channel.STABLE);
+        RestTemplate http = stubHttp(svc);
+
+        UpdateCheckService.BetaStatus status = svc.checkBeta();
+
+        assertFalse(status.enabled());
+        assertEquals("not-on-beta-channel", status.disabledReason());
+        verifyNoInteractions(http);
+    }
+
+    @Test
+    void checkBeta_readsPublicBetaImagesWithoutCredentials() {
+        UpdateCheckService svc = newService("tok", version("1.5.0-beta"), ChannelSwitcherService.Channel.BETA);
+        RestTemplate http = stubHttp(svc);
+        stubTags(http, "igmlcreation/loremind-beta-core", List.of("beta", "1.5.0-beta", "1.6.0-beta"));
+
+        UpdateCheckService.BetaStatus status = svc.checkBeta();
+
+        assertTrue(status.enabled());
+        assertTrue(status.updateAvailable());
+        @SuppressWarnings("rawtypes")
+        ArgumentCaptor<HttpEntity> sent = ArgumentCaptor.forClass(HttpEntity.class);
+        verify(http).exchange(eq("https://ghcr.io/v2/igmlcreation/loremind-beta-core/tags/list"),
+                eq(HttpMethod.GET), sent.capture(), eq(TagsListResponse.class));
+        assertFalse(sent.getValue().getHeaders().containsKey(HttpHeaders.AUTHORIZATION),
+                "plus d'identifiants : les images beta sont publiques");
     }
 
     private static RestTemplate stubHttp(UpdateCheckService svc) {

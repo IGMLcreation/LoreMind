@@ -22,7 +22,7 @@ import { RemoteAccessService } from '../services/remote-access.service';
  * cles API, embeddings RAG, fenetre de contexte, import PDF) + sa sauvegarde.
  *
  * Les responsabilites voisines sont des sous-composants standalone :
- *  - UpdatesSectionComponent : mises a jour conteneurs + licence Patreon + canal beta ;
+ *  - UpdatesSectionComponent : mises a jour conteneurs + canal beta ;
  *  - OllamaModelManagerComponent : pull/suppression des modeles Ollama.
  *
  * Les modifications sont persistees cote Brain dans data/settings.json

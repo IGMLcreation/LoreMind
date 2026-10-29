@@ -7,7 +7,6 @@
 [![Licence: AGPL v3](https://img.shields.io/badge/Licence-AGPL%20v3-blue.svg)](LICENSE)
 [![Documentation](https://img.shields.io/badge/docs-loremind--docs-green)](https://loremind-docs.igmlcreation.fr/)
 [![Démo](https://img.shields.io/badge/d%C3%A9mo-en%20ligne-orange)](https://loremind-demo.igmlcreation.fr/)
-[![Patreon](https://img.shields.io/badge/Patreon-soutenir-red)](https://www.patreon.com/c/IGMLCreation)
 [![Discord](https://img.shields.io/badge/Discord-rejoindre-5865F2)](https://discord.gg/cPpFzCjEzQ)
 
 ## Découvrir DM Loremind en vidéo
@@ -67,7 +66,7 @@ Quelques limites à connaître :
 
 DM Loremind est **et restera gratuit en auto-hébergement**. Le développement avance plus vite avec votre soutien :
 
-- **[Patreon](https://www.patreon.com/c/IGMLCreation)** — accès anticipé aux features, vote sur la roadmap, devlogs exclusifs
+- **Canal bêta** — les nouveautés en avant-première, gratuites pour tous : bascule depuis les Paramètres (Docker) ou pré-version GitHub (bureau)
 - **[Discord](https://discord.gg/cPpFzCjEzQ)** — annonces, support, retours utilisateurs
 
 ## Licence

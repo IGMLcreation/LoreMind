@@ -1,5 +1,6 @@
 package com.loremind.infrastructure.web.controller;
 
+import com.loremind.application.channel.ChannelSwitcherService;
 import com.loremind.infrastructure.updates.UpdateCheckService;
 import com.loremind.infrastructure.updates.UpdateCheckService.BetaStatus;
 import com.loremind.infrastructure.updates.UpdateCheckService.ImageStatus;
@@ -11,6 +12,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.nio.charset.StandardCharsets;
@@ -45,6 +47,7 @@ class UpdatesControllerTest {
 
     @Autowired private MockMvc mockMvc;
     @MockitoBean private UpdateCheckService updates;
+    @MockitoBean private ChannelSwitcherService channels;
 
     private UpdateStatus sampleUpdate() {
         return new UpdateStatus(true, true, false, "1.0.0",
@@ -54,6 +57,51 @@ class UpdatesControllerTest {
 
     private BetaStatus sampleBeta() {
         return new BetaStatus(true, false, false, List.of(), FIXED_INSTANT, null);
+    }
+
+    // --- Canal beta libre : bascule sans licence -------------------------------
+
+    @Test
+    void switchToBeta_isAcceptedWithoutAnyLicense() throws Exception {
+        when(channels.isSwitcherAvailable()).thenReturn(true);
+        when(channels.requestSwitch(ChannelSwitcherService.Channel.BETA))
+                .thenReturn("cmd-1");
+        mockMvc.perform(post("/api/admin/updates/channel/switch")
+                        .header(HttpHeaders.AUTHORIZATION, ADMIN_AUTH)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"channel\":\"beta\"}"))
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.id").value("cmd-1"))
+                .andExpect(jsonPath("$.channel").value("beta"));
+    }
+
+    @Test
+    void switchChannel_rejectsUnknownChannel() throws Exception {
+        mockMvc.perform(post("/api/admin/updates/channel/switch")
+                        .header(HttpHeaders.AUTHORIZATION, ADMIN_AUTH)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"channel\":\"nightly\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void switchChannel_503WhenSwitcherMissing() throws Exception {
+        when(channels.isSwitcherAvailable()).thenReturn(false);
+        mockMvc.perform(post("/api/admin/updates/channel/switch")
+                        .header(HttpHeaders.AUTHORIZATION, ADMIN_AUTH)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"channel\":\"beta\"}"))
+                .andExpect(status().isServiceUnavailable());
+    }
+
+    @Test
+    void channel_returnsCurrentChannel() throws Exception {
+        when(channels.getCurrentChannel()).thenReturn(ChannelSwitcherService.Channel.BETA);
+        when(channels.isSwitcherAvailable()).thenReturn(true);
+        mockMvc.perform(get("/api/admin/updates/channel").header(HttpHeaders.AUTHORIZATION, ADMIN_AUTH))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.currentChannel").value("beta"))
+                .andExpect(jsonPath("$.switcherAvailable").value(true));
     }
 
     // --- GET /check ---------------------------------------------------------

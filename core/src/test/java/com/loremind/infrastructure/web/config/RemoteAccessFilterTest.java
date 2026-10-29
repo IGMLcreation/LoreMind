@@ -90,7 +90,7 @@ class RemoteAccessFilterTest {
 
     @Test
     void lan_adminRoutes_areAlwaysForbidden_evenWhenPaired() throws Exception {
-        for (String path : new String[]{"/api/settings", "/api/settings/remote-access", "/api/admin/data/export", "/api/license"}) {
+        for (String path : new String[]{"/api/settings", "/api/settings/remote-access", "/api/admin/data/export", "/api/admin/updates/channel"}) {
             Outcome outcome = run(LAN_PORT, path, "bon-jeton");
             assertFalse(outcome.passed(), path);
             assertEquals(403, outcome.status(), path);

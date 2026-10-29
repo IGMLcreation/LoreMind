@@ -1,9 +1,7 @@
 package com.loremind.infrastructure.updates;
 
-import com.loremind.application.licensing.LicenseService;
-import com.loremind.domain.licensing.LicenseSnapshot;
-import com.loremind.domain.licensing.LicenseStatus;
-import com.loremind.domain.licensing.RegistryCredentials;
+import com.loremind.application.channel.ChannelSwitcherService;
+import com.loremind.application.channel.ChannelSwitcherService.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,10 +22,8 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * Detection des mises a jour disponibles + declenchement via Watchtower.
@@ -59,8 +55,9 @@ public class UpdateCheckService {
     private final List<String> images;
     private final String watchtowerUrl;
     private final String watchtowerToken;
+    private final String betaRegistry;
     private final List<String> betaImages;
-    private final LicenseService licenseService;
+    private final ChannelSwitcherService channels;
     /** Version semver courante du binaire (ex: "0.8.0"). Source de verite. */
     private final String currentVersion;
 
@@ -70,8 +67,9 @@ public class UpdateCheckService {
             @Value("${update-check.images:}") String imagesCsv,
             @Value("${update-check.watchtower-url:http://watchtower:8080}") String watchtowerUrl,
             @Value("${update-check.watchtower-token:}") String watchtowerToken,
-            @Value("${licensing.beta.images:}") String betaImagesCsv,
-            LicenseService licenseService,
+            @Value("${update-check.beta-registry:ghcr.io}") String betaRegistry,
+            @Value("${update-check.beta-images:}") String betaImagesCsv,
+            ChannelSwitcherService channels,
             @Nullable BuildProperties buildProperties) {
         this.http = builder
                 .connectTimeout(Duration.ofSeconds(5))
@@ -81,8 +79,9 @@ public class UpdateCheckService {
         this.images = parseImages(imagesCsv);
         this.watchtowerUrl = watchtowerUrl;
         this.watchtowerToken = watchtowerToken;
+        this.betaRegistry = normalizeRegistry(betaRegistry);
         this.betaImages = parseImages(betaImagesCsv);
-        this.licenseService = licenseService;
+        this.channels = channels;
         this.currentVersion = buildProperties != null ? buildProperties.getVersion() : null;
         log.info("Update check init - registry={} images={} currentVersion={}",
                 this.registry, this.images, this.currentVersion);
@@ -119,33 +118,17 @@ public class UpdateCheckService {
     }
 
     /**
-     * Verifie l'etat du canal beta (images privees GHCR) avec auth basique.
+     * Verifie l'etat du canal beta quand l'instance y tourne. Les images beta sont
+     * publiques (canal libre, plus de licence) : lecture anonyme du registry.
      */
     public BetaStatus checkBeta() {
-        if (!licenseService.isLicensingEnabled()) {
-            return BetaStatus.disabled("licensing-not-configured");
+        if (channels.getCurrentChannel() != Channel.BETA) {
+            return BetaStatus.disabled("not-on-beta-channel");
         }
-        LicenseSnapshot snap = licenseService.getCurrentSnapshot();
-        if (snap.status() != LicenseStatus.VALID && snap.status() != LicenseStatus.GRACE) {
-            return BetaStatus.disabled("license-" + snap.status().name().toLowerCase());
-        }
-        if (!snap.betaChannelEnabled()) {
-            return BetaStatus.disabled("beta-toggle-off");
-        }
-        if (betaImages.isEmpty()) {
+        if (betaImages.isEmpty() || betaRegistry.isEmpty()) {
             return BetaStatus.disabled("no-beta-images-configured");
         }
-
-        Optional<RegistryCredentials> creds = licenseService.fetchRegistryCredentials();
-        if (creds.isEmpty()) {
-            return new BetaStatus(true, false, true, List.of(), Instant.now(), "relay-unavailable");
-        }
-
-        String basicAuth = "Basic " + Base64.getEncoder().encodeToString(
-                (creds.get().username() + ":" + creds.get().password()).getBytes(StandardCharsets.UTF_8));
-        String betaRegistry = normalizeRegistry(creds.get().registry());
-
-        ImagesEvaluation ev = evaluateImages(betaImages, betaRegistry, basicAuth);
+        ImagesEvaluation ev = evaluateImages(betaImages, betaRegistry, null);
         return new BetaStatus(true, ev.anyUpdate(), ev.anyUnknown(),
                 ev.statuses(), Instant.now(), null);
     }

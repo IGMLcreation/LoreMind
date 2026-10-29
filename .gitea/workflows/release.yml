@@ -47,7 +47,7 @@ jobs:
 
       # Detection du canal :
       #   - tag vX.Y.Z         -> stable (push :latest + :version sur les repos publics)
-      #   - tag vX.Y.Z-beta*   -> beta  (push :beta + :version sur les repos GHCR prives
+      #   - tag vX.Y.Z-beta*   -> beta  (push :beta + :version sur les repos GHCR publics
       #                                  loremind-beta-<component> ; backup Gitea avec :version)
       - name: Extract version & channel
         id: meta
@@ -74,8 +74,8 @@ jobs:
             ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_NAMESPACE }}/loremind-${{ matrix.component }}:${{ steps.meta.outputs.version }}
 
       # Build & push canal BETA
-      # GHCR : repos prives loremind-beta-<component> (gated par PAT distribue
-      #        via le relais Patreon aux tiers Compagnon).
+      # GHCR : repos PUBLICS loremind-beta-<component> (canal beta libre ;
+      #        le switcher bascule IMAGE_NAMESPACE vers ce prefixe).
       # Gitea : backup prive avec :version uniquement (pas de :latest pour ne
       #         pas faire upgrader les installs branchees sur Gitea).
       - name: Build & push ${{ matrix.component }} (beta)

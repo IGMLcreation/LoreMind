@@ -94,22 +94,10 @@ services:
       UPDATE_CHECK_TAG: ${TAG:-latest}
       WATCHTOWER_URL: http://watchtower:8080
       WATCHTOWER_TOKEN: ${WATCHTOWER_TOKEN:-}
-      # Licensing : la cle publique JWT est embarquee dans le binaire
-      # (core/src/main/resources/licensing/jwt-public-key.pem).
-      # LICENSING_JWT_PUBLIC_KEY est un override optionnel (rotation de cle
-      # sans rebuild) - non defini par defaut.
-      LICENSING_JWT_PUBLIC_KEY: ${LICENSING_JWT_PUBLIC_KEY:-}
-      LICENSING_RELAY_BASE_URL: ${LICENSING_RELAY_BASE_URL:-https://loremind-auth.igmlcreation.fr}
-      # Chemin du docker config.json partage avec Watchtower
-      LICENSING_DOCKER_CONFIG_PATH: /shared/docker/config.json
       # Chemin du repertoire partage avec le switcher (commande + resultat).
       # Doit matcher le volume `switcher-data` monte ci-dessous.
       SWITCHER_DATA_PATH: /shared/switcher
     volumes:
-      # Volume partage avec Watchtower : Core ecrit les credentials registry
-      # GHCR (recus du relais) ici, Watchtower les utilise pour pull les images
-      # privees du canal beta. Pas de creds = no-op.
-      - docker-config:/shared/docker
       # Volume partage avec le switcher : Core ecrit une commande de switch
       # de canal ici (command.json), le switcher la traite et y depose son
       # resultat (result.json). Cf. service `switcher` ci-dessous.
@@ -202,10 +190,6 @@ services:
       - ${COMPOSE_PROJECT_DIR:-./}:/compose
       # Volume partage avec le Core pour la commande + le resultat.
       - switcher-data:/data
-      # Volume partage avec le Core + Watchtower : contient config.json avec
-      # les creds GHCR (ecrits par le Core a partir du token Patreon).
-      # Indispensable pour pull les images privees du canal beta.
-      - docker-config:/shared/docker
     environment:
       # Repertoire interne ou trouver docker-compose.yml et .env. Bind au
       # volume ci-dessus (COMPOSE_PROJECT_DIR = repertoire d'install du host).
@@ -214,9 +198,6 @@ services:
       # le MEME stack que celui qui tourne (sinon il creerait un duplicate).
       # Doit matcher le `name:` (en V2.x) ou le nom du dossier du host.
       COMPOSE_PROJECT_NAME: ${COMPOSE_PROJECT_NAME:-loremind}
-      # Indique au CLI Docker du switcher ou trouver config.json (auth GHCR
-      # pour les images privees beta). Meme mecanisme que sur Watchtower.
-      DOCKER_CONFIG: /shared/docker
     restart: unless-stopped
 
   # Mises a jour automatiques des images core/brain/web.
@@ -234,14 +215,7 @@ services:
     profiles: ["autoupdate"]
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      # Volume partage avec Core : credentials registry GHCR (canal beta).
-      # Watchtower lit le config.json depuis DOCKER_CONFIG.
-      - docker-config:/shared/docker
     environment:
-      # Indique a Watchtower (et au CLI Docker embarque) ou trouver le
-      # config.json. Active automatiquement l'auth GHCR pour les images
-      # du canal beta des que Core a ecrit le fichier.
-      DOCKER_CONFIG: /shared/docker
       WATCHTOWER_LABEL_ENABLE: "true"
       WATCHTOWER_CLEANUP: "true"
       WATCHTOWER_INCLUDE_RESTARTING: "true"
@@ -267,8 +241,5 @@ volumes:
   minio-data:
   brain-data:
   ollama-data:
-  # Volume partage Core <-> Watchtower : config.json Docker pour
-  # l'authentification au registry prive GHCR (canal beta Patreon).
-  docker-config:
   # Volume partage Core <-> Switcher : commande de bascule de canal + resultat.
   switcher-data:

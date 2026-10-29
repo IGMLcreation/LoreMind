@@ -32,6 +32,32 @@ export interface UpdateStatus {
   checkedAt: string;
 }
 
+/** Canal courant + dernier resultat de bascule (cf. ChannelStatusDTO cote backend). */
+export type ChannelName = 'stable' | 'beta';
+export type SwitchStatus = 'IN_PROGRESS' | 'SUCCESS' | 'ERROR';
+
+export interface ChannelStatusDTO {
+  currentChannel: ChannelName;
+  switcherAvailable: boolean;
+  lastSwitch: {
+    id: string;
+    status: SwitchStatus;
+    channel: ChannelName;
+    message: string;
+    completedAt: string;
+  } | null;
+}
+
+/** Reflet de UpdateCheckService.BetaStatus (images beta publiques, verifiees en beta). */
+export interface BetaStatusDTO {
+  enabled: boolean;
+  updateAvailable: boolean;
+  anyUnknown: boolean;
+  images: ImageStatus[];
+  checkedAt: string;
+  disabledReason: string | null;
+}
+
 /**
  * Service de detection / declenchement des mises a jour des conteneurs
  * LoreMind. Endpoints proteges par HTTP Basic (admin) — withCredentials
@@ -70,6 +96,29 @@ export class UpdatesService {
       `${this.apiUrl}/apply`, null, this.authOptions
     ).pipe(
       catchError(() => of(null))
+    );
+  }
+
+  /** Nouvelle beta disponible ? (seulement quand l'instance tourne sur le canal beta). */
+  checkBeta(): Observable<BetaStatusDTO | null> {
+    return this.http.get<BetaStatusDTO>(`${this.apiUrl}/check-beta`, this.authOptions).pipe(
+      catchError(() => of(null))
+    );
+  }
+
+  /** Canal courant et dernier resultat de bascule (pour le polling de l'UI). */
+  getChannelStatus(): Observable<ChannelStatusDTO | null> {
+    return this.http.get<ChannelStatusDTO>(`${this.apiUrl}/channel`, this.authOptions).pipe(
+      catchError(() => of(null))
+    );
+  }
+
+  /** Demande une bascule de canal : 202 + { id, channel }, sinon { error } (503 = sidecar absent…). */
+  switchChannel(channel: ChannelName): Observable<{ id: string; channel: ChannelName } | { error: string }> {
+    return this.http.post<{ id: string; channel: ChannelName }>(
+      `${this.apiUrl}/channel/switch`, { channel }, this.authOptions
+    ).pipe(
+      catchError((err) => of({ error: err?.error?.error ?? 'Echec du switch de canal' }))
     );
   }
 }

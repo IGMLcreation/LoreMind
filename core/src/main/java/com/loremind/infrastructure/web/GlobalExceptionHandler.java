@@ -31,7 +31,7 @@ import java.util.Map;
  * </ul>
  *
  * <p>Important : ne court-circuite PAS les try/catch locaux des controllers
- * (ex: LicenseController.install catche InstallException -> 400 lui-meme).
+ * (ex: UpdatesController.switchChannel catche IOException -> 500 lui-meme).
  * Ce handler n'attrape QUE ce qui a echappe au catch local.
  */
 @RestControllerAdvice

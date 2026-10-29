@@ -1,4 +1,4 @@
-package com.loremind.application.licensing;
+package com.loremind.application.channel;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;

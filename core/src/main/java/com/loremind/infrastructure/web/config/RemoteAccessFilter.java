@@ -32,7 +32,7 @@ public class RemoteAccessFilter extends OncePerRequestFilter {
     private static final List<String> PUBLIC_PATHS = List.of(
             "/api/config", "/api/version", "/api/remote-access/pair", "/api/remote-access/session");
     private static final List<String> LOCAL_ONLY_PREFIXES = List.of(
-            "/api/settings", "/api/admin", "/api/license");
+            "/api/settings", "/api/admin");
 
     private final RemoteAccessService remoteAccessService;
 

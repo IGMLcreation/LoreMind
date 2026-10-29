@@ -31,6 +31,9 @@ import java.util.Optional;
  * <p>
  * {@code /releases/latest} ne renvoie que les releases stables (pas les
  * prereleases) : les utilisateurs stables ne sont donc pas notifies des betas.
+ * Une version BETA (le canal beta est libre : chaque beta est publiee en
+ * prerelease GitHub) interroge la liste complete des releases, pour etre
+ * prevenue de la beta suivante comme de la version stable qui la remplace.
  */
 @Service
 @Profile("local")
@@ -73,17 +76,18 @@ public class DesktopUpdateService {
             headers.set(HttpHeaders.USER_AGENT, "LoreMind-Desktop");
             headers.set(HttpHeaders.ACCEPT, "application/vnd.github+json");
 
+            boolean beta = isPrerelease(currentVersion);
             ResponseEntity<JsonNode> resp = http.exchange(
-                    releasesApiUrl, HttpMethod.GET, new HttpEntity<>(headers), JsonNode.class);
-            JsonNode body = resp.getBody();
-            if (body == null || body.path("tag_name").isMissingNode()) {
+                    beta ? allReleasesUrl(releasesApiUrl) : releasesApiUrl,
+                    HttpMethod.GET, new HttpEntity<>(headers), JsonNode.class);
+            JsonNode release = beta ? newestRelease(resp.getBody()) : resp.getBody();
+            if (release == null || release.path("tag_name").isMissingNode()) {
                 return Optional.empty();
             }
-            String tag = body.path("tag_name").asText("");          // ex: "v0.15.0"
-            String releaseUrl = body.path("html_url").asText(null);  // page de la release
-            String latest = tag.startsWith("v") ? tag.substring(1) : tag;
+            String latest = version(release);                          // ex: "0.15.0"
+            String releaseUrl = release.path("html_url").asText(null);  // page de la release
 
-            if (!latest.isBlank() && compareSemver(currentVersion, latest) < 0) {
+            if (!latest.isBlank() && (beta ? compareVersions(currentVersion, latest) : compareSemver(currentVersion, latest)) < 0) {
                 log.info("[Update] Nouvelle version disponible : {} (courante : {})", latest, currentVersion);
                 return Optional.of(new UpdateInfo(currentVersion, latest, releaseUrl));
             }
@@ -98,6 +102,66 @@ public class DesktopUpdateService {
 
     /** Infos d'une mise a jour disponible. */
     public record UpdateInfo(String currentVersion, String latestVersion, String releaseUrl) {}
+
+    static boolean isPrerelease(String version) {
+        return version.split("\\+", 2)[0].contains("-");
+    }
+
+    /** {@code .../releases/latest} -> {@code .../releases?per_page=30} (prereleases incluses). */
+    static String allReleasesUrl(String latestUrl) {
+        String base = latestUrl.endsWith("/latest") ? latestUrl.substring(0, latestUrl.length() - "/latest".length()) : latestUrl;
+        return base + "?per_page=30";
+    }
+
+    private static String version(JsonNode release) {
+        String tag = release.path("tag_name").asText("");
+        return tag.startsWith("v") ? tag.substring(1) : tag;
+    }
+
+    /** Release publiee la plus recente (stable ou beta), brouillons exclus. */
+    @Nullable
+    static JsonNode newestRelease(@Nullable JsonNode releases) {
+        if (releases == null || !releases.isArray()) return null;
+        JsonNode best = null;
+        for (JsonNode r : releases) {
+            if (r.path("draft").asBoolean(false) || version(r).isBlank()) continue;
+            if (best == null || compareVersions(version(best), version(r)) < 0) best = r;
+        }
+        return best;
+    }
+
+    /**
+     * Comme {@link #compareSemver} mais tient compte du suffixe : a version egale,
+     * la stable passe devant la beta (1.5.0-beta &lt; 1.5.0), et deux betas se
+     * comparent par leur numero (1.5.0-beta &lt; 1.5.0-beta.2 &lt; 1.5.0-beta.10).
+     */
+    static int compareVersions(String a, String b) {
+        int cmp = compareSemver(a, b);
+        if (cmp != 0) return cmp;
+        String sa = suffix(a);
+        String sb = suffix(b);
+        if (sa.isEmpty() || sb.isEmpty()) return Boolean.compare(sa.isEmpty(), sb.isEmpty());
+        return compareSuffixes(sa, sb);
+    }
+
+    private static String suffix(String version) {
+        String noBuild = version.split("\\+", 2)[0];
+        int dash = noBuild.indexOf('-');
+        return dash < 0 ? "" : noBuild.substring(dash + 1);
+    }
+
+    /** Compare des suffixes en traitant les nombres comme des nombres (beta.10 &gt; beta.2). */
+    private static int compareSuffixes(String a, String b) {
+        String[] pa = a.split("(?<=\\d)(?=\\D)|(?<=\\D)(?=\\d)");
+        String[] pb = b.split("(?<=\\d)(?=\\D)|(?<=\\D)(?=\\d)");
+        for (int i = 0; i < Math.min(pa.length, pb.length); i++) {
+            boolean na = Character.isDigit(pa[i].charAt(0));
+            boolean nb = Character.isDigit(pb[i].charAt(0));
+            int cmp = na && nb ? Long.compare(Long.parseLong(pa[i]), Long.parseLong(pb[i])) : pa[i].compareTo(pb[i]);
+            if (cmp != 0) return cmp;
+        }
+        return Integer.compare(pa.length, pb.length);
+    }
 
     /**
      * Compare deux versions MAJOR.MINOR.PATCH (suffixe -beta/-rc ignore).
