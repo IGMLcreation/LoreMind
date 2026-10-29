@@ -69,6 +69,17 @@ DM Loremind est **et restera gratuit en auto-hébergement**. Le développement a
 - **Canal bêta** — les nouveautés en avant-première, gratuites pour tous : bascule depuis les Paramètres (Docker) ou pré-version GitHub (bureau)
 - **[Discord](https://discord.gg/cPpFzCjEzQ)** — annonces, support, retours utilisateurs
 
+## Politique de signature du code (Code signing policy)
+
+Signature de code gratuite fournie par [SignPath.io](https://about.signpath.io), certificat de [SignPath Foundation](https://signpath.org).
+
+- **Signé** : les installeurs Windows (`.msi`) et le lanceur `DM Loremind.exe`, construits par GitHub Actions à partir de ce dépôt.
+- **Auteurs et relecteurs** : [IGMLcreation](https://github.com/IGMLcreation)
+- **Approbateurs** : [IGMLcreation](https://github.com/IGMLcreation) — chaque demande de signature est approuvée manuellement.
+- **Confidentialité** : DM Loremind ne transmet aucune information à d'autres systèmes en réseau, sauf à la demande explicite de la personne qui l'utilise, l'installe ou l'exploite, et sauf la vérification des mises à jour, qui peut être désactivée. Voir la [politique de confidentialité](https://loremind-docs.igmlcreation.fr/docs/confidentialite).
+
+Politique complète : [Politique de signature du code](https://loremind-docs.igmlcreation.fr/docs/signature-du-code).
+
 ## Licence
 
 DM Loremind est distribué sous licence **[GNU AGPL v3](LICENSE)**.
