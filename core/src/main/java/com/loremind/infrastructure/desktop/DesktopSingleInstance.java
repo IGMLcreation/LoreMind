@@ -3,7 +3,9 @@ package com.loremind.infrastructure.desktop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.awt.Desktop;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.file.Files;
@@ -102,14 +104,20 @@ public final class DesktopSingleInstance {
         openUrl("http://localhost:" + DesktopUserConfig.runningPort() + "/");
     }
 
-    /** Ouvre le navigateur par defaut sur une URL quelconque (sans dependance AWT). */
+    /**
+     * Ouvre le navigateur par defaut sur une URL quelconque : API standard de Java
+     * (ShellExecute sous Windows), sinon commande du systeme. Plus de {@code rundll32
+     * url.dll} : outil Windows tres detourne par les logiciels malveillants, que des
+     * antivirus signalaient (Avast « IDP.Generic ») quand un programme peu connu le lance.
+     */
     public static void openUrl(String url) {
+        if (browseWithJava(url)) return;
         try {
             String os = System.getProperty(OS_NAME_PROPERTY, "").toLowerCase();
             ProcessBuilder pb;
             if (os.contains("win")) {
-                // rundll32 : ouverture d'URL fiable sans dependance graphique Java.
-                pb = new ProcessBuilder("rundll32", "url.dll,FileProtocolHandler", url);
+                // « start » de cmd ; le "" est le titre de fenetre attendu avant l'URL.
+                pb = new ProcessBuilder("cmd", "/c", "start", "", url);
             } else if (os.contains("mac")) {
                 pb = new ProcessBuilder("open", url);
             } else {
@@ -119,6 +127,20 @@ public final class DesktopSingleInstance {
         } catch (IOException e) {
             log.warn("[Desktop] Impossible d'ouvrir le navigateur sur {} : {}. Ouvrez-le manuellement.",
                     url, e.getMessage());
+        }
+    }
+
+    /** {@link Desktop#browse} si disponible (jamais en headless) ; false = repli sur une commande. */
+    private static boolean browseWithJava(String url) {
+        try {
+            if (!Desktop.isDesktopSupported() || !Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                return false;
+            }
+            Desktop.getDesktop().browse(URI.create(url));
+            return true;
+        } catch (IOException | RuntimeException e) {
+            log.debug("[Desktop] Ouverture via Desktop.browse impossible ({}), repli sur une commande.", e.getMessage());
+            return false;
         }
     }
 

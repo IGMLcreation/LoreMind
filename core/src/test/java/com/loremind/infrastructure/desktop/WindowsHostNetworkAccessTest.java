@@ -8,6 +8,7 @@ import org.junit.jupiter.api.condition.OS;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -68,6 +69,37 @@ class WindowsHostNetworkAccessTest {
         assertTrue(allow.contains("Remove-NetFirewallRule"), "les blocages de CE programme sont retirés");
         assertTrue(WindowsHostNetworkAccess.inspectScript(path).contains("ConvertTo-Json"));
         assertTrue(WindowsHostNetworkAccess.inspectScript(path).contains("SecurityCenter2"));
+    }
+
+    @Test
+    void command_passesTheScriptInClear_withoutAntivirusRedFlags() {
+        String script = WindowsHostNetworkAccess.inspectScript("C:\\Users\\Jérôme\\DM Loremind.exe");
+        List<String> cmd = WindowsHostNetworkAccess.command(script);
+
+        assertEquals(List.of("powershell.exe", "-NoProfile", "-NonInteractive", "-Command", script), cmd);
+        assertFalse(String.join(" ", cmd).contains("EncodedCommand"), "script lisible, pas encodé");
+        assertFalse(String.join(" ", cmd).contains("Bypass"), "la politique d'exécution ne concerne que les .ps1");
+        assertTrue(script.contains("'C:\\Users\\Jérôme\\DM Loremind.exe'"), "accents gardés tels quels (ligne de commande UTF-16)");
+    }
+
+    @Test
+    void command_refusesMultilineOrDoubleQuotedScripts() {
+        assertThrows(IllegalArgumentException.class, () -> WindowsHostNetworkAccess.command("a\nb"));
+        assertThrows(IllegalArgumentException.class, () -> WindowsHostNetworkAccess.command("Write-Host \"x\""));
+    }
+
+    @Test
+    void elevation_runsTheAllowScriptAsAdmin_inOneLine() {
+        String path = "C:\\Users\\l'MJ\\DM Loremind.exe";
+        String elevation = WindowsHostNetworkAccess.elevationScript(path);
+
+        WindowsHostNetworkAccess.command(elevation); // une ligne, sans guillemet double
+        assertTrue(elevation.contains("-Verb RunAs"));
+        assertFalse(elevation.contains("Bypass"));
+        assertTrue(elevation.contains("catch { exit 1223 }"), "refus de l'UAC = annulation");
+        String encoded = elevation.replaceAll(".*'-EncodedCommand','([^']+)'.*", "$1");
+        assertEquals(WindowsHostNetworkAccess.allowScript(path),
+                new String(Base64.getDecoder().decode(encoded), StandardCharsets.UTF_16LE));
     }
 
     @Test

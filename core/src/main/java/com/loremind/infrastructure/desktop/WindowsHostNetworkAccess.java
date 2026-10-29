@@ -26,9 +26,16 @@ import java.util.concurrent.TimeUnit;
  * qu'aux réseaux PRIVÉS ; un Wi-Fi classé « Public » reste à basculer par l'utilisateur
  * (réglage système, jamais modifié par l'application).
  * <p>
- * Les scripts sont passés en {@code -EncodedCommand} (UTF-16LE base64) : aucun problème de
- * guillemets ni d'accents. Le seul paramètre variable est le chemin de l'exécutable,
- * fourni par le système (pas par l'utilisateur), et échappé pour une chaîne PowerShell.
+ * Les scripts sont passés EN CLAIR ({@code -Command}, une ligne) : un script encodé
+ * ({@code -EncodedCommand}) accompagné de {@code -ExecutionPolicy Bypass} est la signature
+ * typique des logiciels malveillants, et faisait réagir des antivirus (Avast « IDP.Generic »).
+ * La politique d'exécution ne concerne que les fichiers .ps1 : inutile de la contourner.
+ * La ligne de commande Windows est en UTF-16 : accents et noms de réseau passent tels quels.
+ * Seule exception : le script relancé EN ADMINISTRATEUR (bouton « Autoriser »), encodé car
+ * {@code Start-Process -ArgumentList} ne sait pas transmettre un script avec espaces et
+ * guillemets ; il ne s'exécute que sur clic de l'utilisateur, derrière la confirmation UAC.
+ * Le seul paramètre variable est le chemin de l'exécutable, fourni par le système (pas par
+ * l'utilisateur), et échappé pour une chaîne PowerShell.
  * <p>
  * Choisie au démarrage par {@code HostNetworkAccessConfig} sous Windows.
  */
@@ -69,14 +76,8 @@ public class WindowsHostNetworkAccess implements HostNetworkAccess {
     public FirewallFixOutcome allowThroughFirewall() {
         String program = currentProgram();
         if (!isWindows() || program == null) return FirewallFixOutcome.UNSUPPORTED;
-        String outer = "try {\n"
-                + "  $p = Start-Process -FilePath 'powershell.exe' -Verb RunAs -WindowStyle Hidden -Wait -PassThru "
-                + "-ArgumentList @('-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-EncodedCommand','"
-                + encode(allowScript(program)) + "')\n"
-                + "  exit $p.ExitCode\n"
-                + "} catch { exit " + EXIT_CANCELLED + " }\n";
         try {
-            int exit = runPowerShell(outer, ELEVATION_TIMEOUT_S).exitCode();
+            int exit = runPowerShell(elevationScript(program), ELEVATION_TIMEOUT_S).exitCode();
             FirewallFixOutcome outcome = exit == 0 ? FirewallFixOutcome.APPLIED
                     : exit == EXIT_CANCELLED ? FirewallFixOutcome.CANCELLED : FirewallFixOutcome.FAILED;
             log.info("Accès distant : autorisation pare-feu → {}", outcome);
@@ -103,24 +104,37 @@ public class WindowsHostNetworkAccess implements HostNetworkAccess {
 
     // --- Scripts --------------------------------------------------------------------------
 
-    /** Réseaux connectés + règles entrantes visant ce programme (chemins avec %VARIABLES% compris). */
+    /**
+     * Réseaux connectés + règles entrantes visant ce programme (chemins avec %VARIABLES% compris).
+     * Une seule ligne d'instructions séparées par « ; » : elle est passée telle quelle à {@code -Command}.
+     */
     static String inspectScript(String program) {
-        return "$ErrorActionPreference = 'SilentlyContinue'\n"
+        return "$ErrorActionPreference = 'SilentlyContinue'; "
                 // Sortie en UTF-8 : sinon la page de codes de la console abîme les noms de réseau accentués.
-                + "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8\n"
-                + "$p = '" + psQuote(program) + "'\n"
-                + "$nets =@(Get-NetConnectionProfile | ForEach-Object { [pscustomobject]@{ name = $_.Name; "
-                + "alias = $_.InterfaceAlias; category = $_.NetworkCategory.ToString() } })\n"
+                + "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; "
+                + "$p = '" + psQuote(program) + "'; "
+                + "$nets = @(Get-NetConnectionProfile | ForEach-Object { [pscustomobject]@{ name = $_.Name; "
+                + "alias = $_.InterfaceAlias; category = $_.NetworkCategory.ToString() } }); "
                 + "$rules = @(Get-NetFirewallApplicationFilter | Where-Object { $_.Program -and "
                 + "([Environment]::ExpandEnvironmentVariables($_.Program) -ieq $p) } | Get-NetFirewallRule | "
                 + "Where-Object { $_.Direction.ToString() -eq 'Inbound' } | ForEach-Object { [pscustomobject]@{ "
-                + "action = $_.Action.ToString(); profile = $_.Profile.ToString(); enabled = $_.Enabled.ToString() } })\n"
+                + "action = $_.Action.ToString(); profile = $_.Profile.ToString(); enabled = $_.Enabled.ToString() } }); "
                 // Pare-feu TIERS déclarés au Centre de sécurité (le pare-feu Windows n'y figure pas) :
                 // ils filtrent en plus de Windows, avec des règles qu'on ne peut pas lire.
                 + "$fw = @(Get-CimInstance -Namespace root/SecurityCenter2 -ClassName FirewallProduct | "
-                + "ForEach-Object { $_.displayName } | Where-Object { $_ -and $_ -notmatch 'Windows' })\n"
+                + "ForEach-Object { $_.displayName } | Where-Object { $_ -and $_ -notmatch 'Windows' }); "
                 + "[pscustomobject]@{ networks = $nets; rules = $rules; thirdPartyFirewalls = $fw } | "
-                + "ConvertTo-Json -Depth 4 -Compress\n";
+                + "ConvertTo-Json -Depth 4 -Compress";
+    }
+
+    /**
+     * Relance PowerShell EN ADMINISTRATEUR (confirmation UAC) avec {@link #allowScript}, et
+     * renvoie son code de sortie ; refus de l'UAC → {@value #EXIT_CANCELLED}. Une seule ligne.
+     */
+    static String elevationScript(String program) {
+        return "try { $p = Start-Process -FilePath 'powershell.exe' -Verb RunAs -WindowStyle Hidden -Wait -PassThru "
+                + "-ArgumentList @('-NoProfile','-NonInteractive','-EncodedCommand','"
+                + encode(allowScript(program)) + "'); exit $p.ExitCode } catch { exit " + EXIT_CANCELLED + " }";
     }
 
     /**
@@ -183,9 +197,9 @@ public class WindowsHostNetworkAccess implements HostNetworkAccess {
 
     private record Result(int exitCode, String output) {}
 
+    /** {@code script} : une ligne, sans guillemet double (chaînes PowerShell entre apostrophes). */
     private static Result runPowerShell(String script, long timeoutSeconds) throws IOException, InterruptedException {
-        Process process = new ProcessBuilder("powershell.exe", "-NoProfile", "-NonInteractive",
-                "-ExecutionPolicy", "Bypass", "-EncodedCommand", encode(script))
+        Process process = new ProcessBuilder(command(script))
                 .redirectError(ProcessBuilder.Redirect.DISCARD)
                 .start();
         process.getOutputStream().close();
@@ -202,6 +216,14 @@ public class WindowsHostNetworkAccess implements HostNetworkAccess {
             throw new IOException("PowerShell n'a pas répondu en " + timeoutSeconds + " s");
         }
         return new Result(process.exitValue(), output.join());
+    }
+
+    /** Ligne de commande PowerShell : script en clair, ni encodage ni contournement de politique. */
+    static List<String> command(String script) {
+        if (script.indexOf('"') >= 0 || script.indexOf('\n') >= 0) {
+            throw new IllegalArgumentException("Script PowerShell : une ligne, sans guillemet double");
+        }
+        return List.of("powershell.exe", "-NoProfile", "-NonInteractive", "-Command", script);
     }
 
     private static boolean isWindows() {
